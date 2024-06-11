@@ -10,7 +10,7 @@ URL=$(cut -d ";" -f 2 <<< "$1")
 # Make sure to check both URL *and* redirections (--location) for excluded domains
 full_info=$(curl -I --silent --insecure --location -- "$URL")
 LOCATION=$(curl -I --silent --insecure -- "$URL" | perl -n -e '/^[Ll]ocation: (.*)$/ && print "$1\n"')
-if [[ "$full_info + $URL" =~ 'drive.google.com'|'pipeline-hemis'|'sciencedirect.com'|'wiley.com'|'sagepub.com'|'ncbi.nlm.nih.gov'|'oxfordjournals.org'|'docker.com'|'ieeexplore.ieee.org'|'liebertpub.com'|'tandfonline.com'|'pnas.org'|'neurology.org'|'academic.oup.com'|'journals.lww.com'|'science.org'|'pubs.rsna.org'|'direct.mit.edu'|'%s' ]]; then
+if [[ "$full_info + $URL" =~ 'drive.google.com'|'pipeline-hemis'|'sciencedirect.com'|'wiley.com'|'sagepub.com'|'ncbi.nlm.nih.gov'|'oxfordjournals.org'|'docker.com'|'ieeexplore.ieee.org'|'liebertpub.com'|'tandfonline.com'|'pnas.org'|'neurology.org'|'academic.oup.com'|'journals.lww.com'|'science.org'|'pubs.rsna.org'|'direct.mit.edu'|'archive.ph'|'mirror.centos.org'|'vault.centos.org'|'%s' ]]; then
     echo -e "$filename: \x1B[33m⚠️  Warning - Skipping: $URL --> $LOCATION\x1B[0m"
     exit 0
 fi

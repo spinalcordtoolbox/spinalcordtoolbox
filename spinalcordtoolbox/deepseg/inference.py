@@ -20,7 +20,7 @@ from monai.inferers import sliding_window_inference
 
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname
 from spinalcordtoolbox.image import Image, get_orientation, add_suffix
-from spinalcordtoolbox.math import binarize
+from spinalcordtoolbox.math import binarize, keep_largest_object, fill_holes, remove_small_objects
 
 import spinalcordtoolbox.deepseg.monai as ds_monai
 import spinalcordtoolbox.deepseg.nnunet as ds_nnunet
@@ -103,7 +103,8 @@ def segment_and_average_volumes(model_paths, input_filenames, options, use_gpu=F
     return im_lst, target_lst
 
 
-def segment_non_ivadomed(path_model, model_type, input_filenames, threshold, use_gpu=False, remove_temp_files=True):
+def segment_non_ivadomed(path_model, model_type, input_filenames, threshold, keep_largest, fill_holes_in_pred,
+                         remove_small, use_gpu=False, remove_temp_files=True):
     # MONAI and NNUnet have similar structure, and so we use nnunet+inference functions with the same signature
     if model_type == "monai":
         create_net = ds_monai.create_nnunet_from_plans
@@ -125,8 +126,24 @@ def segment_non_ivadomed(path_model, model_type, input_filenames, threshold, use
         fnames_out, targets = inference(path_img=fname_in, tmpdir=tmpdir, predictor=net, device=device)
         for fname_out, target in zip(fnames_out, targets):
             im_out = Image(fname_out)
+            # Apply postprocessing (replicates existing functionality from ivadomed package)
+            # 1. Binarize predictions based on the threshold value
+            # NOTE: Any post-processing is done only after thresholding (as post-processing operations
+            # expect binary masks)
             if threshold:  # Default: None, but `-thr 0` will also turn off binarization
                 im_out.data = binarize(im_out.data, threshold)
+            # 2. Keep the largest connected object
+            if keep_largest is not None:
+                im_out.data[im_out.data < 0.001] = 0  # Replicates ivadomed's `@binarize_with_low_threshold`
+                im_out.data = keep_largest_object(im_out.data)
+            # 3. Fill holes
+            if fill_holes_in_pred is not None:
+                im_out.data = fill_holes(im_out.data)
+            # 4. Remove small objects
+            if remove_small is not None:
+                unit = 'mm3' if 'mm3' in remove_small[-1] else 'vox'
+                thr = [int(t.replace(unit, "")) for t in remove_small]
+                im_out.data = remove_small_objects(im_out.data, im_out.dim[4:7], unit, thr)
             im_lst.append(im_out)
             target_lst.append(target)
         if remove_temp_files:

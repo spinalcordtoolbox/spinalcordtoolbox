@@ -66,6 +66,9 @@ def test_segment_nifti(fname_image, fname_seg_manual, fname_out, task, thr,
     args = ['-i', fname_image, '-task', task, '-o', fname_out, '-qc', str(tmp_path/'qc')]
     if thr is not None:
         args.extend(['-thr', str(thr)])
+    if 'seg_sc' in task:
+        # TODO: Replace the "general" testing of these arguments with specific tests with specific input data
+        args.extend(['-largest', '1', '-fill-holes', '1', '-remove-small', '5mm3'])
     sct_deepseg.main(argv=args)
     # Make sure output file exists
     assert os.path.isfile(fname_out)

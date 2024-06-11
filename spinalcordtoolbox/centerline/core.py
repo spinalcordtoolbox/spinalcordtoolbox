@@ -270,18 +270,14 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
                      else "centerline.nii.gz")
         im_centerline.save(os.path.join(tmp_folder, fname_ctr), mutable=True)
 
+    arr_ctl = np.array([x_centerline_fit, y_centerline_fit, z_ref])
+    arr_ctl_der = np.array([x_centerline_deriv, y_centerline_deriv, np.ones_like(z_ref)])
     # If 'phys' is specified, adjust centerline coordinates (`Centerline.points`) and
     # derivatives (`Centerline.derivatives`) to physical ("phys") space and native (`im_seg`) orientation.
     if space == 'phys':
         # Transform centerline to physical coordinate system
-        arr_ctl = im_seg.transfo_pix2phys([[x_centerline_fit[i], y_centerline_fit[i], z_ref[i]]
-                                           for i in range(len(x_centerline_fit))]).T
-        # Adjust derivatives with pixel size
-        _, _, _, _, px, py, pz, _ = im_seg.change_orientation(native_orientation).dim
-        arr_ctl_der = np.array([x_centerline_deriv * px, y_centerline_deriv * py, np.ones_like(z_ref) * pz])
-    else:
-        arr_ctl = np.array([x_centerline_fit, y_centerline_fit, z_ref])
-        arr_ctl_der = np.array([x_centerline_deriv, y_centerline_deriv, np.ones_like(z_ref)])
+        arr_ctl = im_seg.transfo_pix2phys(arr_ctl.T, mode='absolute').T
+        arr_ctl_der = im_seg.transfo_pix2phys(arr_ctl_der.T, mode='relative').T
 
     return (im_centerline,
             arr_ctl,

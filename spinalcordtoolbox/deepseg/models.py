@@ -139,7 +139,7 @@ MODELS = {
     #       - Binarization is applied within SCT code
     "model_seg_sc_contrast_agnostic_softseg_monai": {
         "url": [
-            "https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/releases/download/v2.3/model_soft_bin_20240410-1136.zip"
+            "https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/releases/download/v2.4/model_soft_bin_20240425-170840.zip"
         ],
         "description": "Spinal cord segmentation agnostic to MRI contrasts using MONAI-based nnUNet model",
         "contrasts": ["any"],
@@ -467,7 +467,7 @@ def is_up_to_date(path_model):
     else:
         logger.warning("Mismatch between 'source.json' URL format and SCT source code URLs")
         return False
-    logger.info(f"Model '{model_name}' is up to date")
+    logger.info(f"Model '{model_name}' is up to date (Source: {actual_model_urls})")
     return True
 
 
