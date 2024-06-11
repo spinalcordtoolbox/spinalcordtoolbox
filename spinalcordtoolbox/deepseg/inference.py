@@ -134,6 +134,7 @@ def segment_non_ivadomed(path_model, model_type, input_filenames, threshold, kee
                 im_out.data = binarize(im_out.data, threshold)
             # 2. Keep the largest connected object
             if keep_largest is not None:
+                im_out.data[im_out.data < 0.001] = 0  # Replicates ivadomed's `@binarize_with_low_threshold`
                 im_out.data = keep_largest_object(im_out.data)
             # 3. Fill holes
             if fill_holes_in_pred is not None:
