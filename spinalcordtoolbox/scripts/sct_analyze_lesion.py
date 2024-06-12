@@ -451,8 +451,8 @@ class AnalyzeLesion:
 
         #  Create a figure with num of subplots equal to the num of sagittal slices containing the lesion
         fig, axes = plt.subplots(1, len(sagittal_lesion_slices), figsize=(len(sagittal_lesion_slices)*5, 5))
-        # Flatten 2D array into 1D to allow iteration by loop
-        axs = axes.ravel()
+        # Flatten 2D array into 1D to allow iteration by loop (only if len() > 1)
+        axs = axes.ravel() if len(sagittal_lesion_slices) > 1 else [axes]
         # Loop across subplots (one subplot per sagittal slice)
         for index in range(0, len(axs)):
             # Get sagittal slice
