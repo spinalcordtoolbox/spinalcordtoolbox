@@ -72,6 +72,9 @@ def compute_expected_measurements(dim, starting_coord=None, path_seg=None):
             tissue_bridges[f"slice_{z_flipped}_ventral_bridge_width [mm]"] = min(ventral_bridge_widths)
             tissue_bridges[f"slice_{z_flipped}_total_bridge_width [mm]"] = (min(dorsal_bridge_widths) +
                                                                             min(ventral_bridge_widths))
+    else:
+        min_area = 0
+        tissue_bridges = {}
 
     # Compute the expected (voxel) measurements from the provided dimensions
     # NB: Actual measurements will differ slightly due to spine curvature
@@ -91,7 +94,7 @@ def compute_expected_measurements(dim, starting_coord=None, path_seg=None):
         'volume [mm3]': dim[0] * dim[1] * dim[2],
         # Take the dummy lesion CSA and divide it by the minimum surrounding SC seg area
         # NB: We should account for voxel resolution, but in this case it's just 1.0mm/voxel
-        'max_axial_damage_ratio []': dim[0] * dim[2] / min_area if path_seg else None,
+        'max_axial_damage_ratio []': dim[0] * dim[2] / min_area if min_area != 0 else None,
         **tissue_bridges
     }
 
