@@ -41,11 +41,37 @@ def dummy_lesion(request, tmp_path):
 
 
 def compute_expected_measurements(dim, starting_coord=None, path_seg=None):
-    # Find the minimum SC area surrounding the lesion
     if path_seg:
+        # Find the minimum SC area surrounding the lesion
         data_seg = Image(path_seg).data
         min_area = min(np.sum(data_seg[:, n_slice, :])
                        for n_slice in range(starting_coord[1], starting_coord[1] + dim[1]))
+
+        # Find the minimum mid-sagittal tissue bridge width for each LR slice in the lesion
+        x = starting_coord[0] + (dim[0] // 2)  # Compute midpoint of lesion (to split into dorsal/ventral regions)
+        tissue_bridges = {}
+        for z in range(starting_coord[2], starting_coord[2] + dim[2]):
+
+            # for each SI slice in the lesion, compute the bridge widths
+            dorsal_bridge_widths, ventral_bridge_widths = [], []
+            for y in range(starting_coord[1], starting_coord[1] + dim[1]):
+                # compute ventral widths
+                ventral_sc_width = np.sum(data_seg[:x, y, z])
+                ventral_lesion_width = (x - starting_coord[0])
+                ventral_bridge_widths.append(max(0.0, ventral_sc_width - ventral_lesion_width))
+                # compute dorsal widths
+                dorsal_sc_width = np.sum(data_seg[x:, y, z])
+                dorsal_lesion_width = (starting_coord[0] + dim[0] - x)
+                dorsal_bridge_widths.append(max(0.0, dorsal_sc_width - dorsal_lesion_width))
+
+            # find minimum widths
+            # FIXME: Because t2.nii.gz starts as AIL but is reoriented to RPI, there is a RL flip, meaning the
+            #        z slice number of the AIL image won't correspond to the z slice number used for the column name.
+            z_flipped = data_seg.shape[2] - (z + 1)  # account for 0-based index
+            tissue_bridges[f"slice_{z_flipped}_dorsal_bridge_width [mm]"] = min(dorsal_bridge_widths)
+            tissue_bridges[f"slice_{z_flipped}_ventral_bridge_width [mm]"] = min(ventral_bridge_widths)
+            tissue_bridges[f"slice_{z_flipped}_total_bridge_width [mm]"] = (min(dorsal_bridge_widths) +
+                                                                            min(ventral_bridge_widths))
 
     # Compute the expected (voxel) measurements from the provided dimensions
     # NB: Actual measurements will differ slightly due to spine curvature
@@ -65,7 +91,8 @@ def compute_expected_measurements(dim, starting_coord=None, path_seg=None):
         'volume [mm3]': dim[0] * dim[1] * dim[2],
         # Take the dummy lesion CSA and divide it by the minimum surrounding SC seg area
         # NB: We should account for voxel resolution, but in this case it's just 1.0mm/voxel
-        'max_axial_damage_ratio []': dim[0] * dim[2] / min_area if path_seg else None
+        'max_axial_damage_ratio []': dim[0] * dim[2] / min_area if path_seg else None,
+        **tissue_bridges
     }
 
     return measurements
@@ -110,10 +137,10 @@ def test_sct_analyze_lesion_matches_expected_dummy_lesion_measurements(dummy_les
             # The values will be adjusted according to the cos of the angle
             # between the spinal cord centerline and the S-I axis, as per:
             # https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3681#discussion_r804822552
-            if key == 'max_equivalent_diameter [mm]':
-                assert measurements.at[0, key] < expected_value
+            if key == 'max_equivalent_diameter [mm]' or key.endswith("bridge_width [mm]"):
+                assert measurements.at[0, key] <= expected_value
             elif key == 'length [mm]':
-                assert measurements.at[0, key] > expected_value
+                assert measurements.at[0, key] >= expected_value
 
 
 @pytest.mark.sct_testing
