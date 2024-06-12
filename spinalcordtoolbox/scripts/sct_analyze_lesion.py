@@ -642,6 +642,10 @@ class AnalyzeLesion:
 
         label_lst = [label for label in np.unique(im_lesion_data) if label]  # lesion label IDs list
 
+        # Print warning if there is no lesion (label_lst is empty list)
+        if not label_lst:
+            printv(f'WARNING: No lesion found in {self.fname_label}.', self.verbose, 'warning')
+
         if self.path_template is not None:
             if os.path.isfile(self.path_levels):
                 img_vert = Image(self.path_levels)
