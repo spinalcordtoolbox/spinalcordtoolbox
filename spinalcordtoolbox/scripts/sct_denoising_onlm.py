@@ -11,12 +11,13 @@ from typing import Sequence
 
 import numpy as np
 import nibabel as nib
-from dipy.denoise.nlmeans import nlmeans
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.utils.fs import extract_fname
-from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel, LazyLoader
 from spinalcordtoolbox.utils.shell import Metavar, SCTArgumentParser, display_viewer_syntax
+
+nlmeans = LazyLoader("nlmeans", globals(), "dipy.denoise.nlmeans")
 
 
 # DEFAULT PARAMETERS
@@ -104,7 +105,7 @@ def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose, caller_module_name=__name__)
 
     parameter = arguments.p
     remove_temp_files = arguments.r
@@ -141,9 +142,9 @@ def main(argv: Sequence[str]):
         # Application of NLM filter to the image
         printv('Applying Non-local mean filter...')
         if param.parameter == 'Rician':
-            den = nlmeans(data, sigma=sigma, mask=None, rician=True, block_radius=block_radius)
+            den = nlmeans.nlmeans(data, sigma=sigma, mask=None, rician=True, block_radius=block_radius)
         else:
-            den = nlmeans(data, sigma=sigma, mask=None, rician=False, block_radius=block_radius)
+            den = nlmeans.nlmeans(data, sigma=sigma, mask=None, rician=False, block_radius=block_radius)
     else:
         # # Process for manual detecting of background
         mask = data > noise_threshold
@@ -151,9 +152,9 @@ def main(argv: Sequence[str]):
         # Application of NLM filter to the image
         printv('Applying Non-local mean filter...')
         if param.parameter == 'Rician':
-            den = nlmeans(data, sigma=sigma, mask=mask, rician=True, block_radius=block_radius)
+            den = nlmeans.nlmeans(data, sigma=sigma, mask=mask, rician=True, block_radius=block_radius)
         else:
-            den = nlmeans(data, sigma=sigma, mask=mask, rician=False, block_radius=block_radius)
+            den = nlmeans.nlmeans(data, sigma=sigma, mask=mask, rician=False, block_radius=block_radius)
 
     t = time()
     printv("total time: %s" % (time() - t))

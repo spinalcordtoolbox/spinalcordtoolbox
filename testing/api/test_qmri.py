@@ -11,7 +11,7 @@ from spinalcordtoolbox.utils.sys import init_sct, set_loglevel
 
 # Set logger to "DEBUG"
 init_sct()
-set_loglevel(verbose=2)
+set_loglevel(verbose=2, caller_module_name=__name__)
 
 
 def make_sct_image(data):

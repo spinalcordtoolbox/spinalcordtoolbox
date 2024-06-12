@@ -11,16 +11,16 @@ import pickle
 from typing import Sequence
 
 import numpy as np
-import pandas as pd
-from matplotlib import pyplot as plt
 from skimage.measure import label
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel, LazyLoader
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, copy, rmtree
 
+pd = LazyLoader("pd", globals(), "pandas")
+plt = LazyLoader("plt", globals(), "matplotlib.pyplot")
 
 def get_parser():
     parser = SCTArgumentParser(
@@ -71,9 +71,17 @@ def get_parser():
     optional.add_argument(
         "-f",
         help="Path to folder containing the atlas/template registered to the anatomical image. If provided, the "
-             "function computes: (i) the distribution of each lesion depending on each vertebral level and on each "
-             "region of the template (e.g. GM, WM, WM tracts) and (ii) the proportion of ROI (e.g. vertebral level, "
-             "GM, WM) occupied by lesion.",
+             "function computes:\n"
+             "\n"
+             "  a. for each lesion, the proportion of that lesion within each vertebral level and each region "
+             "of the template (e.g. GM, WM, WM tracts). Each cell contains a percentage value representing how much of "
+             "the lesion volume exists within the region indicated by the row/column (rows represent vertebral levels, "
+             "columns represent ROIs). The percentage values are summed to totals in both the bottom row and the right "
+             "column, and the sum of all cells is 100 (i.e. 100 percent of the lesion), found in the bottom-right.\n"
+             "  b. the proportions of each ROI (e.g. vertebral level, GM, WM) occupied by lesions.\n"
+             "\n"
+             "These percentage values are stored in different pages of the output `lesion_analysis.xls` spreadsheet;"
+             "one page for each lesion (a.) plus a final page summarizing the total ROI occupation of all lesions (b.)",
         metavar=Metavar.str,
         default=None,
         required=False)
@@ -219,8 +227,8 @@ class AnalyzeLesion:
                     if '#' in sheet_name:
                         df = self.distrib_matrix_dct[sheet_name].copy()
                         df = df.append(df.sum(numeric_only=True, axis=0), ignore_index=True)
-                        df['total'] = df.sum(numeric_only=True, axis=1)
-                        df.iloc[-1, df.columns.get_loc('vert')] = 'total'
+                        df['total % (all tracts)'] = df.sum(numeric_only=True, axis=1)
+                        df.iloc[-1, df.columns.get_loc('vert')] = 'total % (all vert)'
                         df.to_excel(writer, sheet_name=sheet_name, index=False, engine='xlsxwriter')
                     else:
                         self.distrib_matrix_dct[sheet_name].to_excel(writer, sheet_name=sheet_name, index=False, engine='xlsxwriter')
@@ -593,14 +601,14 @@ class AnalyzeLesion:
     def _measure_totLesion_distribution(self, im_lesion, atlas_data, im_vert, p_lst):
 
         sheet_name = 'ROI_occupied_by_lesion'
-        self.distrib_matrix_dct[sheet_name] = pd.DataFrame.from_dict({'vert': [str(v) for v in self.vert_lst] + ['total']})
+        self.distrib_matrix_dct[sheet_name] = pd.DataFrame.from_dict({'vert': [str(v) for v in self.vert_lst] + ['total % (all vert)']})
 
         # initialized to 0 for each vertebral level and each PAM50 tract
         for tract_id in atlas_data:
-            self.distrib_matrix_dct[sheet_name]['PAM50_' + str(tract_id).zfill(2)] = [0] * len(self.vert_lst + ['total'])
+            self.distrib_matrix_dct[sheet_name]['PAM50_' + str(tract_id).zfill(2)] = [0] * len(self.vert_lst + ['total % (all vert)'])
 
-        for vert in self.vert_lst + ['total']:  # loop over the vertebral levels
-            if vert != 'total':
+        for vert in self.vert_lst + ['total % (all vert)']:  # loop over the vertebral levels
+            if vert != 'total % (all vert)':
                 im_vert_cur = np.copy(im_vert)
                 im_vert_cur[np.where(im_vert_cur != vert)] = 0
             else:
@@ -791,7 +799,7 @@ def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose, caller_module_name=__name__)
 
     fname_mask = arguments.m
     fname_sc = arguments.s

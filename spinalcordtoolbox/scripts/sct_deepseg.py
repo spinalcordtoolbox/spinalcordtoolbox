@@ -18,14 +18,17 @@ import sys
 import logging
 from typing import Sequence
 
-import torch
-
 from spinalcordtoolbox.reports import qc2
-from spinalcordtoolbox.deepseg import models, inference
 from spinalcordtoolbox.image import splitext, Image, check_image_kind
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax, ActionCreateFolder
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel, __version__, _git_info
 from spinalcordtoolbox.utils.fs import tmp_create
+from spinalcordtoolbox.utils.sys import LazyLoader
+
+cuda = LazyLoader("cuda", globals(), 'torch.cuda')
+
+inference = LazyLoader("inference", globals(), 'spinalcordtoolbox.deepseg.inference')
+models = LazyLoader("models", globals(), 'spinalcordtoolbox.deepseg.models')
 
 logger = logging.getLogger(__name__)
 
@@ -153,7 +156,7 @@ def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose, caller_module_name=__name__)
 
     if (arguments.list_tasks is False
             and arguments.install is None
@@ -272,7 +275,7 @@ def main(argv: Sequence[str]):
         # Control GPU usage based on SCT-specific environment variable
         # NB: We use 'SCT_USE_GPU' as a "hidden option" to turn on GPU inference internally.
         # NB: Controlling which GPU(s) are used should be done by the environment variable 'CUDA_VISIBLE_DEVICES'.
-        use_gpu = torch.cuda.is_available() and "SCT_USE_GPU" in os.environ
+        use_gpu = cuda.is_available() and "SCT_USE_GPU" in os.environ
 
         if model_type == 'ivadomed':
             # NB: For single models, the averaging will have no effect.
@@ -284,6 +287,9 @@ def main(argv: Sequence[str]):
             thr = (arguments.binarize_prediction if arguments.binarize_prediction
                    else models.MODELS[name_model]['thr'])  # Default `thr` value stored in model dict
             im_lst, target_lst = inference.segment_non_ivadomed(path_model, model_type, input_filenames, thr,
+                                                                keep_largest=arguments.keep_largest,
+                                                                fill_holes_in_pred=arguments.fill_holes,
+                                                                remove_small=arguments.remove_small,
                                                                 use_gpu=use_gpu, remove_temp_files=arguments.r)
 
         # Delete intermediate outputs
