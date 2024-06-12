@@ -428,10 +428,14 @@ class AnalyzeLesion:
             # p_lst[0] is the pixel size in the R-L direction, p_lst[1] is the pixel size in the A-P direction, and
             # p_lst[2] is the pixel size in the S-I direction.
             # Since we are computing dorsal and ventral tissue bridges, we use p_lst[1] (A-P direction)
-            dorsal_bridge_width_mm = float(df_temp[df_temp['axial_slice'] ==
-                                                   min_dorsal_bridge_width_slice]['dorsal_bridge_width'] * p_lst[1])
-            ventral_bridge_width_mm = float(df_temp[df_temp['axial_slice'] ==
-                                                    min_ventral_bridge_width_slice]['ventral_bridge_width'] * p_lst[1])
+            # NOTE: we use np.cos(self.angles[SLICE]) to correct for the angle of the spinal cord with respect to the
+            # slice
+            dorsal_bridge_width_mm = (float(df_temp[df_temp['axial_slice'] ==
+                                                    min_dorsal_bridge_width_slice]['dorsal_bridge_width'] * p_lst[1]) *
+                                      np.cos(self.angles[min_dorsal_bridge_width_slice]))
+            ventral_bridge_width_mm = (float(df_temp[df_temp['axial_slice'] ==
+                                                     min_ventral_bridge_width_slice]['ventral_bridge_width'] * p_lst[1]) *
+                                       np.cos(self.angles[min_ventral_bridge_width_slice]))
             total_bridge_width_mm = dorsal_bridge_width_mm + ventral_bridge_width_mm
 
             # Save the minimum tissue bridges
