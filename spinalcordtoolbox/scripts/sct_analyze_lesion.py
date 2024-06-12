@@ -404,6 +404,8 @@ class AnalyzeLesion:
         # 3. Reset the index to make 'sagittal_slice' and 'axial_slice' as columns
         tissue_bridges_df.reset_index(inplace=True)
 
+        # Initialize auxiliary dict to store info for plotting
+        plot_dict = {}
         # Get slices of minimum dorsal and ventral tissue bridges for each sagittal slice
         # NOTE: we get minimum because tissue bridges are quantified as the width of spared tissue at the minimum
         # distance from cerebrospinal fluid to the lesion boundary
@@ -422,6 +424,10 @@ class AnalyzeLesion:
                                   (tissue_bridges_df['axial_slice'] == min_ventral_bridge_width_slice), 'min_ventral_bridge_axial_slice'] = True
             # Replace NaN with False
             tissue_bridges_df.fillna(False, inplace=True)
+
+            # Save info for plotting
+            plot_dict[sagittal_slice, 'dorsal'] = df_temp[df_temp['axial_slice'] == min_dorsal_bridge_width_slice]
+            plot_dict[sagittal_slice, 'ventral'] = df_temp[df_temp['axial_slice'] == min_ventral_bridge_width_slice]
 
             # Get the width of the tissue bridges in mm
             # NOTE: the orientation is RPI (because we reoriented the image to RPI using orient2rpi()); therefore
@@ -480,40 +486,37 @@ class AnalyzeLesion:
 
             # --------------------------------------
             # Add horizontal lines for the tissue bridges
+            # TODO: the lines (aka tissue bridges) are now plotted without the angle correction.
+            #  The shown widths in mm are after the angle correction, though.
+            #  It would be great to plot the lines (bridges) with the angle correction as well.
             # --------------------------------------
             # x1_dorsal is ndarray: the indices of the lesion mask
             # Note: we use [0] because .values returns a numpy array
-            x1_dorsal = tissue_bridges_df[(tissue_bridges_df['sagittal_slice'] == sagittal_slice) &
-                                          (tissue_bridges_df['min_dorsal_bridge_axial_slice'])]['lesion_indices'].values[0]
-            # x2_dorsal is int: the width of the tissue bridge
-            x2_dorsal = tissue_bridges_df[(tissue_bridges_df['sagittal_slice'] == sagittal_slice) &
-                                          (tissue_bridges_df['min_dorsal_bridge_axial_slice'])]['dorsal_bridge_width'].values[0]
-            # y_dorsal is int: the axial slice with the minimum dorsal tissue bridge width
-            y_dorsal = tissue_bridges_df[(tissue_bridges_df['sagittal_slice'] == sagittal_slice) &
-                                         (tissue_bridges_df['min_dorsal_bridge_axial_slice'])]['axial_slice'].values[0]
+            x1_dorsal = plot_dict[sagittal_slice, 'dorsal']['lesion_indices'].values[0]
+            # x2_dorsal: the width of the tissue bridge
+            x2_dorsal = float(plot_dict[sagittal_slice, 'dorsal']['dorsal_bridge_width'])
+            # y_dorsal: the axial slice with the minimum dorsal tissue bridge width
+            y_dorsal = int(plot_dict[sagittal_slice, 'dorsal']['axial_slice'])
             axs[index].plot([x1_dorsal[0] - 1, x1_dorsal[0] - x2_dorsal], [y_dorsal] * 2,  'r--', linewidth=1)
 
             # x1_ventral is ndarray: the indices of the lesion mask
             # Note: we use [0] because .values returns a numpy array
-            x1_ventral = tissue_bridges_df[(tissue_bridges_df['sagittal_slice'] == sagittal_slice) &
-                                           (tissue_bridges_df['min_ventral_bridge_axial_slice'])]['lesion_indices'].values[0]
-            # x2_ventral is int: the width of the tissue bridge
-            x2_ventral = tissue_bridges_df[(tissue_bridges_df['sagittal_slice'] == sagittal_slice) &
-                                           (tissue_bridges_df['min_ventral_bridge_axial_slice'])]['ventral_bridge_width'].values[0]
-            # y_dorsal is int: the axial slice with the minimum dorsal tissue bridge width
-            y_ventral = tissue_bridges_df[(tissue_bridges_df['sagittal_slice'] == sagittal_slice) &
-                                          (tissue_bridges_df['min_ventral_bridge_axial_slice'])]['axial_slice'].values[0]
+            x1_ventral = plot_dict[sagittal_slice, 'ventral']['lesion_indices'].values[0]
+            # x2_ventral: the width of the tissue bridge
+            x2_ventral = float(plot_dict[sagittal_slice, 'ventral']['ventral_bridge_width'])
+            # y_dorsal: the axial slice with the minimum dorsal tissue bridge width
+            y_ventral = int(plot_dict[sagittal_slice, 'ventral']['axial_slice'])
             axs[index].plot([x1_ventral[-1] + 1, x1_ventral[-1] + x2_ventral], [y_ventral] * 2,  'r--', linewidth=1)
 
             # --------------------------------------
             # Add text with the width of the tissue bridges above the tissue bridges
             # --------------------------------------
-            dorsal_bridge_width_mm = float(x2_dorsal * p_lst[1])
+            dorsal_bridge_width_mm = float(x2_dorsal * p_lst[1]) * np.cos(self.angles[y_dorsal])
             axs[index].text(x1_dorsal[0] - x2_dorsal / 2,
                             y_dorsal + 1,
                             f'{np.round(dorsal_bridge_width_mm, 2)} mm',
                             color='red', fontsize=12, ha='right', va='bottom')
-            ventral_bridge_width_mm = float(x2_ventral * p_lst[1])
+            ventral_bridge_width_mm = float(x2_ventral * p_lst[1]) * np.cos(self.angles[y_ventral])
             axs[index].text(x1_ventral[-1] + x2_ventral / 2,
                             y_ventral + 1,
                             f'{np.round(ventral_bridge_width_mm, 2)} mm',
