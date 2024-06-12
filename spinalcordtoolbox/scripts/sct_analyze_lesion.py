@@ -432,16 +432,20 @@ class AnalyzeLesion:
                                                    min_dorsal_bridge_width_slice]['dorsal_bridge_width'] * p_lst[1])
             ventral_bridge_width_mm = float(df_temp[df_temp['axial_slice'] ==
                                                     min_ventral_bridge_width_slice]['ventral_bridge_width'] * p_lst[1])
+            total_bridge_width_mm = dorsal_bridge_width_mm + ventral_bridge_width_mm
 
             # Save the minimum tissue bridges
             self.measure_pd.loc[idx, f'slice_{str(sagittal_slice)}_dorsal_bridge_width [mm]'] = dorsal_bridge_width_mm
             self.measure_pd.loc[idx, f'slice_{str(sagittal_slice)}_ventral_bridge_width [mm]'] = ventral_bridge_width_mm
+            self.measure_pd.loc[idx, f'slice_{str(sagittal_slice)}_total_bridge_width [mm]'] = total_bridge_width_mm
             printv(f'  Sagittal slice {sagittal_slice}, Minimum dorsal tissue bridge width: '
                    f'{np.round(dorsal_bridge_width_mm, 2)} mm (axial slice {min_dorsal_bridge_width_slice})',
                    self.verbose, type='info')
             printv(f'  Sagittal slice {sagittal_slice}, Minimum ventral tissue bridge width: '
                    f'{np.round(ventral_bridge_width_mm, 2)} mm (axial slice {min_ventral_bridge_width_slice})',
                    self.verbose, type='info')
+            printv(f'  Sagittal slice {sagittal_slice}, Total tissue bridge width: '
+                   f'{np.round(total_bridge_width_mm, 2)} mm', self.verbose, type='info')
 
         # --------------------------------------
         # Plot all sagittal slices with lesions using matplotlib and save it as png
