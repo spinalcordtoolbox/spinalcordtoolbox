@@ -22,6 +22,7 @@ from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, copy, rmtree
 pd = LazyLoader("pd", globals(), "pandas")
 plt = LazyLoader("plt", globals(), "matplotlib.pyplot")
 
+
 def get_parser():
     parser = SCTArgumentParser(
         description='Compute statistics on segmented lesions. The function assigns an ID value to each lesion (1, 2, '
@@ -493,7 +494,7 @@ class AnalyzeLesion:
                                            (tissue_bridges_df['min_ventral_bridge_axial_slice'])]['ventral_bridge_width'].values[0]
             # y_dorsal is int: the axial slice with the minimum dorsal tissue bridge width
             y_ventral = tissue_bridges_df[(tissue_bridges_df['sagittal_slice'] == sagittal_slice) &
-                                         (tissue_bridges_df['min_ventral_bridge_axial_slice'])]['axial_slice'].values[0]
+                                          (tissue_bridges_df['min_ventral_bridge_axial_slice'])]['axial_slice'].values[0]
             axs[index].plot([x1_ventral[-1] + 1, x1_ventral[-1] + x2_ventral], [y_ventral] * 2,  'r--', linewidth=1)
 
             # --------------------------------------
