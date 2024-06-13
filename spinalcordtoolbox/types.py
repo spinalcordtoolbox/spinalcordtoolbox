@@ -327,10 +327,10 @@ class Centerline:
         return coordinates - unit_derivatives * dot_products
 
     def get_in_plans_coordinates(self, coordinates, indexes):
-        return einsum('mnr,nr->mr', rollaxis(self.inverse_matrices[indexes], 0, 3), (coordinates - self.points[indexes]).transpose()).transpose()
+        return einsum('mnr,nr->rm', rollaxis(self.inverse_matrices[indexes], 0, 3), (coordinates - self.points[indexes]).transpose())
 
     def get_inverse_plans_coordinates(self, coordinates, indexes):
-        return einsum('mnr,nr->mr', rollaxis(self.matrices[indexes], 0, 3), coordinates.transpose()).transpose() + self.points[indexes]
+        return einsum('mnr,nr->rm', rollaxis(self.matrices[indexes], 0, 3), coordinates.transpose()) + self.points[indexes]
 
     def compute_vertebral_distribution(self, discs_levels, label_reference='C1'):
         """
