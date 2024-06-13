@@ -7,7 +7,7 @@ License: see the file LICENSE
 
 from operator import itemgetter
 
-from numpy import dot, cross, array, einsum, stack, rollaxis, zeros
+from numpy import dot, cross, array, einsum, stack, zeros
 from numpy.linalg import norm, inv
 import numpy as np
 from scipy.spatial import cKDTree
@@ -327,10 +327,14 @@ class Centerline:
         return coordinates - unit_derivatives * dot_products
 
     def get_in_plans_coordinates(self, coordinates, indexes):
-        return einsum('mnr,nr->mr', rollaxis(self.inverse_matrices[indexes], 0, 3), (coordinates - self.points[indexes]).transpose()).transpose()
+        return einsum('rmn,rn->rm',  # matmul Rx2D and Rx1D to get Rx1D
+                      self.inverse_matrices[indexes],      # [r, m, n]
+                      coordinates - self.points[indexes])  # [r, n]
 
     def get_inverse_plans_coordinates(self, coordinates, indexes):
-        return einsum('mnr,nr->mr', rollaxis(self.matrices[indexes], 0, 3), coordinates.transpose()).transpose() + self.points[indexes]
+        return einsum('rmn,rn->rm',  # matmul Rx2D and Rx1D to get Rx1D
+                      self.matrices[indexes],              # [r, m, n]
+                      coordinates) + self.points[indexes]  # [r, n]
 
     def compute_vertebral_distribution(self, discs_levels, label_reference='C1'):
         """
