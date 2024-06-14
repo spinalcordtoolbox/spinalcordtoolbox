@@ -417,9 +417,8 @@ class AnalyzeLesion:
         for sagittal_slice in sagittal_lesion_slices:
             # Get df for the selected sagittal slice
             df_temp = tissue_bridges_df[tissue_bridges_df['sagittal_slice'] == sagittal_slice]
-            # Get the axial slice with the minimum dorsal tissue bridge for the selected sagittal slice
+            # Get the axial slices corresponding to the minimum bridge widths
             min_dorsal_bridge_width_slice = df_temp.loc[df_temp['dorsal_bridge_width'].idxmin(), 'axial_slice']
-            # Get the axial slice with the minimum ventral tissue bridge for the selected sagittal slice
             min_ventral_bridge_width_slice = df_temp.loc[df_temp['ventral_bridge_width'].idxmin(), 'axial_slice']
 
             # Add a new column with value True to tissue_bridges_df; this information is needed for plotting
