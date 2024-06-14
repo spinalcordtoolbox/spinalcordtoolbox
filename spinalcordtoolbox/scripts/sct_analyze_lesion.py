@@ -35,8 +35,8 @@ def get_parser():
                     'If the proportion of lesion in each region (e.g. WM and GM) does not sum up to 100%, it means '
                     'that the registered template does not fully cover the lesion. In that case you might want to '
                     'check the registration results.'
-                    '- dorsal_bridge_width [mm]: width of spared tissue dorsal to the spinal cord lesion\n'
-                    '- ventral_bridge_width [mm]: width of spared tissue ventral to the spinal cord lesion\n\n'
+                    '- dorsal_bridge_width [mm]: width of spared tissue dorsal to the spinal cord lesion (i.e. towards the posterior direction of the AP axis)\n'
+                    '- ventral_bridge_width [mm]: width of spared tissue ventral to the spinal cord lesion (i.e. towards the anterior direction of the AP axis)\n\n'
     )
 
     mandatory_arguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
