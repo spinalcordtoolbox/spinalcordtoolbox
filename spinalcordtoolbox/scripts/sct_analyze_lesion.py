@@ -330,8 +330,13 @@ class AnalyzeLesion:
         Measure the tissue bridges (widths of spared tissue ventral and dorsal to the spinal cord lesion).
         Tissue bridges are quantified as the width of spared tissue at the **minimum** distance from cerebrospinal fluid
         (i.e., the spinal cord boundary) to the lesion boundary.
+
         NOTE: we compute the tissue bridges for all sagittal slices containing the lesion (i.e., for the midsagittal and
         parasagittal slices).
+        
+        Since we assume the input is in RPI orientation, then bridge widths are computed across the Y axis 
+        (AP axis), with dorsal == posterior (-Y) and ventral == anterior (+Y).
+        
         REF: Huber E, Lachappelle P, Sutter R, Curt A, Freund P. Are midsagittal tissue bridges predictive of outcome
         after cervical spinal cord injury? Ann Neurol. 2017 May;81(5):740-748. doi: 10.1002/ana.24932.
 
