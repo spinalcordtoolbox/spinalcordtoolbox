@@ -28,6 +28,20 @@ def template_lpi(tmp_path_factory):
     return path_out
 
 
+@pytest.fixture(scope="module")
+def labels_discs(tmp_path_factory):
+    """Create a disc labels file."""
+    file_out = os.path.join(str(tmp_path_factory.mktemp("tmp_data")), 'labels_discs.nii.gz')
+    im_labels = Image(sct_test_path('t2', 'labels.nii.gz'))
+    im_labels.data = np.zeros(im_labels.data.shape)
+    im_labels.data[23,53,26] = 3
+    im_labels.data[24,24,26] = 4
+    im_labels.data[25,17,26] = 5
+    im_labels.data[26,1,26] = 6
+    im_labels.save(file_out)
+    return file_out
+
+
 def test_sct_register_to_template_non_rpi_template(tmp_path, template_lpi):
     """Test registration with option -ref subject when template is not RPI orientation, causing #3300."""
     # Run registration to template using the RPI template as input file
@@ -125,3 +139,14 @@ def test_sct_register_to_template_mismatched_xforms(tmp_path, capsys):
                                             '-s', sct_test_path('t2', 't2_seg-manual.nii.gz'),
                                             '-l', sct_test_path('t2', 'labels.nii.gz')])
     assert "Image sform does not match qform" in capsys.readouterr().out
+
+
+def test_sct_register_to_template_3_labels(tmp_path, labels_discs):
+    """Test registration with 3 labels."""
+    sct_register_to_template.main(argv=['-i', sct_test_path('t2', 't2.nii.gz'),
+                                        '-s', sct_test_path('t2', 't2_seg-manual.nii.gz'),
+                                        '-ldisc', labels_discs,
+                                        '-t', sct_test_path('template'),
+                                        '-param', 'step=1,type=seg,algo=centermassrot,metric=MeanSquares:step=2,type=seg,algo=bsplinesyn,iter=5,metric=MeanSquares',
+                                        '-ofolder', str(tmp_path)])
+    # TODO: assert distance between registered labels and ground truth labels
