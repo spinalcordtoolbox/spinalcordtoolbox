@@ -613,7 +613,7 @@ def main(argv: Sequence[str]):
                     f"are within the ROI of the spinal cord segmentation.", type='error'
                 )
 
-            # Compute rigid transformation straight landmarks --> template landmarks
+            # Compute affine transformation straight landmarks --> template landmarks
             printv('\nEstimate transformation for step #0...', verbose)
             try:
                 register_landmarks(ftmp_label, ftmp_template_label, paramregmulti.steps['0'].dof,
