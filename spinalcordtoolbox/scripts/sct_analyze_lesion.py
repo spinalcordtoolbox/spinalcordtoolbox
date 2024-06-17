@@ -507,7 +507,7 @@ class AnalyzeLesion:
             x2_dorsal = float(plot_dict[sagittal_slice, 'dorsal']['dorsal_bridge_width'])
             # y_dorsal: the axial slice with the minimum dorsal tissue bridge width
             y_dorsal = int(plot_dict[sagittal_slice, 'dorsal']['axial_slice'])
-            axs[index].plot([x1_dorsal[0] - 1, x1_dorsal[0] - x2_dorsal], [y_dorsal] * 2,  'r--', linewidth=1)
+            axs[index].plot([x1_dorsal[0] - 1, x1_dorsal[0] - x2_dorsal], [y_dorsal] * 2, 'r--', linewidth=1)
 
             # x1_ventral is ndarray: the indices of the lesion mask
             x1_ventral = plot_dict[sagittal_slice, 'ventral']['lesion_indices']
@@ -515,7 +515,7 @@ class AnalyzeLesion:
             x2_ventral = float(plot_dict[sagittal_slice, 'ventral']['ventral_bridge_width'])
             # y_dorsal: the axial slice with the minimum dorsal tissue bridge width
             y_ventral = int(plot_dict[sagittal_slice, 'ventral']['axial_slice'])
-            axs[index].plot([x1_ventral[-1] + 1, x1_ventral[-1] + x2_ventral], [y_ventral] * 2,  'r--', linewidth=1)
+            axs[index].plot([x1_ventral[-1] + 1, x1_ventral[-1] + x2_ventral], [y_ventral] * 2, 'r--', linewidth=1)
 
             # --------------------------------------
             # Add text with the width of the tissue bridges above the tissue bridges
