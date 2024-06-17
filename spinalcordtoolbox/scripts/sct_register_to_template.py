@@ -427,7 +427,7 @@ def main(argv: Sequence[str]):
         ftmp_template_label_, ftmp_template_label = ftmp_template_label, add_suffix(ftmp_template_label, "_body")
         sct_labels.label_vertebrae(Image(ftmp_template_label_)).save(path=ftmp_template_label)
 
-    # check if provided labels are available in the template
+    # Check if provided labels are available in the template
     printv('\nCheck if provided labels are available in the template', verbose)
     image_label_template = Image(ftmp_template_label)
 
