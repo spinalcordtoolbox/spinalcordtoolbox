@@ -56,7 +56,7 @@ class Param:
 
 # get default parameters
 # Note: step0 is used as pre-registration
-step0 = Paramreg(step='0', type='label', dof='Tx_Ty_Tz_Sz')  # if ref=template, we only need translations and z-scaling because the cord is already straight
+step0 = Paramreg(step='0', type='label', dof='Tx_Ty_Tz_Rx_Ry_Rz_Sz')  # if ref=template, we only need translations and z-scaling because the cord is already straight
 step1 = Paramreg(step='1', type='imseg', algo='centermassrot', rot_method='pcahog')
 step2 = Paramreg(step='2', type='seg', algo='bsplinesyn', metric='MeanSquares', iter='3', smooth='1', slicewise='0')
 paramregmulti = ParamregMultiStep([step0, step1, step2])
@@ -332,18 +332,13 @@ def main(argv: Sequence[str]):
         smooth=arguments.centerline_smooth)
     # registration parameters
     if arguments.param is not None:
-        # reset parameters but keep step=0 (might be overwritten if user specified step=0)
+        # reset parameters but keep step=0 (can be overwritten if user specified step=0)
         paramregmulti = ParamregMultiStep([step0])
-        if ref == 'subject':
-            paramregmulti.steps['0'].dof = 'Tx_Ty_Tz_Rx_Ry_Rz_Sz'
         # add user parameters
         for paramStep in arguments.param:
             paramregmulti.addStep(paramStep)
     else:
         paramregmulti = ParamregMultiStep([step0, step1, step2])
-        # if ref=subject, initialize registration using different affine parameters
-        if ref == 'subject':
-            paramregmulti.steps['0'].dof = 'Tx_Ty_Tz_Rx_Ry_Rz_Sz'
 
     # initialize other parameters
     zsubsample = param.zsubsample
@@ -612,6 +607,15 @@ def main(argv: Sequence[str]):
                     f"the labels being outside the ROI of the spinal cord segmentation. Please make sure all labels "
                     f"are within the ROI of the spinal cord segmentation.", type='error'
                 )
+            
+            # Add labels in the X-Z and Y-Z planes to accommodate for rotations about the Y and X axes
+            printv('\nAdd labels in the X-Z and Y-Z planes to accommodate for rotations about the Y and X axes...', verbose)
+            # -> Pick a dummy label between [1, 127] that doesn't clash with the existing label values.
+            existing_label_vals = {coord.value for coord in img_tmp_label.getNonZeroCoordinates()}
+            positive_int8_vals = set(range(1, 128))
+            dummy_label = max(positive_int8_vals - existing_label_vals)  # Should be 127 in 99.99% of cases
+            add_orthogonal_label(ftmp_label, new_label_value=dummy_label)
+            add_orthogonal_label(ftmp_template_label, new_label_value=dummy_label)
 
             # Compute affine transformation straight landmarks --> template landmarks
             printv('\nEstimate transformation for step #0...', verbose)
