@@ -35,8 +35,8 @@ def get_parser():
                     'If the proportion of lesion in each region (e.g. WM and GM) does not sum up to 100%, it means '
                     'that the registered template does not fully cover the lesion. In that case you might want to '
                     'check the registration results.'
-                    '- dorsal_bridge_width [mm]: width of spared tissue dorsal to the spinal cord lesion\n'
-                    '- ventral_bridge_width [mm]: width of spared tissue ventral to the spinal cord lesion\n\n'
+                    '- dorsal_bridge_width [mm]: width of spared tissue dorsal to the spinal cord lesion (i.e. towards the posterior direction of the AP axis)\n'
+                    '- ventral_bridge_width [mm]: width of spared tissue ventral to the spinal cord lesion (i.e. towards the anterior direction of the AP axis)\n\n'
     )
 
     mandatory_arguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
@@ -330,8 +330,13 @@ class AnalyzeLesion:
         Measure the tissue bridges (widths of spared tissue ventral and dorsal to the spinal cord lesion).
         Tissue bridges are quantified as the width of spared tissue at the **minimum** distance from cerebrospinal fluid
         (i.e., the spinal cord boundary) to the lesion boundary.
+
         NOTE: we compute the tissue bridges for all sagittal slices containing the lesion (i.e., for the midsagittal and
         parasagittal slices).
+        
+        Since we assume the input is in RPI orientation, then bridge widths are computed across the Y axis 
+        (AP axis), with dorsal == posterior (-Y) and ventral == anterior (+Y).
+        
         REF: Huber E, Lachappelle P, Sutter R, Curt A, Freund P. Are midsagittal tissue bridges predictive of outcome
         after cervical spinal cord injury? Ann Neurol. 2017 May;81(5):740-748. doi: 10.1002/ana.24932.
 
@@ -418,9 +423,8 @@ class AnalyzeLesion:
         for sagittal_slice in sagittal_lesion_slices:
             # Get df for the selected sagittal slice
             df_temp = tissue_bridges_df[tissue_bridges_df['sagittal_slice'] == sagittal_slice]
-            # Get the axial slice with the minimum dorsal tissue bridge for the selected sagittal slice
+            # Get the axial slices corresponding to the minimum bridge widths
             min_dorsal_bridge_width_slice = df_temp.loc[df_temp['dorsal_bridge_width'].idxmin(), 'axial_slice']
-            # Get the axial slice with the minimum ventral tissue bridge for the selected sagittal slice
             min_ventral_bridge_width_slice = df_temp.loc[df_temp['ventral_bridge_width'].idxmin(), 'axial_slice']
 
             # Add a new column with value True to tissue_bridges_df; this information is needed for plotting
