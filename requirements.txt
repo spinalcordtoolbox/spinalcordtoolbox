@@ -27,7 +27,8 @@ nilearn
 # 2.4.0/2.4.1 fail during inference due to https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4444
 # 2.3.0 and below are incompatible due to breaking API change (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4380)
 nnunetv2!=2.4.0,!=2.4.1,>=2.3.1
-numpy
+# SCT is compatible, however the upgrade to numpy==2.0.0 broke *many* upstream packages. Let's try again later.
+numpy<2
 # 1.7.0>onnxruntime>=1.5.1 required `brew install libomp` on macOS.
 # So, pin to >=1.7.0 to avoid having to ask users to install libomp.
 # Avoid version 1.16.0 due to: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4225
