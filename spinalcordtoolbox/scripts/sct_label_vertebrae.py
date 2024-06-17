@@ -22,7 +22,7 @@ from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.math import dilate
 from spinalcordtoolbox.labels import create_labels_along_segmentation
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, printv, __data_dir__, set_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, printv, __data_dir__, set_loglevel, __version__
 from spinalcordtoolbox.utils.fs import tmp_create, cache_signature, cache_valid, cache_save, copy, extract_fname, rmtree
 from spinalcordtoolbox.math import threshold, laplacian
 
@@ -307,6 +307,7 @@ def main(argv: Sequence[str]):
     # check if warp_curve2straight and warp_straight2curve already exist (i.e. no need to do it another time)
     cache_sig = cache_signature(
         input_files=[fname_in, fname_seg],
+        input_params={"version": __version__},
     )
     if (cache_valid(os.path.join(curdir, "straightening.cache"), cache_sig)
             and os.path.isfile(os.path.join(curdir, "warp_curve2straight.nii.gz"))
