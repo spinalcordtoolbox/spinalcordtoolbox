@@ -35,10 +35,6 @@ def labels_discs(tmp_path_factory):
     file_out = os.path.join(str(tmp_path_factory.mktemp("tmp_data")), 'labels_discs.nii.gz')
     im_labels = Image(sct_test_path('t2', 'labels.nii.gz'))
     im_labels.data = np.zeros(im_labels.data.shape)
-    # im_labels.data[23,53,26] = 3
-    # im_labels.data[24,24,26] = 4
-    # im_labels.data[25,17,26] = 5
-    # im_labels.data[26,1,26] = 6
     im_labels.data[30, 53, 26] = 3
     im_labels.data[31, 34, 26] = 4
     im_labels.data[31, 17, 26] = 5
