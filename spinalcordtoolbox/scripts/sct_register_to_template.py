@@ -332,7 +332,7 @@ def main(argv: Sequence[str]):
         smooth=arguments.centerline_smooth)
     # registration parameters
     if arguments.param is not None:
-        # reset parameters but keep step=0 (can be overwritten if user specified step=0)
+        # reset parameters but keep step=0 (might be overwritten if user specified step=0)
         paramregmulti = ParamregMultiStep([step0])
         # add user parameters
         for paramStep in arguments.param:
@@ -422,7 +422,7 @@ def main(argv: Sequence[str]):
         ftmp_template_label_, ftmp_template_label = ftmp_template_label, add_suffix(ftmp_template_label, "_body")
         sct_labels.label_vertebrae(Image(ftmp_template_label_)).save(path=ftmp_template_label)
 
-    # Check if provided labels are available in the template
+    # check if provided labels are available in the template
     printv('\nCheck if provided labels are available in the template', verbose)
     image_label_template = Image(ftmp_template_label)
 
