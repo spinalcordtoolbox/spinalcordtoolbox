@@ -15,13 +15,27 @@ import spinalcordtoolbox.image as msct_image
 import spinalcordtoolbox.labels as sct_labels
 
 
-def add_orthogonal_label(fname_label, new_label_value):
+def add_dummy_orthogonal_labels(img_tmp_label, img_tmp_template_label):
+    """
+    Add matching dummy orthogonal labels to both the input and template images. This is necessary when
+    estimating an affine transformation, as at least 3 orthogonal labels are needed for affine transformations.
+
+    (NB: Orthogonal -> labels are added in the X-Z and Y-Z planes to accommodate for rotations about the Y and X axes)
+    """
+    # -> Pick a dummy label between [1, 127] that doesn't clash with the existing label values.
+    existing_label_vals = {coord.value for coord in img_tmp_label.getNonZeroCoordinates()}
+    positive_int8_vals = set(range(1, 128))
+    dummy_label = max(positive_int8_vals - existing_label_vals)  # Should be 127 in 99.99% of cases
+    add_orthogonal_label(img_tmp_label, new_label_value=dummy_label)
+    add_orthogonal_label(img_tmp_template_label, new_label_value=dummy_label)
+
+
+def add_orthogonal_label(im_label, new_label_value):
     """
     Add one label at the axial slice that contains the label with the lowest value, 5mm to the left.
     :param fname_label:
     :return:
     """
-    im_label = Image(fname_label)
     orient_orig = im_label.orientation
     # For some reasons (#3304) calling self.change_orientation() replaces self.absolutepath with Null so we need to
     # save it.
