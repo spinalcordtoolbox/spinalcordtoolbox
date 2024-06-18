@@ -51,7 +51,7 @@ pytest-cov
 requests
 requirements-parser
 scipy
-scikit-image
+scikit-image==0.24.0rc1
 scikit-learn
 xlwt
 tqdm
