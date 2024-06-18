@@ -12,6 +12,7 @@ from spinalcordtoolbox.image import Image, compute_dice
 from spinalcordtoolbox.utils.sys import __sct_dir__
 from spinalcordtoolbox.utils.sys import sct_test_path
 from spinalcordtoolbox.scripts import sct_register_to_template, sct_apply_transfo
+from spinalcordtoolbox.labels import compute_mean_squared_error
 
 logger = logging.getLogger(__name__)
 
@@ -151,6 +152,21 @@ def test_sct_register_to_template_3_labels(tmp_path, labels_discs):
                                         '-s', sct_test_path('t2', 't2_seg-manual.nii.gz'),
                                         '-ldisc', labels_discs,
                                         '-t', sct_test_path('template'),
-                                        '-param', 'step=1,type=seg,algo=centermassrot,metric=MeanSquares:step=2,type=seg,algo=bsplinesyn,iter=5,metric=MeanSquares',
+                                        '-param', 'step=1,type=seg,algo=centermassrot,metric=MeanSquares:step=2,type=seg,algo=bsplinesyn,iter=0,metric=MeanSquares',
                                         '-ofolder', str(tmp_path)])
-    # TODO: assert distance between registered labels and ground truth labels
+    # Apply transformation to source labels
+    sct_apply_transfo.main(argv=['-i', labels_discs,
+                                 '-d', str(tmp_path/'anat2template.nii.gz'),
+                                 '-w', str(tmp_path/'warp_anat2template.nii.gz'),
+                                 '-o', str(tmp_path/'labels_discs_reg.nii.gz'),
+                                 '-x', 'label'])
+    # Compute pairwise distance between the template label and the registered label, ie: compute distance between dest and src_reg
+    # for label of value '2', then '3', etc. and compute the mean square of all distances. The labels should be touching, hence
+    # the mean square should be 0.
+    im_label_dest = Image(sct_test_path('template', 'template', 'PAM50_small_label_disc.nii.gz'))
+    im_label_src_reg = Image(str(tmp_path/'labels_discs_reg.nii.gz'))
+    assert compute_mean_squared_error(im_label_dest, im_label_src_reg) == 0
+
+
+
+
