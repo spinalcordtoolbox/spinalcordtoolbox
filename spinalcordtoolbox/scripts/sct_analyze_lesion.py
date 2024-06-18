@@ -360,6 +360,7 @@ class AnalyzeLesion:
         mid_sagittal_sc_slice = int(np.mean([np.min(np.unique(np.where(im_sc_data)[0])),
                                              np.max(np.unique(np.where(im_sc_data)[0]))]))
         printv('  Mid-sagittal slice of the spinal cord: ' + str(mid_sagittal_sc_slice), self.verbose, type='info')
+        self.measure_pd.loc[idx, f'midsagittal_spinal_cord_slice'] = mid_sagittal_sc_slice
 
         # --------------------------------------
         # Get slices with the lesion
