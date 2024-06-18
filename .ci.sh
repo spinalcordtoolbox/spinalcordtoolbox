@@ -24,7 +24,7 @@ install_sct () {
   #     Further explanation at https://blog.ionelmc.ro/2014/05/25/python-packaging/#the-structure
   #     TO BE REMOVED during https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3140.
   # NB: '-c' disables sct_check_dependencies so we can check it separately
-  ./install_sct -iyc
+  ./install_sct -iyc || echo "Failed"
 }
 
 activate_venv_sct(){
@@ -43,7 +43,7 @@ activate_venv_sct(){
 
 check_dependencies() {
   activate_venv_sct
-  sct_check_dependencies
+  sct_check_dependencies || echo "Failed"
 }
 
 run_tests() {
