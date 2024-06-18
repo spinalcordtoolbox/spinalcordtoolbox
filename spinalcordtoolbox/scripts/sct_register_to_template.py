@@ -607,7 +607,7 @@ def main(argv: Sequence[str]):
                     f"the labels being outside the ROI of the spinal cord segmentation. Please make sure all labels "
                     f"are within the ROI of the spinal cord segmentation.", type='error'
                 )
-            
+
             # Add labels in the X-Z and Y-Z planes to accommodate for rotations about the Y and X axes
             printv('\nAdd labels in the X-Z and Y-Z planes to accommodate for rotations about the Y and X axes...', verbose)
             # -> Pick a dummy label between [1, 127] that doesn't clash with the existing label values.
