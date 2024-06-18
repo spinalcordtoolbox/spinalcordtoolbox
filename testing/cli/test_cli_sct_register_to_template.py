@@ -142,8 +142,14 @@ def test_sct_register_to_template_mismatched_xforms(tmp_path, capsys):
     assert "Image sform does not match qform" in capsys.readouterr().out
 
 
-def test_sct_register_to_template_3_labels(tmp_path, labels_discs):
-    """Test registration with 3 labels."""
+def test_sct_register_to_template_more_than_2_labels(tmp_path, labels_discs):
+    """
+    Test registration with >2 labels. This test (and the custom disc label file) are needed because the existing
+    `t2/labels.nii.gz` file only contains 2 labels. But, registration will be performed differently depending on
+    whether there are 1, 2, or >2 labels. See also:
+
+    https://spinalcordtoolbox.com/user_section/tutorials/vertebral-labeling/how-many-labels-for-registration.html
+    """
     sct_register_to_template.main(argv=['-i', sct_test_path('t2', 't2.nii.gz'),
                                         '-s', sct_test_path('t2', 't2_seg-manual.nii.gz'),
                                         '-ldisc', labels_discs,
