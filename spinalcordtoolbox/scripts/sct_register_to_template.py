@@ -32,8 +32,7 @@ from spinalcordtoolbox.utils.fs import (copy, extract_fname, check_file_exist, r
                                         cache_save, cache_signature, cache_valid, tmp_create)
 from spinalcordtoolbox.utils.shell import (SCTArgumentParser, ActionCreateFolder, Metavar, list_type,
                                            printv, display_viewer_syntax)
-from spinalcordtoolbox.utils.sys import set_loglevel, init_sct, run_proc
-from spinalcordtoolbox.utils.sys import __data_dir__
+from spinalcordtoolbox.utils.sys import set_loglevel, init_sct, run_proc, __data_dir__, __version__
 import spinalcordtoolbox.image as msct_image
 import spinalcordtoolbox.labels as sct_labels
 from spinalcordtoolbox.scripts import sct_apply_transfo, sct_resample
@@ -532,6 +531,7 @@ def main(argv: Sequence[str]):
             ]
         cache_sig = cache_signature(
             input_files=cache_input_files,
+            input_params={"version": __version__},
         )
         if (cache_valid(os.path.join(curdir, "straightening.cache"), cache_sig)
                 and os.path.isfile(fn_warp_curve2straight)

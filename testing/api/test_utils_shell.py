@@ -1,4 +1,4 @@
-# pytest unit tests for spinalcordtoolbox.utils
+# pytest unit tests for spinalcordtoolbox.utils.shell
 
 import os
 import sys
