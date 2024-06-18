@@ -90,7 +90,8 @@ def create_qc_entry(
             raise FileNotFoundError(f"Required QC image '{img_type}' was not found at the expected path: '{path}')")
 
     # Use mutex to ensure that we're only generating shared QC assets using one process at a time
-    with mutex(f"sct_qc-{md5(str(path_qc.resolve()).encode('utf-8')).hexdigest()}"):
+    realpath = path_qc.resolve()
+    with mutex(f"sct_qc-{realpath.name}-{md5(str(realpath).encode('utf-8')).hexdigest()}"):
         # Create a json file for the new QC report entry
         path_json = path_qc / '_json'
         path_json.mkdir(parents=True, exist_ok=True)
