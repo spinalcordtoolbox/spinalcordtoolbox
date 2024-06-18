@@ -351,6 +351,10 @@ class AnalyzeLesion:
         im_sc = Image(self.fname_sc)
         im_sc_data = im_sc.data
 
+        # Restrict the lesion mask to the spinal cord mask (from anatomical level, it does not make sense to have lesion
+        # outside the spinal cord mask)
+        im_lesion_data = im_lesion_data * im_sc_data
+
         # Get and print the mid-sagittal slice of the spinal cord (count all slices with the spinal cord mask and get
         # the middle slice)
         mid_sagittal_sc_slice = int(np.mean([np.min(np.unique(np.where(im_sc_data)[0])),
