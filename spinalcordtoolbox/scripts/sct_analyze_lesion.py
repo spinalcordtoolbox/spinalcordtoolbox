@@ -843,7 +843,7 @@ def main(argv: Sequence[str]):
     #     printv("ERROR output directory %s is not a valid directory" % path_template, 1, 'error')
 
     # Output Folder
-    path_results = arguments.ofolder
+    path_results = os.path.expanduser(arguments.ofolder)        # expand '~' to user home directory
     # if not os.path.isdir(path_results) and os.path.exists(path_results):
     #     printv("ERROR output directory %s is not a valid directory" % path_results, 1, 'error')
     if not os.path.exists(path_results):
