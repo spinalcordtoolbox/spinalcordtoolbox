@@ -15,7 +15,7 @@ from scipy.ndimage import distance_transform_edt, center_of_mass, label
 
 from spinalcordtoolbox import resampling
 from spinalcordtoolbox.deepseg_.onnx import onnx_inference
-from spinalcordtoolbox.deepseg_.postprocessing import post_processing_volume_wise, keep_largest_object, fill_holes_2d
+from spinalcordtoolbox.deepseg_.postprocessing import post_processing_volume_wise, keep_largest_object, fill_holes
 from spinalcordtoolbox.image import Image, empty_like, change_type, zeros_like, add_suffix, concat_data, split_img_data
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline, _call_viewer_centerline
 from spinalcordtoolbox.utils.fs import TempFolder
@@ -494,7 +494,7 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     for zz in range(im_norm_in.dim[2]):
         # Fill holes (only for binary segmentations)
         if threshold_seg >= 0:
-            pred_seg_th = fill_holes_2d((seg_crop[:, :, zz] > threshold_seg).astype(int))
+            pred_seg_th = fill_holes((seg_crop[:, :, zz] > threshold_seg).astype(int))
             pred_seg_pp = keep_largest_object(pred_seg_th, x_cOm, y_cOm)
             # Update center of mass for slice i+1
             if 1 in pred_seg_pp:

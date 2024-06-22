@@ -20,8 +20,8 @@ from monai.inferers import sliding_window_inference
 
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname
 from spinalcordtoolbox.image import Image, get_orientation, add_suffix
-from spinalcordtoolbox.math import binarize, fill_holes, remove_small_objects
-from spinalcordtoolbox.deepseg_.postprocessing import keep_largest_object
+from spinalcordtoolbox.math import binarize, remove_small_objects
+from spinalcordtoolbox.deepseg_.postprocessing import keep_largest_object, fill_holes
 
 import spinalcordtoolbox.deepseg.monai as ds_monai
 import spinalcordtoolbox.deepseg.nnunet as ds_nnunet

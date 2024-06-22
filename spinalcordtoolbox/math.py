@@ -10,7 +10,7 @@ import logging
 import numpy as np
 from skimage.morphology import erosion, dilation, disk, ball, square, cube
 from skimage.filters import threshold_local, threshold_otsu, rank
-from scipy.ndimage import gaussian_filter, gaussian_laplace, label, binary_fill_holes, generate_binary_structure
+from scipy.ndimage import gaussian_filter, gaussian_laplace, label, generate_binary_structure
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.utils.sys import LazyLoader
@@ -345,29 +345,6 @@ def denoise_patch2self(data_in, bvals_in, patch_radius=0, model='ols'):
     denoised = dipy.denoise.patch2self.patch2self(data_in, bvals_in, patch_radius=patch_radius, model=model)
 
     return denoised
-
-
-def fill_holes(predictions, structure=(3, 3, 3)):
-    """Fill holes in the predictions using a given structuring element.
-    Note: This function only works for binary segmentation.
-
-    Taken from:
-    https://github.com/ivadomed/ivadomed/blob/master/ivadomed/postprocessing.py#L143
-
-    Args:
-        predictions (ndarray or nibabel object): Input binary segmentation. Image could be 2D or 3D.
-        structure (tuple of integers): Structuring element, number of ints equals
-            number of dimensions in the input array.
-
-    Returns:
-        ndrray or nibabel (same object as the input). Output type is int.
-    """
-    assert np.array_equal(predictions, predictions.astype(bool)), (
-        "fill_holes expects a binary segmentation as input. "
-        "Use `-thr` to binarize the prediction before using fill_holes."
-    )
-    assert len(structure) == len(predictions.shape)
-    return binary_fill_holes(predictions, structure=np.ones(structure)).astype(int)
 
 
 def remove_small_objects(data, dim_lst, unit, thr):
