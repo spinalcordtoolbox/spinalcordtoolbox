@@ -153,13 +153,14 @@ def keep_largest_object(z_slice_bin, x_cOm, y_cOm):
     Keep the largest connected object per z_slice and fill little holes.
     Note: This function only works for binary segmentation.
 
+    When x_c0m/y_c0m are None, this function is identical to:
+    https://github.com/ivadomed/ivadomed/blob/1fccf77239985fc3be99161f9eb18c9470d65206/ivadomed/postprocessing.py#L99-L116
+
     :param z_slice: int 2d-array: Input 2d segmentation
     :param x_cOm: int: X center of mass of the segmentation for the previous 2d slice
     :param y_cOm: int: Y center of mass of the segmentation for the previous 2d slice
     :return: z_slice: int 2d-array: Processed 2d segmentation
     """
-    if z_slice_bin.dtype != np.dtype('int'):
-        raise ValueError(f"Expected array of type int but got '{z_slice_bin.dtype}' instead.")
     # Find number of closed objects using skimage "label"
     labeled_obj, num_obj = label(z_slice_bin)
     # If more than one object is found, keep the largest one
