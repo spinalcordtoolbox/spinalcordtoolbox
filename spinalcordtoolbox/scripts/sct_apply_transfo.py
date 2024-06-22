@@ -202,7 +202,7 @@ class Transform:
                 path_tmp = tmp_create(basename="apply-transfo-3d-label")
                 fname_dilated_labels = os.path.join(path_tmp, "dilated_data.nii")
                 # dilate points
-                dilate(Image(fname_src), 4, 'ball').save(fname_dilated_labels)
+                dilate(Image(fname_src), 3, 'ball').save(fname_dilated_labels)
                 fname_src = fname_dilated_labels
 
             printv("\nApply transformation and resample to destination space...", verbose)
