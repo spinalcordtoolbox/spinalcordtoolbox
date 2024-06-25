@@ -27,7 +27,7 @@ from spinalcordtoolbox.image import Image, add_suffix, generate_output_file
 from spinalcordtoolbox.centerline.core import ParamCenterline
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.resampling import resample_file
-from spinalcordtoolbox.math import dilate, binarize
+from spinalcordtoolbox.math import binarize
 from spinalcordtoolbox.utils.fs import (copy, extract_fname, check_file_exist, rmtree,
                                         cache_save, cache_signature, cache_valid, tmp_create)
 from spinalcordtoolbox.utils.shell import (SCTArgumentParser, ActionCreateFolder, Metavar, list_type,
@@ -582,11 +582,6 @@ def main(argv: Sequence[str]):
             printv('\nRemove unused label on template. Keep only label present in the input label image...', verbose)
             sct_labels.remove_missing_labels(Image(ftmp_template_label), Image(ftmp_label)).save(path=ftmp_template_label)
 
-            # Dilating the input label so they can be straighten without losing them
-            printv('\nDilating input labels using 3vox ball radius')
-            dilate(Image(ftmp_label), 3, 'ball').save(add_suffix(ftmp_label, '_dilate'))
-            ftmp_label = add_suffix(ftmp_label, '_dilate')
-
             # Apply straightening to labels
             printv('\nApply straightening to labels...', verbose)
             label_vals_src = {coord.value for coord in Image(ftmp_label).getCoordinatesAveragedByValue()}
@@ -595,7 +590,7 @@ def main(argv: Sequence[str]):
                 '-o', add_suffix(ftmp_label, '_straight'),
                 '-d', add_suffix(ftmp_seg, '_straight'),
                 '-w', 'warp_curve2straight.nii.gz',
-                '-x', 'nn',
+                '-x', 'label',
                 '-v', '0',
             ])
             ftmp_label = add_suffix(ftmp_label, '_straight')
