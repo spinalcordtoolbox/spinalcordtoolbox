@@ -219,6 +219,10 @@ class AnalyzeLesion:
                  os.path.join(self.path_ofolder, self.tissue_bridges_png_name))
 
     def pack_measures(self):
+
+        # Replace 'nan' with 'n/a' ('nan' results in empty cells in Excel)
+        self.measure_pd = self.measure_pd.replace(np.nan, 'n/a')
+
         with pd.ExcelWriter(self.excel_name, engine='xlsxwriter') as writer:
             self.measure_pd.to_excel(writer, sheet_name='measures', index=False, engine='xlsxwriter')
 
