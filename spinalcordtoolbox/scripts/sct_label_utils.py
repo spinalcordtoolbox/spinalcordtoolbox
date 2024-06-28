@@ -122,8 +122,10 @@ def get_parser():
     func_group.add_argument(
         '-disc',
         metavar=Metavar.file,
-        help="Project disc labels (-disc) onto a spinal cord segmentation (-i) to create a labeled segmentation. "
-             "Note: Unlike 'sct_label_vertebrae -discfile', this function does not involve cord straightening. "
+        help="Project disc labels ('-disc') onto a spinal cord segmentation ('-i') within the axial plane to create a labeled segmentation.\n"
+             "Note: Unlike 'sct_label_vertebrae -discfile', this function does NOT involve cord straightening.\n"
+             "Note: This method does NOT involve orthogonal projection onto the cord centerline. "
+             "Details: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3395#issuecomment-1478435265\n"
              "The disc labeling follows the convention: "
              "https://spinalcordtoolbox.com/user_section/tutorials/vertebral-labeling/labeling-conventions.html"
     )
