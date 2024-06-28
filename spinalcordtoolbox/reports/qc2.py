@@ -7,6 +7,7 @@ License: see the file LICENSE
 
 from contextlib import contextmanager
 import datetime
+from hashlib import md5
 import importlib.resources
 from importlib.abc import Traversable
 import json
@@ -15,11 +16,6 @@ import math
 from pathlib import Path
 from typing import Optional, Sequence
 
-from matplotlib.axes import Axes
-from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
-from matplotlib.figure import Figure
-import matplotlib.patheffects as path_effects
-import matplotlib.colors as color
 import numpy as np
 from scipy.ndimage import center_of_mass
 import skimage.exposure
@@ -29,8 +25,15 @@ import spinalcordtoolbox.reports
 from spinalcordtoolbox.reports.assets._assets.py import refresh_qc_entries
 from spinalcordtoolbox.resampling import resample_nib
 from spinalcordtoolbox.utils.shell import display_open
-from spinalcordtoolbox.utils.sys import __version__, list2cmdline
+from spinalcordtoolbox.utils.sys import __version__, list2cmdline, LazyLoader
 from spinalcordtoolbox.utils.fs import mutex
+
+mpl_figure = LazyLoader("mpl_figure", globals(), "matplotlib.figure")
+mpl_axes = LazyLoader("mpl_axes", globals(), "matplotlib.axes")
+mpl_cm = LazyLoader("mpl_cm", globals(), "matplotlib.cm")
+mpl_colors = LazyLoader("mpl_colors", globals(), "matplotlib.colors")
+mpl_backend_agg = LazyLoader("mpl_backend_agg", globals(), "matplotlib.backends.backend_agg")
+mpl_patheffects = LazyLoader("mpl_patheffects", globals(), "matplotlib.patheffects")
 
 logger = logging.getLogger(__name__)
 
@@ -87,7 +90,8 @@ def create_qc_entry(
             raise FileNotFoundError(f"Required QC image '{img_type}' was not found at the expected path: '{path}')")
 
     # Use mutex to ensure that we're only generating shared QC assets using one process at a time
-    with mutex(name="sct_qc"):
+    realpath = path_qc.resolve()
+    with mutex(f"sct_qc-{realpath.name}-{md5(str(realpath).encode('utf-8')).hexdigest()}"):
         # Create a json file for the new QC report entry
         path_json = path_qc / '_json'
         path_json.mkdir(parents=True, exist_ok=True)
@@ -204,9 +208,9 @@ def sct_register_multimodal(
         # `size_fig` is in inches. So, dpi=300 --> 1500px, dpi=100 --> 500px, etc.
         size_fig = [5, 5 * img.shape[0] / img.shape[1]]
 
-        fig = Figure()
+        fig = mpl_figure.Figure()
         fig.set_size_inches(*size_fig, forward=True)
-        FigureCanvas(fig)
+        mpl_backend_agg.FigureCanvasAgg(fig)
         ax = fig.add_axes((0, 0, 1, 1))
         ax.imshow(img, cmap='gray', interpolation='none', aspect=1.0)
         add_orientation_labels(ax)
@@ -218,9 +222,9 @@ def sct_register_multimodal(
 
         # Generate the second QC report image
         img = equalize_histogram(mosaic(img_output, centers))
-        fig = Figure()
+        fig = mpl_figure.Figure()
         fig.set_size_inches(*size_fig, forward=True)
-        FigureCanvas(fig)
+        mpl_backend_agg.FigureCanvasAgg(fig)
         ax = fig.add_axes((0, 0, 1, 1), label='0')
         ax.imshow(img, cmap='gray', interpolation='none', aspect=1.0)
         add_orientation_labels(ax)
@@ -299,9 +303,9 @@ def sct_deepseg(
         # `size_fig` is in inches. So, dpi=300 --> 1500px, dpi=100 --> 500px, etc.
         size_fig = [5, 5 * img.shape[0] / img.shape[1]]
 
-        fig = Figure()
+        fig = mpl_figure.Figure()
         fig.set_size_inches(*size_fig, forward=True)
-        FigureCanvas(fig)
+        mpl_backend_agg.FigureCanvasAgg(fig)
         ax = fig.add_axes((0, 0, 1, 1))
         ax.imshow(img, cmap='gray', interpolation='none', aspect=1.0)
         add_orientation_labels(ax)
@@ -312,12 +316,12 @@ def sct_deepseg(
         fig.savefig(img_path, format='png', transparent=True, dpi=300)
 
         # Generate the second QC report image
-        fig = Figure()
+        fig = mpl_figure.Figure()
         fig.set_size_inches(*size_fig, forward=True)
-        FigureCanvas(fig)
+        mpl_backend_agg.FigureCanvasAgg(fig)
         ax = fig.add_axes((0, 0, 1, 1))
-        colormaps = [color.ListedColormap(["#ff0000"]),  # Red for first image
-                     color.ListedColormap(["#00ffff"])]  # Cyan for second
+        colormaps = [mpl_colors.ListedColormap(["#ff0000"]),  # Red for first image
+                     mpl_colors.ListedColormap(["#00ffff"])]  # Cyan for second
         for i, image in enumerate([img_seg_sc, img_seg_lesion]):
             if not image:
                 continue
@@ -326,7 +330,7 @@ def sct_deepseg(
             img.set_fill_value(0)
             ax.imshow(img,
                       cmap=colormaps[i],
-                      norm=color.Normalize(vmin=0.5, vmax=1),
+                      norm=mpl_colors.Normalize(vmin=0.5, vmax=1),
                       # img==1 -> opaque, but soft regions -> more transparent as value decreases
                       alpha=(img / img.max()),  # scale to [0, 1]
                       interpolation='none',
@@ -384,7 +388,7 @@ def mosaic(img: Image, centers: np.ndarray, radius: tuple[int, int] = (15, 15)):
     return np.block([cropped[i:i+num_col] for i in range(0, len(cropped), num_col)])
 
 
-def add_orientation_labels(ax: Axes):
+def add_orientation_labels(ax: mpl_axes.Axes):
     """
     Add orientation labels (A, P, L, R) to a figure, yellow with a black outline.
     """
@@ -395,8 +399,8 @@ def add_orientation_labels(ax: Axes):
         (24, 18, 'R'),
     ]:
         ax.text(x, y, letter, color='yellow', size=4).set_path_effects([
-            path_effects.Stroke(linewidth=1, foreground='black'),
-            path_effects.Normal(),
+            mpl_patheffects.Stroke(linewidth=1, foreground='black'),
+            mpl_patheffects.Normal(),
         ])
 
 

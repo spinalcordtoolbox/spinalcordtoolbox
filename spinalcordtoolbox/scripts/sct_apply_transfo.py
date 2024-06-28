@@ -13,7 +13,7 @@ import os
 import functools
 from typing import Sequence
 
-from spinalcordtoolbox.image import Image, generate_output_file
+from spinalcordtoolbox.image import Image, generate_output_file, add_suffix
 from spinalcordtoolbox.cropping import ImageCropper
 from spinalcordtoolbox.math import dilate
 from spinalcordtoolbox.labels import cubic_to_point
@@ -78,15 +78,17 @@ def get_parser():
         "-o",
         help='Registered source. Example: dest.nii.gz',
         required=False,
-        metavar=Metavar.file,
-        default='')
+        metavar=Metavar.file)
     optional.add_argument(
         "-x",
-        help=""" Interpolation method. The 'label' method is to be used if you would like to apply a transformation
-        on a file that has single-voxel labels (classical interpolation methods won't work, as resampled labels might
-        disappear or their values be altered). The function will dilate each label, apply the transformation using
-        nearest neighbour interpolation, and then take the center-of-mass of each "blob" and output a single voxel per
-        blob.""",
+        help="Interpolation method.\n"
+             "Note: The 'label' method is a special interpolation method designed for single-voxel labels (e.g. disc "
+             "labels used as registration landmarks, compression labels, etc.). This method is necessary because "
+             "classical interpolation may corrupt the values of single-voxel labels, or cause them to disappear "
+             "entirely. The function works by dilating each label, applying the transformation using nearest neighbour "
+             "interpolation, then extracting the center-of-mass of each transformed 'blob' to get a single-voxel "
+             "output label. Because the output is a single-voxel label, the `-x label` method is not appropriate for "
+             "multi-voxel labeled segmentations (such as spinal cord or lesion masks).",
         required=False,
         default='spline',
         choices=('nn', 'linear', 'spline', 'label'))
@@ -110,7 +112,7 @@ def get_parser():
 
 
 class Transform:
-    def __init__(self, input_filename, fname_dest, list_warp, list_warpinv=[], output_filename='', verbose=0, crop=0,
+    def __init__(self, input_filename, fname_dest, output_filename, list_warp, list_warpinv=[], verbose=0, crop=0,
                  interp='spline', remove_temp_files=1, debug=0):
         self.input_filename = input_filename
         self.list_warp = list_warp
@@ -178,13 +180,6 @@ class Transform:
         # Extract path, file and extension
         path_src, file_src, ext_src = extract_fname(fname_src)
         path_dest, file_dest, ext_dest = extract_fname(fname_dest)
-
-        # Get output folder and file name
-        if fname_out == '':
-            path_out = ''  # output in user's current directory
-            file_out = file_src + '_reg'
-            ext_out = ext_src
-            fname_out = os.path.join(path_out, file_out + ext_out)
 
         # Get dimensions of data
         printv('\nGet dimensions of data...', verbose)
@@ -334,18 +329,18 @@ def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose, caller_module_name=__name__)
 
     input_filename = arguments.i
+    fname_out = arguments.o if arguments.o is not None else os.path.basename(add_suffix(input_filename, '_reg'))
     fname_dest = arguments.d
     warp_filename = arguments.w
     warpinv_filename = arguments.winv
 
     transform = Transform(input_filename=input_filename, fname_dest=fname_dest, list_warp=warp_filename,
-                          list_warpinv=warpinv_filename)
+                          list_warpinv=warpinv_filename, output_filename=fname_out)
 
     transform.crop = arguments.crop
-    transform.output_filename = fname_out = arguments.o
     transform.interp = arguments.x
     transform.remove_temp_files = arguments.r
     transform.verbose = verbose

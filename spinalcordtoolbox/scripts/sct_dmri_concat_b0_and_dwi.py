@@ -10,11 +10,12 @@ import sys
 from typing import Sequence
 
 import numpy as np
-from dipy.data.fetcher import read_bvals_bvecs
 
-from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel, LazyLoader
 from spinalcordtoolbox.utils.shell import Metavar, SCTArgumentParser
 from spinalcordtoolbox.image import Image, concat_data
+
+fetcher = LazyLoader("fetcher", globals(), "dipy.data.fetcher")
 
 
 def get_parser():
@@ -105,7 +106,7 @@ def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose, caller_module_name=__name__)
 
     # check number of input args
     if not len(arguments.i) == len(arguments.order):
@@ -131,7 +132,7 @@ def main(argv: Sequence[str]):
             bvec = np.array([[0.0, 0.0, 0.0]] * n_b0)
         elif arguments.order[i_item] == 'dwi':
             # read bval/bvec files
-            bval, bvec = read_bvals_bvecs(arguments.bval[i_dwi], arguments.bvec[i_dwi])
+            bval, bvec = fetcher.read_bvals_bvecs(arguments.bval[i_dwi], arguments.bvec[i_dwi])
             i_dwi += 1
         # Concatenate bvals
         bvals_concat += ' '.join(str(v) for v in bval)

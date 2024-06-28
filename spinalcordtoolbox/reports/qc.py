@@ -19,20 +19,22 @@ import skimage
 import skimage.io
 import skimage.exposure
 from scipy.ndimage import center_of_mass
-from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
-from matplotlib.figure import Figure
-from matplotlib.axes import Axes
-from matplotlib.animation import FuncAnimation, PillowWriter
-import matplotlib.colors as color
-from matplotlib import cm
-import matplotlib.patheffects as path_effects
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.reports.slice import Slice, Axial, Sagittal
 from spinalcordtoolbox.reports.assets._assets.py import refresh_qc_entries
 from spinalcordtoolbox.utils.fs import copy, extract_fname, mutex
-from spinalcordtoolbox.utils.sys import __version__, list2cmdline
+from spinalcordtoolbox.utils.sys import __version__, list2cmdline, LazyLoader
 from spinalcordtoolbox.utils.shell import display_open
+
+mpl_figure = LazyLoader("mpl_figure", globals(), "matplotlib.figure")
+mpl_axes = LazyLoader("mpl_axes", globals(), "matplotlib.axes")
+mpl_cm = LazyLoader("mpl_cm", globals(), "matplotlib.cm")
+mpl_colors = LazyLoader("mpl_colors", globals(), "matplotlib.colors")
+mpl_backend_agg = LazyLoader("mpl_backend_agg", globals(), "matplotlib.backends.backend_agg")
+mpl_animation = LazyLoader("mpl_animation", globals(), "matplotlib.animation")
+mpl_patheffects = LazyLoader("mpl_patheffects", globals(), "matplotlib.patheffects")
+
 
 logger = logging.getLogger(__name__)
 
@@ -99,8 +101,8 @@ class QcImage:
             color_list = ['#000000'] * (labels.max() - labels.min() + 1)
             # Assign a colormap to each group of labels (while sampling the colormap at different points)
             for i, label_group in enumerate(label_groups):
-                colormap = cm.get_cmap(distinct_colormaps[i % len(distinct_colormaps)])
-                sampled_colors = [color.to_hex(c) for c in [colormap(n) for n in colormap_sampling]]
+                colormap = mpl_cm.get_cmap(distinct_colormaps[i % len(distinct_colormaps)])
+                sampled_colors = [mpl_colors.to_hex(c) for c in [colormap(n) for n in colormap_sampling]]
                 # Then, assign a color to each label within the group
                 for j, label in enumerate(label_group):
                     color_list[label - labels.min()] = sampled_colors[j % len(sampled_colors)]
@@ -138,8 +140,8 @@ class QcImage:
         """Create figure with red segmentation. Common scenario."""
         img = np.ma.masked_equal(mask, 0)
         ax.imshow(img,
-                  cmap=color.LinearSegmentedColormap.from_list("", self._seg_colormap),
-                  norm=color.Normalize(vmin=0.5, vmax=1),
+                  cmap=mpl_colors.LinearSegmentedColormap.from_list("", self._seg_colormap),
+                  norm=mpl_colors.Normalize(vmin=0.5, vmax=1),
                   interpolation=self.interpolation,
                   aspect=float(self.aspect_mask))
         ax.get_xaxis().set_visible(False)
@@ -149,11 +151,11 @@ class QcImage:
         """Show template statistical atlas"""
         values = mask
         values[values < 0.5] = 0
-        color_white = color.colorConverter.to_rgba('white', alpha=0.0)
-        color_blue = color.colorConverter.to_rgba('blue', alpha=0.7)
-        color_cyan = color.colorConverter.to_rgba('cyan', alpha=0.8)
-        cmap = color.LinearSegmentedColormap.from_list('cmap_atlas',
-                                                       [color_white, color_blue, color_cyan], N=256)
+        color_white = mpl_colors.colorConverter.to_rgba('white', alpha=0.0)
+        color_blue = mpl_colors.colorConverter.to_rgba('blue', alpha=0.7)
+        color_cyan = mpl_colors.colorConverter.to_rgba('cyan', alpha=0.8)
+        cmap = mpl_colors.LinearSegmentedColormap.from_list('cmap_atlas',
+                                                            [color_white, color_blue, color_cyan], N=256)
         ax.imshow(values,
                   cmap=cmap,
                   interpolation=self.interpolation,
@@ -181,7 +183,8 @@ class QcImage:
             ax.plot(coord[1], coord[0], 'o', color='lime', markersize=5)
             label_text = ax.text(coord[1] + horiz_offset, coord[0], str(round(mask[coord[0], coord[1]])), color='lime',
                                  fontsize=15, verticalalignment='center', clip_on=True)
-            label_text.set_path_effects([path_effects.Stroke(linewidth=2, foreground='black'), path_effects.Normal()])
+            label_text.set_path_effects([mpl_patheffects.Stroke(linewidth=2, foreground='black'),
+                                         mpl_patheffects.Normal()])
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
 
@@ -191,7 +194,7 @@ class QcImage:
         labels = np.unique(img[np.where(~img.mask)]).astype(int)  # get available labels
         color_list = self._assign_label_colors_by_groups(labels)
         ax.imshow(img,
-                  cmap=color.ListedColormap(color_list),
+                  cmap=mpl_colors.ListedColormap(color_list),
                   interpolation=self.interpolation,
                   alpha=1,
                   aspect=float(self.aspect_mask))
@@ -214,8 +217,8 @@ class QcImage:
                         x += data.shape[1] / 25
                         label = list(self._labels_regions.keys())[list(self._labels_regions.values()).index(index)]
                         label_text = ax.text(x, y, label, color=label_color, clip_on=True)
-                        label_text.set_path_effects([path_effects.Stroke(linewidth=2, foreground='black'),
-                                                     path_effects.Normal()])
+                        label_text.set_path_effects([mpl_patheffects.Stroke(linewidth=2, foreground='black'),
+                                                     mpl_patheffects.Normal()])
 
     def highlight_pmj(self, mask, ax):
         """Hook to show a rectangle where PMJ is on the slice"""
@@ -236,8 +239,8 @@ class QcImage:
             # ax.text(cord[1]+5,cord[0]+5, str(mask[cord]), color='lime', clip_on=True)
         img = np.rint(np.ma.masked_where(mask < 1, mask))
         ax.imshow(img,
-                  cmap=color.ListedColormap(self._color_bin_red),
-                  norm=color.Normalize(vmin=0, vmax=1),
+                  cmap=mpl_colors.ListedColormap(self._color_bin_red),
+                  norm=mpl_colors.Normalize(vmin=0, vmax=1),
                   interpolation=self.interpolation,
                   alpha=1,
                   aspect=float(self.aspect_mask))
@@ -269,8 +272,8 @@ class QcImage:
         mask[mask < 0.05] = 0  # Apply 0.5 threshold
         img = np.ma.masked_equal(mask, 0)
         ax.imshow(img,
-                  cmap=color.LinearSegmentedColormap.from_list("", self._ctl_colormap),
-                  norm=color.Normalize(vmin=0, vmax=1),
+                  cmap=mpl_colors.LinearSegmentedColormap.from_list("", self._ctl_colormap),
+                  norm=mpl_colors.Normalize(vmin=0, vmax=1),
                   interpolation=self.interpolation,
                   aspect=float(self.aspect_mask))
         ax.get_xaxis().set_visible(False)
@@ -312,9 +315,9 @@ class QcImage:
         #  NB: `size_fig` is in inches. So, dpi=300 --> 1500px, dpi=100 --> 500px, etc.
         size_fig = [5, 5 * img.shape[0] / img.shape[1]]
 
-        fig = Figure()
+        fig = mpl_figure.Figure()
         fig.set_size_inches(size_fig[0], size_fig[1], forward=True)
-        FigureCanvas(fig)
+        mpl_backend_agg.FigureCanvasAgg(fig)
         ax = fig.add_axes((0, 0, 1, 1))
         ax.imshow(img, cmap='gray', interpolation=self.interpolation, aspect=float(self.aspect_img))
         self._add_orientation_label(ax)
@@ -323,9 +326,9 @@ class QcImage:
         logger.info(self.qc_report.abs_background_img_path())
         self._save(fig, self.qc_report.abs_background_img_path(), dpi=self.qc_report.dpi)
 
-        fig = Figure()
+        fig = mpl_figure.Figure()
         fig.set_size_inches(size_fig[0], size_fig[1], forward=True)
-        FigureCanvas(fig)
+        mpl_backend_agg.FigureCanvasAgg(fig)
         for i, action in enumerate(self.action_list):
             logger.debug('Action List %s', action.__name__)
             if self._stretch_contrast and action.__name__ in ("no_seg_seg",):
@@ -408,10 +411,10 @@ class QcImage:
             text_l = ax.text(0, 18, 'L', color='yellow', size=4)
             text_r = ax.text(24, 18, 'R', color='yellow', size=4)
             # Add a black outline surrounding the text
-            text_a.set_path_effects([path_effects.Stroke(linewidth=1, foreground='black'), path_effects.Normal()])
-            text_p.set_path_effects([path_effects.Stroke(linewidth=1, foreground='black'), path_effects.Normal()])
-            text_l.set_path_effects([path_effects.Stroke(linewidth=1, foreground='black'), path_effects.Normal()])
-            text_r.set_path_effects([path_effects.Stroke(linewidth=1, foreground='black'), path_effects.Normal()])
+            text_a.set_path_effects([mpl_patheffects.Stroke(linewidth=1, foreground='black'), mpl_patheffects.Normal()])
+            text_p.set_path_effects([mpl_patheffects.Stroke(linewidth=1, foreground='black'), mpl_patheffects.Normal()])
+            text_l.set_path_effects([mpl_patheffects.Stroke(linewidth=1, foreground='black'), mpl_patheffects.Normal()])
+            text_r.set_path_effects([mpl_patheffects.Stroke(linewidth=1, foreground='black'), mpl_patheffects.Normal()])
 
     def _generate_and_save_gif(self, top_images, bottom_images, size_fig, is_mask=False):
         """
@@ -429,8 +432,8 @@ class QcImage:
         else:
             aspect = self.aspect_img
 
-        fig = Figure()
-        FigureCanvas(fig)
+        fig = mpl_figure.Figure()
+        mpl_backend_agg.FigureCanvasAgg(fig)
         fig.set_size_inches(size_fig[0], size_fig[1], forward=True)
         fig.subplots_adjust(left=0, top=0.9, bottom=0.1)
 
@@ -464,7 +467,7 @@ class QcImage:
             ann.set_text(f'Volume: {i + 1}/{len(top_images)}')
 
         # FuncAnimation creates an animation by repeatedly calling the function update_figure for each frame
-        ani = FuncAnimation(fig, update_figure, frames=len(top_images))
+        ani = mpl_animation.FuncAnimation(fig, update_figure, frames=len(top_images))
 
         if is_mask:
             gif_out_path = self.qc_report.abs_overlay_img_path()
@@ -473,7 +476,7 @@ class QcImage:
 
         if self._fps is None:
             self._fps = 3
-        writer = PillowWriter(self._fps)
+        writer = mpl_animation.PillowWriter(self._fps)
         logger.info('Saving gif %s', gif_out_path)
         ani.save(gif_out_path, writer=writer, dpi=self.qc_report.dpi)
 
@@ -582,7 +585,9 @@ class QcReport:
         logger.debug('Description file: %s', self.qc_results)
 
         # Use a mutex on a hash of the QC path, so that we use a unique mutex per target QC report
-        with mutex(f"sct_qc-{os.path.basename(path_qc)}-{md5(self.path_qc.encode('utf-8')).hexdigest()}"):
+        realpath = os.path.realpath(path_qc)
+        basename = os.path.basename(realpath)
+        with mutex(f"sct_qc-{basename}-{md5(realpath.encode('utf-8')).hexdigest()}"):
             # results = []
             # Create path to store json files
             path_json, _ = os.path.split(self.qc_results)
@@ -654,7 +659,7 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
     # The following are the expected types for some variables that get values
     # assigned in all branches of the big `if...elif...elif...` construct below
     qcslice: Slice
-    action_list: List[Callable[[QcImage, np.ndarray, Axes], None]]
+    action_list: List[Callable[[QcImage, np.ndarray, mpl_axes.Axes], None]]
     qcslice_layout: Callable[[Slice],
                              Union[List[np.ndarray],
                                    Tuple[List[List[np.ndarray]], List[Tuple[int, int]]]]]

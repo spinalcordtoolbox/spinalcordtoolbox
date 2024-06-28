@@ -69,7 +69,11 @@ def resolve_module(framework_name):
         'pytest-cov': ('pytest_cov', False),
         'urllib3[secure]': ('urllib3', False),
         'pytest-xdist': ('xdist', False),
-        'protobuf': ('google.protobuf', False)
+        'protobuf': ('google.protobuf', False),
+        # Importing `matplotlib_inline` requires IPython, but we don't install IPython (on purpose). This is because
+        # `matplotlib_inline` is only needed to run SCT scripts in Jupyter notebooks, and IPython would already be
+        # installed in the parent context. So, we map `matplotlib-inline` to None to skip import (which would fail).
+        'matplotlib-inline': (None, False)
     }
 
     try:
@@ -195,7 +199,7 @@ def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = complete_test = arguments.complete
-    set_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose, caller_module_name=__name__)
 
     print("\nSYSTEM INFORMATION"
           "\n------------------")
@@ -353,6 +357,10 @@ def main(argv: Sequence[str]):
 
         try:
             module_name, suppress_stderr = resolve_module(dep_pkg)
+            # If a module cannot be imported, then its `dep_pkg` name should be resolved to `module_name=None`
+            if module_name is None:
+                print_ok()
+                continue
             module = module_import(module_name, suppress_stderr)
             version = get_version(module)
 

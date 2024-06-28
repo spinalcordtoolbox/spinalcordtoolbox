@@ -12,6 +12,7 @@ from spinalcordtoolbox.image import Image, compute_dice
 from spinalcordtoolbox.utils.sys import __sct_dir__
 from spinalcordtoolbox.utils.sys import sct_test_path
 from spinalcordtoolbox.scripts import sct_register_to_template, sct_apply_transfo
+from spinalcordtoolbox.labels import compute_mean_squared_error
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +27,20 @@ def template_lpi(tmp_path_factory):
         nii.change_orientation('LPI')
         nii.save(file)
     return path_out
+
+
+@pytest.fixture(scope="module")
+def labels_discs(tmp_path_factory):
+    """Create a disc labels file."""
+    file_out = os.path.join(str(tmp_path_factory.mktemp("tmp_data")), 'labels_discs.nii.gz')
+    im_labels = Image(sct_test_path('t2', 'labels.nii.gz'))
+    im_labels.data = np.zeros(im_labels.data.shape)
+    im_labels.data[30, 53, 26] = 3
+    im_labels.data[31, 34, 26] = 4
+    im_labels.data[31, 17, 26] = 5
+    im_labels.data[32, 1, 26] = 6
+    im_labels.save(file_out)
+    return file_out
 
 
 def test_sct_register_to_template_non_rpi_template(tmp_path, template_lpi):
@@ -125,3 +140,32 @@ def test_sct_register_to_template_mismatched_xforms(tmp_path, capsys):
                                             '-s', sct_test_path('t2', 't2_seg-manual.nii.gz'),
                                             '-l', sct_test_path('t2', 'labels.nii.gz')])
     assert "Image sform does not match qform" in capsys.readouterr().out
+
+
+def test_sct_register_to_template_more_than_2_labels(tmp_path, labels_discs):
+    """
+    Test registration with >2 labels. This test (and the custom disc label file) are needed because the existing
+    `t2/labels.nii.gz` file only contains 2 labels. But, registration will be performed differently depending on
+    whether there are 1, 2, or >2 labels. See also:
+
+    https://spinalcordtoolbox.com/user_section/tutorials/vertebral-labeling/how-many-labels-for-registration.html
+    """
+    sct_register_to_template.main(argv=['-i', sct_test_path('t2', 't2.nii.gz'),
+                                        '-s', sct_test_path('t2', 't2_seg-manual.nii.gz'),
+                                        '-ldisc', labels_discs,
+                                        '-t', sct_test_path('template'),
+                                        '-param', 'step=1,type=seg,algo=centermassrot,metric=MeanSquares:'
+                                                  'step=2,type=seg,algo=bsplinesyn,iter=0,metric=MeanSquares',
+                                        '-ofolder', str(tmp_path)])
+    # Apply transformation to source labels
+    sct_apply_transfo.main(argv=['-i', labels_discs,
+                                 '-d', str(tmp_path/'anat2template.nii.gz'),
+                                 '-w', str(tmp_path/'warp_anat2template.nii.gz'),
+                                 '-o', str(tmp_path/'labels_discs_reg.nii.gz'),
+                                 '-x', 'label'])
+    # Compute pairwise distance between the template label and the registered label, ie: compute distance between dest
+    # and src_reg for label of value '2', then '3', etc. and compute the mean square of all distances. The labels
+    # should be touching, hence the mean square should be 0.
+    im_label_dest = Image(sct_test_path('template', 'template', 'PAM50_small_label_disc.nii.gz'))
+    im_label_src_reg = Image(str(tmp_path/'labels_discs_reg.nii.gz'))
+    assert compute_mean_squared_error(im_label_dest, im_label_src_reg) == 0
