@@ -187,12 +187,17 @@ python\envs\venv_sct\Scripts\pip install -e . || goto error
 rem Install external dependencies
 echo:
 echo ### Downloading model files and binaries...
-FOR %%D IN (PAM50 deepseg_sc_models deepseg_gm_models deepseg_lesion_models binaries_win deepreg_models PAM50_normalized_metrics) DO sct_download_data -d %%D -k || goto error
+python\envs\venv_sct\Scripts\sct_download_data -d binaries_win -k
+python\envs\venv_sct\Scripts\sct_download_data -d default -k
+python\envs\venv_sct\python -c "import spinalcordtoolbox.deepseg.models; spinalcordtoolbox.deepseg.models.install_default_models()"
 
 rem Copying SCT scripts to an isolated folder (so we can add scripts to the PATH without adding the entire venv_sct)
 echo:
 echo ### Copying SCT's CLI scripts to %CD%\bin\
 xcopy %CD%\python\envs\venv_sct\Scripts\*sct*.* %CD%\bin\ /v /y /q /i || goto error
+
+echo ### Checking installation...
+python\envs\venv_sct\Scripts\sct_check_dependencies
 
 rem Give further instructions that the user add the Scripts directory to their PATH
 echo:

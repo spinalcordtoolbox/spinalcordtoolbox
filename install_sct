@@ -698,9 +698,7 @@ else
   # Download data
   print info "Installing data..."
   run mkdir -p "$SCT_DIR/$DATA_DIR"
-  for data in PAM50 deepseg_sc_models deepseg_gm_models deepseg_lesion_models deepreg_models PAM50_normalized_metrics; do
-    run sct_download_data -d "$data"
-  done
+  run sct_download_data -d default -k
 fi
 
 # Install deep learning models

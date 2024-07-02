@@ -130,7 +130,7 @@ def segment_non_ivadomed(path_model, model_type, input_filenames, threshold, kee
             # 1. Binarize predictions based on the threshold value
             # NOTE: Any post-processing is done only after thresholding (as post-processing operations
             # expect binary masks)
-            if threshold is not None:
+            if threshold:  # Default: None, but `-thr 0` will also turn off binarization
                 im_out.data = binarize(im_out.data, threshold)
             # 2. Keep the largest connected object
             if keep_largest is not None:
