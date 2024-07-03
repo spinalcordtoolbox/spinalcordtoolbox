@@ -349,9 +349,9 @@ TASKS = {
                         'Switzerland and Center for Magnetic Resonance in Biology and Medicine, CRMBM-CEMEREM, UMR 7339, CNRS,  '
                         'Aix-Marseille University, Marseille, France). '
                         'To crop the data you can first segment the spinal cord using the contrast agnostic model, This could be '
-                        'done using: "sct_deepseg -i IMAGE_UNIT1 -task seg_sc_contrast_agnostic -o IMAGE_UNIT1_sc", then crop the ' 
+                        'done using: "sct_deepseg -i IMAGE_UNIT1 -task seg_sc_contrast_agnostic -o IMAGE_UNIT1_sc", then crop the '
                         'IMAGE_UNIT1 image with 30 mm of dilation on axial orientation around the spinal cord. This could be done using: '
-                        '"sct_crop_image -i IMAGE_UNIT1 -m IMAGE_seg -dilate 30x30x5" . Note that 30 is only for 1mm isotropic ' 
+                        '"sct_crop_image -i IMAGE_UNIT1 -m IMAGE_seg -dilate 30x30x5" . Note that 30 is only for 1mm isotropic '
                         'resolution, for images with another resolution divide 30/your_axial_resolution.',
          'url': 'https://github.com/ivadomed/model_seg_ms_mp2rage',
          'models': ['model_seg_ms_lesion_mp2rage']},
