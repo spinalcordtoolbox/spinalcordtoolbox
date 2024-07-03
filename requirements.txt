@@ -9,6 +9,11 @@ dipy!=1.6.*,!=1.7.*,<1.9.0
 --extra-index-url https://download.pytorch.org/whl/cpu # append_to_freeze
 ivadomed
 matplotlib
+# `matplotlib-inline` is an optional package that comes with `jupyter` for use with the '%matplotlib inline' directive.
+# However, if the user runs `jupyter` from a separate environment and sets '%matplotlib inline', then SCT's
+# environment will be missing this backend, and SCT scripts will crash when trying to import matplotlib. So, we install
+# `matplotlib-inline` in our env by default to ensure that SCT scripts can be run in Jupyter notebooks without error.
+matplotlib-inline
 monai[nibabel]
 # Fresh Windows installations may be missing the C++ runtime library required by scikit-image.
 # Installing "Microsoft Visual C++ Redistributable for Visual Studio" will fix this too, but
@@ -22,7 +27,8 @@ nilearn
 # 2.4.0/2.4.1 fail during inference due to https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4444
 # 2.3.0 and below are incompatible due to breaking API change (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4380)
 nnunetv2!=2.4.0,!=2.4.1,>=2.3.1
-numpy
+# SCT is compatible, however the upgrade to numpy==2.0.0 broke *many* upstream packages. Let's try again later. See https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4535
+numpy<2
 # 1.7.0>onnxruntime>=1.5.1 required `brew install libomp` on macOS.
 # So, pin to >=1.7.0 to avoid having to ask users to install libomp.
 # Avoid version 1.16.0 due to: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4225

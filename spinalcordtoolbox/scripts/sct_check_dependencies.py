@@ -24,9 +24,10 @@ import requirements
 import torch.cuda
 from torch import __version__ as __torch_version__
 
+from spinalcordtoolbox.download import default_datasets, is_installed
 from spinalcordtoolbox.utils.shell import SCTArgumentParser
 from spinalcordtoolbox.utils.sys import (sct_dir_local_path, init_sct, run_proc, __version__, __sct_dir__,
-                                         __data_dir__, set_loglevel, ANSIColors16)
+                                         set_loglevel, ANSIColors16, _which_sct_binaries)
 
 
 def _test_condition(condition):
@@ -68,7 +69,11 @@ def resolve_module(framework_name):
         'pytest-cov': ('pytest_cov', False),
         'urllib3[secure]': ('urllib3', False),
         'pytest-xdist': ('xdist', False),
-        'protobuf': ('google.protobuf', False)
+        'protobuf': ('google.protobuf', False),
+        # Importing `matplotlib_inline` requires IPython, but we don't install IPython (on purpose). This is because
+        # `matplotlib_inline` is only needed to run SCT scripts in Jupyter notebooks, and IPython would already be
+        # installed in the parent context. So, we map `matplotlib-inline` to None to skip import (which would fail).
+        'matplotlib-inline': (None, False)
     }
 
     try:
@@ -340,13 +345,6 @@ def main(argv: Sequence[str]):
         print_warning()
         print('  Using system python which is unsupported: {}'.format(path_python))
 
-    # check if data folder is empty
-    print_line('Check if data are installed')
-    if os.path.isdir(__data_dir__):
-        print_ok()
-    else:
-        print_fail()
-
     # Import matplotlib.pyplot here (before PyQt can be imported) in order to mitigate a libgcc error
     # See also: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3511#issuecomment-912167649
     import matplotlib.pyplot as plt
@@ -359,6 +357,10 @@ def main(argv: Sequence[str]):
 
         try:
             module_name, suppress_stderr = resolve_module(dep_pkg)
+            # If a module cannot be imported, then its `dep_pkg` name should be resolved to `module_name=None`
+            if module_name is None:
+                print_ok()
+                continue
             module = module_import(module_name, suppress_stderr)
             version = get_version(module)
 
@@ -441,6 +443,14 @@ def main(argv: Sequence[str]):
     except Exception as err:
         print_fail()
         print(err)
+
+    # check if data folder contains the required default depedencies
+    for dataset_name in default_datasets() + [_which_sct_binaries()]:
+        print_line(f"Check data dependency '{dataset_name}'")
+        if is_installed(dataset_name):
+            print_ok()
+        else:
+            print_fail(f" Run 'sct_download_data -d {dataset_name}' to reinstall")
 
     print('')
     sys.exit(e + install_software)

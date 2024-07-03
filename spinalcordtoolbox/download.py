@@ -37,6 +37,7 @@ DATASET_DICT = {
         ],
         "default_location": os.path.join(__sct_dir__, "data", "sct_example_data"),
         "download_type": "Datasets",
+        "default": False,
     },
     "sct_testing_data": {
         "mirrors": [
@@ -45,6 +46,7 @@ DATASET_DICT = {
         ],
         "default_location": os.path.join(__sct_dir__, "data", "sct_testing_data"),
         "download_type": "Datasets",
+        "default": False,
     },
     "sct_course_data": {
         "mirrors": [
@@ -52,6 +54,7 @@ DATASET_DICT = {
         ],
         "default_location": os.path.join(__sct_dir__, "data", "sct_course_data"),
         "download_type": "SCT Course Files",
+        "default": False,
     },
     "manual-correction": {
         "mirrors": [
@@ -59,6 +62,7 @@ DATASET_DICT = {
         ],
         "default_location": os.path.join(__sct_dir__, "data", "manual-correction"),
         "download_type": "SCT Course Files",
+        "default": False,
     },
     "PAM50": {
         "mirrors": [
@@ -67,6 +71,7 @@ DATASET_DICT = {
         ],
         "default_location": os.path.join(__sct_dir__, "data", "PAM50"),
         "download_type": "Templates",
+        "default": True,
     },
     "MNI-Poly-AMU": {
         "mirrors": [
@@ -75,6 +80,7 @@ DATASET_DICT = {
         ],
         "default_location": os.path.join(__sct_dir__, "data", "MNI-Poly-AMU"),
         "download_type": "Templates",
+        "default": False,
     },
     "binaries_linux": {
         "mirrors": [
@@ -82,6 +88,7 @@ DATASET_DICT = {
         ],
         "default_location": __bin_dir__,
         "download_type": "Binaries",
+        "default": False,  # Technically 'True', but whether to download by default is platform-dependent
     },
     "binaries_osx": {
         "mirrors": [
@@ -89,6 +96,7 @@ DATASET_DICT = {
         ],
         "default_location": __bin_dir__,
         "download_type": "Binaries",
+        "default": False,  # Technically 'True', but whether to download by default is platform-dependent
     },
     "binaries_win": {
         "mirrors": [
@@ -96,6 +104,7 @@ DATASET_DICT = {
         ],
         "default_location": __bin_dir__,
         "download_type": "Binaries",
+        "default": False,  # Technically 'True', but whether to download by default is platform-dependent
     },
     "deepseg_gm_models": {
         "mirrors": [
@@ -103,6 +112,7 @@ DATASET_DICT = {
         ],
         "default_location": os.path.join(__sct_dir__, "data", "deepseg_gm_models"),
         "download_type": "Models",
+        "default": True,
     },
     "deepseg_sc_models": {
         "mirrors": [
@@ -110,6 +120,7 @@ DATASET_DICT = {
         ],
         "default_location": os.path.join(__sct_dir__, "data", "deepseg_sc_models"),
         "download_type": "Models",
+        "default": True,
     },
     "deepseg_lesion_models": {
         "mirrors": [
@@ -117,6 +128,7 @@ DATASET_DICT = {
         ],
         "default_location": os.path.join(__sct_dir__, "data", "deepseg_lesion_models"),
         "download_type": "Models",
+        "default": True,
     },
     "exvivo_template": {
         "mirrors": [
@@ -124,6 +136,7 @@ DATASET_DICT = {
         ],
         "default_location": os.path.join(__sct_dir__, "data", "exvivo_template"),
         "download_type": "Templates",
+        "default": False,
     },
     "deepreg_models": {
         "mirrors": [
@@ -131,6 +144,7 @@ DATASET_DICT = {
         ],
         "default_location": os.path.join(__sct_dir__, "data", "deepreg_models"),
         "download_type": "Models",
+        "default": True,
     },
     "PAM50_normalized_metrics": {
         "mirrors": [
@@ -138,6 +152,7 @@ DATASET_DICT = {
         ],
         "default_location": os.path.join(__sct_dir__, "data", "PAM50_normalized_metrics"),
         "download_type": "Templates",
+        "default": True,
     },
 }
 
@@ -345,6 +360,30 @@ def install_named_dataset(dataset_name, dest_folder=None, keep=False):
     install_data(urls, dest_folder, keep)
 
 
+def default_datasets():
+    return [name_model for name_model, value in DATASET_DICT.items() if value['default']]
+
+
+def install_default_datasets(keep=False):
+    """
+    Download all default datasets and install them under SCT installation dir.
+
+    :return: None
+    """
+    for name_model in default_datasets():
+        install_named_dataset(name_model, keep=keep)
+
+
+def is_installed(dataset_name):
+    """
+    :param dataset_name: Dataset name
+    :returns: Whether the dataset is installed in $SCT_DIR.
+    :rtype: bool
+    """
+    path_dataset = DATASET_DICT[dataset_name]['default_location']
+    return os.path.exists(path_dataset) and len(os.listdir(path_dataset)) > 0
+
+
 def list_datasets():
     """
     :returns: A table listing the downloadable datasets
@@ -359,10 +398,7 @@ def list_datasets():
         download_type = DATASET_DICT[dataset_name]['download_type']
         dataset_status = dataset_name.ljust(30)
         if download_type != "Binaries":
-            path_dataset = DATASET_DICT[dataset_name]['default_location']
-            installed = (os.path.exists(path_dataset)
-                         and len(os.listdir(path_dataset)) > 0)
-            dataset_status = stylize(dataset_status, color[installed])
+            dataset_status = stylize(dataset_status, color[is_installed(dataset_name)])
         table += f"{dataset_status}{download_type:<20s}\n"
 
     table += '\nLegend: {} | {} (in the $SCT_DIR/data folder)\n\n'.format(
