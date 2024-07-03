@@ -176,7 +176,7 @@ MODELS = {
      },
     "model_seg_ms_lesion_mp2rage": {
          "url": [
-             "https://github.com/ivadomed/model_seg_ms_mp2rage/releases/download/r20240610/model_ms_lesion_mp2rage-unit1_3d.zip"
+             "https://github.com/ivadomed/model_seg_ms_mp2rage/releases/download/r20240610/nnUNetTrainer_seg_ms_lesion_mp2rage__nnUNetPlans__3d_fullres.zip"
          ],
          "description": "Segmentation of spinal cord MS lesions on MP2RAGE UNIT1 contrast",
          "contrasts": ["UNIT1"],
