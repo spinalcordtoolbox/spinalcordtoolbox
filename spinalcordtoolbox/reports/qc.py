@@ -29,7 +29,7 @@ from spinalcordtoolbox.utils.shell import display_open
 
 mpl_figure = LazyLoader("mpl_figure", globals(), "matplotlib.figure")
 mpl_axes = LazyLoader("mpl_axes", globals(), "matplotlib.axes")
-mpl_cm = LazyLoader("mpl_cm", globals(), "matplotlib.cm")
+mpl_plt = LazyLoader("mpl_plt", globals(), "matplotlib.pyplot")
 mpl_colors = LazyLoader("mpl_colors", globals(), "matplotlib.colors")
 mpl_backend_agg = LazyLoader("mpl_backend_agg", globals(), "matplotlib.backends.backend_agg")
 mpl_animation = LazyLoader("mpl_animation", globals(), "matplotlib.animation")
@@ -85,7 +85,7 @@ def assign_label_colors_by_groups(labels):
         color_list = ['#000000'] * (labels.max() - labels.min() + 1)
         # Assign a colormap to each group of labels (while sampling the colormap at different points)
         for i, label_group in enumerate(label_groups):
-            colormap = mpl_cm.get_cmap(distinct_colormaps[i % len(distinct_colormaps)])
+            colormap = mpl_plt.get_cmap(distinct_colormaps[i % len(distinct_colormaps)])
             sampled_colors = [mpl_colors.to_hex(c) for c in [colormap(n) for n in colormap_sampling]]
             # Then, assign a color to each label within the group
             for j, label in enumerate(label_group):
