@@ -269,27 +269,42 @@ def sct_deepseg(
         #        use the old qc.py method "_make_QC_image_for_3d_volumes" for generating the background img.
         # Resample images slice by slice
         scale = 1
+        radius = (15, 15)
         p_resample = {
             'human': 0.6, 'mouse': 0.1,
         }[species]
-        logger.info('Resample images to %fx%f vox', p_resample, p_resample)
         img_input = Image(fname_input).change_orientation('SAL')
-        img_input = resample_nib(
-            image=img_input,
-            new_size=[img_input.dim[4], p_resample, p_resample],
-            new_size_type='mm',
-            interpolation='spline',
-        )
-        img_seg_sc = resample_nib(
-            image=Image(fname_seg).change_orientation('SAL'),
-            image_dest=img_input,
-            interpolation='linear',
-        )
-        img_seg_lesion = resample_nib(
-            image=Image(fname_seg2).change_orientation('SAL'),
-            image_dest=img_input,
-            interpolation='linear',
-        ) if fname_seg2 else None
+        img_seg_sc = Image(fname_seg).change_orientation('SAL')
+        img_seg_lesion = Image(fname_seg2).change_orientation('SAL') if fname_seg2 else None
+        if "seg_spinal_rootlets_t2w" in argv:
+            radius = (radius[0] + 8, radius[1] + 8)  # Rootlets need a larger "base" radius as they exist outside the SC
+            # The radius size is suited to the species-specific resolutions. But, since we plan to skip
+            # resampling, we need to instead adjust the crop radius to suit the *actual* resolution.
+            p_original = img_seg_sc.dim[5]  # dim[0:3] => shape, dim[4:7] => pixdim, so dim[5] == pixdim[1]
+            radius = tuple(int(v * (p_resample / p_original)) for v in radius)
+            # If the resolution is greater than the resampling resolution, then the crop size will be smaller.
+            # To compensate for this (and ensure the QC is visually readable), we scale up the image
+            if p_original > p_resample:
+                scale = int(math.ceil(p_original / p_resample))  # e.g. 0.8mm human -> 0.8/0.6 -> 1.33x => 2x scale
+        else:
+            # Resample images slice by slice
+            logger.info('Resample images to %fx%f vox', p_resample, p_resample)
+            img_input = resample_nib(
+                image=img_input,
+                new_size=[img_input.dim[4], p_resample, p_resample],
+                new_size_type='mm',
+                interpolation='spline',
+            )
+            img_seg_sc = resample_nib(
+                image=img_seg_sc,
+                image_dest=img_input,
+                interpolation='linear',
+            )
+            img_seg_lesion = resample_nib(
+                image=img_seg_lesion,
+                image_dest=img_input,
+                interpolation='linear',
+            ) if fname_seg2 else None
 
         # Each slice is centered on the segmentation
         logger.info('Find the center of each slice')
@@ -300,9 +315,6 @@ def sct_deepseg(
             centers = np.array([center_of_mass(slice) for slice in img_seg_sc.data])
         inf_nan_fill(centers[:, 0])
         inf_nan_fill(centers[:, 1])
-
-        # Rootlets needs a larger radius as it is outside the SC
-        radius = (23, 23) if "seg_spinal_rootlets_t2w" in argv else (15, 15)
 
         # Generate the first QC report image
         img = equalize_histogram(mosaic(img_input, centers, radius, scale))
