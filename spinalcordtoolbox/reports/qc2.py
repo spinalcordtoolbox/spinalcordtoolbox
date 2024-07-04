@@ -346,7 +346,9 @@ def sct_deepseg(
             # get available labels
             img = np.rint(np.ma.masked_where(img_seg_sc.data < 1, img_seg_sc.data))
             labels = np.unique(img[np.where(~img.mask)]).astype(int)
-            colormaps = [mpl_colors.ListedColormap(assign_label_colors_by_groups(labels))]
+            # Add black as first color (to be used as a semi-transparent background)
+            # Since black == 0, but labels may start at >=2, we want to also pad the colors so that they line up.
+            colormaps = [mpl_colors.ListedColormap(["#000000"] * labels.min() + assign_label_colors_by_groups(labels))]
         else:
             colormaps = [mpl_colors.ListedColormap(["#ff0000"]),  # Red for first image
                          mpl_colors.ListedColormap(["#00ffff"])]  # Cyan for second
@@ -356,13 +358,23 @@ def sct_deepseg(
             img = mosaic(image, centers, radius, scale)
             img = np.ma.masked_less_equal(img, 0)
             img.set_fill_value(0)
-            ax.imshow(img,
-                      cmap=colormaps[i],
-                      norm=mpl_colors.Normalize(vmin=0.5, vmax=1),
-                      # img==1 -> opaque, but soft regions -> more transparent as value decreases
-                      alpha=(img / img.max()),  # scale to [0, 1]
-                      interpolation='none',
-                      aspect=1.0)
+            if "seg_spinal_rootlets_t2w" in argv:
+                alphas = img.copy()
+                alphas[alphas >= 1] = 1     # 1.0 transparency for rootlets seg
+                alphas.set_fill_value(0.5)  # 0.5 transparency for background
+                ax.imshow(img.filled(),
+                          cmap=colormaps[i],
+                          alpha=alphas.filled(),
+                          interpolation='none',
+                          aspect=1.0)
+            else:
+                ax.imshow(img,
+                          cmap=colormaps[i],
+                          norm=mpl_colors.Normalize(vmin=0.5, vmax=1),
+                          # img==1 -> opaque, but soft regions -> more transparent as value decreases
+                          alpha=(img / img.max()),  # scale to [0, 1]
+                          interpolation='none',
+                          aspect=1.0)
 
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
