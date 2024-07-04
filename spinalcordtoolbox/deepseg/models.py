@@ -341,7 +341,7 @@ TASKS = {
          'url': 'https://github.com/sct-pipeline/fmri-segmentation',
          'models': ['model_seg_sc_epi_nnunet']},
     'seg_ms_lesion_mp2rage':
-        {'description': 'Segmentation of spinal cord MS lesions on MP2RAGE UNIT1 contrast',
+        {'description': 'MS lesion segmentation on cropped MP2RAGE data',
          'long_description': 'This segmentation model for multiple sclerosis lesion segmentation on cropped MP2RAGE-UNIT1 spinal cord data. '
                              'Uses a 3D U-Net, trained with the nnUNetV2 framework. It is a single-class model outputting binary MS lesions '
                              'segmentations. Training consisted of MP2RAGE data on UNIT1 contrast at 1.0 mm3 isotropic (322 subjects from '
