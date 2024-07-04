@@ -23,6 +23,7 @@ import skimage.exposure
 from spinalcordtoolbox.centerline.core import get_centerline
 from spinalcordtoolbox.image import Image
 import spinalcordtoolbox.reports
+from spinalcordtoolbox.reports.qc import assign_label_colors_by_groups
 from spinalcordtoolbox.reports.assets._assets.py import refresh_qc_entries
 from spinalcordtoolbox.resampling import resample_nib
 from spinalcordtoolbox.utils.shell import display_open
@@ -341,8 +342,14 @@ def sct_deepseg(
         fig.set_size_inches(*size_fig, forward=True)
         mpl_backend_agg.FigureCanvasAgg(fig)
         ax = fig.add_axes((0, 0, 1, 1))
-        colormaps = [mpl_colors.ListedColormap(["#ff0000"]),  # Red for first image
-                     mpl_colors.ListedColormap(["#00ffff"])]  # Cyan for second
+        if "seg_spinal_rootlets_t2w" in argv:
+            # get available labels
+            img = np.rint(np.ma.masked_where(img_seg_sc.data < 1, img_seg_sc.data))
+            labels = np.unique(img[np.where(~img.mask)]).astype(int)
+            colormaps = [mpl_colors.ListedColormap(assign_label_colors_by_groups(labels))]
+        else:
+            colormaps = [mpl_colors.ListedColormap(["#ff0000"]),  # Red for first image
+                         mpl_colors.ListedColormap(["#00ffff"])]  # Cyan for second
         for i, image in enumerate([img_seg_sc, img_seg_lesion]):
             if not image:
                 continue
