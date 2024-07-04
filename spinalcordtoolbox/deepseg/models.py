@@ -343,16 +343,16 @@ TASKS = {
     'seg_ms_lesion_mp2rage':
         {'description': 'Segmentation of spinal cord MS lesions on MP2RAGE UNIT1 contrast',
          'long_description': 'This segmentation model for multiple sclerosis lesion segmentation on cropped MP2RAGE-UNIT1 spinal cord data. '
-                        'Uses a 3D U-Net, trained with the nnUNetV2 framework. It is a single-class model outputting binary MS lesions '
-                        'segmentations. Training consisted of MP2RAGE data on UNIT1 contrast at 1.0 mm3 isotropic (322 subjects from '
-                        '3 sites: National Institutes of Health, Bethesda, USA, University Hospital Basel and University of Basel, Basel, '
-                        'Switzerland and Center for Magnetic Resonance in Biology and Medicine, CRMBM-CEMEREM, UMR 7339, CNRS,  '
-                        'Aix-Marseille University, Marseille, France). '
-                        'To crop the data you can first segment the spinal cord using the contrast agnostic model, This could be '
-                        'done using: "sct_deepseg -i IMAGE_UNIT1 -task seg_sc_contrast_agnostic -o IMAGE_UNIT1_sc", then crop the '
-                        'IMAGE_UNIT1 image with 30 mm of dilation on axial orientation around the spinal cord. This could be done using: '
-                        '"sct_crop_image -i IMAGE_UNIT1 -m IMAGE_seg -dilate 30x30x5" . Note that 30 is only for 1mm isotropic '
-                        'resolution, for images with another resolution divide 30/your_axial_resolution.',
+                             'Uses a 3D U-Net, trained with the nnUNetV2 framework. It is a single-class model outputting binary MS lesions '
+                             'segmentations. Training consisted of MP2RAGE data on UNIT1 contrast at 1.0 mm3 isotropic (322 subjects from '
+                             '3 sites: National Institutes of Health, Bethesda, USA, University Hospital Basel and University of Basel, Basel, '
+                             'Switzerland and Center for Magnetic Resonance in Biology and Medicine, CRMBM-CEMEREM, UMR 7339, CNRS,  '
+                             'Aix-Marseille University, Marseille, France). '
+                             'To crop the data you can first segment the spinal cord using the contrast agnostic model, This could be '
+                             'done using: "sct_deepseg -i IMAGE_UNIT1 -task seg_sc_contrast_agnostic -o IMAGE_UNIT1_sc", then crop the '
+                             'IMAGE_UNIT1 image with 30 mm of dilation on axial orientation around the spinal cord. This could be done using: '
+                             '"sct_crop_image -i IMAGE_UNIT1 -m IMAGE_seg -dilate 30x30x5" . Note that 30 is only for 1mm isotropic '
+                             'resolution, for images with another resolution divide 30/your_axial_resolution.',
          'url': 'https://github.com/ivadomed/model_seg_ms_mp2rage',
          'models': ['model_seg_ms_lesion_mp2rage']},
 }
