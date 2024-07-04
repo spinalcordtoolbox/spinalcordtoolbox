@@ -268,6 +268,7 @@ def sct_deepseg(
         # FIXME: This code is more or less duplicated with the 'sct_register_multimodal' report, because both reports
         #        use the old qc.py method "_make_QC_image_for_3d_volumes" for generating the background img.
         # Resample images slice by slice
+        scale = 1
         p_resample = {
             'human': 0.6, 'mouse': 0.1,
         }[species]
@@ -304,7 +305,7 @@ def sct_deepseg(
         radius = (23, 23) if "seg_spinal_rootlets_t2w" in argv else (15, 15)
 
         # Generate the first QC report image
-        img = equalize_histogram(mosaic(img_input, centers, radius))
+        img = equalize_histogram(mosaic(img_input, centers, radius, scale))
 
         # For QC reports, axial mosaics will often have smaller height than width
         # (e.g. WxH = 20x3 slice images). So, we want to reduce the fig height to match this.
@@ -333,7 +334,7 @@ def sct_deepseg(
         for i, image in enumerate([img_seg_sc, img_seg_lesion]):
             if not image:
                 continue
-            img = mosaic(image, centers, radius)
+            img = mosaic(image, centers, radius, scale)
             img = np.ma.masked_less_equal(img, 0)
             img.set_fill_value(0)
             ax.imshow(img,
@@ -367,7 +368,7 @@ def inf_nan_fill(A: np.ndarray):
             A[valid])
 
 
-def mosaic(img: Image, centers: np.ndarray, radius: tuple[int, int] = (15, 15)):
+def mosaic(img: Image, centers: np.ndarray, radius: tuple[int, int] = (15, 15), scale: int = 1):
     """
     Arrange the slices of `img` into a grid of images.
 
@@ -377,19 +378,20 @@ def mosaic(img: Image, centers: np.ndarray, radius: tuple[int, int] = (15, 15)):
     If `img` has N slices, then `centers` should have shape (N, 2).
     """
     # Fit as many slices as possible in each row of 600 pixels
-    num_col = math.floor(600 / (2*radius[0]))
+    num_col = math.floor(600 / (2*radius[0]*scale))
 
     # Center and crop each axial slice
     cropped = []
     for center, slice in zip(centers.astype(int), img.data):
         # Add a margin before cropping, in case the center is too close to the edge
-        cropped.append(np.pad(slice, radius)[
+        # Also, use Kronecker product to scale each block in multiples
+        cropped.append(np.kron(np.pad(slice, radius)[
             center[0]:center[0] + 2*radius[0],
             center[1]:center[1] + 2*radius[1],
-        ])
+        ], np.ones((scale, scale))))
 
     # Pad the list with empty arrays, to get complete rows of num_col
-    empty = np.zeros((2*radius[0], 2*radius[1]))
+    empty = np.zeros((2*radius[0]*scale, 2*radius[1]*scale))
     cropped.extend([empty] * (-len(cropped) % num_col))
 
     # Arrange the images into a grid
