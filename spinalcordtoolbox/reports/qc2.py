@@ -317,7 +317,7 @@ def sct_deepseg(
         mpl_backend_agg.FigureCanvasAgg(fig)
         ax = fig.add_axes((0, 0, 1, 1))
         ax.imshow(img, cmap='gray', interpolation='none', aspect=1.0)
-        add_orientation_labels(ax)
+        add_orientation_labels(ax, radius=(radius[0]*scale, radius[1]*scale))
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
         img_path = str(imgs_to_generate['path_background_img'])
@@ -398,15 +398,19 @@ def mosaic(img: Image, centers: np.ndarray, radius: tuple[int, int] = (15, 15), 
     return np.block([cropped[i:i+num_col] for i in range(0, len(cropped), num_col)])
 
 
-def add_orientation_labels(ax: mpl_axes.Axes):
+def add_orientation_labels(ax: mpl_axes.Axes, radius: tuple[int, int] = (15, 15)):
     """
     Add orientation labels (A, P, L, R) to a figure, yellow with a black outline.
     """
-    for x, y, letter in [
-        (12, 6, 'A'),
-        (12, 28, 'P'),
-        (0, 18, 'L'),
-        (24, 18, 'R'),
+    # Ensure that letter locations are determined as a function of the bounding box. For a 15,15 radius (30x30):
+    #    A                    [12,  6]
+    # L     R   -->  [0, 17]            [24, 17]
+    #    P                    [12, 28]
+    for letter, x, y, in [
+        ('A', radius[0] - 3,   6),
+        ('P', radius[0] - 3,   radius[1]*2 - 2),
+        ('L', 0,               radius[1] + 2),
+        ('R', radius[0]*2 - 6, radius[1] + 2)
     ]:
         ax.text(x, y, letter, color='yellow', size=4).set_path_effects([
             mpl_patheffects.Stroke(linewidth=1, foreground='black'),
