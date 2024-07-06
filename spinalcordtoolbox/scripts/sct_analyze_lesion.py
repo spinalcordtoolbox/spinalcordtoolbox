@@ -744,6 +744,8 @@ class AnalyzeLesion:
         im_lesion_data = im_lesion.data
         p_lst = im_lesion.dim[4:7]  # voxel size
 
+        # TODO: label_lst could become self.label_lst, then we would not need to pass it as an argument to
+        #  _measure_within_im
         label_lst = [label for label in np.unique(im_lesion_data) if label]  # lesion label IDs list
 
         # Print warning if there is no lesion (label_lst is empty list)
