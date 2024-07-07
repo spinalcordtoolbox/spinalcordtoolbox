@@ -585,34 +585,44 @@ class AnalyzeLesion:
                 # If the key exists, it means that we have tissue bridges for the current lesion and sagittal slice
                 if (idx_row in self.tissue_bridges_plotting_data) and \
                         ((sagittal_slice, 'dorsal') in self.tissue_bridges_plotting_data[idx_row]):
-                    # x1_dorsal is ndarray: the indices of the lesion mask
+                    # --------------------------------------
+                    # Dorsal tissue bridge
+                    # --------------------------------------
+                    # lesion_indices_dorsal_bridge: ndarray of the indices of the lesion mask
                     # Note: we use [0] because .values returns a numpy array
-                    x1_dorsal = self.tissue_bridges_plotting_data[idx_row][sagittal_slice, 'dorsal']['lesion_indices'].values[0]
-                    # x2_dorsal: the width of the tissue bridge
-                    x2_dorsal = float(self.tissue_bridges_plotting_data[idx_row][sagittal_slice, 'dorsal']['dorsal_bridge_width'])
+                    lesion_indices_dorsal_bridge = self.tissue_bridges_plotting_data[idx_row][sagittal_slice, 'dorsal']['lesion_indices'].values[0]
+                    # Get the posterior/dorsal tip of the lesion (the first element in the lesion_indices)
+                    x_dorsal = lesion_indices_dorsal_bridge[0]
+                    # dorsal_bridge_width: the width of the tissue bridge
+                    dorsal_bridge_width = float(self.tissue_bridges_plotting_data[idx_row][sagittal_slice, 'dorsal']['dorsal_bridge_width'])
                     # y_dorsal: the axial slice with the minimum dorsal tissue bridge width
                     y_dorsal = int(self.tissue_bridges_plotting_data[idx_row][sagittal_slice, 'dorsal']['axial_slice'])
-                    axes[idx_row, idx_col].plot([x1_dorsal[0] - 1, x1_dorsal[0] - x2_dorsal], [y_dorsal] * 2, 'r--', linewidth=1)
+                    axes[idx_row, idx_col].plot([x_dorsal - dorsal_bridge_width, x_dorsal - 1], [y_dorsal] * 2, 'r--', linewidth=1)
 
-                    # x1_ventral is ndarray: the indices of the lesion mask
+                    # --------------------------------------
+                    # Ventral tissue bridge
+                    # --------------------------------------
+                    # lesion_indices_ventral_bridge: ndarray of the indices of the lesion mask
                     # Note: we use [0] because .values returns a numpy array
-                    x1_ventral = self.tissue_bridges_plotting_data[idx_row][sagittal_slice, 'ventral']['lesion_indices'].values[0]
-                    # x2_ventral: the width of the tissue bridge
-                    x2_ventral = float(self.tissue_bridges_plotting_data[idx_row][sagittal_slice, 'ventral']['ventral_bridge_width'])
+                    lesion_indices_ventral_bridge = self.tissue_bridges_plotting_data[idx_row][sagittal_slice, 'ventral']['lesion_indices'].values[0]
+                    # Get the anterior/ventral tip of the lesion (the last element in the lesion_indices)
+                    x_ventral = lesion_indices_ventral_bridge[-1]
+                    # ventral_bridge_width: the width of the tissue bridge
+                    ventral_bridge_width = float(self.tissue_bridges_plotting_data[idx_row][sagittal_slice, 'ventral']['ventral_bridge_width'])
                     # y_dorsal: the axial slice with the minimum dorsal tissue bridge width
                     y_ventral = int(self.tissue_bridges_plotting_data[idx_row][sagittal_slice, 'ventral']['axial_slice'])
-                    axes[idx_row, idx_col].plot([x1_ventral[-1] + 1, x1_ventral[-1] + x2_ventral], [y_ventral] * 2, 'r--', linewidth=1)
+                    axes[idx_row, idx_col].plot([x_ventral + 1, x_ventral + ventral_bridge_width], [y_ventral] * 2, 'r--', linewidth=1)
 
                     # --------------------------------------
                     # Add text with the width of the tissue in mm above each bridge
                     # --------------------------------------
-                    dorsal_bridge_width_mm = float(x2_dorsal * p_lst[1]) * np.cos(self.angles[y_dorsal])
-                    axes[idx_row, idx_col].text(x1_dorsal[0] - x2_dorsal / 2,
+                    dorsal_bridge_width_mm = float(dorsal_bridge_width * p_lst[1]) * np.cos(self.angles[y_dorsal])
+                    axes[idx_row, idx_col].text(x_dorsal - dorsal_bridge_width / 2,
                                                 y_dorsal + 1,
                                                 f'{np.round(dorsal_bridge_width_mm, 2)} mm',
                                                 color='red', fontsize=12, ha='right', va='bottom')
-                    ventral_bridge_width_mm = float(x2_ventral * p_lst[1]) * np.cos(self.angles[y_ventral])
-                    axes[idx_row, idx_col].text(x1_ventral[-1] + x2_ventral / 2,
+                    ventral_bridge_width_mm = float(ventral_bridge_width * p_lst[1]) * np.cos(self.angles[y_ventral])
+                    axes[idx_row, idx_col].text(x_ventral + ventral_bridge_width / 2,
                                                 y_ventral + 1,
                                                 f'{np.round(ventral_bridge_width_mm, 2)} mm',
                                                 color='red', fontsize=12, ha='left', va='bottom')
