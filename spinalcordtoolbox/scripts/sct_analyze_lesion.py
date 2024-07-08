@@ -396,7 +396,7 @@ class AnalyzeLesion:
         # Note: as the midsagittal slice is computed from the spinal cord mask, it is the same for all lesions (all idx)
         # TODO: consider whether it is necessary to print the midsagittal slice for each lesion as it is the same for
         #  all lesions. This would require moving the print statement outside the loop across lesions.
-        self.measure_pd.loc[idx, f'midsagittal_spinal_cord_slice'] = mid_sagittal_sc_slice
+        self.measure_pd.loc[idx, 'midsagittal_spinal_cord_slice'] = mid_sagittal_sc_slice
         printv('  Midsagittal slice of the spinal cord: ' + str(mid_sagittal_sc_slice), self.verbose, type='info')
 
         # --------------------------------------
@@ -634,7 +634,7 @@ class AnalyzeLesion:
 
         # Get the midsagittal slice of the spinal cord
         # Note: as the midsagittal slice is the same for all lesions, we can pick the first lesion ([0]) to get it
-        mid_sagittal_sc_slice = self.measure_pd.loc[0, f'midsagittal_spinal_cord_slice']
+        mid_sagittal_sc_slice = self.measure_pd.loc[0, 'midsagittal_spinal_cord_slice']
 
         #  Create a figure
         #  The figure has one row per lesion and one column per sagittal slice containing the lesion
