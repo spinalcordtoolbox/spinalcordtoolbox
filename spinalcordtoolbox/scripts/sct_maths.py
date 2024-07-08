@@ -639,6 +639,42 @@ def apply_erode(current_value, size, *, shape, dim):
     )
 
 
+def apply_smooth(current_value, *sigmas):
+    """Implementation for -smooth."""
+    ndims = current_value.data.ndims
+    if len(sigmas) == 1:
+        sigmas *= ndims
+    elif len(sigmas) != ndims:
+        raise SctMathsValueError(f"expected 1 or {ndims} values, got {len(sigmas)} values")
+
+    # adjust sigma based on voxel size
+    pdims = current_value.dim[4:8]
+    sigmas = [s/d for s, d in zip(sigmas, pdims)]
+
+    return Image(
+        sct_math.smooth(current_value.data, sigmas),
+        hdr=current_value.hdr,
+    )
+
+
+def apply_laplacian(current_value, *sigmas):
+    """Implementation for -laplacian."""
+    ndims = current_value.data.ndims
+    if len(sigmas) == 1:
+        sigmas *= ndims
+    elif len(sigmas) != ndims:
+        raise SctMathsValueError(f"expected 1 or {ndims} values, got {len(sigmas)} values")
+
+    # adjust sigma based on voxel size
+    pdims = current_value.dim[4:8]
+    sigmas = [s/d for s, d in zip(sigmas, pdims)]
+
+    return Image(
+        sct_math.laplacian(current_value.data, sigmas),
+        hdr=current_value.hdr,
+    )
+
+
 def apply_symmetrize(current_value, axis):
     """Implementation for -symmetrize."""
     return Image(
@@ -665,8 +701,8 @@ APPLY = {
     "uthr": apply_uthr,
     "dilate": apply_dilate,
     "erode": apply_erode,
-    "smooth": None,
-    "laplacian": None,
+    "smooth": apply_smooth,
+    "laplacian": apply_laplacian,
     "denoise": None,
     "mi": None,
     "minorm": None,
@@ -677,30 +713,6 @@ APPLY = {
 
 def apply_array_operation(data, dim, arg_name, arg_value, parser):
     dim_list = ['x', 'y', 'z', 't']
-
-    elif arg_name == "laplacian":
-        sigmas = arg_value
-        if len(sigmas) == 1:
-            sigmas = [sigmas for i in range(len(data.shape))]
-        elif len(sigmas) != len(data.shape):
-            printv(parser.error(
-                'ERROR: -laplacian need the same number of inputs as the number of image dimension OR only one input'))
-        # adjust sigma based on voxel size
-        sigmas = [sigmas[i] / dim[i + 4] for i in range(3)]
-        # smooth data
-        data_out = sct_math.laplacian(data, sigmas)
-
-    elif arg_name == "smooth":
-        sigmas = arg_value
-        if len(sigmas) == 1:
-            sigmas = [sigmas[0] for i in range(len(data.shape))]
-        elif len(sigmas) != len(data.shape):
-            printv(parser.error(
-                'ERROR: -smooth need the same number of inputs as the number of image dimension OR only one input'))
-        # adjust sigma based on voxel size
-        sigmas = [sigmas[i] / dim[i + 4] for i in range(3)]
-        # smooth data
-        data_out = sct_math.smooth(data, sigmas)
 
     elif arg_name == "denoise":
         # parse denoising arguments
