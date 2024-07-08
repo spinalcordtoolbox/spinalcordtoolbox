@@ -495,8 +495,7 @@ class AnalyzeLesion:
         :param label_lst: list, labels of the lesions (because we used label_lesion() function at the beginning of the
         script)
         """
-        # TODO: consider making the plotting optional? Or move the code below under `if self.verbose == 2`?
-        #  Or include the figure into QC report?
+        # TODO: include the figure into the QC report
 
         def _plot_dorsal_tissue_bridge():
             """
