@@ -359,6 +359,70 @@ def get_parser():
     return parser
 
 
+class SctMathsTypeError(Exception):
+    """Inappropriate argument type for an `sct_maths` operation."""
+
+
+def check_image_to_image(current_type: str, *args, **kwargs) -> str:
+    """Type checker for generic image -> image operations."""
+    if current_type != 'image':
+        raise SctMathsTypeError(f"expected image, but got {current_type}")
+    return 'image'
+
+
+def check_metric(current_type: str, fname) -> str:
+    """Type checker for similarity metrics."""
+    if current_type != 'image':
+        raise SctMathsTypeError(f"expected image, but got {current_type}")
+    return 'metric'
+
+
+def check_arithmetic(current_type: str, *args) -> str:
+    """Type checker for `-add`, `-sub`, etc."""
+    # special case for -add, -mul to operate on a 4D volume across the t axis
+    if not args:
+        return check_image_to_image(current_type)
+
+    # in the usual case, numbers can get promoted to images
+    if current_type == 'number':
+        if all(isinstance(arg, float) for arg in args):
+            return 'number'
+        else:
+            return 'image'
+    elif current_type == 'image':
+        return 'image'
+    else:
+        raise SctMathsTypeError(f"expected number or image, but got {current_type}")
+
+
+# the type-checking function for each sct_maths operation
+CHECK = {
+    "add": check_arithmetic,
+    "sub": check_arithmetic,
+    "mul": check_arithmetic,
+    "div": check_arithmetic,
+    "mean": check_image_to_image,
+    "rms": check_image_to_image,
+    "std": check_image_to_image,
+    "bin": check_image_to_image,
+    "otsu": check_image_to_image,
+    "adap": check_image_to_image,
+    "otsu_median": check_image_to_image,
+    "percent": check_image_to_image,
+    "thr": check_image_to_image,
+    "uthr": check_image_to_image,
+    "dilate": check_image_to_image,
+    "erode": check_image_to_image,
+    "smooth": check_image_to_image,
+    "laplacian": check_image_to_image,
+    "denoise": check_image_to_image,
+    "mi": check_metric,
+    "minorm": check_metric,
+    "corr": check_metric,
+    "symmetrize": check_image_to_image,
+}
+
+
 def apply_array_operation(data, dim, arg_name, arg_value, parser):
     dim_list = ['x', 'y', 'z', 't']
 
@@ -482,6 +546,21 @@ def main(argv: Sequence[str]):
     arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_loglevel(verbose=verbose)
+
+    # Check data types
+    current_type = 'number' if isinstance(arguments.i, float) else 'image'
+    for operation, args, kwargs in arguments.todo:
+        try:
+            current_type = CHECK[operation](current_type, *args, **kwargs)
+        except SctMathsTypeError as e:
+            parser.error(f"wrong type for -{operation}: {e}")
+    final_type = current_type
+    if final_type == 'number':
+        parser.error('there must be at least one image in the list of inputs')
+    elif final_type == 'metric':
+        if arguments.type is not None:
+            printv("WARNING: Output type conversion has no effect for similarity metrics, "
+                   "-type argument will be ignored.", verbose=verbose, type='warning')
 
     fname_in = arguments.i
     fname_out = arguments.o
