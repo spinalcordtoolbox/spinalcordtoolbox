@@ -53,66 +53,55 @@ def denoise_params(arg: str) -> tuple[int, int]:
     return (p, b)
 
 
-class ParseDataOrScalarArgument(argparse.Action):
+class StoreTodo(argparse.Action):
     """
-    Parses arguments that can take the following forms:
+    Store the arguments of an sct_maths operation in `arguments.todo`.
 
-    - '-arg 5'                      (Int argument)
-    - '-arg 5.0'                    (Float argument)
-    - '-arg image.nii.gz'           (Image)
-    - '-arg im1.nii.gz im2.nii.gz'  (List of images)
+    The format is: (operation name, positional args, keyword args).
     """
-    def __call__(self, parser, namespace, values, option_string=None):
-        def is_float(element):
-            try:
-                float(element)
-                return True
-            except ValueError:
-                return False
+    def ___call___(self, parser, namespace, values, option_string=None):
+        # make sure values is a list, rather than a single bare value
+        if self.nargs in [None, '?']:
+            values = [values]
 
-        # '-i' is mandatory, and the first argument in the parser, so this *should* be parsed first
-        data_in = Image(namespace.i).data
-
-        data_out = []
-        for val in values:
-            # Case 1: Argument is a float
-            if is_float(val):
-                data_out.append(np.full_like(data_in, float(val)))
-            # Case 2: If argument is not a float, assume argument is a path to an image file
-            else:
-                data = Image(val).data
-                if data.shape == data_in.shape:
-                    data_out.append(data)
-                else:
-                    parser.error(f"Dimensions of '{val}' ({data.shape}) "
-                                 f"must match input image ({data_in.shape}).")
-
-        # Make sure the custom action follows the same logic as the regular "store" action
-        store(namespace, dest=self.dest, values=data_out)
+        namespace.todo.append((self.dest, values, {}))
 
 
-def store(namespace, dest, values):
+class StoreTodoWithShapeDim(argparse.Action):
     """
-    In addition to the default behavior (storing the argument value in the `arguments` namespace),
-    we preserve the parsed arguments in an ordered list. This allows us to execute each of the `sct_maths`
-    operations in the order they were passed in, while also allowing for duplicate calls to the same argument.
+    Store the arguments of `-dilate` or `-erode` in `arguments.todo`.
+
+    These two operations are special-cased because they need the "current"
+    values of `-shape` and `-dim` to also be saved.
+
+    The format is: (operation name, positional args, keyword args).
     """
-    setattr(namespace, dest, values)    # default behavior of argparse._StoreAction.__call__
-    setattr(namespace, "ordered_args",  # store the parsed argument in a separate list of ordered args
-            getattr(namespace, "ordered_args", []) + [(dest, values)])
+    def ___call___(self, parser, namespace, values, option_string=None):
+        # make sure values is a list, rather than a single bare value
+        if self.nargs in [None, '?']:
+            values = [values]
+
+        shape = namespace.shape
+        if shape in ['disk', 'square']:
+            # 2D kernels need the value of `-dim`
+            dim = namespace.dim
+            if dim is None:
+                parser.error(f"-dim is required for -{self.dest} with 2D morphological kernel")
+        else:
+            # 3D kernels don't need `-dim`
+            dim = None
+
+        namespace.todo.append((self.dest, values, {'shape': shape, 'dim': dim}))
 
 
 def get_parser():
     parser = SCTArgumentParser(
-        description='Perform mathematical operations on images.'
+        description='Perform mathematical operations on images.',
+        argument_default=argparse.SUPPRESS,  # so that the operations to perform are only in arguments.todo
     )
 
-    # Add additional functionality to the default "store" action (used only for sct_maths' parser)
-    class StoreAction(argparse._StoreAction):
-        def __call__(self, _, namespace, values, option_string=None):
-            store(namespace, dest=self.dest, values=values)
-    parser.register("action", None, StoreAction)
-    parser.register("action", "store", StoreAction)
+    # Make sure the list of operations to perform gets initialized
+    parser.set_default('todo', [])
 
     mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
     mandatory.add_argument(
@@ -140,7 +129,7 @@ def get_parser():
         metavar='',
         nargs="*",
         type=number_or_image,
-        action=ParseDataOrScalarArgument,
+        action=StoreTodo,
         help='Add following input. Can be a number or one or more 3D/4D images (separated with space). Examples:'
              '\n  - sct_maths -i 3D.nii.gz -add 5                       (Result: 3D image with "5" added to each voxel)'
              '\n  - sct_maths -i 3D.nii.gz -add 3D_2.nii.gz             (Result: 3D image)'
@@ -156,7 +145,7 @@ def get_parser():
         metavar='',
         nargs="+",
         type=number_or_image,
-        action=ParseDataOrScalarArgument,
+        action=StoreTodo,
         help='Subtract following input. Can be a number, or one or more 3D/4D images (separated with space).',
         required=False)
     basic.add_argument(
@@ -164,7 +153,7 @@ def get_parser():
         metavar='',
         nargs="*",
         type=number_or_image,
-        action=ParseDataOrScalarArgument,
+        action=StoreTodo,
         help='Multiply by following input. Can be a number, or one or more 3D/4D images (separated with space). '
              '(See -add for examples.)',
         required=False)
@@ -173,42 +162,48 @@ def get_parser():
         metavar='',
         nargs="+",
         type=number_or_image,
-        action=ParseDataOrScalarArgument,
+        action=StoreTodo,
         help='Divide by following input. Can be a number, or one or more 3D/4D images (separated with space).',
         required=False)
     basic.add_argument(
         '-mean',
+        choices=('x', 'y', 'z', 't'),
+        action=StoreTodo,
         help='Average data across dimension.',
-        required=False,
-        choices=('x', 'y', 'z', 't'))
+        required=False)
     basic.add_argument(
         '-rms',
+        choices=('x', 'y', 'z', 't'),
+        action=StoreTodo,
         help='Compute root-mean-squared across dimension.',
-        required=False,
-        choices=('x', 'y', 'z', 't'))
+        required=False)
     basic.add_argument(
         '-std',
+        choices=('x', 'y', 'z', 't'),
+        action=StoreTodo,
         help='Compute STD across dimension.',
-        required=False,
-        choices=('x', 'y', 'z', 't'))
+        required=False)
     basic.add_argument(
         "-bin",
-        type=float,
         metavar=Metavar.float,
+        type=float,
+        action=StoreTodo,
         help='Binarize image using specified threshold. Example: 0.5',
         required=False)
 
     thresholding = parser.add_argument_group("THRESHOLDING METHODS")
     thresholding.add_argument(
         '-otsu',
-        type=int,
         metavar=Metavar.int,
+        type=int,
+        action=StoreTodo,
         help='Threshold image using Otsu algorithm (from skimage). Specify the number of bins (e.g. 16, 64, 128)',
         required=False)
     thresholding.add_argument(
         "-adap",
         metavar=Metavar.list,
         type=list_type(',', int, 2),
+        action=StoreTodo,
         help="Threshold image using Adaptive algorithm (from skimage). Provide 2 values separated by ',' that "
              "correspond to the parameters below. For example, '-adap 7,0' corresponds to a block size of 7 and an "
              "offset of 0.\n"
@@ -220,6 +215,7 @@ def get_parser():
         "-otsu-median",
         metavar=Metavar.list,
         type=list_type(',', int, 2),
+        action=StoreTodo,
         help="Threshold image using Median Otsu algorithm (from dipy). Provide 2 values separated by ',' that "
              "correspond to the parameters below. For example, '-otsu-median 3,5' corresponds to a filter size of 3 "
              "repeated over 5 iterations.\n"
@@ -228,60 +224,67 @@ def get_parser():
         required=False)
     thresholding.add_argument(
         '-percent',
-        type=int,
-        help="Threshold image using percentile of its histogram.",
         metavar=Metavar.int,
+        type=int,
+        action=StoreTodo,
+        help="Threshold image using percentile of its histogram.",
         required=False)
     thresholding.add_argument(
         "-thr",
-        type=float,
-        help='Lower threshold limit (zero below number).',
         metavar=Metavar.float,
+        type=float,
+        action=StoreTodo,
+        help='Lower threshold limit (zero below number).',
         required=False)
     thresholding.add_argument(
         "-uthr",
-        type=float,
-        help='Upper threshold limit (zero above number).',
         metavar=Metavar.float,
+        type=float,
+        action=StoreTodo,
+        help='Upper threshold limit (zero above number).',
         required=False)
 
     mathematical = parser.add_argument_group("MATHEMATICAL MORPHOLOGY")
     mathematical.add_argument(
         '-dilate',
-        type=int,
         metavar=Metavar.int,
+        type=int,
+        action=StoreTodoWithShapeDim,
         help="Dilate binary or greyscale image with specified size. If shape={'square', 'cube'}: size corresponds to the length of "
              "an edge (size=1 has no effect). If shape={'disk', 'ball'}: size corresponds to the radius, not including "
              "the center element (size=0 has no effect).",
         required=False)
     mathematical.add_argument(
         '-erode',
-        type=int,
         metavar=Metavar.int,
+        type=int,
+        action=StoreTodoWithShapeDim,
         help="Erode binary or greyscale image with specified size. If shape={'square', 'cube'}: size corresponds to the length of "
              "an edge (size=1 has no effect). If shape={'disk', 'ball'}: size corresponds to the radius, not including "
              "the center element (size=0 has no effect).",
         required=False)
     mathematical.add_argument(
         '-shape',
+        choices=('square', 'cube', 'disk', 'ball'),
+        default='ball',
         help="Shape of the structuring element for the mathematical morphology operation. Default: ball.\n"
              "If a 2D shape {'disk', 'square'} is selected, -dim must be specified.",
-        required=False,
-        choices=('square', 'cube', 'disk', 'ball'),
-        default='ball')
+        required=False)
     mathematical.add_argument(
         '-dim',
         type=int,
+        choices=(0, 1, 2),
+        default=None,  # needed because argument_default=argparse.SUPPRESS
         help="Dimension of the array which 2D structural element will be orthogonal to. For example, if you wish to "
              "apply a 2D disk kernel in the X-Y plane, leaving Z unaffected, parameters will be: shape=disk, dim=2.",
-        required=False,
-        choices=(0, 1, 2))
+        required=False)
 
     filtering = parser.add_argument_group("FILTERING METHODS")
     filtering.add_argument(
         "-smooth",
         metavar=Metavar.list,
         type=list_type(',', float),
+        action=StoreTodo,
         help='Gaussian smoothing filtering. Supply values for standard deviations in mm. If a single value is provided, '
              'it will be applied to each axis of the image. If multiple values are provided, there must be one value '
              'per image axis. (Examples: "-smooth 2.0,3.0,2.0" (3D image), "-smooth 2.0" (any-D image)).',
@@ -290,6 +293,7 @@ def get_parser():
         '-laplacian',
         metavar=Metavar.list,
         type=list_type(',', float),
+        action=StoreTodo,
         help='Laplacian filtering. Supply values for standard deviations in mm. If a single value is provided, it will '
              'be applied to each axis of the image. If multiple values are provided, there must be one value per '
              'image axis. (Examples: "-laplacian 2.0,3.0,2.0" (3D image), "-laplacian 2.0" (any-D image)).',
@@ -297,6 +301,7 @@ def get_parser():
     filtering.add_argument(
         '-denoise',
         type=denoise_params,
+        action=StoreTodo,
         help='Non-local means adaptative denoising from P. Coupe et al. as implemented in dipy. Separate with "," Example: p=1,b=3\n'
              ' p: (patch radius) similar patches in the non-local means are searched for locally, inside a cube of side 2*p+1 centered at each voxel of interest. Default: p=1\n'
              ' b: (block radius) the size of the block to be used (2*b+1) in the blockwise non-local means implementation. Default: b=5 '
@@ -308,34 +313,39 @@ def get_parser():
     similarity.add_argument(
         '-mi',
         metavar=Metavar.file,
+        action=StoreTodo,
         help='Compute the mutual information (MI) between both input files (-i and -mi) as in: '
              'https://scikit-learn.org/stable/modules/generated/sklearn.metrics.mutual_info_score.html',
         required=False)
     similarity.add_argument(
         '-minorm',
         metavar=Metavar.file,
+        action=StoreTodo,
         help='Compute the normalized mutual information (MI) between both input files (-i and -mi) as in: '
              'https://scikit-learn.org/stable/modules/generated/sklearn.metrics.normalized_mutual_info_score.html',
         required=False)
     similarity.add_argument(
         '-corr',
         metavar=Metavar.file,
-        help='Compute the cross correlation (CC) between both input files (-i and -cc).',
+        action=StoreTodo,
+        help='Compute the cross correlation (CC) between both input files (-i and -corr).',
         required=False)
 
     misc = parser.add_argument_group("MISC")
     misc.add_argument(
         '-symmetrize',
         type=int,
+        choices=(0, 1, 2),
+        action=StoreTodo,
         help='Symmetrize data along the specified dimension.',
-        required=False,
-        choices=(0, 1, 2))
+        required=False)
     misc.add_argument(
         '-type',
-        required=False,
+        choices=('uint8', 'int16', 'int32', 'float32', 'complex64', 'float64',
+                 'int8', 'uint16', 'uint32', 'int64', 'uint64'),
+        default=None,  # needed because argument_default=argparse.SUPPRESS
         help='Output type.',
-        choices=('uint8', 'int16', 'int32', 'float32', 'complex64', 'float64', 'int8', 'uint16', 'uint32', 'int64',
-                 'uint64'))
+        required=False)
     optional.add_argument(
         '-v',
         metavar=Metavar.int,
@@ -343,7 +353,8 @@ def get_parser():
         choices=[0, 1, 2],
         default=1,
         # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
+        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode",
+        required=False)
 
     return parser
 
