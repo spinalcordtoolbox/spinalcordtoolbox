@@ -750,6 +750,16 @@ def main(argv: Sequence[str]):
         except SctMathsValueError as e:
             printv(f"ERROR: -{operation}: {e}", 1, 'error')
 
+    # Post-processing of the results
+    if final_type == 'image':
+        current_value.save(arguments.o, dtype=arguments.type)
+        display_viewer_syntax([arguments.o], verbose=verbose)
+    else:
+        assert final_type == 'metric'
+        img1, img2, metric, metric_full = current_value
+        compute_similarity(img1, img2, arguments.o, metric, metric_full, verbose)
+        printv(f"\nDone! File created: {arguments.o}", verbose, 'info')
+
     fname_in = arguments.i
     fname_out = arguments.o
     output_type = arguments.type
@@ -774,18 +784,6 @@ def main(argv: Sequence[str]):
             im_2 = Image(arguments.corr)
             compute_similarity(im, im_2, fname_out, metric='corr', metric_full='Pearson correlation coefficient',
                                verbose=verbose)
-
-        printv('\nDone! File created: ' + fname_out, verbose, 'info')
-
-    # Case 2: One or more array operations (array_in -> array_out)
-    else:
-        # Write output
-        nii_out = Image(fname_in)  # use header of input file
-        nii_out.data = data_intermediate
-        nii_out.save(fname_out, dtype=output_type)
-
-        # display message
-        display_viewer_syntax([fname_out], verbose=verbose)
 
 
 def compute_similarity(img1: Image, img2: Image, fname_out: str, metric: str, metric_full: str, verbose):
