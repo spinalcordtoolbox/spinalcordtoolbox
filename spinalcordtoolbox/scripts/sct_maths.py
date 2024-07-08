@@ -538,15 +538,44 @@ def apply_div(current_value, *args):
         )
 
 
+def apply_mean(current_value, dim):
+    """Implementation for -mean."""
+    if current_value.data.ndim == 3 and dim == 't':
+        return current_value
+    return Image(
+        np.mean(current_value.data, ('x', 'y', 'z', 't').index(dim)),
+        hdr=current_value.hdr,
+    )
+
+
+def apply_rms(current_value, dim):
+    """Implementation for -rms."""
+    data = current_value.data.astype(float)
+    if current_value.data.ndim == 3 and dim == 't':
+        rms = np.abs(data)
+    else:
+        axis = ('x', 'y', 'z', 't').index(dim)
+        rms = np.sqrt(np.mean(np.square(data), axis))
+    return Image(rms, hdr=current_value.hdr)
+
+
+def apply_std(current_value, dim):
+    """Implementation for -std."""
+    return Image(
+        np.std(current_value.data, ('x', 'y', 'z', 't').index(dim), ddof=1),
+        hdr=current_value.hdr,
+    )
+
+
 # the implementation function for each sct_maths operation
 APPLY = {
     "add": apply_add,
     "sub": apply_sub,
     "mul": apply_mul,
     "div": apply_div,
-    "mean": None,
-    "rms": None,
-    "std": None,
+    "mean": apply_mean,
+    "rms": apply_rms,
+    "std": apply_std,
     "bin": None,
     "otsu": None,
     "adap": None,
@@ -601,24 +630,6 @@ def apply_array_operation(data, dim, arg_name, arg_value, parser):
         sigmas = [sigmas[i] / dim[i + 4] for i in range(3)]
         # smooth data
         data_out = sct_math.laplacian(data, sigmas)
-
-    elif arg_name == "mean":
-        dim = dim_list.index(arg_value)
-        if dim + 1 > len(np.shape(data)):  # in case input volume is 3d and dim=t
-            data = data[..., np.newaxis]
-        data_out = np.mean(data, dim)
-
-    elif arg_name == "rms":
-        dim = dim_list.index(arg_value)
-        if dim + 1 > len(np.shape(data)):  # in case input volume is 3d and dim=t
-            data = data[..., np.newaxis]
-        data_out = np.sqrt(np.mean(np.square(data.astype(float)), dim))
-
-    elif arg_name == "std":
-        dim = dim_list.index(arg_value)
-        if dim + 1 > len(np.shape(data)):  # in case input volume is 3d and dim=t
-            data = data[..., np.newaxis]
-        data_out = np.std(data, dim, ddof=1)
 
     elif arg_name == "smooth":
         sigmas = arg_value
