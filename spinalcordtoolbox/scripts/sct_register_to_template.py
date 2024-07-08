@@ -18,7 +18,7 @@ import numpy as np
 
 from spinalcordtoolbox.registration.core import register_wrapper
 from spinalcordtoolbox.registration.algorithms import Paramreg, ParamregMultiStep
-from spinalcordtoolbox.registration.labeling import (add_orthogonal_label, check_labels,
+from spinalcordtoolbox.registration.labeling import (add_dummy_orthogonal_labels, check_labels,
                                                      project_labels_on_spinalcord, resample_labels)
 from spinalcordtoolbox.registration.landmarks import register_landmarks
 
@@ -32,8 +32,7 @@ from spinalcordtoolbox.utils.fs import (copy, extract_fname, check_file_exist, r
                                         cache_save, cache_signature, cache_valid, tmp_create)
 from spinalcordtoolbox.utils.shell import (SCTArgumentParser, ActionCreateFolder, Metavar, list_type,
                                            printv, display_viewer_syntax)
-from spinalcordtoolbox.utils.sys import set_loglevel, init_sct, run_proc
-from spinalcordtoolbox.utils.sys import __data_dir__
+from spinalcordtoolbox.utils.sys import set_loglevel, init_sct, run_proc, __data_dir__, __version__
 import spinalcordtoolbox.image as msct_image
 import spinalcordtoolbox.labels as sct_labels
 from spinalcordtoolbox.scripts import sct_apply_transfo, sct_resample
@@ -56,7 +55,7 @@ class Param:
 
 # get default parameters
 # Note: step0 is used as pre-registration
-step0 = Paramreg(step='0', type='label', dof='Tx_Ty_Tz_Sz')  # if ref=template, we only need translations and z-scaling because the cord is already straight
+step0 = Paramreg(step='0', type='label', dof='Tx_Ty_Tz_Rx_Ry_Rz_Sz')  # affine, requires 3 orthogonal labels
 step1 = Paramreg(step='1', type='imseg', algo='centermassrot', rot_method='pcahog')
 step2 = Paramreg(step='2', type='seg', algo='bsplinesyn', metric='MeanSquares', iter='3', smooth='1', slicewise='0')
 paramregmulti = ParamregMultiStep([step0, step1, step2])
@@ -334,16 +333,11 @@ def main(argv: Sequence[str]):
     if arguments.param is not None:
         # reset parameters but keep step=0 (might be overwritten if user specified step=0)
         paramregmulti = ParamregMultiStep([step0])
-        if ref == 'subject':
-            paramregmulti.steps['0'].dof = 'Tx_Ty_Tz_Rx_Ry_Rz_Sz'
         # add user parameters
         for paramStep in arguments.param:
             paramregmulti.addStep(paramStep)
     else:
         paramregmulti = ParamregMultiStep([step0, step1, step2])
-        # if ref=subject, initialize registration using different affine parameters
-        if ref == 'subject':
-            paramregmulti.steps['0'].dof = 'Tx_Ty_Tz_Rx_Ry_Rz_Sz'
 
     # initialize other parameters
     zsubsample = param.zsubsample
@@ -532,6 +526,7 @@ def main(argv: Sequence[str]):
             ]
         cache_sig = cache_signature(
             input_files=cache_input_files,
+            input_params={"version": __version__},
         )
         if (cache_valid(os.path.join(curdir, "straightening.cache"), cache_sig)
                 and os.path.isfile(fn_warp_curve2straight)
@@ -613,7 +608,10 @@ def main(argv: Sequence[str]):
                     f"are within the ROI of the spinal cord segmentation.", type='error'
                 )
 
-            # Compute rigid transformation straight landmarks --> template landmarks
+            # Add a dummy label, because at least 3 orthogonal labels are required to estimate an affine transformation.
+            add_dummy_orthogonal_labels(Image(ftmp_label), Image(ftmp_template_label))
+
+            # Compute affine transformation straight landmarks --> template landmarks
             printv('\nEstimate transformation for step #0...', verbose)
             try:
                 register_landmarks(ftmp_label, ftmp_template_label, paramregmulti.steps['0'].dof,
@@ -764,12 +762,7 @@ def main(argv: Sequence[str]):
         sct_labels.remove_missing_labels(Image(ftmp_template_label), Image(ftmp_label)).save(path=ftmp_template_label)
 
         # Add a dummy label, because at least 3 orthogonal labels are required to estimate an affine transformation.
-        # -> Pick a dummy label between [1, 127] that doesn't clash with the existing label values.
-        existing_label_vals = {coord.value for coord in img_tmp_label.getNonZeroCoordinates()}
-        positive_int8_vals = set(range(1, 128))
-        dummy_label = max(positive_int8_vals - existing_label_vals)  # Should be 127 in 99.99% of cases
-        add_orthogonal_label(ftmp_label, new_label_value=dummy_label)
-        add_orthogonal_label(ftmp_template_label, new_label_value=dummy_label)
+        add_dummy_orthogonal_labels(Image(ftmp_label), Image(ftmp_template_label))
 
         # Set the angle of the template orientation to 0 (source image)
         for key in list(paramregmulti.steps.keys()):

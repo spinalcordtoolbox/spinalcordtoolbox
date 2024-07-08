@@ -12,7 +12,7 @@ from dynamic_network_architectures.initialization.weight_init import init_last_b
 from monai.data import Dataset, DataLoader, decollate_batch
 from monai.transforms import (Compose, EnsureTyped, Invertd, Spacingd,
                               LoadImaged, NormalizeIntensityd, EnsureChannelFirstd,
-                              DivisiblePadd, Orientationd, ResizeWithPadOrCropd)
+                              DivisiblePadd, Orientationd, ResizeWithPadOrCropd, ThresholdIntensityd)
 
 # NNUNET global params
 INIT_FILTERS = 32
@@ -155,6 +155,11 @@ def prepare_data(path_image, crop_size=(64, 160, 320)):
                 orig_keys=["image"],
                 meta_keys=["pred_meta_dict"],
                 nearest_interp=False, to_tensor=True),
+        # The output softseg includes garbage low-intensity values around ~0.0, so we filter them with thresholding
+        ThresholdIntensityd(keys=["pred"], threshold=0.1),
+        # With spline interpolation, resampled softsegs can end up with values >1.0, so clip to 1.0.
+        # TODO: Replace with bilinear once https://github.com/Project-MONAI/MONAI/issues/7836 is solved.
+        ThresholdIntensityd(keys=["pred"], threshold=1.0, above=False, cval=1.0)
     ])
     test_ds = Dataset(data=[{"image": path_image}], transform=transforms_test)
     test_loader = DataLoader(test_ds, batch_size=1, shuffle=False, num_workers=8, pin_memory=True)

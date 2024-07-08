@@ -1,2 +1,2 @@
 Timestamp,SCT Version,Filename,Slice (I->S),VertLevel,DistancePMJ,Label,Size [vox],MAP(),STD()
-"2024-06-05 13:59:08","git-mgp/straighten-48694d5e7bcb19513a666993d550f43db1b99afe","/home/mguaypaq/neuropoly/spinalcordtoolbox/data/sct_example_data/mt/mtr.nii.gz","4:17","2:5","","white matter",984.0806602870925,54.409838390430586,4.871310263754723
+"2024-06-18 16:05:44","git-jca/4527-register-template-step0-26015605a80d65a04f1df7cdd8f599725a5c9d94*","/home/joshua/repos/spinalcordtoolbox/data/sct_example_data/mt/mtr.nii.gz","4:17","2:5","","white matter",981.2495735973243,54.43385545448296,4.839705676930072

@@ -585,7 +585,9 @@ class QcReport:
         logger.debug('Description file: %s', self.qc_results)
 
         # Use a mutex on a hash of the QC path, so that we use a unique mutex per target QC report
-        with mutex(f"sct_qc-{os.path.basename(path_qc)}-{md5(self.path_qc.encode('utf-8')).hexdigest()}"):
+        realpath = os.path.realpath(path_qc)
+        basename = os.path.basename(realpath)
+        with mutex(f"sct_qc-{basename}-{md5(realpath.encode('utf-8')).hexdigest()}"):
             # results = []
             # Create path to store json files
             path_json, _ = os.path.split(self.qc_results)

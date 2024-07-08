@@ -8,6 +8,7 @@ from torch.serialization import SourceChangeWarning
 
 import spinalcordtoolbox as sct
 from spinalcordtoolbox.image import Image, compute_dice, add_suffix, check_image_kind
+from spinalcordtoolbox.math import binarize
 from spinalcordtoolbox.utils.sys import sct_test_path
 import spinalcordtoolbox.deepseg.models
 
@@ -55,10 +56,9 @@ def test_model_dict():
      None),
 
 ])
-def test_segment_nifti(fname_image, fname_seg_manual, fname_out, task, thr,
-                       tmp_path):
+def test_segment_nifti_binary_seg(fname_image, fname_seg_manual, fname_out, task, thr, tmp_path):
     """
-    Uses the locally-installed sct_testing_data
+    Test binary output (produced using values other than `-thr 0`) with sct_deepseg postprocessing CLI arguments.
     """
     # Ignore warnings from ivadomed model source code changing
     warnings.filterwarnings("ignore", category=SourceChangeWarning)
@@ -86,6 +86,48 @@ def test_segment_nifti(fname_image, fname_seg_manual, fname_out, task, thr,
             detected_labels = {coord.value for coord in im_seg.getCoordinatesAveragedByValue()}
             for label in expected_labels:
                 assert label in detected_labels
+
+
+@pytest.mark.parametrize('fname_image, fname_seg_manual, fname_out, task, thr', [
+    (sct_test_path('t2', 't2.nii.gz'),
+     sct_test_path('t2', 't2_seg-manual.nii.gz'),
+     't2_seg_deepseg.nii.gz',
+     'seg_sc_contrast_agnostic',
+     0),
+])
+def test_segment_nifti_softseg(fname_image, fname_seg_manual, fname_out, task, thr, tmp_path):
+    """
+    Test soft output (produced using `-thr 0`) with sct_deepseg postprocessing CLI arguments.
+    """
+    # Ignore warnings from ivadomed model source code changing
+    warnings.filterwarnings("ignore", category=SourceChangeWarning)
+    fname_out = str(tmp_path/fname_out)  # tmp_path for automatic cleanup
+    sct_deepseg.main(argv=['-i', fname_image, '-task', task, '-o', fname_out, '-qc', str(tmp_path/'qc'),
+                           '-thr', str(thr), '-largest', '1', '-remove-small', '5mm3'])
+    # Make sure output file exists
+    assert os.path.isfile(fname_out)
+    # Compare with ground-truth segmentation if provided
+    if fname_seg_manual:
+        im_seg = Image(fname_out)
+        im_seg_manual = Image(fname_seg_manual)
+        output_type = check_image_kind(im_seg)
+        assert output_type == 'softseg'
+        im_seg.data = binarize(im_seg.data, bin_thr=0.5)
+        dice_segmentation = compute_dice(im_seg, im_seg_manual, mode='3d', zboundaries=False)
+        assert dice_segmentation > 0.95
+
+
+def test_segment_nifti_softseg_error_with_fill_holes(tmp_path):
+    """
+    Test soft output (produced using `-thr 0`) throws error when used with `-fill-holes 1'
+    """
+    # Ignore warnings from ivadomed model source code changing
+    warnings.filterwarnings("ignore", category=SourceChangeWarning)
+    fname_out = str(tmp_path/'t2_seg_deepseg.nii.gz')  # tmp_path for automatic cleanup
+    with pytest.raises(AssertionError):
+        sct_deepseg.main(argv=['-i', sct_test_path('t2', 't2.nii.gz'), '-task', 'seg_sc_contrast_agnostic',
+                               '-o', fname_out, '-qc', str(tmp_path/'qc'),
+                               '-thr', '0', '-fill-holes', '1'])
 
 
 @pytest.mark.parametrize('fname_image, fnames_seg_manual, fname_out, suffixes, task, thr', [
