@@ -253,14 +253,17 @@ class ActionCreateFolder(argparse.Action):
         setattr(namespace, self.dest, folders)
 
 
-def list_type(delimiter, subtype):
+def list_type(delimiter, subtype, length=None):
     """
         Factory function that returns a list parsing function, which can be
         used with argparse's `type` option. This allows for more complex type
         parsing, and preserves the behavior of the old msct_parser.
     """
     def list_typecast_func(string):
-        return [subtype(v) for v in string.split(delimiter)]
+        vals = [subtype(v) for v in string.split(delimiter)]
+        if length is not None and len(vals) != length:
+            raise ValueError(f"expected {length} values, got {len(vals)} values")
+        return vals
 
     return list_typecast_func
 

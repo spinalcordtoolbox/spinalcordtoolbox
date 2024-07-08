@@ -9,7 +9,7 @@ import sys
 import pickle
 import gzip
 import argparse
-from typing import Sequence
+from typing import Sequence, Union
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -19,6 +19,38 @@ from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, list_type, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 from spinalcordtoolbox.utils.fs import extract_fname
+
+
+def number_or_image(arg: str) -> Union[float, str]:
+    """
+    Parse an argument as either a number or an image file name.
+
+    Can be used as the `type` argument to `parser.add_argument`.
+
+    Examples:
+    - '-arg 5'             (int argument, converted to float)
+    - '-arg 5.0'           (float argument)
+    - '-arg image.nii.gz'  (image file name)
+    """
+    try:
+        return float(arg)
+    except ValueError:
+        return arg
+
+
+def denoise_params(arg: str) -> tuple[int, int]:
+    """
+    Parse the argument for `-denoise` into a pair (patch radius, block radius).
+
+    Any sub-arguments that don't start with "p=" or "b=" are silently ignored.
+    """
+    p, b = 1, 5  # defaults
+    for sub_arg in arg.split(","):
+        if sub_arg.startswith("p="):
+            p = int(sub_arg[2:])
+        elif sub_arg.startswith("b="):
+            b = int(sub_arg[2:])
+    return (p, b)
 
 
 class ParseDataOrScalarArgument(argparse.Action):
@@ -86,6 +118,7 @@ def get_parser():
     mandatory.add_argument(
         "-i",
         metavar=Metavar.file,
+        type=number_or_image,
         help="Input file. Example: data.nii.gz",
         required=True)
     mandatory.add_argument(
@@ -106,6 +139,7 @@ def get_parser():
         "-add",
         metavar='',
         nargs="*",
+        type=number_or_image,
         action=ParseDataOrScalarArgument,
         help='Add following input. Can be a number or one or more 3D/4D images (separated with space). Examples:'
              '\n  - sct_maths -i 3D.nii.gz -add 5                       (Result: 3D image with "5" added to each voxel)'
@@ -121,6 +155,7 @@ def get_parser():
         "-sub",
         metavar='',
         nargs="+",
+        type=number_or_image,
         action=ParseDataOrScalarArgument,
         help='Subtract following input. Can be a number, or one or more 3D/4D images (separated with space).',
         required=False)
@@ -128,6 +163,7 @@ def get_parser():
         "-mul",
         metavar='',
         nargs="*",
+        type=number_or_image,
         action=ParseDataOrScalarArgument,
         help='Multiply by following input. Can be a number, or one or more 3D/4D images (separated with space). '
              '(See -add for examples.)',
@@ -136,6 +172,7 @@ def get_parser():
         "-div",
         metavar='',
         nargs="+",
+        type=number_or_image,
         action=ParseDataOrScalarArgument,
         help='Divide by following input. Can be a number, or one or more 3D/4D images (separated with space).',
         required=False)
@@ -171,7 +208,7 @@ def get_parser():
     thresholding.add_argument(
         "-adap",
         metavar=Metavar.list,
-        type=list_type(',', int),
+        type=list_type(',', int, 2),
         help="Threshold image using Adaptive algorithm (from skimage). Provide 2 values separated by ',' that "
              "correspond to the parameters below. For example, '-adap 7,0' corresponds to a block size of 7 and an "
              "offset of 0.\n"
@@ -182,7 +219,7 @@ def get_parser():
     thresholding.add_argument(
         "-otsu-median",
         metavar=Metavar.list,
-        type=list_type(',', int),
+        type=list_type(',', int, 2),
         help="Threshold image using Median Otsu algorithm (from dipy). Provide 2 values separated by ',' that "
              "correspond to the parameters below. For example, '-otsu-median 3,5' corresponds to a filter size of 3 "
              "repeated over 5 iterations.\n"
@@ -259,7 +296,8 @@ def get_parser():
         required=False)
     filtering.add_argument(
         '-denoise',
-        help='Non-local means adaptative denoising from P. Coupe et al. as implemented in dipy. Separate with ". Example: p=1,b=3\n'
+        type=denoise_params,
+        help='Non-local means adaptative denoising from P. Coupe et al. as implemented in dipy. Separate with "," Example: p=1,b=3\n'
              ' p: (patch radius) similar patches in the non-local means are searched for locally, inside a cube of side 2*p+1 centered at each voxel of interest. Default: p=1\n'
              ' b: (block radius) the size of the block to be used (2*b+1) in the blockwise non-local means implementation. Default: b=5 '
              '    Note, block radius must be smaller than the smaller image dimension: default value is lowered for small images)\n'
