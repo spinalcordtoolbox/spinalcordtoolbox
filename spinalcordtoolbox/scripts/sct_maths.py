@@ -623,6 +623,22 @@ def apply_uthr(current_value, threshold):
     )
 
 
+def apply_dilate(current_value, size, *, shape, dim):
+    """Implementation for -dilate."""
+    return Image(
+        sct_math.dilate(current_value.data, size=size, shape=shape, dim=dim),
+        hdr=current_value.hdr,
+    )
+
+
+def apply_erode(current_value, size, *, shape, dim):
+    """Implementation for -erode."""
+    return Image(
+        sct_math.erode(current_value.data, size=size, shape=shape, dim=dim),
+        hdr=current_value.hdr,
+    )
+
+
 def apply_symmetrize(current_value, axis):
     """Implementation for -symmetrize."""
     return Image(
@@ -647,8 +663,8 @@ APPLY = {
     "percent": apply_percent,
     "thr": apply_thr,
     "uthr": apply_uthr,
-    "dilate": None,
-    "erode": None,
+    "dilate": apply_dilate,
+    "erode": apply_erode,
     "smooth": None,
     "laplacian": None,
     "denoise": None,
@@ -685,16 +701,6 @@ def apply_array_operation(data, dim, arg_name, arg_value, parser):
         sigmas = [sigmas[i] / dim[i + 4] for i in range(3)]
         # smooth data
         data_out = sct_math.smooth(data, sigmas)
-
-    elif arg_name == "dilate":
-        if arg_value[1] in ['disk', 'square'] and arg_value[2] is None:
-            printv(parser.error('ERROR: -dim is required for -dilate with 2D morphological kernel'))
-        data_out = sct_math.dilate(data, size=arg_value[0], shape=arg_value[1], dim=arg_value[2])
-
-    elif arg_name == "erode":
-        if arg_value[1] in ['disk', 'square'] and arg_value[2] is None:
-            printv(parser.error('ERROR: -dim is required for -erode with 2D morphological kernel'))
-        data_out = sct_math.erode(data, size=arg_value[0], shape=arg_value[1], dim=arg_value[2])
 
     elif arg_name == "denoise":
         # parse denoising arguments
