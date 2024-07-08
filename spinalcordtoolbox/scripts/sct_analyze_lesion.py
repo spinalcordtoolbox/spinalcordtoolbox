@@ -535,9 +535,9 @@ class AnalyzeLesion:
 
             # Add text with the width of the tissue in mm above each bridge
             dorsal_bridge_width_mm = float(dorsal_bridge_width * p_lst[1]) * np.cos(self.angles[y_dorsal])
-            axes[idx_row, idx_col].text(x_dorsal - dorsal_bridge_width / 2,
-                                        y_dorsal + 1,
-                                        f'{np.round(dorsal_bridge_width_mm, 2)} mm',
+            axes[idx_row, idx_col].text(x_dorsal - 3,
+                                        y_dorsal,
+                                        f'Dorsal bridge\n{np.round(dorsal_bridge_width_mm, 2)} mm',
                                         color='red', fontsize=12, ha='right', va='bottom')
 
         def _plot_ventral_tissue_bridge():
@@ -577,9 +577,9 @@ class AnalyzeLesion:
 
             # Add text with the width of the tissue in mm above each bridge
             ventral_bridge_width_mm = float(ventral_bridge_width * p_lst[1]) * np.cos(self.angles[y_ventral])
-            axes[idx_row, idx_col].text(x_ventral + ventral_bridge_width / 2,
-                                        y_ventral + 1,
-                                        f'{np.round(ventral_bridge_width_mm, 2)} mm',
+            axes[idx_row, idx_col].text(x_ventral + 3,
+                                        y_ventral,
+                                        f'Ventral bridge\n{np.round(ventral_bridge_width_mm, 2)} mm',
                                         color='red', fontsize=12, ha='left', va='bottom')
 
         # Load the spinal cord segmentation mask
