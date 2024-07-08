@@ -675,6 +675,14 @@ def apply_laplacian(current_value, *sigmas):
     )
 
 
+def apply_denoise(current_value, patch_radius, block_radius):
+    """Implementation for -denoise."""
+    return Image(
+        sct_math.denoise_nlmeans(current_value.data, patch_radius, block_radius),
+        hdr=current_value.hdr,
+    )
+
+
 def apply_symmetrize(current_value, axis):
     """Implementation for -symmetrize."""
     return Image(
@@ -703,29 +711,12 @@ APPLY = {
     "erode": apply_erode,
     "smooth": apply_smooth,
     "laplacian": apply_laplacian,
-    "denoise": None,
+    "denoise": apply_denoise,
     "mi": None,
     "minorm": None,
     "corr": None,
     "symmetrize": apply_symmetrize,
 }
-
-
-def apply_array_operation(data, dim, arg_name, arg_value, parser):
-    dim_list = ['x', 'y', 'z', 't']
-
-    elif arg_name == "denoise":
-        # parse denoising arguments
-        p, b = 1, 5  # default arguments
-        list_denoise = arg_value.split(",")
-        for i in list_denoise:
-            if 'p' in i:
-                p = int(i.split('=')[1])
-            if 'b' in i:
-                b = int(i.split('=')[1])
-        data_out = sct_math.denoise_nlmeans(data, patch_radius=p, block_radius=b)
-
-    return data_out
 
 
 # MAIN
