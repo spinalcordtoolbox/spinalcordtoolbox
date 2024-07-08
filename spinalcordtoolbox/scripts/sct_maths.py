@@ -423,6 +423,38 @@ CHECK = {
 }
 
 
+class SctMathsValueError(Exception):
+    """Inappropriate argument value for an `sct_maths` operation."""
+
+
+# the implementation function for each sct_maths operation
+APPLY = {
+    "add": None,
+    "sub": None,
+    "mul": None,
+    "div": None,
+    "mean": None,
+    "rms": None,
+    "std": None,
+    "bin": None,
+    "otsu": None,
+    "adap": None,
+    "otsu_median": None,
+    "percent": None,
+    "thr": None,
+    "uthr": None,
+    "dilate": None,
+    "erode": None,
+    "smooth": None,
+    "laplacian": None,
+    "denoise": None,
+    "mi": None,
+    "minorm": None,
+    "corr": None,
+    "symmetrize": None,
+}
+
+
 def apply_array_operation(data, dim, arg_name, arg_value, parser):
     dim_list = ['x', 'y', 'z', 't']
 
@@ -562,18 +594,17 @@ def main(argv: Sequence[str]):
             printv("WARNING: Output type conversion has no effect for similarity metrics, "
                    "-type argument will be ignored.", verbose=verbose, type='warning')
 
+    # Actually do the computations
+    current_value = arguments.i if isinstance(arguments.i, float) else Image(arguments.i)
+    for operation, args, kwargs in arguments.todo:
+        try:
+            current_value = APPLY[operation](current_value, *args, **kwargs)
+        except SctMathsValueError as e:
+            printv(f"ERROR: -{operation}: {e}", 1, 'error')
+
     fname_in = arguments.i
     fname_out = arguments.o
     output_type = arguments.type
-
-    # Open file(s)
-    im = Image(fname_in)
-
-    # Get "array operation" arguments passed to the parser
-    ordered_args = [(arg, value) for (arg, value) in arguments.ordered_args
-                    if arg not in ['i', 'o', 'type', 'shape', 'dim', 'v']]  # Include only array operations
-    if not ordered_args:
-        printv(parser.error('ERROR: you need to specify an operation to do on the input image'))
 
     # Case 1: Compute similarity metrics
     if any(getattr(arguments, similarity_arg) is not None for similarity_arg in ['mi', 'minorm', 'corr']):
@@ -600,14 +631,6 @@ def main(argv: Sequence[str]):
 
     # Case 2: One or more array operations (array_in -> array_out)
     else:
-        # Loop through arguments and sequentially process data
-        data_intermediate = im.data  # 3d or 4d numpy array
-        dim = im.dim
-        for arg_name, arg_value in ordered_args:
-            # arguments "-dilate" and "-erode" depend on the "global variable"-esque arguments -shape and -dim,
-            if arg_name in ["dilate", "erode"]:
-                arg_value = [arg_value, arguments.shape, arguments.dim]
-            data_intermediate = apply_array_operation(data_intermediate, dim, arg_name, arg_value, parser)
         # Write output
         nii_out = Image(fname_in)  # use header of input file
         nii_out.data = data_intermediate
