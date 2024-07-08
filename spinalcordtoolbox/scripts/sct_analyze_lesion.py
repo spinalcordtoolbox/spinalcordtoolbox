@@ -406,7 +406,8 @@ class AnalyzeLesion:
         # In other words, we compute the tissue bridges from the midsagittal slice and also from all parasagittal slices
 
         # Get slices with lesion
-        sagittal_lesion_slices = np.unique(np.where(im_lesion_data)[0])     # as the orientation is RPI, [0] is the R-L direction
+        # Note: we use [0] for the R-L direction as the orientation is RPI
+        sagittal_lesion_slices = np.unique(np.where(im_lesion_data)[0])
         if self.verbose == 2:
             printv('  Slices with lesion: ' + str(sagittal_lesion_slices), self.verbose, type='info')
 
@@ -419,7 +420,8 @@ class AnalyzeLesion:
             # Get all axial slices (S-I direction) with the lesion for the selected sagittal slice
             # In other words, we will iterate through the lesion in S-I direction and compute tissue bridges for each
             # axial slice with the lesion
-            axial_lesion_slices = np.unique(np.where(im_lesion_data[sagittal_slice, :, :])[1])     # as the orientation is RPI, [1] is the S-I direction
+            # Note: we use [1] for the S-I direction as the orientation is RPI
+            axial_lesion_slices = np.unique(np.where(im_lesion_data[sagittal_slice, :, :])[1])
             # Iterate across axial slices to compute tissue bridges
             for axial_slice in axial_lesion_slices:
                 # Get the lesion segmentation mask of the selected 2D axial slice
@@ -473,9 +475,11 @@ class AnalyzeLesion:
 
             # Add a new column with value True to tissue_bridges_df; this information is needed for plotting
             tissue_bridges_df.loc[(tissue_bridges_df['sagittal_slice'] == sagittal_slice) &
-                                  (tissue_bridges_df['axial_slice'] == min_dorsal_bridge_width_slice), 'min_dorsal_bridge_axial_slice'] = True
+                                  (tissue_bridges_df['axial_slice'] ==
+                                   min_dorsal_bridge_width_slice), 'min_dorsal_bridge_axial_slice'] = True
             tissue_bridges_df.loc[(tissue_bridges_df['sagittal_slice'] == sagittal_slice) &
-                                  (tissue_bridges_df['axial_slice'] == min_ventral_bridge_width_slice), 'min_ventral_bridge_axial_slice'] = True
+                                  (tissue_bridges_df['axial_slice'] ==
+                                   min_ventral_bridge_width_slice), 'min_ventral_bridge_axial_slice'] = True
             # Replace NaN with False
             tissue_bridges_df.fillna(False, inplace=True)
 
@@ -492,11 +496,11 @@ class AnalyzeLesion:
             # Since we are computing dorsal and ventral tissue bridges, we use p_lst[1] (A-P direction)
             # NOTE: we use np.cos(self.angles[SLICE]) to correct for the angle of the spinal cord with respect to the
             # slice
-            dorsal_bridge_width_mm = (float(df_temp[df_temp['axial_slice'] ==
-                                                    min_dorsal_bridge_width_slice]['dorsal_bridge_width'] * p_lst[1]) *
+            dorsal_bridge_width_mm = (float(df_temp[df_temp['axial_slice'] == min_dorsal_bridge_width_slice]
+                                            ['dorsal_bridge_width'] * p_lst[1]) *
                                       np.cos(self.angles[min_dorsal_bridge_width_slice]))
-            ventral_bridge_width_mm = (float(df_temp[df_temp['axial_slice'] ==
-                                                     min_ventral_bridge_width_slice]['ventral_bridge_width'] * p_lst[1]) *
+            ventral_bridge_width_mm = (float(df_temp[df_temp['axial_slice'] == min_ventral_bridge_width_slice]
+                                             ['ventral_bridge_width'] * p_lst[1]) *
                                        np.cos(self.angles[min_ventral_bridge_width_slice]))
             total_bridge_width_mm = dorsal_bridge_width_mm + ventral_bridge_width_mm
 
@@ -590,7 +594,8 @@ class AnalyzeLesion:
             # slope = np.tan(self.angles[y_ventral])
             # # Plot the line using axline (using one point and the slope)
             # # But, this results into a line going through the whole image, so we use the line segment instead
-            # # axes[idx_row, idx_col].axline((x_ventral, y_ventral), slope=slope, linestyle='--', color='g', linewidth=1)
+            # # axes[idx_row, idx_col].axline((x_ventral, y_ventral), slope=slope, linestyle='--', color='g',
+            # #                               linewidth=1)
             #
             # # Calculate the change in x and y based on the dorsal bridge width and the angle
             # delta_x = ventral_bridge_width / np.sqrt(1 + slope ** 2)
