@@ -9,8 +9,10 @@ import sys
 import pickle
 import gzip
 import argparse
+import math
 from typing import Sequence, Union
 
+import nibabel as nib
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -427,12 +429,121 @@ class SctMathsValueError(Exception):
     """Inappropriate argument value for an `sct_maths` operation."""
 
 
+def get_header_and_values(
+    current_value: Union[float, Image],
+    args: list[Union[float, str]],
+) -> Union[
+    tuple[None, list[float]],  # if there are only numbers
+    tuple[nib.Nifti1Header, list[np.ndarray]],  # if there is an image
+]:
+    """
+    Helper function to normalize the arguments of -add, -sub, etc.
+
+    If there are only numbers, returns (None, list of numbers).
+    If there is at least one image, returns (image header, list of data arrays),
+    where all the data arrays have the same shape.
+
+    Raises an SctMathsValueError if there is a shape mismatch.
+    """
+    # the first image, if any, determines the final header and data shape
+    if isinstance(current_value, Image):
+        header = current_value.hdr
+        shape = current_value.data.shape
+    else:
+        for arg in args:
+            if isinstance(arg, str):
+                im = Image(arg)
+                header = im.hdr
+                shape = im.data.shape
+                break  # found the first image
+        else:
+            # there are no images, only numbers
+            return None, [current_value] + args
+
+    # make sure all the data arrays have the same shape
+    if isinstance(current_value, Image):
+        values = [current_value.data]
+    else:
+        values = [np.full(shape, current_value)]
+    for arg in args:
+        if isinstance(arg, str):
+            im = Image(arg)
+            if im.data.shape != shape:
+                raise SctMathsValueError(f"image {arg} has the wrong shape {im.data.shape} (expected: {shape})")
+            values.append(im.data)
+        else:
+            values.append(np.full(shape, arg))
+    return header, values
+
+
+def apply_add(current_value, *args):
+    """Implementation for -add."""
+    # special case to operate on a 4D volume across the t axis
+    if isinstance(current_value, Image) and current_value.data.ndim == 4 and not args:
+        return Image(
+            np.sum(current_value.data, axis=3),
+            hdr=current_value.hdr,
+        )
+
+    header, values = get_header_and_values(current_value, args)
+    if header is None:
+        return sum(values)
+    else:
+        return Image(
+            np.sum(values, axis=0),
+            hdr=header,
+        )
+
+
+def apply_sub(current_value, *args):
+    """Implementation for -sub."""
+    header, [first, *rest] = get_header_and_values(current_value, args)
+    if header is None:
+        return first - sum(rest)
+    else:
+        return Image(
+            first - np.sum(rest, axis=0),
+            hdr=header,
+        )
+
+
+def apply_mul(current_value, *args):
+    """Implementation for -mul."""
+    # special case to operate on a 4D volume across the t axis
+    if isinstance(current_value, Image) and current_value.data.ndim == 4 and not args:
+        return Image(
+            np.prod(current_value.data, axis=3),
+            hdr=current_value.hdr,
+        )
+
+    header, values = get_header_and_values(current_value, args)
+    if header is None:
+        return math.prod(values)
+    else:
+        return Image(
+            np.prod(values, axis=0),
+            hdr=header,
+        )
+
+
+def apply_div(current_value, *args):
+    """Implementation for -div."""
+    header, [first, *rest] = get_header_and_values(current_value, args)
+    if header is None:
+        return first / math.prod(rest)
+    else:
+        return Image(
+            first / np.prod(rest, axis=0),
+            hdr=header,
+        )
+
+
 # the implementation function for each sct_maths operation
 APPLY = {
-    "add": None,
-    "sub": None,
-    "mul": None,
-    "div": None,
+    "add": apply_add,
+    "sub": apply_sub,
+    "mul": apply_mul,
+    "div": apply_div,
     "mean": None,
     "rms": None,
     "std": None,
@@ -479,17 +590,6 @@ def apply_array_operation(data, dim, arg_name, arg_value, parser):
     elif arg_name == "bin":
         data_out = sct_math.binarize(data, bin_thr=arg_value)
 
-    elif arg_name == "add":
-        if data.ndim == 4 and len(arg_value) == 0:
-            data_to_add = data  # Special case for summing 3D volumes within a single 4D image (i.e. "-add" by itself)
-        else:
-            data_to_add = sct_math.concatenate_along_last_dimension([data] + arg_value)
-        data_out = np.sum(data_to_add, axis=-1)
-
-    elif arg_name == "sub":
-        data_to_sub = sct_math.concatenate_along_last_dimension(arg_value)
-        data_out = np.subtract(data, np.sum(data_to_sub, axis=-1))
-
     elif arg_name == "laplacian":
         sigmas = arg_value
         if len(sigmas) == 1:
@@ -501,17 +601,6 @@ def apply_array_operation(data, dim, arg_name, arg_value, parser):
         sigmas = [sigmas[i] / dim[i + 4] for i in range(3)]
         # smooth data
         data_out = sct_math.laplacian(data, sigmas)
-
-    elif arg_name == "mul":
-        if data.ndim == 4 and len(arg_value) == 0:
-            data_to_mul = data  # Special case for multiplying 3D volumes within a single 4D image (i.e. "-mul" by itself)
-        else:
-            data_to_mul = sct_math.concatenate_along_last_dimension([data] + arg_value)
-        data_out = np.prod(data_to_mul, axis=-1)
-
-    elif arg_name == "div":
-        data_to_div = sct_math.concatenate_along_last_dimension(arg_value)
-        data_out = np.divide(data, np.prod(data_to_div, axis=-1))
 
     elif arg_name == "mean":
         dim = dim_list.index(arg_value)
