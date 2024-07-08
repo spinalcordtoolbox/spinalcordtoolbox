@@ -683,6 +683,21 @@ def apply_denoise(current_value, patch_radius, block_radius):
     )
 
 
+def apply_mi(current_value, fname):
+    """Implementation for -mi."""
+    return (current_value, Image(fname), 'mi', 'Mutual information')
+
+
+def apply_minorm(current_value, fname):
+    """Implementation for -minorm."""
+    return (current_value, Image(fname), 'minorm', 'Normalized Mutual information')
+
+
+def apply_corr(current_value, fname):
+    """Implementation for -corr."""
+    return (current_value, Image(fname), 'corr', 'Pearson correlation coefficient')
+
+
 def apply_symmetrize(current_value, axis):
     """Implementation for -symmetrize."""
     return Image(
@@ -712,9 +727,9 @@ APPLY = {
     "smooth": apply_smooth,
     "laplacian": apply_laplacian,
     "denoise": apply_denoise,
-    "mi": None,
-    "minorm": None,
-    "corr": None,
+    "mi": apply_mi,
+    "minorm": apply_minorm,
+    "corr": apply_corr,
     "symmetrize": apply_symmetrize,
 }
 
@@ -760,31 +775,6 @@ def main(argv: Sequence[str]):
         compute_similarity(img1, img2, arguments.o, metric, metric_full, verbose)
         printv(f"\nDone! File created: {arguments.o}", verbose, 'info')
 
-    fname_in = arguments.i
-    fname_out = arguments.o
-    output_type = arguments.type
-
-    # Case 1: Compute similarity metrics
-    if any(getattr(arguments, similarity_arg) is not None for similarity_arg in ['mi', 'minorm', 'corr']):
-        if arguments.mi is not None:
-            # input 1 = from flag -i --> im
-            # input 2 = from flag -mi
-            im_2 = Image(arguments.mi)
-            compute_similarity(im, im_2, fname_out, metric='mi', metric_full='Mutual information', verbose=verbose)
-
-        elif arguments.minorm is not None:
-            im_2 = Image(arguments.minorm)
-            compute_similarity(im, im_2, fname_out, metric='minorm', metric_full='Normalized Mutual information',
-                               verbose=verbose)
-
-        else:
-            assert arguments.corr is not None
-            # input 1 = from flag -i --> im
-            # input 2 = from flag -mi
-            im_2 = Image(arguments.corr)
-            compute_similarity(im, im_2, fname_out, metric='corr', metric_full='Pearson correlation coefficient',
-                               verbose=verbose)
-
 
 def compute_similarity(img1: Image, img2: Image, fname_out: str, metric: str, metric_full: str, verbose):
     """
@@ -807,7 +797,7 @@ def compute_similarity(img1: Image, img2: Image, fname_out: str, metric: str, me
 
     path_out, filename_out, ext_out = extract_fname(fname_out)
     if ext_out not in ['.txt', '.pkl', '.pklz', '.pickle']:
-        raise ValueError(f"The output file should a text file or a pickle file. Received extension: {ext_out}")
+        raise ValueError(f"The output file should be a text file or a pickle file. Received extension: {ext_out}")
 
     if ext_out == '.txt':
         with open(fname_out, 'w') as f:
