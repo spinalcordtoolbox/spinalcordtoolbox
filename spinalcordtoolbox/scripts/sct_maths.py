@@ -567,6 +567,70 @@ def apply_std(current_value, dim):
     )
 
 
+def apply_bin(current_value, bin_thr):
+    """Implementation for -bin."""
+    return Image(
+        sct_math.binarize(current_value.data, bin_thr),
+        hdr=current_value.hdr,
+    )
+
+
+def apply_otsu(current_value, nbins):
+    """Implementation for -otsu."""
+    return Image(
+        sct_math.otsu(current_value.data, nbins),
+        hdr=current_value.hdr,
+    )
+
+
+def apply_adap(current_value, block_size, offset):
+    """Implementation for -adap."""
+    return Image(
+        sct_math.adap(current_value.data, block_size, offset),
+        hdr=current_value.hdr,
+    )
+
+
+def apply_otsu_median(current_value, size, n_iter):
+    """Implementation for -otsu-median."""
+    return Image(
+        sct_math.otsu_media(current_value.data, size, n_iter),
+        hdr=current_value.hdr,
+    )
+
+
+def apply_percent(current_value, percentile):
+    """Implementation for -percent."""
+    return Image(
+        sct_math.perc(current_value.data, percentile),
+        hdr=current_value.hdr,
+    )
+
+
+def apply_thr(current_value, threshold):
+    """Implementation for -thr."""
+    return Image(
+        sct_math.threshold(current_value.data, lthr=threshold),
+        hdr=current_value.hdr,
+    )
+
+
+def apply_uthr(current_value, threshold):
+    """Implementation for -uthr."""
+    return Image(
+        sct_math.threshold(current_value.data, uthr=threshold),
+        hdr=current_value.hdr,
+    )
+
+
+def apply_symmetrize(current_value, axis):
+    """Implementation for -symmetrize."""
+    return Image(
+        sct_math.symmetrize(current_value.data, axis),
+        hdr=current_value.hdr,
+    )
+
+
 # the implementation function for each sct_maths operation
 APPLY = {
     "add": apply_add,
@@ -576,13 +640,13 @@ APPLY = {
     "mean": apply_mean,
     "rms": apply_rms,
     "std": apply_std,
-    "bin": None,
-    "otsu": None,
-    "adap": None,
-    "otsu_median": None,
-    "percent": None,
-    "thr": None,
-    "uthr": None,
+    "bin": apply_bin,
+    "otsu": apply_otsu,
+    "adap": apply_adap,
+    "otsu_median": apply_otsu_median,
+    "percent": apply_percent,
+    "thr": apply_thr,
+    "uthr": apply_uthr,
     "dilate": None,
     "erode": None,
     "smooth": None,
@@ -591,33 +655,12 @@ APPLY = {
     "mi": None,
     "minorm": None,
     "corr": None,
-    "symmetrize": None,
+    "symmetrize": apply_symmetrize,
 }
 
 
 def apply_array_operation(data, dim, arg_name, arg_value, parser):
     dim_list = ['x', 'y', 'z', 't']
-
-    if arg_name == "otsu":
-        data_out = sct_math.otsu(data, arg_value)
-
-    elif arg_name == "adap":
-        data_out = sct_math.adap(data, arg_value[0], arg_value[1])
-
-    elif arg_name == "otsu_median":
-        data_out = sct_math.otsu_median(data, arg_value[0], arg_value[1])
-
-    elif arg_name == "thr":
-        data_out = sct_math.threshold(data, lthr=arg_value)
-
-    elif arg_name == "uthr":
-        data_out = sct_math.threshold(data, uthr=arg_value)
-
-    elif arg_name == "percent":
-        data_out = sct_math.perc(data, arg_value)
-
-    elif arg_name == "bin":
-        data_out = sct_math.binarize(data, bin_thr=arg_value)
 
     elif arg_name == "laplacian":
         sigmas = arg_value
@@ -663,10 +706,6 @@ def apply_array_operation(data, dim, arg_name, arg_value, parser):
             if 'b' in i:
                 b = int(i.split('=')[1])
         data_out = sct_math.denoise_nlmeans(data, patch_radius=p, block_radius=b)
-
-    else:
-        assert arg_name == "symmetrize"
-        data_out = sct_math.symmetrize(data, arg_value)
 
     return data_out
 
