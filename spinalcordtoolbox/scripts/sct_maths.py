@@ -641,11 +641,11 @@ def apply_erode(current_value, size, *, shape, dim):
 
 def apply_smooth(current_value, *sigmas):
     """Implementation for -smooth."""
-    ndims = current_value.data.ndims
+    ndim = current_value.data.ndim
     if len(sigmas) == 1:
-        sigmas *= ndims
-    elif len(sigmas) != ndims:
-        raise SctMathsValueError(f"expected 1 or {ndims} values, got {len(sigmas)} values")
+        sigmas *= ndim
+    elif len(sigmas) != ndim:
+        raise SctMathsValueError(f"expected 1 or {ndim} values, got {len(sigmas)} values")
 
     # adjust sigma based on voxel size
     pdims = current_value.dim[4:8]
@@ -659,11 +659,11 @@ def apply_smooth(current_value, *sigmas):
 
 def apply_laplacian(current_value, *sigmas):
     """Implementation for -laplacian."""
-    ndims = current_value.data.ndims
+    ndim = current_value.data.ndim
     if len(sigmas) == 1:
-        sigmas *= ndims
-    elif len(sigmas) != ndims:
-        raise SctMathsValueError(f"expected 1 or {ndims} values, got {len(sigmas)} values")
+        sigmas *= ndim
+    elif len(sigmas) != ndim:
+        raise SctMathsValueError(f"expected 1 or {ndim} values, got {len(sigmas)} values")
 
     # adjust sigma based on voxel size
     pdims = current_value.dim[4:8]
