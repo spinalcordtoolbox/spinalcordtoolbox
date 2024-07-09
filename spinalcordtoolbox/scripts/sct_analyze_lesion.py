@@ -260,31 +260,32 @@ class AnalyzeLesion:
             printv(measure_info, self.verbose, type='info')
 
         # For the tissue bridges, we get the minimum bridges across all lesions for the midsagittal slice
-        printv('\nMinimum tissue bridges across all lesions for the midsagittal slice...', self.verbose, 'normal')
-        midsagittal_dorsal_bridges = list()
-        midsagittal_ventral_bridges = list()
-        # Iterate across lesions to get the bridges for the midsagittal slice
-        for idx, row in self.measure_pd.iterrows():
-            if row['midsagittal_spinal_cord_slice'] is not None:        # just safety check
-                # Get the midsagittal slice number for the selected lesion
-                # Note that the midsagittal slice is the same for all lesions as it is based on the spinal cord
-                # segmentation
-                midsagittal_slice = str(int(row['midsagittal_spinal_cord_slice']))
-                # Get dorsal and ventral tissue bridges for the mid-sagittal slice
-                dorsal_tissue_bridge = row['slice_' + midsagittal_slice + '_dorsal_bridge_width [mm]']
-                ventral_tissue_bridge = row['slice_' + midsagittal_slice + '_ventral_bridge_width [mm]']
+        if self.fname_sc is not None:
+            printv('\nMinimum tissue bridges across all lesions for the midsagittal slice...', self.verbose, 'normal')
+            midsagittal_dorsal_bridges = list()
+            midsagittal_ventral_bridges = list()
+            # Iterate across lesions to get the bridges for the midsagittal slice
+            for idx, row in self.measure_pd.iterrows():
+                if row['midsagittal_spinal_cord_slice'] is not None:        # just safety check
+                    # Get the midsagittal slice number for the selected lesion
+                    # Note that the midsagittal slice is the same for all lesions as it is based on the spinal cord
+                    # segmentation
+                    midsagittal_slice = str(int(row['midsagittal_spinal_cord_slice']))
+                    # Get dorsal and ventral tissue bridges for the mid-sagittal slice
+                    dorsal_tissue_bridge = row['slice_' + midsagittal_slice + '_dorsal_bridge_width [mm]']
+                    ventral_tissue_bridge = row['slice_' + midsagittal_slice + '_ventral_bridge_width [mm]']
 
-                # Store the bridges for the midsagittal slice for the selected lesion
-                midsagittal_dorsal_bridges.append(dorsal_tissue_bridge)
-                midsagittal_ventral_bridges.append(ventral_tissue_bridge)
+                    # Store the bridges for the midsagittal slice for the selected lesion
+                    midsagittal_dorsal_bridges.append(dorsal_tissue_bridge)
+                    midsagittal_ventral_bridges.append(ventral_tissue_bridge)
 
-        # Compute the minimum bridges across all lesions for the midsagittal slice
-        # Note: lesions can be parasagittal meaning that they do not have bridges in the midsagittal slice, in such case
-        # the bridge width is NaN --> use np.nanmin to get the minimum value
-        min_dorsal_bridge = np.nanmin(midsagittal_dorsal_bridges)
-        min_ventral_bridge = np.nanmin(midsagittal_ventral_bridges)
-        printv(f'  Minimum dorsal bridge width [mm]: {np.round(min_dorsal_bridge, 2)}', self.verbose, type='info')
-        printv(f'  Minimum ventral bridge width [mm]: {np.round(min_ventral_bridge, 2)}', self.verbose, type='info')
+            # Compute the minimum bridges across all lesions for the midsagittal slice
+            # Note: lesions can be parasagittal meaning that they do not have bridges in the midsagittal slice, in such
+            # case the bridge width is NaN --> use np.nanmin to get the minimum value
+            min_dorsal_bridge = np.nanmin(midsagittal_dorsal_bridges)
+            min_ventral_bridge = np.nanmin(midsagittal_ventral_bridges)
+            printv(f'  Minimum dorsal bridge width [mm]: {np.round(min_dorsal_bridge, 2)}', self.verbose, type='info')
+            printv(f'  Minimum ventral bridge width [mm]: {np.round(min_ventral_bridge, 2)}', self.verbose, type='info')
 
         total_volume = np.round(np.sum(self.measure_pd['volume [mm3]']), 2)
         lesion_count = len(self.measure_pd['volume [mm3]'].values)
