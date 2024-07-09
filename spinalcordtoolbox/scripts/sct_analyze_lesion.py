@@ -887,9 +887,10 @@ class AnalyzeLesion:
                                                       im_lesion=im_lesion_data_cur,
                                                       p_lst=p_lst)
 
-        # Plot tissue bridges
-        # Note: we do plotting here as we plot all lesions into a single figure, so we need to be outside the loop
-        self._plot_tissue_bridges(im_lesion_data, p_lst, label_lst)
+        if self.fname_sc is not None:
+            # Plot tissue bridges
+            # Note: we do plotting here as we plot all lesions into a single figure, so we need to be outside the loop
+            self._plot_tissue_bridges(im_lesion_data, p_lst, label_lst)
 
         if self.path_template is not None:
             # compute total lesion distribution
