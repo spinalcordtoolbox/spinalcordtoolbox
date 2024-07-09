@@ -545,25 +545,6 @@ class AnalyzeLesion:
                 self.tissue_bridges_plotting_data[idx_row][sagittal_slice, 'dorsal']['dorsal_bridge_width'])
             # y_dorsal: the axial slice with the minimum dorsal tissue bridge width
             y_dorsal = int(self.tissue_bridges_plotting_data[idx_row][sagittal_slice, 'dorsal']['axial_slice'])
-            # axes[idx_row, idx_col].plot([x_dorsal - dorsal_bridge_width, x_dorsal - 1], [y_dorsal] * 2, 'r--',
-            #                             linewidth=1)
-            #
-            # # Calculate the slope (tangent of the angle)
-            # slope = np.tan(self.angles[y_dorsal])
-            # # Plot the line using axline (using one point and the slope)
-            # # But, this results into a line going through the whole image, so we use the line segment instead
-            # # axes[idx_row, idx_col].axline((x_dorsal, y_dorsal), slope=slope, linestyle='--', color='g', linewidth=1)
-            #
-            # # Calculate the change in x and y based on the dorsal bridge width and the angle
-            # delta_x = dorsal_bridge_width / np.sqrt(1 + slope ** 2)
-            # delta_y = slope * delta_x
-            # # Define start and end points of the line
-            # start_x = x_dorsal
-            # start_y = y_dorsal
-            # end_x = start_x - delta_x
-            # end_y = start_y - delta_y
-            # # Plot the line segment
-            # axes[idx_row, idx_col].plot([start_x, end_x], [start_y, end_y], 'g--', linewidth=1)
 
             # Add text with the width of the tissue in mm above each bridge
             dorsal_bridge_width_mm = float(dorsal_bridge_width * p_lst[1]) * np.cos(self.angles[y_dorsal])
@@ -587,26 +568,6 @@ class AnalyzeLesion:
                 self.tissue_bridges_plotting_data[idx_row][sagittal_slice, 'ventral']['ventral_bridge_width'])
             # y_ventral: the axial slice with the minimum dorsal tissue bridge width
             y_ventral = int(self.tissue_bridges_plotting_data[idx_row][sagittal_slice, 'ventral']['axial_slice'])
-            # axes[idx_row, idx_col].plot([x_ventral + 1, x_ventral + ventral_bridge_width], [y_ventral] * 2, 'r--',
-            #                             linewidth=1)
-            #
-            # # Calculate the slope (tangent of the angle)
-            # slope = np.tan(self.angles[y_ventral])
-            # # Plot the line using axline (using one point and the slope)
-            # # But, this results into a line going through the whole image, so we use the line segment instead
-            # # axes[idx_row, idx_col].axline((x_ventral, y_ventral), slope=slope, linestyle='--', color='g',
-            # #                               linewidth=1)
-            #
-            # # Calculate the change in x and y based on the dorsal bridge width and the angle
-            # delta_x = ventral_bridge_width / np.sqrt(1 + slope ** 2)
-            # delta_y = slope * delta_x
-            # # Define start and end points of the line
-            # start_x = x_ventral
-            # start_y = y_ventral
-            # end_x = start_x + delta_x
-            # end_y = start_y + delta_y
-            # # Plot the line segment
-            # axes[idx_row, idx_col].plot([start_x, end_x], [start_y, end_y], 'g--', linewidth=1)
 
             # Add text with the width of the tissue in mm above each bridge
             ventral_bridge_width_mm = float(ventral_bridge_width * p_lst[1]) * np.cos(self.angles[y_ventral])
