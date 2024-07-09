@@ -61,7 +61,7 @@ class StoreTodo(argparse.Action):
 
     The format is: (operation name, positional args, keyword args).
     """
-    def ___call___(self, parser, namespace, values, option_string=None):
+    def __call__(self, parser, namespace, values, option_string=None):
         # make sure values is a list, rather than a single bare value
         if self.nargs in [None, '?']:
             values = [values]
@@ -78,7 +78,7 @@ class StoreTodoWithShapeDim(argparse.Action):
 
     The format is: (operation name, positional args, keyword args).
     """
-    def ___call___(self, parser, namespace, values, option_string=None):
+    def __call__(self, parser, namespace, values, option_string=None):
         # make sure values is a list, rather than a single bare value
         if self.nargs in [None, '?']:
             values = [values]
@@ -103,7 +103,7 @@ def get_parser():
     )
 
     # Make sure the list of operations to perform gets initialized
-    parser.set_default('todo', [])
+    parser.set_defaults(todo=[])
 
     mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
     mandatory.add_argument(
