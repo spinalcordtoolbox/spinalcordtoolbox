@@ -63,7 +63,7 @@ class StoreTodo(argparse.Action):
     """
     def __call__(self, parser, namespace, values, option_string=None):
         # make sure values is a list, rather than a single bare value
-        if self.nargs in [None, '?']:
+        if not isinstance(values, list):
             values = [values]
 
         namespace.todo.append((self.dest, values, {}))
@@ -80,7 +80,7 @@ class StoreTodoWithShapeDim(argparse.Action):
     """
     def __call__(self, parser, namespace, values, option_string=None):
         # make sure values is a list, rather than a single bare value
-        if self.nargs in [None, '?']:
+        if not isinstance(values, list):
             values = [values]
 
         shape = namespace.shape
