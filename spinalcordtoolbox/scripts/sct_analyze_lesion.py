@@ -532,7 +532,7 @@ class AnalyzeLesion:
 
         def _plot_dorsal_tissue_bridge():
             """
-            Add a horizontal line segment and text for the dorsal bridge
+            Add text for the dorsal bridge
             """
             # lesion_indices_dorsal_bridge: ndarray of the indices of the lesion mask
             # Note: we use [0] because .values returns a numpy array
@@ -555,7 +555,7 @@ class AnalyzeLesion:
 
         def _plot_ventral_tissue_bridge():
             """
-            Add a horizontal line segment and text for the ventral bridge
+            Add text for the ventral bridge
             """
             # lesion_indices_ventral_bridge: ndarray of the indices of the lesion mask
             # Note: we use [0] because .values returns a numpy array
@@ -654,7 +654,7 @@ class AnalyzeLesion:
                                                 np.max(np.where(im_label_data_cur)[2]) + 20)
 
                 # --------------------------------------
-                # Add line segments and text for tissue bridges
+                # Add text for tissue bridges
                 # --------------------------------------
                 # Check if the [idx_row][sagittal_slice, 'dorsal'] key exists in the tissue_bridges_plotting_data
                 # If the key exists, it means that we have tissue bridges for the current lesion and sagittal slice
