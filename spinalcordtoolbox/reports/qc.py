@@ -313,7 +313,7 @@ class QcImage:
         #  - Sagittal mosaic: e.g. WxH = 3x20 slice images
         #  So, we want to scale the fig height to match this.
         #  NB: `size_fig` is in inches. So, dpi=300 --> 1500px, dpi=100 --> 500px, etc.
-        size_fig = [5, 5 * img.shape[0] / img.shape[1]]
+        size_fig = [5, 5 * img.shape[0] / img.shape[1] * float(self.aspect_img)]
 
         fig = mpl_figure.Figure()
         fig.set_size_inches(size_fig[0], size_fig[1], forward=True)
