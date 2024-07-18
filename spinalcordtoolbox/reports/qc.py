@@ -308,12 +308,21 @@ class QcImage:
         if self._stretch_contrast:
             img = self._func_stretch_contrast(img)
 
-        # For QC reports, mosaics will often have smaller or larger height than width:
-        #  - Axial mosaic: e.g. WxH = 20x3 slice images.
-        #  - Sagittal mosaic: e.g. WxH = 3x20 slice images
-        #  So, we want to scale the fig height to match this.
-        #  NB: `size_fig` is in inches. So, dpi=300 --> 1500px, dpi=100 --> 500px, etc.
-        size_fig = [5, 5 * img.shape[0] / img.shape[1] * float(self.aspect_img)]
+        # NB: `size_fig` is in inches. So, when size_fig == 5", then: dpi=300 --> 1500px, dpi=100 --> 500px, etc.
+        size_fig = [
+            5, (5
+                # Sagittal slice QCs for isotropic images will often have similar heights and widths. However,
+                # anisotropic images (and slice mosaics) will often have smaller or larger height than width:
+                #  - Axial mosaic: e.g. WxH = 20x3 slice images.
+                #  - Sagittal mosaic: e.g. WxH = 3x20 slice images
+                # So, we want to scale the fig height to match the height of the image:
+                * (img.shape[0] / img.shape[1])
+
+                # However, we also need to account for the resolutions of each axis when scaling the height. Otherwise,
+                # highly anisotropic images (e.g. T2*) will be shrunken down to a tiny height. (See #4563).
+                # NB: self.aspect_img == (pix[0] / pix[1]), so combined, this is: (shape[0]*pix[0] / shape[1]*pix[1])
+                * float(self.aspect_img))
+        ]
 
         fig = mpl_figure.Figure()
         fig.set_size_inches(size_fig[0], size_fig[1], forward=True)
