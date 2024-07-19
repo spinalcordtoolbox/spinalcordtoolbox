@@ -402,33 +402,50 @@ def apply_div(current_value, *args):
 
 def apply_mean(current_value, dim):
     """Implementation for -mean."""
-    if current_value.data.ndim == 3 and dim == 't':
-        return current_value
-    return Image(
-        np.mean(current_value.data, ('x', 'y', 'z', 't').index(dim)),
-        hdr=current_value.hdr,
-    )
+    data = current_value.data
+    axis = ('x', 'y', 'z', 't').index(dim)
+    if axis >= data.ndim:
+        # Averaging a 3D image over time, nothing to do
+        pass
+    else:
+        data = np.mean(current_value.data, axis)
+        if axis < 3:
+            # Averaging over a spatial axis, we should preserve it
+            data = np.expand_dims(data, axis)
+    current_value.data = data
+    return current_value
 
 
 def apply_rms(current_value, dim):
     """Implementation for -rms."""
     data = current_value.data.astype(float)
-    if current_value.data.ndim == 3 and dim == 't':
+    axis = ('x', 'y', 'z', 't').index(dim)
+    if axis >= data.ndim:
         # Taking the mean across time for a 3D image has no effect.
         # Because of this, RMS is just squaring then sqrting (i.e. taking abs)
         rms = np.abs(data)
     else:
-        axis = ('x', 'y', 'z', 't').index(dim)
         rms = np.sqrt(np.mean(np.square(data), axis))
-    return Image(rms, hdr=current_value.hdr)
+        if axis < 3:
+            # Taking RMS over a spatial axis, we should preserve it
+            rms = np.expand_dims(rms, axis)
+    current_value.data = rms
+    return current_value
 
 
 def apply_std(current_value, dim):
     """Implementation for -std."""
-    return Image(
-        np.std(current_value.data, ('x', 'y', 'z', 't').index(dim), ddof=1),
-        hdr=current_value.hdr,
-    )
+    data = current_value.data
+    axis = ('x', 'y', 'z', 't').index(dim)
+    if axis >= data.ndim or data.shape[axis] == 1:
+        raise SctMathsValueError("Zero division while taking -std along a singleton dimension")
+    else:
+        data = np.std(data, axis, ddof=1),
+        if axis < 3:
+            # Taking std over a spatial axis, we should preserve it
+            data = np.expand_dims(data, axis)
+    current_value.data = data
+    return current_value
 
 
 def apply_bin(current_value, bin_thr):
