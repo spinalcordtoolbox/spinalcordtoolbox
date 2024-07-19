@@ -552,6 +552,8 @@ def apply_rms(current_value, dim):
     """Implementation for -rms."""
     data = current_value.data.astype(float)
     if current_value.data.ndim == 3 and dim == 't':
+        # Taking the mean across time for a 3D image has no effect.
+        # Because of this, RMS is just squaring then sqrting (i.e. taking abs)
         rms = np.abs(data)
     else:
         axis = ('x', 'y', 'z', 't').index(dim)
@@ -666,8 +668,8 @@ def apply_laplacian(current_value, *sigmas):
         raise SctMathsValueError(f"expected 1 or {ndim} values, got {len(sigmas)} values")
 
     # adjust sigma based on voxel size
-    pdims = current_value.dim[4:8]
-    sigmas = [s/d for s, d in zip(sigmas, pdims)]
+    pixdim = current_value.dim[4:8]
+    sigmas = [s/d for s, d in zip(sigmas, pixdim)]
 
     return Image(
         sct_math.laplacian(current_value.data, sigmas),
@@ -771,8 +773,8 @@ def main(argv: Sequence[str]):
         display_viewer_syntax([arguments.o], verbose=verbose)
     else:
         assert final_type == 'metric'
-        img1, img2, metric, metric_full = current_value
-        compute_similarity(img1, img2, arguments.o, metric, metric_full, verbose)
+        img1, img2, metric_name, metric_name_full = current_value
+        compute_similarity(img1, img2, arguments.o, metric_name, metric_name_full, verbose)
         printv(f"\nDone! File created: {arguments.o}", verbose, 'info')
 
 
