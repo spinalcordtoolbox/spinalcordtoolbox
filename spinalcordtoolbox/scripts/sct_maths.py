@@ -522,15 +522,16 @@ def apply_erode(current_value, size, shape, dim):
 
 def apply_smooth(current_value, *sigmas):
     """Implementation for -smooth."""
-    ndim = current_value.data.ndim
+    if current_value.data.ndim != 3:
+        raise SctMathsValueError("can only be applied to 3D images")
     if len(sigmas) == 1:
-        sigmas *= ndim
-    elif len(sigmas) != ndim:
-        raise SctMathsValueError(f"expected 1 or {ndim} values, got {len(sigmas)} values")
+        sigmas *= 3
+    elif len(sigmas) != 3:
+        raise SctMathsValueError(f"expected 1 or 3 values, got {len(sigmas)} values")
 
     # adjust sigma based on voxel size
-    pdims = current_value.dim[4:8]
-    sigmas = [s/d for s, d in zip(sigmas, pdims)]
+    pixdim = current_value.dim[4:7]
+    sigmas = [s/d for s, d in zip(sigmas, pixdim)]
 
     return Image(
         sct_math.smooth(current_value.data, sigmas),
@@ -540,14 +541,15 @@ def apply_smooth(current_value, *sigmas):
 
 def apply_laplacian(current_value, *sigmas):
     """Implementation for -laplacian."""
-    ndim = current_value.data.ndim
+    if current_value.data.ndim != 3:
+        raise SctMathsValueError("can only be applied to 3D images")
     if len(sigmas) == 1:
-        sigmas *= ndim
-    elif len(sigmas) != ndim:
-        raise SctMathsValueError(f"expected 1 or {ndim} values, got {len(sigmas)} values")
+        sigmas *= 3
+    elif len(sigmas) != 3:
+        raise SctMathsValueError(f"expected 1 or 3 values, got {len(sigmas)} values")
 
     # adjust sigma based on voxel size
-    pixdim = current_value.dim[4:8]
+    pixdim = current_value.dim[4:7]
     sigmas = [s/d for s, d in zip(sigmas, pixdim)]
 
     return Image(
