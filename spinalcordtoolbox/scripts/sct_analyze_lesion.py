@@ -18,9 +18,9 @@ from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel, LazyLoader
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, copy, rmtree
+from spinalcordtoolbox.reports.qc2 import sct_analyze_lesion
 
 pd = LazyLoader("pd", globals(), "pandas")
-plt = LazyLoader("plt", globals(), "matplotlib.pyplot")
 
 
 def get_parser():
@@ -93,6 +93,23 @@ def get_parser():
         action=ActionCreateFolder,
         default='.',
         required=False)
+    optional.add_argument(
+        '-qc',
+        metavar=Metavar.folder,
+        action=ActionCreateFolder,
+        default="qc",
+        help="The path where the quality control generated content will be saved."
+    )
+    optional.add_argument(
+        '-qc-dataset',
+        metavar=Metavar.str,
+        help="If provided, this string will be mentioned in the QC report as the dataset the process was run on."
+    )
+    optional.add_argument(
+        '-qc-subject',
+        metavar=Metavar.str,
+        help="If provided, this string will be mentioned in the QC report as the subject the process was run on."
+    )
     optional.add_argument(
         "-r",
         type=int,
@@ -170,7 +187,6 @@ class AnalyzeLesion:
         # output names
         self.pickle_name = extract_fname(self.fname_mask)[1] + '_analysis.pkl'
         self.excel_name = extract_fname(self.fname_mask)[1] + '_analysis.xls'
-        self.tissue_bridges_png_name = extract_fname(self.fname_mask)[1] + '_tissue_bridges.png'
 
     def analyze(self):
         self.ifolder2tmp()
@@ -212,14 +228,6 @@ class AnalyzeLesion:
         for file_ in [self.fname_label, self.excel_name, self.pickle_name]:
             printv('\n  - ' + os.path.join(self.path_ofolder, file_), self.verbose, 'normal')
             copy(os.path.join(self.tmp_dir, file_), os.path.join(self.path_ofolder, file_))
-        # Save tissue bridges plot
-        # TODO: make the plotting below optional --> move the code below under `if self.verbose == 2`?
-        #  or include the figure into QC report?
-        if os.path.isfile(os.path.join(self.tmp_dir, self.tissue_bridges_png_name)):
-            printv('\n... tissue bridges plot saved in the file:', self.verbose, 'normal')
-            printv('\n  - ' + os.path.join(self.path_ofolder, self.tissue_bridges_png_name), self.verbose, 'normal')
-            copy(os.path.join(self.tmp_dir, self.tissue_bridges_png_name),
-                 os.path.join(self.path_ofolder, self.tissue_bridges_png_name))
 
     def pack_measures(self):
 
@@ -518,158 +526,6 @@ class AnalyzeLesion:
             printv(f'  Sagittal slice {sagittal_slice}, Total tissue bridge width: '
                    f'{np.round(total_bridge_width_mm, 2)} mm', self.verbose, type='info')
 
-    def _plot_tissue_bridges(self, im_lesion_data, p_lst, label_lst):
-        """
-        Plot the tissue bridges.
-        The figure has one row per lesion and one column per sagittal slice containing the lesion.
-
-        :param im_lesion_data: 3D numpy array: mask of the lesion. The orientation is assumed to be RPI (because we
-        reoriented the image to RPI using orient2rpi())
-        :param p_lst: list, pixel size of the lesion
-        :param label_lst: list, labels of the lesions (because we used label_lesion() function at the beginning of the
-        script)
-        """
-        # TODO: include the figure into the QC report
-
-        def _plot_dorsal_tissue_bridge():
-            """
-            Add text for the dorsal bridge
-            """
-            # lesion_indices_dorsal_bridge: ndarray of the indices of the lesion mask
-            # Note: we use [0] because .values returns a numpy array
-            lesion_indices_dorsal_bridge = \
-                self.tissue_bridges_plotting_data[idx_row][sagittal_slice, 'dorsal']['lesion_indices'].values[0]
-            # Get the posterior/dorsal tip of the lesion (the first element in the lesion_indices)
-            x_dorsal = lesion_indices_dorsal_bridge[0]
-            # dorsal_bridge_width: the width of the tissue bridge
-            dorsal_bridge_width = float(
-                self.tissue_bridges_plotting_data[idx_row][sagittal_slice, 'dorsal']['dorsal_bridge_width'])
-            # y_dorsal: the axial slice with the minimum dorsal tissue bridge width
-            y_dorsal = int(self.tissue_bridges_plotting_data[idx_row][sagittal_slice, 'dorsal']['axial_slice'])
-
-            # Add text with the width of the tissue in mm above each bridge
-            dorsal_bridge_width_mm = float(dorsal_bridge_width * p_lst[1]) * np.cos(self.angles[y_dorsal])
-            axes[idx_row, idx_col].text(x_dorsal - 3,
-                                        y_dorsal,
-                                        f'Dorsal bridge\n{np.round(dorsal_bridge_width_mm, 2)} mm',
-                                        color='red', fontsize=12, ha='right', va='bottom')
-
-        def _plot_ventral_tissue_bridge():
-            """
-            Add text for the ventral bridge
-            """
-            # lesion_indices_ventral_bridge: ndarray of the indices of the lesion mask
-            # Note: we use [0] because .values returns a numpy array
-            lesion_indices_ventral_bridge = \
-                self.tissue_bridges_plotting_data[idx_row][sagittal_slice, 'ventral']['lesion_indices'].values[0]
-            # Get the anterior/ventral tip of the lesion (the last element in the lesion_indices)
-            x_ventral = lesion_indices_ventral_bridge[-1]
-            # ventral_bridge_width: the width of the tissue bridge
-            ventral_bridge_width = float(
-                self.tissue_bridges_plotting_data[idx_row][sagittal_slice, 'ventral']['ventral_bridge_width'])
-            # y_ventral: the axial slice with the minimum dorsal tissue bridge width
-            y_ventral = int(self.tissue_bridges_plotting_data[idx_row][sagittal_slice, 'ventral']['axial_slice'])
-
-            # Add text with the width of the tissue in mm above each bridge
-            ventral_bridge_width_mm = float(ventral_bridge_width * p_lst[1]) * np.cos(self.angles[y_ventral])
-            axes[idx_row, idx_col].text(x_ventral + 3,
-                                        y_ventral,
-                                        f'Ventral bridge\n{np.round(ventral_bridge_width_mm, 2)} mm',
-                                        color='red', fontsize=12, ha='left', va='bottom')
-
-        # Load the spinal cord segmentation mask
-        # The orientation is assumed to be RPI (because we reoriented the image to RPI using orient2rpi())
-        im_sc = Image(self.fname_sc)
-        im_sc_data = im_sc.data
-
-        # Get the total number of lesions; this will represent the number of rows in the figure. For example, if we have
-        # 2 lesions, we will have two rows. One row per lesion.
-        num_of_lesions = len(label_lst)
-        # Get the minimum sagittal slice with lesion. For example, if a lesion cover slices 7,8,9, get 7
-        min_sag_slice = min([min(self.tissue_bridges_plotting_data[lesion_idx].keys()) for
-                             lesion_idx in self.tissue_bridges_plotting_data])[0]
-        # Get the maximum sagittal slice with lesion. For example, if a lesion cover slices 7,8,9, get 9
-        max_sag_slice = max([max(self.tissue_bridges_plotting_data[lesion_idx].keys()) for
-                             lesion_idx in self.tissue_bridges_plotting_data])[0]
-        # Get the number of slices containing the lesion. For example, if a lesion cover slices 7,8,9, get 3
-        num_of_sag_slices = max_sag_slice - min_sag_slice + 1
-
-        # Get the midsagittal slice of the spinal cord
-        # Note: as the midsagittal slice is the same for all lesions, we can pick the first lesion ([0]) to get it
-        mid_sagittal_sc_slice = self.measure_pd.loc[0, 'midsagittal_spinal_cord_slice']
-
-        #  Create a figure
-        #  The figure has one row per lesion and one column per sagittal slice containing the lesion
-        fig, axes = plt.subplots(num_of_lesions,
-                                 num_of_sag_slices,
-                                 figsize=(num_of_sag_slices*5, num_of_lesions*5))
-
-        # Force axes to be a 2-dimensional array (to avoid indexing issues if we have only a single lesion or a single
-        # sagittal slice)
-        axes = np.atleast_2d(axes)
-
-        # Loop across lesions
-        for idx_row, lesion_label in enumerate(label_lst):
-            # NOTE: As the 'label_lesion()' function has been called at the beginning of the script, im_lesion_data is
-            # now "labeled" meaning that different lesions have different values, e.g., 1, 2, 3
-            # As we are looping across lesions, we get the lesion mask for the current lesion label
-            im_label_data_cur = im_lesion_data == lesion_label
-            # Restrict the lesion mask to the spinal cord mask (from anatomical level, it does not make sense to have
-            # lesion outside the spinal cord mask)
-            boolean_mask = (im_sc_data.data != 0)  # Nonzero -> True | Zero -> False; we use this in case of soft SC
-            im_label_data_cur = im_label_data_cur * boolean_mask
-
-            # Loop across sagittal slices
-            for idx_col, sagittal_slice in enumerate(range(min_sag_slice, max_sag_slice + 1)):
-                # Get spinal cord and lesion masks data for the selected sagittal slice
-                slice_sc = im_sc_data[sagittal_slice]
-                slice_lesion = im_label_data_cur[sagittal_slice]
-
-                # Plot spinal cord and lesion masks
-                axes[idx_row, idx_col].imshow(np.swapaxes(slice_sc, 1, 0),
-                                              cmap='gray', origin="lower")
-                axes[idx_row, idx_col].imshow(np.swapaxes(slice_lesion, 1, 0),
-                                              cmap='jet', alpha=0.8, interpolation='nearest', origin="lower")
-
-                # Add title for each column
-                if idx_row == 0:
-                    if sagittal_slice == mid_sagittal_sc_slice:
-                        axes[idx_row, idx_col].set_title(f'Midsagittal slice\n'
-                                                         f'Sagittal slice #{sagittal_slice}')
-                    else:
-                        axes[idx_row, idx_col].set_title(f'Sagittal slice #{sagittal_slice}')
-
-                # Add title to each row, (i.e., y-axis)
-                if idx_col == 0:
-                    axes[idx_row, idx_col].set_ylabel(f'Lesion #{lesion_label}\n'
-                                                      f'Inferior-Superior')
-                else:
-                    axes[idx_row, idx_col].set_ylabel('Inferior-Superior')
-
-                # Add x-axis label
-                axes[idx_row, idx_col].set_xlabel('Posterior-Anterior')
-
-                # Crop the slice around the lesion (to zoom in)
-                axes[idx_row, idx_col].set_xlim(np.min(np.where(im_label_data_cur)[1]) - 20,
-                                                np.max(np.where(im_label_data_cur)[1]) + 20)
-                axes[idx_row, idx_col].set_ylim(np.min(np.where(im_label_data_cur)[2]) - 20,
-                                                np.max(np.where(im_label_data_cur)[2]) + 20)
-
-                # --------------------------------------
-                # Add text for tissue bridges
-                # --------------------------------------
-                # Check if the [idx_row][sagittal_slice, 'dorsal'] key exists in the tissue_bridges_plotting_data
-                # If the key exists, it means that we have tissue bridges for the current lesion and sagittal slice
-                if (idx_row in self.tissue_bridges_plotting_data) and \
-                        ((sagittal_slice, 'dorsal') in self.tissue_bridges_plotting_data[idx_row]):
-                    _plot_dorsal_tissue_bridge()
-                    _plot_ventral_tissue_bridge()
-
-        # tight layout
-        plt.tight_layout()
-        plt.savefig(self.tissue_bridges_png_name)
-        plt.close()
-
     def _measure_length(self, im_data, p_lst, idx):
         """
         Measure the length of the lesion along the superior-inferior axis when taking into account the angle correction
@@ -848,11 +704,6 @@ class AnalyzeLesion:
                                                       im_lesion=im_lesion_data_cur,
                                                       p_lst=p_lst)
 
-        if self.fname_sc is not None:
-            # Plot tissue bridges
-            # Note: we do plotting here as we plot all lesions into a single figure, so we need to be outside the loop
-            self._plot_tissue_bridges(im_lesion_data, p_lst, label_lst)
-
         if self.path_template is not None:
             # compute total lesion distribution
             self._measure_totLesion_distribution(im_lesion=np.copy(im_lesion_data > 0),
@@ -997,6 +848,24 @@ def main(argv: Sequence[str]):
 
     # run the analyze
     lesion_obj.analyze()
+
+    # Create QC report for tissue bridges (only if SC is provided)
+    if fname_sc is not None:
+        im_lesion = Image(lesion_obj.fname_label).change_orientation("RPI")
+        sct_analyze_lesion(
+            fname_input=fname_mask,
+            fname_sc=fname_sc,
+            tissue_bridges_plotting_data=lesion_obj.tissue_bridges_plotting_data,
+            measure_pd=lesion_obj.measure_pd,
+            im_lesion_data=im_lesion.data,
+            p_lst=im_lesion.dim[4:7],
+            label_lst=[label for label in np.unique(im_lesion.data) if label],
+            angles=lesion_obj.angles,
+            argv=argv,
+            path_qc=arguments.qc,
+            dataset=arguments.qc_dataset,
+            subject=arguments.qc_subject,
+        )
 
     # remove tmp_dir
     if rm_tmp:

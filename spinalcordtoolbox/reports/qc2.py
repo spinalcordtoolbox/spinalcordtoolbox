@@ -28,6 +28,7 @@ from spinalcordtoolbox.utils.shell import display_open
 from spinalcordtoolbox.utils.sys import __version__, list2cmdline, LazyLoader
 from spinalcordtoolbox.utils.fs import mutex
 
+mpl_plt = LazyLoader("mpl_plt", globals(), "matplotlib.pyplot")
 mpl_figure = LazyLoader("mpl_figure", globals(), "matplotlib.figure")
 mpl_axes = LazyLoader("mpl_axes", globals(), "matplotlib.axes")
 mpl_cm = LazyLoader("mpl_cm", globals(), "matplotlib.cm")
@@ -341,6 +342,182 @@ def sct_deepseg(
         img_path = str(imgs_to_generate['path_overlay_img'])
         logger.debug('Save image %s', img_path)
         fig.savefig(img_path, format='png', transparent=True, dpi=300)
+
+
+def sct_analyze_lesion(
+    fname_input: str,
+    tissue_bridges_plotting_data,
+    fname_sc,
+    measure_pd,
+    im_lesion_data,
+    p_lst,
+    label_lst,
+    angles,
+    argv: Sequence[str],
+    path_qc: str,
+    dataset: Optional[str],
+    subject: Optional[str],
+):
+    """
+    Generate a QC report for sct_analyze_lesion, specifically highlighting the tissue bridge widths.
+    """
+    command = 'sct_analyze_lesion'
+    cmdline = [command]
+    cmdline.extend(argv)
+
+    # Axial orientation, switch between one anat image and 1-2 seg images
+    with create_qc_entry(
+        path_input=Path(fname_input).absolute(),
+        path_qc=Path(path_qc),
+        command=command,
+        cmdline=list2cmdline(cmdline),
+        plane='Axial',
+        dataset=dataset,
+        subject=subject,
+    ) as imgs_to_generate:
+        # Load the spinal cord segmentation mask
+        im_sc = Image(fname_sc)
+        im_sc.change_orientation("RPI")
+        im_sc_data = im_sc.data
+
+        # Get the total number of lesions; this will represent the number of rows in the figure. For example, if we have
+        # 2 lesions, we will have two rows. One row per lesion.
+        num_of_lesions = len(label_lst)
+        # Get the minimum sagittal slice with lesion. For example, if a lesion cover slices 7,8,9, get 7
+        min_sag_slice = min([min(tissue_bridges_plotting_data[lesion_idx].keys()) for
+                             lesion_idx in tissue_bridges_plotting_data])[0]
+        # Get the maximum sagittal slice with lesion. For example, if a lesion cover slices 7,8,9, get 9
+        max_sag_slice = max([max(tissue_bridges_plotting_data[lesion_idx].keys()) for
+                             lesion_idx in tissue_bridges_plotting_data])[0]
+        # Get the number of slices containing the lesion. For example, if a lesion cover slices 7,8,9, get 3
+        num_of_sag_slices = max_sag_slice - min_sag_slice + 1
+
+        # Get the midsagittal slice of the spinal cord
+        # Note: as the midsagittal slice is the same for all lesions, we can pick the first lesion ([0]) to get it
+        mid_sagittal_sc_slice = measure_pd.loc[0, 'midsagittal_spinal_cord_slice']
+
+        #  Create a figure
+        #  The figure has one row per lesion and one column per sagittal slice containing the lesion
+        fig, axes = mpl_plt.subplots(num_of_lesions,
+                                     num_of_sag_slices,
+                                     figsize=(num_of_sag_slices * 5, num_of_lesions * 5))
+
+        # Force axes to be a 2-dimensional array (to avoid indexing issues if we have only a single lesion or a single
+        # sagittal slice)
+        axes = np.atleast_2d(axes)
+
+        # Loop across lesions
+        for idx_row, lesion_label in enumerate(label_lst):
+            # NOTE: As the 'label_lesion()' function has been called at the beginning of the script, im_lesion_data is
+            # now "labeled" meaning that different lesions have different values, e.g., 1, 2, 3
+            # As we are looping across lesions, we get the lesion mask for the current lesion label
+            im_label_data_cur = im_lesion_data == lesion_label
+            # Restrict the lesion mask to the spinal cord mask (from anatomical level, it does not make sense to have
+            # lesion outside the spinal cord mask)
+            boolean_mask = (im_sc_data.data != 0)  # Nonzero -> True | Zero -> False; we use this in case of soft SC
+            im_label_data_cur = im_label_data_cur * boolean_mask
+
+            # Loop across sagittal slices
+            for idx_col, sagittal_slice in enumerate(range(min_sag_slice, max_sag_slice + 1)):
+                # Get spinal cord and lesion masks data for the selected sagittal slice
+                slice_sc = im_sc_data[sagittal_slice]
+                slice_lesion = im_label_data_cur[sagittal_slice]
+
+                # Plot spinal cord and lesion masks
+                axes[idx_row, idx_col].imshow(np.swapaxes(slice_sc, 1, 0),
+                                              cmap='gray', origin="lower")
+                axes[idx_row, idx_col].imshow(np.swapaxes(slice_lesion, 1, 0),
+                                              cmap='jet', alpha=0.8, interpolation='nearest', origin="lower")
+
+                # Add title for each column
+                if idx_row == 0:
+                    if sagittal_slice == mid_sagittal_sc_slice:
+                        axes[idx_row, idx_col].set_title(f'Midsagittal slice\n'
+                                                         f'Sagittal slice #{sagittal_slice}')
+                    else:
+                        axes[idx_row, idx_col].set_title(f'Sagittal slice #{sagittal_slice}')
+
+                # Add title to each row, (i.e., y-axis)
+                if idx_col == 0:
+                    axes[idx_row, idx_col].set_ylabel(f'Lesion #{lesion_label}\n'
+                                                      f'Inferior-Superior')
+                else:
+                    axes[idx_row, idx_col].set_ylabel('Inferior-Superior')
+
+                # Add x-axis label
+                axes[idx_row, idx_col].set_xlabel('Posterior-Anterior')
+
+                # Crop the slice around the lesion (to zoom in)
+                axes[idx_row, idx_col].set_xlim(np.min(np.where(im_label_data_cur)[1]) - 20,
+                                                np.max(np.where(im_label_data_cur)[1]) + 20)
+                axes[idx_row, idx_col].set_ylim(np.min(np.where(im_label_data_cur)[2]) - 20,
+                                                np.max(np.where(im_label_data_cur)[2]) + 20)
+
+                # --------------------------------------
+                # Add text for tissue bridges
+                # --------------------------------------
+                # Check if the [idx_row][sagittal_slice, 'dorsal'] key exists in the tissue_bridges_plotting_data
+                # If the key exists, it means that we have tissue bridges for the current lesion and sagittal slice
+                if (idx_row in tissue_bridges_plotting_data) and \
+                        ((sagittal_slice, 'dorsal') in tissue_bridges_plotting_data[idx_row]):
+                    _plot_dorsal_tissue_bridge(tissue_bridges_plotting_data, idx_row, idx_col, sagittal_slice, p_lst,
+                                               angles, axes)
+                    _plot_ventral_tissue_bridge(tissue_bridges_plotting_data, idx_row, idx_col, sagittal_slice, p_lst,
+                                                angles, axes)
+
+        # tight layout
+        mpl_plt.tight_layout()
+        for fname in imgs_to_generate.values():
+            mpl_plt.savefig(fname)
+        mpl_plt.close()
+
+
+def _plot_dorsal_tissue_bridge(tissue_bridges_plotting_data, idx_row, idx_col, sagittal_slice, p_lst, angles, axes):
+    """
+    Add text for the dorsal bridge
+    """
+    # lesion_indices_dorsal_bridge: ndarray of the indices of the lesion mask
+    # Note: we use [0] because .values returns a numpy array
+    lesion_indices_dorsal_bridge = \
+        tissue_bridges_plotting_data[idx_row][sagittal_slice, 'dorsal']['lesion_indices'].values[0]
+    # Get the posterior/dorsal tip of the lesion (the first element in the lesion_indices)
+    x_dorsal = lesion_indices_dorsal_bridge[0]
+    # dorsal_bridge_width: the width of the tissue bridge
+    dorsal_bridge_width = float(
+        tissue_bridges_plotting_data[idx_row][sagittal_slice, 'dorsal']['dorsal_bridge_width'])
+    # y_dorsal: the axial slice with the minimum dorsal tissue bridge width
+    y_dorsal = int(tissue_bridges_plotting_data[idx_row][sagittal_slice, 'dorsal']['axial_slice'])
+
+    # Add text with the width of the tissue in mm above each bridge
+    dorsal_bridge_width_mm = float(dorsal_bridge_width * p_lst[1]) * np.cos(angles[y_dorsal])
+    axes[idx_row, idx_col].text(x_dorsal - 3,
+                                y_dorsal,
+                                f'Dorsal bridge\n{np.round(dorsal_bridge_width_mm, 2)} mm',
+                                color='red', fontsize=12, ha='right', va='bottom')
+
+
+def _plot_ventral_tissue_bridge(tissue_bridges_plotting_data, idx_row, idx_col, sagittal_slice, p_lst, angles, axes):
+    """
+    Add text for the ventral bridge
+    """
+    # lesion_indices_ventral_bridge: ndarray of the indices of the lesion mask
+    # Note: we use [0] because .values returns a numpy array
+    lesion_indices_ventral_bridge = \
+        tissue_bridges_plotting_data[idx_row][sagittal_slice, 'ventral']['lesion_indices'].values[0]
+    # Get the anterior/ventral tip of the lesion (the last element in the lesion_indices)
+    x_ventral = lesion_indices_ventral_bridge[-1]
+    # ventral_bridge_width: the width of the tissue bridge
+    ventral_bridge_width = float(
+        tissue_bridges_plotting_data[idx_row][sagittal_slice, 'ventral']['ventral_bridge_width'])
+    # y_ventral: the axial slice with the minimum dorsal tissue bridge width
+    y_ventral = int(tissue_bridges_plotting_data[idx_row][sagittal_slice, 'ventral']['axial_slice'])
+
+    # Add text with the width of the tissue in mm above each bridge
+    ventral_bridge_width_mm = float(ventral_bridge_width * p_lst[1]) * np.cos(angles[y_ventral])
+    axes[idx_row, idx_col].text(x_ventral + 3,
+                                y_ventral,
+                                f'Ventral bridge\n{np.round(ventral_bridge_width_mm, 2)} mm',
+                                color='red', fontsize=12, ha='left', va='bottom')
 
 
 def inf_nan_fill(A: np.ndarray):
