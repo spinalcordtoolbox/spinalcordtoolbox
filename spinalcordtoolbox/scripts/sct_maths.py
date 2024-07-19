@@ -9,10 +9,8 @@ import sys
 import pickle
 import gzip
 import argparse
-import math
 from typing import Sequence, Union
 
-import nibabel as nib
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -82,7 +80,6 @@ def get_parser():
     mandatory.add_argument(
         "-i",
         metavar=Metavar.file,
-        type=number_or_fname,
         help="Input file. Example: data.nii.gz",
         required=True)
     mandatory.add_argument(
@@ -336,181 +333,71 @@ def get_parser():
     return parser
 
 
-class SctMathsTypeError(Exception):
-    """Inappropriate argument type for an `sct_maths` operation."""
-
-
-def check_image_to_image(current_type: str, *args) -> str:
-    """Type checker for generic image -> image operations."""
-    if current_type != 'image':
-        raise SctMathsTypeError(f"expected image, but got {current_type}")
-    return 'image'
-
-
-def check_metric(current_type: str, fname) -> str:
-    """Type checker for similarity metrics."""
-    if current_type != 'image':
-        raise SctMathsTypeError(f"expected image, but got {current_type}")
-    return 'metric'
-
-
-def check_arithmetic(current_type: str, *args) -> str:
-    """Type checker for `-add`, `-sub`, etc."""
-    # special case for -add, -mul to operate on a 4D volume across the t axis
-    if not args:
-        return check_image_to_image(current_type)
-
-    # in the usual case, numbers can get promoted to images
-    if current_type == 'number':
-        if all(isinstance(arg, float) for arg in args):
-            return 'number'
-        else:
-            return 'image'
-    elif current_type == 'image':
-        return 'image'
-    else:
-        raise SctMathsTypeError(f"expected number or image, but got {current_type}")
-
-
-# the type-checking function for each sct_maths operation
-CHECK = {
-    "add": check_arithmetic,
-    "sub": check_arithmetic,
-    "mul": check_arithmetic,
-    "div": check_arithmetic,
-    "mean": check_image_to_image,
-    "rms": check_image_to_image,
-    "std": check_image_to_image,
-    "bin": check_image_to_image,
-    "otsu": check_image_to_image,
-    "adap": check_image_to_image,
-    "otsu_median": check_image_to_image,
-    "percent": check_image_to_image,
-    "thr": check_image_to_image,
-    "uthr": check_image_to_image,
-    "dilate": check_image_to_image,
-    "erode": check_image_to_image,
-    "smooth": check_image_to_image,
-    "laplacian": check_image_to_image,
-    "denoise": check_image_to_image,
-    "mi": check_metric,
-    "minorm": check_metric,
-    "corr": check_metric,
-    "symmetrize": check_image_to_image,
-}
-
-
 class SctMathsValueError(Exception):
     """Inappropriate argument value for an `sct_maths` operation."""
 
 
-def get_header_and_values(
-    current_value: Union[float, Image],
+def get_data_arrays(
+    current_value: Image,
     args: list[Union[float, str]],
-) -> Union[
-    tuple[None, list[float]],  # if there are only numbers
-    tuple[nib.Nifti1Header, list[np.ndarray]],  # if there is an image
-]:
+) -> list[np.ndarray]:
     """
     Helper function to normalize the arguments of -add, -sub, etc.
 
-    If there are only numbers, returns (None, list of numbers).
-    If there is at least one image, returns (image header, list of data arrays),
-    where all the data arrays have the same shape.
+    Returns a list of data arrays, where they all have the same shape.
 
     Raises an SctMathsValueError if there is a shape mismatch.
     """
-    # the first image, if any, determines the final header and data shape
-    if isinstance(current_value, Image):
-        header = current_value.hdr
-        shape = current_value.data.shape
-    else:
-        for arg in args:
-            if isinstance(arg, str):
-                im = Image(arg)
-                header = im.hdr
-                shape = im.data.shape
-                break  # found the first image
-        else:
-            # there are no images, only numbers
-            return None, [current_value] + args
-
-    # make sure all the data arrays have the same shape
-    if isinstance(current_value, Image):
-        values = [current_value.data]
-    else:
-        values = [np.full(shape, current_value)]
+    shape = current_value.data.shape
+    list_data = []
     for arg in args:
-        if isinstance(arg, str):
+        if isinstance(arg, float):
+            list_data.append(np.full(shape, arg))
+        else:
+            assert isinstance(arg, str)
             im = Image(arg)
             if im.data.shape != shape:
                 raise SctMathsValueError(f"image {arg} has the wrong shape {im.data.shape} (expected: {shape})")
-            values.append(im.data)
-        else:
-            values.append(np.full(shape, arg))
-    return header, values
+            list_data.append(im.data)
+    return list_data
 
 
 def apply_add(current_value, *args):
     """Implementation for -add."""
     # special case to operate on a 4D volume across the t axis
-    if isinstance(current_value, Image) and current_value.data.ndim == 4 and not args:
+    if current_value.data.ndim == 4 and not args:
         return Image(
             np.sum(current_value.data, axis=3),
             hdr=current_value.hdr,
         )
-
-    header, values = get_header_and_values(current_value, args)
-    if header is None:
-        return sum(values)
     else:
-        return Image(
-            np.sum(values, axis=0),
-            hdr=header,
-        )
+        current_value.data += np.sum(get_data_arrays(current_value, args), axis=0)
+        return current_value
 
 
 def apply_sub(current_value, *args):
     """Implementation for -sub."""
-    header, [first, *rest] = get_header_and_values(current_value, args)
-    if header is None:
-        return first - sum(rest)
-    else:
-        return Image(
-            first - np.sum(rest, axis=0),
-            hdr=header,
-        )
+    current_value.data -= np.sum(get_data_arrays(current_value, args), axis=0)
+    return current_value
 
 
 def apply_mul(current_value, *args):
     """Implementation for -mul."""
     # special case to operate on a 4D volume across the t axis
-    if isinstance(current_value, Image) and current_value.data.ndim == 4 and not args:
+    if current_value.data.ndim == 4 and not args:
         return Image(
             np.prod(current_value.data, axis=3),
             hdr=current_value.hdr,
         )
-
-    header, values = get_header_and_values(current_value, args)
-    if header is None:
-        return math.prod(values)
     else:
-        return Image(
-            np.prod(values, axis=0),
-            hdr=header,
-        )
+        current_value.data *= np.prod(get_data_arrays(current_value, args), axis=0)
+        return current_value
 
 
 def apply_div(current_value, *args):
     """Implementation for -div."""
-    header, [first, *rest] = get_header_and_values(current_value, args)
-    if header is None:
-        return first / math.prod(rest)
-    else:
-        return Image(
-            first / np.prod(rest, axis=0),
-            hdr=header,
-        )
+    current_value.data /= np.prod(get_data_arrays(current_value, args), axis=0)
+    return current_value
 
 
 def apply_mean(current_value, dim):
@@ -747,36 +634,32 @@ def main(argv: Sequence[str]):
         if operation in ['dilate', 'erode']:
             args.extend([shape, dim])
 
-    # Check data types
-    current_type = 'number' if isinstance(arguments.i, float) else 'image'
-    for operation, args in arguments.todo:
-        try:
-            current_type = CHECK[operation](current_type, *args)
-        except SctMathsTypeError as e:
-            parser.error(f"wrong type for -{operation}: {e}")
-    final_type = current_type
-    if final_type == 'number':
-        parser.error('there must be at least one image in the list of inputs')
-    elif final_type == 'metric':
-        if arguments.type is not None:
-            printv("WARNING: Output type conversion has no effect for similarity metrics, "
-                   "-type argument will be ignored.", verbose=verbose, type='warning')
+    # Check that the list of operations makes sense
+    if not arguments.todo:
+        parser.error("there must be at least one operation to perform")
+    for operation, args in arguments.todo[:-1]:
+        if operation in ['mi', 'minorm', 'corr']:
+            parser.error(f"-{operation}: similarity metrics are only supported "
+                         "as the last operation to perform")
+    last_operation, _ = arguments.todo[-1]
+    final_type = 'metric_todo' if last_operation in ['mi', 'minorm', 'corr'] else 'image'
 
     # Actually do the computations
-    current_value = arguments.i if isinstance(arguments.i, float) else Image(arguments.i)
+    current_value = Image(arguments.i)
     for operation, args in arguments.todo:
         try:
             current_value = APPLY[operation](current_value, *args)
         except SctMathsValueError as e:
             printv(f"ERROR: -{operation}: {e}", 1, 'error')
+    final_value = current_value
 
     # Post-processing of the results
     if final_type == 'image':
-        current_value.save(arguments.o, dtype=arguments.type)
+        final_value.save(arguments.o, dtype=arguments.type)
         display_viewer_syntax([arguments.o], verbose=verbose)
     else:
-        assert final_type == 'metric'
-        img1, img2, metric_name, metric_name_full = current_value
+        assert final_type == 'metric_todo'
+        img1, img2, metric_name, metric_name_full = final_value
         compute_similarity(img1, img2, arguments.o, metric_name, metric_name_full, verbose)
         printv(f"\nDone! File created: {arguments.o}", verbose, 'info')
 
