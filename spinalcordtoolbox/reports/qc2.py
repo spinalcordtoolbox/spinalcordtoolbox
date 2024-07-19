@@ -28,6 +28,7 @@ from spinalcordtoolbox.utils.shell import display_open
 from spinalcordtoolbox.utils.sys import __version__, list2cmdline, LazyLoader
 from spinalcordtoolbox.utils.fs import mutex
 
+pd = LazyLoader("pd", globals(), "pandas")
 mpl_plt = LazyLoader("mpl_plt", globals(), "matplotlib.pyplot")
 mpl_figure = LazyLoader("mpl_figure", globals(), "matplotlib.figure")
 mpl_axes = LazyLoader("mpl_axes", globals(), "matplotlib.axes")
@@ -346,8 +347,8 @@ def sct_deepseg(
 
 def sct_analyze_lesion(
     fname_input: str,
-    fname_sc,
-    measure_pd,
+    fname_sc: str,
+    measure_pd: pd.DataFrame,
     argv: Sequence[str],
     path_qc: str,
     dataset: Optional[str],
@@ -366,7 +367,7 @@ def sct_analyze_lesion(
         path_qc=Path(path_qc),
         command=command,
         cmdline=list2cmdline(cmdline),
-        plane='Axial',
+        plane='Sagittal',
         dataset=dataset,
         subject=subject,
     ) as imgs_to_generate:
