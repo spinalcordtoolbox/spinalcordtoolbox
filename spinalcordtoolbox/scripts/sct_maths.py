@@ -59,41 +59,14 @@ class StoreTodo(argparse.Action):
     """
     Store the arguments of an sct_maths operation in `arguments.todo`.
 
-    The format is: (operation name, positional args, keyword args).
+    The format is: (operation name, list of arguments).
     """
     def __call__(self, parser, namespace, values, option_string=None):
         # make sure values is a list, rather than a single bare value
         if not isinstance(values, list):
             values = [values]
 
-        namespace.todo.append((self.dest, values, {}))
-
-
-class StoreTodoWithShapeDim(argparse.Action):
-    """
-    Store the arguments of `-dilate` or `-erode` in `arguments.todo`.
-
-    These two operations are special-cased because they need the "current"
-    values of `-shape` and `-dim` to also be saved.
-
-    The format is: (operation name, positional args, keyword args).
-    """
-    def __call__(self, parser, namespace, values, option_string=None):
-        # make sure values is a list, rather than a single bare value
-        if not isinstance(values, list):
-            values = [values]
-
-        shape = namespace.shape
-        if shape in ['disk', 'square']:
-            # 2D kernels need the value of `-dim`
-            dim = namespace.dim
-            if dim is None:
-                parser.error(f"-dim is required for -{self.dest} with 2D morphological kernel")
-        else:
-            # 3D kernels don't need `-dim`
-            dim = None
-
-        namespace.todo.append((self.dest, values, {'shape': shape, 'dim': dim}))
+        namespace.todo.append((self.dest, values))
 
 
 def get_parser():
@@ -251,7 +224,7 @@ def get_parser():
         '-dilate',
         metavar=Metavar.int,
         type=int,
-        action=StoreTodoWithShapeDim,
+        action=StoreTodo,
         help="Dilate binary or greyscale image with specified size. If shape={'square', 'cube'}: size corresponds to the length of "
              "an edge (size=1 has no effect). If shape={'disk', 'ball'}: size corresponds to the radius, not including "
              "the center element (size=0 has no effect).",
@@ -260,7 +233,7 @@ def get_parser():
         '-erode',
         metavar=Metavar.int,
         type=int,
-        action=StoreTodoWithShapeDim,
+        action=StoreTodo,
         help="Erode binary or greyscale image with specified size. If shape={'square', 'cube'}: size corresponds to the length of "
              "an edge (size=1 has no effect). If shape={'disk', 'ball'}: size corresponds to the radius, not including "
              "the center element (size=0 has no effect).",
@@ -268,7 +241,8 @@ def get_parser():
     mathematical.add_argument(
         '-shape',
         choices=('square', 'cube', 'disk', 'ball'),
-        default='ball',
+        action='append',  # to output a warning if used more than once
+        default=[],
         help="Shape of the structuring element for the mathematical morphology operation. Default: ball.\n"
              "If a 2D shape {'disk', 'square'} is selected, -dim must be specified.",
         required=False)
@@ -276,7 +250,8 @@ def get_parser():
         '-dim',
         type=int,
         choices=(0, 1, 2),
-        default=None,  # needed because argument_default=argparse.SUPPRESS
+        action='append',  # to output a warning if used more than once
+        default=[],
         help="Dimension of the array which 2D structural element will be orthogonal to. For example, if you wish to "
              "apply a 2D disk kernel in the X-Y plane, leaving Z unaffected, parameters will be: shape=disk, dim=2.",
         required=False)
@@ -365,7 +340,7 @@ class SctMathsTypeError(Exception):
     """Inappropriate argument type for an `sct_maths` operation."""
 
 
-def check_image_to_image(current_type: str, *args, **kwargs) -> str:
+def check_image_to_image(current_type: str, *args) -> str:
     """Type checker for generic image -> image operations."""
     if current_type != 'image':
         raise SctMathsTypeError(f"expected image, but got {current_type}")
@@ -625,7 +600,7 @@ def apply_uthr(current_value, threshold):
     )
 
 
-def apply_dilate(current_value, size, *, shape, dim):
+def apply_dilate(current_value, size, shape, dim):
     """Implementation for -dilate."""
     return Image(
         sct_math.dilate(current_value.data, size=size, shape=shape, dim=dim),
@@ -633,7 +608,7 @@ def apply_dilate(current_value, size, *, shape, dim):
     )
 
 
-def apply_erode(current_value, size, *, shape, dim):
+def apply_erode(current_value, size, shape, dim):
     """Implementation for -erode."""
     return Image(
         sct_math.erode(current_value.data, size=size, shape=shape, dim=dim),
@@ -744,11 +719,39 @@ def main(argv: Sequence[str]):
     verbose = arguments.v
     set_loglevel(verbose=verbose)
 
+    # Handle `-shape` and `-dim` for `-dilate` and `-erode`
+    if len(arguments.shape) == 0:
+        shape = 'ball'
+    elif len(arguments.shape) == 1:
+        shape = arguments.shape[0]
+    else:
+        parser.error("-shape cannot be specified more than once")
+
+    if shape in ['disk', 'square']:
+        # 2D kernels need the value of `-dim`
+        if len(arguments.dim) == 0:
+            parser.error(f"-dim is required for -shape {shape}")
+        elif len(arguments.dim) == 1:
+            dim = arguments.dim[0]
+        else:
+            parser.error("-dim cannot be specified more than once")
+    else:
+        # 3D kernels don't need `-dim`
+        if len(arguments.dim) == 0:
+            dim = None
+        else:
+            parser.error(f"-dim should not be specified for -shape {shape}")
+
+    # Pass `-shape` and `-dim` to `-dilate` and `-erode`, now that we know their values
+    for operation, args in arguments.todo:
+        if operation in ['dilate', 'erode']:
+            args.extend([shape, dim])
+
     # Check data types
     current_type = 'number' if isinstance(arguments.i, float) else 'image'
-    for operation, args, kwargs in arguments.todo:
+    for operation, args in arguments.todo:
         try:
-            current_type = CHECK[operation](current_type, *args, **kwargs)
+            current_type = CHECK[operation](current_type, *args)
         except SctMathsTypeError as e:
             parser.error(f"wrong type for -{operation}: {e}")
     final_type = current_type
@@ -761,9 +764,9 @@ def main(argv: Sequence[str]):
 
     # Actually do the computations
     current_value = arguments.i if isinstance(arguments.i, float) else Image(arguments.i)
-    for operation, args, kwargs in arguments.todo:
+    for operation, args in arguments.todo:
         try:
-            current_value = APPLY[operation](current_value, *args, **kwargs)
+            current_value = APPLY[operation](current_value, *args)
         except SctMathsValueError as e:
             printv(f"ERROR: -{operation}: {e}", 1, 'error')
 
