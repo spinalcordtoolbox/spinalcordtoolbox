@@ -346,10 +346,8 @@ def sct_deepseg(
 
 def sct_analyze_lesion(
     fname_input: str,
-    tissue_bridges_plotting_data,
     fname_sc,
     measure_pd,
-    angles,
     argv: Sequence[str],
     path_qc: str,
     dataset: Optional[str],
@@ -381,18 +379,17 @@ def sct_analyze_lesion(
         im_lesion = Image(fname_input)
         im_lesion.change_orientation("RPI")
         im_lesion_data = im_lesion.data
-        p_lst = im_lesion.dim[4:7]
         label_lst = [label for label in np.unique(im_lesion.data) if label]
 
         # Get the total number of lesions; this will represent the number of rows in the figure. For example, if we have
         # 2 lesions, we will have two rows. One row per lesion.
         num_of_lesions = len(label_lst)
+        # Get the sagittal lesion slices
+        sagittal_lesion_slices = np.unique(np.where(im_lesion_data)[0])
         # Get the minimum sagittal slice with lesion. For example, if a lesion cover slices 7,8,9, get 7
-        min_sag_slice = min([min(tissue_bridges_plotting_data[lesion_idx].keys()) for
-                             lesion_idx in tissue_bridges_plotting_data])[0]
+        min_sag_slice = min(sagittal_lesion_slices)
         # Get the maximum sagittal slice with lesion. For example, if a lesion cover slices 7,8,9, get 9
-        max_sag_slice = max([max(tissue_bridges_plotting_data[lesion_idx].keys()) for
-                             lesion_idx in tissue_bridges_plotting_data])[0]
+        max_sag_slice = max(sagittal_lesion_slices)
         # Get the number of slices containing the lesion. For example, if a lesion cover slices 7,8,9, get 3
         num_of_sag_slices = max_sag_slice - min_sag_slice + 1
 
@@ -462,12 +459,14 @@ def sct_analyze_lesion(
                 # --------------------------------------
                 # Check if the [idx_row][sagittal_slice, 'dorsal'] key exists in the tissue_bridges_plotting_data
                 # If the key exists, it means that we have tissue bridges for the current lesion and sagittal slice
-                if (idx_row in tissue_bridges_plotting_data) and \
-                        ((sagittal_slice, 'dorsal') in tissue_bridges_plotting_data[idx_row]):
-                    _plot_dorsal_tissue_bridge(tissue_bridges_plotting_data, idx_row, idx_col, sagittal_slice, p_lst,
-                                               angles, axes)
-                    _plot_ventral_tissue_bridge(tissue_bridges_plotting_data, idx_row, idx_col, sagittal_slice, p_lst,
-                                                angles, axes)
+                if idx_row < len(measure_pd):
+                    col_name_dorsal = f"slice_{int(sagittal_slice)}_dorsal_bridge_width [mm]"
+                    if col_name_dorsal in measure_pd.columns and measure_pd[col_name_dorsal][idx_row] != np.nan:
+                        _plot_dorsal_tissue_bridge(idx_row, idx_col, sagittal_slice, axes, measure_pd, slice_lesion)
+
+                    col_name_ventral = f"slice_{int(sagittal_slice)}_ventral_bridge_width [mm]"
+                    if col_name_ventral in measure_pd.columns and measure_pd[col_name_ventral][idx_row] != np.nan:
+                        _plot_ventral_tissue_bridge(idx_row, idx_col, sagittal_slice, axes, measure_pd, slice_lesion)
 
         # tight layout
         mpl_plt.tight_layout()
@@ -476,50 +475,25 @@ def sct_analyze_lesion(
         mpl_plt.close()
 
 
-def _plot_dorsal_tissue_bridge(tissue_bridges_plotting_data, idx_row, idx_col, sagittal_slice, p_lst, angles, axes):
+def _plot_dorsal_tissue_bridge(idx_row, idx_col, sagittal_slice, axes, measure_pd, slice_lesion):
     """
     Add text for the dorsal bridge
     """
-    # lesion_indices_dorsal_bridge: ndarray of the indices of the lesion mask
-    # Note: we use [0] because .values returns a numpy array
-    lesion_indices_dorsal_bridge = \
-        tissue_bridges_plotting_data[idx_row][sagittal_slice, 'dorsal']['lesion_indices'].values[0]
-    # Get the posterior/dorsal tip of the lesion (the first element in the lesion_indices)
-    x_dorsal = lesion_indices_dorsal_bridge[0]
-    # dorsal_bridge_width: the width of the tissue bridge
-    dorsal_bridge_width = float(
-        tissue_bridges_plotting_data[idx_row][sagittal_slice, 'dorsal']['dorsal_bridge_width'])
-    # y_dorsal: the axial slice with the minimum dorsal tissue bridge width
-    y_dorsal = int(tissue_bridges_plotting_data[idx_row][sagittal_slice, 'dorsal']['axial_slice'])
-
     # Add text with the width of the tissue in mm above each bridge
-    dorsal_bridge_width_mm = float(dorsal_bridge_width * p_lst[1]) * np.cos(angles[y_dorsal])
-    axes[idx_row, idx_col].text(x_dorsal - 3,
-                                y_dorsal,
+    dorsal_bridge_width_mm = measure_pd[f"slice_{int(sagittal_slice)}_dorsal_bridge_width [mm]"][idx_row]
+    axes[idx_row, idx_col].text(min(np.where(slice_lesion)[0]) - 3,
+                                min(np.where(slice_lesion)[1]),
                                 f'Dorsal bridge\n{np.round(dorsal_bridge_width_mm, 2)} mm',
                                 color='red', fontsize=12, ha='right', va='bottom')
 
 
-def _plot_ventral_tissue_bridge(tissue_bridges_plotting_data, idx_row, idx_col, sagittal_slice, p_lst, angles, axes):
+def _plot_ventral_tissue_bridge(idx_row, idx_col, sagittal_slice, axes, measure_pd, slice_lesion):
     """
     Add text for the ventral bridge
     """
-    # lesion_indices_ventral_bridge: ndarray of the indices of the lesion mask
-    # Note: we use [0] because .values returns a numpy array
-    lesion_indices_ventral_bridge = \
-        tissue_bridges_plotting_data[idx_row][sagittal_slice, 'ventral']['lesion_indices'].values[0]
-    # Get the anterior/ventral tip of the lesion (the last element in the lesion_indices)
-    x_ventral = lesion_indices_ventral_bridge[-1]
-    # ventral_bridge_width: the width of the tissue bridge
-    ventral_bridge_width = float(
-        tissue_bridges_plotting_data[idx_row][sagittal_slice, 'ventral']['ventral_bridge_width'])
-    # y_ventral: the axial slice with the minimum dorsal tissue bridge width
-    y_ventral = int(tissue_bridges_plotting_data[idx_row][sagittal_slice, 'ventral']['axial_slice'])
-
-    # Add text with the width of the tissue in mm above each bridge
-    ventral_bridge_width_mm = float(ventral_bridge_width * p_lst[1]) * np.cos(angles[y_ventral])
-    axes[idx_row, idx_col].text(x_ventral + 3,
-                                y_ventral,
+    ventral_bridge_width_mm = measure_pd[f"slice_{int(sagittal_slice)}_ventral_bridge_width [mm]"][idx_row]
+    axes[idx_row, idx_col].text(max(np.where(slice_lesion)[0]) + 3,
+                                min(np.where(slice_lesion)[1]),
                                 f'Ventral bridge\n{np.round(ventral_bridge_width_mm, 2)} mm',
                                 color='red', fontsize=12, ha='left', va='bottom')
 

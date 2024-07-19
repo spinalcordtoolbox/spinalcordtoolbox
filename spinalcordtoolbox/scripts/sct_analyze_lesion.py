@@ -181,9 +181,6 @@ class AnalyzeLesion:
         self.atlas_roi_lst = None
         self.distrib_matrix_dct = {}
 
-        # data for tissue bridges plotting
-        self.tissue_bridges_plotting_data = {}
-
         # output names
         self.pickle_name = extract_fname(self.fname_mask)[1] + '_analysis.pkl'
         self.excel_name = extract_fname(self.fname_mask)[1] + '_analysis.xls'
@@ -454,8 +451,7 @@ class AnalyzeLesion:
 
                 tissue_bridges_dict[sagittal_slice, axial_slice] = \
                     {'dorsal_bridge_width': dorsal_bridge_width,
-                     'ventral_bridge_width': ventral_bridge_width,
-                     'lesion_indices': lesion_indices}       # we store lesion indices for plotting
+                     'ventral_bridge_width': ventral_bridge_width}
 
         # --------------------------------------
         # Get minimal tissue bridges
@@ -467,10 +463,6 @@ class AnalyzeLesion:
         tissue_bridges_df = pd.DataFrame(list(tissue_bridges_dict.values()), index=index)
         # 3. Reset the index to make 'sagittal_slice' and 'axial_slice' as columns
         tissue_bridges_df.reset_index(inplace=True)
-
-        # Initialize auxiliary dict to store info for plotting
-        lesion_idx = idx.values[0]
-        self.tissue_bridges_plotting_data[lesion_idx] = {}
 
         # Get slices of minimum dorsal and ventral tissue bridges for each sagittal slice
         # NOTE: we get minimum because tissue bridges are quantified as the width of spared tissue at the minimum
@@ -491,12 +483,6 @@ class AnalyzeLesion:
                                    min_ventral_bridge_width_slice), 'min_ventral_bridge_axial_slice'] = True
             # Replace NaN with False
             tissue_bridges_df.fillna(False, inplace=True)
-
-            # Save info for plotting
-            self.tissue_bridges_plotting_data[lesion_idx][sagittal_slice, 'dorsal'] = (
-                df_temp)[df_temp['axial_slice'] == min_dorsal_bridge_width_slice]
-            self.tissue_bridges_plotting_data[lesion_idx][sagittal_slice, 'ventral'] = (
-                df_temp)[df_temp['axial_slice'] == min_ventral_bridge_width_slice]
 
             # Get the width of the tissue bridges in mm
             # NOTE: the orientation is RPI (because we reoriented the image to RPI using orient2rpi()); therefore
@@ -854,9 +840,7 @@ def main(argv: Sequence[str]):
         sct_analyze_lesion(
             fname_input=lesion_obj.fname_label,
             fname_sc=fname_sc,
-            tissue_bridges_plotting_data=lesion_obj.tissue_bridges_plotting_data,
             measure_pd=lesion_obj.measure_pd,
-            angles=lesion_obj.angles,
             argv=argv,
             path_qc=arguments.qc,
             dataset=arguments.qc_dataset,
