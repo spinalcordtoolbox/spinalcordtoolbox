@@ -347,6 +347,7 @@ def sct_deepseg(
 
 def sct_analyze_lesion(
     fname_input: str,
+    fname_label: str,
     fname_sc: str,
     measure_pd: pd.DataFrame,
     argv: Sequence[str],
@@ -377,7 +378,7 @@ def sct_analyze_lesion(
         im_sc_data = im_sc.data
 
         # Load the labeled lesion mask
-        im_lesion = Image(fname_input)
+        im_lesion = Image(fname_label)
         im_lesion.change_orientation("RPI")
         im_lesion_data = im_lesion.data
         label_lst = [label for label in np.unique(im_lesion.data) if label]
