@@ -349,9 +349,6 @@ def sct_analyze_lesion(
     tissue_bridges_plotting_data,
     fname_sc,
     measure_pd,
-    im_lesion_data,
-    p_lst,
-    label_lst,
     angles,
     argv: Sequence[str],
     path_qc: str,
@@ -379,6 +376,13 @@ def sct_analyze_lesion(
         im_sc = Image(fname_sc)
         im_sc.change_orientation("RPI")
         im_sc_data = im_sc.data
+
+        # Load the labeled lesion mask
+        im_lesion = Image(fname_input)
+        im_lesion.change_orientation("RPI")
+        im_lesion_data = im_lesion.data
+        p_lst = im_lesion.dim[4:7]
+        label_lst = [label for label in np.unique(im_lesion.data) if label]
 
         # Get the total number of lesions; this will represent the number of rows in the figure. For example, if we have
         # 2 lesions, we will have two rows. One row per lesion.

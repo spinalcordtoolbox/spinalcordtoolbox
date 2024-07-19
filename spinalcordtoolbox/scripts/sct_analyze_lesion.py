@@ -851,15 +851,11 @@ def main(argv: Sequence[str]):
 
     # Create QC report for tissue bridges (only if SC is provided)
     if fname_sc is not None:
-        im_lesion = Image(lesion_obj.fname_label).change_orientation("RPI")
         sct_analyze_lesion(
-            fname_input=fname_mask,
+            fname_input=lesion_obj.fname_label,
             fname_sc=fname_sc,
             tissue_bridges_plotting_data=lesion_obj.tissue_bridges_plotting_data,
             measure_pd=lesion_obj.measure_pd,
-            im_lesion_data=im_lesion.data,
-            p_lst=im_lesion.dim[4:7],
-            label_lst=[label for label in np.unique(im_lesion.data) if label],
             angles=lesion_obj.angles,
             argv=argv,
             path_qc=arguments.qc,
