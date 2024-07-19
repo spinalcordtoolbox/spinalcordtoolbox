@@ -23,7 +23,7 @@ from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 from spinalcordtoolbox.utils.fs import extract_fname
 
 
-def number_or_image(arg: str) -> Union[float, str]:
+def number_or_fname(arg: str) -> Union[float, str]:
     """
     Parse an argument as either a number or an image file name.
 
@@ -109,7 +109,7 @@ def get_parser():
     mandatory.add_argument(
         "-i",
         metavar=Metavar.file,
-        type=number_or_image,
+        type=number_or_fname,
         help="Input file. Example: data.nii.gz",
         required=True)
     mandatory.add_argument(
@@ -130,7 +130,7 @@ def get_parser():
         "-add",
         metavar='',
         nargs="*",
-        type=number_or_image,
+        type=number_or_fname,
         action=StoreTodo,
         help='Add following input. Can be a number or one or more 3D/4D images (separated with space). Examples:'
              '\n  - sct_maths -i 3D.nii.gz -add 5                       (Result: 3D image with "5" added to each voxel)'
@@ -146,7 +146,7 @@ def get_parser():
         "-sub",
         metavar='',
         nargs="+",
-        type=number_or_image,
+        type=number_or_fname,
         action=StoreTodo,
         help='Subtract following input. Can be a number, or one or more 3D/4D images (separated with space).',
         required=False)
@@ -154,7 +154,7 @@ def get_parser():
         "-mul",
         metavar='',
         nargs="*",
-        type=number_or_image,
+        type=number_or_fname,
         action=StoreTodo,
         help='Multiply by following input. Can be a number, or one or more 3D/4D images (separated with space). '
              '(See -add for examples.)',
@@ -163,7 +163,7 @@ def get_parser():
         "-div",
         metavar='',
         nargs="+",
-        type=number_or_image,
+        type=number_or_fname,
         action=StoreTodo,
         help='Divide by following input. Can be a number, or one or more 3D/4D images (separated with space).',
         required=False)
