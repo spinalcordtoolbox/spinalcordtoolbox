@@ -463,16 +463,17 @@ def sct_analyze_lesion(
                 # If the key exists, it means that we have tissue bridges for the current lesion and sagittal slice
                 if idx_row < len(measure_pd):
                     col_name_dorsal = f"slice_{int(sagittal_slice)}_dorsal_bridge_width [mm]"
-                    if col_name_dorsal in measure_pd.columns and measure_pd[col_name_dorsal][idx_row] != np.nan:
-                        dorsal_bridge_width_mm = measure_pd[col_name_dorsal][idx_row]
+                    dorsal_bridge_width_mm = measure_pd[col_name_dorsal][idx_row]
+                    if col_name_dorsal in measure_pd.columns and not pd.isna(dorsal_bridge_width_mm):
+
                         axes[idx_row, idx_col].text(min(np.where(slice_lesion)[0]) - 3,
                                                     min(np.where(slice_lesion)[1]),
                                                     f'Dorsal bridge\n{np.round(dorsal_bridge_width_mm, 2)} mm',
                                                     color='red', fontsize=12, ha='right', va='bottom')
 
                     col_name_ventral = f"slice_{int(sagittal_slice)}_ventral_bridge_width [mm]"
-                    if col_name_ventral in measure_pd.columns and measure_pd[col_name_ventral][idx_row] != np.nan:
-                        ventral_bridge_width_mm = measure_pd[col_name_ventral][idx_row]
+                    ventral_bridge_width_mm = measure_pd[col_name_ventral][idx_row]
+                    if col_name_ventral in measure_pd.columns and not pd.isna(ventral_bridge_width_mm):
                         axes[idx_row, idx_col].text(max(np.where(slice_lesion)[0]) + 3,
                                                     min(np.where(slice_lesion)[1]),
                                                     f'Ventral bridge\n{np.round(ventral_bridge_width_mm, 2)} mm',
