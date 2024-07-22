@@ -117,7 +117,8 @@ def test_sct_analyze_lesion_matches_expected_dummy_lesion_measurements(dummy_les
     path_seg = sct_test_path("t2", "t2_seg-manual.nii.gz")
     sct_analyze_lesion.main(argv=['-m', path_lesion,
                                   '-s', path_seg,
-                                  '-ofolder', str(tmp_path)])
+                                  '-ofolder', str(tmp_path),
+                                  '-qc', str(tmp_path / "qc")])
 
     # Load analysis results from pickled pandas.Dataframe
     _, fname, _ = extract_fname(path_lesion)
@@ -161,7 +162,8 @@ def test_sct_analyze_lesion_matches_expected_dummy_lesion_measurements_without_s
     # Run the analysis on the dummy lesion file
     path_lesion, _, dim = dummy_lesion
     sct_analyze_lesion.main(argv=['-m', path_lesion,
-                                  '-ofolder', str(tmp_path)])
+                                  '-ofolder', str(tmp_path),
+                                  '-qc', str(tmp_path / 'qc')])  # A warning will be printed because no SC seg
 
     # Load analysis results from pickled pandas.Dataframe
     _, fname, _ = extract_fname(path_lesion)
