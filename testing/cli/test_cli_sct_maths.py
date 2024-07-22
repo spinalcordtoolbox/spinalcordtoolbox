@@ -101,7 +101,7 @@ def test_mismatched_dimensions_error(tmp_path, ndims, op):
     dims = [possible_dims[n] for n in ndims]
     with pytest.raises(SystemExit) as e:
         run_arithmetic_operation(tmp_path, dims, op)
-    assert 'printv(f"ERROR: -{operation}: {e}"' in str(tb.format_list(tb.extract_tb(e.tb)))
+    assert 'printv(f"ERROR: -{arg_name}: {e}"' in str(tb.format_list(tb.extract_tb(e.tb)))
 
 
 @pytest.mark.parametrize('op', ['-add', '-mul'])
