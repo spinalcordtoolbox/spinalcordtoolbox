@@ -97,7 +97,6 @@ def get_parser():
         '-qc',
         metavar=Metavar.folder,
         action=ActionCreateFolder,
-        default="qc",
         help="The path where the quality control generated content will be saved."
     )
     optional.add_argument(
@@ -836,17 +835,22 @@ def main(argv: Sequence[str]):
     lesion_obj.analyze()
 
     # Create QC report for tissue bridges (only if SC is provided)
-    if fname_sc is not None:
-        sct_analyze_lesion(
-            fname_input=fname_mask,
-            fname_label=lesion_obj.fname_label,
-            fname_sc=fname_sc,
-            measure_pd=lesion_obj.measure_pd,
-            argv=argv,
-            path_qc=arguments.qc,
-            dataset=arguments.qc_dataset,
-            subject=arguments.qc_subject,
-        )
+    if arguments.qc is not None:
+        if fname_sc is not None:
+            sct_analyze_lesion(
+                fname_input=fname_mask,
+                fname_label=lesion_obj.fname_label,
+                fname_sc=fname_sc,
+                measure_pd=lesion_obj.measure_pd,
+                argv=argv,
+                path_qc=arguments.qc,
+                dataset=arguments.qc_dataset,
+                subject=arguments.qc_subject,
+            )
+        else:
+            printv("WARNING: Spinal cord segmentation not provided, skipping QC. "
+                   "(SC seg is required to show tissue bridges).",
+                   verbose=verbose, type="warning")
 
     # remove tmp_dir
     if rm_tmp:
