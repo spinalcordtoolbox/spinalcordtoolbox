@@ -82,6 +82,14 @@ DATASET_DICT = {
         "download_type": "Templates",
         "default": False,
     },
+    "template-dog": {
+        "mirrors": [
+            "https://github.com/spinalcordtoolbox/template-dog/releases/download/r20240709/templatedog_r20240709.zip"
+        ],
+        "default_location": os.path.join(__sct_dir__, "data", "template-dog"),
+        "download_type": "Templates",
+        "default": False,
+    },
     "binaries_linux": {
         "mirrors": [
             "https://github.com/spinalcordtoolbox/spinalcordtoolbox-binaries/releases/download/r20221109/spinalcordtoolbox-binaries_linux.tar.gz",
