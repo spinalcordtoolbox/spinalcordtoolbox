@@ -19,16 +19,20 @@ logger = logging.getLogger(__name__)
 
 @pytest.fixture()
 def dummy_lesion(request, tmp_path):
-    """Define a fake voxel lesion using the specified dimensions."""
-    starting_coord, dim = request.param
+    """Define fake voxel lesions using the specified dimensions."""
+    lesion_params = request.param
+    if isinstance(lesion_params, list) and all(isinstance(t, tuple) for t in lesion_params):
+        lesion_params = [lesion_params]  # If we only have a single lesion, encapsulate in a list to iterate
 
-    # Format the coordinates into a str argument that `-create` can accept
+    # Create the list of coordinates spanning the lesions
     coordinates = []
-    for x in range(starting_coord[0], starting_coord[0] + dim[0]):
-        for y in range(starting_coord[1], starting_coord[1] + dim[1]):
-            for z in range(starting_coord[2], starting_coord[2] + dim[2]):
-                coord = [str(x), str(y), str(z), "1"]
-                coordinates.append(",".join(coord))
+    for (starting_coord, dim) in lesion_params:
+        for x in range(starting_coord[0], starting_coord[0] + dim[0]):
+            for y in range(starting_coord[1], starting_coord[1] + dim[1]):
+                for z in range(starting_coord[2], starting_coord[2] + dim[2]):
+                    coord = [str(x), str(y), str(z), "1"]
+                    coordinates.append(",".join(coord))
+    # Format the coordinates into a str argument that `-create` can accept
     create_arg = ":".join(coordinates)
 
     # Create the lesion mask file and output to a temporary directory
@@ -37,7 +41,7 @@ def dummy_lesion(request, tmp_path):
     sct_label_utils.main(argv=['-i', path_ref, '-o', path_out,
                                '-create', create_arg])
 
-    return path_out, starting_coord, dim
+    return path_out, lesion_params
 
 
 def compute_expected_measurements(dim, starting_coord=None, path_seg=None):
@@ -107,13 +111,16 @@ def compute_expected_measurements(dim, starting_coord=None, path_seg=None):
     ([(29, 45, 25), (3, 10, 2)], 0.001),
     ([(29, 27, 25), (1, 4, 1)], 0.001),  # NB: Example from #3633
     # Curved region of `t2.nii.gz` -> lots of curvature -> larger tolerance
-    ([(29, 0, 25), (4, 15, 3)], 0.01)
+    ([(29, 0, 25), (4, 15, 3)], 0.01),
+    # Multiple lesions
+    ([[(29, 0, 25), (4, 15, 3)],
+      [(29, 45, 25), (3, 10, 2)]], 0.01)
 ], indirect=["dummy_lesion"])
 def test_sct_analyze_lesion_matches_expected_dummy_lesion_measurements(dummy_lesion, rtol, tmp_path):
     """Run the CLI script and verify that the lesion measurements match
     expected values."""
     # Run the analysis on the dummy lesion file
-    path_lesion, starting_coord, dim = dummy_lesion
+    path_lesion, lesion_params = dummy_lesion
     path_seg = sct_test_path("t2", "t2_seg-manual.nii.gz")
     sct_analyze_lesion.main(argv=['-m', path_lesion,
                                   '-s', path_seg,
@@ -126,25 +133,26 @@ def test_sct_analyze_lesion_matches_expected_dummy_lesion_measurements(dummy_les
         measurements = pickle.load(f)['measures']
 
     # Compute expected measurements from the lesion dimensions
-    expected_measurements = compute_expected_measurements(dim, starting_coord, path_seg)
+    for idx, (starting_coord, dim) in enumerate(lesion_params):
+        expected_measurements = compute_expected_measurements(dim, starting_coord, path_seg)
 
-    # Validate analysis results
-    for key, expected_value in expected_measurements.items():
-        # These measures are the same regardless of angle adjustment/spine curvature
-        if key in ['volume [mm3]', 'max_axial_damage_ratio []']:
-            np.testing.assert_equal(measurements.at[0, key], expected_value)
-        else:
-            # However, these measures won't match exactly due to angle adjustment
-            # from spinal cord centerline curvature
-            np.testing.assert_allclose(measurements.at[0, key],
-                                       expected_value, rtol=rtol)
-            # The values will be adjusted according to the cos of the angle
-            # between the spinal cord centerline and the S-I axis, as per:
-            # https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3681#discussion_r804822552
-            if key == 'max_equivalent_diameter [mm]' or key.endswith("bridge_width [mm]"):
-                assert measurements.at[0, key] <= expected_value
-            elif key == 'length [mm]':
-                assert measurements.at[0, key] >= expected_value
+        # Validate analysis results
+        for key, expected_value in expected_measurements.items():
+            # These measures are the same regardless of angle adjustment/spine curvature
+            if key in ['volume [mm3]', 'max_axial_damage_ratio []']:
+                np.testing.assert_equal(measurements.at[idx, key], expected_value)
+            else:
+                # However, these measures won't match exactly due to angle adjustment
+                # from spinal cord centerline curvature
+                np.testing.assert_allclose(measurements.at[idx, key],
+                                           expected_value, rtol=rtol)
+                # The values will be adjusted according to the cos of the angle
+                # between the spinal cord centerline and the S-I axis, as per:
+                # https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3681#discussion_r804822552
+                if key == 'max_equivalent_diameter [mm]' or key.endswith("bridge_width [mm]"):
+                    assert measurements.at[idx, key] <= expected_value
+                elif key == 'length [mm]':
+                    assert measurements.at[idx, key] >= expected_value
 
 
 @pytest.mark.sct_testing
@@ -153,14 +161,17 @@ def test_sct_analyze_lesion_matches_expected_dummy_lesion_measurements(dummy_les
     ([(29, 45, 25), (3, 10, 2)], 0.001),
     ([(29, 27, 25), (1, 4, 1)], 0.001),  # NB: Example from #3633
     # Curved region of `t2.nii.gz` -> lots of curvature -> larger tolerance
-    ([(29, 0, 25), (4, 15, 3)], 0.01)
+    ([(29, 0, 25), (4, 15, 3)], 0.01),
+    # Multiple lesions
+    ([[(29, 0, 25), (4, 15, 3)],
+      [(29, 45, 25), (3, 10, 2)]], 0.01)
 ], indirect=["dummy_lesion"])
 def test_sct_analyze_lesion_matches_expected_dummy_lesion_measurements_without_segmentation(dummy_lesion, rtol,
                                                                                             tmp_path):
     """Run the CLI script without providing SC segmentation -- only volume is computed. Max_equivalent_diameter and
     length are nan."""
     # Run the analysis on the dummy lesion file
-    path_lesion, _, dim = dummy_lesion
+    path_lesion, lesion_params = dummy_lesion
     sct_analyze_lesion.main(argv=['-m', path_lesion,
                                   '-ofolder', str(tmp_path),
                                   '-qc', str(tmp_path / 'qc')])  # A warning will be printed because no SC seg
@@ -171,15 +182,16 @@ def test_sct_analyze_lesion_matches_expected_dummy_lesion_measurements_without_s
         measurements = pickle.load(f)['measures']
 
     # Compute expected measurements from the lesion dimensions
-    expected_measurements = compute_expected_measurements(dim)
+    for idx, (_, dim) in enumerate(lesion_params):
+        expected_measurements = compute_expected_measurements(dim)
 
-    # Validate analysis results
-    for key, expected_value in expected_measurements.items():
-        if key == 'volume [mm3]':
-            np.testing.assert_equal(measurements.at[0, key], expected_value)
-        # The max_equivalent_diameter, length, and damage ratio are nan because no segmentation is provided
-        elif key in ['max_equivalent_diameter [mm]', 'length [mm]', 'max_axial_damage_ratio []']:
-            assert math.isnan(measurements.at[0, key])
+        # Validate analysis results
+        for key, expected_value in expected_measurements.items():
+            if key == 'volume [mm3]':
+                np.testing.assert_equal(measurements.at[idx, key], expected_value)
+            # The max_equivalent_diameter, length, and damage ratio are nan because no segmentation is provided
+            elif key in ['max_equivalent_diameter [mm]', 'length [mm]', 'max_axial_damage_ratio []']:
+                assert math.isnan(measurements.at[idx, key])
 
 
 @pytest.mark.parametrize("dummy_lesion", [
@@ -203,7 +215,7 @@ def test_sct_analyze_lesion_with_template(dummy_lesion, tmp_path):
     (tmp_path / 'atlas').mkdir()  # make a dummy atlas folder to avoid errors due to expected folder
 
     # Run the analysis on the dummy lesion file
-    path_lesion, _, dim = dummy_lesion
+    path_lesion, _ = dummy_lesion
     sct_analyze_lesion.main(argv=['-m', path_lesion,
                                   '-f', str(tmp_path),
                                   '-ofolder', str(tmp_path)])
