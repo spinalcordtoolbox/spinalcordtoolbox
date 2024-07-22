@@ -53,17 +53,27 @@ def denoise_params(arg: str) -> tuple[int, int]:
     return (p, b)
 
 
-class StoreTodo(argparse.Action):
+def one_or_three_sigmas(arg: str) -> list[float]:
+    """
+    Parse the arguments for `-smooth` and `-laplacian`.
+
+    Returns a list of exactly 3 floats, measured in millimeters.
+    """
+    values = [float(v) for v in arg.split(',')]
+    if len(values) == 1:
+        values *= 3
+    elif len(values) != 3:
+        raise ValueError(f"expected 1 or 3 values, got {len(values)}")
+    return values
+
+
+class AppendTodo(argparse.Action):
     """
     Store the arguments of an sct_maths operation in `arguments.todo`.
 
-    The format is: (operation name, list of arguments).
+    The format is: (arg_name, arg_value).
     """
     def __call__(self, parser, namespace, values, option_string=None):
-        # make sure values is a list, rather than a single bare value
-        if not isinstance(values, list):
-            values = [values]
-
         namespace.todo.append((self.dest, values))
 
 
@@ -101,7 +111,7 @@ def get_parser():
         metavar='',
         nargs="*",
         type=number_or_fname,
-        action=StoreTodo,
+        action=AppendTodo,
         help='Add following input. Can be a number or one or more 3D/4D images (separated with space). Examples:'
              '\n  - sct_maths -i 3D.nii.gz -add 5                       (Result: 3D image with "5" added to each voxel)'
              '\n  - sct_maths -i 3D.nii.gz -add 3D_2.nii.gz             (Result: 3D image)'
@@ -117,7 +127,7 @@ def get_parser():
         metavar='',
         nargs="+",
         type=number_or_fname,
-        action=StoreTodo,
+        action=AppendTodo,
         help='Subtract following input. Can be a number, or one or more 3D/4D images (separated with space).',
         required=False)
     basic.add_argument(
@@ -125,7 +135,7 @@ def get_parser():
         metavar='',
         nargs="*",
         type=number_or_fname,
-        action=StoreTodo,
+        action=AppendTodo,
         help='Multiply by following input. Can be a number, or one or more 3D/4D images (separated with space). '
              '(See -add for examples.)',
         required=False)
@@ -134,32 +144,32 @@ def get_parser():
         metavar='',
         nargs="+",
         type=number_or_fname,
-        action=StoreTodo,
+        action=AppendTodo,
         help='Divide by following input. Can be a number, or one or more 3D/4D images (separated with space).',
         required=False)
     basic.add_argument(
         '-mean',
         choices=('x', 'y', 'z', 't'),
-        action=StoreTodo,
+        action=AppendTodo,
         help='Average data across dimension.',
         required=False)
     basic.add_argument(
         '-rms',
         choices=('x', 'y', 'z', 't'),
-        action=StoreTodo,
+        action=AppendTodo,
         help='Compute root-mean-squared across dimension.',
         required=False)
     basic.add_argument(
         '-std',
         choices=('x', 'y', 'z', 't'),
-        action=StoreTodo,
+        action=AppendTodo,
         help='Compute STD across dimension.',
         required=False)
     basic.add_argument(
         "-bin",
         metavar=Metavar.float,
         type=float,
-        action=StoreTodo,
+        action=AppendTodo,
         help='Binarize image using specified threshold. Example: 0.5',
         required=False)
 
@@ -168,14 +178,14 @@ def get_parser():
         '-otsu',
         metavar=Metavar.int,
         type=int,
-        action=StoreTodo,
+        action=AppendTodo,
         help='Threshold image using Otsu algorithm (from skimage). Specify the number of bins (e.g. 16, 64, 128)',
         required=False)
     thresholding.add_argument(
         "-adap",
         metavar=Metavar.list,
         type=list_type(',', int, 2),
-        action=StoreTodo,
+        action=AppendTodo,
         help="Threshold image using Adaptive algorithm (from skimage). Provide 2 values separated by ',' that "
              "correspond to the parameters below. For example, '-adap 7,0' corresponds to a block size of 7 and an "
              "offset of 0.\n"
@@ -187,7 +197,7 @@ def get_parser():
         "-otsu-median",
         metavar=Metavar.list,
         type=list_type(',', int, 2),
-        action=StoreTodo,
+        action=AppendTodo,
         help="Threshold image using Median Otsu algorithm (from dipy). Provide 2 values separated by ',' that "
              "correspond to the parameters below. For example, '-otsu-median 3,5' corresponds to a filter size of 3 "
              "repeated over 5 iterations.\n"
@@ -198,21 +208,21 @@ def get_parser():
         '-percent',
         metavar=Metavar.int,
         type=int,
-        action=StoreTodo,
+        action=AppendTodo,
         help="Threshold image using percentile of its histogram.",
         required=False)
     thresholding.add_argument(
         "-thr",
         metavar=Metavar.float,
         type=float,
-        action=StoreTodo,
+        action=AppendTodo,
         help='Lower threshold limit (zero below number).',
         required=False)
     thresholding.add_argument(
         "-uthr",
         metavar=Metavar.float,
         type=float,
-        action=StoreTodo,
+        action=AppendTodo,
         help='Upper threshold limit (zero above number).',
         required=False)
 
@@ -221,7 +231,7 @@ def get_parser():
         '-dilate',
         metavar=Metavar.int,
         type=int,
-        action=StoreTodo,
+        action=AppendTodo,
         help="Dilate binary or greyscale image with specified size. If shape={'square', 'cube'}: size corresponds to the length of "
              "an edge (size=1 has no effect). If shape={'disk', 'ball'}: size corresponds to the radius, not including "
              "the center element (size=0 has no effect).",
@@ -230,7 +240,7 @@ def get_parser():
         '-erode',
         metavar=Metavar.int,
         type=int,
-        action=StoreTodo,
+        action=AppendTodo,
         help="Erode binary or greyscale image with specified size. If shape={'square', 'cube'}: size corresponds to the length of "
              "an edge (size=1 has no effect). If shape={'disk', 'ball'}: size corresponds to the radius, not including "
              "the center element (size=0 has no effect).",
@@ -257,8 +267,8 @@ def get_parser():
     filtering.add_argument(
         "-smooth",
         metavar=Metavar.list,
-        type=list_type(',', float),
-        action=StoreTodo,
+        type=one_or_three_sigmas,
+        action=AppendTodo,
         help='Gaussian smoothing filtering. Supply values for standard deviations in mm. If a single value is provided, '
              'it will be applied to each axis of the image. If multiple values are provided, there must be one value '
              'per image axis. (Examples: "-smooth 2.0,3.0,2.0" (3D image), "-smooth 2.0" (any-D image)).',
@@ -266,8 +276,8 @@ def get_parser():
     filtering.add_argument(
         '-laplacian',
         metavar=Metavar.list,
-        type=list_type(',', float),
-        action=StoreTodo,
+        type=one_or_three_sigmas,
+        action=AppendTodo,
         help='Laplacian filtering. Supply values for standard deviations in mm. If a single value is provided, it will '
              'be applied to each axis of the image. If multiple values are provided, there must be one value per '
              'image axis. (Examples: "-laplacian 2.0,3.0,2.0" (3D image), "-laplacian 2.0" (any-D image)).',
@@ -275,7 +285,7 @@ def get_parser():
     filtering.add_argument(
         '-denoise',
         type=denoise_params,
-        action=StoreTodo,
+        action=AppendTodo,
         help='Non-local means adaptative denoising from P. Coupe et al. as implemented in dipy. Separate with "," Example: p=1,b=3\n'
              ' p: (patch radius) similar patches in the non-local means are searched for locally, inside a cube of side 2*p+1 centered at each voxel of interest. Default: p=1\n'
              ' b: (block radius) the size of the block to be used (2*b+1) in the blockwise non-local means implementation. Default: b=5 '
@@ -287,21 +297,21 @@ def get_parser():
     similarity.add_argument(
         '-mi',
         metavar=Metavar.file,
-        action=StoreTodo,
+        action=AppendTodo,
         help='Compute the mutual information (MI) between both input files (-i and -mi) as in: '
              'https://scikit-learn.org/stable/modules/generated/sklearn.metrics.mutual_info_score.html',
         required=False)
     similarity.add_argument(
         '-minorm',
         metavar=Metavar.file,
-        action=StoreTodo,
+        action=AppendTodo,
         help='Compute the normalized mutual information (MI) between both input files (-i and -mi) as in: '
              'https://scikit-learn.org/stable/modules/generated/sklearn.metrics.normalized_mutual_info_score.html',
         required=False)
     similarity.add_argument(
         '-corr',
         metavar=Metavar.file,
-        action=StoreTodo,
+        action=AppendTodo,
         help='Compute the cross correlation (CC) between both input files (-i and -corr).',
         required=False)
 
@@ -310,7 +320,7 @@ def get_parser():
         '-symmetrize',
         type=int,
         choices=(0, 1, 2),
-        action=StoreTodo,
+        action=AppendTodo,
         help='Symmetrize data along the specified dimension.',
         required=False)
     misc.add_argument(
@@ -333,22 +343,16 @@ def get_parser():
     return parser
 
 
-class SctMathsValueError(Exception):
-    """Inappropriate argument value for an `sct_maths` operation."""
-
-
 def get_data_arrays(
-    current_value: Image,
+    shape: tuple[int, ...],
     args: list[Union[float, str]],
 ) -> list[np.ndarray]:
     """
-    Helper function to normalize the arguments of -add, -sub, etc.
+    Helper function to load the arguments of -add, -sub, -mul, -div.
 
-    Returns a list of data arrays, where they all have the same shape.
-
-    Raises an SctMathsValueError if there is a shape mismatch.
+    Returns a list of data arrays, where they all have the given shape.
+    Raises a ValueError if there is a shape mismatch.
     """
-    shape = current_value.data.shape
     list_data = []
     for arg in args:
         if isinstance(arg, float):
@@ -357,264 +361,9 @@ def get_data_arrays(
             assert isinstance(arg, str)
             im = Image(arg)
             if im.data.shape != shape:
-                raise SctMathsValueError(f"image {arg} has the wrong shape {im.data.shape} (expected: {shape})")
+                raise ValueError(f"image {arg} has the wrong shape {im.data.shape} (expected: {shape})")
             list_data.append(im.data)
     return list_data
-
-
-def apply_add(current_value, *args):
-    """Implementation for -add."""
-    # special case to operate on a 4D volume across the t axis
-    if current_value.data.ndim == 4 and not args:
-        return Image(
-            np.sum(current_value.data, axis=3),
-            hdr=current_value.hdr,
-        )
-    else:
-        current_value.data += np.sum(get_data_arrays(current_value, args), axis=0)
-        return current_value
-
-
-def apply_sub(current_value, *args):
-    """Implementation for -sub."""
-    current_value.data -= np.sum(get_data_arrays(current_value, args), axis=0)
-    return current_value
-
-
-def apply_mul(current_value, *args):
-    """Implementation for -mul."""
-    # special case to operate on a 4D volume across the t axis
-    if current_value.data.ndim == 4 and not args:
-        return Image(
-            np.prod(current_value.data, axis=3),
-            hdr=current_value.hdr,
-        )
-    else:
-        current_value.data *= np.prod(get_data_arrays(current_value, args), axis=0)
-        return current_value
-
-
-def apply_div(current_value, *args):
-    """Implementation for -div."""
-    current_value.data /= np.prod(get_data_arrays(current_value, args), axis=0)
-    return current_value
-
-
-def apply_mean(current_value, dim):
-    """Implementation for -mean."""
-    data = current_value.data
-    axis = ('x', 'y', 'z', 't').index(dim)
-    if axis >= data.ndim:
-        # Averaging a 3D image over time, nothing to do
-        pass
-    else:
-        data = np.mean(current_value.data, axis)
-        if axis < 3:
-            # Averaging over a spatial axis, we should preserve it
-            data = np.expand_dims(data, axis)
-    current_value.data = data
-    return current_value
-
-
-def apply_rms(current_value, dim):
-    """Implementation for -rms."""
-    data = current_value.data.astype(float)
-    axis = ('x', 'y', 'z', 't').index(dim)
-    if axis >= data.ndim:
-        # Taking the mean across time for a 3D image has no effect.
-        # Because of this, RMS is just squaring then sqrting (i.e. taking abs)
-        rms = np.abs(data)
-    else:
-        rms = np.sqrt(np.mean(np.square(data), axis))
-        if axis < 3:
-            # Taking RMS over a spatial axis, we should preserve it
-            rms = np.expand_dims(rms, axis)
-    current_value.data = rms
-    return current_value
-
-
-def apply_std(current_value, dim):
-    """Implementation for -std."""
-    data = current_value.data
-    axis = ('x', 'y', 'z', 't').index(dim)
-    if axis >= data.ndim or data.shape[axis] == 1:
-        raise SctMathsValueError("Zero division while taking -std along a singleton dimension")
-    else:
-        data = np.std(data, axis, ddof=1),
-        if axis < 3:
-            # Taking std over a spatial axis, we should preserve it
-            data = np.expand_dims(data, axis)
-    current_value.data = data
-    return current_value
-
-
-def apply_bin(current_value, bin_thr):
-    """Implementation for -bin."""
-    return Image(
-        sct_math.binarize(current_value.data, bin_thr),
-        hdr=current_value.hdr,
-    )
-
-
-def apply_otsu(current_value, nbins):
-    """Implementation for -otsu."""
-    return Image(
-        sct_math.otsu(current_value.data, nbins),
-        hdr=current_value.hdr,
-    )
-
-
-def apply_adap(current_value, block_size, offset):
-    """Implementation for -adap."""
-    return Image(
-        sct_math.adap(current_value.data, block_size, offset),
-        hdr=current_value.hdr,
-    )
-
-
-def apply_otsu_median(current_value, size, n_iter):
-    """Implementation for -otsu-median."""
-    return Image(
-        sct_math.otsu_media(current_value.data, size, n_iter),
-        hdr=current_value.hdr,
-    )
-
-
-def apply_percent(current_value, percentile):
-    """Implementation for -percent."""
-    return Image(
-        sct_math.perc(current_value.data, percentile),
-        hdr=current_value.hdr,
-    )
-
-
-def apply_thr(current_value, threshold):
-    """Implementation for -thr."""
-    return Image(
-        sct_math.threshold(current_value.data, lthr=threshold),
-        hdr=current_value.hdr,
-    )
-
-
-def apply_uthr(current_value, threshold):
-    """Implementation for -uthr."""
-    return Image(
-        sct_math.threshold(current_value.data, uthr=threshold),
-        hdr=current_value.hdr,
-    )
-
-
-def apply_dilate(current_value, size, shape, dim):
-    """Implementation for -dilate."""
-    return Image(
-        sct_math.dilate(current_value.data, size=size, shape=shape, dim=dim),
-        hdr=current_value.hdr,
-    )
-
-
-def apply_erode(current_value, size, shape, dim):
-    """Implementation for -erode."""
-    return Image(
-        sct_math.erode(current_value.data, size=size, shape=shape, dim=dim),
-        hdr=current_value.hdr,
-    )
-
-
-def apply_smooth(current_value, *sigmas):
-    """Implementation for -smooth."""
-    if current_value.data.ndim != 3:
-        raise SctMathsValueError("can only be applied to 3D images")
-    if len(sigmas) == 1:
-        sigmas *= 3
-    elif len(sigmas) != 3:
-        raise SctMathsValueError(f"expected 1 or 3 values, got {len(sigmas)} values")
-
-    # adjust sigma based on voxel size
-    pixdim = current_value.dim[4:7]
-    sigmas = [s/d for s, d in zip(sigmas, pixdim)]
-
-    return Image(
-        sct_math.smooth(current_value.data, sigmas),
-        hdr=current_value.hdr,
-    )
-
-
-def apply_laplacian(current_value, *sigmas):
-    """Implementation for -laplacian."""
-    if current_value.data.ndim != 3:
-        raise SctMathsValueError("can only be applied to 3D images")
-    if len(sigmas) == 1:
-        sigmas *= 3
-    elif len(sigmas) != 3:
-        raise SctMathsValueError(f"expected 1 or 3 values, got {len(sigmas)} values")
-
-    # adjust sigma based on voxel size
-    pixdim = current_value.dim[4:7]
-    sigmas = [s/d for s, d in zip(sigmas, pixdim)]
-
-    return Image(
-        sct_math.laplacian(current_value.data, sigmas),
-        hdr=current_value.hdr,
-    )
-
-
-def apply_denoise(current_value, patch_radius, block_radius):
-    """Implementation for -denoise."""
-    return Image(
-        sct_math.denoise_nlmeans(current_value.data, patch_radius, block_radius),
-        hdr=current_value.hdr,
-    )
-
-
-def apply_mi(current_value, fname):
-    """Implementation for -mi."""
-    return (current_value, Image(fname), 'mi', 'Mutual information')
-
-
-def apply_minorm(current_value, fname):
-    """Implementation for -minorm."""
-    return (current_value, Image(fname), 'minorm', 'Normalized Mutual information')
-
-
-def apply_corr(current_value, fname):
-    """Implementation for -corr."""
-    return (current_value, Image(fname), 'corr', 'Pearson correlation coefficient')
-
-
-def apply_symmetrize(current_value, axis):
-    """Implementation for -symmetrize."""
-    return Image(
-        sct_math.symmetrize(current_value.data, axis),
-        hdr=current_value.hdr,
-    )
-
-
-# the implementation function for each sct_maths operation
-APPLY = {
-    "add": apply_add,
-    "sub": apply_sub,
-    "mul": apply_mul,
-    "div": apply_div,
-    "mean": apply_mean,
-    "rms": apply_rms,
-    "std": apply_std,
-    "bin": apply_bin,
-    "otsu": apply_otsu,
-    "adap": apply_adap,
-    "otsu_median": apply_otsu_median,
-    "percent": apply_percent,
-    "thr": apply_thr,
-    "uthr": apply_uthr,
-    "dilate": apply_dilate,
-    "erode": apply_erode,
-    "smooth": apply_smooth,
-    "laplacian": apply_laplacian,
-    "denoise": apply_denoise,
-    "mi": apply_mi,
-    "minorm": apply_minorm,
-    "corr": apply_corr,
-    "symmetrize": apply_symmetrize,
-}
 
 
 # MAIN
@@ -648,39 +397,167 @@ def main(argv: Sequence[str]):
         else:
             parser.error(f"-dim should not be specified for -shape {shape}")
 
-    # Pass `-shape` and `-dim` to `-dilate` and `-erode`, now that we know their values
-    for operation, args in arguments.todo:
-        if operation in ['dilate', 'erode']:
-            args.extend([shape, dim])
-
     # Check that the list of operations makes sense
     if not arguments.todo:
         parser.error("there must be at least one operation to perform")
-    for operation, args in arguments.todo[:-1]:
-        if operation in ['mi', 'minorm', 'corr']:
-            parser.error(f"-{operation}: similarity metrics are only supported "
+    for arg_name, _ in arguments.todo[:-1]:
+        if arg_name in ['mi', 'minorm', 'corr']:
+            parser.error(f"-{arg_name}: similarity metrics are only supported "
                          "as the last operation to perform")
-    last_operation, _ = arguments.todo[-1]
-    final_type = 'metric_todo' if last_operation in ['mi', 'minorm', 'corr'] else 'image'
 
     # Actually do the computations
-    current_value = Image(arguments.i)
-    for operation, args in arguments.todo:
-        try:
-            current_value = APPLY[operation](current_value, *args)
-        except SctMathsValueError as e:
-            printv(f"ERROR: -{operation}: {e}", 1, 'error')
-    final_value = current_value
+    im = Image(arguments.i)
+    data = im.data
+    for arg_name, arg_value in arguments.todo:
+        assert data is not None
 
-    # Post-processing of the results
-    if final_type == 'image':
-        final_value.save(arguments.o, dtype=arguments.type)
-        display_viewer_syntax([arguments.o], verbose=verbose)
-    else:
-        assert final_type == 'metric_todo'
-        img1, img2, metric_name, metric_name_full = final_value
-        compute_similarity(img1, img2, arguments.o, metric_name, metric_name_full, verbose)
-        printv(f"\nDone! File created: {arguments.o}", verbose, 'info')
+        if arg_name == "add":
+            if data.ndim == 4 and not arg_value:
+                # special case to sum a 4D volume across the t axis
+                data = np.sum(data, axis=3)
+            else:
+                try:
+                    list_data = get_data_arrays(data.shape, arg_value)
+                except ValueError as e:
+                    printv(f"ERROR: -{arg_name}: {e}", 1, 'error')
+                data += np.sum(list_data, axis=0)
+
+        elif arg_name == "sub":
+            try:
+                list_data = get_data_arrays(data.shape, arg_value)
+            except ValueError as e:
+                printv(f"ERROR: -{arg_name}: {e}", 1, 'error')
+            data -= np.sum(list_data, axis=0)
+
+        elif arg_name == "mul":
+            if data.ndim == 4 and not arg_value:
+                # special case to multiply a 4D volume across the t axis
+                data = np.sum(data, axis=3)
+            else:
+                try:
+                    list_data = get_data_arrays(data.shape, arg_value)
+                except ValueError as e:
+                    printv(f"ERROR: -{arg_name}: {e}", 1, 'error')
+                data *= np.prod(list_data, axis=0)
+
+        elif arg_name == "div":
+            try:
+                list_data = get_data_arrays(data.shape, arg_value)
+            except ValueError as e:
+                printv(f"ERROR: -{arg_name}: {e}", 1, 'error')
+            data /= np.prod(list_data, axis=0)
+
+        elif arg_name == "mean":
+            axis = ('x', 'y', 'z', 't').index(arg_value)
+            if axis >= data.ndim:
+                # Averaging a 3D image over time, nothing to do
+                pass
+            else:
+                data = np.mean(data, axis)
+                if axis < 3:
+                    # Averaging over a spatial axis, we should preserve it
+                    data = np.expand_dims(data, axis)
+
+        elif arg_name == "rms":
+            data = data.astype(float)
+            axis = ('x', 'y', 'z', 't').index(arg_value)
+            if axis >= data.ndim:
+                # Taking the mean across time for a 3D image has no effect.
+                # Because of this, RMS is just squaring then sqrting (i.e. abs)
+                data = np.abs(data)
+            else:
+                data = np.sqrt(np.mean(np.square(data), axis))
+                if axis < 3:
+                    # Taking RMS over a spatial axis, we should preserve it
+                    data = np.expand_dims(data, axis)
+
+        elif arg_name == "std":
+            axis = ('x', 'y', 'z', 't').index(arg_value)
+            if axis >= data.ndim or data.shape[axis] == 1:
+                printv("ERROR: Zero division while taking -std along a singleton dimension", 1, 'error')
+            else:
+                data = np.std(data, axis, ddof=1),
+                if axis < 3:
+                    # Taking std over a spatial axis, we should preserve it
+                    data = np.expand_dims(data, axis)
+
+        elif arg_name == "bin":
+            bin_thr = arg_value
+            data = sct_math.binarize(data, bin_thr)
+
+        elif arg_name == "otsu":
+            nbins = arg_value
+            data = sct_math.otsu(data, nbins)
+
+        elif arg_name == "adap":
+            block_size, offset = arg_value
+            data = sct_math.adap(data, block_size, offset)
+
+        elif arg_name == "otsu_median":
+            size, n_iter = arg_value
+            data = sct_math.otsu_median(data, size, n_iter)
+
+        elif arg_name == "percent":
+            percentile = arg_value
+            data = sct_math.perc(data, percentile)
+
+        elif arg_name == "thr":
+            threshold = arg_value
+            data = sct_math.threshold(data, lthr=threshold)
+
+        elif arg_name == "uthr":
+            threshold = arg_value
+            data = sct_math.threshold(data, uthr=threshold)
+
+        elif arg_name == "dilate":
+            # This uses the global `shape` and `dim` values
+            size = arg_value
+            data = sct_math.dilate(data, size, shape, dim)
+
+        elif arg_name == "erode":
+            # This uses the global `shape` and `dim` values
+            size = arg_value
+            data = sct_math.erode(data, size, shape, dim)
+
+        elif arg_name in ["smooth", "laplacian"]:
+            # Adjust sigmas from millimeters to voxels
+            # This uses the resolution of the starting value `im`
+            sigmas = [mm/pixdim for mm, pixdim in zip(arg_value, im.dim[4:7])]
+            if arg_name == "smooth":
+                data = sct_math.smooth(data, sigmas)
+            else:
+                assert arg_name == "laplacian"
+                data = sct_math.laplacian(data, sigmas)
+
+        elif arg_name == "denoise":
+            patch_radius, block_radius = arg_value
+            data = sct_math.denoise_nlmeans(data, patch_radius, block_radius)
+
+        elif arg_name in ["mi", "minorm", "corr"]:
+            # Reuses the header of the starting value `im`
+            compute_similarity(
+                img1=Image(data, hdr=im.hdr),
+                img2=Image(arg_value),
+                fname_out=arguments.o,
+                metric=arg_name,
+                metric_full={
+                    'mi': 'Mutual information',
+                    'minorm': 'Normalized Mutual information',
+                    'corr': 'Pearson correlation coefficient',
+                }[arg_name],
+                verbose=verbose,
+            )
+            printv(f"\nDone! File created: {arguments.o}", verbose, 'info')
+            return
+
+        else:
+            assert arg_name == "symmetrize"
+            axis = arg_value
+            data = sct_math.symmetrize(data, axis)
+
+    # Save the final image with the requested dtype
+    Image(data, hdr=im.hdr).save(arguments.o, dtype=arguments.type)
+    display_viewer_syntax([arguments.o], verbose=verbose)
 
 
 def compute_similarity(img1: Image, img2: Image, fname_out: str, metric: str, metric_full: str, verbose):
