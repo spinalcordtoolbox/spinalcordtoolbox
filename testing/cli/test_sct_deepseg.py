@@ -54,7 +54,11 @@ def test_model_dict():
      't2_seg_deepseg.nii.gz',
      'seg_spinal_rootlets_t2w',
      None),
-
+    (sct_test_path('t2', 't2.nii.gz'),  # dummy image since no MP2RAGE test data
+     None,  # no ground truth, just test if it runs
+     't2_seg_deepseg.nii.gz',
+     'seg_ms_lesion_mp2rage',
+     None),
 ])
 def test_segment_nifti_binary_seg(fname_image, fname_seg_manual, fname_out, task, thr, tmp_path):
     """

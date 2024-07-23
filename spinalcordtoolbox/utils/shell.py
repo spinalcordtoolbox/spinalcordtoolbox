@@ -188,11 +188,12 @@ class SCTArgumentParser(argparse.ArgumentParser):
         TODO: Centralize `-v`, `-r`, and `-h` arguments here too, as they're copied
               and pasted across all SCT scripts.
     """
-    def __init__(self, description, epilog=None):
+    def __init__(self, description, epilog=None, argument_default=None):
         super(SCTArgumentParser, self).__init__(
             description=description,
             epilog=epilog,
             formatter_class=SmartFormatter,
+            argument_default=argument_default,
             # Disable "add_help", because it won't properly add '-h' to our custom argument groups
             # (We use custom argument groups because of https://stackoverflow.com/a/24181138)
             add_help=False
@@ -243,14 +244,17 @@ class ActionCreateFolder(argparse.Action):
         setattr(namespace, self.dest, folders)
 
 
-def list_type(delimiter, subtype):
+def list_type(delimiter, subtype, length=None):
     """
         Factory function that returns a list parsing function, which can be
         used with argparse's `type` option. This allows for more complex type
         parsing, and preserves the behavior of the old msct_parser.
     """
     def list_typecast_func(string):
-        return [subtype(v) for v in string.split(delimiter)]
+        vals = [subtype(v) for v in string.split(delimiter)]
+        if length is not None and len(vals) != length:
+            raise ValueError(f"expected {length} values, got {len(vals)} values")
+        return vals
 
     return list_typecast_func
 
