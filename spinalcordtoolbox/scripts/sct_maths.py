@@ -433,7 +433,7 @@ def main(argv: Sequence[str]):
         elif arg_name == "mul":
             if data.ndim == 4 and not arg_value:
                 # special case to multiply a 4D volume across the t axis
-                data = np.sum(data, axis=3)
+                data = np.prod(data, axis=3)
             else:
                 try:
                     list_data = get_data_arrays(data.shape, arg_value)
