@@ -358,9 +358,9 @@ def sct_deepseg(
             img.set_fill_value(0)
             ax.imshow(img,
                       cmap=colormaps[i],
-                      norm=mpl_colors.Normalize(vmin=0.5, vmax=1),
+                      norm=None if "seg_spinal_rootlets_t2w" in argv else mpl_colors.Normalize(vmin=0.5, vmax=1),
                       # img==1 -> opaque, but soft regions -> more transparent as value decreases
-                      alpha=(img / img.max()),  # scale to [0, 1]
+                      alpha=1.0 if "seg_spinal_rootlets_t2w" in argv else (img / img.max()),  # scale to [0, 1]
                       interpolation='none',
                       aspect=1.0)
 
