@@ -41,20 +41,26 @@ def test_sct_maths_symmetrize(dim, tmp_path):
                           (im_in.data + np.flip(im_in.data, axis=int(dim))) / 2.0)
 
 
-def run_arithmetic_operation(tmp_path, dims, op):
+def run_arithmetic_operation(tmp_path, dims, ops):
     """Generate some dummy data, then run -add/-sub/-mul/-div on the data."""
+    assert len(dims) > 1  # dim[0] -> -i, dim[1:] -> ops
     args = []
-    # Add input images to argument list
+    im_list = []
+    # Generate input images
     for i, dim in enumerate(dims):
         path_im = str(tmp_path / f"im_{i}.nii.gz")
         Image(np.ones(dim)).save(path_im)
         if i == 0:
             args += ["-i", path_im]
-            args += [op]
         else:
-            args += [path_im]
+            im_list += [path_im]
+    # Generate arg string
+    if not isinstance(ops, list):
+        ops = [ops]
+    for op in ops:
+        args += [op] + im_list
     # Add output image to argument list
-    path_out = str(tmp_path / f"im_out{op}.nii.gz")
+    path_out = str(tmp_path / f"im_out{''.join(ops)}.nii.gz")
     args += ["-o", path_out]
     # Call sct_maths and return output data
     sct_maths.main(args)
@@ -74,15 +80,28 @@ def test_arithmetic_operation_output_dimensions(tmp_path, ndims, op):
     assert dim_out == dim_expected, f"Calling {op} on ndims {ndims} resulted in mismatch."
 
 
+@pytest.mark.parametrize('ndims', [(3, 3), (4, 4), (3, 3, 3), (4, 4, 4)])
+def test_chained_arithmetic_operations_output_dimensions(tmp_path, ndims):
+    """Test that arithmetic operations return the correct dimensions across various combinations
+       of 3D and 4D images."""
+    ops = ['-add', '-mul', '-sub', '-div']
+    possible_dims = {3: [10, 15, 20], 4: [10, 15, 20, 5]}
+    dims = [possible_dims[n] for n in ndims]
+    data_out = run_arithmetic_operation(tmp_path, dims, ops)
+    dim_expected = dims[0]  # Expected dimension should match the input image
+    dim_out = list(data_out.shape)
+    assert dim_out == dim_expected, f"Calling {ops} on ndims {ndims} resulted in mismatch."
+
+
 @pytest.mark.parametrize('ndims', [(3, 4), (3, 4, 5)])
 @pytest.mark.parametrize('op', ['-add', '-mul', '-sub', '-div'])
 def test_mismatched_dimensions_error(tmp_path, ndims, op):
-    """Test that passing images of mismatched dimensions returns the proper parser error."""
+    """Test that passing images of mismatched dimensions returns a user-friendly error."""
     possible_dims = {3: [10, 15, 20], 4: [10, 15, 20, 5], 5: [10, 15, 20, 5, 1]}
     dims = [possible_dims[n] for n in ndims]
     with pytest.raises(SystemExit) as e:
         run_arithmetic_operation(tmp_path, dims, op)
-    assert 'parser.error(f"Dimensions of' in str(tb.format_list(tb.extract_tb(e.tb)))
+    assert 'printv(f"ERROR: -{arg_name}: {e}"' in str(tb.format_list(tb.extract_tb(e.tb)))
 
 
 @pytest.mark.parametrize('op', ['-add', '-mul'])
