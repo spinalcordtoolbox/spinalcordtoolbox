@@ -36,6 +36,7 @@ mpl_cm = LazyLoader("mpl_cm", globals(), "matplotlib.cm")
 mpl_colors = LazyLoader("mpl_colors", globals(), "matplotlib.colors")
 mpl_backend_agg = LazyLoader("mpl_backend_agg", globals(), "matplotlib.backends.backend_agg")
 mpl_patheffects = LazyLoader("mpl_patheffects", globals(), "matplotlib.patheffects")
+mpl_collections = LazyLoader("mpl_collections", globals(), "matplotlib.collections")
 
 logger = logging.getLogger(__name__)
 
@@ -364,6 +365,7 @@ def sct_deepseg(
                       interpolation='none',
                       aspect=1.0)
             if "seg_spinal_rootlets_t2w" in argv:
+                plot_outlines(img.T, ax=ax, lw=0.3, color='#000000')  # 0.5 is too thick, 0.25 is too thin
                 add_segmentation_labels(ax, img, colors=colormaps[i].colors, radius=(radius[0]*scale, radius[1]*scale))
 
         ax.get_xaxis().set_visible(False)
@@ -493,3 +495,68 @@ def equalize_histogram(img: np.ndarray):
         c = c[:h, :w]
 
     return np.array(c * (max_ - min_) + min_, dtype=img.dtype)
+
+
+def plot_outlines(bool_img, ax, **kwargs):
+    """
+    Draw the outlines of a binary Numpy array with Matplotlib.
+
+    Source: https://stackoverflow.com/questions/60095053/draw-the-borders-of-a-binary-numpy-array-with-matplotlib
+    """
+    def close_loop_edges(edges):
+        """
+        Combine the edges defined by 'get_all_edges' to closed loops around objects.
+        If there are multiple disconnected objects a list of closed loops is returned.
+        Note that it's expected that all the edges are part of exactly one loop (but not necessarily the same one).
+        """
+
+        loop_list = []
+        while edges.size != 0:
+            loop = [edges[0, 0], edges[0, 1]]  # Start with first edge
+            edges = np.delete(edges, 0, axis=0)
+            while edges.size != 0:
+                # Get next edge (=edge with common node)
+                ij = np.nonzero((edges == loop[-1]).all(axis=2))
+                if ij[0].size > 0:
+                    i = ij[0][0]
+                    j = ij[1][0]
+                else:
+                    loop.append(loop[0])
+                    # Uncomment to make the start of the loop invisible when plotting
+                    # loop.append(loop[1])
+                    break
+                loop.append(edges[i, (j + 1) % 2, :])
+                edges = np.delete(edges, i, axis=0)
+            loop_list.append(np.array(loop))
+
+        return loop_list
+
+    def get_all_edges(bool_img):
+        """
+        Get a list of all edges (where the value changes from True to False) in the 2D boolean image.
+        The returned array edges has the dimensions (n, 2, 2).
+        Edge i connects the pixels edges[i, 0, :] and edges[i, 1, :].
+        Note that the indices of a pixel also denote the coordinates of its lower left corner.
+        """
+        edges = []
+        ii, jj = np.nonzero(bool_img)
+        for i, j in zip(ii, jj):
+            if j == bool_img.shape[1]-1 or not bool_img[i, j+1]:  # North
+                edges.append(np.array([[i, j+1], [i+1, j+1]]))
+            if i == bool_img.shape[0]-1 or not bool_img[i+1, j]:  # East
+                edges.append(np.array([[i+1, j], [i+1, j+1]]))
+            if j == 0 or not bool_img[i, j-1]:  # South
+                edges.append(np.array([[i, j], [i+1, j]]))
+            if i == 0 or not bool_img[i-1, j]:  # West
+                edges.append(np.array([[i, j], [i, j+1]]))
+
+        if not edges:
+            return np.zeros((0, 2, 2))
+        else:
+            return np.array(edges)
+
+    edges = get_all_edges(bool_img=bool_img)
+    edges = edges - 0.5  # convert indices to coordinates; TODO adjust according to image extent
+    outlines = close_loop_edges(edges=edges)
+    cl = mpl_collections.LineCollection(outlines, **kwargs)
+    ax.add_collection(cl)
