@@ -523,11 +523,10 @@ def main(argv: Sequence[str]):
             # Adjust sigmas from millimeters to voxels
             # This uses the resolution of the starting value `im`
             sigmas = [mm/pixdim for mm, pixdim in zip(arg_value, im.dim[4:7])]
-            if arg_name == "smooth":
-                data = sct_math.smooth(data, sigmas)
-            else:
-                assert arg_name == "laplacian"
-                data = sct_math.laplacian(data, sigmas)
+            data = {
+                "smooth": sct_math.smooth,
+                "laplacian": sct_math.laplacian,
+            }[arg_name](data, sigmas)
 
         elif arg_name == "denoise":
             patch_radius, block_radius = arg_value
