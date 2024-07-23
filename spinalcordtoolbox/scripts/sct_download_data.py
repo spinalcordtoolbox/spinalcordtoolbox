@@ -8,7 +8,7 @@
 import sys
 from typing import Sequence
 
-from spinalcordtoolbox.download import install_named_dataset, DATASET_DICT, list_datasets
+from spinalcordtoolbox.download import install_named_dataset, DATASET_DICT, list_datasets, install_default_datasets
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 
@@ -22,9 +22,10 @@ def get_parser():
     mandatory.add_argument(
         '-d',
         required=True,
-        choices=sorted(list(DATASET_DICT.keys()), key=str.casefold),
+        choices=['default'] + sorted(list(DATASET_DICT.keys()), key=str.casefold),
         metavar="<dataset>",
-        help="Name of the dataset, as listed in the table below."
+        help="Name of the dataset, as listed in the table below. If 'default' is specified, then all default datasets "
+             "will be re-downloaded. (Default datasets are critical datasets downloaded during installation.)"
     )
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
@@ -63,9 +64,12 @@ def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose, caller_module_name=__name__)
 
-    install_named_dataset(arguments.d, dest_folder=arguments.o, keep=arguments.k)
+    if arguments.d == "default":
+        install_default_datasets(keep=arguments.k)
+    else:
+        install_named_dataset(arguments.d, dest_folder=arguments.o, keep=arguments.k)
 
     printv('Done!\n', verbose)
 

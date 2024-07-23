@@ -1,2 +1,2 @@
 Timestamp,SCT Version,Filename,Slice (I->S),VertLevel,DistancePMJ,Label,Size [vox],MAP(),STD()
-"2023-11-23 14:46:01","git-mgp/resample-float-70ef897d385b7b6a0de2d7acd2222e3519f4d690","/home/joshua/repos/spinalcordtoolbox/data/sct_example_data/mt/mtr.nii.gz","4:17","2:5","","white matter",979.1405660958703,54.417007018368906,4.731289391883629
+"2024-06-18 16:05:44","git-jca/4527-register-template-step0-26015605a80d65a04f1df7cdd8f599725a5c9d94*","/home/joshua/repos/spinalcordtoolbox/data/sct_example_data/mt/mtr.nii.gz","4:17","2:5","","white matter",981.2495735973243,54.43385545448296,4.839705676930072

@@ -12,13 +12,14 @@ import argparse
 from typing import Sequence, Union
 
 import numpy as np
-import matplotlib.pyplot as plt
 
 import spinalcordtoolbox.math as sct_math
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, list_type, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel, LazyLoader
 from spinalcordtoolbox.utils.fs import extract_fname
+
+plt = LazyLoader("plt", globals(), "matplotlib.pyplot")
 
 
 def number_or_fname(arg: str) -> Union[float, str]:
@@ -372,7 +373,7 @@ def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose, caller_module_name=__name__)
 
     # Handle `-shape` and `-dim` for `-dilate` and `-erode`
     if len(arguments.shape) == 0:

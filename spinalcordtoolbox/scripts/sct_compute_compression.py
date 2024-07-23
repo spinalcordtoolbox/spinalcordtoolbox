@@ -12,16 +12,16 @@ import os
 import numpy as np
 import logging
 from typing import Sequence
-import pandas as pd
 from spinalcordtoolbox.utils.fs import extract_fname, get_absolute_path
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 from spinalcordtoolbox.utils.shell import Metavar, SCTArgumentParser
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.centerline.core import get_centerline, ParamCenterline
 from spinalcordtoolbox.types import Centerline
-from spinalcordtoolbox.utils.sys import __data_dir__
+from spinalcordtoolbox.utils.sys import __data_dir__, LazyLoader
 from spinalcordtoolbox.scripts import sct_process_segmentation
 
+pd = LazyLoader("pd", globals(), "pandas")
 
 logger = logging.getLogger(__name__)
 
@@ -531,7 +531,7 @@ def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_loglevel(verbose=verbose)    # values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG]
+    set_loglevel(verbose=verbose, caller_module_name=__name__)    # values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG]
 
     # Step 0: Argument loading and validation
     # ---------------------------

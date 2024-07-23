@@ -81,11 +81,14 @@ def get_parser():
         metavar=Metavar.file)
     optional.add_argument(
         "-x",
-        help=""" Interpolation method. The 'label' method is to be used if you would like to apply a transformation
-        on a file that has single-voxel labels (classical interpolation methods won't work, as resampled labels might
-        disappear or their values be altered). The function will dilate each label, apply the transformation using
-        nearest neighbour interpolation, and then take the center-of-mass of each "blob" and output a single voxel per
-        blob.""",
+        help="Interpolation method.\n"
+             "Note: The 'label' method is a special interpolation method designed for single-voxel labels (e.g. disc "
+             "labels used as registration landmarks, compression labels, etc.). This method is necessary because "
+             "classical interpolation may corrupt the values of single-voxel labels, or cause them to disappear "
+             "entirely. The function works by dilating each label, applying the transformation using nearest neighbour "
+             "interpolation, then extracting the center-of-mass of each transformed 'blob' to get a single-voxel "
+             "output label. Because the output is a single-voxel label, the `-x label` method is not appropriate for "
+             "multi-voxel labeled segmentations (such as spinal cord or lesion masks).",
         required=False,
         default='spline',
         choices=('nn', 'linear', 'spline', 'label'))
@@ -326,7 +329,7 @@ def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose, caller_module_name=__name__)
 
     input_filename = arguments.i
     fname_out = arguments.o if arguments.o is not None else os.path.basename(add_suffix(input_filename, '_reg'))

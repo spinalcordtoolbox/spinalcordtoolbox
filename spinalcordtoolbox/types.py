@@ -7,7 +7,7 @@ License: see the file LICENSE
 
 from operator import itemgetter
 
-from numpy import dot, cross, array, einsum, tile, multiply, stack, rollaxis, zeros
+from numpy import dot, cross, array, einsum, stack, zeros
 from numpy.linalg import norm, inv
 import numpy as np
 from scipy.spatial import cKDTree
@@ -321,13 +321,20 @@ class Centerline:
         return origin, x_prime_axis, y_prime_axis, z_prime_axis, matrix_base, inverse_matrix
 
     def get_projected_coordinates_on_planes(self, coordinates, indexes):
-        return coordinates - multiply(tile(einsum('ij,ij->i', coordinates - self.points[indexes], self.derivatives[indexes]), (3, 1)).transpose(), self.derivatives[indexes])
+        unit_derivatives = self.derivatives[indexes]
+        unit_derivatives /= np.expand_dims(norm(unit_derivatives, axis=1), axis=1)
+        dot_products = np.expand_dims(np.sum((coordinates - self.points[indexes]) * unit_derivatives, axis=1), axis=1)
+        return coordinates - unit_derivatives * dot_products
 
     def get_in_plans_coordinates(self, coordinates, indexes):
-        return einsum('mnr,nr->mr', rollaxis(self.inverse_matrices[indexes], 0, 3), (coordinates - self.points[indexes]).transpose()).transpose()
+        return einsum('rmn,rn->rm',  # matmul Rx2D and Rx1D to get Rx1D
+                      self.inverse_matrices[indexes],      # [r, m, n]
+                      coordinates - self.points[indexes])  # [r, n]
 
     def get_inverse_plans_coordinates(self, coordinates, indexes):
-        return einsum('mnr,nr->mr', rollaxis(self.matrices[indexes], 0, 3), coordinates.transpose()).transpose() + self.points[indexes]
+        return einsum('rmn,rn->rm',  # matmul Rx2D and Rx1D to get Rx1D
+                      self.matrices[indexes],              # [r, m, n]
+                      coordinates) + self.points[indexes]  # [r, n]
 
     def compute_vertebral_distribution(self, discs_levels, label_reference='C1'):
         """

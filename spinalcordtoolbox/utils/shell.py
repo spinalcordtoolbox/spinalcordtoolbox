@@ -11,7 +11,6 @@ import re
 import shutil
 import logging
 import argparse
-import inspect
 
 from enum import Enum
 
@@ -53,7 +52,7 @@ IMTYPES_COLORMAP = {
     'anat':        {'fsleyes': 'greyscale',      'fslview': 'Greyscale',       'itksnap': 'gray'},
     'seg':         {'fsleyes': 'red',            'fslview': 'Red',             'itksnap': 'seg'},
     'seg-labeled': {'fsleyes': 'subcortical',    'fslview': 'MGH-Subcortical', 'itksnap': 'seg'},
-    'softseg':     {'fsleyes': 'red-yellow',     'fslview': 'Red-Yellow',      'itksnap': 'gray'},
+    'softseg':     {'fsleyes': 'YlOrRd',         'fslview': 'YlOrRd',      'itksnap': 'gray'},
     'softseg-alt': {'fsleyes': 'blue-lightblue', 'fslview': 'Blue-Lightblue',  'itksnap': 'gray'},
 }
 
@@ -189,27 +188,18 @@ class SCTArgumentParser(argparse.ArgumentParser):
         TODO: Centralize `-v`, `-r`, and `-h` arguments here too, as they're copied
               and pasted across all SCT scripts.
     """
-    def __init__(self, *args, **kwargs):
-        def update_parent_default(key, value):
-            """A polite way of letting a child class have different default values than the parent class."""
-            # Source: https://stackoverflow.com/a/41623488
-            argspec = inspect.getfullargspec(super(SCTArgumentParser, self).__init__)
-            arg_index = argspec.args.index(key)
-            if len(args) < arg_index and key not in kwargs:
-                kwargs[key] = value
-
-        update_parent_default('formatter_class', SmartFormatter)
+    def __init__(self, description, epilog=None):
+        super(SCTArgumentParser, self).__init__(
+            description=description,
+            epilog=epilog,
+            formatter_class=SmartFormatter,
+            # Disable "add_help", because it won't properly add '-h' to our custom argument groups
+            # (We use custom argument groups because of https://stackoverflow.com/a/24181138)
+            add_help=False
+        )
 
         # Update "usage:" message to match how SCT scripts are actually called (no '.py')
-        frame = inspect.stack()[1]
-        module = inspect.getmodule(frame[0])
-        update_parent_default('prog', removesuffix(os.path.basename(module.__file__), ".py"))
-
-        # Disable "add_help", because it won't properly add '-h' to our custom argument groups
-        # (We use custom argument groups because of https://stackoverflow.com/a/24181138)
-        update_parent_default('add_help', False)
-
-        super(SCTArgumentParser, self).__init__(*args, **kwargs)
+        self.prog = removesuffix(self.prog, ".py")
 
     def error(self, message):
         """

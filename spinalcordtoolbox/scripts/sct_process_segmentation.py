@@ -15,7 +15,6 @@ import logging
 import argparse
 from typing import Sequence
 
-import pandas as pd
 import numpy as np
 from matplotlib.ticker import MaxNLocator
 
@@ -32,7 +31,9 @@ from spinalcordtoolbox.utils.fs import get_absolute_path
 from spinalcordtoolbox.utils.sys import __sct_dir__, init_sct, sct_progress_bar, set_loglevel
 from spinalcordtoolbox.utils.shell import (ActionCreateFolder, Metavar, SCTArgumentParser,
                                            display_open, parse_num_list)
-from spinalcordtoolbox.utils.sys import __data_dir__
+from spinalcordtoolbox.utils.sys import __data_dir__, LazyLoader
+
+pd = LazyLoader("pd", globals(), "pandas")
 
 logger = logging.getLogger(__name__)
 
@@ -388,7 +389,7 @@ def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose, caller_module_name=__name__)
 
     # Initialization
     group_funcs = (('MEAN', func_wa), ('STD', func_std))  # functions to perform when aggregating metrics along S-I

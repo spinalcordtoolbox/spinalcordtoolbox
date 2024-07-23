@@ -19,9 +19,11 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
-import inspect
 
 import tqdm
+
+# Expose Tensorflow's LazyLoader class in `utils.sys` namespace
+from contrib.tensorflow.lazy_loader import LazyLoader  # noqa
 
 logger = logging.getLogger(__name__)
 
@@ -98,16 +100,7 @@ class ANSIColors16(object):
     BackgroundWhite = "\033[107m"
 
 
-def get_caller_module():
-    """Return the first non-`utils.sys` module in the stack (to see where `utils.sys` is being called from)."""
-    for frame in inspect.stack():
-        mod = inspect.getmodule(frame[0])
-        if mod.__file__ != __file__:
-            break
-    return mod
-
-
-def set_loglevel(verbose):
+def set_loglevel(verbose, caller_module_name):
     """
     Use SCT's verbosity values to set the logging level.
 
@@ -119,6 +112,7 @@ def set_loglevel(verbose):
     one of two schemes:
        - [0, 1, 2], which corresponds to [WARNING, INFO, DEBUG]. (Older scheme)
        - [False, True], which corresponds to [INFO, DEBUG].      (Newer scheme)
+    :caller_module_name: The `__name__` of the caller module
     """
     dict_log_levels = {
         '0': 'WARNING', '1': 'INFO', '2': 'DEBUG',  # Older scheme
@@ -134,7 +128,6 @@ def set_loglevel(verbose):
     logger.setLevel(getattr(logging, log_level))
 
     # Set logging level for the file that called this function
-    caller_module_name = get_caller_module().__name__
     caller_logger = logging.getLogger(caller_module_name)
     caller_logger.setLevel(getattr(logging, log_level))
 
@@ -183,7 +176,7 @@ def init_sct():
         return _format
 
     # Initialize logging
-    set_loglevel(verbose=False)  # False => "INFO". For "DEBUG", must be called again with verbose=True.
+    set_loglevel(verbose=False, caller_module_name=__name__)  # False => "INFO". For "DEBUG", must be called again with verbose=True.
     hdlr = logging.StreamHandler(sys.stdout)
     fmt = logging.Formatter()
     fmt.format = _format_wrap(fmt.format)

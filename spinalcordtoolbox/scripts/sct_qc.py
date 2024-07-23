@@ -19,6 +19,7 @@ def get_parser():
         description='Generate Quality Control (QC) report following SCT processing.',
         epilog='Examples:\n'
                'sct_qc -i t2.nii.gz -s t2_seg.nii.gz -p sct_deepseg_sc\n'
+               'sct_qc -i t2.nii.gz -s t2_pmj.nii.gz -p sct_detect_pmj\n'
                'sct_qc -i t2.nii.gz -s t2_seg_labeled.nii.gz -p sct_label_vertebrae\n'
                'sct_qc -i t2.nii.gz -s t2_seg.nii.gz -p sct_deepseg_sc -qc-dataset mydata -qc-subject sub-45\n'
                'sct_qc -i t2.nii.gz -s t2_seg.nii.gz -d t2_lesion.nii.gz -p sct_deepseg_lesion -plane axial'
@@ -96,7 +97,7 @@ def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose, caller_module_name=__name__)
 
     if arguments.p == 'sct_deepseg_lesion' and arguments.plane is None:
         parser.error('Please provide the plane of the output QC with -plane')

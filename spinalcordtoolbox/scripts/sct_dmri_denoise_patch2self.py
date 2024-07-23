@@ -11,11 +11,12 @@ from typing import Sequence
 
 import numpy as np
 import nibabel as nib
-from dipy.denoise.patch2self import patch2self
 
 from spinalcordtoolbox.image import add_suffix, Image
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, list_type, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, set_loglevel, printv
+from spinalcordtoolbox.utils.sys import init_sct, set_loglevel, printv, LazyLoader
+
+patch2self = LazyLoader("patch2self", globals(), 'dipy.denoise.patch2self')
 
 
 def get_parser():
@@ -91,7 +92,7 @@ def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose, caller_module_name=__name__)
 
     model = arguments.model
     if "," in arguments.radius:
@@ -115,7 +116,7 @@ def main(argv: Sequence[str]):
     data = nii.get_fdata()
 
     printv("Applying Patch2Self Denoising...")
-    data_denoised = patch2self(data, bvals, patch_radius, model, verbose=True)
+    data_denoised = patch2self.patch2self(data, bvals, patch_radius, model, verbose=True)
     data_diff = np.absolute(data_denoised.astype('f8') - data.astype('f8'))
 
     if verbose == 2:

@@ -14,7 +14,7 @@ from spinalcordtoolbox.utils.sys import init_sct, sct_test_path, set_loglevel
 
 # Set logger to "DEBUG"
 init_sct()
-set_loglevel(verbose=2)
+set_loglevel(verbose=2, caller_module_name=__name__)
 # Separate setting for get_centerline. Set to 2 to save images ("DEBUG"), 0 otherwise ("INFO")
 VERBOSE = 0
 
