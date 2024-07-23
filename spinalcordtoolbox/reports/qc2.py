@@ -363,6 +363,8 @@ def sct_deepseg(
                       alpha=1.0 if "seg_spinal_rootlets_t2w" in argv else (img / img.max()),  # scale to [0, 1]
                       interpolation='none',
                       aspect=1.0)
+            if "seg_spinal_rootlets_t2w" in argv:
+                add_segmentation_labels(ax, img, colors=colormaps[i].colors, radius=(radius[0]*scale, radius[1]*scale))
 
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
@@ -435,6 +437,35 @@ def add_orientation_labels(ax: mpl_axes.Axes, radius: tuple[int, int] = (15, 15)
             mpl_patheffects.Stroke(linewidth=1, foreground='black'),
             mpl_patheffects.Normal(),
         ])
+
+
+def add_segmentation_labels(ax: mpl_axes.Axes, seg_mosaic: np.ndarray, colors: list[str],
+                            radius: tuple[int, int] = (15, 15)):
+    """
+    Add labels corresponding to the value of the segmentation for each slice in the mosaic.
+    """
+    # Fetch mosaic shape properties
+    bbox = [2*radius[0], 2*radius[1]]
+    grid_shape = [s // bb for s, bb in zip(seg_mosaic.shape, bbox)]
+    # Fetch set of labels in the mosaic
+    labels = [v for v in np.unique(seg_mosaic) if v]
+    # Iterate over each sub-array in the mosaic
+    for row in range(grid_shape[0]):
+        for col in range(grid_shape[1]):
+            # Fetch sub-array from mosaic
+            extents = [(row*bbox[0], (row+1)*bbox[0]),
+                       (col*bbox[1], (col+1)*bbox[1])]
+            arr = seg_mosaic[extents[0][0]:extents[0][1], extents[1][0]:extents[1][1]]
+            # Check for nonzero labels, then draw text for each label found
+            labels_in_arr = [v for v in np.unique(arr) if v]
+            for idx_pos, l_arr in enumerate(labels_in_arr, start=1):
+                y, x = (extents[0][1] - 6*idx_pos + 3,  # Shift each subsequent label up in case there are >1
+                        extents[1][1] - 6)
+                color = colors[0] if len(colors) == 1 else colors[labels.index(l_arr)]
+                ax.text(x, y, str(int(l_arr)), color=color, size=4).set_path_effects([
+                    mpl_patheffects.Stroke(linewidth=1, foreground='black'),
+                    mpl_patheffects.Normal(),
+                ])
 
 
 def equalize_histogram(img: np.ndarray):
