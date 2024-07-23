@@ -96,12 +96,12 @@ def test_chained_arithmetic_operations_output_dimensions(tmp_path, ndims):
 @pytest.mark.parametrize('ndims', [(3, 4), (3, 4, 5)])
 @pytest.mark.parametrize('op', ['-add', '-mul', '-sub', '-div'])
 def test_mismatched_dimensions_error(tmp_path, ndims, op):
-    """Test that passing images of mismatched dimensions returns the proper parser error."""
+    """Test that passing images of mismatched dimensions returns a user-friendly error."""
     possible_dims = {3: [10, 15, 20], 4: [10, 15, 20, 5], 5: [10, 15, 20, 5, 1]}
     dims = [possible_dims[n] for n in ndims]
     with pytest.raises(SystemExit) as e:
         run_arithmetic_operation(tmp_path, dims, op)
-    assert 'parser.error(f"Dimensions of' in str(tb.format_list(tb.extract_tb(e.tb)))
+    assert 'printv(f"ERROR: -{arg_name}: {e}"' in str(tb.format_list(tb.extract_tb(e.tb)))
 
 
 @pytest.mark.parametrize('op', ['-add', '-mul'])
