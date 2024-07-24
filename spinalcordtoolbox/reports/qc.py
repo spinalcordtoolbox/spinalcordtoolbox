@@ -20,7 +20,7 @@ import skimage.io
 import skimage.exposure
 from scipy.ndimage import center_of_mass
 
-from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.image import Image, check_image_kind
 from spinalcordtoolbox.reports.slice import Slice, Axial, Sagittal
 from spinalcordtoolbox.reports.assets._assets.py import refresh_qc_entries
 from spinalcordtoolbox.utils.fs import copy, extract_fname, mutex
@@ -778,7 +778,26 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
         p_resample = None
 
     qcslice = object.__new__(SliceSubtype)
-    qcslice.__init__(im_list, p_resample=p_resample)
+    qcslice._images = list()  # 3d volumes
+    qcslice._4d_images = list()  # 4d volumes
+    qcslice._image_seg = None  # for cropping
+    qcslice._absolute_paths = list()  # Used because change_orientation removes the field absolute_path
+    image_ref = None  # first pass: we don't have a reference image to resample to
+    for i, image in enumerate(im_list):
+        img = image.copy()
+        qcslice._absolute_paths.append(img.absolutepath)  # change_orientation removes the field absolute_path
+        img.change_orientation('SAL')
+        if p_resample:
+            type_img = 'seg' if ('seg' in check_image_kind(img)) else 'im'  # condense seg/softseg into just 'seg'
+            img_r = qcslice._resample_slicewise(img, p_resample, type_img=type_img, image_ref=image_ref)
+        else:
+            img_r = img.copy()
+        if img_r.dim[3] == 1:   # If image is 3D, nt = 1
+            qcslice._images.append(img_r)
+            image_ref = qcslice._images[0]  # 2nd and next passes: we resample any image to the space of the first one
+        else:
+            qcslice._4d_images.append(img_r)
+            # image_ref = qcslice._4d_images[0]  # img_dest is not covered for 4D volumes in resample_nib()
 
     qc_report = object.__new__(QcReport)
     qc_report.__init__(fname_in1, process, args, plane, path_qc, dpi, dataset, subject)

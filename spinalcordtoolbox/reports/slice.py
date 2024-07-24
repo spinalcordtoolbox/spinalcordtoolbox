@@ -15,7 +15,7 @@ import numpy as np
 from scipy.ndimage import center_of_mass
 from nibabel.nifti1 import Nifti1Image
 
-from spinalcordtoolbox.image import Image, split_img_data, check_image_kind
+from spinalcordtoolbox.image import Image, split_img_data
 from spinalcordtoolbox.resampling import resample_nib
 from spinalcordtoolbox.cropping import ImageCropper
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
@@ -39,31 +39,6 @@ class Slice(object):
     IMPORTANT: Convention for orientation is "SAL"
 
     """
-
-    def __init__(self, images, p_resample=0.6):
-        """
-        :param images: list of 3D or 4D volumes to be separated into slices.
-        """
-        self._images = list()  # 3d volumes
-        self._4d_images = list()  # 4d volumes
-        self._image_seg = None  # for cropping
-        self._absolute_paths = list()  # Used because change_orientation removes the field absolute_path
-        image_ref = None  # first pass: we don't have a reference image to resample to
-        for i, image in enumerate(images):
-            img = image.copy()
-            self._absolute_paths.append(img.absolutepath)  # change_orientation removes the field absolute_path
-            img.change_orientation('SAL')
-            if p_resample:
-                type_img = 'seg' if ('seg' in check_image_kind(img)) else 'im'  # condense seg/softseg into just 'seg'
-                img_r = self._resample_slicewise(img, p_resample, type_img=type_img, image_ref=image_ref)
-            else:
-                img_r = img.copy()
-            if img_r.dim[3] == 1:   # If image is 3D, nt = 1
-                self._images.append(img_r)
-                image_ref = self._images[0]  # 2nd and next passes: we resample any image to the space of the first one
-            else:
-                self._4d_images.append(img_r)
-                # image_ref = self._4d_images[0]  # img_dest is not covered for 4D volumes in resample_nib()
 
     def get_aspect(self, image):
         raise NotImplementedError
