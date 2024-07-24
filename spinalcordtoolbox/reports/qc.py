@@ -252,22 +252,6 @@ class QcImage:
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
 
-    def layout(self, qcslice_layout, qcslice):
-        """The main entry point for actually *using* a QcImage instance."""
-        # Get the aspect ratio (height/width) based on pixel size. Consider only the first 2 slices.
-        self.aspect_img, self.aspect_mask = qcslice.aspect()[:2]
-
-        self.qc_report.make_content_path()
-        logger.info('QcImage: layout with %s slice', self.qc_report.plane)
-
-        if self.process in ['sct_fmri_moco', 'sct_dmri_moco']:
-            [images_after_moco, images_before_moco], centermass = qcslice_layout(qcslice)
-            self._centermass = centermass
-            self._make_QC_image_for_4d_volumes(images_after_moco, images_before_moco)
-        else:
-            img, *mask = qcslice_layout(qcslice)
-            self._make_QC_image_for_3d_volumes(img, mask, plane=self.qc_report.plane)
-
     def _make_QC_image_for_3d_volumes(self, img, mask, plane):
         """
         Create overlay and background images for all processes that deal with 3d volumes
@@ -776,10 +760,19 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
     qc_image._draw_text = draw_text
     qc_image._centermass = None  # center of mass returned by slice.Axial.get_center()
 
-    qc_image.layout(
-        qcslice_layout=qcslice_layout,
-        qcslice=qcslice,
-    )
+    # Get the aspect ratio (height/width) based on pixel size. Consider only the first 2 slices.
+    qc_image.aspect_img, qc_image.aspect_mask = qcslice.aspect()[:2]
+
+    qc_image.qc_report.make_content_path()
+    logger.info('QcImage: layout with %s slice', qc_image.qc_report.plane)
+
+    if qc_image.process in ['sct_fmri_moco', 'sct_dmri_moco']:
+        [images_after_moco, images_before_moco], centermass = qcslice_layout(qcslice)
+        qc_image._centermass = centermass
+        qc_image._make_QC_image_for_4d_volumes(images_after_moco, images_before_moco)
+    else:
+        img, *mask = qcslice_layout(qcslice)
+        qc_image._make_QC_image_for_3d_volumes(img, mask, plane=qc_image.qc_report.plane)
 
     logger.info('Successfully generated the QC results in %s', qc_report.qc_results)
     display_open(file=os.path.join(path_qc, "index.html"), message="To see the results in a browser")
