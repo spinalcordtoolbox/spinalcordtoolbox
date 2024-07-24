@@ -417,8 +417,8 @@ def sct_analyze_lesion(
             im_label_data_cur = im_lesion_data == lesion_label
             # Restrict the lesion mask to the spinal cord mask (from anatomical level, it does not make sense to have
             # lesion outside the spinal cord mask)
-            boolean_mask = (im_sc_data != 0)  # Nonzero -> True | Zero -> False; we use this in case of soft SC
-            im_label_data_cur = im_label_data_cur * boolean_mask
+            # Note for `im_sc_data != 0`: Nonzero -> True | Zero -> False; we use this in case of soft SC
+            im_label_data_cur = np.logical_and(im_lesion_data == lesion_label, im_sc_data != 0)
 
             # Loop across sagittal slices
             for idx_col, sagittal_slice in enumerate(range(min_sag_slice, max_sag_slice + 1)):
