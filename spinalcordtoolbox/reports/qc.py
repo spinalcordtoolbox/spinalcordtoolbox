@@ -515,49 +515,6 @@ class QcReport:
     It will also setup the folder structure so the report generator only needs to fetch the appropriate files.
     """
 
-    def __init__(self, input_file, command, args, plane, path_qc, dpi=300, dataset=None, subject=None):
-        """
-        :param input_file: str: the input nifti file name
-        :param command: str: command name
-        :param args: str: the command's arguments
-        :param plane: str: The anatomical orientation
-        :param path_qc: str: The absolute path of the QC root
-        :param dpi: int: Output resolution of the image
-        :param dataset: str: Dataset name
-        :param subject: str: Subject name
-        """
-        path_in, file_in, ext_in = extract_fname(os.path.abspath(input_file))
-        # Assuming BIDS convention, we derive the value of the dataset, subject and contrast from the `input_file`
-        # by splitting it into `[dataset]/[subject]/[contrast]/input_file`
-        abs_input_path, contrast = os.path.split(path_in)
-        abs_input_path, subject_tmp = os.path.split(abs_input_path)
-        _, dataset_tmp = os.path.split(abs_input_path)
-        if dataset is None:
-            dataset = dataset_tmp
-        if subject is None:
-            subject = subject_tmp
-        if isinstance(args, list):
-            args = list2cmdline(args)
-        self.fname_in = file_in + ext_in
-        self.dataset = dataset
-        self.subject = subject
-        self.cwd = os.getcwd()
-        self.contrast = contrast
-        self.command = command
-        self.sct_version = __version__
-        self.args = args
-        self.plane = plane
-        self.dpi = dpi
-        self.path_qc = path_qc
-        self.mod_date = datetime.datetime.strftime(datetime.datetime.now(), '%Y_%m_%d_%H%M%S.%f')
-        self.qc_results = os.path.join(path_qc, '_json', f'qc_{self.mod_date}.json')
-        if command in ['sct_fmri_moco', 'sct_dmri_moco']:
-            ext = "gif"
-        else:
-            ext = "png"
-        self.background_img_path = os.path.join(dataset, subject, contrast, command, self.mod_date, f"background_img.{ext}")
-        self.overlay_img_path = os.path.join(dataset, subject, contrast, command, self.mod_date, f"overlay_img.{ext}")
-
     def abs_background_img_path(self):
         return os.path.join(self.path_qc, self.background_img_path)
 
@@ -800,7 +757,37 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
             # image_ref = qcslice._4d_images[0]  # img_dest is not covered for 4D volumes in resample_nib()
 
     qc_report = object.__new__(QcReport)
-    qc_report.__init__(fname_in1, process, args, plane, path_qc, dpi, dataset, subject)
+    path_in, file_in, ext_in = extract_fname(os.path.abspath(fname_in1))
+    # Assuming BIDS convention, we derive the value of the dataset, subject and contrast from the `fname_in1`
+    # by splitting it into `[dataset]/[subject]/[contrast]/fname_in1`
+    abs_input_path, contrast = os.path.split(path_in)
+    abs_input_path, subject_tmp = os.path.split(abs_input_path)
+    _, dataset_tmp = os.path.split(abs_input_path)
+    if dataset is None:
+        dataset = dataset_tmp
+    if subject is None:
+        subject = subject_tmp
+    if isinstance(args, list):
+        args = list2cmdline(args)
+    qc_report.fname_in = file_in + ext_in
+    qc_report.dataset = dataset
+    qc_report.subject = subject
+    qc_report.cwd = os.getcwd()
+    qc_report.contrast = contrast
+    qc_report.command = process
+    qc_report.sct_version = __version__
+    qc_report.args = args
+    qc_report.plane = plane
+    qc_report.dpi = dpi
+    qc_report.path_qc = path_qc
+    qc_report.mod_date = datetime.datetime.strftime(datetime.datetime.now(), '%Y_%m_%d_%H%M%S.%f')
+    qc_report.qc_results = os.path.join(path_qc, '_json', f'qc_{qc_report.mod_date}.json')
+    if process in ['sct_fmri_moco', 'sct_dmri_moco']:
+        ext = "gif"
+    else:
+        ext = "png"
+    qc_report.background_img_path = os.path.join(dataset, subject, contrast, process, qc_report.mod_date, f"background_img.{ext}")
+    qc_report.overlay_img_path = os.path.join(dataset, subject, contrast, process, qc_report.mod_date, f"overlay_img.{ext}")
 
     qc_image = object.__new__(QcImage)
     qc_image.__init__(
