@@ -407,7 +407,7 @@ def sct_analyze_lesion(
 
         # Force axes to be a 2-dimensional array (to avoid indexing issues if we have only a single lesion or a single
         # sagittal slice)
-        axes = np.atleast_2d(axes)
+        axes = np.asanyarray(axes).reshape((num_of_lesions, num_of_sag_slices))
 
         # Loop across lesions
         for idx_row, lesion_label in enumerate(label_lst):
