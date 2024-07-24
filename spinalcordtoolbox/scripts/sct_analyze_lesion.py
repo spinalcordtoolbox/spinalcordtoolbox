@@ -273,8 +273,8 @@ class AnalyzeLesion:
                     # segmentation
                     midsagittal_slice = str(int(row['midsagittal_spinal_cord_slice']))
                     # Get dorsal and ventral tissue bridges for the mid-sagittal slice
-                    dorsal_tissue_bridge = row['slice_' + midsagittal_slice + '_dorsal_bridge_width [mm]']
-                    ventral_tissue_bridge = row['slice_' + midsagittal_slice + '_ventral_bridge_width [mm]']
+                    dorsal_tissue_bridge = row[f'slice_{midsagittal_slice}_dorsal_bridge_width [mm]']
+                    ventral_tissue_bridge = row[f'slice_{midsagittal_slice}_ventral_bridge_width [mm]']
 
                     # Store the bridges for the midsagittal slice for the selected lesion
                     midsagittal_dorsal_bridges.append(dorsal_tissue_bridge)
