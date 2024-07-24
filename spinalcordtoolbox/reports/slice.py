@@ -160,30 +160,6 @@ class Slice(object):
         """Obtain matrices of the mosaics"""
         raise NotImplementedError
 
-    def single(self):
-        """Obtain the matrices of the single slices. Flatten
-
-        :returns: tuple of numpy.ndarray, matrix of the input 3D MRI
-                  containing the slices and matrix of the transformed 3D MRI
-                  to output containing the slices
-        """
-        if len(set([x.data.shape for x in self._images])) != 1:
-            raise ValueError("Volumes don't have the same size")
-
-        matrices = list()
-        # Retrieve the L-R center of the slice for each row (i.e. in the S-I direction).
-        index = self.get_center_spit()
-        # Loop across images and generate matrices for the image and the overlay
-        for image in self._images:
-            # Initialize matrix with zeros. This matrix corresponds to the 2d slice shown on the QC report.
-            matrix = np.zeros(image.dim[0:2])
-            for row in range(len(index)):
-                # For each slice, translate in the R-L direction to center the cord
-                matrix[row] = self.get_slice(image.data, int(np.round(index[row])))[row]
-            matrices.append(matrix)
-
-        return matrices
-
     def aspect(self):
         if len(self._4d_images) == 0:  # For 3D images
             return [self.get_aspect(x) for x in self._images]
@@ -424,6 +400,30 @@ class Sagittal(Slice):
                 lrslice_cropped = self.get_slice(image_cropped.data, i)
                 # Add the cropped slice to the matrix layout
                 self.add_slice(matrix, i, nb_column, lrslice_cropped)
+            matrices.append(matrix)
+
+        return matrices
+
+    def single(self):
+        """Obtain the matrices of the single slices. Flatten
+
+        :returns: tuple of numpy.ndarray, matrix of the input 3D MRI
+                  containing the slices and matrix of the transformed 3D MRI
+                  to output containing the slices
+        """
+        if len(set([x.data.shape for x in self._images])) != 1:
+            raise ValueError("Volumes don't have the same size")
+
+        matrices = list()
+        # Retrieve the L-R center of the slice for each row (i.e. in the S-I direction).
+        index = self.get_center_spit()
+        # Loop across images and generate matrices for the image and the overlay
+        for image in self._images:
+            # Initialize matrix with zeros. This matrix corresponds to the 2d slice shown on the QC report.
+            matrix = np.zeros(image.dim[0:2])
+            for row in range(len(index)):
+                # For each slice, translate in the R-L direction to center the cord
+                matrix[row] = self.get_slice(image.data, int(np.round(index[row])))[row]
             matrices.append(matrix)
 
         return matrices
