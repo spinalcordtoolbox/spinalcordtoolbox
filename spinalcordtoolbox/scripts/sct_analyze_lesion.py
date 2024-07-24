@@ -466,47 +466,50 @@ class AnalyzeLesion:
         for sagittal_slice in sagittal_lesion_slices:
             # Get df for the selected sagittal slice
             df_temp = tissue_bridges_df[tissue_bridges_df['sagittal_slice'] == sagittal_slice]
-            # Get the axial slices corresponding to the minimum bridge widths
-            min_dorsal_bridge_width_slice = df_temp.loc[df_temp['dorsal_bridge_width'].idxmin(), 'axial_slice']
-            min_ventral_bridge_width_slice = df_temp.loc[df_temp['ventral_bridge_width'].idxmin(), 'axial_slice']
 
-            # Add a new column with value True to tissue_bridges_df; this information is needed for plotting
-            tissue_bridges_df.loc[(tissue_bridges_df['sagittal_slice'] == sagittal_slice) &
-                                  (tissue_bridges_df['axial_slice'] ==
-                                   min_dorsal_bridge_width_slice), 'min_dorsal_bridge_axial_slice'] = True
-            tissue_bridges_df.loc[(tissue_bridges_df['sagittal_slice'] == sagittal_slice) &
-                                  (tissue_bridges_df['axial_slice'] ==
-                                   min_ventral_bridge_width_slice), 'min_ventral_bridge_axial_slice'] = True
-            # Replace NaN with False
-            tissue_bridges_df.fillna(False, inplace=True)
-
-            # Get the width of the tissue bridges in mm
+            # Get the width of the tissue bridges in mm (by multiplying by p_lst[1]) and use np.cos(self.angles[SLICE])
+            # to correct for the angle of the spinal cord with respect to the axial slice
             # NOTE: the orientation is RPI (because we reoriented the image to RPI using orient2rpi()); therefore
             # p_lst[0] is the pixel size in the R-L direction, p_lst[1] is the pixel size in the A-P direction, and
             # p_lst[2] is the pixel size in the S-I direction.
             # Since we are computing dorsal and ventral tissue bridges, we use p_lst[1] (A-P direction)
-            # NOTE: we use np.cos(self.angles[SLICE]) to correct for the angle of the spinal cord with respect to the
-            # slice
-            dorsal_bridge_width_mm = (float(df_temp[df_temp['axial_slice'] == min_dorsal_bridge_width_slice]
-                                            ['dorsal_bridge_width'] * p_lst[1]) *
-                                      np.cos(self.angles[min_dorsal_bridge_width_slice]))
-            ventral_bridge_width_mm = (float(df_temp[df_temp['axial_slice'] == min_ventral_bridge_width_slice]
-                                             ['ventral_bridge_width'] * p_lst[1]) *
-                                       np.cos(self.angles[min_ventral_bridge_width_slice]))
-            total_bridge_width_mm = dorsal_bridge_width_mm + ventral_bridge_width_mm
+            dorsal_bridge_width_mm = df_temp.apply(lambda row: row['dorsal_bridge_width'] * p_lst[1] *
+                                                               np.cos(self.angles[row['axial_slice']]), axis=1)
+            ventral_bridge_width_mm = df_temp.apply(lambda row: row['ventral_bridge_width'] * p_lst[1] *
+                                                                np.cos(self.angles[row['axial_slice']]), axis=1)
+
+            # Add the columns to the DataFrame
+            # For some reason I need to add the columns one by one. When I tried to write directly to the DataFrame,
+            # I got the following error:
+            #   "IndexError: only integers, slices (:), ellipsis (...), numpy.newaxis (None) and integer or boolean
+            #   arrays are valid indices"
+            df_temp['dorsal_bridge_width_mm'] = dorsal_bridge_width_mm
+            df_temp['ventral_bridge_width_mm'] = ventral_bridge_width_mm
+
+            # Get the axial slices corresponding to the minimum bridge widths
+            # This information is printed to terminal
+            min_dorsal_bridge_width_slice = df_temp.loc[df_temp['dorsal_bridge_width_mm'].idxmin(), 'axial_slice']
+            min_ventral_bridge_width_slice = df_temp.loc[df_temp['ventral_bridge_width_mm'].idxmin(), 'axial_slice']
+
+            # Get the minimum dorsal and ventral bridge widths
+            min_dorsal_bridge_width_mm = float(df_temp[df_temp['axial_slice'] == min_dorsal_bridge_width_slice]
+                                                  ['dorsal_bridge_width_mm'])
+            min_ventral_bridge_width_mm = float(df_temp[df_temp['axial_slice'] == min_ventral_bridge_width_slice]
+                                                    ['ventral_bridge_width_mm'])
+            min_total_bridge_width_mm = min_dorsal_bridge_width_mm + min_ventral_bridge_width_mm
 
             # Save the minimum tissue bridges
-            self.measure_pd.loc[idx, f'slice_{str(sagittal_slice)}_dorsal_bridge_width [mm]'] = dorsal_bridge_width_mm
-            self.measure_pd.loc[idx, f'slice_{str(sagittal_slice)}_ventral_bridge_width [mm]'] = ventral_bridge_width_mm
-            self.measure_pd.loc[idx, f'slice_{str(sagittal_slice)}_total_bridge_width [mm]'] = total_bridge_width_mm
+            self.measure_pd.loc[idx, f'slice_{str(sagittal_slice)}_dorsal_bridge_width [mm]'] = min_dorsal_bridge_width_mm
+            self.measure_pd.loc[idx, f'slice_{str(sagittal_slice)}_ventral_bridge_width [mm]'] = min_ventral_bridge_width_mm
+            self.measure_pd.loc[idx, f'slice_{str(sagittal_slice)}_total_bridge_width [mm]'] = min_total_bridge_width_mm
             printv(f'  Sagittal slice {sagittal_slice}, Minimum dorsal tissue bridge width: '
-                   f'{np.round(dorsal_bridge_width_mm, 2)} mm (axial slice {min_dorsal_bridge_width_slice})',
+                   f'{np.round(min_dorsal_bridge_width_mm, 2)} mm (axial slice {min_dorsal_bridge_width_slice})',
                    self.verbose, type='info')
             printv(f'  Sagittal slice {sagittal_slice}, Minimum ventral tissue bridge width: '
-                   f'{np.round(ventral_bridge_width_mm, 2)} mm (axial slice {min_ventral_bridge_width_slice})',
+                   f'{np.round(min_ventral_bridge_width_mm, 2)} mm (axial slice {min_ventral_bridge_width_slice})',
                    self.verbose, type='info')
             printv(f'  Sagittal slice {sagittal_slice}, Total tissue bridge width: '
-                   f'{np.round(total_bridge_width_mm, 2)} mm', self.verbose, type='info')
+                   f'{np.round(min_total_bridge_width_mm, 2)} mm', self.verbose, type='info')
 
     def _measure_length(self, im_data, p_lst, idx):
         """
