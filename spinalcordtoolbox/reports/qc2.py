@@ -482,7 +482,6 @@ def sct_analyze_lesion(
         mpl_plt.tight_layout()
         for fname in imgs_to_generate.values():
             mpl_plt.savefig(fname)
-        mpl_plt.close()
 
 
 def inf_nan_fill(A: np.ndarray):
