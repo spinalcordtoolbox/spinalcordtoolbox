@@ -417,7 +417,7 @@ def sct_analyze_lesion(
             im_label_data_cur = im_lesion_data == lesion_label
             # Restrict the lesion mask to the spinal cord mask (from anatomical level, it does not make sense to have
             # lesion outside the spinal cord mask)
-            boolean_mask = (im_sc_data.data != 0)  # Nonzero -> True | Zero -> False; we use this in case of soft SC
+            boolean_mask = (im_sc_data != 0)  # Nonzero -> True | Zero -> False; we use this in case of soft SC
             im_label_data_cur = im_label_data_cur * boolean_mask
 
             # Loop across sagittal slices
