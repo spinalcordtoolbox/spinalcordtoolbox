@@ -499,9 +499,9 @@ class AnalyzeLesion:
             min_total_bridge_width_mm = min_dorsal_bridge_width_mm + min_ventral_bridge_width_mm
 
             # Save the minimum tissue bridges
-            self.measure_pd.loc[idx, f'slice_{str(sagittal_slice)}_dorsal_bridge_width [mm]'] = min_dorsal_bridge_width_mm
-            self.measure_pd.loc[idx, f'slice_{str(sagittal_slice)}_ventral_bridge_width [mm]'] = min_ventral_bridge_width_mm
-            self.measure_pd.loc[idx, f'slice_{str(sagittal_slice)}_total_bridge_width [mm]'] = min_total_bridge_width_mm
+            self.measure_pd.loc[idx, f'slice_{sagittal_slice}_dorsal_bridge_width [mm]'] = min_dorsal_bridge_width_mm
+            self.measure_pd.loc[idx, f'slice_{sagittal_slice}_ventral_bridge_width [mm]'] = min_ventral_bridge_width_mm
+            self.measure_pd.loc[idx, f'slice_{sagittal_slice}_total_bridge_width [mm]'] = min_total_bridge_width_mm
             printv(f'  Sagittal slice {sagittal_slice}, Minimum dorsal tissue bridge width: '
                    f'{np.round(min_dorsal_bridge_width_mm, 2)} mm (axial slice {min_dorsal_bridge_width_slice})',
                    self.verbose, type='info')
