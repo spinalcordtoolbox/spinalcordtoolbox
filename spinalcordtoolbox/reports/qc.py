@@ -304,8 +304,6 @@ class QcImage:
             action(self, mask[i], ax)
         self._save(fig, self.qc_report.abs_overlay_img_path(), dpi=self.qc_report.dpi)
 
-        self.qc_report.update_description_file()
-
     def _make_QC_image_for_4d_volumes(self, images_after_moco, images_before_moco):
         """
         Generate background and overlay gifs for sct_fmri_moco and sct_dmri_moco
@@ -323,8 +321,6 @@ class QcImage:
 
         self._generate_and_save_gif(images_before_moco, images_after_moco, size_fig)
         self._generate_and_save_gif(images_before_moco, images_after_moco, size_fig, is_mask=True)
-
-        self.qc_report.update_description_file()
 
     def _func_stretch_contrast(self, img):
         if self._stretch_contrast_method == "equalized":
@@ -477,61 +473,6 @@ class QcReport:
 
     def abs_overlay_img_path(self):
         return os.path.join(self.path_qc, self.overlay_img_path)
-
-    def update_description_file(self):
-        """Create the description file with a JSON structure"""
-        path_qc = self.path_qc
-        output = {
-            'cwd': self.cwd,
-            'cmdline': "{} {}".format(self.command, self.args),
-            'command': self.command,
-            'sct_version': self.sct_version,
-            'dataset': self.dataset,
-            'subject': self.subject,
-            'contrast': self.contrast,
-            'fname_in': self.fname_in,
-            'plane': self.plane,
-            'background_img': self.background_img_path,
-            'overlay_img': self.overlay_img_path,
-            'moddate': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            'qc': ""
-        }
-        logger.debug('Description file: %s', self.qc_results)
-
-        # Use a mutex on a hash of the QC path, so that we use a unique mutex per target QC report
-        realpath = os.path.realpath(path_qc)
-        basename = os.path.basename(realpath)
-        with mutex(f"sct_qc-{basename}-{md5(realpath.encode('utf-8')).hexdigest()}"):
-            # results = []
-            # Create path to store json files
-            path_json, _ = os.path.split(self.qc_results)
-            if not os.path.exists(path_json):
-                os.makedirs(path_json, exist_ok=True)
-
-            # Create json file for specific QC entry
-            with open(self.qc_results, 'w+') as qc_file:
-                json.dump(output, qc_file, indent=1)
-
-            assets_path = os.path.join(os.path.dirname(__file__), 'assets')
-            for path in ['css', 'js', 'imgs', 'fonts', 'html', 'py']:
-                src_path = os.path.join(assets_path, '_assets', path)
-                dest_path = os.path.join(path_qc, '_assets', path)
-                if not os.path.exists(dest_path):
-                    os.makedirs(dest_path, exist_ok=True)
-                for file_ in os.listdir(src_path):
-                    if file_ == "__pycache__":
-                        continue
-                    src_filepath = os.path.join(src_path, file_)
-                    dest_filepath = os.path.join(dest_path, file_)
-                    if not os.path.isfile(dest_filepath):
-                        copy(src_filepath, dest_path)
-                    elif open(src_filepath, 'rb').read() != open(dest_filepath, 'rb').read():
-                        logger.warning(f"WARNING: Copy of '{file_}' in '{path_qc}' doesn't match the version in the "
-                                       f"SCT source code. Updating file to match newest version...")
-                        copy(src_filepath, dest_path)
-
-            # Inject the JSON QC entries into the index.html file
-            refresh_qc_entries.main(path_qc)
 
 
 def get_json_data_from_path(path_json):
@@ -765,6 +706,59 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
     else:
         img, *mask = qcslice_layout(qcslice)
         qc_image._make_QC_image_for_3d_volumes(img, mask, plane=qc_image.qc_report.plane)
+
+    path_qc = qc_report.path_qc
+    output = {
+        'cwd': qc_report.cwd,
+        'cmdline': "{} {}".format(qc_report.command, qc_report.args),
+        'command': qc_report.command,
+        'sct_version': qc_report.sct_version,
+        'dataset': qc_report.dataset,
+        'subject': qc_report.subject,
+        'contrast': qc_report.contrast,
+        'fname_in': qc_report.fname_in,
+        'plane': qc_report.plane,
+        'background_img': qc_report.background_img_path,
+        'overlay_img': qc_report.overlay_img_path,
+        'moddate': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        'qc': ""
+    }
+    logger.debug('Description file: %s', qc_report.qc_results)
+
+    # Use a mutex on a hash of the QC path, so that we use a unique mutex per target QC report
+    realpath = os.path.realpath(path_qc)
+    basename = os.path.basename(realpath)
+    with mutex(f"sct_qc-{basename}-{md5(realpath.encode('utf-8')).hexdigest()}"):
+        # results = []
+        # Create path to store json files
+        path_json, _ = os.path.split(qc_report.qc_results)
+        if not os.path.exists(path_json):
+            os.makedirs(path_json, exist_ok=True)
+
+        # Create json file for specific QC entry
+        with open(qc_report.qc_results, 'w+') as qc_file:
+            json.dump(output, qc_file, indent=1)
+
+        assets_path = os.path.join(os.path.dirname(__file__), 'assets')
+        for path in ['css', 'js', 'imgs', 'fonts', 'html', 'py']:
+            src_path = os.path.join(assets_path, '_assets', path)
+            dest_path = os.path.join(path_qc, '_assets', path)
+            if not os.path.exists(dest_path):
+                os.makedirs(dest_path, exist_ok=True)
+            for file_ in os.listdir(src_path):
+                if file_ == "__pycache__":
+                    continue
+                src_filepath = os.path.join(src_path, file_)
+                dest_filepath = os.path.join(dest_path, file_)
+                if not os.path.isfile(dest_filepath):
+                    copy(src_filepath, dest_path)
+                elif open(src_filepath, 'rb').read() != open(dest_filepath, 'rb').read():
+                    logger.warning(f"WARNING: Copy of '{file_}' in '{path_qc}' doesn't match the version in the "
+                                   f"SCT source code. Updating file to match newest version...")
+                    copy(src_filepath, dest_path)
+
+        # Inject the JSON QC entries into the index.html file
+        refresh_qc_entries.main(path_qc)
 
     logger.info('Successfully generated the QC results in %s', qc_report.qc_results)
     display_open(file=os.path.join(path_qc, "index.html"), message="To see the results in a browser")
