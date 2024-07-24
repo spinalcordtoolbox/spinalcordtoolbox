@@ -8,7 +8,6 @@ License: see the file LICENSE
 # TODO: Replace slice by spinalcordtoolbox.image.Slicer
 
 import os
-import abc
 import logging
 import math
 
@@ -40,8 +39,6 @@ class Slice(object):
     IMPORTANT: Convention for orientation is "SAL"
 
     """
-
-    __metaclass__ = abc.ABCMeta
 
     def __init__(self, images, p_resample=0.6):
         """
@@ -110,9 +107,8 @@ class Slice(object):
         nx, ny, nz, nt, px, py, pz, pt = image.dim
         return px / pz
 
-    @abc.abstractmethod
     def get_aspect(self, image):
-        return
+        raise NotImplementedError
 
     @staticmethod
     def crop(matrix, x, y, width, height):
@@ -185,7 +181,6 @@ class Slice(object):
                 np.nonzero(valid)[0],
                 A[valid])
 
-    @abc.abstractmethod
     def get_slice(self, data, i):
         """Abstract method to obtain a slice of a 3d matrix
 
@@ -193,16 +188,15 @@ class Slice(object):
         :param i: position to slice
         :return: 2D slice
         """
-        return
+        raise NotImplementedError
 
-    @abc.abstractmethod
     def get_dim(self, image):
         """Abstract method to obtain the depth of the 3d matrix.
 
         :param image: input Image
         :returns: numpy.ndarray
         """
-        return
+        raise NotImplementedError
 
     def _axial_center(self, image):
         """Gets the center of mass in the axial plan
@@ -221,10 +215,9 @@ class Slice(object):
         Slice.inf_nan_fill(centers_y)
         return centers_x, centers_y
 
-    @abc.abstractmethod
     def mosaic(self):
         """Obtain matrices of the mosaics"""
-        return
+        raise NotImplementedError
 
     def single(self):
         """Obtain the matrices of the single slices. Flatten
