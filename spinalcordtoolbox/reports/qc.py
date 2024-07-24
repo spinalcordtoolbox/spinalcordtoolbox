@@ -776,10 +776,15 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
         p_resample = p_resample_default
     elif p_resample == 0:   # If user specified `-resample 0`, turn off resampling
         p_resample = None
-    qcslice = SliceSubtype(im_list, p_resample=p_resample)
-    qc_report = QcReport(fname_in1, process, args, plane, path_qc, dpi, dataset, subject)
 
-    QcImage(
+    qcslice = object.__new__(SliceSubtype)
+    qcslice.__init__(im_list, p_resample=p_resample)
+
+    qc_report = object.__new__(QcReport)
+    qc_report.__init__(fname_in1, process, args, plane, path_qc, dpi, dataset, subject)
+
+    qc_image = object.__new__(QcImage)
+    qc_image.__init__(
         qc_report=qc_report,
         interpolation='none',
         action_list=action_list,
@@ -787,7 +792,8 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
         stretch_contrast_method='equalized',
         fps=fps,
         draw_text=draw_text,
-    ).layout(
+    )
+    qc_image.layout(
         qcslice_layout=qcslice_layout,
         qcslice=qcslice,
     )
