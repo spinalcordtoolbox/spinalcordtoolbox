@@ -109,33 +109,6 @@ class QcImage:
 
         return color_list
 
-    def __init__(self, qc_report, interpolation, action_list, process, stretch_contrast=True,
-                 stretch_contrast_method='contrast_stretching', fps=None, draw_text=True):
-        """
-        :param qc_report: QcReport: The QC report object
-        :param interpolation: str: Type of interpolation used in matplotlib
-        :param action_list: list: List of functions that generates a specific type of images. It can be seen as
-                                  "figures" of matplotlib to be shown. Ex: if 'listed_seg' is in the list, the process
-                                  will generate a figure with red segmentation.
-        :param process: str: Name of SCT function. e.g., sct_propseg
-        :param stretch_contrast: adjust image so as to improve contrast
-        :param stretch_contrast_method: str: {'contrast_stretching', 'equalized'}: Method for stretching contrast
-        :param fps: float: Number of frames per second for output gif images. It is only used for sct_fmri_moco and\
-        sct_dmri_moco
-        """
-        self.qc_report = qc_report
-        self.interpolation = interpolation
-        self.action_list = action_list
-        self.process = process
-        self._stretch_contrast = stretch_contrast
-        self._stretch_contrast_method = stretch_contrast_method
-        if stretch_contrast_method not in ['equalized', 'contrast_stretching']:
-            raise ValueError("Unrecognized stretch_contrast_method: {}.".format(stretch_contrast_method),
-                             "Try 'equalized' or 'contrast_stretching'")
-        self._fps = fps
-        self._draw_text = draw_text
-        self._centermass = None  # center of mass returned by slice.Axial.get_center()
-
     def listed_seg(self, mask, ax):
         """Create figure with red segmentation. Common scenario."""
         img = np.ma.masked_equal(mask, 0)
@@ -790,15 +763,19 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
     qc_report.overlay_img_path = os.path.join(dataset, subject, contrast, process, qc_report.mod_date, f"overlay_img.{ext}")
 
     qc_image = object.__new__(QcImage)
-    qc_image.__init__(
-        qc_report=qc_report,
-        interpolation='none',
-        action_list=action_list,
-        process=process,
-        stretch_contrast_method='equalized',
-        fps=fps,
-        draw_text=draw_text,
-    )
+    qc_image.qc_report = qc_report
+    qc_image.interpolation = 'none'
+    qc_image.action_list = action_list
+    qc_image.process = process
+    qc_image._stretch_contrast = True
+    qc_image._stretch_contrast_method = 'equalized'
+    if 'equalized' not in ['equalized', 'contrast_stretching']:
+        raise ValueError("Unrecognized stretch_contrast_method: {}.".format('equalized'),
+                         "Try 'equalized' or 'contrast_stretching'")
+    qc_image._fps = fps
+    qc_image._draw_text = draw_text
+    qc_image._centermass = None  # center of mass returned by slice.Axial.get_center()
+
     qc_image.layout(
         qcslice_layout=qcslice_layout,
         qcslice=qcslice,
