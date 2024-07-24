@@ -58,6 +58,9 @@ def flatten_sagittal(im_anat, im_centerline, verbose):
         img_reg = transform.warp(img, tform)
         im_anat_flattened.data[:, :, iz] = img_reg
 
+    # Change [-1, 1] values back to the original range ([min, max])
+    im_anat_flattened.data = (im_anat_flattened.data + 1) * (max_data - min_data) / 2
+
     # change back to native orientation
     im_anat_flattened.change_orientation(orientation_native)
 
