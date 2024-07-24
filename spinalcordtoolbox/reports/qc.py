@@ -5,7 +5,6 @@ Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
 License: see the file LICENSE
 """
 
-import glob
 import os
 import json
 import logging
@@ -473,16 +472,6 @@ class QcReport:
 
     def abs_overlay_img_path(self):
         return os.path.join(self.path_qc, self.overlay_img_path)
-
-
-def get_json_data_from_path(path_json):
-    """Read all json files present in the given path, and output an aggregated json structure"""
-    results = []
-    for file_json in glob.iglob(os.path.join(path_json, '*.json')):
-        logger.debug('Opening: ' + file_json)
-        with open(file_json, 'r+') as fjson:
-            results.append(json.load(fjson))
-    return results
 
 
 def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None, path_qc=None, dataset=None,
