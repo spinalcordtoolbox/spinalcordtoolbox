@@ -478,15 +478,6 @@ class QcReport:
     def abs_overlay_img_path(self):
         return os.path.join(self.path_qc, self.overlay_img_path)
 
-    def make_content_path(self):
-        """Creates the whole directory to contain the QC report
-
-        :return: return "root folder of the report" and the "furthest folder path" containing the images
-        """
-        # make a new or update Qc directory
-        target_img_folder = os.path.dirname(self.abs_background_img_path())
-        os.makedirs(target_img_folder, exist_ok=True)
-
     def update_description_file(self):
         """Create the description file with a JSON structure"""
         path_qc = self.path_qc
@@ -763,7 +754,8 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
     # Get the aspect ratio (height/width) based on pixel size. Consider only the first 2 slices.
     qc_image.aspect_img, qc_image.aspect_mask = qcslice.aspect()[:2]
 
-    qc_image.qc_report.make_content_path()
+    target_img_folder = os.path.dirname(qc_report.abs_background_img_path())
+    os.makedirs(target_img_folder, exist_ok=True)
     logger.info('QcImage: layout with %s slice', qc_image.qc_report.plane)
 
     if qc_image.process in ['sct_fmri_moco', 'sct_dmri_moco']:
