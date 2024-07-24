@@ -65,48 +65,6 @@ class Slice(object):
                 self._4d_images.append(img_r)
                 # image_ref = self._4d_images[0]  # img_dest is not covered for 4D volumes in resample_nib()
 
-    @staticmethod
-    def axial_slice(data, i):
-        return data[i, :, :]
-
-    @staticmethod
-    def axial_dim(image):
-        nx, ny, nz, nt, px, py, pz, pt = image.dim
-        return nx
-
-    @staticmethod
-    def axial_aspect(image):
-        nx, ny, nz, nt, px, py, pz, pt = image.dim
-        return py / pz
-
-    @staticmethod
-    def sagittal_slice(data, i):
-        return data[:, :, int(i)]
-
-    @staticmethod
-    def sagittal_dim(image):
-        nx, ny, nz, nt, px, py, pz, pt = image.dim
-        return nz
-
-    @staticmethod
-    def sagittal_aspect(image):
-        nx, ny, nz, nt, px, py, pz, pt = image.dim
-        return px / py
-
-    @staticmethod
-    def coronal_slice(data, i):
-        return data[:, i, :]
-
-    @staticmethod
-    def coronal_dim(image):
-        nx, ny, nz, nt, px, py, pz, pt = image.dim
-        return ny
-
-    @staticmethod
-    def coronal_aspect(image):
-        nx, ny, nz, nt, px, py, pz, pt = image.dim
-        return px / pz
-
     def get_aspect(self, image):
         raise NotImplementedError
 
@@ -198,23 +156,6 @@ class Slice(object):
         """
         raise NotImplementedError
 
-    def _axial_center(self, image):
-        """Gets the center of mass in the axial plan
-
-        :param image : input Image
-        :returns: centers of mass in the x and y axis (tuple of numpy.ndarray of int)
-        """
-        logger.info('Compute center of mass at each slice')
-        data = np.array(image.data)  # we cast np.array to overcome problem if inputing nii format
-        nz = image.dim[0]  # SAL orientation
-        centers_x = np.zeros(nz)
-        centers_y = np.zeros(nz)
-        for i in range(nz):
-            centers_x[i], centers_y[i] = center_of_mass(data[i, :, :])
-        Slice.inf_nan_fill(centers_x)
-        Slice.inf_nan_fill(centers_y)
-        return centers_x, centers_y
-
     def mosaic(self):
         """Obtain matrices of the mosaics"""
         raise NotImplementedError
@@ -301,13 +242,15 @@ class Axial(Slice):
     """The axial representation of a slice"""
 
     def get_aspect(self, image):
-        return Slice.axial_aspect(image)
+        nx, ny, nz, nt, px, py, pz, pt = image.dim
+        return py / pz
 
     def get_slice(self, data, i):
-        return self.axial_slice(data, i)
+        return data[i, :, :]
 
     def get_dim(self, image):
-        return self.axial_dim(image)
+        nx, ny, nz, nt, px, py, pz, pt = image.dim
+        return nx
 
     def get_center(self, img_idx=-1):
         """Get the center of mass of each slice. For 4D images, segmentation is placed in self.image_seg.
@@ -317,7 +260,16 @@ class Axial(Slice):
             image = self._images[img_idx]
         else:  # For 4D images
             image = self._image_seg
-        return self._axial_center(image)
+        logger.info('Compute center of mass at each slice')
+        data = np.array(image.data)  # we cast np.array to overcome problem if inputing nii format
+        nz = image.dim[0]  # SAL orientation
+        centers_x = np.zeros(nz)
+        centers_y = np.zeros(nz)
+        for i in range(nz):
+            centers_x[i], centers_y[i] = center_of_mass(data[i, :, :])
+        Slice.inf_nan_fill(centers_x)
+        Slice.inf_nan_fill(centers_y)
+        return centers_x, centers_y
 
     def mosaic(self, return_center=False):
         """Obtain matrices of the mosaics
@@ -389,13 +341,15 @@ class Sagittal(Slice):
     """The sagittal representation of a slice"""
 
     def get_aspect(self, image):
-        return Slice.sagittal_aspect(image)
+        nx, ny, nz, nt, px, py, pz, pt = image.dim
+        return px / py
 
     def get_slice(self, data, i):
-        return self.sagittal_slice(data, i)
+        return data[:, :, int(i)]
 
     def get_dim(self, image):
-        return self.sagittal_dim(image)
+        nx, ny, nz, nt, px, py, pz, pt = image.dim
+        return nz
 
     def get_center_spit(self, img_idx=-1):
         """
@@ -429,13 +383,6 @@ class Sagittal(Slice):
             data_ctl_RPI.change_orientation('SAL')
             index_RL = np.argwhere(data_ctl_RPI.data)
             return [index_RL[i][2] for i in range(len(index_RL))]
-
-    def get_center(self, img_idx=-1):
-        image = self._images[img_idx]
-        dim = self.get_dim(image)
-        size_y = self.axial_dim(image)
-        size_x = self.coronal_dim(image)
-        return np.ones(dim) * size_x / 2, np.ones(dim) * size_y / 2
 
     def mosaic(self):
         """Obtain matrices of the mosaics
