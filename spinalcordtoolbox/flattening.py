@@ -44,7 +44,10 @@ def flatten_sagittal(im_anat, im_centerline, verbose):
     # change type to float32 and scale between -1 and 1 as requested by img_as_float(). See #1790, #2069
     im_anat_flattened = change_type(im_anat, np.float32)
     min_data, max_data = np.min(im_anat_flattened.data), np.max(im_anat_flattened.data)
-    im_anat_flattened.data = 2 * im_anat_flattened.data / (max_data - min_data) - 1
+    im_anat_flattened.data -= min_data               # [min, max]   -> [ 0, max-min]
+    im_anat_flattened.data /= (max_data - min_data)  # [0, max-min] -> [ 0, 1]
+    im_anat_flattened.data *= 2                      # [0, 1]       -> [ 0, 2]
+    im_anat_flattened.data -= 1                      # [0, 2]       -> [-1, 1]
 
     # loop and translate each axial slice, such that the flattened centerline is centered in the medial plane (R-L)
     for iz in range(nz):
@@ -59,7 +62,10 @@ def flatten_sagittal(im_anat, im_centerline, verbose):
         im_anat_flattened.data[:, :, iz] = img_reg
 
     # Change [-1, 1] values back to the original range ([min, max])
-    im_anat_flattened.data = (im_anat_flattened.data + 1) * (max_data - min_data) / 2
+    im_anat_flattened.data += 1                      # [-1, 1]       -> [0, 2]
+    im_anat_flattened.data /= 2                      # [ 0, 2]       -> [0, 1]
+    im_anat_flattened.data *= (max_data - min_data)  # [ 0, 1]       -> [0, max-min]
+    im_anat_flattened.data += min_data               # [ 0, max-min] -> [min, max]
 
     # change back to native orientation and datatype
     im_anat_flattened.change_orientation(orientation_native)
