@@ -193,7 +193,8 @@ class AnalyzeLesion:
         # Label connected regions of the masked image
         self.label_lesion()
 
-        # Compute angle for CSA correction if spinal cord segmentation provided
+        # Compute angles for CSA correction and tissue bridge computations if
+        # spinal cord segmentation is provided.
         # NB: If segmentation is not provided, then we will only compute volume, so
         #     no angle correction is needed
         if self.fname_sc is not None:
@@ -467,7 +468,7 @@ class AnalyzeLesion:
             # Get df for the selected sagittal slice
             df_temp = tissue_bridges_df[tissue_bridges_df['sagittal_slice'] == sagittal_slice]
 
-            # Get the width of the tissue bridges in mm (by multiplying by p_lst[1]) and use np.cos(self.angles[SLICE])
+            # Get the width of the tissue bridges in mm (by multiplying by p_lst[1]) and use np.cos(self.angles_sagittal[SLICE])
             # to correct for the angle of the spinal cord with respect to the axial slice
             # NOTE: the orientation is RPI (because we reoriented the image to RPI using orient2rpi()); therefore
             # p_lst[0] is the pixel size in the R-L direction, p_lst[1] is the pixel size in the A-P direction, and
@@ -475,10 +476,10 @@ class AnalyzeLesion:
             # Since we are computing dorsal and ventral tissue bridges, we use p_lst[1] (A-P direction)
             dorsal_bridge_width_mm = df_temp.apply(lambda row:
                                                    row['dorsal_bridge_width'] * p_lst[1] *
-                                                   np.cos(self.angles[row['axial_slice']]), axis=1)
+                                                   np.cos(self.angles_sagittal[row['axial_slice']]), axis=1)
             ventral_bridge_width_mm = df_temp.apply(lambda row:
                                                     row['ventral_bridge_width'] * p_lst[1] *
-                                                    np.cos(self.angles[row['axial_slice']]), axis=1)
+                                                    np.cos(self.angles_sagittal[row['axial_slice']]), axis=1)
 
             # Add the columns to the DataFrame
             # For some reason I need to add the columns one by one. When I tried to write directly to the DataFrame,
@@ -515,7 +516,7 @@ class AnalyzeLesion:
         """
         Measure the length of the lesion along the superior-inferior axis when taking into account the angle correction
         """
-        length_cur = np.sum([p_lst[2] / np.cos(self.angles[zz]) for zz in np.unique(np.where(im_data)[2])])
+        length_cur = np.sum([p_lst[2] / np.cos(self.angles_3d[zz]) for zz in np.unique(np.where(im_data)[2])])
         self.measure_pd.loc[idx, 'length [mm]'] = length_cur
         printv('  (S-I) length : ' + str(np.round(length_cur, 2)) + ' mm', self.verbose, type='info')
 
@@ -523,7 +524,7 @@ class AnalyzeLesion:
         """
         Measure the max. equivalent diameter of the lesion when taking into account the angle correction
         """
-        area_lst = [np.sum(im_data[:, :, zz]) * np.cos(self.angles[zz]) * p_lst[0] * p_lst[1] for zz in range(im_data.shape[2])]
+        area_lst = [np.sum(im_data[:, :, zz]) * np.cos(self.angles_3d[zz]) * p_lst[0] * p_lst[1] for zz in range(im_data.shape[2])]
         diameter_cur = 2 * np.sqrt(max(area_lst) / np.pi)
         self.measure_pd.loc[idx, 'max_equivalent_diameter [mm]'] = diameter_cur
         printv('  Max. equivalent diameter : ' + str(np.round(diameter_cur, 2)) + ' mm', self.verbose, type='info')
@@ -709,20 +710,26 @@ class AnalyzeLesion:
         nx, ny, nz, nt, px, py, pz, pt = im_seg.dim
 
         # fit centerline, smooth it and return the first derivative (in physical space)
-        # We set minmax=False to prevent cropping and ensure that `self.angles[iz]` covers all z slices of `im_seg`
+        # We set minmax=False to prevent cropping and ensure that `self.angles_3d[iz]` covers all z slices of `im_seg`
         _, arr_ctl, arr_ctl_der, _ = get_centerline(im_seg, param=ParamCenterline(minmax=False), verbose=1)
         x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = arr_ctl_der
 
-        self.angles = np.full_like(np.empty(nz), np.nan, dtype=np.double)
+        self.angles_3d = np.full(nz, np.nan, dtype=np.double)
+        self.angles_sagittal = np.full(nz, np.nan, dtype=np.double)
 
         # loop across x_centerline_deriv (instead of [min_z_index, max_z_index], which could vary after interpolation)
         for iz in range(x_centerline_deriv.shape[0]):
             # normalize the tangent vector to the centerline (i.e. its derivative)
             tangent_vect = self._normalize(np.array(
                 [x_centerline_deriv[iz] * px, y_centerline_deriv[iz] * py, pz]))
-
             # compute the angle between the normal vector of the plane and the vector z
-            self.angles[iz] = np.arccos(np.vdot(tangent_vect, np.array([0, 0, 1])))
+            self.angles_3d[iz] = np.arccos(np.vdot(tangent_vect, np.array([0, 0, 1])))
+
+            # this assumes RPI orientation, and computes the angle of the centerline
+            # when projected onto the sagittal plane
+            tangent_vect = self._normalize(np.array([0, y_centerline_deriv[iz] * py, pz]))
+            # compute the angle between the normal vector of the plane and the vector z
+            self.angles_sagittal[iz] = np.arccos(np.vdot(tangent_vect, np.array([0, 0, 1])))
 
     def label_lesion(self):
         printv('\nLabel connected regions of the masked image...', self.verbose, 'normal')
