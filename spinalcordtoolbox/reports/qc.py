@@ -5,13 +5,10 @@ Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
 License: see the file LICENSE
 """
 
-import os
-import json
 import logging
-import datetime
+from pathlib import Path
 from typing import Callable, List, Tuple, Union
 import itertools as it
-from hashlib import md5
 
 import numpy as np
 import skimage
@@ -20,11 +17,9 @@ import skimage.exposure
 from scipy.ndimage import center_of_mass
 
 from spinalcordtoolbox.image import Image, check_image_kind
+from spinalcordtoolbox.reports.qc2 import create_qc_entry
 from spinalcordtoolbox.reports.slice import Slice, Axial, Sagittal
-from spinalcordtoolbox.reports.assets._assets.py import refresh_qc_entries
-from spinalcordtoolbox.utils.fs import copy, extract_fname, mutex
-from spinalcordtoolbox.utils.sys import __version__, list2cmdline, LazyLoader
-from spinalcordtoolbox.utils.shell import display_open
+from spinalcordtoolbox.utils.sys import list2cmdline, LazyLoader
 
 mpl_figure = LazyLoader("mpl_figure", globals(), "matplotlib.figure")
 mpl_axes = LazyLoader("mpl_axes", globals(), "matplotlib.axes")
@@ -251,7 +246,7 @@ class QcImage:
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
 
-    def _make_QC_image_for_3d_volumes(self, img, mask, plane):
+    def _make_QC_image_for_3d_volumes(self, img, mask, plane, imgs_to_generate):
         """
         Create overlay and background images for all processes that deal with 3d volumes
         (all except sct_fmri_moco and sct_dmri_moco)
@@ -288,8 +283,8 @@ class QcImage:
         self._add_orientation_label(ax)
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
-        logger.info(self.qc_report.abs_background_img_path())
-        self._save(fig, self.qc_report.abs_background_img_path(), dpi=self.qc_report.dpi)
+        logger.info(str(imgs_to_generate['path_background_img']))
+        self._save(fig, str(imgs_to_generate['path_background_img']), dpi=self.dpi)
 
         fig = mpl_figure.Figure()
         fig.set_size_inches(size_fig[0], size_fig[1], forward=True)
@@ -301,9 +296,9 @@ class QcImage:
                 mask[i] = self._func_stretch_contrast(mask[i])
             ax = fig.add_axes((0, 0, 1, 1), label=str(i))
             action(self, mask[i], ax)
-        self._save(fig, self.qc_report.abs_overlay_img_path(), dpi=self.qc_report.dpi)
+        self._save(fig, str(imgs_to_generate['path_overlay_img']), dpi=self.dpi)
 
-    def _make_QC_image_for_4d_volumes(self, images_after_moco, images_before_moco):
+    def _make_QC_image_for_4d_volumes(self, images_after_moco, images_before_moco, imgs_to_generate):
         """
         Generate background and overlay gifs for sct_fmri_moco and sct_dmri_moco
 
@@ -318,8 +313,8 @@ class QcImage:
                 images_after_moco[i] = self._func_stretch_contrast(images_after_moco[i])
                 images_before_moco[i] = self._func_stretch_contrast(images_before_moco[i])
 
-        self._generate_and_save_gif(images_before_moco, images_after_moco, size_fig)
-        self._generate_and_save_gif(images_before_moco, images_after_moco, size_fig, is_mask=True)
+        self._generate_and_save_gif(images_before_moco, images_after_moco, imgs_to_generate, size_fig)
+        self._generate_and_save_gif(images_before_moco, images_after_moco, imgs_to_generate, size_fig, is_mask=True)
 
     def _func_stretch_contrast(self, img):
         if self._stretch_contrast_method == "equalized":
@@ -365,7 +360,7 @@ class QcImage:
         :param fig: MPL figure handler
         :return:
         """
-        if self.qc_report.plane == 'Axial':
+        if self.plane == 'Axial':
             # If mosaic of axial slices, display orientation labels
             text_a = ax.text(12, 6, 'A', color='yellow', size=4)
             text_p = ax.text(12, 28, 'P', color='yellow', size=4)
@@ -377,7 +372,7 @@ class QcImage:
             text_l.set_path_effects([mpl_patheffects.Stroke(linewidth=1, foreground='black'), mpl_patheffects.Normal()])
             text_r.set_path_effects([mpl_patheffects.Stroke(linewidth=1, foreground='black'), mpl_patheffects.Normal()])
 
-    def _generate_and_save_gif(self, top_images, bottom_images, size_fig, is_mask=False):
+    def _generate_and_save_gif(self, top_images, bottom_images, imgs_to_generate, size_fig, is_mask=False):
         """
         Create figure with two images for sct_fmri_moco and sct_dmri_moco and save gif
 
@@ -431,15 +426,15 @@ class QcImage:
         ani = mpl_animation.FuncAnimation(fig, update_figure, frames=len(top_images))
 
         if is_mask:
-            gif_out_path = self.qc_report.abs_overlay_img_path()
+            gif_out_path = str(imgs_to_generate['path_overlay_img'])
         else:
-            gif_out_path = self.qc_report.abs_background_img_path()
+            gif_out_path = str(imgs_to_generate['path_background_img'])
 
         if self._fps is None:
             self._fps = 3
         writer = mpl_animation.PillowWriter(self._fps)
         logger.info('Saving gif %s', gif_out_path)
-        ani.save(gif_out_path, writer=writer, dpi=self.qc_report.dpi)
+        ani.save(gif_out_path, writer=writer, dpi=self.dpi)
 
     def _save(self, fig, img_path, format='png', bbox_inches='tight', pad_inches=0.00, dpi=300):
         """
@@ -459,19 +454,6 @@ class QcImage:
                     bbox_inches=None,
                     transparent=True,
                     dpi=dpi)
-
-
-class QcReport:
-    """This class generates the quality control report.
-
-    It will also setup the folder structure so the report generator only needs to fetch the appropriate files.
-    """
-
-    def abs_background_img_path(self):
-        return os.path.join(self.path_qc, self.background_img_path)
-
-    def abs_overlay_img_path(self):
-        return os.path.join(self.path_qc, self.overlay_img_path)
 
 
 def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None, path_qc=None, dataset=None,
@@ -496,7 +478,6 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
     :param exclude_text: bool: If provided, text won't be drawn on top of labels. Used only for sct_label_vertebrae.
     :return: None
     """
-    logger.info('\n*** Generate Quality Control (QC) html report ***')
     dpi = 300  # Output resolution of the image
     p_resample_default = 0.6  # Resolution in mm to resample the image to
 
@@ -634,41 +615,9 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
             qcslice._4d_images.append(img_r)
             # image_ref = qcslice._4d_images[0]  # img_dest is not covered for 4D volumes in resample_nib()
 
-    qc_report = object.__new__(QcReport)
-    path_in, file_in, ext_in = extract_fname(os.path.abspath(fname_in1))
-    # Assuming BIDS convention, we derive the value of the dataset, subject and contrast from the `fname_in1`
-    # by splitting it into `[dataset]/[subject]/[contrast]/fname_in1`
-    abs_input_path, contrast = os.path.split(path_in)
-    abs_input_path, subject_tmp = os.path.split(abs_input_path)
-    _, dataset_tmp = os.path.split(abs_input_path)
-    if dataset is None:
-        dataset = dataset_tmp
-    if subject is None:
-        subject = subject_tmp
-    if isinstance(args, list):
-        args = list2cmdline(args)
-    qc_report.fname_in = file_in + ext_in
-    qc_report.dataset = dataset
-    qc_report.subject = subject
-    qc_report.cwd = os.getcwd()
-    qc_report.contrast = contrast
-    qc_report.command = process
-    qc_report.sct_version = __version__
-    qc_report.args = args
-    qc_report.plane = plane
-    qc_report.dpi = dpi
-    qc_report.path_qc = path_qc
-    qc_report.mod_date = datetime.datetime.strftime(datetime.datetime.now(), '%Y_%m_%d_%H%M%S.%f')
-    qc_report.qc_results = os.path.join(path_qc, '_json', f'qc_{qc_report.mod_date}.json')
-    if process in ['sct_fmri_moco', 'sct_dmri_moco']:
-        ext = "gif"
-    else:
-        ext = "png"
-    qc_report.background_img_path = os.path.join(dataset, subject, contrast, process, qc_report.mod_date, f"background_img.{ext}")
-    qc_report.overlay_img_path = os.path.join(dataset, subject, contrast, process, qc_report.mod_date, f"overlay_img.{ext}")
-
     qc_image = object.__new__(QcImage)
-    qc_image.qc_report = qc_report
+    qc_image.plane = plane
+    qc_image.dpi = dpi
     qc_image.interpolation = 'none'
     qc_image.action_list = action_list
     qc_image.process = process
@@ -684,70 +633,32 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
     # Get the aspect ratio (height/width) based on pixel size. Consider only the first 2 slices.
     qc_image.aspect_img, qc_image.aspect_mask = qcslice.aspect()[:2]
 
-    target_img_folder = os.path.dirname(qc_report.abs_background_img_path())
-    os.makedirs(target_img_folder, exist_ok=True)
-    logger.info('QcImage: layout with %s slice', qc_image.qc_report.plane)
+    path_input = Path(fname_in1).absolute()
+    path_qc = Path(path_qc)
+    command = process
+    cmdline = [command]
+    if isinstance(args, str):
+        cmdline = f"{command} {args}"
+    elif isinstance(args, list):
+        cmdline = list2cmdline([command] + args)
+    else:
+        cmdline = command
 
     if qc_image.process in ['sct_fmri_moco', 'sct_dmri_moco']:
         [images_after_moco, images_before_moco], centermass = qcslice_layout(qcslice)
         qc_image._centermass = centermass
-        qc_image._make_QC_image_for_4d_volumes(images_after_moco, images_before_moco)
+        with create_qc_entry(
+            path_input, path_qc, command, cmdline, plane, dataset, subject,
+            image_extension='gif',
+        ) as imgs_to_generate:
+            qc_image._make_QC_image_for_4d_volumes(
+                images_after_moco,
+                images_before_moco,
+                imgs_to_generate,
+            )
     else:
         img, *mask = qcslice_layout(qcslice)
-        qc_image._make_QC_image_for_3d_volumes(img, mask, plane=qc_image.qc_report.plane)
-
-    path_qc = qc_report.path_qc
-    output = {
-        'cwd': qc_report.cwd,
-        'cmdline': "{} {}".format(qc_report.command, qc_report.args),
-        'command': qc_report.command,
-        'sct_version': qc_report.sct_version,
-        'dataset': qc_report.dataset,
-        'subject': qc_report.subject,
-        'contrast': qc_report.contrast,
-        'fname_in': qc_report.fname_in,
-        'plane': qc_report.plane,
-        'background_img': qc_report.background_img_path,
-        'overlay_img': qc_report.overlay_img_path,
-        'moddate': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        'qc': ""
-    }
-    logger.debug('Description file: %s', qc_report.qc_results)
-
-    # Use a mutex on a hash of the QC path, so that we use a unique mutex per target QC report
-    realpath = os.path.realpath(path_qc)
-    basename = os.path.basename(realpath)
-    with mutex(f"sct_qc-{basename}-{md5(realpath.encode('utf-8')).hexdigest()}"):
-        # results = []
-        # Create path to store json files
-        path_json, _ = os.path.split(qc_report.qc_results)
-        if not os.path.exists(path_json):
-            os.makedirs(path_json, exist_ok=True)
-
-        # Create json file for specific QC entry
-        with open(qc_report.qc_results, 'w+') as qc_file:
-            json.dump(output, qc_file, indent=1)
-
-        assets_path = os.path.join(os.path.dirname(__file__), 'assets')
-        for path in ['css', 'js', 'imgs', 'fonts', 'html', 'py']:
-            src_path = os.path.join(assets_path, '_assets', path)
-            dest_path = os.path.join(path_qc, '_assets', path)
-            if not os.path.exists(dest_path):
-                os.makedirs(dest_path, exist_ok=True)
-            for file_ in os.listdir(src_path):
-                if file_ == "__pycache__":
-                    continue
-                src_filepath = os.path.join(src_path, file_)
-                dest_filepath = os.path.join(dest_path, file_)
-                if not os.path.isfile(dest_filepath):
-                    copy(src_filepath, dest_path)
-                elif open(src_filepath, 'rb').read() != open(dest_filepath, 'rb').read():
-                    logger.warning(f"WARNING: Copy of '{file_}' in '{path_qc}' doesn't match the version in the "
-                                   f"SCT source code. Updating file to match newest version...")
-                    copy(src_filepath, dest_path)
-
-        # Inject the JSON QC entries into the index.html file
-        refresh_qc_entries.main(path_qc)
-
-    logger.info('Successfully generated the QC results in %s', qc_report.qc_results)
-    display_open(file=os.path.join(path_qc, "index.html"), message="To see the results in a browser")
+        with create_qc_entry(
+            path_input, path_qc, command, cmdline, plane, dataset, subject,
+        ) as imgs_to_generate:
+            qc_image._make_QC_image_for_3d_volumes(img, mask, plane, imgs_to_generate)
