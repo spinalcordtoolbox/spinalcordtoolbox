@@ -69,7 +69,7 @@ def flatten_sagittal(im_anat, im_centerline, verbose):
     flattened_data += min_data               # [ 0, max-min] -> [min, max]
 
     # change back to native orientation and datatype
-    im_anat_flattened.change_orientation(orientation_native)
     im_anat_flattened.data = flattened_data.astype(im_anat.data.dtype)
+    im_anat_flattened.change_orientation(orientation_native)
 
     return im_anat_flattened
