@@ -494,10 +494,8 @@ class AnalyzeLesion:
             min_ventral_bridge_width_slice = df_temp.loc[df_temp['ventral_bridge_width_mm'].idxmin(), 'axial_slice']
 
             # Get the minimum dorsal and ventral bridge widths
-            min_dorsal_bridge_width_mm = float(df_temp[df_temp['axial_slice'] == min_dorsal_bridge_width_slice]
-                                               ['dorsal_bridge_width_mm'])
-            min_ventral_bridge_width_mm = float(df_temp[df_temp['axial_slice'] == min_ventral_bridge_width_slice]
-                                                ['ventral_bridge_width_mm'])
+            min_dorsal_bridge_width_mm = float(df_temp['dorsal_bridge_width_mm'].min())
+            min_ventral_bridge_width_mm = float(df_temp['ventral_bridge_width_mm'].min())
             min_total_bridge_width_mm = min_dorsal_bridge_width_mm + min_ventral_bridge_width_mm
 
             # Save the minimum tissue bridges
