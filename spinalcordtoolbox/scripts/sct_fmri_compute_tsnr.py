@@ -68,6 +68,11 @@ def get_parser():
     )
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
+        '-m',
+        help='Binary (or weighted) mask within which tSNR will be averaged. Example: fmri_moco_mean_seg.nii.gz',
+        metavar=Metavar.file,
+        default='')
+    optional.add_argument(
         "-h",
         "--help",
         action="help",
