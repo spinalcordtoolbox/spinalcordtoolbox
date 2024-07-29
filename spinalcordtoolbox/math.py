@@ -10,7 +10,7 @@ import logging
 import numpy as np
 from skimage.morphology import erosion, dilation, disk, ball, square, cube
 from skimage.filters import threshold_local, threshold_otsu, rank
-from scipy.ndimage import gaussian_filter, gaussian_laplace, label, binary_fill_holes, generate_binary_structure
+from scipy.ndimage import gaussian_filter, gaussian_laplace, label, generate_binary_structure
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.utils.sys import LazyLoader
@@ -345,50 +345,6 @@ def denoise_patch2self(data_in, bvals_in, patch_radius=0, model='ols'):
     denoised = dipy.denoise.patch2self.patch2self(data_in, bvals_in, patch_radius=patch_radius, model=model)
 
     return denoised
-
-
-def keep_largest_object(predictions):
-    """Keep the largest connected object from the input array (2D or 3D).
-
-    Taken from:
-    https://github.com/ivadomed/ivadomed/blob/1fccf77239985fc3be99161f9eb18c9470d65206/ivadomed/postprocessing.py#L99-L116
-
-    Args:
-        predictions (ndarray or nibabel object): Input segmentation. Image could be 2D or 3D.
-
-    Returns:
-        ndarray or nibabel (same object as the input).
-    """
-    # Find number of closed objects using skimage "label"
-    labeled_obj, num_obj = label(np.copy(predictions))
-    # If more than one object is found, keep the largest one
-    if num_obj > 1:
-        # Keep the largest object
-        predictions[np.where(labeled_obj != (np.bincount(labeled_obj.flat)[1:].argmax() + 1))] = 0
-    return predictions
-
-
-def fill_holes(predictions, structure=(3, 3, 3)):
-    """Fill holes in the predictions using a given structuring element.
-    Note: This function only works for binary segmentation.
-
-    Taken from:
-    https://github.com/ivadomed/ivadomed/blob/master/ivadomed/postprocessing.py#L143
-
-    Args:
-        predictions (ndarray or nibabel object): Input binary segmentation. Image could be 2D or 3D.
-        structure (tuple of integers): Structuring element, number of ints equals
-            number of dimensions in the input array.
-
-    Returns:
-        ndrray or nibabel (same object as the input). Output type is int.
-    """
-    assert np.array_equal(predictions, predictions.astype(bool)), (
-        "fill_holes expects a binary segmentation as input. "
-        "Use `-thr` to binarize the prediction before using fill_holes."
-    )
-    assert len(structure) == len(predictions.shape)
-    return binary_fill_holes(predictions, structure=np.ones(structure)).astype(int)
 
 
 def remove_small_objects(data, dim_lst, unit, thr):
