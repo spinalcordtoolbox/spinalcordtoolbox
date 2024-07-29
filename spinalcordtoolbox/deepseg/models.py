@@ -131,9 +131,9 @@ MODELS = {
     },
     "model_seg_sci_multiclass_sc_lesion_nnunet": {
         "url": [
-            "https://github.com/ivadomed/model_seg_sci/releases/download/r20240130/model-sci-multisite_r20240130.zip"
+            "https://github.com/ivadomed/model_seg_sci/releases/tag/r20240729/model_SCIsegV2_r20240729.zip"
         ],
-        "description": "Traumatic SCI spinal cord/lesion segmentation for T2w contrast",
+        "description": "Universal tool for intramedullary spinal cord and lesion segmentation in T2w MRI",
         "contrasts": ["t2"],
         "thr": None,  # Images are already binarized when splitting into sc-seg + lesion-seg
         "default": False,
@@ -293,11 +293,12 @@ TASKS = {
          'url': 'https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/',
          'models': ['model_seg_sc_contrast_agnostic_softseg_monai']},
     'seg_sc_lesion_t2w_sci':
-        {'description': 'Traumatic SCI spinal cord/lesion seg for T2w contrast',
+        {'description': 'Universal tool for intrameduallary spinal cord and lesion segmentation in T2w MRI',
          'long_description': 'This segmentation model for spinal cord injury segmentation uses a 3D U-Net '
                              'architecture, and was trained with the nnUNetV2 framework. It is a multiclass model, '
                              'outputting segmentations for both the hyperintense SCI lesions and spinal cord. Training '
-                             'data consisted of T2w images (n=196), spanning numerous resolutions and '
+                             'data consisted of T2w images from 7 sites with traumatic (acute pre-operative, intermediate, '
+                             'chronic), non-traumatic (DCM) and ischemic SCI lesions spanning numerous resolutions, '
                              'orientations, as well as multiple scanner manufacturers and field strengths.',
          'url': 'https://github.com/ivadomed/model_seg_sci',
          'models': ['model_seg_sci_multiclass_sc_lesion_nnunet']},
