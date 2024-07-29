@@ -131,7 +131,7 @@ MODELS = {
     },
     "model_seg_sci_multiclass_sc_lesion_nnunet": {
         "url": [
-            "https://github.com/ivadomed/model_seg_sci/releases/tag/r20240729/model_SCIsegV2_r20240729.zip"
+            "https://github.com/ivadomed/model_seg_sci/releases/download/r20240729/model_SCIsegV2_r20240729.zip"
         ],
         "description": "Universal tool for intramedullary spinal cord and lesion segmentation in T2w MRI",
         "contrasts": ["t2"],
