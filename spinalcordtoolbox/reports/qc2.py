@@ -20,7 +20,7 @@ import numpy as np
 from scipy.ndimage import center_of_mass
 import skimage.exposure
 
-from spinalcordtoolbox.centerline.core import get_centerline
+from spinalcordtoolbox.centerline.core import get_centerline, ParamCenterline
 from spinalcordtoolbox.image import Image
 import spinalcordtoolbox.reports
 from spinalcordtoolbox.reports.qc import assign_label_colors_by_groups
@@ -311,7 +311,8 @@ def sct_deepseg(
         # Each slice is centered on the segmentation
         logger.info('Find the center of each slice')
         if "seg_spinal_rootlets_t2w" in argv:
-            img_centerline, _, _, _ = get_centerline(img_input)
+            centerline_param = ParamCenterline(algo_fitting="optic", contrast="t2")
+            img_centerline, _, _, _ = get_centerline(img_input, param=centerline_param)
             centers = np.array([center_of_mass(slice) for slice in img_centerline.data])
         else:
             centers = np.array([center_of_mass(slice) for slice in img_seg_sc.data])
