@@ -20,7 +20,8 @@ from monai.inferers import sliding_window_inference
 
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname
 from spinalcordtoolbox.image import Image, get_orientation, add_suffix
-from spinalcordtoolbox.math import binarize, keep_largest_object, fill_holes, remove_small_objects
+from spinalcordtoolbox.math import binarize, remove_small_objects
+from spinalcordtoolbox.deepseg_.postprocessing import keep_largest_object, fill_holes
 
 import spinalcordtoolbox.deepseg.monai as ds_monai
 import spinalcordtoolbox.deepseg.nnunet as ds_nnunet
@@ -135,7 +136,7 @@ def segment_non_ivadomed(path_model, model_type, input_filenames, threshold, kee
             # 2. Keep the largest connected object
             if keep_largest is not None:
                 im_out.data[im_out.data < 0.001] = 0  # Replicates ivadomed's `@binarize_with_low_threshold`
-                im_out.data = keep_largest_object(im_out.data)
+                im_out.data = keep_largest_object(im_out.data, x_cOm=None, y_cOm=None)
             # 3. Fill holes
             if fill_holes_in_pred is not None:
                 im_out.data = fill_holes(im_out.data)
@@ -167,9 +168,10 @@ def segment_monai(path_img, tmpdir, predictor, device: torch.device):
     # define inference patch size and center crop size
     crop_size = (64, 192, -1)
     inference_roi_size = (64, 192, 320)
+    pad_mode = "edge"
 
     # define the dataset and dataloader
-    test_loader, test_post_pred = ds_monai.prepare_data(path_img_tmp, crop_size=crop_size)
+    test_loader, test_post_pred = ds_monai.prepare_data(path_img_tmp, crop_size=crop_size, padding=pad_mode)
     [batch] = test_loader  # we expected there to only be one batch (with one image)
 
     # Run MONAI prediction
