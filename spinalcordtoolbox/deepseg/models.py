@@ -133,7 +133,7 @@ MODELS = {
         "url": [
             "https://github.com/ivadomed/model_seg_sci/releases/download/r20240729/model_SCIsegV2_r20240729.zip"
         ],
-        "description": "Universal tool for intramedullary spinal cord and lesion segmentation in T2w MRI",
+        "description": "Universal tool for segmentation of intramedullary lesion and spinal cord in T2w MRI",
         "contrasts": ["t2"],
         "thr": None,  # Images are already binarized when splitting into sc-seg + lesion-seg
         "default": False,
