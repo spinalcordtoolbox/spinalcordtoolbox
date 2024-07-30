@@ -168,9 +168,10 @@ def segment_monai(path_img, tmpdir, predictor, device: torch.device):
     # define inference patch size and center crop size
     crop_size = (64, 192, -1)
     inference_roi_size = (64, 192, 320)
+    pad_mode = "edge"
 
     # define the dataset and dataloader
-    test_loader, test_post_pred = ds_monai.prepare_data(path_img_tmp, crop_size=crop_size)
+    test_loader, test_post_pred = ds_monai.prepare_data(path_img_tmp, crop_size=crop_size, padding=pad_mode)
     [batch] = test_loader  # we expected there to only be one batch (with one image)
 
     # Run MONAI prediction
