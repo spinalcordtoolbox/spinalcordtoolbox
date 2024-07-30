@@ -231,17 +231,11 @@ class AnalyzeLesion:
         with pd.ExcelWriter(self.excel_name, engine='xlsxwriter') as writer:
             self.measure_pd.to_excel(writer, sheet_name='measures', index=False, engine='xlsxwriter')
 
-            # Add the total column and row
+            # Save spreadsheet (for -f option)
             if self.path_template is not None:
                 for sheet_name in self.distrib_matrix_dct:
-                    if '#' in sheet_name:
-                        df = self.distrib_matrix_dct[sheet_name].copy()
-                        df = df.append(df.sum(numeric_only=True, axis=0), ignore_index=True)
-                        df['total % (all tracts)'] = df.sum(numeric_only=True, axis=1)
-                        df.iloc[-1, df.columns.get_loc('vert')] = 'total % (all vert)'
-                        df.to_excel(writer, sheet_name=sheet_name, index=False, engine='xlsxwriter')
-                    else:
-                        self.distrib_matrix_dct[sheet_name].to_excel(writer, sheet_name=sheet_name, index=False, engine='xlsxwriter')
+                    self.distrib_matrix_dct[sheet_name].to_excel(writer, sheet_name=sheet_name, index=False,
+                                                                 engine='xlsxwriter')
 
             # Save pickle
             self.distrib_matrix_dct['measures'] = self.measure_pd
@@ -587,6 +581,13 @@ class AnalyzeLesion:
             for tract_id in atlas_data:
                 val = self.distrib_matrix_dct[sheet_name].loc[idx, 'PAM50_' + str(tract_id).zfill(2)].values[0]
                 self.distrib_matrix_dct[sheet_name].loc[idx, 'PAM50_' + str(tract_id).zfill(2)] = val * 100.0 / vol_mask_tot
+
+        # Add the total column and row
+        df = self.distrib_matrix_dct[sheet_name]
+        df = df.append(df.sum(numeric_only=True, axis=0), ignore_index=True)
+        df['total % (all tracts)'] = df.sum(numeric_only=True, axis=1)
+        df.iloc[-1, df.columns.get_loc('vert')] = 'total % (all vert)'
+        self.distrib_matrix_dct[sheet_name] = df
 
     def __regroup_per_tracts(self, vol_dct, tract_limit):
         res_mask = [vol_dct[t][0] for t in vol_dct if t >= tract_limit[0] and t <= tract_limit[1]]
