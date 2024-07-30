@@ -15,6 +15,7 @@ from skimage.measure import label
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
+from spinalcordtoolbox.metadata import read_label_file
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel, LazyLoader
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, copy, rmtree
@@ -178,6 +179,7 @@ class AnalyzeLesion:
             self.path_atlas, self.path_levels = None, None
         self.vert_lst = None
         self.atlas_roi_lst = None
+        self.atlas_combinedlabels = None
         self.distrib_matrix_dct = {}
 
         # output names
@@ -582,12 +584,18 @@ class AnalyzeLesion:
                 val = self.distrib_matrix_dct[sheet_name].loc[idx, 'PAM50_' + str(tract_id).zfill(2)].values[0]
                 self.distrib_matrix_dct[sheet_name].loc[idx, 'PAM50_' + str(tract_id).zfill(2)] = val * 100.0 / vol_mask_tot
 
-        # Add the total column and row
-        df = self.distrib_matrix_dct[sheet_name]
-        df = df.append(df.sum(numeric_only=True, axis=0), ignore_index=True)
-        df['total % (all tracts)'] = df.sum(numeric_only=True, axis=1)
-        df.iloc[-1, df.columns.get_loc('vert')] = 'total % (all vert)'
-        self.distrib_matrix_dct[sheet_name] = df
+        # Add the total column
+        self.distrib_matrix_dct[sheet_name]['total % (all tracts)'] = \
+            self.distrib_matrix_dct[sheet_name].sum(numeric_only=True, axis=1)
+
+        # Add the total row
+        self.distrib_matrix_dct[sheet_name] = self.distrib_matrix_dct[sheet_name].append(
+            self.distrib_matrix_dct[sheet_name].sum(numeric_only=True, axis=0),
+            ignore_index=True
+        )
+        self.distrib_matrix_dct[sheet_name].iloc[
+            -1, self.distrib_matrix_dct[sheet_name].columns.get_loc('vert')
+        ] = 'total % (all vert)'
 
     def __regroup_per_tracts(self, vol_dct, tract_limit):
         res_mask = [vol_dct[t][0] for t in vol_dct if t >= tract_limit[0] and t <= tract_limit[1]]
@@ -792,6 +800,12 @@ class AnalyzeLesion:
                     if tract_id < 36:  # Not interested in CSF
                         copy(os.path.join(self.path_atlas, fname_atlas_roi), self.tmp_dir)
                         self.atlas_roi_lst.append(fname_atlas_roi)
+
+            # fetch "CombinedLabels" from atlas info_label.txt
+            # NB: We have to do this here (rather than in tmp_dir) because `read_label_file` will fail unless all files
+            # are present, and we skip copying the CSF to the tmp dir in the lines above.
+            _, _, _, _, combinedlabel_names, label_groups, _ = read_label_file(self.path_atlas, "info_label.txt")
+            self.atlas_combinedlabels = {name: label_group for name, label_group in zip(combinedlabel_names, label_groups)}
 
         os.chdir(self.tmp_dir)  # go to tmp directory
 
