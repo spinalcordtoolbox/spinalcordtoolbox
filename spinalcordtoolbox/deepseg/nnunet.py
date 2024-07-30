@@ -18,6 +18,13 @@ if TYPE_CHECKING:
 
 def create_nnunet_from_plans(path_model, device: 'torch.device'):
     tile_step_size = 0.5
+    # get the nnunet trainer directory
+    trainer = os.listdir(path_model)[0]
+    if not trainer.startswith("nnUNetTrainer"):
+        raise FileNotFoundError(f"Could not find 'nnUNetTrainer*' directory inside model path: {path_model} "
+                                "Please make sure the release keeps the nnUNet output structure intact "
+                                "by also including the 'nnUNetTrainer*' directory.")
+    path_model = os.path.join(path_model, trainer)
     fold_dirs = [os.path.basename(path) for path in glob.glob(os.path.join(path_model, "fold_*"))]
     if not fold_dirs:
         raise FileNotFoundError(f"No 'fold_*' directories found in model path: {path_model}")
