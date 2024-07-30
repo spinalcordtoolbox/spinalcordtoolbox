@@ -588,6 +588,12 @@ class AnalyzeLesion:
         self.distrib_matrix_dct[sheet_name]['total % (all tracts)'] = \
             self.distrib_matrix_dct[sheet_name].sum(numeric_only=True, axis=1)
 
+        # Add additional columns for the "CombinedLabels" defined by info_label.txt
+        for label_name, sublabels in self.atlas_combinedlabels.items():
+            column_names_to_sum = [f"PAM50_{str(subid).zfill(2)}" for subid in sublabels]
+            self.distrib_matrix_dct[sheet_name][label_name] = \
+                self.distrib_matrix_dct[sheet_name][column_names_to_sum].sum(axis=1)
+
         # Add the total row
         self.distrib_matrix_dct[sheet_name] = self.distrib_matrix_dct[sheet_name].append(
             self.distrib_matrix_dct[sheet_name].sum(numeric_only=True, axis=0),
