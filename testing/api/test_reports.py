@@ -7,8 +7,8 @@ import pytest
 import numpy as np
 
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.reports.slice import Axial, Sagittal
-from spinalcordtoolbox.reports.qc import QcReport, QcImage
+from spinalcordtoolbox.reports.slice import Sagittal
+from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.utils.sys import sct_test_path
 
 
@@ -86,35 +86,36 @@ def assert_qc_assets(path):
 
 
 def test_label_vertebrae(t2_image, t2_seg_image, tmp_path):
-    qc_report = QcReport(t2_image.absolutepath, 'sct_label_vertebrae', ['-a', '-b'], 'Sagittal', str(tmp_path))
-
-    QcImage(
-        qc_report=qc_report,
-        interpolation='spline36',
-        action_list=[QcImage.label_vertebrae],
-        process=qc_report.command,
-    ).layout(
-        qcslice_layout=lambda qcslice: qcslice.single(),
-        qcslice=Sagittal([t2_image, t2_seg_image]),
+    generate_qc(
+        fname_in1=t2_image.absolutepath,
+        fname_seg=t2_seg_image.absolutepath,
+        plane='Sagittal',
+        args=['-a', '-b'],
+        path_qc=str(tmp_path),
+        dataset='dat',
+        subject='sub',
+        process='sct_label_vertebrae',
     )
 
-    assert os.path.isfile(qc_report.abs_background_img_path())
-    assert os.path.isfile(qc_report.abs_overlay_img_path())
+    # check that some files exist
+    assert len(list(tmp_path.glob('dat/sub/*/sct_label_vertebrae/*/background_img.png'))) == 1
+    assert len(list(tmp_path.glob('dat/sub/*/sct_label_vertebrae/*/overlay_img.png'))) == 1
+    assert len(list(tmp_path.glob('_json/qc_*.json'))) == 1
 
 
 def test_propseg(t2_image, t2_seg_image, tmp_path):
-    qc_report = QcReport(t2_image.absolutepath, 'sct_propseg', ['-a'], 'Axial', str(tmp_path))
-
-    QcImage(
-        qc_report=qc_report,
-        interpolation='none',
-        action_list=[QcImage.listed_seg],
-        process=qc_report.command,
-    ).layout(
-        qcslice_layout=lambda qcslice: qcslice.mosaic(),
-        qcslice=Axial([t2_image, t2_seg_image]),
+    generate_qc(
+        fname_in1=t2_image.absolutepath,
+        fname_seg=t2_seg_image.absolutepath,
+        plane='Axial',
+        args=['-a'],
+        path_qc=str(tmp_path),
+        dataset='dat',
+        subject='sub',
+        process='sct_propseg',
     )
 
-    assert os.path.isfile(qc_report.abs_background_img_path())
-    assert os.path.isfile(qc_report.abs_overlay_img_path())
-    assert os.path.isfile(qc_report.qc_results)
+    # check that some files exist
+    assert len(list(tmp_path.glob('dat/sub/*/sct_propseg/*/background_img.png'))) == 1
+    assert len(list(tmp_path.glob('dat/sub/*/sct_propseg/*/overlay_img.png'))) == 1
+    assert len(list(tmp_path.glob('_json/qc_*.json'))) == 1
