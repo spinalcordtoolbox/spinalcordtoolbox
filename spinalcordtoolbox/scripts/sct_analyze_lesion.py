@@ -798,7 +798,7 @@ class AnalyzeLesion:
             self.path_levels = ''.join(extract_fname(self.path_levels)[1:])
 
             self.atlas_roi_lst = []
-            for fname_atlas_roi in os.listdir(self.path_atlas):
+            for fname_atlas_roi in sorted(os.listdir(self.path_atlas)):
                 if fname_atlas_roi.endswith('.nii.gz'):
                     tract_id = int(fname_atlas_roi.split('_')[-1].split('.nii.gz')[0])
                     if tract_id < 36:  # Not interested in CSF
