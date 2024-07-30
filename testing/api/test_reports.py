@@ -45,7 +45,13 @@ def labeled_data_test_params(path_in=sct_test_path('t2', 't2.nii.gz'),
 def test_sagittal_slice_get_center_spit(im_in, im_seg):
     """Test that get_center_split returns a valid index list."""
     assert im_in.orientation == im_seg.orientation, "im_in and im_seg aren't in the same orientation"
-    qcslice = Sagittal([im_in, im_seg], p_resample=None)
+
+    # Sagittal.get_center_spit() only uses self._images
+    qcslice = Sagittal()
+    qcslice._images = [
+        im_in.copy().change_orientation('SAL'),
+        im_seg.copy().change_orientation('SAL'),
+    ]
 
     if np.count_nonzero(im_seg.data) == 0:
         # If im_seg contains no labels, get_center_spit should fail
