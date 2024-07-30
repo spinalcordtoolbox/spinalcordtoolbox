@@ -7,10 +7,9 @@ import pytest
 import numpy as np
 
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.reports.slice import Sagittal
+from spinalcordtoolbox.reports.slice import Axial, Sagittal
+from spinalcordtoolbox.reports.qc import QcReport, QcImage
 from spinalcordtoolbox.utils.sys import sct_test_path
-import spinalcordtoolbox.reports.qc as qc
-import spinalcordtoolbox.reports.slice as qcslice
 
 
 logger = logging.getLogger()
@@ -87,16 +86,16 @@ def assert_qc_assets(path):
 
 
 def test_label_vertebrae(t2_image, t2_seg_image, tmp_path):
-    qc_report = qc.QcReport(t2_image.absolutepath, 'sct_label_vertebrae', ['-a', '-b'], 'Sagittal', str(tmp_path))
+    qc_report = QcReport(t2_image.absolutepath, 'sct_label_vertebrae', ['-a', '-b'], 'Sagittal', str(tmp_path))
 
-    qc.QcImage(
+    QcImage(
         qc_report=qc_report,
         interpolation='spline36',
-        action_list=[qc.QcImage.label_vertebrae],
+        action_list=[QcImage.label_vertebrae],
         process=qc_report.command,
     ).layout(
         qcslice_layout=lambda qcslice: qcslice.single(),
-        qcslice=qcslice.Sagittal([t2_image, t2_seg_image]),
+        qcslice=Sagittal([t2_image, t2_seg_image]),
     )
 
     assert os.path.isfile(qc_report.abs_background_img_path())
@@ -104,16 +103,16 @@ def test_label_vertebrae(t2_image, t2_seg_image, tmp_path):
 
 
 def test_propseg(t2_image, t2_seg_image, tmp_path):
-    qc_report = qc.QcReport(t2_image.absolutepath, 'sct_propseg', ['-a'], 'Axial', str(tmp_path))
+    qc_report = QcReport(t2_image.absolutepath, 'sct_propseg', ['-a'], 'Axial', str(tmp_path))
 
-    qc.QcImage(
+    QcImage(
         qc_report=qc_report,
         interpolation='none',
-        action_list=[qc.QcImage.listed_seg],
+        action_list=[QcImage.listed_seg],
         process=qc_report.command,
     ).layout(
         qcslice_layout=lambda qcslice: qcslice.mosaic(),
-        qcslice=qcslice.Axial([t2_image, t2_seg_image]),
+        qcslice=Axial([t2_image, t2_seg_image]),
     )
 
     assert os.path.isfile(qc_report.abs_background_img_path())
