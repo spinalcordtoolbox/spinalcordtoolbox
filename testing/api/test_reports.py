@@ -1,6 +1,5 @@
 # pytest unit tests for spinalcordtoolbox.reports
 
-import os
 import logging
 
 import pytest
@@ -81,14 +80,6 @@ def t2_seg_image():
 def t2_path():
     t2_path = sct_test_path('t2')
     return t2_path
-
-
-def assert_qc_assets(path):
-    files = ('html/index.html', 'css/style.css', 'js/main.js')
-    for file_name in files:
-        assert os.path.exists(os.path.join(path, file_name))
-
-    assert os.path.isdir(os.path.join(path, 'imgs'))
 
 
 def test_label_vertebrae(t2_image, t2_seg_image, tmp_path):
