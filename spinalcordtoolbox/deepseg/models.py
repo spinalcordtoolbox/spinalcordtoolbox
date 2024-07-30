@@ -142,7 +142,7 @@ MODELS = {
         "url": [
             "https://github.com/ivadomed/model-spinal-rootlets/releases/download/r20240730/model-spinal-rootlets_M5_r20240129-2.zip"
         ],
-        "description": "Segmentation of spinal nerve rootlets for T2w images using NNUnet",
+        "description": "Segmentation of spinal nerve rootlets for T2w images using nnUNet",
         "contrasts": ["t2"],
         "thr": None,  # Multiclass rootlets model (1.0, 2.0, 3.0...) -> no thresholding
         "default": False,
@@ -151,7 +151,7 @@ MODELS = {
          "url": [
              "https://github.com/ivadomed/model_seg_mouse-sc_wm-gm_t1/releases/download/v0.4/model.zip"
          ],
-         "description": "White and grey matter segmentation on T1-weighted exvivo mouse spinal cord using NNUnet",
+         "description": "White and grey matter segmentation on T1-weighted exvivo mouse spinal cord using nnUNet",
          "contrasts": ["t1"],
          "thr": None,  # Images are already binarized when splitting into gm-seg and wm-seg
          "default": False,
@@ -502,7 +502,7 @@ def has_ckpt_files(path_model):
 
 def has_pth_files(path_model):
     """
-    Check if model path contains any serialized PyTorch state dictionary files (used by non-ivadomed NNUnet models)
+    Check if model path contains any serialized PyTorch state dictionary files (used by non-ivadomed nnUNet models)
     """
     return bool(glob.glob(os.path.join(path_model, '**', '*.pth'), recursive=True))
 
