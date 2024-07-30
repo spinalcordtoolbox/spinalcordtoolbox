@@ -603,9 +603,9 @@ class AnalyzeLesion:
             -1, self.distrib_matrix_dct[sheet_name].columns.get_loc('vert')
         ] = 'total % (all vert)'
 
-    def __regroup_per_tracts(self, vol_dct, tract_limit):
-        res_mask = [vol_dct[t][0] for t in vol_dct if t >= tract_limit[0] and t <= tract_limit[1]]
-        res_tot = [vol_dct[t][1] for t in vol_dct if t >= tract_limit[0] and t <= tract_limit[1]]
+    def __regroup_per_tracts(self, vol_dct, tracts):
+        res_mask = [vol_dct[t][0] for t in vol_dct if t in tracts]
+        res_tot = [vol_dct[t][1] for t in vol_dct if t in tracts]
         return np.sum(res_mask) * 100.0 / np.sum(res_tot)
 
     def _measure_totLesion_distribution(self, im_lesion, atlas_data, im_vert, p_lst):
@@ -633,12 +633,10 @@ class AnalyzeLesion:
                                                                                 im_template_vert_data=np.copy(im_vert_cur),
                                                                                 vert_level=vert)
 
-                # group tracts to compute involvement in GM, WM, DC, VF, LF
-                self.distrib_matrix_dct[sheet_name].loc[idx, 'PAM50_GM'] = self.__regroup_per_tracts(vol_dct=res_perTract_dct, tract_limit=[30, 35])
-                self.distrib_matrix_dct[sheet_name].loc[idx, 'PAM50_WM'] = self.__regroup_per_tracts(vol_dct=res_perTract_dct, tract_limit=[0, 29])
-                self.distrib_matrix_dct[sheet_name].loc[idx, 'PAM50_DC'] = self.__regroup_per_tracts(vol_dct=res_perTract_dct, tract_limit=[0, 3])
-                self.distrib_matrix_dct[sheet_name].loc[idx, 'PAM50_VF'] = self.__regroup_per_tracts(vol_dct=res_perTract_dct, tract_limit=[14, 29])
-                self.distrib_matrix_dct[sheet_name].loc[idx, 'PAM50_LF'] = self.__regroup_per_tracts(vol_dct=res_perTract_dct, tract_limit=[4, 13])
+                # group tracts to compute involvement in CombinedLabels (GM, WM, DC, VF, LF)
+                for label_name, sublabels in self.atlas_combinedlabels.items():
+                    self.distrib_matrix_dct[sheet_name].loc[idx, label_name] = \
+                        self.__regroup_per_tracts(vol_dct=res_perTract_dct, tracts=sublabels)
 
                 # save involvement in each PAM50 tracts
                 for tract_id in atlas_data:
