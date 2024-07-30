@@ -201,6 +201,7 @@ def main(argv: Sequence[str]):
     param.remove_temp_files = arguments.r
     if arguments.param is not None:
         param.update(arguments.param)
+    param.verbose = verbose
 
     path_qc = arguments.qc
     qc_fps = arguments.qc_fps
