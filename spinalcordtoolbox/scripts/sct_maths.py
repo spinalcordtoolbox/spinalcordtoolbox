@@ -423,15 +423,11 @@ def main(argv: Sequence[str]):
     # If volumewise is specified, treat 4D image as a set of 3D volumes
     if arguments.volumewise:
         data_list = [np.squeeze(arr, axis=3) for arr in np.array_split(im.data, im.data.shape[3], 3)]
-        dim = list(im.dim)
-        dim[3] = 1  # Replace 4D dim with 1 (indicating single 3D volume)
-        dim_list = [tuple(dim)] * len(data_list)
     else:
         data_list = [im.data]
-        dim_list = [im.dim]
 
     data_out_list = []
-    for data, dim in zip(data_list.copy(), dim_list.copy()):
+    for data in data_list:
         for arg_name, arg_value in arguments.todo:
             assert data is not None
 
