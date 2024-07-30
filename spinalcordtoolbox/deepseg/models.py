@@ -133,7 +133,7 @@ MODELS = {
         "url": [
             "https://github.com/ivadomed/model_seg_sci/releases/download/r20240729/model_SCIsegV2_r20240729.zip"
         ],
-        "description": "Universal tool for intramedullary spinal cord and lesion segmentation in T2w MRI",
+        "description": "Universal tool for segmentation of intramedullary lesion and spinal cord in T2w MRI",
         "contrasts": ["t2"],
         "thr": None,  # Images are already binarized when splitting into sc-seg + lesion-seg
         "default": False,
@@ -293,7 +293,7 @@ TASKS = {
          'url': 'https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/',
          'models': ['model_seg_sc_contrast_agnostic_softseg_monai']},
     'seg_sc_lesion_t2w_sci':
-        {'description': 'Universal tool for intrameduallary spinal cord and lesion segmentation in T2w MRI',
+        {'description': 'Universal tool for segmentation of intramedullary lesion and spinal cord in T2w MRI',
          'long_description': 'This segmentation model for spinal cord injury segmentation uses a 3D U-Net '
                              'architecture, and was trained with the nnUNetV2 framework. It is a multiclass model, '
                              'outputting segmentations for both the hyperintense SCI lesions and spinal cord. Training '
