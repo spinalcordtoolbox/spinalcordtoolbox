@@ -16,13 +16,13 @@ The ``sct_analyze_lesion`` function computes various morphometric measures on se
   :align: center
   :figwidth: 60%
 
-.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/lesion-analysis/axial-damage-ratio_10.1038/s41393-020-00561-w.png
+.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/lesion-analysis/axial-damage-ratio.png
   :align: center
   :figwidth: 60%
 
 TODO: Ask Andrew Smith for permission to use the figure
 
-.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/lesion-analysis/tissue-bridges_arXiv.2407.17265.png
+.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/lesion-analysis/tissue-bridges.png
   :align: center
   :figwidth: 60%
 
