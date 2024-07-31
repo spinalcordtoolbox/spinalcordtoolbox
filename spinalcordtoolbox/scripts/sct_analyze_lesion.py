@@ -179,7 +179,7 @@ class AnalyzeLesion:
             self.path_atlas, self.path_levels = None, None
         self.vert_lst = None
         self.atlas_roi_lst = None
-        self.atlas_combinedlabels = None
+        self.atlas_combinedlabels = {}
         self.distrib_matrix_dct = {}
 
         # output names
@@ -808,8 +808,10 @@ class AnalyzeLesion:
             # fetch "CombinedLabels" from atlas info_label.txt
             # NB: We have to do this here (rather than in tmp_dir) because `read_label_file` will fail unless all files
             # are present, and we skip copying the CSF to the tmp dir in the lines above.
-            _, _, _, _, combinedlabel_names, label_groups, _ = read_label_file(self.path_atlas, "info_label.txt")
-            self.atlas_combinedlabels = {name: label_group for name, label_group in zip(combinedlabel_names, label_groups)}
+            if os.path.isfile(os.path.join(self.path_atlas, "info_label.txt")):
+                _, _, _, _, combinedlabel_names, label_groups, _ = read_label_file(self.path_atlas, "info_label.txt")
+                self.atlas_combinedlabels = {name: label_group for name, label_group
+                                             in zip(combinedlabel_names, label_groups)}
 
         os.chdir(self.tmp_dir)  # go to tmp directory
 
