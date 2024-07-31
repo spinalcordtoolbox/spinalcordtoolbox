@@ -19,6 +19,8 @@ We provide the following hands-on tutorials for SCT's command-line tools.
    * :doc:`tutorials/shape-analysis/compute-csa-and-other-shape-metrics`
    * :doc:`tutorials/shape-analysis/normalize-morphometrics-compression`
 
+#. :doc:`Lesion analysis <tutorials/lesion-analysis>`
+
 #. :doc:`Registration to template <tutorials/registration-to-template>`
 
    * :doc:`tutorials/registration-to-template/template-registration`
