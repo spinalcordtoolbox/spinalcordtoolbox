@@ -49,13 +49,14 @@ def create_qc_entry(
     plane: str,
     dataset: Optional[str],
     subject: Optional[str],
+    image_extension: str = 'png',
 ):
     """
     Generate a new QC report entry.
 
-    This context manager yields a tuple of two paths, to be used for the QC report images:
-    1. the path to `background_img.png`, and
-    2. the path to `overlay_img.png`.
+    This context manager yields a dict of two paths, to be used for the QC report images:
+    'path_background_img': the path to `background_img.{image_extension}`, and
+    'path_overlay_img': the path to `overlay_img.{image_extension}`.
 
     The body of the `with` block should create these two image files.
     When the `with` block exits, the QC report is updated, with proper file synchronization.
@@ -82,14 +83,14 @@ def create_qc_entry(
 
     # Ask the caller to generate the image files for the entry
     imgs_to_generate = {
-        'path_background_img': path_img / 'background_img.png',
-        'path_overlay_img':  path_img / 'overlay_img.png',
+        'path_background_img': path_img / f'background_img.{image_extension}',
+        'path_overlay_img':  path_img / f'overlay_img.{image_extension}',
     }
     yield imgs_to_generate
     # Double-check that the images were generated during the 'with:' block
     for img_type, path in imgs_to_generate.items():
         if not path.exists():
-            raise FileNotFoundError(f"Required QC image '{img_type}' was not found at the expected path: '{path}')")
+            raise FileNotFoundError(f"Required QC image '{img_type}' was not found at the expected path: '{path}'")
 
     # Use mutex to ensure that we're only generating shared QC assets using one process at a time
     realpath = path_qc.resolve()
@@ -132,6 +133,8 @@ def update_files(resource: Traversable, destination: Path):
     Make sure that an up-to-date copy of `resource` exists at `destination`,
     by creating or updating files and directories recursively.
     """
+    if resource.name in ['__pycache__']:
+        return  # skip this one
     path = destination / resource.name
     if resource.is_dir():
         path.mkdir(exist_ok=True)
