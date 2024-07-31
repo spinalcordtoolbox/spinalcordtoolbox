@@ -101,6 +101,17 @@ def get_parser():
 
     optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
     optional.add_argument(
+        '-volumewise',
+        type=int,
+        help='Specifying this option will process a 4D image in a "volumewise" manner:\n'
+             '  - Split the 4D input into individual 3D volumes\n'
+             '  - Apply the maths operations to each 3D volume\n'
+             '  - Merge the processed 3D volumes back into a single 4D output image',
+        required=False,
+        choices=(0, 1),
+        default=0
+    )
+    optional.add_argument(
         "-h",
         "--help",
         action="help",
@@ -408,152 +419,165 @@ def main(argv: Sequence[str]):
 
     # Actually do the computations
     im = Image(arguments.i)
-    data = im.data
-    for arg_name, arg_value in arguments.todo:
-        assert data is not None
 
-        if arg_name == "add":
-            if data.ndim == 4 and not arg_value:
-                # special case to sum a 4D volume across the t axis
-                data = np.sum(data, axis=3)
-            else:
+    # If volumewise is specified, treat 4D image as a set of 3D volumes
+    if arguments.volumewise:
+        data_in_list = [np.squeeze(arr, axis=3) for arr in np.array_split(im.data, im.data.shape[3], 3)]
+    else:
+        data_in_list = [im.data]
+
+    data_out_list = []
+    for data in data_in_list:
+        for arg_name, arg_value in arguments.todo:
+            assert data is not None
+
+            if arg_name == "add":
+                if data.ndim == 4 and not arg_value:
+                    # special case to sum a 4D volume across the t axis
+                    data = np.sum(data, axis=3)
+                else:
+                    try:
+                        list_data = get_data_arrays(data.shape, arg_value)
+                    except ValueError as e:
+                        printv(f"ERROR: -{arg_name}: {e}", 1, 'error')
+                    data += np.sum(list_data, axis=0)
+
+            elif arg_name == "sub":
                 try:
                     list_data = get_data_arrays(data.shape, arg_value)
                 except ValueError as e:
                     printv(f"ERROR: -{arg_name}: {e}", 1, 'error')
-                data += np.sum(list_data, axis=0)
+                data -= np.sum(list_data, axis=0)
 
-        elif arg_name == "sub":
-            try:
-                list_data = get_data_arrays(data.shape, arg_value)
-            except ValueError as e:
-                printv(f"ERROR: -{arg_name}: {e}", 1, 'error')
-            data -= np.sum(list_data, axis=0)
+            elif arg_name == "mul":
+                if data.ndim == 4 and not arg_value:
+                    # special case to multiply a 4D volume across the t axis
+                    data = np.prod(data, axis=3)
+                else:
+                    try:
+                        list_data = get_data_arrays(data.shape, arg_value)
+                    except ValueError as e:
+                        printv(f"ERROR: -{arg_name}: {e}", 1, 'error')
+                    data *= np.prod(list_data, axis=0)
 
-        elif arg_name == "mul":
-            if data.ndim == 4 and not arg_value:
-                # special case to multiply a 4D volume across the t axis
-                data = np.prod(data, axis=3)
-            else:
+            elif arg_name == "div":
                 try:
                     list_data = get_data_arrays(data.shape, arg_value)
                 except ValueError as e:
                     printv(f"ERROR: -{arg_name}: {e}", 1, 'error')
-                data *= np.prod(list_data, axis=0)
+                data /= np.prod(list_data, axis=0)
 
-        elif arg_name == "div":
-            try:
-                list_data = get_data_arrays(data.shape, arg_value)
-            except ValueError as e:
-                printv(f"ERROR: -{arg_name}: {e}", 1, 'error')
-            data /= np.prod(list_data, axis=0)
+            elif arg_name == "mean":
+                axis = ('x', 'y', 'z', 't').index(arg_value)
+                if axis >= data.ndim:
+                    # Averaging a 3D image over time, nothing to do
+                    pass
+                else:
+                    data = np.mean(data, axis)
+                    if axis < 3:
+                        # Averaging over a spatial axis, we should preserve it
+                        data = np.expand_dims(data, axis)
 
-        elif arg_name == "mean":
-            axis = ('x', 'y', 'z', 't').index(arg_value)
-            if axis >= data.ndim:
-                # Averaging a 3D image over time, nothing to do
-                pass
+            elif arg_name == "rms":
+                data = data.astype(float)
+                axis = ('x', 'y', 'z', 't').index(arg_value)
+                if axis >= data.ndim:
+                    # Taking the mean across time for a 3D image has no effect.
+                    # Because of this, RMS is just squaring then sqrting (i.e. abs)
+                    data = np.abs(data)
+                else:
+                    data = np.sqrt(np.mean(np.square(data), axis))
+                    if axis < 3:
+                        # Taking RMS over a spatial axis, we should preserve it
+                        data = np.expand_dims(data, axis)
+
+            elif arg_name == "std":
+                axis = ('x', 'y', 'z', 't').index(arg_value)
+                if axis >= data.ndim or data.shape[axis] == 1:
+                    printv("ERROR: Zero division while taking -std along a singleton dimension", 1, 'error')
+                else:
+                    data = np.std(data, axis, ddof=1),
+                    if axis < 3:
+                        # Taking std over a spatial axis, we should preserve it
+                        data = np.expand_dims(data, axis)
+
+            elif arg_name == "bin":
+                bin_thr = arg_value
+                data = sct_math.binarize(data, bin_thr)
+
+            elif arg_name == "otsu":
+                nbins = arg_value
+                data = sct_math.otsu(data, nbins)
+
+            elif arg_name == "adap":
+                block_size, offset = arg_value
+                data = sct_math.adap(data, block_size, offset)
+
+            elif arg_name == "otsu_median":
+                size, n_iter = arg_value
+                data = sct_math.otsu_median(data, size, n_iter)
+
+            elif arg_name == "percent":
+                percentile = arg_value
+                data = sct_math.perc(data, percentile)
+
+            elif arg_name == "thr":
+                threshold = arg_value
+                data = sct_math.threshold(data, lthr=threshold)
+
+            elif arg_name == "uthr":
+                threshold = arg_value
+                data = sct_math.threshold(data, uthr=threshold)
+
+            elif arg_name == "dilate":
+                # This uses the global `shape` and `dim` values
+                size = arg_value
+                data = sct_math.dilate(data, size, shape, dim)
+
+            elif arg_name == "erode":
+                # This uses the global `shape` and `dim` values
+                size = arg_value
+                data = sct_math.erode(data, size, shape, dim)
+
+            elif arg_name in ["smooth", "laplacian"]:
+                # Adjust sigmas from millimeters to voxels
+                # This uses the resolution of the starting value `im`
+                sigmas = [mm/pixdim for mm, pixdim in zip(arg_value, im.dim[4:7])]
+                data = {
+                    "smooth": sct_math.smooth,
+                    "laplacian": sct_math.laplacian,
+                }[arg_name](data, sigmas)
+
+            elif arg_name == "denoise":
+                patch_radius, block_radius = arg_value
+                data = sct_math.denoise_nlmeans(data, patch_radius, block_radius)
+
+            elif arg_name in ["mi", "minorm", "corr"]:
+                # Reuses the header of the starting value `im`
+                compute_similarity(
+                    img1=Image(data, hdr=im.hdr),
+                    img2=Image(arg_value),
+                    fname_out=arguments.o,
+                    metric=arg_name,
+                    metric_full={
+                        'mi': 'Mutual information',
+                        'minorm': 'Normalized Mutual information',
+                        'corr': 'Pearson correlation coefficient',
+                    }[arg_name],
+                    verbose=verbose,
+                )
+                printv(f"\nDone! File created: {arguments.o}", verbose, 'info')
+                return
+
             else:
-                data = np.mean(data, axis)
-                if axis < 3:
-                    # Averaging over a spatial axis, we should preserve it
-                    data = np.expand_dims(data, axis)
+                assert arg_name == "symmetrize"
+                axis = arg_value
+                data = sct_math.symmetrize(data, axis)
 
-        elif arg_name == "rms":
-            data = data.astype(float)
-            axis = ('x', 'y', 'z', 't').index(arg_value)
-            if axis >= data.ndim:
-                # Taking the mean across time for a 3D image has no effect.
-                # Because of this, RMS is just squaring then sqrting (i.e. abs)
-                data = np.abs(data)
-            else:
-                data = np.sqrt(np.mean(np.square(data), axis))
-                if axis < 3:
-                    # Taking RMS over a spatial axis, we should preserve it
-                    data = np.expand_dims(data, axis)
+        data_out_list.append(data)
 
-        elif arg_name == "std":
-            axis = ('x', 'y', 'z', 't').index(arg_value)
-            if axis >= data.ndim or data.shape[axis] == 1:
-                printv("ERROR: Zero division while taking -std along a singleton dimension", 1, 'error')
-            else:
-                data = np.std(data, axis, ddof=1),
-                if axis < 3:
-                    # Taking std over a spatial axis, we should preserve it
-                    data = np.expand_dims(data, axis)
-
-        elif arg_name == "bin":
-            bin_thr = arg_value
-            data = sct_math.binarize(data, bin_thr)
-
-        elif arg_name == "otsu":
-            nbins = arg_value
-            data = sct_math.otsu(data, nbins)
-
-        elif arg_name == "adap":
-            block_size, offset = arg_value
-            data = sct_math.adap(data, block_size, offset)
-
-        elif arg_name == "otsu_median":
-            size, n_iter = arg_value
-            data = sct_math.otsu_median(data, size, n_iter)
-
-        elif arg_name == "percent":
-            percentile = arg_value
-            data = sct_math.perc(data, percentile)
-
-        elif arg_name == "thr":
-            threshold = arg_value
-            data = sct_math.threshold(data, lthr=threshold)
-
-        elif arg_name == "uthr":
-            threshold = arg_value
-            data = sct_math.threshold(data, uthr=threshold)
-
-        elif arg_name == "dilate":
-            # This uses the global `shape` and `dim` values
-            size = arg_value
-            data = sct_math.dilate(data, size, shape, dim)
-
-        elif arg_name == "erode":
-            # This uses the global `shape` and `dim` values
-            size = arg_value
-            data = sct_math.erode(data, size, shape, dim)
-
-        elif arg_name in ["smooth", "laplacian"]:
-            # Adjust sigmas from millimeters to voxels
-            # This uses the resolution of the starting value `im`
-            sigmas = [mm/pixdim for mm, pixdim in zip(arg_value, im.dim[4:7])]
-            data = {
-                "smooth": sct_math.smooth,
-                "laplacian": sct_math.laplacian,
-            }[arg_name](data, sigmas)
-
-        elif arg_name == "denoise":
-            patch_radius, block_radius = arg_value
-            data = sct_math.denoise_nlmeans(data, patch_radius, block_radius)
-
-        elif arg_name in ["mi", "minorm", "corr"]:
-            # Reuses the header of the starting value `im`
-            compute_similarity(
-                img1=Image(data, hdr=im.hdr),
-                img2=Image(arg_value),
-                fname_out=arguments.o,
-                metric=arg_name,
-                metric_full={
-                    'mi': 'Mutual information',
-                    'minorm': 'Normalized Mutual information',
-                    'corr': 'Pearson correlation coefficient',
-                }[arg_name],
-                verbose=verbose,
-            )
-            printv(f"\nDone! File created: {arguments.o}", verbose, 'info')
-            return
-
-        else:
-            assert arg_name == "symmetrize"
-            axis = arg_value
-            data = sct_math.symmetrize(data, axis)
+    # Reconstruct output data array from processed volumes
+    data = np.stack(data_out_list, axis=3) if len(data_out_list) > 1 else data_out_list[0]
 
     # Save the final image with the requested dtype
     Image(data, hdr=im.hdr).save(arguments.o, dtype=arguments.type)
