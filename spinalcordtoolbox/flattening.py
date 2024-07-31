@@ -43,8 +43,12 @@ def flatten_sagittal(im_anat, im_centerline, verbose):
 
     # change type to float32 and scale between -1 and 1 as requested by img_as_float(). See #1790, #2069
     im_anat_flattened = change_type(im_anat, np.float32)
-    min_data, max_data = np.min(im_anat_flattened.data), np.max(im_anat_flattened.data)
-    im_anat_flattened.data = 2 * im_anat_flattened.data / (max_data - min_data) - 1
+    flattened_data = im_anat_flattened.data.copy()
+    min_data, max_data = np.min(flattened_data), np.max(flattened_data)
+    flattened_data -= min_data               # [min, max]   -> [ 0, max-min]
+    flattened_data /= (max_data - min_data)  # [0, max-min] -> [ 0, 1]
+    flattened_data *= 2                      # [0, 1]       -> [ 0, 2]
+    flattened_data -= 1                      # [0, 2]       -> [-1, 1]
 
     # loop and translate each axial slice, such that the flattened centerline is centered in the medial plane (R-L)
     for iz in range(nz):
@@ -54,11 +58,18 @@ def flatten_sagittal(im_anat, im_centerline, verbose):
         # tform = tf.SimilarityTransform(scale=1, rotation=0, translation=(translation_x, 0))
         tform = transform.SimilarityTransform(translation=(0, translation_x))
         # important to force input in float to skikit image, because it will output float values
-        img = img_as_float(im_anat_flattened.data[:, :, iz])
+        img = img_as_float(flattened_data[:, :, iz])
         img_reg = transform.warp(img, tform)
-        im_anat_flattened.data[:, :, iz] = img_reg
+        flattened_data[:, :, iz] = img_reg
 
-    # change back to native orientation
+    # Change [-1, 1] values back to the original range ([min, max])
+    flattened_data += 1                      # [-1, 1]       -> [0, 2]
+    flattened_data /= 2                      # [ 0, 2]       -> [0, 1]
+    flattened_data *= (max_data - min_data)  # [ 0, 1]       -> [0, max-min]
+    flattened_data += min_data               # [ 0, max-min] -> [min, max]
+
+    # change back to native orientation and datatype
+    im_anat_flattened.data = flattened_data.astype(im_anat.data.dtype)
     im_anat_flattened.change_orientation(orientation_native)
 
     return im_anat_flattened

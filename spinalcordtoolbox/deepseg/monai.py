@@ -143,9 +143,9 @@ class InitWeights_He(object):
                 module.bias = nn.init.constant_(module.bias, 0)
 
 
-def prepare_data(path_image, crop_size=(64, 160, 320)):
+def prepare_data(path_image, crop_size=(64, 160, 320), padding='edge'):
     # define test transforms
-    transforms_test = inference_transforms_single_image(crop_size=crop_size)
+    transforms_test = inference_transforms_single_image(crop_size=crop_size, padding=padding)
 
     # define post-processing transforms for testing; taken (with explanations) from
     # https://github.com/Project-MONAI/tutorials/blob/main/3d_segmentation/torch/unet_inference_dict.py#L66
@@ -167,14 +167,14 @@ def prepare_data(path_image, crop_size=(64, 160, 320)):
     return test_loader, test_post_pred
 
 
-def inference_transforms_single_image(crop_size):
+def inference_transforms_single_image(crop_size, padding='edge'):
     return Compose([
         LoadImaged(keys=["image"], image_only=False),
         EnsureChannelFirstd(keys=["image"]),
         Orientationd(keys=["image"], axcodes="RPI"),
         Spacingd(keys=["image"], pixdim=(1.0, 1.0, 1.0), mode=2),
-        ResizeWithPadOrCropd(keys=["image"], spatial_size=crop_size, ),
-        DivisiblePadd(keys=["image"], k=2 ** 5),
+        ResizeWithPadOrCropd(keys=["image"], spatial_size=crop_size, mode=padding),
+        DivisiblePadd(keys=["image"], k=2 ** 5, mode=padding),
         # pad inputs to ensure divisibility by no. of layers nnUNet has (5)
         NormalizeIntensityd(keys=["image"], nonzero=False, channel_wise=False),
     ])
