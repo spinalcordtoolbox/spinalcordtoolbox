@@ -1,7 +1,7 @@
-Lesion segmentation in multiple sclerosis: ``sct_deepseg_lesion``
-#####################################################################################################
+Lesion segmentation in multiple sclerosis (MS)
+##############################################
 
-As its name suggests, ``sct_deepseg_lesion`` is based on deep learning.
+SCT provides a deep learning-based algorithm to segment lesions in multiple sclerosis (MS) called ``sct_deepseg_lesion``.
 
 TODO: consider adding dome details what data was used to train the model, similarly to the SCIseg model (lesion-segmentation-sci.rst)
 
