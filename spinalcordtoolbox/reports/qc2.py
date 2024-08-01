@@ -251,15 +251,12 @@ def sct_deepseg(
     subject: Optional[str],
 ):
     """
-    Generate a QC report for sct_deepseg, with varied colormaps depending on the type of segmentation.
-
-    This refactor is based off of the `listed_seg` method in qc.py, adapted to support multiple images.
+    Generate a QC report for sct_deepseg, based on which task was used.
     """
     command = 'sct_deepseg'
     cmdline = [command]
     cmdline.extend(argv)
 
-    # Axial orientation, switch between one anat image and 1-2 seg images
     with create_qc_entry(
         path_input=Path(fname_input).absolute(),
         path_qc=Path(path_qc),
@@ -269,113 +266,256 @@ def sct_deepseg(
         dataset=dataset,
         subject=subject,
     ) as imgs_to_generate:
-        # FIXME: This code is more or less duplicated with the 'sct_register_multimodal' report, because both reports
-        #        use the old qc.py method "_make_QC_image_for_3d_volumes" for generating the background img.
+        if "seg_spinal_rootlets_t2w" in argv:
+            sct_deepseg_spinal_rootlets_t2w(
+                imgs_to_generate, fname_input, fname_seg, fname_seg2, species)
+        else:
+            sct_deepseg_default(
+                imgs_to_generate, fname_input, fname_seg, fname_seg2, species)
+
+
+def sct_deepseg_default(
+    imgs_to_generate: dict[str, Path],
+    fname_input: str,
+    fname_seg_sc: str,
+    fname_seg_lesion: Optional[str],
+    species: str,
+):
+    """
+    Generate a QC report for sct_deepseg, with varied colormaps depending on the type of segmentation.
+
+    This refactor is based off of the `listed_seg` method in qc.py, adapted to support multiple images.
+    """
+    # Axial orientation, switch between one anat image and 1-2 seg images
+    # FIXME: This code is more or less duplicated with the 'sct_register_multimodal' report, because both reports
+    #        use the old qc.py method "_make_QC_image_for_3d_volumes" for generating the background img.
+    # Resample images slice by slice
+    scale = 1
+    radius = (15, 15)
+    p_resample = {
+        'human': 0.6, 'mouse': 0.1,
+    }[species]
+    img_input = Image(fname_input).change_orientation('SAL')
+    img_seg_sc = Image(fname_seg_sc).change_orientation('SAL')
+    img_seg_lesion = Image(fname_seg_lesion).change_orientation('SAL') if fname_seg_lesion else None
+    if False:
+        radius = (radius[0] + 8, radius[1] + 8)  # Rootlets need a larger "base" radius as they exist outside the SC
+        # The radius size is suited to the species-specific resolutions. But, since we plan to skip
+        # resampling, we need to instead adjust the crop radius to suit the *actual* resolution.
+        p_original = img_seg_sc.dim[5]  # dim[0:3] => shape, dim[4:7] => pixdim, so dim[5] == pixdim[1]
+        radius = tuple(int(v * (p_resample / p_original)) for v in radius)
+        # If the resolution is greater than the resampling resolution, then the crop size will be smaller.
+        # To compensate for this (and ensure the QC is visually readable), we scale up the image
+        if p_original > p_resample:
+            scale = int(math.ceil(p_original / p_resample))  # e.g. 0.8mm human -> 0.8/0.6 -> 1.33x => 2x scale
+    else:
         # Resample images slice by slice
-        scale = 1
-        radius = (15, 15)
-        p_resample = {
-            'human': 0.6, 'mouse': 0.1,
-        }[species]
-        img_input = Image(fname_input).change_orientation('SAL')
-        img_seg_sc = Image(fname_seg).change_orientation('SAL')
-        img_seg_lesion = Image(fname_seg2).change_orientation('SAL') if fname_seg2 else None
-        if "seg_spinal_rootlets_t2w" in argv:
-            radius = (radius[0] + 8, radius[1] + 8)  # Rootlets need a larger "base" radius as they exist outside the SC
-            # The radius size is suited to the species-specific resolutions. But, since we plan to skip
-            # resampling, we need to instead adjust the crop radius to suit the *actual* resolution.
-            p_original = img_seg_sc.dim[5]  # dim[0:3] => shape, dim[4:7] => pixdim, so dim[5] == pixdim[1]
-            radius = tuple(int(v * (p_resample / p_original)) for v in radius)
-            # If the resolution is greater than the resampling resolution, then the crop size will be smaller.
-            # To compensate for this (and ensure the QC is visually readable), we scale up the image
-            if p_original > p_resample:
-                scale = int(math.ceil(p_original / p_resample))  # e.g. 0.8mm human -> 0.8/0.6 -> 1.33x => 2x scale
-        else:
-            # Resample images slice by slice
-            logger.info('Resample images to %fx%f vox', p_resample, p_resample)
-            img_input = resample_nib(
-                image=img_input,
-                new_size=[img_input.dim[4], p_resample, p_resample],
-                new_size_type='mm',
-                interpolation='spline',
-            )
-            img_seg_sc = resample_nib(
-                image=img_seg_sc,
-                image_dest=img_input,
-                interpolation='linear',
-            )
-            img_seg_lesion = resample_nib(
-                image=img_seg_lesion,
-                image_dest=img_input,
-                interpolation='linear',
-            ) if fname_seg2 else None
+        logger.info('Resample images to %fx%f vox', p_resample, p_resample)
+        img_input = resample_nib(
+            image=img_input,
+            new_size=[img_input.dim[4], p_resample, p_resample],
+            new_size_type='mm',
+            interpolation='spline',
+        )
+        img_seg_sc = resample_nib(
+            image=img_seg_sc,
+            image_dest=img_input,
+            interpolation='linear',
+        )
+        img_seg_lesion = resample_nib(
+            image=img_seg_lesion,
+            image_dest=img_input,
+            interpolation='linear',
+        ) if fname_seg_lesion else None
 
-        # Each slice is centered on the segmentation
-        logger.info('Find the center of each slice')
-        if "seg_spinal_rootlets_t2w" in argv:
-            centerline_param = ParamCenterline(algo_fitting="optic", contrast="t2")
-            img_centerline, _, _, _ = get_centerline(img_input, param=centerline_param)
-            centers = np.array([center_of_mass(slice) for slice in img_centerline.data])
-        else:
-            centers = np.array([center_of_mass(slice) for slice in img_seg_sc.data])
-        inf_nan_fill(centers[:, 0])
-        inf_nan_fill(centers[:, 1])
+    # Each slice is centered on the segmentation
+    logger.info('Find the center of each slice')
+    if False:
+        centerline_param = ParamCenterline(algo_fitting="optic", contrast="t2")
+        img_centerline, _, _, _ = get_centerline(img_input, param=centerline_param)
+        centers = np.array([center_of_mass(slice) for slice in img_centerline.data])
+    else:
+        centers = np.array([center_of_mass(slice) for slice in img_seg_sc.data])
+    inf_nan_fill(centers[:, 0])
+    inf_nan_fill(centers[:, 1])
 
-        # Generate the first QC report image
-        img = equalize_histogram(mosaic(img_input, centers, radius, scale))
+    # Generate the first QC report image
+    img = equalize_histogram(mosaic(img_input, centers, radius, scale))
 
-        # For QC reports, axial mosaics will often have smaller height than width
-        # (e.g. WxH = 20x3 slice images). So, we want to reduce the fig height to match this.
-        # `size_fig` is in inches. So, dpi=300 --> 1500px, dpi=100 --> 500px, etc.
-        size_fig = [5, 5 * img.shape[0] / img.shape[1]]
+    # For QC reports, axial mosaics will often have smaller height than width
+    # (e.g. WxH = 20x3 slice images). So, we want to reduce the fig height to match this.
+    # `size_fig` is in inches. So, dpi=300 --> 1500px, dpi=100 --> 500px, etc.
+    size_fig = [5, 5 * img.shape[0] / img.shape[1]]
 
-        fig = mpl_figure.Figure()
-        fig.set_size_inches(*size_fig, forward=True)
-        mpl_backend_agg.FigureCanvasAgg(fig)
-        ax = fig.add_axes((0, 0, 1, 1))
-        ax.imshow(img, cmap='gray', interpolation='none', aspect=1.0)
-        add_orientation_labels(ax, radius=(radius[0]*scale, radius[1]*scale))
-        ax.get_xaxis().set_visible(False)
-        ax.get_yaxis().set_visible(False)
-        img_path = str(imgs_to_generate['path_background_img'])
-        logger.debug('Save image %s', img_path)
-        fig.savefig(img_path, format='png', transparent=True, dpi=300)
+    fig = mpl_figure.Figure()
+    fig.set_size_inches(*size_fig, forward=True)
+    mpl_backend_agg.FigureCanvasAgg(fig)
+    ax = fig.add_axes((0, 0, 1, 1))
+    ax.imshow(img, cmap='gray', interpolation='none', aspect=1.0)
+    add_orientation_labels(ax, radius=(radius[0]*scale, radius[1]*scale))
+    ax.get_xaxis().set_visible(False)
+    ax.get_yaxis().set_visible(False)
+    img_path = str(imgs_to_generate['path_background_img'])
+    logger.debug('Save image %s', img_path)
+    fig.savefig(img_path, format='png', transparent=True, dpi=300)
 
-        # Generate the second QC report image
-        fig = mpl_figure.Figure()
-        fig.set_size_inches(*size_fig, forward=True)
-        mpl_backend_agg.FigureCanvasAgg(fig)
-        ax = fig.add_axes((0, 0, 1, 1))
-        if "seg_spinal_rootlets_t2w" in argv:
-            # get available labels
-            img = np.rint(np.ma.masked_where(img_seg_sc.data < 1, img_seg_sc.data))
-            labels = np.unique(img[np.where(~img.mask)]).astype(int)
-            colormaps = [mpl_colors.ListedColormap(assign_label_colors_by_groups(labels))]
-        else:
-            colormaps = [mpl_colors.ListedColormap(["#ff0000"]),  # Red for first image
-                         mpl_colors.ListedColormap(["#00ffff"])]  # Cyan for second
-        for i, image in enumerate([img_seg_sc, img_seg_lesion]):
-            if not image:
-                continue
-            img = mosaic(image, centers, radius, scale)
-            img = np.ma.masked_less_equal(img, 0)
-            img.set_fill_value(0)
-            ax.imshow(img,
-                      cmap=colormaps[i],
-                      norm=None if "seg_spinal_rootlets_t2w" in argv else mpl_colors.Normalize(vmin=0.5, vmax=1),
-                      # img==1 -> opaque, but soft regions -> more transparent as value decreases
-                      alpha=1.0 if "seg_spinal_rootlets_t2w" in argv else (img / img.max()),  # scale to [0, 1]
-                      interpolation='none',
-                      aspect=1.0)
-            if "seg_spinal_rootlets_t2w" in argv:
-                plot_outlines(img.T, ax=ax, lw=0.3, color='#000000')  # 0.5 is too thick, 0.25 is too thin
-                add_segmentation_labels(ax, img, colors=colormaps[i].colors, radius=(radius[0]*scale, radius[1]*scale))
+    # Generate the second QC report image
+    fig = mpl_figure.Figure()
+    fig.set_size_inches(*size_fig, forward=True)
+    mpl_backend_agg.FigureCanvasAgg(fig)
+    ax = fig.add_axes((0, 0, 1, 1))
+    if False:
+        # get available labels
+        img = np.rint(np.ma.masked_where(img_seg_sc.data < 1, img_seg_sc.data))
+        labels = np.unique(img[np.where(~img.mask)]).astype(int)
+        colormaps = [mpl_colors.ListedColormap(assign_label_colors_by_groups(labels))]
+    else:
+        colormaps = [mpl_colors.ListedColormap(["#ff0000"]),  # Red for first image
+                     mpl_colors.ListedColormap(["#00ffff"])]  # Cyan for second
+    for i, image in enumerate([img_seg_sc, img_seg_lesion]):
+        if not image:
+            continue
+        img = mosaic(image, centers, radius, scale)
+        img = np.ma.masked_less_equal(img, 0)
+        img.set_fill_value(0)
+        ax.imshow(img,
+                  cmap=colormaps[i],
+                  norm=None if False else mpl_colors.Normalize(vmin=0.5, vmax=1),
+                  # img==1 -> opaque, but soft regions -> more transparent as value decreases
+                  alpha=1.0 if False else (img / img.max()),  # scale to [0, 1]
+                  interpolation='none',
+                  aspect=1.0)
+        if False:
+            plot_outlines(img.T, ax=ax, lw=0.3, color='#000000')  # 0.5 is too thick, 0.25 is too thin
+            add_segmentation_labels(ax, img, colors=colormaps[i].colors, radius=(radius[0]*scale, radius[1]*scale))
 
-        ax.get_xaxis().set_visible(False)
-        ax.get_yaxis().set_visible(False)
-        img_path = str(imgs_to_generate['path_overlay_img'])
-        logger.debug('Save image %s', img_path)
-        fig.savefig(img_path, format='png', transparent=True, dpi=300)
+    ax.get_xaxis().set_visible(False)
+    ax.get_yaxis().set_visible(False)
+    img_path = str(imgs_to_generate['path_overlay_img'])
+    logger.debug('Save image %s', img_path)
+    fig.savefig(img_path, format='png', transparent=True, dpi=300)
+
+
+def sct_deepseg_spinal_rootlets_t2w(
+    imgs_to_generate: dict[str, Path],
+    fname_input: str,
+    fname_seg_sc: str,
+    fname_seg_lesion: Optional[str],
+    species: str,
+):
+    """
+    Generate a QC report for `sct_deepseg -task seg_spinal_rootlets_t2w`.
+
+    This refactor is based off of the `listed_seg` method in qc.py, adapted to support multiple images.
+    """
+    # Axial orientation, switch between one anat image and 1-2 seg images
+    # FIXME: This code is more or less duplicated with the 'sct_register_multimodal' report, because both reports
+    #        use the old qc.py method "_make_QC_image_for_3d_volumes" for generating the background img.
+    # Resample images slice by slice
+    scale = 1
+    radius = (15, 15)
+    p_resample = {
+        'human': 0.6, 'mouse': 0.1,
+    }[species]
+    img_input = Image(fname_input).change_orientation('SAL')
+    img_seg_sc = Image(fname_seg_sc).change_orientation('SAL')
+    img_seg_lesion = Image(fname_seg_lesion).change_orientation('SAL') if fname_seg_lesion else None
+    if True:
+        radius = (radius[0] + 8, radius[1] + 8)  # Rootlets need a larger "base" radius as they exist outside the SC
+        # The radius size is suited to the species-specific resolutions. But, since we plan to skip
+        # resampling, we need to instead adjust the crop radius to suit the *actual* resolution.
+        p_original = img_seg_sc.dim[5]  # dim[0:3] => shape, dim[4:7] => pixdim, so dim[5] == pixdim[1]
+        radius = tuple(int(v * (p_resample / p_original)) for v in radius)
+        # If the resolution is greater than the resampling resolution, then the crop size will be smaller.
+        # To compensate for this (and ensure the QC is visually readable), we scale up the image
+        if p_original > p_resample:
+            scale = int(math.ceil(p_original / p_resample))  # e.g. 0.8mm human -> 0.8/0.6 -> 1.33x => 2x scale
+    else:
+        # Resample images slice by slice
+        logger.info('Resample images to %fx%f vox', p_resample, p_resample)
+        img_input = resample_nib(
+            image=img_input,
+            new_size=[img_input.dim[4], p_resample, p_resample],
+            new_size_type='mm',
+            interpolation='spline',
+        )
+        img_seg_sc = resample_nib(
+            image=img_seg_sc,
+            image_dest=img_input,
+            interpolation='linear',
+        )
+        img_seg_lesion = resample_nib(
+            image=img_seg_lesion,
+            image_dest=img_input,
+            interpolation='linear',
+        ) if fname_seg_lesion else None
+
+    # Each slice is centered on the segmentation
+    logger.info('Find the center of each slice')
+    if True:
+        centerline_param = ParamCenterline(algo_fitting="optic", contrast="t2")
+        img_centerline, _, _, _ = get_centerline(img_input, param=centerline_param)
+        centers = np.array([center_of_mass(slice) for slice in img_centerline.data])
+    else:
+        centers = np.array([center_of_mass(slice) for slice in img_seg_sc.data])
+    inf_nan_fill(centers[:, 0])
+    inf_nan_fill(centers[:, 1])
+
+    # Generate the first QC report image
+    img = equalize_histogram(mosaic(img_input, centers, radius, scale))
+
+    # For QC reports, axial mosaics will often have smaller height than width
+    # (e.g. WxH = 20x3 slice images). So, we want to reduce the fig height to match this.
+    # `size_fig` is in inches. So, dpi=300 --> 1500px, dpi=100 --> 500px, etc.
+    size_fig = [5, 5 * img.shape[0] / img.shape[1]]
+
+    fig = mpl_figure.Figure()
+    fig.set_size_inches(*size_fig, forward=True)
+    mpl_backend_agg.FigureCanvasAgg(fig)
+    ax = fig.add_axes((0, 0, 1, 1))
+    ax.imshow(img, cmap='gray', interpolation='none', aspect=1.0)
+    add_orientation_labels(ax, radius=(radius[0]*scale, radius[1]*scale))
+    ax.get_xaxis().set_visible(False)
+    ax.get_yaxis().set_visible(False)
+    img_path = str(imgs_to_generate['path_background_img'])
+    logger.debug('Save image %s', img_path)
+    fig.savefig(img_path, format='png', transparent=True, dpi=300)
+
+    # Generate the second QC report image
+    fig = mpl_figure.Figure()
+    fig.set_size_inches(*size_fig, forward=True)
+    mpl_backend_agg.FigureCanvasAgg(fig)
+    ax = fig.add_axes((0, 0, 1, 1))
+    if True:
+        # get available labels
+        img = np.rint(np.ma.masked_where(img_seg_sc.data < 1, img_seg_sc.data))
+        labels = np.unique(img[np.where(~img.mask)]).astype(int)
+        colormaps = [mpl_colors.ListedColormap(assign_label_colors_by_groups(labels))]
+    else:
+        colormaps = [mpl_colors.ListedColormap(["#ff0000"]),  # Red for first image
+                     mpl_colors.ListedColormap(["#00ffff"])]  # Cyan for second
+    for i, image in enumerate([img_seg_sc, img_seg_lesion]):
+        if not image:
+            continue
+        img = mosaic(image, centers, radius, scale)
+        img = np.ma.masked_less_equal(img, 0)
+        img.set_fill_value(0)
+        ax.imshow(img,
+                  cmap=colormaps[i],
+                  norm=None if True else mpl_colors.Normalize(vmin=0.5, vmax=1),
+                  # img==1 -> opaque, but soft regions -> more transparent as value decreases
+                  alpha=1.0 if True else (img / img.max()),  # scale to [0, 1]
+                  interpolation='none',
+                  aspect=1.0)
+        if True:
+            plot_outlines(img.T, ax=ax, lw=0.3, color='#000000')  # 0.5 is too thick, 0.25 is too thin
+            add_segmentation_labels(ax, img, colors=colormaps[i].colors, radius=(radius[0]*scale, radius[1]*scale))
+
+    ax.get_xaxis().set_visible(False)
+    ax.get_yaxis().set_visible(False)
+    img_path = str(imgs_to_generate['path_overlay_img'])
+    logger.debug('Save image %s', img_path)
+    fig.savefig(img_path, format='png', transparent=True, dpi=300)
 
 
 def inf_nan_fill(A: np.ndarray):
