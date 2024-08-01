@@ -12,6 +12,6 @@ This section demonstrates how to segment lesions in spinal cord injury (SCI) or 
 .. toctree::
    :maxdepth: 1
 
-    lesion-segmentation/before-starting
-    lesion-segmentation/lesion-segmentation-sci
-    lesion-segmentation/lesion-segmentation-ms
+   lesion-segmentation/before-starting
+   lesion-segmentation/lesion-segmentation-sci
+   lesion-segmentation/lesion-segmentation-ms

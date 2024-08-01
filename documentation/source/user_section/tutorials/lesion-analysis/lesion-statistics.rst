@@ -12,5 +12,5 @@ This section demonstrates how to compute statistics on segmented lesions using t
 .. toctree::
    :maxdepth: 1
 
-    lesion-statistics/before-starting
-    lesion-statistics/lesion-metrics
+   lesion-statistics/before-starting
+   lesion-statistics/lesion-metrics

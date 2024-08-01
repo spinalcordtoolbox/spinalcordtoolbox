@@ -12,5 +12,5 @@ This tutorial demonstrates how to use SCT's command-line scripts to perform lesi
 .. toctree::
    :maxdepth: 1
 
-    lesion-analysis/lesion-segmentation
-    lesion-analysis/lesion-statistics
+   lesion-analysis/lesion-segmentation
+   lesion-analysis/lesion-statistics
