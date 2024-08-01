@@ -41,4 +41,5 @@ You can try ``sct_deepseg_lesion`` on your own T2w or T2star image using the fol
    - ``t2_lesionseg.nii.gz`` : 3D binary mask of the segmented lesion
 
 Details:
+
 * **Algorithm:** `NeuroImage, C., et al. NeuroImage (2019) <https://doi.org/10.1016/j.neuroimage.2018.09.081>`_

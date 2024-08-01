@@ -31,5 +31,6 @@ You can try ``SCIseg`` on your own T2w image using the following command:
 
 
 Details:
+
 * **SCIsegV1:** `Enamundram, N.K.*, Valošek, J.*, et al. medRxiv (2024) <https://doi.org/10.1101/2024.01.03.24300794>`_
 * **SCIsegV2:** `Enamundram, N.K.*, Valošek, J.*, et al. arXiv (2024) <https://doi.org/10.48550/arXiv.2407.17265>`_

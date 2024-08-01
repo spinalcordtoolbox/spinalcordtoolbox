@@ -49,6 +49,7 @@ Running ``sct_analyze_lesion``
    You can use ``sct_analyze_lesion`` on lesion and spinal cord segmentation masks produced automatically (for example by SCT's deep learning models; see :ref:`lesion-segmentation <lesion-segmentation>` for more information. ) or manually.
 
 Details:
+
 * **maximum axial damage ratio:** `Smith, A.C., et al. Spinal Cord (2021) <https://doi.org/10.1038/s41393-020-00561-w>`_
 * **tissue bridges:** `Enamundram, N.K.*, Valošek, J.*, et al. arXiv (2024) <https://doi.org/10.48550/arXiv.2407.17265>`_, `Huber, E., et al. Ann Neurol. (2017) <https://doi.org/10.1002/ana.24932>`_, `Pfyffer, D., et al. Lancet Neurol. (2024) <https://doi.org/10.1016/S1474-4422%2824%2900173-X>`_
 
