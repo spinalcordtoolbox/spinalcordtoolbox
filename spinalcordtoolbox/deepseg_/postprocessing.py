@@ -153,13 +153,14 @@ def keep_largest_object(z_slice_bin, x_cOm, y_cOm):
     Keep the largest connected object per z_slice and fill little holes.
     Note: This function only works for binary segmentation.
 
+    When x_c0m/y_c0m are None, this function is identical to:
+    https://github.com/ivadomed/ivadomed/blob/1fccf77239985fc3be99161f9eb18c9470d65206/ivadomed/postprocessing.py#L99-L116
+
     :param z_slice: int 2d-array: Input 2d segmentation
     :param x_cOm: int: X center of mass of the segmentation for the previous 2d slice
     :param y_cOm: int: Y center of mass of the segmentation for the previous 2d slice
     :return: z_slice: int 2d-array: Processed 2d segmentation
     """
-    if z_slice_bin.dtype != np.dtype('int'):
-        raise ValueError(f"Expected array of type int but got '{z_slice_bin.dtype}' instead.")
     # Find number of closed objects using skimage "label"
     labeled_obj, num_obj = label(z_slice_bin)
     # If more than one object is found, keep the largest one
@@ -178,13 +179,26 @@ def keep_largest_object(z_slice_bin, x_cOm, y_cOm):
     return z_slice_bin
 
 
-def fill_holes_2d(z_slice):
-    """
-    Fill holes in the segmentation.
+def fill_holes(predictions, structure=None):
+    """Fill holes in the predictions using a given structuring element.
+    Note: This function only works for binary segmentation.
 
-    :param z_slice: int 2d-array: Input 2D segmentation.
-    :return: int 2d-array: Output segmentation with holes filled
+    Taken from:
+    https://github.com/ivadomed/ivadomed/blob/master/ivadomed/postprocessing.py#L143
+
+    Args:
+        predictions (ndarray or nibabel object): Input binary segmentation. Image could be 2D or 3D.
+        structure (tuple of integers): Structuring element, number of ints equals
+            number of dimensions in the input array.
+
+    Returns:
+        ndrray or nibabel (same object as the input). Output type is int.
     """
-    if z_slice.dtype != np.dtype('int'):
-        raise ValueError(f"Expected array of type int but got '{z_slice.dtype}' instead.")
-    return binary_fill_holes(z_slice, structure=np.ones((3, 3))).astype(int)
+    assert np.array_equal(predictions, predictions.astype(bool)), (
+        "fill_holes expects a binary segmentation as input. "
+        "Use `-thr` to binarize the prediction before using fill_holes."
+    )
+    if structure is None:
+        structure = [3] * len(predictions.shape)
+    assert len(structure) == len(predictions.shape)
+    return binary_fill_holes(predictions, structure=np.ones(structure)).astype(int)

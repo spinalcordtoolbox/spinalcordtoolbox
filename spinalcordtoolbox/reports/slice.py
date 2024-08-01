@@ -8,7 +8,6 @@ License: see the file LICENSE
 # TODO: Replace slice by spinalcordtoolbox.image.Slicer
 
 import os
-import abc
 import logging
 import math
 
@@ -16,7 +15,7 @@ import numpy as np
 from scipy.ndimage import center_of_mass
 from nibabel.nifti1 import Nifti1Image
 
-from spinalcordtoolbox.image import Image, split_img_data, check_image_kind
+from spinalcordtoolbox.image import Image, split_img_data
 from spinalcordtoolbox.resampling import resample_nib
 from spinalcordtoolbox.cropping import ImageCropper
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
@@ -41,78 +40,8 @@ class Slice(object):
 
     """
 
-    __metaclass__ = abc.ABCMeta
-
-    def __init__(self, images, p_resample=0.6):
-        """
-        :param images: list of 3D or 4D volumes to be separated into slices.
-        """
-        self._images = list()  # 3d volumes
-        self._4d_images = list()  # 4d volumes
-        self._image_seg = None  # for cropping
-        self._absolute_paths = list()  # Used because change_orientation removes the field absolute_path
-        image_ref = None  # first pass: we don't have a reference image to resample to
-        for i, image in enumerate(images):
-            img = image.copy()
-            self._absolute_paths.append(img.absolutepath)  # change_orientation removes the field absolute_path
-            img.change_orientation('SAL')
-            if p_resample:
-                type_img = 'seg' if ('seg' in check_image_kind(img)) else 'im'  # condense seg/softseg into just 'seg'
-                img_r = self._resample_slicewise(img, p_resample, type_img=type_img, image_ref=image_ref)
-            else:
-                img_r = img.copy()
-            if img_r.dim[3] == 1:   # If image is 3D, nt = 1
-                self._images.append(img_r)
-                image_ref = self._images[0]  # 2nd and next passes: we resample any image to the space of the first one
-            else:
-                self._4d_images.append(img_r)
-                # image_ref = self._4d_images[0]  # img_dest is not covered for 4D volumes in resample_nib()
-
-    @staticmethod
-    def axial_slice(data, i):
-        return data[i, :, :]
-
-    @staticmethod
-    def axial_dim(image):
-        nx, ny, nz, nt, px, py, pz, pt = image.dim
-        return nx
-
-    @staticmethod
-    def axial_aspect(image):
-        nx, ny, nz, nt, px, py, pz, pt = image.dim
-        return py / pz
-
-    @staticmethod
-    def sagittal_slice(data, i):
-        return data[:, :, int(i)]
-
-    @staticmethod
-    def sagittal_dim(image):
-        nx, ny, nz, nt, px, py, pz, pt = image.dim
-        return nz
-
-    @staticmethod
-    def sagittal_aspect(image):
-        nx, ny, nz, nt, px, py, pz, pt = image.dim
-        return px / py
-
-    @staticmethod
-    def coronal_slice(data, i):
-        return data[:, i, :]
-
-    @staticmethod
-    def coronal_dim(image):
-        nx, ny, nz, nt, px, py, pz, pt = image.dim
-        return ny
-
-    @staticmethod
-    def coronal_aspect(image):
-        nx, ny, nz, nt, px, py, pz, pt = image.dim
-        return px / pz
-
-    @abc.abstractmethod
     def get_aspect(self, image):
-        return
+        raise NotImplementedError
 
     @staticmethod
     def crop(matrix, x, y, width, height):
@@ -185,7 +114,6 @@ class Slice(object):
                 np.nonzero(valid)[0],
                 A[valid])
 
-    @abc.abstractmethod
     def get_slice(self, data, i):
         """Abstract method to obtain a slice of a 3d matrix
 
@@ -193,62 +121,19 @@ class Slice(object):
         :param i: position to slice
         :return: 2D slice
         """
-        return
+        raise NotImplementedError
 
-    @abc.abstractmethod
     def get_dim(self, image):
         """Abstract method to obtain the depth of the 3d matrix.
 
         :param image: input Image
         :returns: numpy.ndarray
         """
-        return
+        raise NotImplementedError
 
-    def _axial_center(self, image):
-        """Gets the center of mass in the axial plan
-
-        :param image : input Image
-        :returns: centers of mass in the x and y axis (tuple of numpy.ndarray of int)
-        """
-        logger.info('Compute center of mass at each slice')
-        data = np.array(image.data)  # we cast np.array to overcome problem if inputing nii format
-        nz = image.dim[0]  # SAL orientation
-        centers_x = np.zeros(nz)
-        centers_y = np.zeros(nz)
-        for i in range(nz):
-            centers_x[i], centers_y[i] = center_of_mass(data[i, :, :])
-        Slice.inf_nan_fill(centers_x)
-        Slice.inf_nan_fill(centers_y)
-        return centers_x, centers_y
-
-    @abc.abstractmethod
     def mosaic(self):
         """Obtain matrices of the mosaics"""
-        return
-
-    def single(self):
-        """Obtain the matrices of the single slices. Flatten
-
-        :returns: tuple of numpy.ndarray, matrix of the input 3D MRI
-                  containing the slices and matrix of the transformed 3D MRI
-                  to output containing the slices
-        """
-        if len(set([x.data.shape for x in self._images])) != 1:
-            raise ValueError("Volumes don't have the same size")
-
-        matrices = list()
-        # Retrieve the L-R center of the slice for each row (i.e. in the S-I direction).
-        index = self.get_center_spit()
-        # Loop across images and generate matrices for the image and the overlay
-        for image in self._images:
-            # Initialize matrix with zeros. This matrix corresponds to the 2d slice shown on the QC report.
-            matrix = np.zeros(image.dim[0:2])
-            for row in range(len(index)):
-                # For each slice, translate in the R-L direction to center the cord
-                matrix[row] = self.get_slice(image.data, int(np.round(index[row])))[row]
-            matrices.append(matrix)
-
-        return matrices
+        raise NotImplementedError
 
     def aspect(self):
         if len(self._4d_images) == 0:  # For 3D images
@@ -308,13 +193,15 @@ class Axial(Slice):
     """The axial representation of a slice"""
 
     def get_aspect(self, image):
-        return Slice.axial_aspect(image)
+        nx, ny, nz, nt, px, py, pz, pt = image.dim
+        return py / pz
 
     def get_slice(self, data, i):
-        return self.axial_slice(data, i)
+        return data[i, :, :]
 
     def get_dim(self, image):
-        return self.axial_dim(image)
+        nx, ny, nz, nt, px, py, pz, pt = image.dim
+        return nx
 
     def get_center(self, img_idx=-1):
         """Get the center of mass of each slice. For 4D images, segmentation is placed in self.image_seg.
@@ -324,7 +211,16 @@ class Axial(Slice):
             image = self._images[img_idx]
         else:  # For 4D images
             image = self._image_seg
-        return self._axial_center(image)
+        logger.info('Compute center of mass at each slice')
+        data = np.array(image.data)  # we cast np.array to overcome problem if inputing nii format
+        nz = image.dim[0]  # SAL orientation
+        centers_x = np.zeros(nz)
+        centers_y = np.zeros(nz)
+        for i in range(nz):
+            centers_x[i], centers_y[i] = center_of_mass(data[i, :, :])
+        Slice.inf_nan_fill(centers_x)
+        Slice.inf_nan_fill(centers_y)
+        return centers_x, centers_y
 
     def mosaic(self, return_center=False):
         """Obtain matrices of the mosaics
@@ -396,13 +292,15 @@ class Sagittal(Slice):
     """The sagittal representation of a slice"""
 
     def get_aspect(self, image):
-        return Slice.sagittal_aspect(image)
+        nx, ny, nz, nt, px, py, pz, pt = image.dim
+        return px / py
 
     def get_slice(self, data, i):
-        return self.sagittal_slice(data, i)
+        return data[:, :, int(i)]
 
     def get_dim(self, image):
-        return self.sagittal_dim(image)
+        nx, ny, nz, nt, px, py, pz, pt = image.dim
+        return nz
 
     def get_center_spit(self, img_idx=-1):
         """
@@ -436,13 +334,6 @@ class Sagittal(Slice):
             data_ctl_RPI.change_orientation('SAL')
             index_RL = np.argwhere(data_ctl_RPI.data)
             return [index_RL[i][2] for i in range(len(index_RL))]
-
-    def get_center(self, img_idx=-1):
-        image = self._images[img_idx]
-        dim = self.get_dim(image)
-        size_y = self.axial_dim(image)
-        size_x = self.coronal_dim(image)
-        return np.ones(dim) * size_x / 2, np.ones(dim) * size_y / 2
 
     def mosaic(self):
         """Obtain matrices of the mosaics
@@ -484,6 +375,30 @@ class Sagittal(Slice):
                 lrslice_cropped = self.get_slice(image_cropped.data, i)
                 # Add the cropped slice to the matrix layout
                 self.add_slice(matrix, i, nb_column, lrslice_cropped)
+            matrices.append(matrix)
+
+        return matrices
+
+    def single(self):
+        """Obtain the matrices of the single slices. Flatten
+
+        :returns: tuple of numpy.ndarray, matrix of the input 3D MRI
+                  containing the slices and matrix of the transformed 3D MRI
+                  to output containing the slices
+        """
+        if len(set([x.data.shape for x in self._images])) != 1:
+            raise ValueError("Volumes don't have the same size")
+
+        matrices = list()
+        # Retrieve the L-R center of the slice for each row (i.e. in the S-I direction).
+        index = self.get_center_spit()
+        # Loop across images and generate matrices for the image and the overlay
+        for image in self._images:
+            # Initialize matrix with zeros. This matrix corresponds to the 2d slice shown on the QC report.
+            matrix = np.zeros(image.dim[0:2])
+            for row in range(len(index)):
+                # For each slice, translate in the R-L direction to center the cord
+                matrix[row] = self.get_slice(image.data, int(np.round(index[row])))[row]
             matrices.append(matrix)
 
         return matrices
