@@ -6,21 +6,23 @@ The ``sct_analyze_lesion`` function computes various morphometric measures on se
 :The following morphometric measures are computed:
    - ``volume [mm^3]`` : volume of the lesion
    - ``length [mm]`` : length of the lesion along the superior-inferior (SI) axis
-   - ``max_equivalent_diameter [mm]`` : maximum diameter of the lesion, when approximating the lesion as a circle in the axial plane
-   - ``max_axial_damage_ratio []`` : maximum axial damage ratio defined as the ratio of the lesion area divided by the spinal cord area. The ratio is computed in the axial plane for each slice and and the maximum ratio is reported.
-   - ``dorsal_bridge_width [mm]`` : dorsal tissue bridges defined as the width of dorsal spared tissue (i.e. towards the posterior direction of the AP axis) at the minimum distance from the intramedullary lesion edge to the boundary between the spinal cord and cerebrospinal fluid
-   - ``ventral_bridge_width [mm]`` : ventral tissue bridges defined as the width of ventral spared tissue (i.e. towards the anterior direction of the AP axis) at the minimum distance from the intramedullary lesion edge to the boundary between the spinal cord and cerebrospinal fluid
-
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/lesion-analysis/intramedullary-lesion-length.png
   :align: center
   :figwidth: 60%
+
+   - ``max_equivalent_diameter [mm]`` : maximum diameter of the lesion, when approximating the lesion as a circle in the axial plane
+   - ``max_axial_damage_ratio []`` : maximum axial damage ratio defined as the ratio of the lesion area divided by the spinal cord area. The ratio is computed in the axial plane for each slice and and the maximum ratio is reported.
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/lesion-analysis/axial-damage-ratio.png
   :align: center
   :figwidth: 60%
 
 TODO: Ask Andrew Smith for permission to use the figure
+
+   - ``dorsal_bridge_width [mm]`` : dorsal tissue bridges defined as the width of dorsal spared tissue (i.e. towards the posterior direction of the AP axis) at the minimum distance from the intramedullary lesion edge to the boundary between the spinal cord and cerebrospinal fluid
+   - ``ventral_bridge_width [mm]`` : ventral tissue bridges defined as the width of ventral spared tissue (i.e. towards the anterior direction of the AP axis) at the minimum distance from the intramedullary lesion edge to the boundary between the spinal cord and cerebrospinal fluid
+
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/lesion-analysis/tissue-bridges.png
   :align: center
