@@ -13,4 +13,4 @@ This tutorial demonstrates how to use SCT's command-line scripts to perform lesi
    :maxdepth: 1
 
     lesion-analysis/lesion-segmentation
-    lesion-analysis/lesion-analysis
+    lesion-analysis/lesion-statistics
