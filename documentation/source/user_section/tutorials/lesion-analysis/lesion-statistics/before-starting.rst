@@ -6,7 +6,7 @@ Before starting this tutorial
    * ``single_subject/data/t2_lesion/t2_seg.nii.gz``: A 3D binary mask of the spinal cord.
    * ``single_subject/data/t2_lesion/t2_lesion.nii.gz``: A 3D binary mask of the lesion.
 
-   You can get these files by downloading :sct_tutorial_data:`data_lesion.zip`.
+   You can get these files by downloading :sct_tutorial_data:`data_lesion.zip`. TODO: add data_lesion.zip
 
 .. note::
 
