@@ -11,7 +11,6 @@ import json
 import logging
 import datetime
 from typing import Callable, List, Tuple, Union
-import itertools as it
 from hashlib import md5
 
 import numpy as np
@@ -21,6 +20,7 @@ import skimage.exposure
 from scipy.ndimage import center_of_mass
 
 from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.reports.qc2 import assign_label_colors_by_groups
 from spinalcordtoolbox.reports.slice import Slice, Axial, Sagittal
 from spinalcordtoolbox.reports.assets._assets.py import refresh_qc_entries
 from spinalcordtoolbox.utils.fs import copy, extract_fname, mutex
@@ -37,61 +37,6 @@ mpl_patheffects = LazyLoader("mpl_patheffects", globals(), "matplotlib.patheffec
 
 
 logger = logging.getLogger(__name__)
-
-
-def assign_label_colors_by_groups(labels):
-    """
-    This function handles label colors when labels may not be in a single continuous group:
-
-        - Normal vertebral labels:  [2, 3, 4, 5, 6, ...]
-        - Edge case, TotalSegmentator labels: [31, 32, 33, 200, 201, 217, 218, 219]
-
-    We assume that the subgroups of labels (1: [31, 32, 33, ...], 2: [200, 201], 3: [217, 218, 219, ...])
-    should each be assigned their own distinct colormap, as to group them semantically.
-    """
-    # Arrange colormaps for max contrast between colormaps, and max contrast between colors in colormaps
-    distinct_colormaps = ['Blues', 'Reds', 'Greens', 'Oranges', 'Purples']
-    colormap_sampling = [0.25, 0.5, 0.75, 0.5]  # light -> medium -> dark -> medium -> (repeat)
-
-    # Split labels into subgroups --> we split the groups wherever the difference between labels is > 1
-    start_end = [0, len(labels)]
-    for idx, (prev, curr) in enumerate(zip(labels, labels[1:]), start=1):
-        if curr - prev > 1:
-            start_end.insert(len(start_end) - 1, idx)
-    label_groups = [labels[start:end] for start, end in zip(start_end, start_end[1:])]
-
-    # Handle the usual case: A single continuous group (likely vertebral labels)
-    # Contrast ratios against #000000 taken from https://webaim.org/resources/contrastchecker/
-    labels_color = [
-        "#ffffff",  # White       (21.00:1)
-        "#F28C28",  # Orange      ( 8.55:1)
-        "#0096FF",  # Blue        ( 6.80:1)
-        "#ffee00",  # Yellow      (17.48:1)
-        "#ff0000",  # Red         ( 5.25:1)
-        "#50ff30",  # Green       (15.68:1)
-        "#F749FD",  # Magenta     ( 7.32:1)
-    ]
-    if len(label_groups) == 1:
-        # repeat high-contrast colors until we have enough to cover the range of labels
-        n_colors = labels.max() - labels.min() + 1
-        color_list = list(it.islice(it.cycle(labels_color), n_colors))
-
-    # Handle the edge case: Multiple continuous groups
-    else:
-        # Initialize a list by repeating the color black (#000000) to fill in the gaps between colors.
-        # We do this because matplotlib applies colormaps by scaling both the data and the colormap to [0, 1].
-        # Without filling in the gaps between groups, the colormap would be scaled incorrectly relative to the data.
-        # ((Note that, if done right, the #000000 color should never be assigned to our label values.))
-        color_list = ['#000000'] * (labels.max() - labels.min() + 1)
-        # Assign a colormap to each group of labels (while sampling the colormap at different points)
-        for i, label_group in enumerate(label_groups):
-            colormap = mpl_plt.get_cmap(distinct_colormaps[i % len(distinct_colormaps)])
-            sampled_colors = [mpl_colors.to_hex(c) for c in [colormap(n) for n in colormap_sampling]]
-            # Then, assign a color to each label within the group
-            for j, label in enumerate(label_group):
-                color_list[label - labels.min()] = sampled_colors[j % len(sampled_colors)]
-
-    return color_list
 
 
 class QcImage:
