@@ -538,14 +538,14 @@ def add_segmentation_labels(ax: mpl_axes.Axes, seg_mosaic: np.ndarray, colors: l
     for row in range(grid_shape[0]):
         for col in range(grid_shape[1]):
             # Fetch sub-array from mosaic
-            extents = [(row*bbox[0], (row+1)*bbox[0]),
-                       (col*bbox[1], (col+1)*bbox[1])]
-            arr = seg_mosaic[extents[0][0]:extents[0][1], extents[1][0]:extents[1][1]]
+            extents = (slice(row*bbox[0], (row+1)*bbox[0]),
+                       slice(col*bbox[1], (col+1)*bbox[1]))
+            arr = seg_mosaic[extents]
             # Check for nonzero labels, then draw text for each label found
             labels_in_arr = [v for v in np.unique(arr) if v]
             for idx_pos, l_arr in enumerate(labels_in_arr, start=1):
-                y, x = (extents[0][1] - 6*idx_pos + 3,  # Shift each subsequent label up in case there are >1
-                        extents[1][1] - 6)
+                y, x = (extents[0].stop - 6*idx_pos + 3,  # Shift each subsequent label up in case there are >1
+                        extents[1].stop - 6)
                 color = colors[0] if len(colors) == 1 else colors[labels.index(l_arr)]
                 ax.text(x, y, str(int(l_arr)), color=color, size=4).set_path_effects([
                     mpl_patheffects.Stroke(linewidth=1, foreground='black'),
