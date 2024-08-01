@@ -29,7 +29,7 @@ TODO: Ask Andrew Smith for permission to use the figure
   :figwidth: 60%
 
 Running ``sct_analyze_lesion``
----------------------------
+------------------------------
 
 ``sct_analyze_lesion`` can be applied to lesion and spinal cord segmentation masks using the following command
 
