@@ -310,7 +310,12 @@ def install_data(url, dest_folder, keep=False):
             for entry in it:
                 if entry.name in ("__MACOSX",):
                     continue
-                bundle_folder = entry.path
+                # NB: Don't traverse into nnUNetTrainer folders, and instead preserve the structure.
+                # This allows users to re-use the model folder for 3DSlicer with the correct structure.
+                elif entry.name.startswith("nnUNetTrainer"):
+                    bundle_folder = extraction_folder
+                else:
+                    bundle_folder = entry.path
     else:
         # bomb scenario -> stay here
         bundle_folder = extraction_folder
