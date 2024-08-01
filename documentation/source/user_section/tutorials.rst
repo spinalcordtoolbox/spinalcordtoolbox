@@ -20,7 +20,6 @@ We provide the following hands-on tutorials for SCT's command-line tools.
    * :doc:`tutorials/shape-analysis/normalize-morphometrics-compression`
 
 #. :doc:`Lesion analysis <tutorials/lesion-analysis>`
-
 #. :doc:`Registration to template <tutorials/registration-to-template>`
 
    * :doc:`tutorials/registration-to-template/template-registration`
@@ -72,6 +71,7 @@ If you would prefer to learn how to use SCT in a guided workshop setting, we pro
    tutorials/segmentation
    tutorials/vertebral-labeling
    tutorials/shape-analysis
+   tutorials/lesion-analysis
    tutorials/registration-to-template
    tutorials/multimodal-registration
    tutorials/gray-matter-segmentation
