@@ -165,6 +165,7 @@ def main(argv: Sequence[str]):
         param.fname_mask = arguments.m
     if arguments.param is not None:
         param.update(arguments.param)
+    param.verbose = verbose
 
     path_qc = arguments.qc
     qc_fps = arguments.qc_fps
