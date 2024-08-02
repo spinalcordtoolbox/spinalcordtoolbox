@@ -1,6 +1,5 @@
 # pytest unit tests for spinalcordtoolbox.reports
 
-import os
 import logging
 
 import pytest
@@ -8,9 +7,8 @@ import numpy as np
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.reports.slice import Sagittal
+from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.utils.sys import sct_test_path
-import spinalcordtoolbox.reports.qc as qc
-import spinalcordtoolbox.reports.slice as qcslice
 
 
 logger = logging.getLogger()
@@ -46,7 +44,13 @@ def labeled_data_test_params(path_in=sct_test_path('t2', 't2.nii.gz'),
 def test_sagittal_slice_get_center_spit(im_in, im_seg):
     """Test that get_center_split returns a valid index list."""
     assert im_in.orientation == im_seg.orientation, "im_in and im_seg aren't in the same orientation"
-    qcslice = Sagittal([im_in, im_seg], p_resample=None)
+
+    # Sagittal.get_center_spit() only uses self._images
+    qcslice = Sagittal()
+    qcslice._images = [
+        im_in.copy().change_orientation('SAL'),
+        im_seg.copy().change_orientation('SAL'),
+    ]
 
     if np.count_nonzero(im_seg.data) == 0:
         # If im_seg contains no labels, get_center_spit should fail
@@ -78,44 +82,37 @@ def t2_path():
     return t2_path
 
 
-def assert_qc_assets(path):
-    files = ('html/index.html', 'css/style.css', 'js/main.js')
-    for file_name in files:
-        assert os.path.exists(os.path.join(path, file_name))
-
-    assert os.path.isdir(os.path.join(path, 'imgs'))
-
-
 def test_label_vertebrae(t2_image, t2_seg_image, tmp_path):
-    qc_report = qc.QcReport(t2_image.absolutepath, 'sct_label_vertebrae', ['-a', '-b'], 'Sagittal', str(tmp_path))
-
-    qc.QcImage(
-        qc_report=qc_report,
-        interpolation='spline36',
-        action_list=[qc.QcImage.label_vertebrae],
-        process=qc_report.command,
-    ).layout(
-        qcslice_layout=lambda qcslice: qcslice.single(),
-        qcslice=qcslice.Sagittal([t2_image, t2_seg_image]),
+    generate_qc(
+        fname_in1=t2_image.absolutepath,
+        fname_seg=t2_seg_image.absolutepath,
+        plane='Sagittal',
+        args=['-a', '-b'],
+        path_qc=str(tmp_path),
+        dataset='dat',
+        subject='sub',
+        process='sct_label_vertebrae',
     )
 
-    assert os.path.isfile(qc_report.abs_background_img_path())
-    assert os.path.isfile(qc_report.abs_overlay_img_path())
+    # check that some files exist
+    assert len(list(tmp_path.glob('dat/sub/*/sct_label_vertebrae/*/background_img.png'))) == 1
+    assert len(list(tmp_path.glob('dat/sub/*/sct_label_vertebrae/*/overlay_img.png'))) == 1
+    assert len(list(tmp_path.glob('_json/qc_*.json'))) == 1
 
 
 def test_propseg(t2_image, t2_seg_image, tmp_path):
-    qc_report = qc.QcReport(t2_image.absolutepath, 'sct_propseg', ['-a'], 'Axial', str(tmp_path))
-
-    qc.QcImage(
-        qc_report=qc_report,
-        interpolation='none',
-        action_list=[qc.QcImage.listed_seg],
-        process=qc_report.command,
-    ).layout(
-        qcslice_layout=lambda qcslice: qcslice.mosaic(),
-        qcslice=qcslice.Axial([t2_image, t2_seg_image]),
+    generate_qc(
+        fname_in1=t2_image.absolutepath,
+        fname_seg=t2_seg_image.absolutepath,
+        plane='Axial',
+        args=['-a'],
+        path_qc=str(tmp_path),
+        dataset='dat',
+        subject='sub',
+        process='sct_propseg',
     )
 
-    assert os.path.isfile(qc_report.abs_background_img_path())
-    assert os.path.isfile(qc_report.abs_overlay_img_path())
-    assert os.path.isfile(qc_report.qc_results)
+    # check that some files exist
+    assert len(list(tmp_path.glob('dat/sub/*/sct_propseg/*/background_img.png'))) == 1
+    assert len(list(tmp_path.glob('dat/sub/*/sct_propseg/*/overlay_img.png'))) == 1
+    assert len(list(tmp_path.glob('_json/qc_*.json'))) == 1
