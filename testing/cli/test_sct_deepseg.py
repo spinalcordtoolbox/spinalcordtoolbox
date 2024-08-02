@@ -175,4 +175,4 @@ def test_segment_nifti_multiclass(fname_image, fnames_seg_manual, fname_out, suf
             im_seg = Image(fname_out)
             im_seg_manual = Image(fname_seg_manual)
             dice_segmentation = compute_dice(im_seg, im_seg_manual, mode='3d', zboundaries=False)
-            assert dice_segmentation > 0.85  # Temporary until we improve "fake_lesion" ground truth
+            assert dice_segmentation > 0.95
