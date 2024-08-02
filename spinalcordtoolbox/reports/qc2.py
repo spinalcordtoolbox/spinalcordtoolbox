@@ -10,6 +10,7 @@ import datetime
 from hashlib import md5
 import importlib.resources
 from importlib.abc import Traversable
+import itertools as it
 import json
 import logging
 import math
@@ -20,6 +21,7 @@ import numpy as np
 from scipy.ndimage import center_of_mass
 import skimage.exposure
 
+from spinalcordtoolbox.centerline.core import get_centerline, ParamCenterline
 from spinalcordtoolbox.image import Image
 import spinalcordtoolbox.reports
 from spinalcordtoolbox.reports.assets._assets.py import refresh_qc_entries
@@ -36,6 +38,9 @@ mpl_cm = LazyLoader("mpl_cm", globals(), "matplotlib.cm")
 mpl_colors = LazyLoader("mpl_colors", globals(), "matplotlib.colors")
 mpl_backend_agg = LazyLoader("mpl_backend_agg", globals(), "matplotlib.backends.backend_agg")
 mpl_patheffects = LazyLoader("mpl_patheffects", globals(), "matplotlib.patheffects")
+mpl_collections = LazyLoader("mpl_collections", globals(), "matplotlib.collections")
+mpl_plt = LazyLoader("mpl_plt", globals(), "matplotlib.pyplot")
+
 
 logger = logging.getLogger(__name__)
 
@@ -251,15 +256,12 @@ def sct_deepseg(
     subject: Optional[str],
 ):
     """
-    Generate a QC report for sct_deepseg, with varied colormaps depending on the type of segmentation.
-
-    This refactor is based off of the `listed_seg` method in qc.py, adapted to support multiple images.
+    Generate a QC report for sct_deepseg, based on which task was used.
     """
     command = 'sct_deepseg'
     cmdline = [command]
     cmdline.extend(argv)
 
-    # Axial orientation, switch between one anat image and 1-2 seg images
     with create_qc_entry(
         path_input=Path(fname_input).absolute(),
         path_qc=Path(path_qc),
@@ -269,83 +271,197 @@ def sct_deepseg(
         dataset=dataset,
         subject=subject,
     ) as imgs_to_generate:
-        # FIXME: This code is more or less duplicated with the 'sct_register_multimodal' report, because both reports
-        #        use the old qc.py method "_make_QC_image_for_3d_volumes" for generating the background img.
-        # Resample images slice by slice
-        p_resample = {
-            'human': 0.6, 'mouse': 0.1,
-        }[species]
-        logger.info('Resample images to %fx%f vox', p_resample, p_resample)
-        img_input = Image(fname_input).change_orientation('SAL')
-        img_input = resample_nib(
-            image=img_input,
-            new_size=[img_input.dim[4], p_resample, p_resample],
-            new_size_type='mm',
-            interpolation='spline',
-        )
-        img_seg_sc = resample_nib(
-            image=Image(fname_seg).change_orientation('SAL'),
-            image_dest=img_input,
-            interpolation='linear',
-        )
-        img_seg_lesion = resample_nib(
-            image=Image(fname_seg2).change_orientation('SAL'),
-            image_dest=img_input,
-            interpolation='linear',
-        ) if fname_seg2 else None
+        if "seg_spinal_rootlets_t2w" in argv:
+            sct_deepseg_spinal_rootlets_t2w(
+                imgs_to_generate, fname_input, fname_seg, fname_seg2, species)
+        else:
+            sct_deepseg_default(
+                imgs_to_generate, fname_input, fname_seg, fname_seg2, species)
 
-        # Each slice is centered on the segmentation
-        logger.info('Find the center of each slice')
-        centers = np.array([center_of_mass(slice) for slice in img_seg_sc.data])
-        inf_nan_fill(centers[:, 0])
-        inf_nan_fill(centers[:, 1])
 
-        # Generate the first QC report image
-        img = equalize_histogram(mosaic(img_input, centers))
+def sct_deepseg_default(
+    imgs_to_generate: dict[str, Path],
+    fname_input: str,
+    fname_seg_sc: str,
+    fname_seg_lesion: Optional[str],
+    species: str,
+):
+    """
+    Generate a QC report for sct_deepseg, with varied colormaps depending on the type of segmentation.
 
-        # For QC reports, axial mosaics will often have smaller height than width
-        # (e.g. WxH = 20x3 slice images). So, we want to reduce the fig height to match this.
-        # `size_fig` is in inches. So, dpi=300 --> 1500px, dpi=100 --> 500px, etc.
-        size_fig = [5, 5 * img.shape[0] / img.shape[1]]
+    This refactor is based off of the `listed_seg` method in qc.py, adapted to support multiple images.
+    """
+    # Axial orientation, switch between one anat image and 1-2 seg images
+    # FIXME: This code is more or less duplicated with the 'sct_register_multimodal' report, because both reports
+    #        use the old qc.py method "_make_QC_image_for_3d_volumes" for generating the background img.
+    # Resample images slice by slice
+    p_resample = {'human': 0.6, 'mouse': 0.1}[species]
+    img_input = Image(fname_input).change_orientation('SAL')
+    img_seg_sc = Image(fname_seg_sc).change_orientation('SAL')
+    img_seg_lesion = Image(fname_seg_lesion).change_orientation('SAL') if fname_seg_lesion else None
 
-        fig = mpl_figure.Figure()
-        fig.set_size_inches(*size_fig, forward=True)
-        mpl_backend_agg.FigureCanvasAgg(fig)
-        ax = fig.add_axes((0, 0, 1, 1))
-        ax.imshow(img, cmap='gray', interpolation='none', aspect=1.0)
-        add_orientation_labels(ax)
-        ax.get_xaxis().set_visible(False)
-        ax.get_yaxis().set_visible(False)
-        img_path = str(imgs_to_generate['path_background_img'])
-        logger.debug('Save image %s', img_path)
-        fig.savefig(img_path, format='png', transparent=True, dpi=300)
+    # Resample images slice by slice
+    logger.info('Resample images to %fx%f vox', p_resample, p_resample)
+    img_input = resample_nib(
+        image=img_input,
+        new_size=[img_input.dim[4], p_resample, p_resample],
+        new_size_type='mm',
+        interpolation='spline',
+    )
+    img_seg_sc = resample_nib(
+        image=img_seg_sc,
+        image_dest=img_input,
+        interpolation='linear',
+    )
+    img_seg_lesion = resample_nib(
+        image=img_seg_lesion,
+        image_dest=img_input,
+        interpolation='linear',
+    ) if fname_seg_lesion else None
 
-        # Generate the second QC report image
-        fig = mpl_figure.Figure()
-        fig.set_size_inches(*size_fig, forward=True)
-        mpl_backend_agg.FigureCanvasAgg(fig)
-        ax = fig.add_axes((0, 0, 1, 1))
-        colormaps = [mpl_colors.ListedColormap(["#ff0000"]),  # Red for first image
-                     mpl_colors.ListedColormap(["#00ffff"])]  # Cyan for second
-        for i, image in enumerate([img_seg_sc, img_seg_lesion]):
-            if not image:
-                continue
-            img = mosaic(image, centers)
-            img = np.ma.masked_less_equal(img, 0)
-            img.set_fill_value(0)
-            ax.imshow(img,
-                      cmap=colormaps[i],
-                      norm=mpl_colors.Normalize(vmin=0.5, vmax=1),
-                      # img==1 -> opaque, but soft regions -> more transparent as value decreases
-                      alpha=(img / img.max()),  # scale to [0, 1]
-                      interpolation='none',
-                      aspect=1.0)
+    # Each slice is centered on the segmentation
+    logger.info('Find the center of each slice')
+    centers = np.array([center_of_mass(slice) for slice in img_seg_sc.data])
+    inf_nan_fill(centers[:, 0])
+    inf_nan_fill(centers[:, 1])
 
-        ax.get_xaxis().set_visible(False)
-        ax.get_yaxis().set_visible(False)
-        img_path = str(imgs_to_generate['path_overlay_img'])
-        logger.debug('Save image %s', img_path)
-        fig.savefig(img_path, format='png', transparent=True, dpi=300)
+    # Generate the first QC report image
+    img = equalize_histogram(mosaic(img_input, centers))
+
+    # For QC reports, axial mosaics will often have smaller height than width
+    # (e.g. WxH = 20x3 slice images). So, we want to reduce the fig height to match this.
+    # `size_fig` is in inches. So, dpi=300 --> 1500px, dpi=100 --> 500px, etc.
+    size_fig = [5, 5 * img.shape[0] / img.shape[1]]
+
+    fig = mpl_figure.Figure()
+    fig.set_size_inches(*size_fig, forward=True)
+    mpl_backend_agg.FigureCanvasAgg(fig)
+    ax = fig.add_axes((0, 0, 1, 1))
+    ax.imshow(img, cmap='gray', interpolation='none', aspect=1.0)
+    add_orientation_labels(ax)
+    ax.get_xaxis().set_visible(False)
+    ax.get_yaxis().set_visible(False)
+    img_path = str(imgs_to_generate['path_background_img'])
+    logger.debug('Save image %s', img_path)
+    fig.savefig(img_path, format='png', transparent=True, dpi=300)
+
+    # Generate the second QC report image
+    fig = mpl_figure.Figure()
+    fig.set_size_inches(*size_fig, forward=True)
+    mpl_backend_agg.FigureCanvasAgg(fig)
+    ax = fig.add_axes((0, 0, 1, 1))
+    colormaps = [mpl_colors.ListedColormap(["#ff0000"]),  # Red for first image
+                 mpl_colors.ListedColormap(["#00ffff"])]  # Cyan for second
+    for i, image in enumerate([img_seg_sc, img_seg_lesion]):
+        if not image:
+            continue
+        img = mosaic(image, centers)
+        img = np.ma.masked_less_equal(img, 0)
+        img.set_fill_value(0)
+        ax.imshow(img,
+                  cmap=colormaps[i],
+                  norm=mpl_colors.Normalize(vmin=0.5, vmax=1),
+                  # img==1 -> opaque, but soft regions -> more transparent as value decreases
+                  alpha=(img / img.max()),  # scale to [0, 1]
+                  interpolation='none',
+                  aspect=1.0)
+
+    ax.get_xaxis().set_visible(False)
+    ax.get_yaxis().set_visible(False)
+    img_path = str(imgs_to_generate['path_overlay_img'])
+    logger.debug('Save image %s', img_path)
+    fig.savefig(img_path, format='png', transparent=True, dpi=300)
+
+
+def sct_deepseg_spinal_rootlets_t2w(
+    imgs_to_generate: dict[str, Path],
+    fname_input: str,
+    fname_seg_sc: str,
+    fname_seg_lesion: Optional[str],
+    species: str,
+):
+    """
+    Generate a QC report for `sct_deepseg -task seg_spinal_rootlets_t2w`.
+
+    This refactor is based off of the `listed_seg` method in qc.py, adapted to support multiple images.
+    """
+    # Axial orientation, switch between one anat image and 1-2 seg images
+    # FIXME: This code is more or less duplicated with the 'sct_register_multimodal' report, because both reports
+    #        use the old qc.py method "_make_QC_image_for_3d_volumes" for generating the background img.
+    # Resample images slice by slice
+    p_resample = {'human': 0.6, 'mouse': 0.1}[species]
+    img_input = Image(fname_input).change_orientation('SAL')
+    img_seg_sc = Image(fname_seg_sc).change_orientation('SAL')
+    img_seg_lesion = Image(fname_seg_lesion).change_orientation('SAL') if fname_seg_lesion else None
+
+    # Rootlets need a larger "base" radius as they exist outside the SC
+    radius = (23, 23)
+    # The radius size is suited to the species-specific resolutions. But, since we plan to skip
+    # resampling, we need to instead adjust the crop radius to suit the *actual* resolution.
+    p_original = img_seg_sc.dim[5]  # dim[0:3] => shape, dim[4:7] => pixdim, so dim[5] == pixdim[1]
+    radius = tuple(int(v * (p_resample / p_original)) for v in radius)
+    # If the resolution is greater than the resampling resolution, then the crop size will be smaller.
+    # To compensate for this (and ensure the QC is visually readable), we scale up the image
+    scale = int(math.ceil(p_original / p_resample))  # e.g. 0.8mm human -> 0.8/0.6 -> 1.33x => 2x scale
+
+    # Each slice is centered on the segmentation
+    logger.info('Find the center of each slice')
+    centerline_param = ParamCenterline(algo_fitting="optic", contrast="t2")
+    img_centerline, _, _, _ = get_centerline(img_input, param=centerline_param)
+    centers = np.array([center_of_mass(slice) for slice in img_centerline.data])
+    inf_nan_fill(centers[:, 0])
+    inf_nan_fill(centers[:, 1])
+
+    # Generate the first QC report image
+    img = equalize_histogram(mosaic(img_input, centers, radius, scale))
+
+    # For QC reports, axial mosaics will often have smaller height than width
+    # (e.g. WxH = 20x3 slice images). So, we want to reduce the fig height to match this.
+    # `size_fig` is in inches. So, dpi=300 --> 1500px, dpi=100 --> 500px, etc.
+    size_fig = [5, 5 * img.shape[0] / img.shape[1]]
+
+    fig = mpl_figure.Figure()
+    fig.set_size_inches(*size_fig, forward=True)
+    mpl_backend_agg.FigureCanvasAgg(fig)
+    ax = fig.add_axes((0, 0, 1, 1))
+    ax.imshow(img, cmap='gray', interpolation='none', aspect=1.0)
+    add_orientation_labels(ax, radius=tuple(r*scale for r in radius))
+    ax.get_xaxis().set_visible(False)
+    ax.get_yaxis().set_visible(False)
+    img_path = str(imgs_to_generate['path_background_img'])
+    logger.debug('Save image %s', img_path)
+    fig.savefig(img_path, format='png', transparent=True, dpi=300)
+
+    # Generate the second QC report image
+    fig = mpl_figure.Figure()
+    fig.set_size_inches(*size_fig, forward=True)
+    mpl_backend_agg.FigureCanvasAgg(fig)
+    ax = fig.add_axes((0, 0, 1, 1))
+    # get available labels
+    img = np.rint(np.ma.masked_where(img_seg_sc.data < 1, img_seg_sc.data))
+    labels = np.unique(img[np.where(~img.mask)]).astype(int)
+    colormaps = [mpl_colors.ListedColormap(assign_label_colors_by_groups(labels))]
+    for i, image in enumerate([img_seg_sc, img_seg_lesion]):
+        if not image:
+            continue
+        img = mosaic(image, centers, radius, scale)
+        img = np.ma.masked_less_equal(img, 0)
+        img.set_fill_value(0)
+        ax.imshow(img,
+                  cmap=colormaps[i],
+                  norm=None,
+                  alpha=1.0,
+                  interpolation='none',
+                  aspect=1.0)
+        # linewidth 0.5 is too thick, 0.25 is too thin
+        plot_outlines(img, ax=ax, facecolor='none', edgecolor='black', linewidth=0.3)
+        add_segmentation_labels(ax, img, colors=colormaps[i].colors, radius=tuple(r*scale for r in radius))
+
+    ax.get_xaxis().set_visible(False)
+    ax.get_yaxis().set_visible(False)
+    img_path = str(imgs_to_generate['path_overlay_img'])
+    logger.debug('Save image %s', img_path)
+    fig.savefig(img_path, format='png', transparent=True, dpi=300)
 
 
 def sct_analyze_lesion(
@@ -503,7 +619,7 @@ def inf_nan_fill(A: np.ndarray):
             A[valid])
 
 
-def mosaic(img: Image, centers: np.ndarray, radius: tuple[int, int] = (15, 15)):
+def mosaic(img: Image, centers: np.ndarray, radius: tuple[int, int] = (15, 15), scale: int = 1):
     """
     Arrange the slices of `img` into a grid of images.
 
@@ -513,39 +629,73 @@ def mosaic(img: Image, centers: np.ndarray, radius: tuple[int, int] = (15, 15)):
     If `img` has N slices, then `centers` should have shape (N, 2).
     """
     # Fit as many slices as possible in each row of 600 pixels
-    num_col = math.floor(600 / (2*radius[0]))
+    num_col = math.floor(600 / (2*radius[0]*scale))
 
     # Center and crop each axial slice
     cropped = []
     for center, slice in zip(centers.astype(int), img.data):
         # Add a margin before cropping, in case the center is too close to the edge
-        cropped.append(np.pad(slice, radius)[
+        # Also, use Kronecker product to scale each block in multiples
+        cropped.append(np.kron(np.pad(slice, radius)[
             center[0]:center[0] + 2*radius[0],
             center[1]:center[1] + 2*radius[1],
-        ])
+        ], np.ones((scale, scale))))
 
     # Pad the list with empty arrays, to get complete rows of num_col
-    empty = np.zeros((2*radius[0], 2*radius[1]))
+    empty = np.zeros((2*radius[0]*scale, 2*radius[1]*scale))
     cropped.extend([empty] * (-len(cropped) % num_col))
 
     # Arrange the images into a grid
     return np.block([cropped[i:i+num_col] for i in range(0, len(cropped), num_col)])
 
 
-def add_orientation_labels(ax: mpl_axes.Axes):
+def add_orientation_labels(ax: mpl_axes.Axes, radius: tuple[int, int] = (15, 15)):
     """
     Add orientation labels (A, P, L, R) to a figure, yellow with a black outline.
     """
-    for x, y, letter in [
-        (12, 6, 'A'),
-        (12, 28, 'P'),
-        (0, 18, 'L'),
-        (24, 18, 'R'),
+    # Ensure that letter locations are determined as a function of the bounding box. For a 15,15 radius (30x30):
+    #    A                    [12,  6]
+    # L     R   -->  [0, 17]            [24, 17]
+    #    P                    [12, 28]
+    for letter, x, y, in [
+        ('A', radius[0] - 3,   6),
+        ('P', radius[0] - 3,   radius[1]*2 - 2),
+        ('L', 0,               radius[1] + 2),
+        ('R', radius[0]*2 - 6, radius[1] + 2)
     ]:
         ax.text(x, y, letter, color='yellow', size=4).set_path_effects([
             mpl_patheffects.Stroke(linewidth=1, foreground='black'),
             mpl_patheffects.Normal(),
         ])
+
+
+def add_segmentation_labels(ax: mpl_axes.Axes, seg_mosaic: np.ndarray, colors: list[str],
+                            radius: tuple[int, int] = (15, 15)):
+    """
+    Add labels corresponding to the value of the segmentation for each slice in the mosaic.
+    """
+    # Fetch mosaic shape properties
+    bbox = [2*radius[0], 2*radius[1]]
+    grid_shape = [s // bb for s, bb in zip(seg_mosaic.shape, bbox)]
+    # Fetch set of labels in the mosaic
+    labels = [v for v in np.unique(seg_mosaic) if v]
+    # Iterate over each sub-array in the mosaic
+    for row in range(grid_shape[0]):
+        for col in range(grid_shape[1]):
+            # Fetch sub-array from mosaic
+            extents = (slice(row*bbox[0], (row+1)*bbox[0]),
+                       slice(col*bbox[1], (col+1)*bbox[1]))
+            arr = seg_mosaic[extents]
+            # Check for nonzero labels, then draw text for each label found
+            labels_in_arr = [v for v in np.unique(arr) if v]
+            for idx_pos, l_arr in enumerate(labels_in_arr, start=1):
+                y, x = (extents[0].stop - 6*idx_pos + 3,  # Shift each subsequent label up in case there are >1
+                        extents[1].stop - 6)
+                color = colors[0] if len(colors) == 1 else colors[labels.index(l_arr)]
+                ax.text(x, y, str(int(l_arr)), color=color, size=4).set_path_effects([
+                    mpl_patheffects.Stroke(linewidth=1, foreground='black'),
+                    mpl_patheffects.Normal(),
+                ])
 
 
 def equalize_histogram(img: np.ndarray):
@@ -573,3 +723,117 @@ def equalize_histogram(img: np.ndarray):
         c = c[:h, :w]
 
     return np.array(c * (max_ - min_) + min_, dtype=img.dtype)
+
+
+def plot_outlines(bool_img: np.ndarray, ax: mpl_axes.Axes, **kwargs):
+    """
+    Draw the outlines of a 2D binary Numpy array with Matplotlib.
+
+    kwargs are forwarded to `matplotlib.collections.PolyCollection` for styling.
+    """
+    # To see where each (row, column) index shows up in the graphic
+    # (left, right, top, bottom), see:
+    # https://matplotlib.org/stable/users/explain/artists/imshow_extent.html#default-extent
+
+    # Add a frame of zeros around the image to account for cells on the border
+    padded = np.pad(bool_img, 1)
+
+    # horizontal_edge[r, c] is True when there should be a visible horizontal
+    # outline between bool_img[r, c+1] and bool_img[r+1, c+1]
+    horizontal_edge = (padded[:-1, :] != padded[1:, :])
+
+    # corner[r, c] is True when a run of horizontal edges starts or stops at
+    # the upper left corner of bool_img[r, c]
+    corner = (horizontal_edge[:, :-1] != horizontal_edge[:, 1:])
+
+    # List the corners in order: first by row (from top to bottom), then by
+    # column within each row (from left to right). These will be all the
+    # polygon vertices we need, and the two endpoints of each run of horizontal
+    # edges appearing side by side in the list
+    vertices = sorted(map(tuple, np.argwhere(corner)))
+
+    # Given a vertex, we want to quickly travel to its horizontal neighbour
+    # i^1 == i+1 when i is even (0->1, 2->3, ...)
+    # i^1 == i-1 when i is odd (1->0, 3->2, ...)
+    horizontal_move = {v: vertices[i ^ 1] for i, v in enumerate(vertices)}
+
+    # We also want to quickly travel to vertical neighbours. We can do the same
+    # thing as above, with a different sorting order: by column, then by row
+    vertices.sort(key=lambda v: v[::-1])
+    vertical_move = {v: vertices[i ^ 1] for i, v in enumerate(vertices)}
+
+    # Now build each polygon by listing its vertices in order. We remove the
+    # vertices from horizontal_move as we visit them
+    polys = []
+    while horizontal_move:
+        polygon = []
+        # Start at an arbitrary unvisited vertex
+        v1 = next(iter(horizontal_move))
+        while v1 in horizontal_move:
+            # Keep alternating horizontal and vertical moves, until we revisit
+            # the polygon's first vertex
+            polygon.append(v1)
+            v2 = horizontal_move.pop(v1)  # remove one endpoint
+            polygon.append(v2)
+            del horizontal_move[v2]  # remove the other endpoint
+            v1 = vertical_move[v2]
+        # Convert (row, column) coordinates to (x, y)
+        polys.append(np.array(polygon)[:, ::-1] - 0.5)
+
+    # Draw it
+    ax.add_collection(mpl_collections.PolyCollection(polys, **kwargs))
+
+
+def assign_label_colors_by_groups(labels):
+    """
+    This function handles label colors when labels may not be in a single continuous group:
+
+        - Normal vertebral labels:  [2, 3, 4, 5, 6, ...]
+        - Edge case, TotalSegmentator labels: [31, 32, 33, 200, 201, 217, 218, 219]
+
+    We assume that the subgroups of labels (1: [31, 32, 33, ...], 2: [200, 201], 3: [217, 218, 219, ...])
+    should each be assigned their own distinct colormap, as to group them semantically.
+    """
+    # Arrange colormaps for max contrast between colormaps, and max contrast between colors in colormaps
+    distinct_colormaps = ['Blues', 'Reds', 'Greens', 'Oranges', 'Purples']
+    colormap_sampling = [0.25, 0.5, 0.75, 0.5]  # light -> medium -> dark -> medium -> (repeat)
+
+    # Split labels into subgroups --> we split the groups wherever the difference between labels is > 1
+    start_end = [0, len(labels)]
+    for idx, (prev, curr) in enumerate(zip(labels, labels[1:]), start=1):
+        if curr - prev > 1:
+            start_end.insert(len(start_end) - 1, idx)
+    label_groups = [labels[start:end] for start, end in zip(start_end, start_end[1:])]
+
+    # Handle the usual case: A single continuous group (likely vertebral labels)
+    # Contrast ratios against #000000 taken from https://webaim.org/resources/contrastchecker/
+    labels_color = [
+        "#ffffff",  # White       (21.00:1)
+        "#F28C28",  # Orange      ( 8.55:1)
+        "#0096FF",  # Blue        ( 6.80:1)
+        "#ffee00",  # Yellow      (17.48:1)
+        "#ff0000",  # Red         ( 5.25:1)
+        "#50ff30",  # Green       (15.68:1)
+        "#F749FD",  # Magenta     ( 7.32:1)
+    ]
+    if len(label_groups) == 1:
+        # repeat high-contrast colors until we have enough to cover the range of labels
+        n_colors = labels.max() - labels.min() + 1
+        color_list = list(it.islice(it.cycle(labels_color), n_colors))
+
+    # Handle the edge case: Multiple continuous groups
+    else:
+        # Initialize a list by repeating the color black (#000000) to fill in the gaps between colors.
+        # We do this because matplotlib applies colormaps by scaling both the data and the colormap to [0, 1].
+        # Without filling in the gaps between groups, the colormap would be scaled incorrectly relative to the data.
+        # ((Note that, if done right, the #000000 color should never be assigned to our label values.))
+        color_list = ['#000000'] * (labels.max() - labels.min() + 1)
+        # Assign a colormap to each group of labels (while sampling the colormap at different points)
+        for i, label_group in enumerate(label_groups):
+            colormap = mpl_plt.get_cmap(distinct_colormaps[i % len(distinct_colormaps)])
+            sampled_colors = [mpl_colors.to_hex(c) for c in [colormap(n) for n in colormap_sampling]]
+            # Then, assign a color to each label within the group
+            for j, label in enumerate(label_group):
+                color_list[label - labels.min()] = sampled_colors[j % len(sampled_colors)]
+
+    return color_list
