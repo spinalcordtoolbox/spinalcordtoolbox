@@ -248,13 +248,14 @@ def unzip(compressed, dest_folder):
         raise
 
 
-def install_data(url, dest_folder, keep=False):
+def install_data(url, dest_folder, keep=False, dirs_to_preserve=()):
     """
     Download a data bundle from a URL and install in the destination folder.
 
     :param url: URL or sequence thereof (if mirrors).
     :param dest_folder: destination directory for the data (to be created).
     :param keep: whether to keep existing data in the destination folder.
+    :param dirs_to_preserve: Tuple of substrings where, if found in subdirectory name, the dir will be preserved.
     :return: url_used: the URL that was successfully used to download the bundle
 
     .. note::
@@ -310,9 +311,7 @@ def install_data(url, dest_folder, keep=False):
             for entry in it:
                 if entry.name in ("__MACOSX",):
                     continue
-                # NB: Don't traverse into nnUNetTrainer folders, and instead preserve the structure.
-                # This allows users to re-use the model folder for 3DSlicer with the correct structure.
-                elif entry.name.startswith("nnUNetTrainer"):
+                elif any((s in entry.name) for s in dirs_to_preserve):
                     bundle_folder = extraction_folder
                 else:
                     bundle_folder = entry.path

@@ -395,7 +395,8 @@ def install_model(name_model):
     # List of mirror URLs corresponding to a single model
     if isinstance(url_field, list):
         model_urls = url_field
-        urls_used = download.install_data(model_urls, folder(name_model))
+        # Make sure to preserve the internal folder structure for nnUNet-based models (to allow re-use with 3D Slicer)
+        urls_used = download.install_data(model_urls, folder(name_model), dirs_to_preserve=("nnUNetTrainer",))
     # Dict of lists, with each list corresponding to a different model seed for ensembling
     else:
         if not isinstance(url_field, dict):
