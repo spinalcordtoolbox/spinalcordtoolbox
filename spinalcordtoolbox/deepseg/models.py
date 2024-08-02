@@ -131,18 +131,18 @@ MODELS = {
     },
     "model_seg_sci_multiclass_sc_lesion_nnunet": {
         "url": [
-            "https://github.com/ivadomed/model_seg_sci/releases/download/r20240130/model-sci-multisite_r20240130.zip"
+            "https://github.com/ivadomed/model_seg_sci/releases/download/r20240729/model_SCIsegV2_r20240729.zip"
         ],
-        "description": "Traumatic SCI spinal cord/lesion segmentation for T2w contrast",
+        "description": "Intramedullary SCI lesion and cord segmentation in T2w MRI",
         "contrasts": ["t2"],
         "thr": None,  # Images are already binarized when splitting into sc-seg + lesion-seg
         "default": False,
     },
     "model_seg_spinal_rootlets_nnunet": {
         "url": [
-            "https://github.com/ivadomed/model-spinal-rootlets/releases/download/r20240129/model-spinal-rootlets_M5_r20240129.zip"
+            "https://github.com/ivadomed/model-spinal-rootlets/releases/download/r20240730/model-spinal-rootlets_M5_r20240129-2.zip"
         ],
-        "description": "Segmentation of spinal nerve rootlets for T2w images using NNUnet",
+        "description": "Segmentation of spinal nerve rootlets for T2w images using nnUNet",
         "contrasts": ["t2"],
         "thr": None,  # Multiclass rootlets model (1.0, 2.0, 3.0...) -> no thresholding
         "default": False,
@@ -151,7 +151,7 @@ MODELS = {
          "url": [
              "https://github.com/ivadomed/model_seg_mouse-sc_wm-gm_t1/releases/download/v0.4/model.zip"
          ],
-         "description": "White and grey matter segmentation on T1-weighted exvivo mouse spinal cord using NNUnet",
+         "description": "White and grey matter segmentation on T1-weighted exvivo mouse spinal cord using nnUNet",
          "contrasts": ["t1"],
          "thr": None,  # Images are already binarized when splitting into gm-seg and wm-seg
          "default": False,
@@ -293,11 +293,12 @@ TASKS = {
          'url': 'https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/',
          'models': ['model_seg_sc_contrast_agnostic_softseg_monai']},
     'seg_sc_lesion_t2w_sci':
-        {'description': 'Traumatic SCI spinal cord/lesion seg for T2w contrast',
+        {'description': 'Intramedullary SCI lesion and cord segmentation in T2w MRI',
          'long_description': 'This segmentation model for spinal cord injury segmentation uses a 3D U-Net '
                              'architecture, and was trained with the nnUNetV2 framework. It is a multiclass model, '
                              'outputting segmentations for both the hyperintense SCI lesions and spinal cord. Training '
-                             'data consisted of T2w images (n=196), spanning numerous resolutions and '
+                             'data consisted of T2w images from 7 sites with traumatic (acute pre-operative, intermediate, '
+                             'chronic), non-traumatic (DCM) and ischemic SCI lesions spanning numerous resolutions, '
                              'orientations, as well as multiple scanner manufacturers and field strengths.',
          'url': 'https://github.com/ivadomed/model_seg_sci',
          'models': ['model_seg_sci_multiclass_sc_lesion_nnunet']},
@@ -394,7 +395,8 @@ def install_model(name_model):
     # List of mirror URLs corresponding to a single model
     if isinstance(url_field, list):
         model_urls = url_field
-        urls_used = download.install_data(model_urls, folder(name_model))
+        # Make sure to preserve the internal folder structure for nnUNet-based models (to allow re-use with 3D Slicer)
+        urls_used = download.install_data(model_urls, folder(name_model), dirs_to_preserve=("nnUNetTrainer",))
     # Dict of lists, with each list corresponding to a different model seed for ensembling
     else:
         if not isinstance(url_field, dict):
@@ -501,7 +503,7 @@ def has_ckpt_files(path_model):
 
 def has_pth_files(path_model):
     """
-    Check if model path contains any serialized PyTorch state dictionary files (used by non-ivadomed NNUnet models)
+    Check if model path contains any serialized PyTorch state dictionary files (used by non-ivadomed nnUNet models)
     """
     return bool(glob.glob(os.path.join(path_model, '**', '*.pth'), recursive=True))
 

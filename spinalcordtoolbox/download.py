@@ -41,8 +41,8 @@ DATASET_DICT = {
     },
     "sct_testing_data": {
         "mirrors": [
-            "https://github.com/spinalcordtoolbox/sct_testing_data/releases/download/r20240503/sct_testing_data-r20240503.zip",
-            "https://osf.io/zpnbv/?action=download",
+            "https://github.com/spinalcordtoolbox/sct_testing_data/releases/download/r20240802/sct_testing_data-r20240802.zip",
+            "https://osf.io/9cdh8/?action=download",
         ],
         "default_location": os.path.join(__sct_dir__, "data", "sct_testing_data"),
         "download_type": "Datasets",
@@ -248,13 +248,14 @@ def unzip(compressed, dest_folder):
         raise
 
 
-def install_data(url, dest_folder, keep=False):
+def install_data(url, dest_folder, keep=False, dirs_to_preserve=()):
     """
     Download a data bundle from a URL and install in the destination folder.
 
     :param url: URL or sequence thereof (if mirrors).
     :param dest_folder: destination directory for the data (to be created).
     :param keep: whether to keep existing data in the destination folder.
+    :param dirs_to_preserve: Tuple of substrings where, if found in subdirectory name, the dir will be preserved.
     :return: url_used: the URL that was successfully used to download the bundle
 
     .. note::
@@ -310,7 +311,10 @@ def install_data(url, dest_folder, keep=False):
             for entry in it:
                 if entry.name in ("__MACOSX",):
                     continue
-                bundle_folder = entry.path
+                elif any((s in entry.name) for s in dirs_to_preserve):
+                    bundle_folder = extraction_folder
+                else:
+                    bundle_folder = entry.path
     else:
         # bomb scenario -> stay here
         bundle_folder = extraction_folder

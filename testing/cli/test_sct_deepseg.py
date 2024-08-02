@@ -162,7 +162,8 @@ def test_segment_nifti_multiclass(fname_image, fnames_seg_manual, fname_out, suf
         pytest.skip("Mouse data must be manually downloaded to run this test.")
 
     fname_out = str(tmp_path / fname_out)
-    sct_deepseg.main(['-i', fname_image, '-task', task, '-thr', str(thr), '-o', fname_out, '-qc', str(tmp_path/'qc')])
+    sct_deepseg.main(['-i', fname_image, '-task', task, '-thr', str(thr), '-o', fname_out, '-qc', str(tmp_path/'qc'),
+                      '-largest', '1'])
     # The `-o` argument takes a single filename, even though one (or more!) files might be output.
     # If multiple output files will be produced, `sct_deepseg` will take this singular `-o` and add suffixes to it.
     fnames_out = [add_suffix(fname_out, suffix) for suffix in suffixes]
