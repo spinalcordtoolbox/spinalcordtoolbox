@@ -560,9 +560,8 @@ class AnalyzeLesion:
         #           - indices_to_keep - type=(anything that can be used to index numpy arrays)
         #                               anything outside this mask will be set to 0
         #
-        if indices_to_keep is not None:
-            im_atlas_roi_data = self.__keep_only_indices(im_atlas_roi_data, indices_to_keep)
-            im_mask_data = self.__keep_only_indices(im_mask_data, indices_to_keep)
+        im_atlas_roi_data = self.__keep_only_indices(im_atlas_roi_data, indices_to_keep)
+        im_mask_data = self.__keep_only_indices(im_mask_data, indices_to_keep)
 
         im_mask_roi_data_wa = self.___pve_weighted_avg(im_mask_data=im_mask_data, im_atlas_data=im_atlas_roi_data)
         vol_tot_roi = np.sum(im_atlas_roi_data) * p_lst[0] * p_lst[1] * p_lst[2]
@@ -586,8 +585,8 @@ class AnalyzeLesion:
             if np.count_nonzero(im_vert_and_lesion[indices_to_keep]):  # if there is lesion in this vertebral level
                 idx = self.distrib_matrix_dct[sheet_name][self.distrib_matrix_dct[sheet_name].row == str(row)].index
                 for tract_id in atlas_data:  # Loop over PAM50 tracts
-                    res_lst = self.__relative_ROIvol_in_mask(im_mask_data=np.copy(im_lesion),
-                                                             im_atlas_roi_data=np.copy(atlas_data[tract_id]),
+                    res_lst = self.__relative_ROIvol_in_mask(im_mask_data=im_lesion,
+                                                             im_atlas_roi_data=atlas_data[tract_id],
                                                              p_lst=p_lst,
                                                              indices_to_keep=indices_to_keep)
                     self.distrib_matrix_dct[sheet_name].loc[idx, 'PAM50_' + str(tract_id).zfill(2)] = res_lst[0]
@@ -630,7 +629,8 @@ class AnalyzeLesion:
         sheet_name = 'ROI_occupied_by_lesion'
         rows_with_total = {
             **self.rows,
-            f'total % (all {self.row_name})': None,
+            # numpy array index equivalent to [:, :, :]
+            f'total % (all {self.row_name})': (slice(None), slice(None), slice(None)),
         }
         self.distrib_matrix_dct[sheet_name] = pd.DataFrame.from_dict({'row': [str(r) for r in rows_with_total]})
 
@@ -646,8 +646,8 @@ class AnalyzeLesion:
                 res_perTract_dct = {}  # for each tract compute the volume occupied by lesion and the volume of the tract
                 idx = self.distrib_matrix_dct[sheet_name][self.distrib_matrix_dct[sheet_name].row == str(row)].index
                 for tract_id in atlas_data:  # loop over the tracts
-                    res_perTract_dct[tract_id] = self.__relative_ROIvol_in_mask(im_mask_data=np.copy(im_lesion),
-                                                                                im_atlas_roi_data=np.copy(atlas_data[tract_id]),
+                    res_perTract_dct[tract_id] = self.__relative_ROIvol_in_mask(im_mask_data=im_lesion,
+                                                                                im_atlas_roi_data=atlas_data[tract_id],
                                                                                 p_lst=p_lst,
                                                                                 indices_to_keep=indices_to_keep)
 
