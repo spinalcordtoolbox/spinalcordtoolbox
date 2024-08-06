@@ -548,8 +548,7 @@ class AnalyzeLesion:
             image_out[:, :, indices] = image[:, :, indices]
         return image_out
 
-    def __relative_ROIvol_in_mask(self, im_mask_data, im_atlas_roi_data, p_lst, im_template_vert_data,
-                                  indices_to_keep):
+    def __relative_ROIvol_in_mask(self, im_mask_data, im_atlas_roi_data, p_lst, indices_to_keep):
         #
         #   Goal:
         #         This function computes the percentage of ROI occupied by binary mask
@@ -560,11 +559,11 @@ class AnalyzeLesion:
         #   Inputs:
         #           - im_mask_data - type=NumPyArray - binary mask (eg lesions)
         #           - im_atlas_roi_data - type=NumPyArray - ROI in the same space as im_mask
-        #                        - p_lst - type=list of float
-        #           - im_template_vert_data - type=NumPyArray - vertebral template in the same space as im_mask
-        #           - vert_level - type=int - vertebral level ID to restrict the ROI
+        #           - p_lst - type=list of float
+        #           - indices_to_keep - type=(anything that can be used to index numpy arrays)
+        #                               anything outside this mask will be set to 0
         #
-        if im_template_vert_data is not None and indices_to_keep:
+        if indices_to_keep:
             im_atlas_roi_data = self.__keep_only_indices(im_atlas_roi_data, indices_to_keep)
             im_mask_data = self.__keep_only_indices(im_mask_data, indices_to_keep)
 
@@ -594,7 +593,6 @@ class AnalyzeLesion:
                     res_lst = self.__relative_ROIvol_in_mask(im_mask_data=np.copy(im_lesion),
                                                              im_atlas_roi_data=np.copy(atlas_data[tract_id]),
                                                              p_lst=p_lst,
-                                                             im_template_vert_data=np.copy(im_vert_cur),
                                                              indices_to_keep=indices_to_keep)
                     self.distrib_matrix_dct[sheet_name].loc[idx, 'PAM50_' + str(tract_id).zfill(2)] = res_lst[0]
                     vol_mask_tot += res_lst[0]
@@ -656,7 +654,6 @@ class AnalyzeLesion:
                     res_perTract_dct[tract_id] = self.__relative_ROIvol_in_mask(im_mask_data=np.copy(im_lesion),
                                                                                 im_atlas_roi_data=np.copy(atlas_data[tract_id]),
                                                                                 p_lst=p_lst,
-                                                                                im_template_vert_data=np.copy(im_vert_cur),
                                                                                 indices_to_keep=indices_to_keep)
 
                 # group tracts to compute involvement in CombinedLabels (GM, WM, DC, VF, LF)
