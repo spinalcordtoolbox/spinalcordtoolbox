@@ -579,12 +579,11 @@ class AnalyzeLesion:
             self.distrib_matrix_dct[sheet_name]['PAM50_' + str(tract_id).zfill(2)] = [0] * len(self.rows)
 
         vol_mask_tot = 0.0  # vol tot of this lesion through the vertebral levels and PAM50 tracts
+        im_vert_and_lesion = im_vert * im_lesion  # to check which vertebral levels have lesions
         # Loop over slices or vertebral levels
         for row, indices_to_keep in sct_progress_bar(self.rows.items(), unit=self.row_name,
                                                      desc="  Computing lesion distribution (volume values)"):
-            # Set everything but the current vertlevel (or slice) to 0
-            im_vert_cur = self.__keep_only_indices(im_vert, indices_to_keep)
-            if np.count_nonzero(im_vert_cur * im_lesion):  # if there is lesion in this vertebral level
+            if np.count_nonzero(im_vert_and_lesion[indices_to_keep]):  # if there is lesion in this vertebral level
                 idx = self.distrib_matrix_dct[sheet_name][self.distrib_matrix_dct[sheet_name].row == str(row)].index
                 for tract_id in atlas_data:  # Loop over PAM50 tracts
                     res_lst = self.__relative_ROIvol_in_mask(im_mask_data=np.copy(im_lesion),
@@ -639,15 +638,11 @@ class AnalyzeLesion:
         for tract_id in atlas_data:
             self.distrib_matrix_dct[sheet_name]['PAM50_' + str(tract_id).zfill(2)] = [0] * len(rows_with_total)
 
+        im_vert_and_lesion = im_vert * im_lesion  # to check which vertebral levels have lesions
         # loop over slices/vertlevels
         for row, indices_to_keep in sct_progress_bar(rows_with_total.items(), unit=self.row_name,
                                                      desc="  Computing ROI distribution for all lesions"):
-            if row != f'total % (all {self.row_name})':
-                # Set everything but the current vertlevel (or slice) to 0
-                im_vert_cur = self.__keep_only_indices(im_vert, indices_to_keep)
-            else:
-                im_vert_cur = None
-            if im_vert_cur is None or np.count_nonzero(im_vert_cur * im_lesion):
+            if row.startswith('total') or np.count_nonzero(im_vert_and_lesion[indices_to_keep]):
                 res_perTract_dct = {}  # for each tract compute the volume occupied by lesion and the volume of the tract
                 idx = self.distrib_matrix_dct[sheet_name][self.distrib_matrix_dct[sheet_name].row == str(row)].index
                 for tract_id in atlas_data:  # loop over the tracts
