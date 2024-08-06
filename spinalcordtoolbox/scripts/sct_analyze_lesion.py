@@ -298,6 +298,10 @@ class AnalyzeLesion:
             min_ventral_bridge = np.nanmin(midsagittal_ventral_bridges)
             printv(f'  Minimum dorsal bridge width [mm]: {np.round(min_dorsal_bridge, 2)}', self.verbose, type='info')
             printv(f'  Minimum ventral bridge width [mm]: {np.round(min_ventral_bridge, 2)}', self.verbose, type='info')
+            # If there are NaN values, print a warning
+            if np.isnan(min_dorsal_bridge) or np.isnan(min_ventral_bridge):
+                printv('WARNING: There are no tissue bridges in the midsagittal slice.',
+                       self.verbose, type='warning')
 
         total_volume = np.round(np.sum(self.measure_pd['volume [mm3]']), 2)
         lesion_count = len(self.measure_pd['volume [mm3]'].values)
