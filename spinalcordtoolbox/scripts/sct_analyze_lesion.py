@@ -187,7 +187,7 @@ class AnalyzeLesion:
             self.path_levels = os.path.join(self.path_template, "template", "PAM50_levels.nii.gz")
         else:
             self.path_atlas, self.path_levels = None, None
-        self.rows = None
+        self.rows = {}
         self.row_name = "slice" if perslice else "vert"
         self.atlas_roi_lst = None
         self.atlas_combinedlabels = {}
@@ -542,10 +542,7 @@ class AnalyzeLesion:
     def __keep_only_indices(self, image, indices):
         """Keep values defined by indices, and set all other coordinates to zero."""
         image_out = np.zeros_like(image)
-        if isinstance(indices, list) and len(indices) == 3:  # Lists of [x], [y], and [z] coords produced by np.where()
-            image_out[indices] = image[indices]
-        else:
-            image_out[:, :, indices] = image[:, :, indices]
+        image_out[indices] = image[indices]
         return image_out
 
     def __relative_ROIvol_in_mask(self, im_mask_data, im_atlas_roi_data, p_lst, indices_to_keep):
@@ -563,7 +560,7 @@ class AnalyzeLesion:
         #           - indices_to_keep - type=(anything that can be used to index numpy arrays)
         #                               anything outside this mask will be set to 0
         #
-        if indices_to_keep:
+        if indices_to_keep is not None:
             im_atlas_roi_data = self.__keep_only_indices(im_atlas_roi_data, indices_to_keep)
             im_mask_data = self.__keep_only_indices(im_mask_data, indices_to_keep)
 
@@ -573,19 +570,19 @@ class AnalyzeLesion:
 
         return vol_mask_roi_wa, vol_tot_roi
 
-    def _measure_eachLesion_distribution(self, lesion_id, atlas_data, im_vert, im_lesion, p_lst, vert_indices):
+    def _measure_eachLesion_distribution(self, lesion_id, atlas_data, im_vert, im_lesion, p_lst):
         sheet_name = 'lesion#' + str(lesion_id) + '_distribution'
-        self.distrib_matrix_dct[sheet_name] = pd.DataFrame.from_dict({'row': [str(v) for v in self.rows]})
+        self.distrib_matrix_dct[sheet_name] = pd.DataFrame.from_dict({'row': [str(v) for v in self.rows.keys()]})
 
         # initialized to 0 for each vertebral level and each PAM50 tract
         for tract_id in atlas_data:
             self.distrib_matrix_dct[sheet_name]['PAM50_' + str(tract_id).zfill(2)] = [0] * len(self.rows)
 
         vol_mask_tot = 0.0  # vol tot of this lesion through the vertebral levels and PAM50 tracts
-        for row in sct_progress_bar(self.rows, unit=self.row_name,
-                                    desc="  Computing lesion distribution (volume values)"):  # Loop over slices or vertebral levels
+        # Loop over slices or vertebral levels
+        for row, indices_to_keep in sct_progress_bar(self.rows.items(), unit=self.row_name,
+                                                     desc="  Computing lesion distribution (volume values)"):
             # Set everything but the current vertlevel (or slice) to 0
-            indices_to_keep = vert_indices[row] if self.row_name == "vert" else row
             im_vert_cur = self.__keep_only_indices(im_vert, indices_to_keep)
             if np.count_nonzero(im_vert_cur * np.copy(im_lesion)):  # if there is lesion in this vertebral level
                 idx = self.distrib_matrix_dct[sheet_name][self.distrib_matrix_dct[sheet_name].row == str(row)].index
@@ -598,7 +595,7 @@ class AnalyzeLesion:
                     vol_mask_tot += res_lst[0]
 
         # convert the volume values in distrib_matrix_dct to percentage values
-        for row in sct_progress_bar(self.rows, unit=self.row_name,
+        for row in sct_progress_bar(self.rows.keys(), unit=self.row_name,
                                     desc="  Converting volume values into percentage values"):
             idx = self.distrib_matrix_dct[sheet_name][self.distrib_matrix_dct[sheet_name].row == str(row)].index
             for tract_id in atlas_data:
@@ -629,23 +626,26 @@ class AnalyzeLesion:
         res_tot = [vol_dct[t][1] for t in vol_dct if t in tracts]
         return np.sum(res_mask) * 100.0 / np.sum(res_tot)
 
-    def _measure_totLesion_distribution(self, im_lesion, atlas_data, im_vert, p_lst, vert_indices):
+    def _measure_totLesion_distribution(self, im_lesion, atlas_data, im_vert, p_lst):
 
         sheet_name = 'ROI_occupied_by_lesion'
-        self.distrib_matrix_dct[sheet_name] = pd.DataFrame.from_dict({'row': [str(r) for r in self.rows] + [f'total % (all {self.row_name})']})
+        rows_with_total = {
+            **self.rows,
+            f'total % (all {self.row_name})': None,
+        }
+        self.distrib_matrix_dct[sheet_name] = pd.DataFrame.from_dict({'row': [str(r) for r in rows_with_total]})
 
         # initialized to 0 for each vertebral level and each PAM50 tract
         for tract_id in atlas_data:
-            self.distrib_matrix_dct[sheet_name]['PAM50_' + str(tract_id).zfill(2)] = [0] * len(self.rows + [f'total % (all {self.row_name})'])
+            self.distrib_matrix_dct[sheet_name]['PAM50_' + str(tract_id).zfill(2)] = [0] * len(rows_with_total)
 
-        for row in sct_progress_bar(self.rows + [f'total % (all {self.row_name})'], unit=self.row_name,
-                                    desc="  Computing ROI distribution for all lesions"):  # loop over slices/vertlevels
+        # loop over slices/vertlevels
+        for row, indices_to_keep in sct_progress_bar(rows_with_total.items(), unit=self.row_name,
+                                                     desc="  Computing ROI distribution for all lesions"):
             if row != f'total % (all {self.row_name})':
                 # Set everything but the current vertlevel (or slice) to 0
-                indices_to_keep = vert_indices[row] if self.row_name == "vert" else row
                 im_vert_cur = self.__keep_only_indices(im_vert, indices_to_keep)
             else:
-                indices_to_keep = None
                 im_vert_cur = None
             if im_vert_cur is None or np.count_nonzero(im_vert_cur * np.copy(im_lesion)):
                 res_perTract_dct = {}  # for each tract compute the volume occupied by lesion and the volume of the tract
@@ -682,16 +682,19 @@ class AnalyzeLesion:
                 im_vert_data = img_vert.data
                 if self.row_name == "vert":
                     # list of vertebral levels available in the input image
-                    self.rows = [v for v in np.unique(im_vert_data) if v]
                     # precompute the list of indices for each vertebral level
                     # these indices are used to zero out certain levels (to compute the volume of the remaining levels)
-                    vert_indices = {
-                        vert: np.where(im_vert_data == vert) for vert in self.rows
+                    self.rows = {
+                        vert: np.where(im_vert_data == vert)
+                        for vert in np.unique(im_vert_data) if vert
                     }
                 else:
                     assert self.row_name == "slice"
-                    self.rows = list(range(im_vert_data.shape[-1]))  # Keep the same vert image, but uses slices instead
-                    vert_indices = None
+                    # Keep the same vert image, but uses slices instead
+                    self.rows = {
+                        z: (slice(None), slice(None), z)  # numpy array index equivalent to [:, :, z]
+                        for z in range(im_vert_data.shape[2])
+                    }
 
             else:
                 im_vert_data = None
@@ -735,8 +738,7 @@ class AnalyzeLesion:
                                                       atlas_data=atlas_data_dct,
                                                       im_vert=im_vert_data,
                                                       im_lesion=im_lesion_data_cur,
-                                                      p_lst=p_lst,
-                                                      vert_indices=vert_indices)
+                                                      p_lst=p_lst)
 
         if self.path_template is not None:
             # compute total lesion distribution
@@ -744,8 +746,7 @@ class AnalyzeLesion:
             self._measure_totLesion_distribution(im_lesion=np.copy(im_lesion_data > 0),
                                                  atlas_data=atlas_data_dct,
                                                  im_vert=im_vert_data,
-                                                 p_lst=p_lst,
-                                                 vert_indices=vert_indices)
+                                                 p_lst=p_lst)
 
         if self.fname_ref is not None:
             # Compute mean and std value in each labeled lesion
