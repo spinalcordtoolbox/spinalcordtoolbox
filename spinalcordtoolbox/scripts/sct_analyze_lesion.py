@@ -292,8 +292,8 @@ class AnalyzeLesion:
                     midsagittal_ventral_bridges.append(ventral_tissue_bridge)
 
             # Compute the minimum bridges across all lesions for the midsagittal slice
-            # Note: lesions can be parasagittal meaning that they do not have bridges in the midsagittal slice, in such
-            # case the bridge width is NaN --> use np.nanmin to get the minimum value
+            # Note: lesion(s) can be located on the parasagittal slices meaning that they do not have bridges in the
+            # midsagittal slice, in such case the bridge width is NaN --> use np.nanmin to get the minimum value
             min_dorsal_bridge = np.nanmin(midsagittal_dorsal_bridges)
             min_ventral_bridge = np.nanmin(midsagittal_ventral_bridges)
             printv(f'  Minimum dorsal bridge width [mm]: {np.round(min_dorsal_bridge, 2)}', self.verbose, type='info')
