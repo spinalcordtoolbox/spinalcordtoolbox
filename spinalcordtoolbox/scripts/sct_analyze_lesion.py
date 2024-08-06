@@ -284,10 +284,17 @@ class AnalyzeLesion:
                         # Get dorsal and ventral tissue bridges for the mid-sagittal slice
                         dorsal_tissue_bridge = row[f'slice_{midsagittal_slice}_dorsal_bridge_width [mm]']
                         ventral_tissue_bridge = row[f'slice_{midsagittal_slice}_ventral_bridge_width [mm]']
+                    # Note: the following else is for the case when all the lesions are parasagittal and there is thus
+                    # no 'slice_{midsagittal_slice}_dorsal_bridge_width [mm]' column
                     else:
                         dorsal_tissue_bridge = np.nan
                         ventral_tissue_bridge = np.nan
                     # If there are NaN values, print a warning
+                    # Note: for multiple lesions, there might one midsagittal lesion and another parasagittal lesion.
+                    # In such a case, 'slice_{midsagittal_slice}_dorsal_bridge_width [mm]' column exists for both
+                    # lesions (parasagittal lesion contains NaNs) and the previous 'if' is True for both lesions.
+                    # This is why we cannot include the following printv into the previous 'else' statement because it
+                    # would not be printed for the parasagittal lesion.
                     if np.isnan(dorsal_tissue_bridge) or np.isnan(ventral_tissue_bridge):
                         printv(f'WARNING: Lesion #{idx+1} does not exist in the midsagittal slice',
                                self.verbose, type='warning')
