@@ -265,7 +265,6 @@ class AnalyzeLesion:
 
         # For the tissue bridges, we get the minimum bridges across all lesions for the midsagittal slice
         if self.fname_sc is not None:
-            printv('\nMinimum tissue bridges across all lesions for the midsagittal slice...', self.verbose, 'normal')
             midsagittal_dorsal_bridges = list()
             midsagittal_ventral_bridges = list()
             # Iterate across lesions to get the bridges for the midsagittal slice
@@ -275,6 +274,9 @@ class AnalyzeLesion:
                     # Note that the midsagittal slice is the same for all lesions as it is based on the spinal cord
                     # segmentation
                     midsagittal_slice = str(int(row['midsagittal_spinal_cord_slice']))
+                    if idx == 0:        # Print only once, not for each lesion
+                        printv(f'\nMinimum tissue bridges across all lesions for the midsagittal slice '
+                               f'(sagittal slice {midsagittal_slice})...', self.verbose, 'normal')
                     # Check whether the lesion has bridges in the midsagittal slice, if not, set the bridge width to NaN
                     if f'slice_{midsagittal_slice}_dorsal_bridge_width [mm]' in row and \
                             f'slice_{midsagittal_slice}_ventral_bridge_width [mm]' in row:
