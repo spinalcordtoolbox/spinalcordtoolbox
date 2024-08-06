@@ -548,8 +548,8 @@ class AnalyzeLesion:
             image_out[:, :, indices] = image[:, :, indices]
         return image_out
 
-    def __relative_ROIvol_in_mask(self, im_mask_data, im_atlas_roi_data, p_lst, im_template_vert_data=None,
-                                  indices_to_keep=None):
+    def __relative_ROIvol_in_mask(self, im_mask_data, im_atlas_roi_data, p_lst, im_template_vert_data,
+                                  indices_to_keep):
         #
         #   Goal:
         #         This function computes the percentage of ROI occupied by binary mask
