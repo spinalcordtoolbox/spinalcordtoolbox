@@ -627,10 +627,11 @@ class AnalyzeLesion:
     def _measure_totLesion_distribution(self, im_lesion, atlas_data, im_vert, p_lst):
 
         sheet_name = 'ROI_occupied_by_lesion'
+        total_row = f'total % (all {self.row_name})'
         rows_with_total = {
             **self.rows,
             # numpy array index equivalent to [:, :, :]
-            f'total % (all {self.row_name})': (slice(None), slice(None), slice(None)),
+            total_row: (slice(None), slice(None), slice(None)),
         }
         self.distrib_matrix_dct[sheet_name] = pd.DataFrame.from_dict({'row': [str(r) for r in rows_with_total]})
 
@@ -642,7 +643,7 @@ class AnalyzeLesion:
         # loop over slices/vertlevels
         for row, indices_to_keep in sct_progress_bar(rows_with_total.items(), unit=self.row_name,
                                                      desc="  Computing ROI distribution for all lesions"):
-            if row.startswith('total') or np.count_nonzero(im_vert_and_lesion[indices_to_keep]):
+            if row == total_row or np.count_nonzero(im_vert_and_lesion[indices_to_keep]):
                 res_perTract_dct = {}  # for each tract compute the volume occupied by lesion and the volume of the tract
                 idx = self.distrib_matrix_dct[sheet_name][self.distrib_matrix_dct[sheet_name].row == str(row)].index
                 for tract_id in atlas_data:  # loop over the tracts
