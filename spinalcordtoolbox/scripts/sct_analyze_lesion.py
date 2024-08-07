@@ -8,6 +8,7 @@
 import os
 import sys
 import pickle
+import warnings
 from typing import Sequence
 
 import numpy as np
@@ -272,7 +273,6 @@ class AnalyzeLesion:
 
         # For the tissue bridges, we get the minimum bridges across all lesions for the midsagittal slice
         if self.fname_sc is not None:
-            printv('\nMinimum tissue bridges across all lesions for the midsagittal slice...', self.verbose, 'normal')
             midsagittal_dorsal_bridges = list()
             midsagittal_ventral_bridges = list()
             # Iterate across lesions to get the bridges for the midsagittal slice
@@ -282,17 +282,39 @@ class AnalyzeLesion:
                     # Note that the midsagittal slice is the same for all lesions as it is based on the spinal cord
                     # segmentation
                     midsagittal_slice = str(int(row['midsagittal_spinal_cord_slice']))
-                    # Get dorsal and ventral tissue bridges for the mid-sagittal slice
-                    dorsal_tissue_bridge = row[f'slice_{midsagittal_slice}_dorsal_bridge_width [mm]']
-                    ventral_tissue_bridge = row[f'slice_{midsagittal_slice}_ventral_bridge_width [mm]']
+                    if idx == 0:        # Print only once, not for each lesion
+                        printv(f'\nMinimum tissue bridges across all lesions for the midsagittal slice '
+                               f'(sagittal slice {midsagittal_slice})...', self.verbose, 'normal')
+                    # Check whether the lesion has bridges in the midsagittal slice, if not, set the bridge width to NaN
+                    if f'slice_{midsagittal_slice}_dorsal_bridge_width [mm]' in row and \
+                            f'slice_{midsagittal_slice}_ventral_bridge_width [mm]' in row:
+                        # Get dorsal and ventral tissue bridges for the mid-sagittal slice
+                        dorsal_tissue_bridge = row[f'slice_{midsagittal_slice}_dorsal_bridge_width [mm]']
+                        ventral_tissue_bridge = row[f'slice_{midsagittal_slice}_ventral_bridge_width [mm]']
+                    # Note: the following else is for the case when all the lesions are parasagittal and there is thus
+                    # no 'slice_{midsagittal_slice}_dorsal_bridge_width [mm]' column
+                    else:
+                        dorsal_tissue_bridge = np.nan
+                        ventral_tissue_bridge = np.nan
+                    # If there are NaN values, print a warning
+                    # Note: for multiple lesions, there might one midsagittal lesion and another parasagittal lesion.
+                    # In such a case, 'slice_{midsagittal_slice}_dorsal_bridge_width [mm]' column exists for both
+                    # lesions (parasagittal lesion contains NaNs) and the previous 'if' is True for both lesions.
+                    # This is why we cannot include the following printv into the previous 'else' statement because it
+                    # would not be printed for the parasagittal lesion.
+                    if np.isnan(dorsal_tissue_bridge) or np.isnan(ventral_tissue_bridge):
+                        printv(f'WARNING: Lesion #{idx+1} does not exist in the midsagittal slice',
+                               self.verbose, type='warning')
 
                     # Store the bridges for the midsagittal slice for the selected lesion
                     midsagittal_dorsal_bridges.append(dorsal_tissue_bridge)
                     midsagittal_ventral_bridges.append(ventral_tissue_bridge)
 
             # Compute the minimum bridges across all lesions for the midsagittal slice
-            # Note: lesions can be parasagittal meaning that they do not have bridges in the midsagittal slice, in such
-            # case the bridge width is NaN --> use np.nanmin to get the minimum value
+            # Note: lesion(s) can be located on the parasagittal slices meaning that they do not have bridges in the
+            # midsagittal slice, in such case the bridge width is NaN --> use np.nanmin to get the minimum value
+            # Suppress the 'RuntimeWarning for All-NaN axis encountered' warning
+            warnings.filterwarnings("ignore", category=RuntimeWarning, message="All-NaN axis encountered")
             min_dorsal_bridge = np.nanmin(midsagittal_dorsal_bridges)
             min_ventral_bridge = np.nanmin(midsagittal_ventral_bridges)
             printv(f'  Minimum dorsal bridge width [mm]: {np.round(min_dorsal_bridge, 2)}', self.verbose, type='info')
@@ -475,7 +497,7 @@ class AnalyzeLesion:
         # distance from cerebrospinal fluid to the lesion boundary
         for sagittal_slice in sagittal_lesion_slices:
             # Get df for the selected sagittal slice
-            df_temp = tissue_bridges_df[tissue_bridges_df['sagittal_slice'] == sagittal_slice]
+            df_temp = tissue_bridges_df[tissue_bridges_df['sagittal_slice'] == sagittal_slice].copy()
 
             # Get the width of the tissue bridges in mm (by multiplying by p_lst[1]) and use np.cos(self.angles_sagittal[SLICE])
             # to correct for the angle of the spinal cord with respect to the axial slice
