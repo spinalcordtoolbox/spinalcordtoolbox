@@ -468,7 +468,6 @@ def sct_analyze_lesion(
     fname_input: str,
     fname_label: str,
     fname_sc: str,
-    orig_orientation: str,
     measure_pd: pd.DataFrame,
     argv: Sequence[str],
     path_qc: str,
@@ -499,6 +498,8 @@ def sct_analyze_lesion(
 
         # Load the labeled lesion mask
         im_lesion = Image(fname_label)
+        # Store the original orientation of the lesion mask before reorienting it to RPI
+        orig_orientation = im_lesion.orientation
         im_lesion.change_orientation("RPI")
         im_lesion_data = im_lesion.data
         label_lst = [label for label in np.unique(im_lesion.data) if label]
