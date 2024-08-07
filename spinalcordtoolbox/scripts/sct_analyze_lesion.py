@@ -630,7 +630,7 @@ class AnalyzeLesion:
 
         # Add additional columns for the "CombinedLabels" defined by info_label.txt
         for label_name, sublabels in self.atlas_combinedlabels.items():
-            column_names_to_sum = [f"PAM50_{str(subid).zfill(2)}" for subid in sublabels]
+            column_names_to_sum = [f"PAM50_{subid:02}" for subid in sublabels]
             self.distrib_matrix_dct[sheet_name][label_name] = \
                 self.distrib_matrix_dct[sheet_name][column_names_to_sum].sum(axis=1)
 
@@ -661,7 +661,7 @@ class AnalyzeLesion:
 
         # initialized to 0 for each vertebral level and each PAM50 tract
         for tract_id in atlas_data:
-            self.distrib_matrix_dct[sheet_name]['PAM50_' + str(tract_id).zfill(2)] = [0] * len(rows_with_total)
+            self.distrib_matrix_dct[sheet_name][f"PAM50_{tract_id:02}"] = [0] * len(rows_with_total)
 
         im_vert_and_lesion = im_vert * im_lesion  # to check which vertebral levels have lesions
         # loop over slices/vertlevels
