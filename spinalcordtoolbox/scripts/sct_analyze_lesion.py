@@ -490,7 +490,7 @@ class AnalyzeLesion:
         # distance from cerebrospinal fluid to the lesion boundary
         for sagittal_slice in sagittal_lesion_slices:
             # Get df for the selected sagittal slice
-            df_temp = tissue_bridges_df[tissue_bridges_df['sagittal_slice'] == sagittal_slice]
+            df_temp = tissue_bridges_df[tissue_bridges_df['sagittal_slice'] == sagittal_slice].copy()
 
             # Get the width of the tissue bridges in mm (by multiplying by p_lst[1]) and use np.cos(self.angles_sagittal[SLICE])
             # to correct for the angle of the spinal cord with respect to the axial slice
