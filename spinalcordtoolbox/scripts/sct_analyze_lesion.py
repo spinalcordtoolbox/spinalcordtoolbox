@@ -890,6 +890,7 @@ def main(argv: Sequence[str]):
                 fname_input=fname_mask,
                 fname_label=lesion_obj.fname_label,
                 fname_sc=fname_sc,
+                orig_orientation=Image(fname_mask).orientation,
                 measure_pd=lesion_obj.measure_pd,
                 argv=argv,
                 path_qc=arguments.qc,

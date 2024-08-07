@@ -22,7 +22,7 @@ from scipy.ndimage import center_of_mass
 import skimage.exposure
 
 from spinalcordtoolbox.centerline.core import get_centerline, ParamCenterline
-from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.image import Image, rpi_slice_to_orig_orientation
 import spinalcordtoolbox.reports
 from spinalcordtoolbox.reports.assets._assets.py import refresh_qc_entries
 from spinalcordtoolbox.resampling import resample_nib
@@ -468,6 +468,7 @@ def sct_analyze_lesion(
     fname_input: str,
     fname_label: str,
     fname_sc: str,
+    orig_orientation: str,
     measure_pd: pd.DataFrame,
     argv: Sequence[str],
     path_qc: str,
@@ -544,6 +545,11 @@ def sct_analyze_lesion(
                 # Get spinal cord and lesion masks data for the selected sagittal slice
                 slice_sc = im_sc_data[sagittal_slice]
                 slice_lesion = im_label_data_cur[sagittal_slice]
+
+                # Convert the sagittal slice to the original orientation
+                # 'x' because R-L direction (first in RPI --> 'x')
+                sagittal_slice = rpi_slice_to_orig_orientation(im_lesion.dim[0:3], orig_orientation,
+                                                               sagittal_slice, 'x')
 
                 # Plot spinal cord and lesion masks
                 axes[idx_row, idx_col].imshow(np.swapaxes(slice_sc, 1, 0),
