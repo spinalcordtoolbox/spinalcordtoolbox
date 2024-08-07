@@ -69,13 +69,10 @@ def compute_expected_measurements(dim, starting_coord=None, path_seg=None):
                 dorsal_bridge_widths.append(max(0.0, dorsal_sc_width - dorsal_lesion_width))
 
             # find minimum widths
-            # FIXME: Because t2.nii.gz starts as AIL but is reoriented to RPI, there is a RL flip, meaning the
-            #        z slice number of the AIL image won't correspond to the z slice number used for the column name.
-            z_flipped = data_seg.shape[2] - (z + 1)  # account for 0-based index
-            tissue_bridges[f"slice_{z_flipped}_dorsal_bridge_width [mm]"] = min(dorsal_bridge_widths)
-            tissue_bridges[f"slice_{z_flipped}_ventral_bridge_width [mm]"] = min(ventral_bridge_widths)
-            tissue_bridges[f"slice_{z_flipped}_total_bridge_width [mm]"] = (min(dorsal_bridge_widths) +
-                                                                            min(ventral_bridge_widths))
+            tissue_bridges[f"slice_{z}_dorsal_bridge_width [mm]"] = min(dorsal_bridge_widths)
+            tissue_bridges[f"slice_{z}_ventral_bridge_width [mm]"] = min(ventral_bridge_widths)
+            tissue_bridges[f"slice_{z}_total_bridge_width [mm]"] = (min(dorsal_bridge_widths) +
+                                                                    min(ventral_bridge_widths))
     else:
         min_area = 0
         tissue_bridges = {}
