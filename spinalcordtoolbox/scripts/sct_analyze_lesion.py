@@ -856,20 +856,33 @@ class AnalyzeLesion:
             self.path_levels = ''.join(extract_fname(self.path_levels)[1:])
 
             self.atlas_roi_lst = []
+            tract_ids = []
             for fname_atlas_roi in sorted(os.listdir(self.path_atlas)):
                 if fname_atlas_roi.endswith('.nii.gz'):
                     tract_id = int(fname_atlas_roi.split('_')[-1].split('.nii.gz')[0])
                     if tract_id < 36:  # Not interested in CSF
+                        tract_ids.append(tract_id)
                         copy(os.path.join(self.path_atlas, fname_atlas_roi), self.tmp_dir)
                         self.atlas_roi_lst.append(fname_atlas_roi)
 
             # fetch "CombinedLabels" from atlas info_label.txt
             # NB: We have to do this here (rather than in tmp_dir) because `read_label_file` will fail unless all files
             # are present, and we skip copying the CSF to the tmp dir in the lines above.
+            printv("\nLoading CombinedLabels from `info_label.txt`...")
             if os.path.isfile(os.path.join(self.path_atlas, "info_label.txt")):
                 _, _, _, _, combinedlabel_names, label_groups, _ = read_label_file(self.path_atlas, "info_label.txt")
-                self.atlas_combinedlabels = {name: label_group for name, label_group
-                                             in zip(combinedlabel_names, label_groups)}
+                combined_labels = {}
+                for label_name, sublabels in zip(combinedlabel_names, label_groups):
+                    # If one of the CombinedLabels matches the total set of all atlas labels, discard it
+                    # In practice, this will cause the 'spinal cord' label to be discarded (spanning tracts 0:35).
+                    if set(tract_ids) == set(sublabels):
+                        printv(f"WARNING: CombinedLabel '{label_name}' is identical to the 'total' column that sums "
+                               f"all atlas labels ([{sublabels[0]}:{sublabels[-1]}]). "
+                               f"The '{label_name}' column will not be added to the output spreadsheet.",
+                               self.verbose, type="warning")
+                    else:
+                        combined_labels[label_name] = sublabels
+                self.atlas_combinedlabels = combined_labels
 
         os.chdir(self.tmp_dir)  # go to tmp directory
 
