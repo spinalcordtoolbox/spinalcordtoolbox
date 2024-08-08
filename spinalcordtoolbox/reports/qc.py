@@ -93,6 +93,7 @@ class QcImage:
         cax = ax.inset_axes([1.005, 0.07, 0.011, 0.86])
         cbar = fig.colorbar(fig_ax, cax=cax, orientation='vertical', pad=0.01, shrink=0.5, aspect=1, ticks=[vmin,vmax]) #, shrink=0.5, pad=0.05,
         cbar.ax.tick_params(labelsize=5, length=2, pad=1.7)
+        text_2 = ax.text(1.5, 6, '2', color='white', size=3.25)
         self._add_orientation_label(ax)
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
@@ -254,6 +255,7 @@ class QcImage:
             cax = ax.inset_axes([1.005, 0.07, 0.011, 0.86])
             cbar = fig.colorbar(fig_ax, cax=cax, orientation='vertical', pad=0.01, shrink=0.5, aspect=1, ticks=[vmin,vmax]) #, shrink=0.5, pad=0.05,
             cbar.ax.tick_params(labelsize=5, length=2, pad=1.7)
+            text_1 = ax.text(1.5, 6, '1', color='white', size=3.25)
         self._add_orientation_label(ax)
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
