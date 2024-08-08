@@ -24,33 +24,31 @@ install_sct () {
   #     Further explanation at https://blog.ionelmc.ro/2014/05/25/python-packaging/#the-structure
   #     TO BE REMOVED during https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3140.
   # NB: '-c' disables sct_check_dependencies so we can check it separately
-  ./install_sct -iyc
+  ./install_ads -yc
 }
 
 activate_venv_sct(){
   # NB: If "standalone install" is tested when on master, then `python/` won't exist in the PWD
-  if [ "$GITHUB_REF_NAME" = "master" ]; then
-    SCT_VERSION=$(cat spinalcordtoolbox/version.txt)
-    cd "$HOME/sct_$SCT_VERSION"
-  fi
+  cd "$HOME/ads_4.1.0"
   # NB: `python/` won't be available unless `install_sct` is run, hence disabling the check:
   # shellcheck disable=SC1091
   source python/etc/profile.d/conda.sh  # to be able to call conda
   set +u
-  conda activate venv_sct
+  conda activate venv_ads
   set -u
 }
 
 check_dependencies() {
   activate_venv_sct
-  sct_check_dependencies
+  # sct_check_dependencies
 }
 
 run_tests() {
   activate_venv_sct
   # re-run failed tests, just in case something flaky has happened. if no failures, do nothing.
-  pytest testing/api testing/cli || pytest --last-failed --last-failed-no-failures none
+  # pytest testing/api testing/cli || pytest --last-failed --last-failed-no-failures none
   # NB: 'testing/batch_processing' is run by a separate CI workflow
+  axondeepseg_test
 }
 
 while getopts ":ict" opt; do
