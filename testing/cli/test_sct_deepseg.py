@@ -54,6 +54,11 @@ def test_model_dict():
      't2_seg_deepseg.nii.gz',
      'seg_spinal_rootlets_t2w',
      None),
+    (sct_test_path('t2', 't2.nii.gz'),  # dummy image since no EPI test data
+     None,  # no ground truth, just test if it runs
+     't2_seg_deepseg.nii.gz',
+     'seg_sc_epi',
+     None),
     (sct_test_path('t2', 't2.nii.gz'),  # dummy image since no MP2RAGE test data
      None,  # no ground truth, just test if it runs
      't2_seg_deepseg.nii.gz',
