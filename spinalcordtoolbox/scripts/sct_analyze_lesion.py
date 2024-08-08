@@ -16,8 +16,9 @@ from skimage.measure import label
 
 from spinalcordtoolbox.image import Image, rpi_slice_to_orig_orientation
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
+from spinalcordtoolbox.metadata import read_label_file
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel, LazyLoader
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel, LazyLoader, sct_progress_bar
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, copy, rmtree
 from spinalcordtoolbox.reports.qc2 import sct_analyze_lesion
 
@@ -90,6 +91,16 @@ def get_parser():
         default=None,
         required=False)
     optional.add_argument(
+        "-perslice",
+        help="Specify whether to aggregate atlas metrics ('-f' option) per slice (`-perslice 1`) or per vertebral "
+             "level (default behavior).",
+        metavar=Metavar.int,
+        type=int,
+        choices=(0, 1),
+        default=0,
+        required=False
+    )
+    optional.add_argument(
         "-ofolder",
         help='Output folder (e.g. "."). Default is the current folder (".").',
         metavar=Metavar.folder,
@@ -132,7 +143,7 @@ def get_parser():
 
 
 class AnalyzeLesion:
-    def __init__(self, fname_mask, fname_sc, fname_ref, path_template, path_ofolder, verbose):
+    def __init__(self, fname_mask, fname_sc, fname_ref, path_template, path_ofolder, perslice, verbose):
         self.fname_mask = fname_mask
 
         self.fname_sc = fname_sc
@@ -179,8 +190,10 @@ class AnalyzeLesion:
             self.path_levels = os.path.join(self.path_template, "template", "PAM50_levels.nii.gz")
         else:
             self.path_atlas, self.path_levels = None, None
-        self.vert_lst = None
+        self.rows = {}
+        self.row_name = "slice" if perslice else "vert"
         self.atlas_roi_lst = None
+        self.atlas_combinedlabels = {}
         self.distrib_matrix_dct = {}
 
         # output names
@@ -234,17 +247,11 @@ class AnalyzeLesion:
         with pd.ExcelWriter(self.excel_name, engine='xlsxwriter') as writer:
             self.measure_pd.to_excel(writer, sheet_name='measures', index=False, engine='xlsxwriter')
 
-            # Add the total column and row
+            # Save spreadsheet (for -f option)
             if self.path_template is not None:
                 for sheet_name in self.distrib_matrix_dct:
-                    if '#' in sheet_name:
-                        df = self.distrib_matrix_dct[sheet_name].copy()
-                        df = df.append(df.sum(numeric_only=True, axis=0), ignore_index=True)
-                        df['total % (all tracts)'] = df.sum(numeric_only=True, axis=1)
-                        df.iloc[-1, df.columns.get_loc('vert')] = 'total % (all vert)'
-                        df.to_excel(writer, sheet_name=sheet_name, index=False, engine='xlsxwriter')
-                    else:
-                        self.distrib_matrix_dct[sheet_name].to_excel(writer, sheet_name=sheet_name, index=False, engine='xlsxwriter')
+                    self.distrib_matrix_dct[sheet_name].to_excel(writer, sheet_name=sheet_name, index=False,
+                                                                 engine='xlsxwriter')
 
             # Save pickle
             self.distrib_matrix_dct['measures'] = self.measure_pd
@@ -500,7 +507,7 @@ class AnalyzeLesion:
         # distance from cerebrospinal fluid to the lesion boundary
         for sagittal_slice in sagittal_lesion_slices:
             # Get df for the selected sagittal slice
-            df_temp = tissue_bridges_df[tissue_bridges_df['sagittal_slice'] == sagittal_slice]
+            df_temp = tissue_bridges_df[tissue_bridges_df['sagittal_slice'] == sagittal_slice].copy()
 
             # Get the width of the tissue bridges in mm (by multiplying by p_lst[1]) and use np.cos(self.angles_sagittal[SLICE])
             # to correct for the angle of the spinal cord with respect to the axial slice
@@ -575,7 +582,13 @@ class AnalyzeLesion:
     def ___pve_weighted_avg(self, im_mask_data, im_atlas_data):
         return im_mask_data * im_atlas_data
 
-    def __relative_ROIvol_in_mask(self, im_mask_data, im_atlas_roi_data, p_lst, im_template_vert_data=None, vert_level=None):
+    def __keep_only_indices(self, image, indices):
+        """Keep values defined by indices, and set all other coordinates to zero."""
+        image_out = np.zeros_like(image)
+        image_out[indices] = image[indices]
+        return image_out
+
+    def __relative_ROIvol_in_mask(self, im_mask_data, im_atlas_roi_data, p_lst, indices_to_keep):
         #
         #   Goal:
         #         This function computes the percentage of ROI occupied by binary mask
@@ -586,14 +599,12 @@ class AnalyzeLesion:
         #   Inputs:
         #           - im_mask_data - type=NumPyArray - binary mask (eg lesions)
         #           - im_atlas_roi_data - type=NumPyArray - ROI in the same space as im_mask
-        #                        - p_lst - type=list of float
-        #           - im_template_vert_data - type=NumPyArray - vertebral template in the same space as im_mask
-        #           - vert_level - type=int - vertebral level ID to restrict the ROI
+        #           - p_lst - type=list of float
+        #           - indices_to_keep - type=(anything that can be used to index numpy arrays)
+        #                               anything outside this mask will be set to 0
         #
-
-        if im_template_vert_data is not None and vert_level is not None:
-            im_atlas_roi_data[np.where(im_template_vert_data != vert_level)] = 0.0
-            im_mask_data[np.where(im_template_vert_data != vert_level)] = 0.0
+        im_atlas_roi_data = self.__keep_only_indices(im_atlas_roi_data, indices_to_keep)
+        im_mask_data = self.__keep_only_indices(im_mask_data, indices_to_keep)
 
         im_mask_roi_data_wa = self.___pve_weighted_avg(im_mask_data=im_mask_data, im_atlas_data=im_atlas_roi_data)
         vol_tot_roi = np.sum(im_atlas_roi_data) * p_lst[0] * p_lst[1] * p_lst[2]
@@ -603,70 +614,91 @@ class AnalyzeLesion:
 
     def _measure_eachLesion_distribution(self, lesion_id, atlas_data, im_vert, im_lesion, p_lst):
         sheet_name = 'lesion#' + str(lesion_id) + '_distribution'
-        self.distrib_matrix_dct[sheet_name] = pd.DataFrame.from_dict({'vert': [str(v) for v in self.vert_lst]})
+        self.distrib_matrix_dct[sheet_name] = pd.DataFrame.from_dict({'row': [str(v) for v in self.rows.keys()]})
 
         # initialized to 0 for each vertebral level and each PAM50 tract
         for tract_id in atlas_data:
-            self.distrib_matrix_dct[sheet_name]['PAM50_' + str(tract_id).zfill(2)] = [0] * len(self.vert_lst)
+            self.distrib_matrix_dct[sheet_name]['PAM50_' + str(tract_id).zfill(2)] = [0] * len(self.rows)
 
         vol_mask_tot = 0.0  # vol tot of this lesion through the vertebral levels and PAM50 tracts
-        for vert in self.vert_lst:  # Loop over vertebral levels
-            im_vert_cur = np.copy(im_vert)
-            im_vert_cur[np.where(im_vert_cur != vert)] = 0.0
-            if np.count_nonzero(im_vert_cur * np.copy(im_lesion)):  # if there is lesion in this vertebral level
-                idx = self.distrib_matrix_dct[sheet_name][self.distrib_matrix_dct[sheet_name].vert == str(vert)].index
+        im_vert_and_lesion = im_vert * im_lesion  # to check which vertebral levels have lesions
+        # Loop over slices or vertebral levels
+        for row, indices_to_keep in sct_progress_bar(self.rows.items(), unit=self.row_name,
+                                                     desc="  Computing lesion distribution (volume values)"):
+            if np.count_nonzero(im_vert_and_lesion[indices_to_keep]):  # if there is lesion in this vertebral level
+                idx = self.distrib_matrix_dct[sheet_name][self.distrib_matrix_dct[sheet_name].row == str(row)].index
                 for tract_id in atlas_data:  # Loop over PAM50 tracts
-                    res_lst = self.__relative_ROIvol_in_mask(im_mask_data=np.copy(im_lesion),
-                                                             im_atlas_roi_data=np.copy(atlas_data[tract_id]),
+                    res_lst = self.__relative_ROIvol_in_mask(im_mask_data=im_lesion,
+                                                             im_atlas_roi_data=atlas_data[tract_id],
                                                              p_lst=p_lst,
-                                                             im_template_vert_data=np.copy(im_vert_cur),
-                                                             vert_level=vert)
+                                                             indices_to_keep=indices_to_keep)
                     self.distrib_matrix_dct[sheet_name].loc[idx, 'PAM50_' + str(tract_id).zfill(2)] = res_lst[0]
                     vol_mask_tot += res_lst[0]
 
         # convert the volume values in distrib_matrix_dct to percentage values
-        for vert in self.vert_lst:
-            idx = self.distrib_matrix_dct[sheet_name][self.distrib_matrix_dct[sheet_name].vert == str(vert)].index
+        for row in sct_progress_bar(self.rows.keys(), unit=self.row_name,
+                                    desc="  Converting volume values into percentage values"):
+            idx = self.distrib_matrix_dct[sheet_name][self.distrib_matrix_dct[sheet_name].row == str(row)].index
             for tract_id in atlas_data:
                 val = self.distrib_matrix_dct[sheet_name].loc[idx, 'PAM50_' + str(tract_id).zfill(2)].values[0]
                 self.distrib_matrix_dct[sheet_name].loc[idx, 'PAM50_' + str(tract_id).zfill(2)] = val * 100.0 / vol_mask_tot
 
-    def __regroup_per_tracts(self, vol_dct, tract_limit):
-        res_mask = [vol_dct[t][0] for t in vol_dct if t >= tract_limit[0] and t <= tract_limit[1]]
-        res_tot = [vol_dct[t][1] for t in vol_dct if t >= tract_limit[0] and t <= tract_limit[1]]
+        # Add the total column
+        self.distrib_matrix_dct[sheet_name]['total % (all tracts)'] = \
+            self.distrib_matrix_dct[sheet_name].sum(numeric_only=True, axis=1)
+
+        # Add additional columns for the "CombinedLabels" defined by info_label.txt
+        for label_name, sublabels in self.atlas_combinedlabels.items():
+            column_names_to_sum = [f"PAM50_{subid:02}" for subid in sublabels]
+            self.distrib_matrix_dct[sheet_name][label_name] = \
+                self.distrib_matrix_dct[sheet_name][column_names_to_sum].sum(axis=1)
+
+        # Add the total row
+        self.distrib_matrix_dct[sheet_name] = self.distrib_matrix_dct[sheet_name].append(
+            self.distrib_matrix_dct[sheet_name].sum(numeric_only=True, axis=0),
+            ignore_index=True
+        )
+        self.distrib_matrix_dct[sheet_name].iloc[
+            -1, self.distrib_matrix_dct[sheet_name].columns.get_loc('row')
+        ] = f'total % (all {self.row_name})'
+
+    def __regroup_per_tracts(self, vol_dct, tracts):
+        res_mask = [vol_dct[t][0] for t in vol_dct if t in tracts]
+        res_tot = [vol_dct[t][1] for t in vol_dct if t in tracts]
         return np.sum(res_mask) * 100.0 / np.sum(res_tot)
 
     def _measure_totLesion_distribution(self, im_lesion, atlas_data, im_vert, p_lst):
 
         sheet_name = 'ROI_occupied_by_lesion'
-        self.distrib_matrix_dct[sheet_name] = pd.DataFrame.from_dict({'vert': [str(v) for v in self.vert_lst] + ['total % (all vert)']})
+        total_row = f'total % (all {self.row_name})'
+        rows_with_total = {
+            **self.rows,
+            # numpy array index equivalent to [:, :, :]
+            total_row: (slice(None), slice(None), slice(None)),
+        }
+        self.distrib_matrix_dct[sheet_name] = pd.DataFrame.from_dict({'row': [str(r) for r in rows_with_total]})
 
         # initialized to 0 for each vertebral level and each PAM50 tract
         for tract_id in atlas_data:
-            self.distrib_matrix_dct[sheet_name]['PAM50_' + str(tract_id).zfill(2)] = [0] * len(self.vert_lst + ['total % (all vert)'])
+            self.distrib_matrix_dct[sheet_name][f"PAM50_{tract_id:02}"] = [0] * len(rows_with_total)
 
-        for vert in self.vert_lst + ['total % (all vert)']:  # loop over the vertebral levels
-            if vert != 'total % (all vert)':
-                im_vert_cur = np.copy(im_vert)
-                im_vert_cur[np.where(im_vert_cur != vert)] = 0
-            else:
-                im_vert_cur = None
-            if im_vert_cur is None or np.count_nonzero(im_vert_cur * np.copy(im_lesion)):
+        im_vert_and_lesion = im_vert * im_lesion  # to check which vertebral levels have lesions
+        # loop over slices/vertlevels
+        for row, indices_to_keep in sct_progress_bar(rows_with_total.items(), unit=self.row_name,
+                                                     desc="  Computing ROI distribution for all lesions"):
+            if row == total_row or np.count_nonzero(im_vert_and_lesion[indices_to_keep]):
                 res_perTract_dct = {}  # for each tract compute the volume occupied by lesion and the volume of the tract
-                idx = self.distrib_matrix_dct[sheet_name][self.distrib_matrix_dct[sheet_name].vert == str(vert)].index
+                idx = self.distrib_matrix_dct[sheet_name][self.distrib_matrix_dct[sheet_name].row == str(row)].index
                 for tract_id in atlas_data:  # loop over the tracts
-                    res_perTract_dct[tract_id] = self.__relative_ROIvol_in_mask(im_mask_data=np.copy(im_lesion),
-                                                                                im_atlas_roi_data=np.copy(atlas_data[tract_id]),
+                    res_perTract_dct[tract_id] = self.__relative_ROIvol_in_mask(im_mask_data=im_lesion,
+                                                                                im_atlas_roi_data=atlas_data[tract_id],
                                                                                 p_lst=p_lst,
-                                                                                im_template_vert_data=np.copy(im_vert_cur),
-                                                                                vert_level=vert)
+                                                                                indices_to_keep=indices_to_keep)
 
-                # group tracts to compute involvement in GM, WM, DC, VF, LF
-                self.distrib_matrix_dct[sheet_name].loc[idx, 'PAM50_GM'] = self.__regroup_per_tracts(vol_dct=res_perTract_dct, tract_limit=[30, 35])
-                self.distrib_matrix_dct[sheet_name].loc[idx, 'PAM50_WM'] = self.__regroup_per_tracts(vol_dct=res_perTract_dct, tract_limit=[0, 29])
-                self.distrib_matrix_dct[sheet_name].loc[idx, 'PAM50_DC'] = self.__regroup_per_tracts(vol_dct=res_perTract_dct, tract_limit=[0, 3])
-                self.distrib_matrix_dct[sheet_name].loc[idx, 'PAM50_VF'] = self.__regroup_per_tracts(vol_dct=res_perTract_dct, tract_limit=[14, 29])
-                self.distrib_matrix_dct[sheet_name].loc[idx, 'PAM50_LF'] = self.__regroup_per_tracts(vol_dct=res_perTract_dct, tract_limit=[4, 13])
+                # group tracts to compute involvement in CombinedLabels (GM, WM, DC, VF, LF)
+                for label_name, sublabels in self.atlas_combinedlabels.items():
+                    self.distrib_matrix_dct[sheet_name].loc[idx, label_name] = \
+                        self.__regroup_per_tracts(vol_dct=res_perTract_dct, tracts=sublabels)
 
                 # save involvement in each PAM50 tracts
                 for tract_id in atlas_data:
@@ -687,7 +719,21 @@ class AnalyzeLesion:
             if os.path.isfile(self.path_levels):
                 img_vert = Image(self.path_levels)
                 im_vert_data = img_vert.data
-                self.vert_lst = [v for v in np.unique(im_vert_data) if v]  # list of vertebral levels available in the input image
+                if self.row_name == "vert":
+                    # list of vertebral levels available in the input image
+                    # precompute the list of indices for each vertebral level
+                    # these indices are used to zero out certain levels (to compute the volume of the remaining levels)
+                    self.rows = {
+                        vert: np.where(im_vert_data == vert)
+                        for vert in np.unique(im_vert_data) if vert
+                    }
+                else:
+                    assert self.row_name == "slice"
+                    # Keep the same vert image, but uses slices instead
+                    self.rows = {
+                        z: (slice(None), slice(None), z)  # numpy array index equivalent to [:, :, z]
+                        for z in range(im_vert_data.shape[2])
+                    }
 
             else:
                 im_vert_data = None
@@ -735,6 +781,7 @@ class AnalyzeLesion:
 
         if self.path_template is not None:
             # compute total lesion distribution
+            print("\nROI percentage taken up by all lesions...")
             self._measure_totLesion_distribution(im_lesion=np.copy(im_lesion_data > 0),
                                                  atlas_data=atlas_data_dct,
                                                  im_vert=im_vert_data,
@@ -828,12 +875,33 @@ class AnalyzeLesion:
             self.path_levels = ''.join(extract_fname(self.path_levels)[1:])
 
             self.atlas_roi_lst = []
-            for fname_atlas_roi in os.listdir(self.path_atlas):
+            tract_ids = []
+            for fname_atlas_roi in sorted(os.listdir(self.path_atlas)):
                 if fname_atlas_roi.endswith('.nii.gz'):
                     tract_id = int(fname_atlas_roi.split('_')[-1].split('.nii.gz')[0])
                     if tract_id < 36:  # Not interested in CSF
+                        tract_ids.append(tract_id)
                         copy(os.path.join(self.path_atlas, fname_atlas_roi), self.tmp_dir)
                         self.atlas_roi_lst.append(fname_atlas_roi)
+
+            # fetch "CombinedLabels" from atlas info_label.txt
+            # NB: We have to do this here (rather than in tmp_dir) because `read_label_file` will fail unless all files
+            # are present, and we skip copying the CSF to the tmp dir in the lines above.
+            printv("\nLoading CombinedLabels from `info_label.txt`...")
+            if os.path.isfile(os.path.join(self.path_atlas, "info_label.txt")):
+                _, _, _, _, combinedlabel_names, label_groups, _ = read_label_file(self.path_atlas, "info_label.txt")
+                combined_labels = {}
+                for label_name, sublabels in zip(combinedlabel_names, label_groups):
+                    # If one of the CombinedLabels matches the total set of all atlas labels, discard it
+                    # In practice, this will cause the 'spinal cord' label to be discarded (spanning tracts 0:35).
+                    if set(tract_ids) == set(sublabels):
+                        printv(f"WARNING: CombinedLabel '{label_name}' is identical to the 'total' column that sums "
+                               f"all atlas labels ([{sublabels[0]}:{sublabels[-1]}]). "
+                               f"The '{label_name}' column will not be added to the output spreadsheet.",
+                               self.verbose, type="warning")
+                    else:
+                        combined_labels[label_name] = sublabels
+                self.atlas_combinedlabels = combined_labels
 
         os.chdir(self.tmp_dir)  # go to tmp directory
 
@@ -879,6 +947,7 @@ def main(argv: Sequence[str]):
                                fname_ref=fname_ref,
                                path_template=path_template,
                                path_ofolder=path_results,
+                               perslice=arguments.perslice,
                                verbose=verbose)
 
     # run the analyze
