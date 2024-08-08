@@ -5,6 +5,8 @@
 
 **FEATURE**
  - **sct_analyze_lesion**: Automatically compute midsagittal tissue bridges. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4489)
+ - **sct_analyze_lesion**: Support `CombinedLabels` from `info_label.txt` when computing lesion distributions with `-f`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4584)
+ - **sct_analyze_lesion**: Add `-perslice` option (plus performance improvements to make it feasible). [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4588)
  - **sct_compute_flow**: New function to compute velocity from VENC sequence. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4302)
  - **sct_deepseg**: Track `sct_deepseg` model provenance with `source.json` (in model folder) and JSON sidecar (in output). [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4466)
  - **sct_deepseg**: Add postprocessing functionality for non-ivadomed models. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4482)
@@ -23,6 +25,9 @@
  - Run all tests in temporary directories (to preserve a clean copy of `sct_testing_data`). [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4474)
 
 **BUG**
+ - **sct_analyze_lesion**: Fix crashing if there is no midsagittal lesion. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4595)
+ - **sct_analyze_lesion**: Silence `pandas` warning by explicitly using `copy` to remove view/copy ambiguity [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4596)
+ - **sct_analyze_lesion**: Fix slice numbering in QC and CLI output [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4597)
  - **sct_apply_transfo**: Make sure that `fname_out` is set properly for `fsleyes` command when `-o` is not passed. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4480)
  - **sct_deepseg**: Ensure that using `-thr 0` with the contrast agnostic model generates a useful softseg. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4508)
  - **sct_deepseg**: Avoid buggy version of `nnunetv2` that produces empty output predictions. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4564)
