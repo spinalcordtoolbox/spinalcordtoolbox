@@ -117,6 +117,7 @@ tensorboard-data-server==0.7.2
 threadpoolctl==3.5.0
 tifffile==2024.7.24
 tomli==2.0.1
+torch<2.6  # hotfix for torch 2.6 incompatibility with nnunetv2
 tqdm==4.66.5
 traceback2==1.4.0
 traitlets==5.14.3
