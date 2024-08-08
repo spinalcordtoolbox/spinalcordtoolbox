@@ -14,6 +14,8 @@ import skimage
 import skimage.io
 import skimage.exposure
 from scipy.ndimage import center_of_mass
+import matplotlib.colors as color
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 from spinalcordtoolbox.image import Image, check_image_kind
 from spinalcordtoolbox.reports.qc2 import assign_label_colors_by_groups, create_qc_entry
@@ -78,6 +80,19 @@ class QcImage:
     def no_seg_seg(self, mask, ax):
         """Create figure with image overlay. Notably used by sct_registration_to_template"""
         ax.imshow(mask, cmap='gray', interpolation=self.interpolation, aspect=self.aspect_mask)
+        self._add_orientation_label(ax)
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+    
+    def no_seg_seg_tsnr(self, mask, ax, fig, vmin, vmax):
+        """Create figure with image overlay. Notably used by sct_registration_to_template"""
+        cmap='seismic'
+        norm=mpl_colors.Normalize(vmin=vmin, vmax=vmax)
+        ax = fig.add_axes((0, 0, 0.93, 1))
+        fig_ax = ax.imshow(mask, cmap=cmap, norm=norm, interpolation=self.interpolation, aspect=self.aspect_mask)
+        cax = ax.inset_axes([1.005, 0.07, 0.011, 0.86])
+        cbar = fig.colorbar(fig_ax, cax=cax, orientation='vertical', pad=0.01, shrink=0.5, aspect=1, ticks=[vmin,vmax]) #, shrink=0.5, pad=0.05,
+        cbar.ax.tick_params(labelsize=5, length=2, pad=1.7)
         self._add_orientation_label(ax)
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
@@ -202,7 +217,8 @@ class QcImage:
         """
 
         if self._stretch_contrast:
-            img = self._func_stretch_contrast(img)
+            if self.process != 'sct_fmri_compute_tsnr':
+                img = self._func_stretch_contrast(img)
 
         # NB: `size_fig` is in inches. So, when size_fig == 5", then: dpi=300 --> 1500px, dpi=100 --> 500px, etc.
         size_fig = [
@@ -223,8 +239,21 @@ class QcImage:
         fig = mpl_figure.Figure()
         fig.set_size_inches(size_fig[0], size_fig[1], forward=True)
         mpl_backend_agg.FigureCanvasAgg(fig)
-        ax = fig.add_axes((0, 0, 1, 1))
-        ax.imshow(img, cmap='gray', interpolation=self.interpolation, aspect=float(self.aspect_img))
+        if self.process == 'sct_fmri_compute_tsnr':
+            ax = fig.add_axes((0, 0, 0.93, 1))
+            cmap='seismic'
+            vmin = min(int(np.amin(img)), int(np.amin(mask))) # TODO: keep as a variable before
+            vmax = max(int(np.amax(img)),int(np.amax(mask[0]))) - 2
+            norm=mpl_colors.Normalize(vmin=vmin, vmax=vmax)
+        else:
+            ax = fig.add_axes((0, 0, 1, 1))
+            cmap='gray'
+            norm=None
+        fig_ax = ax.imshow(img, cmap=cmap, norm=norm, interpolation=self.interpolation, aspect=float(self.aspect_img))
+        if self.process == 'sct_fmri_compute_tsnr':
+            cax = ax.inset_axes([1.005, 0.07, 0.011, 0.86])
+            cbar = fig.colorbar(fig_ax, cax=cax, orientation='vertical', pad=0.01, shrink=0.5, aspect=1, ticks=[vmin,vmax]) #, shrink=0.5, pad=0.05,
+            cbar.ax.tick_params(labelsize=5, length=2, pad=1.7)
         self._add_orientation_label(ax)
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
@@ -236,11 +265,14 @@ class QcImage:
         mpl_backend_agg.FigureCanvasAgg(fig)
         for i, action in enumerate(self.action_list):
             logger.debug('Action List %s', action.__name__)
-            if self._stretch_contrast and action.__name__ in ("no_seg_seg",):
+            if self._stretch_contrast and action.__name__ in ("no_seg_seg","no_seg_seg_tsnr"):
                 logger.debug("Mask type %s" % mask[i].dtype)
-                mask[i] = self._func_stretch_contrast(mask[i])
-            ax = fig.add_axes((0, 0, 1, 1), label=str(i))
-            action(self, mask[i], ax)
+                if self.process == 'sct_fmri_compute_tsnr':
+                    action(self, mask[i], ax, fig, vmin, vmax)
+                else:
+                    mask[i] = self._func_stretch_contrast(mask[i])
+                    ax = fig.add_axes((0, 0, 1, 1), label=str(i))
+                    action(self, mask[i], ax)
         self._save(fig, str(imgs_to_generate['path_overlay_img']), dpi=self.dpi)
 
     def _make_QC_image_for_4d_volumes(self, images_after_moco, images_before_moco, imgs_to_generate):
@@ -316,6 +348,8 @@ class QcImage:
             text_p.set_path_effects([mpl_patheffects.Stroke(linewidth=1, foreground='black'), mpl_patheffects.Normal()])
             text_l.set_path_effects([mpl_patheffects.Stroke(linewidth=1, foreground='black'), mpl_patheffects.Normal()])
             text_r.set_path_effects([mpl_patheffects.Stroke(linewidth=1, foreground='black'), mpl_patheffects.Normal()])
+
+    #def _add_mean_tsnr(self, ax):
 
     def _generate_and_save_gif(self, top_images, bottom_images, imgs_to_generate, size_fig, is_mask=False):
         """
@@ -441,6 +475,13 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
         im_list = [Image(fname_in1), Image(fname_in2), Image(fname_seg)]
         action_list = [QcImage.no_seg_seg]
         def qcslice_layout(x): return x.mosaic()[:2]
+    # Axial orientation, switch between two input images and color bar and mean value in spinal cord
+    if process in ['sct_fmri_compute_tsnr']:
+        plane = 'Axial'
+        im_list = [Image(fname_in1), Image(fname_in2), Image(fname_seg)]
+        action_list = [QcImage.no_seg_seg_tsnr]
+        def qcslice_layout(x): return x.mosaic()[:2]
+
     # Axial orientation, switch between the image and the segmentation
     elif process in ['sct_propseg', 'sct_deepseg_sc', 'sct_deepseg_gm']:
         plane = 'Axial'
