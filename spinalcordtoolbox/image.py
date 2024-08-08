@@ -71,10 +71,7 @@ def rpi_slice_to_orig_orientation(dim, orig_orientation, slice_number, axis):
             rpi_slice_to_orig_orientation((20, 640, 640), 'AIL', 13, 0) -> 6
     Note: we use 0 as the last arg in this example as it corresponds to the R-L direction (first axis in RPI)
     """
-    # Get the inversions
-    _, inversion = _get_permutations('RPI', orig_orientation)
-
-    return (dim[axis] - 1 - slice_number) if inversion[axis] == -1 else slice_number
+    return (dim[axis] - 1 - slice_number) if orig_orientation[axis] in orig_orientation else slice_number
 
 
 class Slicer(object):
