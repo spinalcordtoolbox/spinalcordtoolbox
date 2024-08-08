@@ -1,5 +1,78 @@
 # Changelog
 
+## 6.4 (2024-08-01)
+[View detailed changelog](https://github.com/spinalcordtoolbox/spinalcordtoolbox/compare/6.3...6.4)
+
+**FEATURE**
+ - **sct_analyze_lesion**: Automatically compute midsagittal tissue bridges. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4489)
+ - **sct_analyze_lesion**: Support `CombinedLabels` from `info_label.txt` when computing lesion distributions with `-f`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4584)
+ - **sct_analyze_lesion**: Add `-perslice` option (plus performance improvements to make it feasible). [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4588)
+ - **sct_compute_flow**: New function to compute velocity from VENC sequence. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4302)
+ - **sct_deepseg**: Track `sct_deepseg` model provenance with `source.json` (in model folder) and JSON sidecar (in output). [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4466)
+ - **sct_deepseg**: Add postprocessing functionality for non-ivadomed models. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4482)
+ - **sct_download_data**: Add T2w dog template to available data downloads. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4561)
+
+**ENHANCEMENT**
+ - **sct_deepseg**: Change `-install-task` arg to `-install`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4473)
+ - **sct_deepseg**: Update contrast agnostic model to v2.4 (now improved for lumbar t2w + PSIR/STIR images). [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4510)
+ - **sct_deepseg**: Indicate model version in "model is up to date" log message. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4519)
+ - **sct_deepseg**: Replace `seg_ms_lesion_mp2rage` model with a nnUnet based model on `sct_deepseg`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4554)
+ - **sct_deepseg**: Fix rootlets QC by improving the cropping, centering, and colormap. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4555)
+ - **sct_deepseg**: Set `edge` padding as default for contrast-agnostic monai model. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4576)
+ - **sct_deepseg**: Update SCI model to SCIsegV2 and standardize on `nnUNetTrainer` folder structure. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4583)
+ - **sct_maths**: Allow multiple `sct_maths` operations to be run sequentially on an image in one command. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4485)
+ - **sct_maths**: Add `-volumewise` to process the individual 3D volumes of 4D input images. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4499)
+ - Run all tests in temporary directories (to preserve a clean copy of `sct_testing_data`). [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4474)
+
+**BUG**
+ - **sct_analyze_lesion**: Fix crashing if there is no midsagittal lesion. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4595)
+ - **sct_analyze_lesion**: Silence `pandas` warning by explicitly using `copy` to remove view/copy ambiguity [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4596)
+ - **sct_analyze_lesion**: Fix slice numbering in QC and CLI output [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4597)
+ - **sct_apply_transfo**: Make sure that `fname_out` is set properly for `fsleyes` command when `-o` is not passed. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4480)
+ - **sct_deepseg**: Ensure that using `-thr 0` with the contrast agnostic model generates a useful softseg. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4508)
+ - **sct_deepseg**: Avoid buggy version of `nnunetv2` that produces empty output predictions. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4564)
+ - **sct_dmri_moco, sct_fmri_moco**: Output ANTs syntax in moco functions with `-v 2` for easier debugging. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4580)
+ - **sct_extract_metric**: Ignore case where user selects 'combine=1' with CombinedLabels. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4469)
+ - **sct_extract_metric**: Skip empty slicegroups to avoid creating blank rows in output metric CSV file. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4487)
+ - **sct_flatten_sagittal**: Rescale flattened values from `[-1.0, 1.0]` back to their original range and datatype. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4573)
+ - **sct_label_vertebrae, sct_register_to_template, sct_smooth_spinalcord**: Include the SCT version in the straightening.cache. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4537)
+ - **sct_qc**: Fix tiny sagittal mosaic QC Report for large images with many slices. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4479)
+ - **sct_qc**: Properly detect softsegs for QC when binary values are *not* the most common values.. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4494)
+ - **sct_qc**: Align the lock names for `qc.py` and `qc2.py`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4541)
+ - **sct_qc**: Adjust QC canvas size by physical resolution to avoid tiny QC with anisotropic T2* images. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4566)
+ - **sct_qc, sct_run_batch**: Increase timeout of `mutex` to avoid `AlreadyLocked` errors with many concurrent processes. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4511)
+ - **sct_register_to_template**: Add rotation to landmark-based preregistration (`step=0`) during template registration. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4533)
+ - **sct_straighten_spinalcord**: Fix straightening transformations for images with "tilted" qform/sform. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4514)
+ - Fix small argparse bug when wrapping help text with whitespace-only lines. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4472)
+ - Add `matplotlib-inline` backend for compatibility with Jupyter notebooks. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4525)
+
+**INSTALLATION**
+ - Make `sct_download_data` errors non-fatal during installations of SCT. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4484)
+ - Restrict `numpy<2` to avoid upstream errors. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4536)
+
+**DOCUMENTATION**
+ - **sct_analyze_lesion**: Improve documentation of the `-f` argument to make the percentages clearer. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4496)
+ - **sct_analyze_lesion**: Improve formatting of bullet points in CLI help. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4585)
+ - **sct_apply_transfo**: Rewrite help for `-x label` to clarify the difference between single-voxel and multi-voxel labels. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4498)
+ - **sct_label_utils**: Clarify that `-disc` does not involve orthogonal projection. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4550)
+ - **sct_run_batch**: Clarified how many subjects are processed in parallel. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4470)
+ - `sct_label_utils`: Clarify argument order for `-disc`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4483)
+ - Update url to slicer documentation. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4486)
+ - Update redirected citation link. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4559)
+
+**REFACTORING**
+ - **sct_deepseg, sct_deepseg_sc, sct_register_to_template**: Remove duplicate functions in `sct_deepseg` and `sct_register_to_template`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4546)
+ - **sct_maths**: Minor improvements to PR #4485. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4557)
+ - **sct_qc**: Refactor `qc.py` to use `create_qc_entry`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4574)
+ - Use Tensorflow's simple `LazyLoader` class to minimize import times of expensive packages. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4493)
+ - Simplify calls to `np.einsum`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4529)
+
+**CI**
+ - Update github action to Node.js 20. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4462)
+ - Replace `libglib2.0-0` with `t64` version to fix Debian Rolling Release test failure. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4463)
+ - Update CentOS Stream 8 runner to work past EOL. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4517)
+ - Set `norecursedirs` in `setup.cfg` to avoid pytest collecting tests from our dependencies within our `venv`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4571)
+
 ## 6.3 (2024-04-25)
 [View detailed changelog](https://github.com/spinalcordtoolbox/spinalcordtoolbox/compare/6.2...6.3)
 
