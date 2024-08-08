@@ -664,7 +664,7 @@ fi
   # https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4352
   SYSTEM_VERSION_COMPAT=0 python/envs/venv_sct/bin/pip install -r "$REQUIREMENTS_FILE" --ignore-installed certifi &&
   print info "Installing spinalcordtoolbox..." &&
-  python/envs/venv_sct/bin/pip install -e .
+  python/envs/venv_sct/bin/pip install -e . --use-pep517
 ) ||
   die "Failed running pip install: $?"
 
