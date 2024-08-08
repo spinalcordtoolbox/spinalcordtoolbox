@@ -6,6 +6,7 @@
 # License: see the file LICENSE
 
 import sys
+import os
 from typing import Sequence
 
 import numpy as np
@@ -13,6 +14,7 @@ import numpy as np
 from spinalcordtoolbox.image import Image, add_suffix, empty_like
 from spinalcordtoolbox.utils.sys import init_sct, set_loglevel, printv
 from spinalcordtoolbox.utils.shell import Metavar, SCTArgumentParser, display_viewer_syntax
+from spinalcordtoolbox.reports.qc import generate_qc
 
 
 class Param:
@@ -136,6 +138,10 @@ def main(argv: Sequence[str]):
     fname_src = arguments.i
     fname_mask = arguments.m
 
+    path_qc = arguments.qc
+    qc_dataset = arguments.qc_dataset
+    qc_subject = arguments.qc_subject
+
     # Check dimensionality of mask
     if fname_mask:
         mask = Image(fname_mask).data
@@ -152,6 +158,10 @@ def main(argv: Sequence[str]):
     tsnr.compute()
 
     display_viewer_syntax([fname_dst], verbose=verbose)
+
+    if path_qc is not None:
+        generate_qc(fname_dst, fname_in2=fname_dst, fname_seg=fname_mask, args=argv, path_qc=os.path.abspath(path_qc),
+                    dataset=qc_dataset, subject=qc_subject, process='sct_fmri_compute_tsnr')
 
 
 if __name__ == "__main__":
