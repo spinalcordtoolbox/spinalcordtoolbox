@@ -548,9 +548,9 @@ def sct_analyze_lesion(
                 slice_lesion = im_label_data_cur[sagittal_slice]
 
                 # Convert the sagittal slice to the original orientation
-                # 'x' because R-L direction (first in RPI --> 'x')
-                sagittal_slice = rpi_slice_to_orig_orientation(im_lesion.dim[0:3], orig_orientation,
-                                                               sagittal_slice, 'x')
+                # '0' because of the R-L direction (first in RPI)
+                sagittal_slice = rpi_slice_to_orig_orientation(im_lesion.dim, orig_orientation,
+                                                               sagittal_slice, 0)
 
                 # Plot spinal cord and lesion masks
                 axes[idx_row, idx_col].imshow(np.swapaxes(slice_sc, 1, 0),
