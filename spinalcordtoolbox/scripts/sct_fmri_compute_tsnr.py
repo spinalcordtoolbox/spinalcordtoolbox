@@ -52,14 +52,14 @@ class Tsnr:
         # compute mean tSNR per slice if mask is there
         if self.mask:
             mask = Image(self.mask)
-            
+
             # TODO add reorientation of mask to tsnr
             data_tsnr_masked = data_tsnr * mask.data
             for z in range(data_tsnr_masked.shape[-1]):
                 # Display result
-                tsnr_roi = (data_tsnr_masked[:,:,z])[data_tsnr_masked[:,:,z]!=0].mean()
+                tsnr_roi = (data_tsnr_masked[:, :, z])[data_tsnr_masked[:, :, z] != 0].mean()
                 printv(f'\nSlice {z},  tSNR = {tsnr_roi:.2f}', type='info')
-            tsnr_roi = (data_tsnr_masked)[data_tsnr_masked!=0].mean()
+            tsnr_roi = (data_tsnr_masked)[data_tsnr_masked != 0].mean()
             printv(f'\ntSNR = {tsnr_roi:.2f}', type='info')
         # save TSNR
         fname_tsnr = self.out
@@ -120,7 +120,6 @@ def get_parser():
         '-qc-subject',
         metavar=Metavar.str,
         help='If provided, this string will be mentioned in the QC report as the subject the process was run on',)
-
 
     return parser
 
