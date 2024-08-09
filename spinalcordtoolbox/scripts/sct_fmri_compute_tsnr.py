@@ -40,15 +40,14 @@ class Tsnr:
 
     def orient2rpi(self):
         # save input image orientation
-        self.orientation = Image(self.mask).orientation
-        if not self.orientation == 'RPI':
-            printv('\nOrient input image(s) to RPI orientation...', self.verbose, 'normal')
-            self._orient(self.mask, 'RPI')
-        print("hello")
+        if self.mask is not None:
+            self.orientation_mask = Image(self.mask).orientation
+            if not self.orientation_mask == 'RPI':
+                printv('\nOrient input image(s) to RPI orientation...', self.verbose, 'normal')
+                self._orient(self.mask, 'RPI')
         self.orientation_fmri = Image(self.fmri).orientation
         if not self.orientation_fmri == 'RPI':
             self._orient(self.fmri, 'RPI')
-            Image(self.mask).orientation
 
     def compute(self):
 
@@ -74,13 +73,16 @@ class Tsnr:
             for z in range(data_tsnr_masked.shape[-1]):
                 # Display result
                 tsnr_roi = (data_tsnr_masked[:, :, z])[data_tsnr_masked[:, :, z] != 0].mean()
-                printv(f'\nSlice {z},  tSNR = {tsnr_roi:.2f}', type='info')
+                printv(f'\nSlice {z},  tSNR = {tsnr_roi:.2f}', type='info')  # TODO: display slice number in original space
             tsnr_roi = (data_tsnr_masked)[data_tsnr_masked != 0].mean()
             printv(f'\ntSNR = {tsnr_roi:.2f}', type='info')
+        # Roerient to original space
+
         # save TSNR
         fname_tsnr = self.out
         nii_tsnr = empty_like(nii_data)
         nii_tsnr.data = data_tsnr
+        nii_tsnr.change_orientation(self.orientation_fmri)
         nii_tsnr.save(fname_tsnr, dtype=np.float32)
 
 
