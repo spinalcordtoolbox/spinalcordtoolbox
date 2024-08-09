@@ -475,7 +475,7 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
         action_list = [QcImage.no_seg_seg]
         def qcslice_layout(x): return x.mosaic()[:2]
     # Axial orientation, switch between two input images and color bar and mean value in spinal cord
-    if process in ['sct_fmri_compute_tsnr']:
+    elif process in ['sct_fmri_compute_tsnr']:
         plane = 'Axial'
         im_list = [Image(fname_in1), Image(fname_in2), Image(fname_seg)]
         action_list = [QcImage.no_seg_seg_tsnr]
