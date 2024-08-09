@@ -6,13 +6,15 @@
 # License: see the file LICENSE
 
 import sys
+import os
 from typing import Sequence
 
 import numpy as np
 
 from spinalcordtoolbox.image import Image, add_suffix, empty_like
-from spinalcordtoolbox.utils.sys import init_sct, set_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, set_loglevel, printv
 from spinalcordtoolbox.utils.shell import Metavar, SCTArgumentParser, display_viewer_syntax
+from spinalcordtoolbox.reports.qc import generate_qc
 
 
 class Param:
@@ -22,13 +24,14 @@ class Param:
 
 
 class Tsnr:
-    def __init__(self, param=None, fmri=None, anat=None, out=None):
+    def __init__(self, param=None, fmri=None, anat=None, mask=None, out=None):
         if param is not None:
             self.param = param
         else:
             self.param = Param()
         self.fmri = fmri
         self.anat = anat
+        self.mask = mask
         self.out = out
 
     def compute(self):
@@ -46,6 +49,18 @@ class Tsnr:
         # compute TSNR
         data_tsnr = data_mean / data_std
 
+        # compute mean tSNR per slice if mask is there
+        if self.mask:
+            mask = Image(self.mask)
+            
+            # TODO add reorientation of mask to tsnr
+            data_tsnr_masked = data_tsnr * mask.data
+            for z in range(data_tsnr_masked.shape[-1]):
+                # Display result
+                tsnr_roi = (data_tsnr_masked[:,:,z])[data_tsnr_masked[:,:,z]!=0].mean()
+                printv(f'\nSlice {z},  tSNR = {tsnr_roi:.2f}', type='info')
+            tsnr_roi = (data_tsnr_masked)[data_tsnr_masked!=0].mean()
+            printv(f'\ntSNR = {tsnr_roi:.2f}', type='info')
         # save TSNR
         fname_tsnr = self.out
         nii_tsnr = empty_like(nii_data)
@@ -68,6 +83,11 @@ def get_parser():
     )
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
+        '-m',
+        help='Binary (or weighted) mask within which tSNR will be averaged. Example: fmri_moco_mean_seg.nii.gz',
+        metavar=Metavar.file,
+        default='')
+    optional.add_argument(
         "-h",
         "--help",
         action="help",
@@ -87,6 +107,20 @@ def get_parser():
         metavar=Metavar.file,
         help="tSNR data output file. Example: fmri_tsnr.nii.gz"
     )
+    optional.add_argument(
+        '-qc',
+        metavar=Metavar.str,
+        help='The path where the quality control generated content will be saved',
+        default=None)
+    optional.add_argument(
+        '-qc-dataset',
+        metavar=Metavar.str,
+        help='If provided, this string will be mentioned in the QC report as the dataset the process was run on',)
+    optional.add_argument(
+        '-qc-subject',
+        metavar=Metavar.str,
+        help='If provided, this string will be mentioned in the QC report as the subject the process was run on',)
+
 
     return parser
 
@@ -102,16 +136,32 @@ def main(argv: Sequence[str]):
     param = Param()
 
     fname_src = arguments.i
+    fname_mask = arguments.m
+
+    path_qc = arguments.qc
+    qc_dataset = arguments.qc_dataset
+    qc_subject = arguments.qc_subject
+
+    # Check dimensionality of mask
+    if fname_mask:
+        mask = Image(fname_mask).data
+        if len(mask.shape) != 3:
+            raise ValueError(f"Mask should be a 3D image, but the input mask has shape '{mask.shape}'.")
+
     if arguments.o is not None:
         fname_dst = arguments.o
     else:
         fname_dst = add_suffix(fname_src, "_tsnr")
 
     # call main function
-    tsnr = Tsnr(param=param, fmri=fname_src, out=fname_dst)
+    tsnr = Tsnr(param=param, fmri=fname_src, mask=fname_mask, out=fname_dst)
     tsnr.compute()
 
     display_viewer_syntax([fname_dst], verbose=verbose)
+
+    if path_qc is not None:
+        generate_qc(fname_dst, fname_in2=fname_dst, fname_seg=fname_mask, args=argv, path_qc=os.path.abspath(path_qc),
+                    dataset=qc_dataset, subject=qc_subject, process='sct_fmri_compute_tsnr')
 
 
 if __name__ == "__main__":
