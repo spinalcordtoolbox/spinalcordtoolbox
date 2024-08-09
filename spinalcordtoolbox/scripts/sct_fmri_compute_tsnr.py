@@ -24,7 +24,7 @@ class Param:
 
 
 class Tsnr:
-    def __init__(self, param=None, fmri=None, anat=None, mask=None, out=None):
+    def __init__(self, param=None, fmri=None, anat=None, mask=None, out=None, verbose=None):
         if param is not None:
             self.param = param
         else:
@@ -33,11 +33,27 @@ class Tsnr:
         self.anat = anat
         self.mask = mask
         self.out = out
+        self.verbose = verbose
+
+    def _orient(self, fname, orientation):
+        return Image(fname).change_orientation(orientation).save(fname, mutable=True)
+
+    def orient2rpi(self):
+        # save input image orientation
+        self.orientation = Image(self.mask).orientation
+        if not self.orientation == 'RPI':
+            printv('\nOrient input image(s) to RPI orientation...', self.verbose, 'normal')
+            self._orient(self.mask, 'RPI')
+        print("hello")
+        self.orientation_fmri = Image(self.fmri).orientation
+        if not self.orientation_fmri == 'RPI':
+            self._orient(self.fmri, 'RPI')
+            Image(self.mask).orientation
 
     def compute(self):
 
+        self.orient2rpi()
         fname_data = self.fmri
-
         # open data
         nii_data = Image(fname_data)
         data = nii_data.data
@@ -153,7 +169,7 @@ def main(argv: Sequence[str]):
         fname_dst = add_suffix(fname_src, "_tsnr")
 
     # call main function
-    tsnr = Tsnr(param=param, fmri=fname_src, mask=fname_mask, out=fname_dst)
+    tsnr = Tsnr(param=param, fmri=fname_src, mask=fname_mask, out=fname_dst, verbose=verbose)
     tsnr.compute()
 
     display_viewer_syntax([fname_dst], verbose=verbose)
