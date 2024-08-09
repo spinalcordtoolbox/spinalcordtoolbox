@@ -81,7 +81,7 @@ class QcImage:
         self._add_orientation_label(ax)
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
-    
+
     def no_seg_seg_tsnr(self, mask, ax, fig, vmin, vmax):
         """Create figure with image overlay. Notably used by sct_registration_to_template"""
         cmap = 'seismic'
