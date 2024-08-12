@@ -63,7 +63,8 @@ class Tsnr:
         data_std = np.std(data, 3, ddof=1)
         # compute TSNR
         data_tsnr = data_mean / data_std
-
+        # Change nan to zeros
+        data_tsnr[np.isnan(data_tsnr)] = 0
         # compute mean tSNR per slice if mask is there
         if self.mask is not None:
             mask = Image(self.mask)
