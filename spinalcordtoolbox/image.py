@@ -55,6 +55,28 @@ def _get_permutations(im_src_orientation, im_dst_orientation):
     return perm, inversion
 
 
+def rpi_slice_to_orig_orientation(dim, orig_orientation, slice_number, axis):
+    """
+    Convert slice number from RPI (right-posterior-inferior) to original orientation, e.g., AIL
+    (anterior-inferior-left).
+    :param dim: tuple, dimensions of the image in RPI orientation, e.g., (20, 640, 640).
+    :param orig_orientation: str, original image orientation, e.g., AIL.
+    :param slice_number: str, slice number in RPI orientation, e.g., 9.
+    :param axis: int, axis of the slice in the RPI orientation. '0' corresponds to the x (R-L) axis,
+    '1' to the y (A-P) axis, and '2' to the z (I-S) axis.
+    :return: int, slice number in original orientation, e.g., 6.
+
+    Example: considering an image with 20 sagittal slices (0-19) and sagittal slice number 13 in the AIL orientation,
+    the corresponding slice number in the RPI orientation is 6:
+            rpi_slice_to_orig_orientation((20, 640, 640), 'AIL', 13, 0) -> 6
+    Note: we use 0 as the last arg in this example as it corresponds to the R-L direction (first axis in RPI)
+    """
+    # Get the inversions
+    _, inversion = _get_permutations('RPI', orig_orientation)
+
+    return (dim[axis] - 1 - slice_number) if inversion[axis] == -1 else slice_number
+
+
 class Slicer(object):
     """
     Provides a sliced view onto original image data.
