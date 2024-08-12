@@ -65,10 +65,8 @@ class Tsnr:
         data_tsnr = data_mean / data_std
 
         # compute mean tSNR per slice if mask is there
-        if self.mask:
+        if self.mask is not None:
             mask = Image(self.mask)
-
-            # TODO add reorientation of mask to tsnr
             data_tsnr_masked = data_tsnr * mask.data
             for z in range(data_tsnr_masked.shape[-1]):
                 # Display result
@@ -104,7 +102,7 @@ def get_parser():
         '-m',
         help='Binary (or weighted) mask within which tSNR will be averaged. Example: fmri_moco_mean_seg.nii.gz',
         metavar=Metavar.file,
-        default='')
+        )
     optional.add_argument(
         "-h",
         "--help",
@@ -153,18 +151,19 @@ def main(argv: Sequence[str]):
     param = Param()
 
     fname_src = arguments.i
-    fname_mask = arguments.m
-
     path_qc = arguments.qc
     qc_dataset = arguments.qc_dataset
     qc_subject = arguments.qc_subject
 
     # Check dimensionality of mask
-    if fname_mask:
+    if arguments.m is not None:
+        fname_mask = arguments.m
+        print("hello")
         mask = Image(fname_mask).data
         if len(mask.shape) != 3:
             raise ValueError(f"Mask should be a 3D image, but the input mask has shape '{mask.shape}'.")
-
+    else:
+        fname_mask = None
     if arguments.o is not None:
         fname_dst = arguments.o
     else:
