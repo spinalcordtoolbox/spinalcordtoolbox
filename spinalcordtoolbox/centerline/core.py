@@ -105,7 +105,7 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
 
     # Open image and change to RPI orientation
     native_orientation = im_seg.orientation
-    im_seg.change_orientation('RPI')
+    im_seg = im_seg.copy().change_orientation('RPI')  # Copy to avoid mutating input image
 
     # The 'optic' method is particular compared to the other methods, as here we estimate the centerline based on the
     # image itself (not the segmentation). This means we do not apply the same fitting procedure and centerline
@@ -122,6 +122,7 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
         _, y_centerline_deriv = curve_fitting.polyfit_1d(z_centerline, y_centerline_fit, z_centerline, deg=param.degree)
         # reorient centerline to native orientation
         im_centerline.change_orientation(native_orientation)
+        im_seg.change_orientation(native_orientation)
         # rename 'z' variable to match the name used the 'non-optic' methods
         z_ref = z_centerline
         # Fit metrics aren't computed for 'optic`, so return 'None'
