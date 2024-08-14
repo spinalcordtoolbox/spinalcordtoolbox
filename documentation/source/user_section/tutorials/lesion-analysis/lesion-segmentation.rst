@@ -7,7 +7,7 @@ Lesion segmentation in spinal cord injury (SCI) or multiple sclerosis (MS)
   :align: center
   :figwidth: 60%
 
-This section demonstrates how to segment lesions in spinal cord injury (SCI) or multiple sclerosis (MS) using the ``sct_deepseg -task seg_sc_lesion_t2w_sci`` or ``sct_deepseg_lesion`` commands, respectively.
+This section demonstrates how to segment lesions in spinal cord injury (SCI) or multiple sclerosis (MS).
 
 .. toctree::
    :maxdepth: 1
