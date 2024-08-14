@@ -157,13 +157,11 @@ def main(argv: Sequence[str]):
     qc_subject = arguments.qc_subject
 
     # Check dimensionality of mask
-    if arguments.m is not None:
-        fname_mask = arguments.m
+    fname_mask = arguments.m
+    if fname_mask is not None:
         mask = Image(fname_mask).data
         if len(mask.shape) != 3:
             raise ValueError(f"Mask should be a 3D image, but the input mask has shape '{mask.shape}'.")
-    else:
-        fname_mask = None
     if arguments.o is not None:
         fname_dst = arguments.o
     else:
