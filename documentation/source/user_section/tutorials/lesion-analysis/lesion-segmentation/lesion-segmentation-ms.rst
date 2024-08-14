@@ -3,7 +3,9 @@ Lesion segmentation in multiple sclerosis (MS)
 
 SCT provides several deep learning-based algorithms to segment lesions in multiple sclerosis (MS), namely:
 
-* ``sct_deepseg_lesion`` - trained on T2w and T2star images. Details: `NeuroImage, C., et al. NeuroImage (2019) <https://doi.org/10.1016/j.neuroimage.2018.09.081>`_.
+:``sct_deepseg_lesion``:
+
+    This algorithm was trained on T2w and T2star images. Details: `NeuroImage, C., et al. NeuroImage (2019) <https://doi.org/10.1016/j.neuroimage.2018.09.081>`_.
 
     .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/spinalcord-segmentation/sct_deepseg_sc_steps.png
        :align: center
@@ -19,7 +21,9 @@ SCT provides several deep learning-based algorithms to segment lesions in multip
        - ``-i`` : Input T2w image
        - ``-c`` : Contrast of the input image
 
-* ``sct_deepseg -task seg_sc_ms_lesion_stir_psir`` - trained on sagittal STIR and PSIR images. It is a region-based model, outputting a single segmentation image containing 2 classes representing the spinal cord and MS lesions. Details: https://github.com/ivadomed/canproco.
+:``sct_deepseg -task seg_sc_ms_lesion_stir_psir``:
+
+    This algorithm was trained on sagittal STIR and PSIR images. It is a region-based model, outputting a single segmentation image containing 2 classes representing the spinal cord and MS lesions. Details: https://github.com/ivadomed/canproco.
 
     .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/lesion-analysis/seg_sc_ms_lesion_stir_psir.gif
        :align: center
@@ -36,7 +40,9 @@ SCT provides several deep learning-based algorithms to segment lesions in multip
        - ``-task`` : Task to perform. In this case, we use the ``seg_sc_ms_lesion_stir_psir`` model
        - ``-qc`` : Directory for Quality Control reporting. QC reports allow us to evaluate the segmentation slice-by-slice
 
-* ``sct_deepseg -task seg_ms_lesion_mp2rage`` - trained on cropped MP2RAGE-UNIT1 images. Details: https://github.com/ivadomed/model_seg_ms_mp2rage.
+:``sct_deepseg -task seg_ms_lesion_mp2rage``:
+
+    This algorithm was trained on cropped MP2RAGE-UNIT1 images. Details: https://github.com/ivadomed/model_seg_ms_mp2rage.
 
     .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/lesion-analysis/model_seg_ms_mp2rage.png
        :align: center
