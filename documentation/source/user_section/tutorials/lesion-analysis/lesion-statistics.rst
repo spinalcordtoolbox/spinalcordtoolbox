@@ -1,6 +1,6 @@
 .. _lesion-statistics:
 
-Compute statistics on segmented lesions
+Computing statistics on segmented lesions
 ##########################################################################
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/lesion-analysis/lesion-analysis_overview.png
