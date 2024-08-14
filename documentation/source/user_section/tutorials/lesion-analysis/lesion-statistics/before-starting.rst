@@ -1,7 +1,9 @@
 Before starting this tutorial
 #############################
 
-#. Make sure that you have the following files in your working directory:
+You can continue this tutorial with your data (see :ref:`lesion-segmentation <lesion-segmentation>` for more information). Or with the provided example data, see below.
+
+#. If you want to continue the tutorial with the provided example data, make sure that you have the following files in your working directory:
 
    * ``single_subject/data/t2_lesion/t2_seg.nii.gz``: A 3D binary mask of the spinal cord.
    * ``single_subject/data/t2_lesion/t2_lesion.nii.gz``: A 3D binary mask of the lesion.
@@ -18,11 +20,3 @@ Before starting this tutorial
 .. code:: sh
 
    cd {PATH_TO_DOWNLOADED_DATA}/single_subject/data/t2_lesion/
-
-
-.. note::
-
-   You can continue this tutorial also with your data; see :ref:`lesion-segmentation <lesion-segmentation>` for more information. In such case, make sure to have the following files in your working directory:
-
-   * ``t2_seg.nii.gz``: A 3D binary mask of the spinal cord.
-   * ``t2_lesion.nii.gz``: A 3D binary mask of the lesion.
