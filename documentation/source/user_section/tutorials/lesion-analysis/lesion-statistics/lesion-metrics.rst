@@ -26,7 +26,7 @@ TODO: Ask Andrew Smith for permission to use the figure
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/lesion-analysis/tissue-bridges.png
   :align: center
-  :figwidth: 80%
+  :figwidth: 60%
 
 Running ``sct_analyze_lesion``
 ------------------------------
