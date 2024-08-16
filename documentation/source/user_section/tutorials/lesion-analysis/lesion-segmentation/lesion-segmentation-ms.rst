@@ -51,7 +51,7 @@ You can try ``seg_sc_ms_lesion_stir_psir`` on your own STIR or PSIR image using 
 
 MP2RAGE-UNIT1
 *************
-``sct_deepseg -task seg_ms_lesion_mp2rage``: This algorithm was trained on cropped MP2RAGE-UNIT1 images. Details: https://github.com/ivadomed/model_seg_ms_mp2rage.
+``sct_deepseg -task seg_ms_lesion_mp2rage``: This algorithm was trained on cropped MP2RAGE-UNIT1 images. Details: `Cohen-Adad, J., et al. Zenodo release (2023) <https://zenodo.org/doi/10.5281/zenodo.8376753>`_.
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/lesion-analysis/model_seg_ms_mp2rage.png
    :align: center
