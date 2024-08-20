@@ -35,26 +35,14 @@ class Tsnr:
         self.out = out
         self.verbose = verbose
 
-    def _orient(self, fname, orientation):
-        return Image(fname).change_orientation(orientation).save(fname, mutable=True)
-
-    def orient2rpi(self):
-        # save input image orientation
-        if self.mask is not None:
-            self.orientation_mask = Image(self.mask).orientation
-            if not self.orientation_mask == 'RPI':
-                printv('\nOrient input image(s) to RPI orientation...', self.verbose, 'normal')
-                self._orient(self.mask, 'RPI')
-        self.orientation_fmri = Image(self.fmri).orientation
-        if not self.orientation_fmri == 'RPI':
-            self._orient(self.fmri, 'RPI')
-
     def compute(self):
 
-        self.orient2rpi()
         fname_data = self.fmri
         # open data
         nii_data = Image(fname_data)
+        orientation_fmri = nii_data.orientation
+        if not orientation_fmri == 'RPI':
+            nii_data.change_orientation(nii_data, 'RPI')
         data = nii_data.data
 
         # compute mean
@@ -68,6 +56,9 @@ class Tsnr:
         # compute mean tSNR per slice if mask is there
         if self.mask is not None:
             mask = Image(self.mask)
+            orientation_mask = mask.orientation
+            if not orientation_mask == 'RPI':
+                mask = mask.change_orientation('RPI')
             data_tsnr_masked = data_tsnr * mask.data
             for z in range(data_tsnr_masked.shape[-1]):
                 # Display result
@@ -81,7 +72,7 @@ class Tsnr:
         fname_tsnr = self.out
         nii_tsnr = empty_like(nii_data)
         nii_tsnr.data = data_tsnr
-        nii_tsnr.change_orientation(self.orientation_fmri)
+        nii_tsnr.change_orientation(orientation_fmri)
         nii_tsnr.save(fname_tsnr, dtype=np.float32)
 
 
