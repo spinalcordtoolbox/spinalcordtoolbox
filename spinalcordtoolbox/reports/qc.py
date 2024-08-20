@@ -75,23 +75,14 @@ class QcImage:
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
 
-    def no_seg_seg(self, mask, ax):
+    def no_seg_seg(self, mask, ax, cmap, norm, fig=None, colorbar=False):
         """Create figure with image overlay. Notably used by sct_registration_to_template"""
-        ax.imshow(mask, cmap='gray', interpolation=self.interpolation, aspect=self.aspect_mask)
-        self._add_orientation_label(ax)
-        ax.get_xaxis().set_visible(False)
-        ax.get_yaxis().set_visible(False)
-
-    def no_seg_seg_tsnr(self, mask, ax, fig, vmin, vmax):
-        """Create figure with image overlay. Notably used by sct_registration_to_template"""
-        cmap = 'seismic'
-        norm = mpl_colors.Normalize(vmin=vmin, vmax=vmax)
-        ax = fig.add_axes((0, 0, 0.93, 1))
         fig_ax = ax.imshow(mask, cmap=cmap, norm=norm, interpolation=self.interpolation, aspect=self.aspect_mask)
-        cax = ax.inset_axes([1.005, 0.07, 0.011, 0.86])
-        cbar = fig.colorbar(fig_ax, cax=cax, orientation='vertical', pad=0.01, shrink=0.5, aspect=1, ticks=[vmin, vmax])
-        cbar.ax.tick_params(labelsize=5, length=2, pad=1.7)
-        ax.text(1.5, 6, '2', color='white', size=3.25)
+        if colorbar:
+            cax = ax.inset_axes([1.005, 0.07, 0.011, 0.86])
+            cbar = fig.colorbar(fig_ax, cax=cax, orientation='vertical', pad=0.01, shrink=0.5, aspect=1, ticks=[norm.vmin, norm.vmax])
+            cbar.ax.tick_params(labelsize=5, length=2, pad=1.7)
+            ax.text(1.5, 6, '2', color='white', size=3.25)
         self._add_orientation_label(ax)
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
@@ -239,6 +230,7 @@ class QcImage:
         fig.set_size_inches(size_fig[0], size_fig[1], forward=True)
         mpl_backend_agg.FigureCanvasAgg(fig)
         if self.process == 'sct_fmri_compute_tsnr':
+            colorbar = True
             ax = fig.add_axes((0, 0, 0.93, 1))
             cmap = 'seismic'
             vmin = min(int(np.amin(img)), int(np.amin(mask)))
@@ -248,15 +240,15 @@ class QcImage:
             ax = fig.add_axes((0, 0, 1, 1))
             cmap = 'gray'
             norm = None
-        fig_ax = ax.imshow(img, cmap=cmap, norm=norm, interpolation=self.interpolation, aspect=float(self.aspect_img))
-        if self.process == 'sct_fmri_compute_tsnr':
-            cax = ax.inset_axes([1.005, 0.07, 0.011, 0.86])
-            cbar = fig.colorbar(fig_ax, cax=cax, orientation='vertical', pad=0.01, shrink=0.5, aspect=1, ticks=[vmin, vmax])
-            cbar.ax.tick_params(labelsize=5, length=2, pad=1.7)
-            ax.text(1.5, 6, '1', color='white', size=3.25)
-        self._add_orientation_label(ax)
-        ax.get_xaxis().set_visible(False)
-        ax.get_yaxis().set_visible(False)
+            colorbar = False
+        QcImage.no_seg_seg(self,
+                           mask=img,
+                           ax=ax,
+                           cmap=cmap,
+                           norm=norm,
+                           fig=fig,
+                           colorbar=colorbar)
+
         logger.info(str(imgs_to_generate['path_background_img']))
         self._save(fig, str(imgs_to_generate['path_background_img']), dpi=self.dpi)
 
@@ -265,14 +257,21 @@ class QcImage:
         mpl_backend_agg.FigureCanvasAgg(fig)
         for i, action in enumerate(self.action_list):
             logger.debug('Action List %s', action.__name__)
-            if self._stretch_contrast and action.__name__ in ("no_seg_seg"):
+            if self._stretch_contrast and action.__name__ in ("no_seg_seg") and not colorbar:
                 logger.debug("Mask type %s" % mask[i].dtype)
                 mask[i] = self._func_stretch_contrast(mask[i])
-            if self.process == 'sct_fmri_compute_tsnr':
-                action(self, mask[i], ax, fig, vmin, vmax)
+            if colorbar:
+                ax = fig.add_axes((0, 0, 0.93, 1))
             else:
-                print("hello")
                 ax = fig.add_axes((0, 0, 1, 1), label=str(i))
+            if action.__name__ in ("no_seg_seg"):
+                action(self, mask[i],
+                       ax=ax,
+                       cmap=cmap,
+                       norm=norm,
+                       fig=fig,
+                       colorbar=colorbar)
+            else:
                 action(self, mask[i], ax)
         self._save(fig, str(imgs_to_generate['path_overlay_img']), dpi=self.dpi)
 
@@ -478,7 +477,7 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
     elif process in ['sct_fmri_compute_tsnr']:
         plane = 'Axial'
         im_list = [Image(fname_in1), Image(fname_in2), Image(fname_seg)]
-        action_list = [QcImage.no_seg_seg_tsnr]
+        action_list = [QcImage.no_seg_seg]
         def qcslice_layout(x): return x.mosaic()[:2]
     # Axial orientation, switch between the image and the segmentation
     elif process in ['sct_propseg', 'sct_deepseg_sc', 'sct_deepseg_gm']:
