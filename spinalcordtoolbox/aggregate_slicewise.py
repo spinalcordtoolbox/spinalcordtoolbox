@@ -317,11 +317,14 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], distan
             slicegroups = [tuple(slices)]
     agg_metric = {}
     # loop across slice group
-    for slicegroup in slicegroups:
+    for i, slicegroup in enumerate(slicegroups):
         # Skip empty slicegroups. This can occur if, for example, the user requests vertlevels that are not in the
         # data. e.g. -vert 4:7 but data only has 5+6. In that case, vertgroups = [(4,), (5,), (6,), (7,)] but
         # slicegroups = [(), (2,), (1,), ()].
         if not slicegroup:
+            warning_msg_vert = f" (vertebral level {vertgroups[i]})" if vertgroups else ""
+            logging.warning(f"WARNING: No slices present in slicegroup {i}{warning_msg_vert}. "
+                            f"Please check that your requested slices/levels are present in the input data files.")
             continue
 
         # initialize slicegroup entry
