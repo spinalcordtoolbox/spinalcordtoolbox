@@ -140,6 +140,15 @@ html_context = {
     "page_source_suffix": "rst",
 }
 
+# Set canonical URL from the Read the Docs Domain
+# NB: This was previously defined by RTD, but RTD no longer performs Sphinx context injection.
+# See also: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4565
+html_baseurl = os.environ.get("READTHEDOCS_CANONICAL_URL", "")
+
+# Tell Jinja2 templates the build is running on Read the Docs
+if os.environ.get("READTHEDOCS", "") == "True":
+    html_context["READTHEDOCS"] = True
+
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
