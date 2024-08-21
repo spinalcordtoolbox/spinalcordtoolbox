@@ -1,5 +1,7 @@
 # pytest unit tests for all cli scripts
 
+import os
+import sys
 import pytest
 from importlib.metadata import entry_points
 import subprocess
@@ -28,4 +30,8 @@ def test_calling_scripts_with_no_args_shows_usage(capsys, script):
     duration = time.time() - start_time
     assert completed_process.returncode == 2
     assert b'usage' in completed_process.stderr
-    assert duration < 2.0, f"Expected '{script} -h' to execute in under 2.0s, but took {duration}"
+    # NB: macOS GitHub Actions runners are inconsistent in their processing speed. Sometimes our requirement is met,
+    #     and other times scripts take significantly longer. It's possible to just "retry" the GHA run, but to save
+    #     development headache, we just skip this check if we're on a macOS GitHub Actions runner.
+    if not (sys.platform.startswith("darwin") and "CI" in os.environ):
+        assert duration < 2.0, f"Expected '{script} -h' to execute in under 2.0s, but took {duration}"
