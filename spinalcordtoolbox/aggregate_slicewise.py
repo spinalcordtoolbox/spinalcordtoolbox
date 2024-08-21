@@ -567,9 +567,9 @@ def save_as_csv(agg_metric, fname_out, fname_in=None, append=False):
         with open(fname_out, 'w', newline='') as csvfile:
             # spamwriter = csv.writer(csvfile, delimiter=',')
             header = ['Timestamp', 'SCT Version', 'Filename', 'Slice (I->S)', 'VertLevel', 'DistancePMJ']
-            agg_metric_key = [v for i, (k, v) in enumerate(agg_metric.items())][0]
+            first_metric_group = list(agg_metric.values())[0]
             for item in list_item:
-                for key in agg_metric_key:
+                for key in first_metric_group.keys():
                     if item in key:
                         header.append(key)
                         break
