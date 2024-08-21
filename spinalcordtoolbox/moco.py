@@ -498,9 +498,6 @@ def moco(param):
     suffix = param.suffix
     verbose = param.verbose
 
-    # other parameters
-    file_mask = 'mask.nii'
-
     printv('\nInput parameters:', param.verbose)
     printv('  Input file ............ ' + file_data, param.verbose)
     printv('  Reference file ........ ' + file_target, param.verbose)
@@ -529,7 +526,8 @@ def moco(param):
     im_target = convert(Image(param.file_target))
     im_target.save("target.nii.gz", mutable=True, verbose=0)
 
-    if not param.fname_mask == '':
+    file_mask = param.fname_mask
+    if file_mask != '':
         im_mask = Image(file_mask)
         im_mask.data = binarize(im_mask.data, bin_thr=0.5)
         file_mask = add_suffix(im_mask.absolutepath, "_bin")
@@ -551,7 +549,7 @@ def moco(param):
             im_targetz.save(verbose=0)
             file_target_splitZ.append(im_targetz.absolutepath)
         # z-split mask (if exists)
-        if not param.fname_mask == '':
+        if file_mask != '':
             im_maskz_list = split_data(Image(file_mask), dim=dim_sag, squeeze_data=False)
             file_mask_splitZ = []
             for im_maskz in im_maskz_list:
@@ -568,8 +566,8 @@ def moco(param):
         file_mat = np.empty((1, nt), dtype=object)
 
         # deal with mask
-        if not param.fname_mask == '':
-            im_mask = convert(Image(param.fname_mask), squeeze_data=False)
+        if file_mask != '':
+            im_mask = convert(Image(file_mask), squeeze_data=False)
             im_mask.save(file_mask, mutable=True, verbose=0)
             im_maskz_list = [Image(file_mask)]  # use a list with single element
 
@@ -605,7 +603,7 @@ def moco(param):
             file_data_splitZ_splitT_moco.append(add_suffix(file_data_splitZ_splitT[it], '_moco'))
             # deal with masking (except in the 'apply' case, where masking is irrelevant)
             input_mask = None
-            if not param.fname_mask == '' and not param.todo == 'apply':
+            if file_mask != '' and not param.todo == 'apply':
                 input_mask = im_maskz_list[iz]
 
             # run 3D registration
