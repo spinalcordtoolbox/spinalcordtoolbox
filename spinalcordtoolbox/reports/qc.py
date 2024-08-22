@@ -75,7 +75,7 @@ class QcImage:
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
 
-    def no_seg_seg(self, mask, ax, cmap, norm, fig=None, colorbar=False):
+    def no_seg_seg(self, mask, ax, cmap='gray', norm=None, fig=None, colorbar=False):
         """Create figure with image overlay. Notably used by sct_registration_to_template"""
         fig_ax = ax.imshow(mask, cmap=cmap, norm=norm, interpolation=self.interpolation, aspect=self.aspect_mask)
         if colorbar:
@@ -228,27 +228,19 @@ class QcImage:
         fig = mpl_figure.Figure()
         fig.set_size_inches(size_fig[0], size_fig[1], forward=True)
         mpl_backend_agg.FigureCanvasAgg(fig)
+        kwargs = {}
         if self.process == 'sct_fmri_compute_tsnr':
-            colorbar = True
+            kwargs['cmap'] = 'seismic'
+            kwargs['colorbar'] = True
+            kwargs['fig'] = fig
             ax_dim = (0, 0, 0.93, 1)
-            #ax = fig.add_axes((0, 0, 0.93, 1))
-            cmap = 'seismic'
             vmin = min(int(np.amin(img)), int(np.amin(mask)))
             vmax = max(int(np.amax(img)), int(np.amax(mask[0]))) - 2
-            norm = mpl_colors.Normalize(vmin=vmin, vmax=vmax)
+            kwargs['norm'] = mpl_colors.Normalize(vmin=vmin, vmax=vmax)
         else:
             ax_dim = (0, 0, 1, 1)  # TODO: maybe put as default value
-            cmap = 'gray'
-            norm = None
-            colorbar = False
         ax = fig.add_axes(ax_dim)
-        QcImage.no_seg_seg(self,
-                           mask=img,
-                           ax=ax,
-                           cmap=cmap,
-                           norm=norm,
-                           fig=fig,
-                           colorbar=colorbar)
+        QcImage.no_seg_seg(self, img, ax, **kwargs)
 
         logger.info(str(imgs_to_generate['path_background_img']))
         self._save(fig, str(imgs_to_generate['path_background_img']), dpi=self.dpi)
@@ -258,23 +250,11 @@ class QcImage:
         mpl_backend_agg.FigureCanvasAgg(fig)
         for i, action in enumerate(self.action_list):
             logger.debug('Action List %s', action.__name__)
-            if self._stretch_contrast and action.__name__ in ("no_seg_seg") and not colorbar:
+            if self._stretch_contrast and action.__name__ in ("no_seg_seg"):
                 logger.debug("Mask type %s" % mask[i].dtype)
                 mask[i] = self._func_stretch_contrast(mask[i])
-            # if colorbar:
-            #     ax = fig.add_axes((0, 0, 0.93, 1))
-            # else:
-            #     ax = fig.add_axes((0, 0, 1, 1), label=str(i))
             ax = fig.add_axes(ax_dim)
-            if action.__name__ in ("no_seg_seg"):
-                action(self, mask[i],
-                       ax=ax,
-                       cmap=cmap,
-                       norm=norm,
-                       fig=fig,
-                       colorbar=colorbar)
-            else:
-                action(self, mask[i], ax)
+            action(self, mask[i], ax, **kwargs)
         self._save(fig, str(imgs_to_generate['path_overlay_img']), dpi=self.dpi)
 
     def _make_QC_image_for_4d_volumes(self, images_after_moco, images_before_moco, imgs_to_generate):
@@ -481,7 +461,7 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
         plane = 'Axial'
         stretch_contrast = False
         im_list = [Image(fname_in1), Image(fname_in2), Image(fname_seg)]
-        action_list = [QcImage.no_seg_seg]      
+        action_list = [QcImage.no_seg_seg]
         def qcslice_layout(x): return x.mosaic()[:2]
     # Axial orientation, switch between the image and the segmentation
     elif process in ['sct_propseg', 'sct_deepseg_sc', 'sct_deepseg_gm']:
