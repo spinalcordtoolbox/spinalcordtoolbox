@@ -231,16 +231,18 @@ class QcImage:
         mpl_backend_agg.FigureCanvasAgg(fig)
         if self.process == 'sct_fmri_compute_tsnr':
             colorbar = True
-            ax = fig.add_axes((0, 0, 0.93, 1))
+            ax_dim = (0, 0, 0.93, 1)
+            #ax = fig.add_axes((0, 0, 0.93, 1))
             cmap = 'seismic'
             vmin = min(int(np.amin(img)), int(np.amin(mask)))
             vmax = max(int(np.amax(img)), int(np.amax(mask[0]))) - 2
             norm = mpl_colors.Normalize(vmin=vmin, vmax=vmax)
         else:
-            ax = fig.add_axes((0, 0, 1, 1))
+            ax_dim = (0, 0, 1, 1)  # TODO: maybe put as default value
             cmap = 'gray'
             norm = None
             colorbar = False
+        ax = fig.add_axes(ax_dim)
         QcImage.no_seg_seg(self,
                            mask=img,
                            ax=ax,
@@ -260,10 +262,11 @@ class QcImage:
             if self._stretch_contrast and action.__name__ in ("no_seg_seg") and not colorbar:
                 logger.debug("Mask type %s" % mask[i].dtype)
                 mask[i] = self._func_stretch_contrast(mask[i])
-            if colorbar:
-                ax = fig.add_axes((0, 0, 0.93, 1))
-            else:
-                ax = fig.add_axes((0, 0, 1, 1), label=str(i))
+            # if colorbar:
+            #     ax = fig.add_axes((0, 0, 0.93, 1))
+            # else:
+            #     ax = fig.add_axes((0, 0, 1, 1), label=str(i))
+            ax = fig.add_axes(ax_dim)
             if action.__name__ in ("no_seg_seg"):
                 action(self, mask[i],
                        ax=ax,
@@ -468,6 +471,7 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
 
     # Get QC specifics based on SCT process
     # Axial orientation, switch between two input images
+    stretch_contrast = True
     if process in ['sct_register_multimodal', 'sct_register_to_template']:
         plane = 'Axial'
         im_list = [Image(fname_in1), Image(fname_in2), Image(fname_seg)]
@@ -476,8 +480,9 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
     # Axial orientation, switch between two input images and color bar and mean value in spinal cord
     elif process in ['sct_fmri_compute_tsnr']:
         plane = 'Axial'
+        stretch_contrast = False
         im_list = [Image(fname_in1), Image(fname_in2), Image(fname_seg)]
-        action_list = [QcImage.no_seg_seg]
+        action_list = [QcImage.no_seg_seg]      
         def qcslice_layout(x): return x.mosaic()[:2]
     # Axial orientation, switch between the image and the segmentation
     elif process in ['sct_propseg', 'sct_deepseg_sc', 'sct_deepseg_gm']:
@@ -604,7 +609,7 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
     qc_image.interpolation = 'none'
     qc_image.action_list = action_list
     qc_image.process = process
-    qc_image._stretch_contrast = True
+    qc_image._stretch_contrast = stretch_contrast
     qc_image._stretch_contrast_method = 'equalized'
     if 'equalized' not in ['equalized', 'contrast_stretching']:
         raise ValueError("Unrecognized stretch_contrast_method: {}.".format('equalized'),
