@@ -207,8 +207,7 @@ class QcImage:
         """
 
         if self._stretch_contrast:
-            if self.process != 'sct_fmri_compute_tsnr':
-                img = self._func_stretch_contrast(img)
+            img = self._func_stretch_contrast(img)
 
         # NB: `size_fig` is in inches. So, when size_fig == 5", then: dpi=300 --> 1500px, dpi=100 --> 500px, etc.
         size_fig = [
