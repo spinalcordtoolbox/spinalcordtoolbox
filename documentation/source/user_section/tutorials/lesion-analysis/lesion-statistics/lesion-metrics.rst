@@ -36,11 +36,12 @@ Running ``sct_analyze_lesion``
 
 .. code:: sh
 
-   sct_analyze_lesion -m t2_lesion_seg.nii.gz -s t2_sc_seg.nii.gz
+   sct_analyze_lesion -m t2_lesion_seg.nii.gz -s t2_sc_seg.nii.gz -qc ./qc
 
 :Input arguments:
    - ``-m`` : 3D binary mask of the segmented lesion
    - ``-s`` : 3D binary mask of the segmented spinal cord
+   - ``-qc`` : Directory for Quality Control reporting. QC report contains a figure for the tissue bridges
 
 :Output files/folders:
    - TODO
