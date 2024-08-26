@@ -13,3 +13,4 @@ This section demonstrates how to compute statistics on segmented lesions using t
 
    lesion-statistics/before-starting
    lesion-statistics/lesion-metrics
+   lesion-statistics/lesion-metrics-template
