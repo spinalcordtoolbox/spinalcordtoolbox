@@ -1,7 +1,8 @@
 Compute lesion morphometric measures using ``sct_analyze_lesion``
 #################################################################
 
-The ``sct_analyze_lesion`` function computes various morphometric measures on segmented lesions and the spinal cord. The function assigns an ID value to each lesion (1, 2, 3, etc.) and then outputs morphometric measures for each lesion to an XLS file.
+The ``sct_analyze_lesion`` function computes various morphometric measures on segmented lesions and spinal cord.
+In case of multiple lesions, the function assigns an ID value to each lesion (1, 2, 3, etc.) and then outputs morphometric measures for each lesion to an XLS file.
 
 The following morphometric measures are computed:
 
@@ -46,7 +47,7 @@ Running ``sct_analyze_lesion``
 
 .. note::
 
-   You can use ``sct_analyze_lesion`` on lesion and spinal cord segmentation masks produced automatically (for example by SCT's deep learning models; see :ref:`lesion-segmentation <lesion-segmentation>` for more information. ) or manually.
+   You can use ``sct_analyze_lesion`` on lesion and spinal cord segmentation masks produced automatically (for example by SCT's deep learning models; see :ref:`lesion-segmentation <lesion-segmentation>` for more information) or manually.
 
 Details:
 
