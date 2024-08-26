@@ -10,8 +10,7 @@ If specified, the function computes:
 .. note::
 
    You can register the template and warp the atlas to the anatomical image using the ``sct_register_to_template`` and ``sct_warp_template`` functions, respectively.
-   See :ref:`registration-to-template/template-registration` for more information.
-
+   See :ref:`template-registration <registration-to-template/template-registration>` for more information.
 
 Running ``sct_analyze_lesion``
 ------------------------------
