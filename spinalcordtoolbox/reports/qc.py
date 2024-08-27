@@ -229,15 +229,14 @@ class QcImage:
         fig.set_size_inches(size_fig[0], size_fig[1], forward=True)
         mpl_backend_agg.FigureCanvasAgg(fig)
         kwargs = {}
+        ax_dim = (0, 0, 1, 1)
         if self.process == 'sct_fmri_compute_tsnr':
-            kwargs['cmap'] = 'seismic'
-            kwargs['colorbar'] = True
-            ax_dim = (0, 0, 0.93, 1)
             vmin = min(int(np.amin(img)), int(np.amin(mask)))
             vmax = max(int(np.amax(img)), int(np.amax(mask[0]))) - 2
             kwargs['norm'] = mpl_colors.Normalize(vmin=vmin, vmax=vmax)
-        else:
-            ax_dim = (0, 0, 1, 1)  # TODO: maybe put as default value
+            kwargs['cmap'] = 'seismic'
+            kwargs['colorbar'] = True
+            ax_dim = (0, 0, 0.93, 1)
         ax = fig.add_axes(ax_dim)
         QcImage.no_seg_seg(self, img, ax, **kwargs)
 
