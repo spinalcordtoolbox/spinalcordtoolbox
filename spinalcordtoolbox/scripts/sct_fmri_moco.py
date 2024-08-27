@@ -61,7 +61,8 @@ def get_parser():
     optional.add_argument(
         '-m',
         metavar=Metavar.file,
-        help="Binary mask to limit voxels considered by the registration metric."
+        help="Binary mask to limit voxels considered by the registration metric. You may also provide a softmask "
+             "(nonbinary, [0, 1]), and it will be binarized at 0.5."
     )
     optional.add_argument(
         '-param',
