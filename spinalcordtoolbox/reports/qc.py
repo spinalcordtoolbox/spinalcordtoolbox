@@ -248,7 +248,7 @@ class QcImage:
         mpl_backend_agg.FigureCanvasAgg(fig)
         for i, action in enumerate(self.action_list):
             logger.debug('Action List %s', action.__name__)
-            if self._stretch_contrast and action.__name__ in ("no_seg_seg"):
+            if self._stretch_contrast and action.__name__ in ("no_seg_seg",):
                 logger.debug("Mask type %s" % mask[i].dtype)
                 mask[i] = self._func_stretch_contrast(mask[i])
             ax = fig.add_axes(ax_dim)
