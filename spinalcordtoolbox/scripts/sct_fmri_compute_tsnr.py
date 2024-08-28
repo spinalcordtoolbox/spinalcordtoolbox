@@ -63,7 +63,7 @@ class Tsnr:
             for z in range(data_tsnr_masked.shape[-1]):
                 # Display result
                 tsnr_roi = (data_tsnr_masked[:, :, z])[data_tsnr_masked[:, :, z] != 0].mean()
-                slice_orig = rpi_slice_to_orig_orientation(data.shape, orientation_fmri,z, 2 )
+                slice_orig = rpi_slice_to_orig_orientation(data.shape, orientation_fmri, z, 2)
                 printv(f'\nSlice {slice_orig},  tSNR = {tsnr_roi:.2f}', type='info')
             tsnr_roi = (data_tsnr_masked)[data_tsnr_masked != 0].mean()
             printv(f'\ntSNR = {tsnr_roi:.2f}', type='info')
