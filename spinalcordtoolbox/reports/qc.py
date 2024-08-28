@@ -252,7 +252,8 @@ class QcImage:
             if self._stretch_contrast and action.__name__ in ("no_seg_seg",):
                 logger.debug("Mask type %s" % mask[i].dtype)
                 mask[i] = self._func_stretch_contrast(mask[i])
-            kwargs['text'] = 2
+            if self.process == 'sct_fmri_compute_tsnr':
+                kwargs['text'] = kwargs['text'] + 1
             ax = fig.add_axes(ax_dim, label=str(i))
             action(self, mask[i], ax, **kwargs)
         self._save(fig, str(imgs_to_generate['path_overlay_img']), dpi=self.dpi)
