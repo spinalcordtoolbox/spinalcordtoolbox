@@ -75,14 +75,14 @@ class QcImage:
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
 
-    def no_seg_seg(self, mask, ax, cmap='gray', norm=None, colorbar=False):
+    def no_seg_seg(self, mask, ax, cmap='gray', norm=None, colorbar=False, text=None):
         """Create figure with image overlay. Notably used by sct_registration_to_template"""
         fig_ax = ax.imshow(mask, cmap=cmap, norm=norm, interpolation=self.interpolation, aspect=self.aspect_mask)
         if colorbar:
             cax = ax.inset_axes([1.005, 0.07, 0.011, 0.86])
             cbar = mpl_plt.colorbar(fig_ax, cax=cax, orientation='vertical', pad=0.01, shrink=0.5, aspect=1, ticks=[norm.vmin, norm.vmax])
             cbar.ax.tick_params(labelsize=5, length=2, pad=1.7)
-            ax.text(1.5, 6, '2', color='white', size=3.25)
+            ax.text(1.5, 6, text, color='white', size=3.25)
         self._add_orientation_label(ax)
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
@@ -236,6 +236,7 @@ class QcImage:
             kwargs['norm'] = mpl_colors.Normalize(vmin=vmin, vmax=vmax)
             kwargs['cmap'] = 'seismic'
             kwargs['colorbar'] = True
+            kwargs['text'] = 1
             ax_dim = (0, 0, 0.93, 1)
         ax = fig.add_axes(ax_dim)
         QcImage.no_seg_seg(self, img, ax, **kwargs)
@@ -251,6 +252,7 @@ class QcImage:
             if self._stretch_contrast and action.__name__ in ("no_seg_seg",):
                 logger.debug("Mask type %s" % mask[i].dtype)
                 mask[i] = self._func_stretch_contrast(mask[i])
+            kwargs['text'] = 2
             ax = fig.add_axes(ax_dim, label=str(i))
             action(self, mask[i], ax, **kwargs)
         self._save(fig, str(imgs_to_generate['path_overlay_img']), dpi=self.dpi)
