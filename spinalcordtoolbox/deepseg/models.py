@@ -167,7 +167,7 @@ MODELS = {
     },
     "model_seg_sc_epi_nnunet": {
          "url": [
-             "https://github.com/sct-pipeline/fmri-segmentation/releases/download/v0.2/model-fmri-segmentation-v0.2.zip"
+             "https://github.com/sct-pipeline/fmri-segmentation/releases/download/v0.2/model-fmri-segmentation-v0.2_nnUNetTrainer.zip"
          ],
          "description": "Spinal cord segmentation for EPI data (single 3D volume)",
          "contrasts": ["bold"],
