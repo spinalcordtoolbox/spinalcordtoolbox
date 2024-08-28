@@ -11,7 +11,7 @@ from typing import Sequence
 
 import numpy as np
 
-from spinalcordtoolbox.image import Image, add_suffix, empty_like
+from spinalcordtoolbox.image import Image, add_suffix, empty_like, rpi_slice_to_orig_orientation
 from spinalcordtoolbox.utils.sys import init_sct, set_loglevel, printv
 from spinalcordtoolbox.utils.shell import Metavar, SCTArgumentParser, display_viewer_syntax
 from spinalcordtoolbox.reports.qc import generate_qc
@@ -42,7 +42,7 @@ class Tsnr:
         nii_data = Image(fname_data)
         orientation_fmri = nii_data.orientation
         if not orientation_fmri == 'RPI':
-            nii_data.change_orientation(nii_data, 'RPI')
+            nii_data.change_orientation('RPI')
         data = nii_data.data
 
         # compute mean
@@ -63,7 +63,8 @@ class Tsnr:
             for z in range(data_tsnr_masked.shape[-1]):
                 # Display result
                 tsnr_roi = (data_tsnr_masked[:, :, z])[data_tsnr_masked[:, :, z] != 0].mean()
-                printv(f'\nSlice {z},  tSNR = {tsnr_roi:.2f}', type='info')  # TODO: display slice number in original space
+                slice_orig = rpi_slice_to_orig_orientation(data.shape, orientation_fmri,z, 2 )
+                printv(f'\nSlice {slice_orig},  tSNR = {tsnr_roi:.2f}', type='info')
             tsnr_roi = (data_tsnr_masked)[data_tsnr_masked != 0].mean()
             printv(f'\ntSNR = {tsnr_roi:.2f}', type='info')
         # Roerient to original space
