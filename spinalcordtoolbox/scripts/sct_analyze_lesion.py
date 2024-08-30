@@ -415,7 +415,8 @@ class AnalyzeLesion:
         #  computed and printed for each lesion. But as the midsagittal slice is based on the spinal cord segmentation,
         #  it is the same for all lesions. So this function could be called only once for all lesions.
         #  This would require moving the print statement outside the loop across lesions.
-        # Convert the mid-sagittal slice number from RPI to the original orientation
+        # Convert the mid-sagittal slice number from RPI to the original orientation for printing and saving it as we
+        # want to report the slice number in the original orientation
         dim = im_sc_data.shape
         # '0' because of the R-L direction (first in RPI)
         mid_sagittal_sc_slice = rpi_slice_to_orig_orientation(dim, self.orientation, mid_sagittal_sc_slice, 0)
