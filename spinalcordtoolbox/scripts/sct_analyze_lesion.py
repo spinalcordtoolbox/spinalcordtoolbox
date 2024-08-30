@@ -589,6 +589,35 @@ class AnalyzeLesion:
         self.measure_pd.loc[idx, 'length [mm]'] = length_cur
         printv('  (S-I) length : ' + str(np.round(length_cur, 2)) + ' mm', self.verbose, type='info')
 
+    def _measure_length_midsagittal_slice(self, im_lesion_data, p_lst, idx):
+        """
+        Measure the length of the lesion along the superior-inferior axis in the **midsagittal slice** when taking into
+        account the angle correction.
+
+        :param im_lesion_data: 3D numpy array: mask of the lesion. The orientation is assumed to be RPI (because we
+        reoriented the image to RPI using orient2rpi())
+        :param p_lst: list, pixel size of the lesion
+        :param idx: int, index of the lesion
+        """
+        # Get the midsagittal slice number (the number is RPI oriented which is fine because we reoriented the
+        # im_lesion_data to RPI using orient2rpi())
+        # Note that this number will the same across all lesions (idx) as the midsagittal slice is based on the spinal
+        # cord segmentation
+        mid_sagittal_sc_slice = self.sagittal_sc_slice
+
+        # Get the lesion mask for the midsagittal slice
+        im_data_midsagittal = im_lesion_data[mid_sagittal_sc_slice, :, :]
+
+        # Compute the length of the lesion along the superior-inferior axis in the midsagittal slice
+        # Note: p_lst[2] represents the pixel size in the S-I direction (z-direction)
+        length_cur = np.sum([p_lst[2] / np.cos(self.angles_sagittal[axial_slice])
+                             for axial_slice in np.unique(np.where(im_data_midsagittal)[1])])
+
+        # Save the length of the lesion along the superior-inferior axis in the midsagittal slice
+        self.measure_pd.loc[idx, 'length_midsagittal_slice [mm]'] = length_cur
+        printv('  (S-I) length in the midsagittal slice: ' + str(np.round(length_cur, 2)) + ' mm',
+               self.verbose, type='info')
+
     def _measure_diameter(self, im_data, p_lst, idx):
         """
         Measure the max. equivalent diameter of the lesion when taking into account the angle correction
@@ -788,6 +817,7 @@ class AnalyzeLesion:
                 self._measure_diameter(im_lesion_data_cur, p_lst, label_idx)
                 self._measure_axial_damage_ratio(im_lesion_data_cur, p_lst, label_idx)
                 self._get_midsagittal_slice(label_idx)
+                self._measure_length_midsagittal_slice(im_lesion_data_cur, p_lst, label_idx)
                 self._measure_tissue_bridges(im_lesion_data_cur, p_lst, label_idx)
             self._measure_volume(im_lesion_data_cur, p_lst, label_idx)
 
