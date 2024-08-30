@@ -430,7 +430,7 @@ class AnalyzeLesion:
         # Note: as the midsagittal slice is computed from the spinal cord mask, it is the same for all lesions (all idx)
         # TODO: consider whether it is necessary to print the midsagittal slice for each lesion as it is the same for
         #  all lesions. This would require moving the print statement outside the loop across lesions.
-        # Convert the mid-sagittal slice from RPI to the original orientation
+        # Convert the mid-sagittal slice number from RPI to the original orientation
         dim = im_lesion_data.shape
         # '0' because of the R-L direction (first in RPI)
         mid_sagittal_sc_slice = rpi_slice_to_orig_orientation(dim, self.orientation, mid_sagittal_sc_slice, 0)
@@ -447,7 +447,7 @@ class AnalyzeLesion:
         # Note: we use [0] for the R-L direction as the orientation is RPI
         sagittal_lesion_slices = np.unique(np.where(im_lesion_data)[0])
         if self.verbose == 2:
-            # Convert the sagittal slices from RPI to the original orientation
+            # Convert the sagittal slice numbers from RPI to the original orientation
             # '0' because of the R-L direction (first in RPI)
             sagittal_lesion_slices_print = [rpi_slice_to_orig_orientation(dim, self.orientation, slice, 0)
                                             for slice in sagittal_lesion_slices]
@@ -540,7 +540,7 @@ class AnalyzeLesion:
             min_ventral_bridge_width_mm = float(df_temp['ventral_bridge_width_mm'].min())
             min_total_bridge_width_mm = min_dorsal_bridge_width_mm + min_ventral_bridge_width_mm
 
-            # Convert the sagittal and axial slices from RPI to the original orientation
+            # Convert the sagittal and axial slice numbers from RPI to the original orientation
             # '0' because of the R-L direction (first in RPI)
             sagittal_slice = rpi_slice_to_orig_orientation(dim, self.orientation, sagittal_slice, 0)
             # '2' because of the S-I direction (third in RPI)
