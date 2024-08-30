@@ -609,7 +609,7 @@ class AnalyzeLesion:
         im_data_midsagittal = im_lesion_data[mid_sagittal_sc_slice, :, :]
 
         # Compute the length of the lesion along the superior-inferior axis in the midsagittal slice
-        # Note: p_lst[2] represents the pixel size in the S-I direction (z-direction)
+        # Note: p_lst[2] is the pixel size in the S-I direction
         length_cur = np.sum([p_lst[2] / np.cos(self.angles_sagittal[axial_slice])
                              for axial_slice in np.unique(np.where(im_data_midsagittal)[1])])
 
