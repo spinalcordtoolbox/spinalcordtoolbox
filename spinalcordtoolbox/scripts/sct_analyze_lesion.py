@@ -408,6 +408,8 @@ class AnalyzeLesion:
         # the middle slice)
         mid_sagittal_sc_slice = int(np.mean([np.min(np.unique(np.where(im_sc_data)[0])),
                                              np.max(np.unique(np.where(im_sc_data)[0]))]))
+        # Save the midsagittal slice of the spinal cord in RPI orientation to make it reusable in other functions
+        self.sagittal_sc_slice = mid_sagittal_sc_slice
         # Note: as the midsagittal slice is computed from the spinal cord mask, it is the same for all lesions (all idx)
         # TODO: as this function is called inside `for lesion_label in label_lst` loop, the midsagittal slice is
         #  computed and printed for each lesion. But as the midsagittal slice is based on the spinal cord segmentation,
