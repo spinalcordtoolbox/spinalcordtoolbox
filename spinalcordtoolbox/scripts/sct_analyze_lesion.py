@@ -393,6 +393,31 @@ class AnalyzeLesion:
         printv('  Maximum axial damage ratio : ' + str(np.round(maximum_axial_damage_ratio, 2)),
                self.verbose, type='info')
 
+    def _get_midsagittal_slice(self, im_lesion_data, idx):
+        """
+        :param im_lesion_data: 3D numpy array: mask of the lesion. The orientation is assumed to be RPI (because we
+        reoriented the image to RPI using orient2rpi())
+        :param idx: int, index of the lesion
+        """
+        # Load the spinal cord segmentation mask
+        # The orientation is assumed to be RPI (because we reoriented the image to RPI using orient2rpi())
+        im_sc = Image(self.fname_sc)
+        im_sc_data = im_sc.data
+
+        # Get and print the midsagittal slice of the spinal cord (count all slices with the spinal cord mask and get
+        # the middle slice)
+        mid_sagittal_sc_slice = int(np.mean([np.min(np.unique(np.where(im_sc_data)[0])),
+                                             np.max(np.unique(np.where(im_sc_data)[0]))]))
+        # Note: as the midsagittal slice is computed from the spinal cord mask, it is the same for all lesions (all idx)
+        # TODO: consider whether it is necessary to print the midsagittal slice for each lesion as it is the same for
+        #  all lesions. This would require moving the print statement outside the loop across lesions.
+        # Convert the mid-sagittal slice number from RPI to the original orientation
+        dim = im_lesion_data.shape
+        # '0' because of the R-L direction (first in RPI)
+        mid_sagittal_sc_slice = rpi_slice_to_orig_orientation(dim, self.orientation, mid_sagittal_sc_slice, 0)
+        self.measure_pd.loc[idx, 'midsagittal_spinal_cord_slice'] = mid_sagittal_sc_slice
+        printv('  Midsagittal slice of the spinal cord: ' + str(mid_sagittal_sc_slice), self.verbose, type='info')
+
     def _measure_tissue_bridges(self, im_lesion_data, p_lst, idx):
         """
         Measure the tissue bridges (widths of spared tissue ventral and dorsal to the spinal cord lesion).
@@ -423,19 +448,8 @@ class AnalyzeLesion:
         # outside the spinal cord mask)
         im_lesion_data = im_lesion_data * im_sc_data
 
-        # Get and print the midsagittal slice of the spinal cord (count all slices with the spinal cord mask and get
-        # the middle slice)
-        mid_sagittal_sc_slice = int(np.mean([np.min(np.unique(np.where(im_sc_data)[0])),
-                                             np.max(np.unique(np.where(im_sc_data)[0]))]))
-        # Note: as the midsagittal slice is computed from the spinal cord mask, it is the same for all lesions (all idx)
-        # TODO: consider whether it is necessary to print the midsagittal slice for each lesion as it is the same for
-        #  all lesions. This would require moving the print statement outside the loop across lesions.
-        # Convert the mid-sagittal slice number from RPI to the original orientation
+        # Get the dimensions of the lesion mask
         dim = im_lesion_data.shape
-        # '0' because of the R-L direction (first in RPI)
-        mid_sagittal_sc_slice = rpi_slice_to_orig_orientation(dim, self.orientation, mid_sagittal_sc_slice, 0)
-        self.measure_pd.loc[idx, 'midsagittal_spinal_cord_slice'] = mid_sagittal_sc_slice
-        printv('  Midsagittal slice of the spinal cord: ' + str(mid_sagittal_sc_slice), self.verbose, type='info')
 
         # --------------------------------------
         # Get slices with the lesion
@@ -768,6 +782,7 @@ class AnalyzeLesion:
                 self._measure_length(im_lesion_data_cur, p_lst, label_idx)
                 self._measure_diameter(im_lesion_data_cur, p_lst, label_idx)
                 self._measure_axial_damage_ratio(im_lesion_data_cur, p_lst, label_idx)
+                self._get_midsagittal_slice(im_lesion_data_cur, label_idx)
                 self._measure_tissue_bridges(im_lesion_data_cur, p_lst, label_idx)
             self._measure_volume(im_lesion_data_cur, p_lst, label_idx)
 
