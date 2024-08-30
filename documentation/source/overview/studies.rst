@@ -26,6 +26,13 @@ The following studies have used SCT:
 2024
 ----
 
+-  Miscioscia *et al.* `The contribution of paramagnetic rim and cortical lesions to physical and cognitive disability at multiple sclerosis clinical onset: evaluating the power of MRI and OCT biomarkers <https://doi.org/10.1007/s00415-024-12622-8>`_, J. Neurol. 2024
+-  Li *et al.* `Contribution of changes in the spinal cord and brain to the onset and progression of hand clumsiness symptoms in cervical spondylotic myelopathy <https://doi.org/10.3171/2024.4.SPINE231238>`_, **J. Neurosurg. Spine** 2024
+-  Schading-Sassenhausen *et al.* `Optimization of cervical cord synthetic T1-weighted MRI for enhancing clinical application in neurodegenerative spinal cord disorders <https://doi.org/10.1162/imag_a_00225>`_, **Imaging Neuroscience** 2024
+-  Chernysh *et al.* `Utility of Diffusion Tensor Imaging for Prognosis and Management of Cervical Spondylotic Myelopathy: A PRISMA Review <https://doi.org/10.1016/j.wneu.2024.07.032>`_, **World Neurosurg.** 2024
+-  Luchetti *et al.* `Evaluation of cervical spinal cord atrophy using a modified SIENA approach <https://doi.org/10.1016/j.neuroimage.2024.120775>`_, **NeuroImage** 2024
+-  Rezende *et al.* `Sensitivity of Advanced Magnetic Resonance Imaging to Progression over Six Months in Early Spinocerebellar Ataxia <https://doi.org/10.1002/mds.29934>`_, **J. Mov. Disord.** 2024
+-  Muhammad *et al.* `Cervical spinal cord morphometrics in degenerative cervical myelopathy: quantification using semi-automated normalized technique and correlation with neurological dysfunctions <https://doi.org/10.1016/j.spinee.2024.07.002>`_, **J. Spine** 2024
 -  Chang *et al.* `Hoffmann's sign in cervical spondylotic myelopathy patients: pathological insights from neuroimaging <https://doi.org/10.3171/2024.3.FOCUS23837>`_, **Neurosurg. Focus** 2024
 -  Qi *et al.* `The relationship between the structural changes in the cervical spinal cord and sensorimotor function of children with thoracolumbar spinal cord injury (TLSCI) <https://doi.org/10.1038/s41393-024-01000-w>`_, **Spinal Cord** 2024
 -  Al-shaari *et al.* `Within-participants reliability and measurement error of magnetization transfer imaging determinations within the healthy cervical spinal cord <https://doi.org/10.1016/j.radi.2024.04.027>`_, **Radiography** 2024
