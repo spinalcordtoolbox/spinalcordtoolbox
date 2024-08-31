@@ -71,6 +71,11 @@ def get_parser():
              " More than one path can be indicated (separated with space) for cascaded application of the models.",
         metavar=Metavar.str)
     seg.add_argument(
+        "-custom-path",
+        help="Path to a custom model. This option is used to specify a custom model that is not part of the official "
+             "list of tasks. The path should point to the folder containing the model files. "
+             "Example: /path/to/custom_model")
+    seg.add_argument(
         "-list-tasks",
         action='store_true',
         help="Display a list of tasks, along with detailed descriptions (including information on how the model was "
@@ -208,15 +213,26 @@ def main(argv: Sequence[str]):
     for name_model in name_models:
         # Check if this is an official model
         if name_model in list(models.MODELS.keys()):
+            # Check if the custom path is provided
+            if arguments.custom_path is not None:
+                path_model = arguments.custom_path
+                # Check if the custom path exists
+                if not os.path.isdir(path_model):
+                    parser.error("The input path invalid: {}".format(path_model))
+                # Check if the custom model is a valid model
+                if not models.is_valid([path_model]):
+                    parser.error("The input model is invalid: {}".format(path_model))
+                logger.warning(f"Using custom model at path: {path_model}")
             # If it is, check if it is installed
-            path_model = models.folder(name_model)
+            else:
+                path_model = models.folder(name_model)
             path_models = models.find_model_folder_paths(path_model)
             if not models.is_valid(path_models):
                 printv("Model {} is not installed. Installing it now...".format(name_model))
                 models.install_model(name_model)
                 path_models = models.find_model_folder_paths(path_model)  # Re-parse to find newly downloaded folders
             # Check folder version file ('{path_model}/source.json')
-            elif not models.is_up_to_date(path_model):
+            elif not models.is_up_to_date(path_model) and not arguments.custom_path:
                 printv("Model {} is out of date. Re-installing it now...".format(name_model))
                 models.install_model(name_model)
                 path_models = models.find_model_folder_paths(path_model)  # Re-parse to find newly downloaded folders
@@ -338,7 +354,8 @@ def main(argv: Sequence[str]):
                     "Version": __version__,
                     "CodeURL": f"https://github.com/spinalcordtoolbox/spinalcordtoolbox/"
                                f"blob/{_git_info()[1].strip('*')}/spinalcordtoolbox/scripts/sct_deepseg.py",
-                    "ModelURL": source_dict["model_urls"],
+                    "ModelURL": source_dict["model_urls"]
+                    if not arguments.custom_path else f"custom model: {path_model}",
                 }
             ]
         }
