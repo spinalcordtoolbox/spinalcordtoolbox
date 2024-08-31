@@ -584,6 +584,9 @@ class AnalyzeLesion:
     def _measure_length(self, im_data, p_lst, idx):
         """
         Measure the length of the lesion along the superior-inferior axis when taking into account the angle correction
+        The length is computed across all sagittal lesion (i.e., midsagittal and parasagittal) slices meaning that the
+        measurement is 3D.
+        For lesion length for the midsagittal slice only, see _measure_length_midsagittal_slice().
         """
         length_cur = np.sum([p_lst[2] / np.cos(self.angles_3d[zz]) for zz in np.unique(np.where(im_data)[2])])
         self.measure_pd.loc[idx, 'length [mm]'] = length_cur
