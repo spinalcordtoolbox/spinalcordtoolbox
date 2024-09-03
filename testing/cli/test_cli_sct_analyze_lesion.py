@@ -51,6 +51,12 @@ def compute_expected_measurements(dim, starting_coord=None, path_seg=None):
         min_area = min(np.sum(data_seg[:, n_slice, :])
                        for n_slice in range(starting_coord[1], starting_coord[1] + dim[1]))
 
+        # Find the midsagittal slice of the spinal cord
+        # Note: we use [2] here although in sct_analyze_lesion we use [0]
+        #  (because sct_analyze_lesion does RPI reorientation)
+        mid_sagittal_slice = int(np.mean([np.min(np.unique(np.where(data_seg)[2])),
+                                          np.max(np.unique(np.where(data_seg)[2]))]))
+
         # Find the minimum mid-sagittal tissue bridge width for each LR slice in the lesion
         x = starting_coord[0] + (dim[0] // 2)  # Compute midpoint of lesion (to split into dorsal/ventral regions)
         tissue_bridges = {}
@@ -76,6 +82,7 @@ def compute_expected_measurements(dim, starting_coord=None, path_seg=None):
     else:
         min_area = 0
         tissue_bridges = {}
+        mid_sagittal_slice = None
 
     # Compute the expected (voxel) measurements from the provided dimensions
     # NB: Actual measurements will differ slightly due to spine curvature
@@ -83,6 +90,12 @@ def compute_expected_measurements(dim, starting_coord=None, path_seg=None):
         # NB: 'sct_analyze_lesion' treats lesions as cylinders. So:
         #   - Vertical axis: Length of the cylinder
         'length [mm]': dim[1],
+        'midsagittal_spinal_cord_slice': mid_sagittal_slice,
+        # NB: we can compute length_midsagittal_slice and width_midsagittal_slice here from dim for the purposes of
+        #  testing, but in the actual script, we need the spinal cord segmentation to compute these values based on
+        #  the midsagittal slice
+        'length_midsagittal_slice [mm]': dim[1],
+        'width_midsagittal_slice [mm]': dim[0],
         #   - Horizontal plane: Cross-sectional slices of the cylinder.
         #        Specifically, 'max_equivalent_diameter' takes the
         #        cross-sectional area of the lesion (which is computed
@@ -136,7 +149,7 @@ def test_sct_analyze_lesion_matches_expected_dummy_lesion_measurements(dummy_les
         # Validate analysis results
         for key, expected_value in expected_measurements.items():
             # These measures are the same regardless of angle adjustment/spine curvature
-            if key in ['volume [mm3]', 'max_axial_damage_ratio []']:
+            if key in ['volume [mm3]', 'max_axial_damage_ratio []', 'midsagittal_spinal_cord_slice']:
                 np.testing.assert_equal(measurements.at[idx, key], expected_value)
             else:
                 # However, these measures won't match exactly due to angle adjustment
@@ -146,9 +159,11 @@ def test_sct_analyze_lesion_matches_expected_dummy_lesion_measurements(dummy_les
                 # The values will be adjusted according to the cos of the angle
                 # between the spinal cord centerline and the S-I axis, as per:
                 # https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3681#discussion_r804822552
-                if key == 'max_equivalent_diameter [mm]' or key.endswith("bridge_width [mm]"):
+                # 'width' matches tissue bridge widths and 'width_midsagittal_slice [mm]'
+                if key == 'max_equivalent_diameter [mm]' or 'width' in key:
                     assert measurements.at[idx, key] <= expected_value
-                elif key == 'length [mm]':
+                # 'length' matches 'length [mm]' and 'length_midsagittal_slice [mm]'
+                elif 'length' in key:
                     assert measurements.at[idx, key] >= expected_value
 
 
