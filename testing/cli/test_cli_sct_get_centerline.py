@@ -14,7 +14,8 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.mark.sct_testing
-def test_sct_get_centerline_output_file_exists(tmp_path):
+@pytest.mark.parametrize('space', ["pix", "phys"])
+def test_sct_get_centerline_output_file_exists(tmp_path, space):
     """This test checks the output file using default usage of the CLI script.
 
     TODO: Check the results. (This test replaces the 'sct_testing' test, which did not implement any checks.)
@@ -22,7 +23,8 @@ def test_sct_get_centerline_output_file_exists(tmp_path):
     'unit_testing/test_centerline.py'. For more details, see:
        * https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/2774/commits/5e6bd57abf6bcf825cd110e0d74b8e465d298409
        * https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/2774#discussion_r450546434"""
-    sct_get_centerline.main(argv=['-i', sct_test_path('t2s', 't2s.nii.gz'), '-c', 't2s', '-qc', str(tmp_path)])
+    sct_get_centerline.main(argv=['-i', sct_test_path('t2s', 't2s.nii.gz'), '-c', 't2s', '-space', space,
+                                  '-qc', str(tmp_path)])
     for file in [sct_test_path('t2s', 't2s_centerline.nii.gz'), sct_test_path('t2s', 't2s_centerline.csv')]:
         assert os.path.exists(file)
 
