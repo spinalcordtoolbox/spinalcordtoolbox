@@ -85,6 +85,15 @@ def get_parser():
         help="Binary or soft centerline. 0 = binarized, 1 = soft. Only relevant with -method fitseg."
     )
     optional.add_argument(
+        "-space",
+        metavar=Metavar.str,
+        type=str,
+        choices=["pix", "phys"],
+        default="pix",
+        help="The coordinate space to use for units when outputting the centerline coordinates to a .csv file."
+             "'pix'=pixel dimensions, 'phys'=physical dimensions."
+    )
+    optional.add_argument(
         "-extrapolation",
         metavar=Metavar.int,
         type=int,
@@ -207,6 +216,7 @@ def main(argv: Sequence[str]):
     # Extrapolate and regularize (or detect if optic) cord centerline
     im_centerline, arr_centerline, _, _ = get_centerline(im_labels,
                                                          param=param_centerline,
+                                                         space=arguments.space,
                                                          verbose=verbose,
                                                          remove_temp_files=arguments.r)
 
