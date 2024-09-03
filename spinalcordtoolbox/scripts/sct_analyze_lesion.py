@@ -644,7 +644,7 @@ class AnalyzeLesion:
 
         # Compute the width of the lesion along the anterior-posterior axis in the midsagittal slice
         # Note: p_lst[1] is the pixel size in the A-P direction
-        width_cur = np.sum([p_lst[1] / np.cos(self.angles_sagittal[axial_slice])
+        width_cur = np.sum([p_lst[1] * np.cos(self.angles_sagittal[axial_slice])
                             for axial_slice in np.unique(np.where(im_lesion_data[mid_sagittal_sc_slice, :, :])[0])])
 
         # Save the width of the lesion along the anterior-posterior axis in the midsagittal slice
