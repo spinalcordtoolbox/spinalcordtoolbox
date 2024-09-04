@@ -633,6 +633,8 @@ class AnalyzeLesion:
         """
         Measure the width of the lesion along the anterior-posterior axis in the **midsagittal slice** when taking into
         account the angle correction.
+        The width is defined as the maximum lesion width in the A-P axis across all axial slices with the lesion in
+        the midsagittal slice.
 
         :param im_lesion_data: 3D numpy array: mask of the lesion. The orientation is assumed to be RPI (because we
         reoriented the image to RPI using orient2rpi())
@@ -645,16 +647,33 @@ class AnalyzeLesion:
         # cord segmentation
         mid_sagittal_sc_slice = self.sagittal_sc_slice
 
-        # Get the lesion mask for the midsagittal slice
-        im_data_midsagittal = im_lesion_data[mid_sagittal_sc_slice, :, :]
+        # Get all axial slices (S-I direction) with the lesion for the selected sagittal slice
+        # In other words, we will iterate through the lesion in S-I direction and compute the lesion width for each
+        # axial slice with the lesion
+        # Note: we use [1] for the S-I direction as the orientation is RPI
+        axial_lesion_slices = np.unique(np.where(im_lesion_data[mid_sagittal_sc_slice, :, :])[1])
+        # Iterate across axial slices to compute lesion width
+        lesion_width_dict = {}
+        for axial_slice in axial_lesion_slices:
+            # Get the lesion segmentation mask of the selected 2D axial slice
+            slice_lesion_data = im_lesion_data[mid_sagittal_sc_slice, :, axial_slice]
+            # Get the indices of the lesion mask for the selected axial slice to compute the lesion width.
+            # The lesion width is defined as max - min + 1
+            # Note: we intentionally use 'max - min + 1' instead of 'len(np.where(slice_lesion_data)[0])' because the
+            # 'len' approach would return the number of elements, which could be influenced, for example, by the
+            # presence of holes in the lesion mask.
+            # Context: https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4617#discussion_r1744031056
+            slice_min = np.where(slice_lesion_data)[0][0]     # [0] returns the most dorsal elements
+            slice_max = np.where(slice_lesion_data)[0][-1]    # [-1] returns the most ventral elements
+            lesion_width_dict[axial_slice] = slice_max - slice_min + 1
 
-        # Compute the width of the lesion along the anterior-posterior axis in the midsagittal slice
-        # The width is computed as the sum of the angle corrected coronal slice thickness (p_lst[1])
-        # Note: 'p_lst[1]' is the pixel size in the A-P direction
-        # Note: '[0]' in ' np.unique(np.where(im_data_midsagittal)[0]' is used to get the unique coronal slices (A-P
-        # direction) with the lesion
-        width_cur = np.sum([p_lst[1] * np.cos(self.angles_sagittal[coronal_slice])
-                            for coronal_slice in np.unique(np.where(im_data_midsagittal)[0])])
+        # Get the width in mm (apply the angle correction)
+        width_cur_dict = {axial_slice: p_lst[1] * np.cos(self.angles_sagittal[axial_slice]) * lesion_width
+                          for axial_slice, lesion_width in lesion_width_dict.items()}
+
+        # Get the maximum width across all axial slices
+        max_width_axial_slice = max(width_cur_dict, key=width_cur_dict.get)
+        width_cur = width_cur_dict[max_width_axial_slice]
 
         # Save the width of the lesion along the anterior-posterior axis in the midsagittal slice
         self.measure_pd.loc[idx, 'width_midsagittal_slice [mm]'] = width_cur
