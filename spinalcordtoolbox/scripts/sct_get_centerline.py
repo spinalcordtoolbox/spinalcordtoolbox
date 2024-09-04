@@ -12,7 +12,8 @@ from typing import Sequence
 import numpy as np
 
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline, _call_viewer_centerline
+from spinalcordtoolbox.centerline.core import (ParamCenterline, get_centerline, _call_viewer_centerline,
+                                               find_and_sort_coord)
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
@@ -214,11 +215,16 @@ def main(argv: Sequence[str]):
         return
 
     # Extrapolate and regularize (or detect if optic) cord centerline
-    im_centerline, arr_centerline, _, _ = get_centerline(im_labels,
-                                                         param=param_centerline,
-                                                         space=arguments.space,
-                                                         verbose=verbose,
-                                                         remove_temp_files=arguments.r)
+    im_centerline, _, _, _ = get_centerline(im_labels,
+                                            param=param_centerline,
+                                            space=arguments.space,
+                                            verbose=verbose,
+                                            remove_temp_files=arguments.r)
+
+    # Fetch `arr_centerline` from `im_centerline`
+    # (This is the easiest way to get coords that are in their original orientation. This is largely equivalent to how
+    #  arr_centerline is determined inside `get_centerline`, but without the RPI orientation.)
+    arr_centerline = np.array(find_and_sort_coord(im_centerline))
 
     # save centerline as nifti (discrete) and csv (continuous) files
     im_centerline.save(file_output)
