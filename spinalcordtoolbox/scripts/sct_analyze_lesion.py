@@ -642,10 +642,13 @@ class AnalyzeLesion:
         # cord segmentation
         mid_sagittal_sc_slice = self.sagittal_sc_slice
 
+        # Get the lesion mask for the midsagittal slice
+        im_data_midsagittal = im_lesion_data[mid_sagittal_sc_slice, :, :]
+
         # Compute the width of the lesion along the anterior-posterior axis in the midsagittal slice
         # Note: p_lst[1] is the pixel size in the A-P direction
-        width_cur = np.sum([p_lst[1] * np.cos(self.angles_sagittal[axial_slice])
-                            for axial_slice in np.unique(np.where(im_lesion_data[mid_sagittal_sc_slice, :, :])[0])])
+        width_cur = np.sum([p_lst[1] * np.cos(self.angles_sagittal[coronal_slice])
+                            for coronal_slice in np.unique(np.where(im_data_midsagittal)[0])])
 
         # Save the width of the lesion along the anterior-posterior axis in the midsagittal slice
         self.measure_pd.loc[idx, 'width_midsagittal_slice [mm]'] = width_cur
