@@ -617,7 +617,10 @@ class AnalyzeLesion:
         im_data_midsagittal = im_lesion_data[mid_sagittal_sc_slice, :, :]
 
         # Compute the length of the lesion along the superior-inferior axis in the midsagittal slice
+        # The length is computed as the sum of the angle corrected axial slice thickness (p_lst[2])
         # Note: p_lst[2] is the pixel size in the S-I direction
+        # Note: '[1]' in 'np.unique(np.where(im_data_midsagittal)[1])' is used to get the unique axial slices (S-I
+        # direction) with the lesion
         length_cur = np.sum([p_lst[2] / np.cos(self.angles_sagittal[axial_slice])
                              for axial_slice in np.unique(np.where(im_data_midsagittal)[1])])
 
@@ -646,7 +649,10 @@ class AnalyzeLesion:
         im_data_midsagittal = im_lesion_data[mid_sagittal_sc_slice, :, :]
 
         # Compute the width of the lesion along the anterior-posterior axis in the midsagittal slice
-        # Note: p_lst[1] is the pixel size in the A-P direction
+        # The width is computed as the sum of the angle corrected coronal slice thickness (p_lst[1])
+        # Note: 'p_lst[1]' is the pixel size in the A-P direction
+        # Note: '[0]' in ' np.unique(np.where(im_data_midsagittal)[0]' is used to get the unique coronal slices (A-P
+        # direction) with the lesion
         width_cur = np.sum([p_lst[1] * np.cos(self.angles_sagittal[coronal_slice])
                             for coronal_slice in np.unique(np.where(im_data_midsagittal)[0])])
 
