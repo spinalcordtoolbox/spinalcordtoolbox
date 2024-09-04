@@ -217,7 +217,9 @@ def main(argv: Sequence[str]):
     # Extrapolate and regularize (or detect if optic) cord centerline
     im_centerline, _, _, _ = get_centerline(im_labels,
                                             param=param_centerline,
-                                            space=arguments.space,
+                                            # NB: We intentionally skip the pix->phys conversion here, since we want to
+                                            #     convert to phys AFTER the image has been reoriented away from RPI.
+                                            # space=arguments.space,
                                             verbose=verbose,
                                             remove_temp_files=arguments.r)
 
@@ -225,6 +227,9 @@ def main(argv: Sequence[str]):
     # (This is the easiest way to get coords that are in their original orientation. This is largely equivalent to how
     #  arr_centerline is determined inside `get_centerline`, but without the RPI orientation.)
     arr_centerline = np.array(find_and_sort_coord(im_centerline))
+    # Convert from pixel coordinates to physical coordinates (in original orientation)
+    if arguments.space is "phys":
+        arr_centerline = im_centerline.transfo_pix2phys(arr_centerline.T, mode="absolute").T  # same as get_centerline
 
     # save centerline as nifti (discrete) and csv (continuous) files
     im_centerline.save(file_output)
