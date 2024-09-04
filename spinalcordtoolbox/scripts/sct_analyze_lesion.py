@@ -609,7 +609,7 @@ class AnalyzeLesion:
         """
         # Get the midsagittal slice number (the number is RPI oriented which is fine because we reoriented the
         # im_lesion_data to RPI using orient2rpi())
-        # Note that this number will the same across all lesions (idx) as the midsagittal slice is based on the spinal
+        # Note that this number is the same across all lesions (idx) as the midsagittal slice is based on the spinal
         # cord segmentation
         mid_sagittal_sc_slice = self.sagittal_sc_slice
 
@@ -641,7 +641,7 @@ class AnalyzeLesion:
         """
         # Get the midsagittal slice number (the number is RPI oriented which is fine because we reoriented the
         # im_lesion_data to RPI using orient2rpi())
-        # Note that this number will the same across all lesions (idx) as the midsagittal slice is based on the spinal
+        # Note that this number is the same across all lesions (idx) as the midsagittal slice is based on the spinal
         # cord segmentation
         mid_sagittal_sc_slice = self.sagittal_sc_slice
 
