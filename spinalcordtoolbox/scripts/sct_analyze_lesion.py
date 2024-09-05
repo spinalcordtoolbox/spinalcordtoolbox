@@ -359,7 +359,7 @@ class AnalyzeLesion:
         """
         volume = np.sum(im_data) * p_lst[0] * p_lst[1] * p_lst[2]
         self.measure_pd.loc[idx, 'volume [mm3]'] = volume
-        printv(f'  Volume : {round(volume, 2)} mm^3', self.verbose, type='info')
+        printv(f'  Volume: {round(volume, 2)} mm^3', self.verbose, type='info')
 
     def _measure_axial_damage_ratio(self, im_data, p_lst, idx):
         """
@@ -395,7 +395,7 @@ class AnalyzeLesion:
 
         # Save the maximum axial damage ratio
         self.measure_pd.loc[idx, 'max_axial_damage_ratio []'] = maximum_axial_damage_ratio
-        printv('  Maximum axial damage ratio : ' + str(np.round(maximum_axial_damage_ratio, 2)),
+        printv('  Maximum axial damage ratio: ' + str(np.round(maximum_axial_damage_ratio, 2)),
                self.verbose, type='info')
 
     def _get_midsagittal_slice(self, idx):
@@ -595,7 +595,7 @@ class AnalyzeLesion:
         """
         length_cur = np.sum([p_lst[2] / np.cos(self.angles_3d[zz]) for zz in np.unique(np.where(im_data)[2])])
         self.measure_pd.loc[idx, 'length [mm]'] = length_cur
-        printv('  (S-I) length : ' + str(np.round(length_cur, 2)) + ' mm', self.verbose, type='info')
+        printv('  (S-I) length: ' + str(np.round(length_cur, 2)) + ' mm', self.verbose, type='info')
 
     def _measure_length_midsagittal_slice(self, im_lesion_data, p_lst, idx):
         """
@@ -687,7 +687,7 @@ class AnalyzeLesion:
         area_lst = [np.sum(im_data[:, :, zz]) * np.cos(self.angles_3d[zz]) * p_lst[0] * p_lst[1] for zz in range(im_data.shape[2])]
         diameter_cur = 2 * np.sqrt(max(area_lst) / np.pi)
         self.measure_pd.loc[idx, 'max_equivalent_diameter [mm]'] = diameter_cur
-        printv('  Max. equivalent diameter : ' + str(np.round(diameter_cur, 2)) + ' mm', self.verbose, type='info')
+        printv('  Max. equivalent diameter: ' + str(np.round(diameter_cur, 2)) + ' mm', self.verbose, type='info')
 
     def ___pve_weighted_avg(self, im_mask_data, im_atlas_data):
         return im_mask_data * im_atlas_data
