@@ -228,7 +228,7 @@ def main(argv: Sequence[str]):
     #  arr_centerline is determined inside `get_centerline`, but without the RPI orientation.)
     arr_centerline = np.array(find_and_sort_coord(im_centerline))
     # Convert from pixel coordinates to physical coordinates (in original orientation)
-    if arguments.space is "phys":
+    if arguments.space == "phys":
         arr_centerline = im_centerline.transfo_pix2phys(arr_centerline.T, mode="absolute").T  # same as get_centerline
 
     # save centerline as nifti (discrete) and csv (continuous) files
