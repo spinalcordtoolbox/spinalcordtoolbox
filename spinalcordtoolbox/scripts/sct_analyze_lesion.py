@@ -672,8 +672,7 @@ class AnalyzeLesion:
                           for axial_slice, lesion_width in lesion_width_dict.items()}
 
         # Get the maximum width across all axial slices
-        max_width_axial_slice = max(width_cur_dict, key=width_cur_dict.get)
-        width_cur = width_cur_dict[max_width_axial_slice]
+        width_cur = max(width_cur_dict.values())
 
         # Save the width of the lesion along the anterior-posterior axis in the midsagittal slice
         self.measure_pd.loc[idx, 'width_midsagittal_slice [mm]'] = width_cur
