@@ -119,7 +119,8 @@ def get_parser():
     optional.add_argument(
         '-qc',
         metavar=Metavar.str,
-        help='The path where the quality control generated content will be saved',
+        help='The path where the quality control generated content will be saved. Note: The "-m" parameter is '
+             'required to generate the QC report, as it is necessary to center the QC on the region of interest.',
         default=None)
     optional.add_argument(
         '-qc-dataset',
@@ -154,6 +155,10 @@ def main(argv: Sequence[str]):
         mask = Image(fname_mask).data
         if len(mask.shape) != 3:
             raise ValueError(f"Mask should be a 3D image, but the input mask has shape '{mask.shape}'.")
+
+    if path_qc and fname_mask is None:
+        parser.error("The '-m' parameter is required to generate the QC report.")
+
     if arguments.o is not None:
         fname_dst = arguments.o
     else:
