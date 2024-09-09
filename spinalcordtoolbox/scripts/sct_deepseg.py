@@ -86,7 +86,7 @@ def get_parser():
              "install a specific version of a model. To use this option, navigate to the 'Releases' page of the model, "
              "find release you wish to install, and right-click + copy the URL of the '.zip' listed under 'Assets'.\n"
              "NB: For multi-model tasks, provide multiple URLs. For single models, just provide one URL.\n"
-             "Example: '-custom-url https://github.com/ivadomed/model-sc/releases/download/r20230101/model.zip'")
+             "Example: '-custom-url github.com/ivadomed/model-sc/releases/download/r20230101/model.zip'")
 
     misc = parser.add_argument_group('\nPARAMETERS')
     misc.add_argument(
