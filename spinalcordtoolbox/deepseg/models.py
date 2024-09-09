@@ -383,7 +383,7 @@ def folder(name_model):
     return os.path.join(__deepseg_dir__, name_model)
 
 
-def install_model(name_model):
+def install_model(name_model, custom_url=None):
     """
     Download and install specified model under SCT installation dir.
 
@@ -391,7 +391,7 @@ def install_model(name_model):
     :return: None
     """
     logger.info("\nINSTALLING MODEL: {}".format(name_model))
-    url_field = MODELS[name_model]['url']
+    url_field = MODELS[name_model]['url'] if not custom_url else [custom_url]  # [] -> mimic a list of mirror URLs
     # List of mirror URLs corresponding to a single model
     if isinstance(url_field, list):
         model_urls = url_field

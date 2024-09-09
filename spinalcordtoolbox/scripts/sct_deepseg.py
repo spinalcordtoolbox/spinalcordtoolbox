@@ -71,11 +71,6 @@ def get_parser():
              " More than one path can be indicated (separated with space) for cascaded application of the models.",
         metavar=Metavar.str)
     seg.add_argument(
-        "-custom-path",
-        help="Path to a custom model. This option is used to specify a custom model that is not part of the official "
-             "list of tasks. The path should point to the folder containing the model files. "
-             "Example: /path/to/custom_model")
-    seg.add_argument(
         "-list-tasks",
         action='store_true',
         help="Display a list of tasks, along with detailed descriptions (including information on how the model was "
@@ -84,6 +79,14 @@ def get_parser():
         "-install", "-install-task",
         help="Install models that are required for specified task.",
         choices=list(models.TASKS.keys()))
+    seg.add_argument(
+        "-custom-url",
+        nargs="+",  # NB: `nargs="+"` won't work for installing custom ensemble models, but we no longer have any
+        help="URL(s) pointing to the `.zip` asset for a model release. This option can be used with `-install` to "
+             "install a specific version of a model. To use this option, navigate to the 'Releases' page of the model, "
+             "find release you wish to install, and right-click + copy the URL of the '.zip' listed under 'Assets'.\n"
+             "NB: For multi-model tasks, provide multiple URLs. For single models, just provide one URL.\n"
+             "Example: '-custom-url https://github.com/ivadomed/model-sc/releases/download/r20230101/model.zip'")
 
     misc = parser.add_argument_group('\nPARAMETERS')
     misc.add_argument(
@@ -174,8 +177,16 @@ def main(argv: Sequence[str]):
         models.display_list_tasks()
 
     if arguments.install is not None:
-        for name_model in models.TASKS[arguments.install]['models']:
-            models.install_model(name_model)
+        models_to_install = models.TASKS[arguments.install]['models']
+        if arguments.custom_url:
+            if len(arguments.custom_url) != len(models_to_install):
+                parser.error(f"Expected {len(models_to_install)} URL(s) for task {arguments.install}, "
+                             f"but got {len(arguments.custom_url)} URL(s) instead.")
+            for name_model, custom_url in zip(models_to_install, arguments.custom_url):
+                models.install_model(name_model, custom_url)
+        else:
+            for name_model in zip(models_to_install):
+                models.install_model(name_model)
         exit(0)
 
     # Deal with input/output
@@ -213,26 +224,15 @@ def main(argv: Sequence[str]):
     for name_model in name_models:
         # Check if this is an official model
         if name_model in list(models.MODELS.keys()):
-            # Check if the custom path is provided
-            if arguments.custom_path is not None:
-                path_model = arguments.custom_path
-                # Check if the custom path exists
-                if not os.path.isdir(path_model):
-                    parser.error("The input path invalid: {}".format(path_model))
-                # Check if the custom model is a valid model
-                if not models.is_valid([path_model]):
-                    parser.error("The input model is invalid: {}".format(path_model))
-                logger.warning(f"Using custom model at path: {path_model}")
             # If it is, check if it is installed
-            else:
-                path_model = models.folder(name_model)
+            path_model = models.folder(name_model)
             path_models = models.find_model_folder_paths(path_model)
             if not models.is_valid(path_models):
                 printv("Model {} is not installed. Installing it now...".format(name_model))
                 models.install_model(name_model)
                 path_models = models.find_model_folder_paths(path_model)  # Re-parse to find newly downloaded folders
             # Check folder version file ('{path_model}/source.json')
-            elif not models.is_up_to_date(path_model) and not arguments.custom_path:
+            elif not models.is_up_to_date(path_model):
                 printv("Model {} is out of date. Re-installing it now...".format(name_model))
                 models.install_model(name_model)
                 path_models = models.find_model_folder_paths(path_model)  # Re-parse to find newly downloaded folders
@@ -354,8 +354,7 @@ def main(argv: Sequence[str]):
                     "Version": __version__,
                     "CodeURL": f"https://github.com/spinalcordtoolbox/spinalcordtoolbox/"
                                f"blob/{_git_info()[1].strip('*')}/spinalcordtoolbox/scripts/sct_deepseg.py",
-                    "ModelURL": source_dict["model_urls"]
-                    if not arguments.custom_path else f"custom model: {path_model}",
+                    "ModelURL": source_dict["model_urls"],
                 }
             ]
         }
