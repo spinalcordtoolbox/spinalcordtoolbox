@@ -409,7 +409,10 @@ def install_model(name_model, custom_url=None):
     # Write `source.json` (for model provenance / updating)
     source_dict = {
         'model_name': name_model,
-        'model_urls': urls_used
+        'model_urls': urls_used,
+        # NB: If a custom URL is used, then it would just get overwritten as "out of date" when running the task
+        #     So, we add a flag to tell `sct_deepseg` *not* to reinstall the model if a custom URL was used.
+        'custom': bool(custom_url)
     }
     with open(os.path.join(folder(name_model), "source.json"), "w") as fp:
         json.dump(source_dict, fp, indent=4)
@@ -443,6 +446,9 @@ def is_up_to_date(path_model):
     if model_name not in MODELS:
         logger.warning(f"Model name '{model_name}' from source.json does not match model names in SCT source code.")
         return False
+    if "custom" in source_dict and source_dict["custom"] is True:
+        return True  # Don't reinstall the model if the 'custom' flag is set (since custom URLs would fail comparison)
+
     expected_model_urls = MODELS[model_name]['url'].copy()
     actual_model_urls = source_dict["model_urls"]
     # Single-seed models
