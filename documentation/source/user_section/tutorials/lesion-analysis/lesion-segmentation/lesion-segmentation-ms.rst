@@ -39,7 +39,7 @@ It is a region-based model, outputting a single segmentation image containing 2 
    :align: center
    :figwidth: 60%
 
-You can try ``seg_sc_ms_lesion_stir_psir`` on your own STIR or PSIR image using the following command:
+You can try ``seg_sc_ms_lesion_stir_psir`` on your *own* STIR or PSIR image using the following command:
 
 .. code:: sh
 
@@ -60,7 +60,7 @@ The algorithm ``seg_ms_lesion_mp2rage`` was trained on cropped MP2RAGE-UNIT1 ima
    :align: center
    :figwidth: 60%
 
-You can try ``seg_ms_lesion_mp2rage`` on your own MP2RAGE UNIT1 image using the following commands.
+You can try ``seg_ms_lesion_mp2rage`` on your *own* MP2RAGE UNIT1 image using the following commands.
 As the model was trained on cropped images, we recommend cropping the input image before running the segmentation.
 
 .. code:: sh
