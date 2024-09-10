@@ -14,15 +14,18 @@ The algorithm ``sct_deepseg_lesion`` was trained on T2w and T2star images. Detai
    :align: center
    :figwidth: 80%
 
-You can try ``sct_deepseg_lesion`` on your own T2w or T2star image using the following command:
+Run the following command to segment the lesion using ``sct_deepseg_lesion`` from the input image:
 
 .. code:: sh
 
    sct_deepseg_lesion -i t2.nii.gz -c t2
 
 :Input arguments:
-   - ``-i`` : Input T2w image
+   - ``-i`` : Input T2w image with fake lesion
    - ``-c`` : Contrast of the input image
+
+:Output files/folders:
+   - ``t2_lesionseg.nii.gz`` : 3D binary mask of the segmented lesion
 
 ----
 

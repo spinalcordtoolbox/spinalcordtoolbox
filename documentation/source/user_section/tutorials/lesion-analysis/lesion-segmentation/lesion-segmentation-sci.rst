@@ -14,14 +14,14 @@ Given an input image, the model segments **both** the lesion and the spinal cord
   :align: center
   :figwidth: 60%
 
-You can try ``SCIseg`` on your own T2w image using the following command:
+Run the following command to segment the lesion using ``SCIseg`` from the input image:
 
 .. code:: sh
 
-   sct_deepseg -i t2.nii.gz -task seg_sc_lesion_t2w_sci -qc ./qc
+   sct_deepseg -i t2.nii.gz -task seg_sc_lesion_t2w_sci -qc ~/qc_singleSubj
 
 :Input arguments:
-   - ``-i`` : Input T2w image
+   - ``-i`` : Input T2w image with fake lesion
    - ``-task`` : Task to perform. In our case, we use the ``SCIseg`` model via the ``seg_sc_lesion_t2w_sci`` task
    - ``-qc`` : Directory for Quality Control reporting. QC reports allow us to evaluate the segmentation slice-by-slice
 
