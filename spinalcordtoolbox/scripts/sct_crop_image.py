@@ -22,19 +22,24 @@ def get_parser():
         epilog=textwrap.dedent("""
             EXAMPLES:
                - To crop an image using the GUI (this does not allow to crop along the right-left dimension):
-               sct_crop_image -i t2.nii.gz -g 1
+
+                 sct_crop_image -i t2.nii.gz -g 1
 
                - To crop an image using a binary mask:
-               sct_crop_image -i t2.nii.gz -m mask.nii.gz
+
+                 sct_crop_image -i t2.nii.gz -m mask.nii.gz
 
                - To crop an image using a reference image:
-               sct_crop_image -i t2.nii.gz -ref mt1.nii.gz
+
+                 sct_crop_image -i t2.nii.gz -ref mt1.nii.gz
 
                - To crop an image by specifying min/max (you don't need to specify all dimensions). In the example below, cropping will occur between x=5 and x=60, and between z=5 and z=zmax-1
-               sct_crop_image -i t2.nii.gz -xmin 5 -xmax 60 -zmin 5 -zmax -2
+
+                 sct_crop_image -i t2.nii.gz -xmin 5 -xmax 60 -zmin 5 -zmax -2
 
                - To crop an image using a binary mask, and keep a margin of 5 voxels on each side in the x and y directions only:
-               sct_crop_image -i t2.nii.gz -m mask.nii.gz -dilate 5x5x0
+
+                 sct_crop_image -i t2.nii.gz -m mask.nii.gz -dilate 5x5x0
         """),  # noqa: E501 (line too long)
     )
 
