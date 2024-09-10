@@ -14,6 +14,7 @@ import os
 import logging
 import argparse
 from typing import Sequence
+import textwrap
 
 import numpy as np
 from matplotlib.ticker import MaxNLocator
@@ -163,9 +164,10 @@ def get_parser():
         '-vertfile',
         metavar=Metavar.str,
         default=os.path.join('.', 'label', 'template', 'PAM50_levels.nii.gz'),
-        help="Vertebral labeling file. Only use with flag -vert.\n"
-        "The input and the vertebral labelling file must in the same voxel coordinate system "
-        "and must match the dimensions between each other. "
+        help=textwrap.dedent("""
+            Vertebral labeling file. Only use with flag -vert.
+        The input and the vertebral labelling file must in the same voxel coordinate system and must match the dimensions between each other.
+        """),
     )
     optional.add_argument(
         '-perlevel',

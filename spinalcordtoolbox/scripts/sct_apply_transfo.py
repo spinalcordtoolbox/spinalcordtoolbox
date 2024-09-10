@@ -12,6 +12,7 @@ import sys
 import os
 import functools
 from typing import Sequence
+import textwrap
 
 from spinalcordtoolbox.image import Image, generate_output_file, add_suffix
 from spinalcordtoolbox.cropping import ImageCropper
@@ -81,14 +82,10 @@ def get_parser():
         metavar=Metavar.file)
     optional.add_argument(
         "-x",
-        help="Interpolation method.\n"
-             "Note: The 'label' method is a special interpolation method designed for single-voxel labels (e.g. disc "
-             "labels used as registration landmarks, compression labels, etc.). This method is necessary because "
-             "classical interpolation may corrupt the values of single-voxel labels, or cause them to disappear "
-             "entirely. The function works by dilating each label, applying the transformation using nearest neighbour "
-             "interpolation, then extracting the center-of-mass of each transformed 'blob' to get a single-voxel "
-             "output label. Because the output is a single-voxel label, the `-x label` method is not appropriate for "
-             "multi-voxel labeled segmentations (such as spinal cord or lesion masks).",
+        help=textwrap.dedent("""
+            Interpolation method.
+             Note: The 'label' method is a special interpolation method designed for single-voxel labels (e.g. disc labels used as registration landmarks, compression labels, etc.). This method is necessary because classical interpolation may corrupt the values of single-voxel labels, or cause them to disappear entirely. The function works by dilating each label, applying the transformation using nearest neighbour interpolation, then extracting the center-of-mass of each transformed 'blob' to get a single-voxel output label. Because the output is a single-voxel label, the `-x label` method is not appropriate for multi-voxel labeled segmentations (such as spinal cord or lesion masks).
+        """),  # noqa: E501 (line too long)
         required=False,
         default='spline',
         choices=('nn', 'linear', 'spline', 'label'))

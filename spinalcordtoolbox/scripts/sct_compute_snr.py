@@ -11,6 +11,7 @@
 
 import sys
 from typing import Sequence
+import textwrap
 
 import numpy as np
 
@@ -36,11 +37,11 @@ def get_parser():
     mandatoryArguments.add_argument(
         '-i',
         required=True,
-        help="Image to compute the SNR on. (Example: b0s.nii.gz)\n"
-             "- For '-method diff' and '-method mult', the image must be 4D, as SNR will be computed "
-             "along the 4th dimension.\n"
-             "- For '-method single', the image can either be 3D or 4D. If a 4D image is passed, a specific "
-             "3D volume should be specified using the '-vol' argument.",
+        help=textwrap.dedent("""
+            Image to compute the SNR on. (Example: b0s.nii.gz)
+             - For '-method diff' and '-method mult', the image must be 4D, as SNR will be computed along the 4th dimension.
+             - For '-method single', the image can either be 3D or 4D. If a 4D image is passed, a specific 3D volume should be specified using the '-vol' argument.
+        """),
         metavar=Metavar.file)
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
@@ -60,7 +61,7 @@ def get_parser():
         default='')
     optional.add_argument(
         '-method',
-        help='Method to use to compute the SNR (default: diff):\n'
+        help="Method to use to compute the SNR (default: diff):\n"
              "  - diff: Substract two volumes (defined by -vol) and estimate noise variance within the ROI "
              "(flag '-m' is required). Requires a 4D volume.\n"
              "  - mult: Estimate noise variance over time across volumes specified with '-vol'. Requires a 4D volume.\n"
@@ -75,11 +76,12 @@ def get_parser():
         default='diff')
     optional.add_argument(
         '-vol',
-        help="Volumes to compute SNR from. Separate with ',' (Example: '-vol 0,1'), or select range "
-             "using ':' (Example: '-vol 2:50'). If this argument is not passed:\n"
-             "  - For '-method mult', all volumes will be used.\n"
-             "  - For '-method diff', the first two volumes will be used.\n"
-             "  - For '-method single', the first volume will be used.",
+        help=textwrap.dedent("""
+            Volumes to compute SNR from. Separate with ',' (Example: '-vol 0,1'), or select range using ':' (Example: '-vol 2:50'). If this argument is not passed:
+               - For '-method mult', all volumes will be used.
+               - For '-method diff', the first two volumes will be used.
+               - For '-method single', the first volume will be used.
+        """),
         metavar=Metavar.str,
         default='')
     optional.add_argument(

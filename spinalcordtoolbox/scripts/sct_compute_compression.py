@@ -9,6 +9,7 @@
 # TODO: maybe create an API or move some functions
 import sys
 import os
+import textwrap
 import numpy as np
 import logging
 from typing import Sequence
@@ -34,36 +35,28 @@ INDEX_COLUMNS = ['filename', 'compression_level', 'Slice (I->S)']
 # ==========================================================================================
 def get_parser():
     parser = SCTArgumentParser(
-        description='Compute normalized morphometric metrics to assess:'
-                    '\n\t- spinal cord compression using MSCC (maximum spinal cord compression)'
-                    '\n\t- spinal canal stenosis using MCC (maximum canal compromise)\n'
-                    '\n'
-                    'Metrics are normalized using the non-compressed levels above and below the compression site using '
-                    'the following equation:\n'
-                    '\n'
-                    '    ratio = (1 - mi/((ma+mb)/2))\n'
-                    '\n'
-                    'Where mi: metric at the compression level, ma: metric above the compression level, mb: metric '
-                    'below the compression level.\n'
-                    '\n'
-                    'Additionally, if the "-normalize-hc" flag is used, metrics are normalized using a database built '
-                    'from healthy control subjects. This database uses the PAM50 template as an anatomical reference '
-                    'system.\n'
-                    '\n'
-                    'References:\n'
-                    '  - Sandrine Bédard, Jan Valošek, Maryam Seif, Armin Curt, Simon Schading, Nikolai Pfender, '
-                    'Patrick Freund, Markus Hupp, Julien Cohen-Adad. Normalizing Spinal Cord Compression Morphometric '
-                    'Measures: Application in Degenerative Cervical Myelopathy. medRxiv 2024.03.13.24304177\n'
-                    '    https://doi.org/10.1101/2024.03.13.24304177\n'
-                    '  - Miyanji F, Furlan JC, Aarabi B, Arnold PM, Fehlings MG. Acute cervical traumatic '
-                    'spinal cord injury: MR imaging findings correlated with neurologic outcome--prospective study '
-                    'with 100 consecutive patients. Radiology 2007;243(3):820-827.\n'
-                    '    https://doi.org/10.1148/radiol.2433060583\n'
-                    '  - "-normalize-hc" flag:\n'
-                    '    Valošek J, Bédard S, Keřkovský M, Rohan T, Cohen-Adad J. A database of the '
-                    'healthy human spinal cord morphometry in the PAM50 template space. Imaging Neuroscience 2024; '
-                    '2 1–15.\n'
-                    '    https://doi.org/10.1162/imag_a_00075'
+        description=textwrap.dedent("""
+                    Compute normalized morphometric metrics to assess:
+                    \t- spinal cord compression using MSCC (maximum spinal cord compression)
+                    \t- spinal canal stenosis using MCC (maximum canal compromise)
+
+                    Metrics are normalized using the non-compressed levels above and below the compression site using the following equation:
+
+                        ratio = (1 - mi/((ma+mb)/2))
+
+                    Where mi: metric at the compression level, ma: metric above the compression level, mb: metric below the compression level.
+
+                    Additionally, if the "-normalize-hc" flag is used, metrics are normalized using a database built from healthy control subjects. This database uses the PAM50 template as an anatomical reference system.
+
+                    References:
+                      - Sandrine Bédard, Jan Valošek, Maryam Seif, Armin Curt, Simon Schading, Nikolai Pfender, Patrick Freund, Markus Hupp, Julien Cohen-Adad. Normalizing Spinal Cord Compression Morphometric Measures: Application in Degenerative Cervical Myelopathy. medRxiv 2024.03.13.24304177
+                        https://doi.org/10.1101/2024.03.13.24304177
+                      - Miyanji F, Furlan JC, Aarabi B, Arnold PM, Fehlings MG. Acute cervical traumatic spinal cord injury: MR imaging findings correlated with neurologic outcome--prospective study with 100 consecutive patients. Radiology 2007;243[3]:820-827.
+                        https://doi.org/10.1148/radiol.2433060583
+                      - "-normalize-hc" flag:
+                        Valošek J, Bédard S, Keřkovský M, Rohan T, Cohen-Adad J. A database of the healthy human spinal cord morphometry in the PAM50 template space. Imaging Neuroscience 2024; 2 1–15.
+                        https://doi.org/10.1162/imag_a_00075
+        """),  # noqa: E501 (line too long)
     )
 
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
@@ -71,29 +64,30 @@ def get_parser():
         '-i',
         metavar=Metavar.file,
         required=True,
-        help='Spinal cord or spinal canal segmentation mask to compute morphometrics from. If spinal cord segmentation '
-             'is provided, MSCC is computed. If spinal canal segmentation (spinal cord + CSF) is provided, MCC is '
-             'computed. Example: sub-001_T2w_seg.nii.gz'
-             '\nNote: If no normalization is wanted (i.e., if the "-normalize-hc" flag is not specified),'
-             ' metric ratio will take the average along the segmentation centerline.'
+        help=textwrap.dedent("""
+            Spinal cord or spinal canal segmentation mask to compute morphometrics from. If spinal cord segmentation is provided, MSCC is computed. If spinal canal segmentation (spinal cord + CSF) is provided, MCC is computed. Example: sub-001_T2w_seg.nii.gz
+             Note: If no normalization is wanted (i.e., if the "-normalize-hc" flag is not specified),
+              metric ratio will take the average along the segmentation centerline.
+        """),  # noqa: E501 (line too long)
     )
     mandatory.add_argument(
         '-vertfile',
         metavar=Metavar.file,
         required=True,
-        help='Vertebral labeling file. Example: sub-001_T2w_seg_labeled.nii.gz'
-             '\nNote: The input and the vertebral labelling file must be in the same voxel coordinate system'
-             'and must match the dimensions between each other.'
+        help=textwrap.dedent("""
+            Vertebral labeling file. Example: sub-001_T2w_seg_labeled.nii.gz
+             Note: The input and the vertebral labelling file must be in the same voxel coordinate system
+             and must match the dimensions between each other.
+        """),
     )
     mandatory.add_argument(
         '-l',
         metavar=Metavar.file,
         required=True,
-        help='NIfTI file that includes labels at the compression sites. '
-             'Each compression site is denoted by a single voxel of value `1`.'
-             ' Example: sub-001_T2w_compression_labels.nii.gz '
-             '\nNote: The input and the compression label file must be in the same voxel coordinate system '
-             'and must match the dimensions between each other.'
+        help=textwrap.dedent("""
+            NIfTI file that includes labels at the compression sites. Each compression site is denoted by a single voxel of value `1`.
+              Example: sub-001_T2w_compression_labels.nii.gz Note: The input and the compression label file must be in the same voxel coordinate system and must match the dimensions between each other.
+        """),  # noqa: E501 (line too long)
     )
     mandatory.add_argument(
         '-metric',
@@ -107,9 +101,9 @@ def get_parser():
         metavar=Metavar.int,
         type=int,
         choices=[0, 1],
-        help='Set to 1 to normalize the metrics using a database of healthy controls. Set to 0 to not normalize. '
-             '\nNote: This flag should not be set to 1 when computing the MCC (i.e. using spinal canal segmentation). '
-             'It should only be used when computing the MSCC (i.e. using spinal cord segmentation).'
+        help=textwrap.dedent("""
+            Set to 1 to normalize the metrics using a database of healthy controls. Set to 0 to not normalize. Note: This flag should not be set to 1 when computing the MCC (i.e. using spinal canal segmentation). It should only be used when computing the MSCC (i.e. using spinal cord segmentation).
+        """),  # noqa: E501 (line too long)
     )
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(

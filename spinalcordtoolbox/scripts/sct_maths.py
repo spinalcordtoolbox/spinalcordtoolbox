@@ -10,6 +10,7 @@ import pickle
 import gzip
 import argparse
 from typing import Sequence, Union
+import textwrap
 
 import numpy as np
 
@@ -103,10 +104,12 @@ def get_parser():
     optional.add_argument(
         '-volumewise',
         type=int,
-        help='Specifying this option will process a 4D image in a "volumewise" manner:\n'
-             '  - Split the 4D input into individual 3D volumes\n'
-             '  - Apply the maths operations to each 3D volume\n'
-             '  - Merge the processed 3D volumes back into a single 4D output image',
+        help=textwrap.dedent("""
+            Specifying this option will process a 4D image in a "volumewise" manner:
+               - Split the 4D input into individual 3D volumes
+               - Apply the maths operations to each 3D volume
+               - Merge the processed 3D volumes back into a single 4D output image
+        """),
         required=False,
         choices=(0, 1),
         default=0
@@ -124,15 +127,17 @@ def get_parser():
         nargs="*",
         type=number_or_fname,
         action=AppendTodo,
-        help='Add following input. Can be a number or one or more 3D/4D images (separated with space). Examples:'
-             '\n  - sct_maths -i 3D.nii.gz -add 5                       (Result: 3D image with "5" added to each voxel)'
-             '\n  - sct_maths -i 3D.nii.gz -add 3D_2.nii.gz             (Result: 3D image)'
-             '\n  - sct_maths -i 4D.nii.gz -add 4D_2.nii.gz             (Result: 4D image)'
-             '\n  - sct_maths -i 4D_nii.gz -add 4D_2.nii.gz 4D_3.nii.gz (Result: 4D image)'
-             '\nNote: If your terminal supports it, you can also specify multiple images using a pattern:'
-             '\n  - sct_maths -i 4D.nii.gz -add 4D_*.nii.gz (Result: Adding 4D_2.nii.gz, 4D_3.nii.gz, etc.)'
-             '\nNote: If the input image is 4D, you can also leave "-add" empty to sum the 3D volumes within the image:'
-             '\n  - sct_maths -i 4D.nii.gz -add             (Result: 3D image, with 3D volumes summed within 4D image)',
+        help=textwrap.dedent("""
+            Add following input. Can be a number or one or more 3D/4D images (separated with space). Examples:
+               - sct_maths -i 3D.nii.gz -add 5                       (Result: 3D image with "5" added to each voxel)
+               - sct_maths -i 3D.nii.gz -add 3D_2.nii.gz             (Result: 3D image)
+               - sct_maths -i 4D.nii.gz -add 4D_2.nii.gz             (Result: 4D image)
+               - sct_maths -i 4D_nii.gz -add 4D_2.nii.gz 4D_3.nii.gz (Result: 4D image)
+             Note: If your terminal supports it, you can also specify multiple images using a pattern:
+               - sct_maths -i 4D.nii.gz -add 4D_*.nii.gz (Result: Adding 4D_2.nii.gz, 4D_3.nii.gz, etc.)
+             Note: If the input image is 4D, you can also leave "-add" empty to sum the 3D volumes within the image:
+               - sct_maths -i 4D.nii.gz -add             (Result: 3D image, with 3D volumes summed within 4D image)
+        """),
         required=False)
     basic.add_argument(
         "-sub",
@@ -198,23 +203,22 @@ def get_parser():
         metavar=Metavar.list,
         type=list_type(',', int, 2),
         action=AppendTodo,
-        help="Threshold image using Adaptive algorithm (from skimage). Provide 2 values separated by ',' that "
-             "correspond to the parameters below. For example, '-adap 7,0' corresponds to a block size of 7 and an "
-             "offset of 0.\n"
-             "  - Block size: Odd size of pixel neighborhood which is used to calculate the threshold value. \n"
-             "  - Offset: Constant subtracted from weighted mean of neighborhood to calculate the local threshold "
-             "value. Suggested offset is 0.",
+        help=textwrap.dedent("""
+            Threshold image using Adaptive algorithm (from skimage). Provide 2 values separated by ',' that correspond to the parameters below. For example, '-adap 7,0' corresponds to a block size of 7 and an offset of 0.
+               - Block size: Odd size of pixel neighborhood which is used to calculate the threshold value.
+               - Offset: Constant subtracted from weighted mean of neighborhood to calculate the local threshold value. Suggested offset is 0.
+        """),  # noqa: E501 (line too long)
         required=False)
     thresholding.add_argument(
         "-otsu-median",
         metavar=Metavar.list,
         type=list_type(',', int, 2),
         action=AppendTodo,
-        help="Threshold image using Median Otsu algorithm (from dipy). Provide 2 values separated by ',' that "
-             "correspond to the parameters below. For example, '-otsu-median 3,5' corresponds to a filter size of 3 "
-             "repeated over 5 iterations.\n"
-             "  - Size: Radius (in voxels) of the applied median filter.\n"
-             "  - Iterations: Number of passes of the median filter.",
+        help=textwrap.dedent("""
+            Threshold image using Median Otsu algorithm (from dipy). Provide 2 values separated by ',' that correspond to the parameters below. For example, '-otsu-median 3,5' corresponds to a filter size of 3 repeated over 5 iterations.
+               - Size: Radius (in voxels) of the applied median filter.
+               - Iterations: Number of passes of the median filter.
+        """),  # noqa: E501 (line too long)
         required=False)
     thresholding.add_argument(
         '-percent',
@@ -262,8 +266,10 @@ def get_parser():
         choices=('square', 'cube', 'disk', 'ball'),
         action='append',  # to output a warning if used more than once
         default=[],
-        help="Shape of the structuring element for the mathematical morphology operation. Default: ball.\n"
-             "If a 2D shape {'disk', 'square'} is selected, -dim must be specified.",
+        help=textwrap.dedent("""
+            Shape of the structuring element for the mathematical morphology operation. Default: ball.
+             If a 2D shape {'disk', 'square'} is selected, -dim must be specified.
+        """),
         required=False)
     mathematical.add_argument(
         '-dim',
@@ -298,11 +304,12 @@ def get_parser():
         '-denoise',
         type=denoise_params,
         action=AppendTodo,
-        help='Non-local means adaptative denoising from P. Coupe et al. as implemented in dipy. Separate with "," Example: p=1,b=3\n'
-             ' p: (patch radius) similar patches in the non-local means are searched for locally, inside a cube of side 2*p+1 centered at each voxel of interest. Default: p=1\n'
-             ' b: (block radius) the size of the block to be used (2*b+1) in the blockwise non-local means implementation. Default: b=5 '
-             '    Note, block radius must be smaller than the smaller image dimension: default value is lowered for small images)\n'
-             'To use default parameters, write -denoise 1',
+        help=textwrap.dedent("""
+            Non-local means adaptative denoising from P. Coupe et al. as implemented in dipy. Separate with "," Example: p=1,b=3
+              p: (patch radius) similar patches in the non-local means are searched for locally, inside a cube of side 2*p+1 centered at each voxel of interest. Default: p=1
+              b: (block radius) the size of the block to be used (2*b+1) in the blockwise non-local means implementation. Default: b=5     Note, block radius must be smaller than the smaller image dimension: default value is lowered for small images)
+             To use default parameters, write -denoise 1
+        """),  # noqa: E501 (line too long)
         required=False)
 
     similarity = parser.add_argument_group("SIMILARITY METRIC")

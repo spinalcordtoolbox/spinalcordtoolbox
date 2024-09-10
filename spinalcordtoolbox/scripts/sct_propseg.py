@@ -12,6 +12,7 @@ import pathlib
 import sys
 import logging
 from typing import Sequence
+import textwrap
 
 import numpy as np
 from scipy.ndimage import label, center_of_mass
@@ -274,10 +275,10 @@ def get_parser():
     optional.add_argument(
         '-init-centerline',
         metavar=Metavar.file,
-        help="Filename of centerline to use for the propagation. Use format .txt or .nii; see file structure in "
-             "documentation.\n"
-             "Replace filename by 'viewer' to use interactive viewer for providing centerline. Example: "
-             "-init-centerline viewer"
+        help=textwrap.dedent("""
+            Filename of centerline to use for the propagation. Use format .txt or .nii; see file structure in documentation.
+             Replace filename by 'viewer' to use interactive viewer for providing centerline. Example: -init-centerline viewer
+        """),
     )
     optional.add_argument(
         '-init',
@@ -288,8 +289,10 @@ def get_parser():
     optional.add_argument(
         '-init-mask',
         metavar=Metavar.file,
-        help="Mask containing three center of the spinal cord, used to initiate the propagation.\n"
-             "Replace filename by 'viewer' to use interactive viewer for providing mask. Example: -init-mask viewer"
+        help=textwrap.dedent("""
+            Mask containing three center of the spinal cord, used to initiate the propagation.
+             Replace filename by 'viewer' to use interactive viewer for providing mask. Example: -init-mask viewer
+        """),
     )
     optional.add_argument(
         '-mask-correction',

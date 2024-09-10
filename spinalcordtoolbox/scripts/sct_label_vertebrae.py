@@ -9,6 +9,7 @@ import sys
 import os
 import argparse
 from typing import Sequence
+import textwrap
 
 import numpy as np
 
@@ -151,9 +152,10 @@ def get_parser():
         '-initz',
         metavar=Metavar.list,
         type=parse_initz,
-        help="Initialize using slice number and disc value. Example: 68,4 (slice 68 corresponds to disc C3/C4).\n"
-             "WARNING: Slice number should correspond to superior-inferior direction (i.e. Z in RPI orientation, but "
-             "Y in LIP orientation)."
+        help=textwrap.dedent("""
+            Initialize using slice number and disc value. Example: 68,4 (slice 68 corresponds to disc C3/C4).
+             WARNING: Slice number should correspond to superior-inferior direction (i.e. Z in RPI orientation, but Y in LIP orientation).
+        """),
     )
     optional.add_argument(
         '-initcenter',
@@ -225,11 +227,13 @@ def get_parser():
         metavar=Metavar.list,
         type=vertebral_detection_param,
         default=','.join(f'{key}={value}' for key, value in param_default.items()),
-        help='Advanced parameters. Assign value with "="; Separate arguments with ","\n'
-             '  - shift_AP [mm]: AP shift of centerline for disc search\n'
-             '  - size_AP [mm]: AP window size for disc search\n'
-             '  - size_RL [mm]: RL window size for disc search\n'
-             '  - size_IS [mm]: IS window size for disc search\n',
+        help=textwrap.dedent("""
+            Advanced parameters. Assign value with "="; Separate arguments with ","
+               - shift_AP [mm]: AP shift of centerline for disc search
+               - size_AP [mm]: AP window size for disc search
+               - size_RL [mm]: RL window size for disc search
+               - size_IS [mm]: IS window size for disc search
+        """),
     )
     optional.add_argument(
         '-r',

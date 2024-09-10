@@ -8,6 +8,7 @@
 import os
 import sys
 from typing import Sequence
+import textwrap
 
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
@@ -46,12 +47,13 @@ def get_parser():
         help="show this help message and exit")
     optional.add_argument(
         "-centerline",
-        help="Method used for extracting the centerline:\n"
-             " svm: Automatic detection using Support Vector Machine algorithm.\n"
-             " cnn: Automatic detection using Convolutional Neural Network.\n"
-             " viewer: Semi-automatic detection using manual selection of a few points with an interactive viewer "
-             "followed by regularization.\n"
-             " file: Use an existing centerline (use with flag -file_centerline)",
+        help=textwrap.dedent("""
+            Method used for extracting the centerline:
+              svm: Automatic detection using Support Vector Machine algorithm.
+              cnn: Automatic detection using Convolutional Neural Network.
+              viewer: Semi-automatic detection using manual selection of a few points with an interactive viewer followed by regularization.
+              file: Use an existing centerline (use with flag -file_centerline)
+        """),
         choices=('svm', 'cnn', 'viewer', 'file'),
         default="svm")
     optional.add_argument(

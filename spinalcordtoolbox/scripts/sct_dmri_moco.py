@@ -26,6 +26,7 @@
 import sys
 import os
 from typing import Sequence
+import textwrap
 
 from spinalcordtoolbox.moco import ParamMoco, moco_wrapper
 from spinalcordtoolbox.utils.sys import init_sct, set_loglevel
@@ -39,22 +40,20 @@ def get_parser():
     param_default = ParamMoco(is_diffusion=True, group_size=3, metric='MI', smooth='1')
 
     parser = SCTArgumentParser(
-        description="Motion correction of dMRI data. Some of the features to improve robustness were proposed in Xu et "
-                    "al. (https://dx.doi.org/10.1016/j.neuroimage.2012.11.014) and include:\n"
-                    "  - group-wise (-g)\n"
-                    "  - slice-wise regularized along z using polynomial function (-param). For more info about the "
-                    "method, type: isct_antsSliceRegularizedRegistration\n"
-                    "  - masking (-m)\n"
-                    "  - iterative averaging of target volume\n"
-                    "\n"
-                    "The outputs of the motion correction process are:\n"
-                    "  - the motion-corrected dMRI volumes\n"
-                    "  - the time average of the corrected dMRI volumes with b == 0\n"
-                    "  - the time average of the corrected dMRI volumes with b != 0\n"
-                    "  - a time-series with 1 voxel in the XY plane, for the X and Y motion direction (two separate "
-                    "files), as required for FSL analysis.\n"
-                    "  - a TSV file with one row for each time point, with the slice-wise average of the "
-                    "motion correction magnitude for that time point, that can be used for Quality Control.\n"
+        description=textwrap.dedent("""
+                    Motion correction of dMRI data. Some of the features to improve robustness were proposed in Xu et al. (https://dx.doi.org/10.1016/j.neuroimage.2012.11.014) and include:
+                      - group-wise (-g)
+                      - slice-wise regularized along z using polynomial function (-param). For more info about the method, type: isct_antsSliceRegularizedRegistration
+                      - masking (-m)
+                      - iterative averaging of target volume
+
+                    The outputs of the motion correction process are:
+                      - the motion-corrected dMRI volumes
+                      - the time average of the corrected dMRI volumes with b == 0
+                      - the time average of the corrected dMRI volumes with b != 0
+                      - a time-series with 1 voxel in the XY plane, for the X and Y motion direction (two separate files), as required for FSL analysis.
+                      - a TSV file with one row for each time point, with the slice-wise average of the motion correction magnitude for that time point, that can be used for Quality Control.
+        """),  # noqa: E501 (line too long)
     )
 
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")

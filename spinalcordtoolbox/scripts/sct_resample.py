@@ -9,6 +9,7 @@
 
 import sys
 from typing import Sequence
+import textwrap
 
 from spinalcordtoolbox.utils.sys import init_sct, set_loglevel
 from spinalcordtoolbox.utils.shell import Metavar, SCTArgumentParser
@@ -55,15 +56,18 @@ def get_parser():
     resample_types.add_argument(
         '-f',
         metavar=Metavar.str,
-        help="Resampling factor in each dimensions (x,y,z). Separate with 'x'. Example: 0.5x0.5x1\n"
-             "For 2x upsampling, set to 2. For 2x downsampling set to 0.5"
+        help=textwrap.dedent("""
+            Resampling factor in each dimensions (x,y,z). Separate with 'x'. Example: 0.5x0.5x1
+             For 2x upsampling, set to 2. For 2x downsampling set to 0.5
+        """),
     )
     resample_types.add_argument(
         '-mm',
         metavar=Metavar.str,
-        help="New resolution in mm. Separate dimension with 'x'. Example: 0.1x0.1x5\n"
-             "Note: Resampling can only approximate a desired `mm` resolution, given the limitations of discrete voxel "
-             "data arrays."
+        help=textwrap.dedent("""
+            New resolution in mm. Separate dimension with 'x'. Example: 0.1x0.1x5
+             Note: Resampling can only approximate a desired `mm` resolution, given the limitations of discrete voxel data arrays.
+        """),
         # Context: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4077
     )
     resample_types.add_argument(

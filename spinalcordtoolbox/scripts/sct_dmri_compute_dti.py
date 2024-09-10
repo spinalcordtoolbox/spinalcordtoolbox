@@ -7,6 +7,7 @@
 
 import sys
 from typing import Sequence
+import textwrap
 
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 from spinalcordtoolbox.utils.shell import Metavar, SCTArgumentParser
@@ -45,9 +46,11 @@ def get_parser():
         help="Show this help message and exit")
     optional.add_argument(
         '-method',
-        help='Type of method to calculate the diffusion tensor:\n'
-             ' standard: Standard equation [Basser, Biophys J 1994]\n'
-             ' restore: Robust fitting with outlier detection [Chang, MRM 2005]',
+        help=textwrap.dedent("""
+            Type of method to calculate the diffusion tensor:
+              standard: Standard equation [Basser, Biophys J 1994]
+              restore: Robust fitting with outlier detection [Chang, MRM 2005]
+        """),
         default='standard',
         choices=('standard', 'restore'))
     optional.add_argument(

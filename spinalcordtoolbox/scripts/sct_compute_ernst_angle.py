@@ -7,6 +7,7 @@
 
 import sys
 from typing import Sequence
+import textwrap
 
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
@@ -54,9 +55,9 @@ class ErnstAngle:
 
 def get_parser():
     parser = SCTArgumentParser(
-        description='Function to compute the Ernst Angle. For examples of T1 values in the brain, see Wansapura et al. '
-                    'NMR relaxation times in the human brain at 3.0 tesla. Journal of magnetic resonance imaging : '
-                    'JMRI (1999) vol. 9 (4) pp. 531-8. \nT1 in WM: 832ms\nT1 in GM: 1331ms'
+        description=textwrap.dedent("""
+            Function to compute the Ernst Angle. For examples of T1 values in the brain, see Wansapura et al. NMR relaxation times in the human brain at 3.0 tesla. Journal of magnetic resonance imaging : JMRI (1999) vol. 9 (4) pp. 531-8. T1 in WM: 832msT1 in GM: 1331ms
+        """),  # noqa: E501 (line too long)
     )
 
     mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")

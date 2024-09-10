@@ -12,6 +12,7 @@ import sys
 import os
 import time
 from typing import Sequence
+import textwrap
 
 import numpy as np
 
@@ -48,10 +49,12 @@ def get_parser():
 
     # Initialize the parser
     parser = SCTArgumentParser(
-        description="Smooth the spinal cord along its centerline. Steps are:\n"
-                    "  1) Spinal cord is straightened (using centerline),\n"
-                    "  2) a Gaussian kernel is applied in the superior-inferior direction,\n"
-                    "  3) then cord is de-straightened as originally.\n"
+        description=textwrap.dedent("""
+                    Smooth the spinal cord along its centerline. Steps are:
+                      1) Spinal cord is straightened (using centerline),
+                      2) a Gaussian kernel is applied in the superior-inferior direction,
+                      3) then cord is de-straightened as originally.
+        """),
     )
 
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")

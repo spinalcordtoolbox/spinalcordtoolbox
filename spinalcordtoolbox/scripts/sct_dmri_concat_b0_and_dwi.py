@@ -8,6 +8,7 @@
 
 import sys
 from typing import Sequence
+import textwrap
 
 import numpy as np
 
@@ -20,15 +21,15 @@ fetcher = LazyLoader("fetcher", globals(), "dipy.data.fetcher")
 
 def get_parser():
     parser = SCTArgumentParser(
-        description="Concatenate b=0 scans with DWI time series and update the bvecs and bvals files.\n\n"
-                    "Example 1: Add two b=0 file at the beginning and one at the end of the DWI time series:\n"
-                    ">> sct_dmri_concat_b0_and_dwi -i b0-1.nii b0-2.nii dmri.nii b0-65.nii -bvec bvecs.txt -bval "
-                    "bvals.txt -order b0 b0 dwi b0 -o dmri_concat.nii -obval bvals_concat.txt -obvec "
-                    "bvecs_concat.txt\n\n"
-                    "Example 2: Concatenate two DWI series and add one b=0 file at the beginning:\n"
-                    ">> sct_dmri_concat_b0_and_dwi -i b0-1.nii dmri1.nii dmri2.nii -bvec bvecs1.txt bvecs2.txt -bval "
-                    "bvals1.txt bvals2.txt -order b0 dwi dwi -o dmri_concat.nii -obval bvals_concat.txt -obvec "
-                    "bvecs_concat.txt"
+        description=textwrap.dedent("""
+                    Concatenate b=0 scans with DWI time series and update the bvecs and bvals files.
+
+                    Example 1: Add two b=0 file at the beginning and one at the end of the DWI time series:
+                    >> sct_dmri_concat_b0_and_dwi -i b0-1.nii b0-2.nii dmri.nii b0-65.nii -bvec bvecs.txt -bval bvals.txt -order b0 b0 dwi b0 -o dmri_concat.nii -obval bvals_concat.txt -obvec bvecs_concat.txt
+
+                    Example 2: Concatenate two DWI series and add one b=0 file at the beginning:
+                    >> sct_dmri_concat_b0_and_dwi -i b0-1.nii dmri1.nii dmri2.nii -bvec bvecs1.txt bvecs2.txt -bval bvals1.txt bvals2.txt -order b0 dwi dwi -o dmri_concat.nii -obval bvals_concat.txt -obvec bvecs_concat.txt
+        """),  # noqa: E501 (line too long)
     )
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(

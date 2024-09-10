@@ -17,6 +17,7 @@ import os
 import sys
 import logging
 from typing import Sequence
+import textwrap
 
 from spinalcordtoolbox.reports import qc2
 from spinalcordtoolbox.image import splitext, Image, check_image_kind
@@ -48,11 +49,12 @@ def get_parser():
     input_output.add_argument(
         "-c",
         nargs="+",
-        help="Contrast of the input. The `-c` option is only relevant for the following tasks:"
-             "\n   - 'seg_tumor-edema-cavity_t1-t2': Specifies the contrast order of input images (e.g. -c t1 t2)"
-             "\n   - 'seg_sc_ms_lesion_stir_psir': Specifies whether input should be inverted based on contrast "
-             "(-c stir: no inversion, -c psir: inverted)"
-             "\nBecause all other models have only a single input contrast, the '-c' option is ignored for them.",
+        help=textwrap.dedent("""
+            Contrast of the input. The `-c` option is only relevant for the following tasks:
+                - 'seg_tumor-edema-cavity_t1-t2': Specifies the contrast order of input images (e.g. -c t1 t2)
+                - 'seg_sc_ms_lesion_stir_psir': Specifies whether input should be inverted based on contrast (-c stir: no inversion, -c psir: inverted)
+             Because all other models have only a single input contrast, the '-c' option is ignored for them.
+        """),
         choices=('t1', 't2', 't2star', 'stir', 'psir'),
         metavar=Metavar.str)
     input_output.add_argument(

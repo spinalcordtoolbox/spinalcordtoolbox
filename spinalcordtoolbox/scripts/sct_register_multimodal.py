@@ -28,6 +28,7 @@ import os
 import time
 from copy import deepcopy
 from typing import Sequence
+import textwrap
 
 import numpy as np
 
@@ -49,28 +50,19 @@ DEFAULT_PARAMREGMULTI = ParamregMultiStep([step0, step1])
 def get_parser():
     # Initialize the parser
     parser = SCTArgumentParser(
-        description="This program co-registers two 3D volumes. The deformation is non-rigid and is constrained along "
-                    "Z direction (i.e., axial plane). Hence, this function assumes that orientation of the destination "
-                    "image is axial (RPI). If you need to register two volumes with large deformations and/or "
-                    "different contrasts, it is recommended to input spinal cord segmentations (binary mask) in order "
-                    "to achieve maximum robustness. The program outputs a warping field that can be used to register "
-                    "other images to the destination image. To apply the warping field to another image, use "
-                    "'sct_apply_transfo'\n"
-                    "\n"
-                    "Tips:\n"
-                    " - For a registration step using segmentations, use the MeanSquares metric. Also, simple "
-                    "algorithm will be very efficient, for example centermass as a 'preregistration'.\n"
-                    " - For a registration step using images of different contrast, use the Mutual Information (MI) "
-                    "metric.\n"
-                    " - Combine the steps by increasing the complexity of the transformation performed in each step, "
-                    "for example: -param step=1,type=seg,algo=slicereg,metric=MeanSquares:"
-                    "step=2,type=seg,algo=affine,metric=MeanSquares,gradStep=0.2:"
-                    "step=3,type=im,algo=syn,metric=MI,iter=5,shrink=2\n"
-                    " - When image contrast is low, a good option is to perform registration only based on the image "
-                    "segmentation, i.e. using type=seg\n"
-                    " - Columnwise algorithm needs to be applied after a translation and rotation such as centermassrot "
-                    "algorithm. For example: -param step=1,type=seg,algo=centermassrot,metric=MeanSquares:"
-                    "step=2,type=seg,algo=columnwise,metric=MeanSquares"
+        description=textwrap.dedent("""
+                    This program co-registers two 3D volumes. The deformation is non-rigid and is constrained along Z direction (i.e., axial plane). Hence, this function assumes that orientation of the destination image is axial (RPI). If you need to register two volumes with large deformations and/or different contrasts, it is recommended to input spinal cord segmentations (binary mask) in order to achieve maximum robustness. The program outputs a warping field that can be used to register other images to the destination image. To apply the warping field to another image, use 'sct_apply_transfo'
+
+                    Tips:
+                     - For a registration step using segmentations, use the MeanSquares metric. Also, simple algorithm will be very efficient, for example centermass as a 'preregistration'.
+                     - For a registration step using images of different contrast, use the Mutual Information (MI) metric.
+                     - Combine the steps by increasing the complexity of the transformation performed in each step, for example: -param step=1,type=seg,algo=slicereg,metric=MeanSquares:
+                    step=2,type=seg,algo=affine,metric=MeanSquares,gradStep=0.2:
+                    step=3,type=im,algo=syn,metric=MI,iter=5,shrink=2
+                     - When image contrast is low, a good option is to perform registration only based on the image segmentation, i.e. using type=seg
+                     - Columnwise algorithm needs to be applied after a translation and rotation such as centermassrot algorithm. For example: -param step=1,type=seg,algo=centermassrot,metric=MeanSquares:
+                    step=2,type=seg,algo=columnwise,metric=MeanSquares
+        """),  # noqa: E501 (line too long)
     )
 
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")

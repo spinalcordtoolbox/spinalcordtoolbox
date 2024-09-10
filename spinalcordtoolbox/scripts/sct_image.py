@@ -8,6 +8,7 @@
 import os
 import sys
 from typing import Sequence
+import textwrap
 
 import numpy as np
 from nibabel import Nifti1Image
@@ -129,12 +130,10 @@ def get_parser():
     header.add_argument(
         '-copy-header',
         metavar=Metavar.file,
-        help='Copy the NIfTI header of the source image (specified in -i) to the destination image (specified here) '
-             'and save it into a new image (specified in -o).\n'
-             '!! WARNING: This command should ONLY be run to fix a wrong header (e.g., where the qform and/or sform '
-             'between an image and a mask of the image do not match). Also note that the image is NOT affected by '
-             'this command, so if the dimensions of the source and destination images do not match, then you should '
-             'probably NOT use this command.',
+        help=textwrap.dedent("""
+            Copy the NIfTI header of the source image (specified in -i) to the destination image (specified here) and save it into a new image (specified in -o).
+            !! WARNING: This command should ONLY be run to fix a wrong header (e.g., where the qform and/or sform between an image and a mask of the image do not match). Also note that the image is NOT affected by this command, so if the dimensions of the source and destination images do not match, then you should probably NOT use this command.
+        """),  # noqa: E501 (line too long)
         required=False)
     affine_fixes = header.add_mutually_exclusive_group(required=False)
     affine_fixes.add_argument(
@@ -172,23 +171,21 @@ def get_parser():
         required=False)
     orientation.add_argument(
         '-flip',
-        help="Flip an axis of the image's data array. (This will not change the header orientation string.)\n"
-             " - WARNING: This option should only be used to fix the data array when it does not match the orientation "
-             "string in the header. We recommend that you investigate and understand where the mismatch originated "
-             "from in the first place before using this option.\n"
-             " - Example: For an image with 'RPI' in its header, `-flip x` will flip the LR axis of the data array.",
+        help=textwrap.dedent("""
+            Flip an axis of the image's data array. (This will not change the header orientation string.)
+              - WARNING: This option should only be used to fix the data array when it does not match the orientation string in the header. We recommend that you investigate and understand where the mismatch originated from in the first place before using this option.
+              - Example: For an image with 'RPI' in its header, `-flip x` will flip the LR axis of the data array.
+        """),  # noqa: E501 (line too long)
         choices=DIM_LIST,
         required=False)
     orientation.add_argument(
         '-transpose',
         metavar="ax1,ax2,ax3",
-        help="Transpose the axes (x,y,z) of the image's data array. (This will not change the header orientation "
-             "string.)\n"
-             " - WARNING: This option should only be used to fix the data array when it does not match the orientation "
-             "string in the header. We recommend that you investigate and understand where the mismatch originated "
-             "from in the first place before using this option.\n"
-             " - Example: For a 3D image with 'RPI' in its header, `-transpose z,y,x` will swap the LR and SI axes of "
-             "the data array.",
+        help=textwrap.dedent("""
+            Transpose the axes (x,y,z) of the image's data array. (This will not change the header orientation string.)
+              - WARNING: This option should only be used to fix the data array when it does not match the orientation string in the header. We recommend that you investigate and understand where the mismatch originated from in the first place before using this option.
+              - Example: For a 3D image with 'RPI' in its header, `-transpose z,y,x` will swap the LR and SI axes of the data array.
+        """),  # noqa: E501 (line too long)
         type=list_type(',', str),
         required=False)
 

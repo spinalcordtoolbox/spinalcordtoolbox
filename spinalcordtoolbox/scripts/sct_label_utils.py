@@ -15,6 +15,7 @@
 import os
 import sys
 from typing import Sequence
+import textwrap
 
 import numpy as np
 
@@ -86,23 +87,20 @@ def get_parser():
         '-create-seg',
         metavar=Metavar.list,
         type=list_type(':', list_type(',', int)),
-        help="Create labels on a cord segmentation (or centerline) image defined by '-i'. Each label should be "
-             "specified using the form 'v1,v2' where 'v1' is value of the slice index along the inferior-superior "
-             "axis, and 'v2' is the value of the label. Separate each label with ':'. \n"
-             "Example: '-create-seg 5,1:14,2:23,3' adds three labels at the axial slices 5, 14, and 23 (starting from "
-             "the most inferior slice)."
+        help=textwrap.dedent("""
+            Create labels on a cord segmentation (or centerline) image defined by '-i'. Each label should be specified using the form 'v1,v2' where 'v1' is value of the slice index along the inferior-superior axis, and 'v2' is the value of the label. Separate each label with ':'.
+            Example: '-create-seg 5,1:14,2:23,3' adds three labels at the axial slices 5, 14, and 23 (starting from the most inferior slice).
+        """),  # noqa: E501 (line too long)
     )
 
     func_group.add_argument(
         '-create-seg-mid',
         metavar=Metavar.int,
         type=int,
-        help="Similar to '-create-seg'. This option takes a single label value, and will automatically select the "
-             "mid-point slice in the inferior-superior direction (so there is no need for a slice index).\n"
-             "This is useful for when you have centered the field of view of your data at a specific location. "
-             "For example, if you already know that the C2-C3 disc is centered in the I-S direction, then "
-             "you can enter '-create-seg-mid 3' for that label. This saves you the trouble of having to manually "
-             "specify a slice index using '-create-seg'."
+        help=textwrap.dedent("""
+            Similar to '-create-seg'. This option takes a single label value, and will automatically select the mid-point slice in the inferior-superior direction (so there is no need for a slice index).
+            This is useful for when you have centered the field of view of your data at a specific location. For example, if you already know that the C2-C3 disc is centered in the I-S direction, then you can enter '-create-seg-mid 3' for that label. This saves you the trouble of having to manually specify a slice index using '-create-seg'.
+        """),  # noqa: E501 (line too long)
     )
 
     func_group.add_argument(
@@ -122,12 +120,12 @@ def get_parser():
     func_group.add_argument(
         '-disc',
         metavar=Metavar.file,
-        help="Project disc labels ('-disc') onto a spinal cord segmentation ('-i') within the axial plane to create a labeled segmentation.\n"
-             "Note: Unlike 'sct_label_vertebrae -discfile', this function does NOT involve cord straightening.\n"
-             "Note: This method does NOT involve orthogonal projection onto the cord centerline. "
-             "Details: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3395#issuecomment-1478435265\n"
-             "The disc labeling follows the convention: "
-             "https://spinalcordtoolbox.com/user_section/tutorials/vertebral-labeling/labeling-conventions.html"
+        help=textwrap.dedent("""
+            Project disc labels ('-disc') onto a spinal cord segmentation ('-i') within the axial plane to create a labeled segmentation.
+            Note: Unlike 'sct_label_vertebrae -discfile', this function does NOT involve cord straightening.
+            Note: This method does NOT involve orthogonal projection onto the cord centerline. Details: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3395#issuecomment-1478435265
+            The disc labeling follows the convention: https://spinalcordtoolbox.com/user_section/tutorials/vertebral-labeling/labeling-conventions.html
+        """),  # noqa: E501 (line too long)
     )
 
     func_group.add_argument(
@@ -151,9 +149,10 @@ def get_parser():
         '-vert-body',
         metavar=Metavar.list,
         type=list_type(',', int),
-        help="From vertebral labeling, create points that are centered at the mid-vertebral levels. Separate "
-             "desired levels with ','. Example: 3,8\n"
-             "To get all levels, enter 0."
+        help=textwrap.dedent("""
+            From vertebral labeling, create points that are centered at the mid-vertebral levels. Separate desired levels with ','. Example: 3,8
+            To get all levels, enter 0.
+        """),
     )
 
     func_group.add_argument(

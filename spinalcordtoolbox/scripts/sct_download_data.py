@@ -7,6 +7,7 @@
 
 import sys
 from typing import Sequence
+import textwrap
 
 from spinalcordtoolbox.download import install_named_dataset, DATASET_DICT, list_datasets, install_default_datasets
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder
@@ -38,9 +39,10 @@ def get_parser():
         '-o',
         metavar=Metavar.folder,
         action=ActionCreateFolder,
-        help="Path to a directory to save the downloaded data.\n"
-             "(If not provided, the dataset will be downloaded to the SCT installation directory by default. Directory will be created if it does not exist. Warning: existing "
-             "data in the directory will be erased unless -k is provided.)\n"
+        help=textwrap.dedent("""
+             Path to a directory to save the downloaded data.
+             (If not provided, the dataset will be downloaded to the SCT installation directory by default. Directory will be created if it does not exist. Warning: existing data in the directory will be erased unless -k is provided.)
+        """),  # noqa: E501 (line too long)
     )
     optional.add_argument(
         '-k',
