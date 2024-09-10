@@ -608,22 +608,15 @@ class AnalyzeLesion:
         :param p_lst: list, pixel size of the lesion
         :param idx: int, index of the lesion
         """
-        # Get the midsagittal slice number (the number is RPI oriented which is fine because we reoriented the
-        # im_lesion_data to RPI using orient2rpi())
-        # Note that this number is the same across all lesions (idx) as the midsagittal slice is based on the spinal
-        # cord segmentation
-        mid_sagittal_sc_slice = self.midsagittal_sc_slice_rpi
+        # Fetch a list of axial slice numbers that are nonzero in the mid-sagittal slice (RPI)
+        im_data_midsagittal = im_lesion_data[self.midsagittal_sc_slice_rpi, :, :]  # 3D -> 2D, dim=[AP, SI]
+        nonzero_axial_slices = np.unique(np.where(im_data_midsagittal)[1])  # [1] -> SI
 
-        # Get all axial slices (S-I direction) with the lesion for the selected sagittal slice
-        # In other words, we will iterate through the lesion in S-I direction and compute the lesion width for each
-        # axial slice with the lesion
-        # Note: we use [1] for the S-I direction as the orientation is RPI
-        axial_lesion_slices = np.unique(np.where(im_lesion_data[mid_sagittal_sc_slice, :, :])[1])
         # Iterate across axial slices to compute lesion width
         lesion_width_dict = {}
-        for axial_slice in axial_lesion_slices:
+        for axial_slice in nonzero_axial_slices:
             # Get the lesion segmentation mask of the selected 2D axial slice
-            slice_lesion_data = im_lesion_data[mid_sagittal_sc_slice, :, axial_slice]
+            slice_lesion_data = im_lesion_data[self.midsagittal_sc_slice_rpi, :, axial_slice]
             # Get the indices of the lesion mask for the selected axial slice to compute the lesion width.
             # The lesion width is defined as max - min + 1
             # Note: we intentionally use 'max - min + 1' instead of 'len(np.where(slice_lesion_data)[0])' because the
@@ -648,7 +641,7 @@ class AnalyzeLesion:
 
         # Save the width of the lesion along the anterior-posterior axis in the midsagittal slice
         self.measure_pd.loc[idx, 'width_midsagittal_slice [mm]'] = width_cur
-        printv('  (A-P) width in the midsagittal slice: ' + str(np.round(width_cur, 2)) + ' mm',
+        printv(f'  (A-P) width in the midsagittal slice: {str(np.round(width_cur, 2))} mm',
                self.verbose, type='info')
 
     def _measure_diameter(self, im_data, p_lst, idx):
