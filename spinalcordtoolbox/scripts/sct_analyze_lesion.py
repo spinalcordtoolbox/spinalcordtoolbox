@@ -616,13 +616,17 @@ class AnalyzeLesion:
         # Get the lesion mask for the midsagittal slice
         im_data_midsagittal = im_lesion_data[mid_sagittal_sc_slice, :, :]
 
-        # Compute the length of the lesion along the superior-inferior axis in the midsagittal slice
-        # The length is computed as the sum of the angle corrected axial slice thickness (p_lst[2])
-        # Note: p_lst[2] is the pixel size in the S-I direction
-        # Note: '[1]' in 'np.unique(np.where(im_data_midsagittal)[1])' is used to get the unique axial slices (S-I
-        # direction) with the lesion
-        length_cur = np.sum([p_lst[2] / np.cos(self.angles_sagittal[axial_slice])
-                             for axial_slice in np.unique(np.where(im_data_midsagittal)[1])])
+        # Check if the lesion exists in the midsagittal slice, if not, set the length to 'np.nan' and return
+        if not np.any(im_data_midsagittal):
+            length_cur = np.nan
+        else:
+            # Compute the length of the lesion along the superior-inferior axis in the midsagittal slice
+            # The length is computed as the sum of the angle corrected axial slice thickness (p_lst[2])
+            # Note: p_lst[2] is the pixel size in the S-I direction
+            # Note: '[1]' in 'np.unique(np.where(im_data_midsagittal)[1])' is used to get the unique axial slices (S-I
+            # direction) with the lesion
+            length_cur = np.sum([p_lst[2] / np.cos(self.angles_sagittal[axial_slice])
+                                 for axial_slice in np.unique(np.where(im_data_midsagittal)[1])])
 
         # Save the length of the lesion along the superior-inferior axis in the midsagittal slice
         self.measure_pd.loc[idx, 'length_midsagittal_slice [mm]'] = length_cur
@@ -672,7 +676,12 @@ class AnalyzeLesion:
                           for axial_slice, lesion_width in lesion_width_dict.items()}
 
         # Get the maximum width across all axial slices
-        width_cur = max(width_cur_dict.values())
+        # Check if width_cur_dict is empty, if so, it means that the lesion does not exist in the midsagittal slice.
+        # In this case, set the width to 'np.nan'
+        if not width_cur_dict:
+            width_cur = np.nan
+        else:
+            width_cur = max(width_cur_dict.values())
 
         # Save the width of the lesion along the anterior-posterior axis in the midsagittal slice
         self.measure_pd.loc[idx, 'width_midsagittal_slice [mm]'] = width_cur
