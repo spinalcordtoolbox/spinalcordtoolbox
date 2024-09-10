@@ -51,11 +51,9 @@ def compute_expected_measurements(dim, starting_coord=None, path_seg=None):
         min_area = min(np.sum(data_seg[:, n_slice, :])
                        for n_slice in range(starting_coord[1], starting_coord[1] + dim[1]))
 
-        # Find the midsagittal slice of the spinal cord
-        # Note: we use [2] here although in sct_analyze_lesion we use [0]
-        #  (because sct_analyze_lesion does RPI reorientation)
-        mid_sagittal_slice = int(np.mean([np.min(np.unique(np.where(data_seg)[2])),
-                                          np.max(np.unique(np.where(data_seg)[2]))]))
+        # Find the midsagittal slice of the spinal cord (assuming AIL input image)
+        nonzero_slices = np.unique(np.where(data_seg)[2])  # AIL image: [2] -> LR (sagittal)
+        mid_sagittal_slice = int(np.mean([np.min(nonzero_slices), np.max(nonzero_slices)]))
 
         # Find the minimum mid-sagittal tissue bridge width for each LR slice in the lesion
         x = starting_coord[0] + (dim[0] // 2)  # Compute midpoint of lesion (to split into dorsal/ventral regions)
