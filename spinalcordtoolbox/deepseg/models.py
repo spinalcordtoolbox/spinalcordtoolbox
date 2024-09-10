@@ -535,7 +535,7 @@ def list_tasks_string():
     # Display coloured output
     color = {True: 'LightGreen', False: 'LightRed'}
     table = f"{'TASK':<30s}{'DESCRIPTION':<50s}\n"
-    table += f"{'-' * 80}\n"
+    table += f"- {'-' * 76}- \n"
     for name_task, value in tasks.items():
         path_models = [folder(name_model) for name_model in value['models']]
         path_models = [find_model_folder_paths(path) for path in path_models]
