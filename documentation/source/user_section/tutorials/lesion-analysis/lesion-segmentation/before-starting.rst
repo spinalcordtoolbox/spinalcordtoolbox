@@ -1,6 +1,14 @@
 Before starting this tutorial
 #############################
 
-Please download the following example data, which contains T2w image (with fake lesions, because of the difficulty to share patient data), segmented spinal cord and segmented lesions.
+#. Make sure that you have the following files in your working directory:
 
-TODO: add `data_lesion.zip`, e.g. https://github.com/ivadomed/ms-challenge-2021/. Context: https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4586#discussion_r1716382846
+   * ``single_subject/data/t2_lesion/t2.nii.gz``: A T2w anatomical image with fake lesion (because of the difficulty to share patient data).
+
+   You can get these files by downloading `data_lesion.zip <https://github.com/spinalcordtoolbox/sct_tutorial_data/archive/refs/heads/master.zip>`_.
+
+#. Open a terminal and navigate to the ``single_subject/data/t2_lesion/`` directory:
+
+.. code:: sh
+
+   cd {PATH_TO_DOWNLOADED_DATA}/single_subject/data/t2_lesion/

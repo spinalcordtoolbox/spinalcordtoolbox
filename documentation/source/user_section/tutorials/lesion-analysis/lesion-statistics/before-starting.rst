@@ -1,19 +1,17 @@
 Before starting this tutorial
 #############################
 
-You can continue this tutorial with your data (see :ref:`lesion-segmentation <lesion-segmentation>` for more information). Or with the provided example data, see below.
+This tutorial is intended to be run following the previous :ref:`lesion-segmentation` tutorial, as computing the lesion statistics relies on segmented lesion mask.
 
-#. If you want to continue the tutorial with the provided example data, make sure that you have the following files in your working directory:
+You can either run :ref:`lesion-segmentation` tutorial first, or download the necessary files below:
 
-   * ``single_subject/data/t2_lesion/t2_seg.nii.gz``: A 3D binary mask of the spinal cord.
-   * ``single_subject/data/t2_lesion/t2_lesion.nii.gz``: A 3D binary mask of the lesion.
+#. Make sure that you have the following files in your working directory:
 
-   You can get these files by downloading :sct_tutorial_data:`data_lesion.zip`. TODO: add data_lesion.zip
+   * ``single_subject/data/t2_lesion/t2.nii.gz``: A T2w anatomical image with fake lesion (because of the difficulty to share patient data).
+   * ``single_subject/data/t2_lesion/t2_sc_seg.nii.gz``: A 3D binary mask for the spinal cord of a T2 anatomical image.
+   * ``single_subject/data/t2_lesion/t2_lesion_seg.nii.gz``: A image file containing a vertebral level labels.
 
-.. note::
-
-   Due to ethics, ``data_lesion.zip`` contains only spinal cord and lesion binary masks and not the T2w image used to generate them.
-
+   You can get these files by downloading `data_lesion.zip <https://github.com/spinalcordtoolbox/sct_tutorial_data/archive/refs/heads/master.zip>`_.
 
 #. Open a terminal and navigate to the ``single_subject/data/t2_lesion/`` directory:
 
