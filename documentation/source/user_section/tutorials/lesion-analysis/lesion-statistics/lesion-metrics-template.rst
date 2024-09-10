@@ -19,7 +19,7 @@ Running ``sct_analyze_lesion``
 
 .. code:: sh
 
-   sct_analyze_lesion -m t2_lesion_seg.nii.gz -s t2_sc_seg.nii.gz -f label_T2w -qc ./qc
+   sct_analyze_lesion -m t2_lesion_seg.nii.gz -s t2_sc_seg.nii.gz -f label_T2w -qc ~/qc_singleSubj
 
 :Input arguments:
    - ``-m`` : 3D binary mask of the segmented lesion
