@@ -1,5 +1,3 @@
-.. _sct_deepseg:
-
 Specialized segmentation models: ``sct_deepseg``
 ################################################
 
