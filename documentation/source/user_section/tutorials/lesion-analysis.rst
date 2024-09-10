@@ -7,7 +7,7 @@ Lesion analysis
   :align: center
 
 This tutorial demonstrates how to use SCT's command-line scripts to perform lesion analysis in spinal cord injury (SCI) or multiple sclerosis (MS) patients.
-First, the tutorial shows how to segment lesions from input MRI images. Then, the tutorial covers how to compute statistics on segmented lesions.
+First, the tutorial shows how to segment lesions from input MRI images. Then, the tutorial covers how to compute statistics, such as the number of lesions, lesion length, lesion volume, etc., on segmented lesions.
 
 .. toctree::
    :maxdepth: 1
