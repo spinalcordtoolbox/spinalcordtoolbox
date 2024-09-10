@@ -48,10 +48,6 @@ Running ``sct_analyze_lesion``
    - ``t2_lesion_analysis.pkl`` : Python Pickle file containing the morphometric measures
    - ``t2_lesion_label.nii.gz`` : 3D mask of the segmented lesion with lesion IDs (1, 2, 3, etc.)
 
-.. note::
-
-   You can use ``sct_analyze_lesion`` on lesion and spinal cord segmentation masks produced automatically (for example by SCT's deep learning models; see :ref:`lesion-segmentation <lesion-segmentation>` for more information) or manually.
-
 Details:
 
 * **maximum axial damage ratio:** `Smith, A.C., et al. Spinal Cord (2021) <https://doi.org/10.1038/s41393-020-00561-w>`_
