@@ -7,7 +7,7 @@ Lesion segmentation
   :align: center
   :figwidth: 60%
 
-This section demonstrates how to segment lesions in spinal cord injury (SCI) or multiple sclerosis (MS).
+This section demonstrates how to segment lesions, for example, in spinal cord injury (SCI) and multiple sclerosis (MS) patients.
 
 .. toctree::
    :maxdepth: 1
