@@ -1,5 +1,5 @@
-Compute lesion morphometric measures using ``sct_analyze_lesion``
-#################################################################
+Compute lesion morphometric measures
+####################################
 
 Here, we will see how to compute various morphometric measures on segmented lesions. For example, the number of lesions, lesion length, lesion volume, etc. The statistics will be output in an Excel (XLS) file.
 
