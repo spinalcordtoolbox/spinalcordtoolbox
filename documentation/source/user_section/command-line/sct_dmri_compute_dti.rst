@@ -3,4 +3,7 @@
 sct_dmri_compute_dti
 ====================
 
-.. program-output:: sct_dmri_compute_dti -h
+.. argparse::
+   :ref: spinalcordtoolbox.scripts.sct_dmri_compute_dti.get_parser
+   :prog: sct_dmri_compute_dti
+   :markdownhelp:

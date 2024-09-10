@@ -3,4 +3,7 @@
 sct_compute_snr
 ===============
 
-.. program-output:: sct_compute_snr -h
+.. argparse::
+   :ref: spinalcordtoolbox.scripts.sct_compute_snr.get_parser
+   :prog: sct_compute_snr
+   :markdownhelp:

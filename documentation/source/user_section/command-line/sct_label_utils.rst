@@ -3,4 +3,7 @@
 sct_label_utils
 ===============
 
-.. program-output:: sct_label_utils -h
+.. argparse::
+   :ref: spinalcordtoolbox.scripts.sct_label_utils.get_parser
+   :prog: sct_label_utils
+   :markdownhelp:

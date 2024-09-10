@@ -3,4 +3,7 @@
 sct_convert
 ==============
 
-.. program-output:: sct_convert -h
+.. argparse::
+   :ref: spinalcordtoolbox.scripts.sct_convert.get_parser
+   :prog: sct_convert
+   :markdownhelp:

@@ -3,4 +3,7 @@
 sct_check_dependencies
 ======================
 
-.. program-output:: sct_check_dependencies -h
+.. argparse::
+   :ref: spinalcordtoolbox.scripts.sct_check_dependencies.get_parser
+   :prog: sct_check_dependencies
+   :markdownhelp:

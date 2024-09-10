@@ -3,4 +3,7 @@
 sct_fmri_compute_tsnr
 =====================
 
-.. program-output:: sct_fmri_compute_tsnr -h
+.. argparse::
+   :ref: spinalcordtoolbox.scripts.sct_fmri_compute_tsnr.get_parser
+   :prog: sct_fmri_compute_tsnr
+   :markdownhelp:

@@ -3,4 +3,7 @@
 sct_warp_template
 =================
 
-.. program-output:: sct_warp_template -h
+.. argparse::
+   :ref: spinalcordtoolbox.scripts.sct_warp_template.get_parser
+   :prog: sct_warp_template
+   :markdownhelp:

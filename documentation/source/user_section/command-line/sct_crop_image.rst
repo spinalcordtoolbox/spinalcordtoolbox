@@ -3,4 +3,7 @@
 sct_crop_image
 ==============
 
-.. program-output:: sct_crop_image -h
+.. argparse::
+   :ref: spinalcordtoolbox.scripts.sct_crop_image.get_parser
+   :prog: sct_crop_image
+   :markdownhelp:

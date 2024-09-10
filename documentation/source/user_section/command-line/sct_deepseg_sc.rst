@@ -3,4 +3,7 @@
 sct_deepseg_sc
 ==============
 
-.. program-output:: sct_deepseg_sc -h
+.. argparse::
+   :ref: spinalcordtoolbox.scripts.sct_deepseg_sc.get_parser
+   :prog: sct_deepseg_sc
+   :markdownhelp:

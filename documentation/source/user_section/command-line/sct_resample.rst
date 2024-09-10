@@ -3,4 +3,7 @@
 sct_resample
 ============
 
-.. program-output:: sct_resample -h
+.. argparse::
+   :ref: spinalcordtoolbox.scripts.sct_resample.get_parser
+   :prog: sct_resample
+   :markdownhelp:

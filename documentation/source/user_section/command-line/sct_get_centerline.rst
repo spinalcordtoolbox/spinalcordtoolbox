@@ -3,4 +3,7 @@
 sct_get_centerline
 ==================
 
-.. program-output:: sct_get_centerline -h
+.. argparse::
+   :ref: spinalcordtoolbox.scripts.sct_get_centerline.get_parser
+   :prog: sct_get_centerline
+   :markdownhelp:

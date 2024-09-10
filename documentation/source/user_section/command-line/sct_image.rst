@@ -3,4 +3,7 @@
 sct_image
 =========
 
-.. program-output:: sct_image -h
+.. argparse::
+   :ref: spinalcordtoolbox.scripts.sct_image.get_parser
+   :prog: sct_image
+   :markdownhelp:

@@ -3,4 +3,7 @@
 sct_dmri_concat_bvals
 =====================
 
-.. program-output:: sct_dmri_concat_bvals -h
+.. argparse::
+   :ref: spinalcordtoolbox.scripts.sct_dmri_concat_bvals.get_parser
+   :prog: sct_dmri_concat_bvals
+   :markdownhelp:

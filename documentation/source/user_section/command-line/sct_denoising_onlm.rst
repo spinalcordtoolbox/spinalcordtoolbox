@@ -3,4 +3,7 @@
 sct_denoising_onlm
 ==================
 
-.. program-output:: sct_denoising_onlm -h
+.. argparse::
+   :ref: spinalcordtoolbox.scripts.sct_denoising_onlm.get_parser
+   :prog: sct_denoising_onlm
+   :markdownhelp:

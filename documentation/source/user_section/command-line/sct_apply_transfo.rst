@@ -3,4 +3,7 @@
 sct_apply_transfo
 =================
 
-.. program-output:: sct_apply_transfo -h
+.. argparse::
+   :ref: spinalcordtoolbox.scripts.sct_apply_transfo.get_parser
+   :prog: sct_apply_transfo
+   :markdownhelp:

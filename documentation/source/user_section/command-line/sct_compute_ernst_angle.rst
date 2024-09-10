@@ -3,4 +3,7 @@
 sct_compute_ernst_angle
 =======================
 
-.. program-output:: sct_compute_ernst_angle -h
+.. argparse::
+   :ref: spinalcordtoolbox.scripts.sct_compute_ernst_angle.get_parser
+   :prog: sct_compute_ernst_angle
+   :markdownhelp:

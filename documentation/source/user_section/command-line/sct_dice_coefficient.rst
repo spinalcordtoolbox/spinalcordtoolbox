@@ -3,4 +3,7 @@
 sct_dice_coefficient
 ====================
 
-.. program-output:: sct_dice_coefficient -h
+.. argparse::
+   :ref: spinalcordtoolbox.scripts.sct_dice_coefficient.get_parser
+   :prog: sct_dice_coefficient
+   :markdownhelp:

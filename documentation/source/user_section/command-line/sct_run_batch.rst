@@ -3,4 +3,7 @@
 sct_run_batch
 =============
 
-.. program-output:: sct_run_batch -h
+.. argparse::
+   :ref: spinalcordtoolbox.scripts.sct_run_batch.get_parser
+   :prog: sct_run_batch
+   :markdownhelp:

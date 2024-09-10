@@ -3,4 +3,7 @@
 sct_process_segmentation
 ========================
 
-.. program-output:: sct_process_segmentation -h
+.. argparse::
+   :ref: spinalcordtoolbox.scripts.sct_process_segmentation.get_parser
+   :prog: sct_process_segmentation
+   :markdownhelp:

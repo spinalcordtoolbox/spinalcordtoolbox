@@ -3,4 +3,7 @@
 sct_compute_mtr
 ===============
 
-.. program-output:: sct_compute_mtr -h
+.. argparse::
+   :ref: spinalcordtoolbox.scripts.sct_compute_mtr.get_parser
+   :prog: sct_compute_mtr
+   :markdownhelp:

@@ -3,4 +3,7 @@
 sct_compute_mtsat
 =================
 
-.. program-output:: sct_compute_mtsat -h
+.. argparse::
+   :ref: spinalcordtoolbox.scripts.sct_compute_mtsat.get_parser
+   :prog: sct_compute_mtsat
+   :markdownhelp:

@@ -3,4 +3,7 @@
 sct_flatten_sagittal
 ====================
 
-.. program-output:: sct_flatten_sagittal -h
+.. argparse::
+   :ref: spinalcordtoolbox.scripts.sct_flatten_sagittal.get_parser
+   :prog: sct_flatten_sagittal
+   :markdownhelp:

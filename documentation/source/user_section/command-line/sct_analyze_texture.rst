@@ -3,4 +3,7 @@
 sct_analyze_texture
 ===================
 
-.. program-output:: sct_analyze_texture -h
+.. argparse::
+   :ref: spinalcordtoolbox.scripts.sct_analyze_texture.get_parser
+   :prog: sct_analyze_texture
+   :markdownhelp:

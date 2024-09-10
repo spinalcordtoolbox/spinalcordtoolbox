@@ -3,4 +3,7 @@
 sct_qc
 ======
 
-.. program-output:: sct_qc -h
+.. argparse::
+   :ref: spinalcordtoolbox.scripts.sct_qc.get_parser
+   :prog: sct_qc
+   :markdownhelp:

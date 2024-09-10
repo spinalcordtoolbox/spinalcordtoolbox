@@ -3,4 +3,7 @@
 sct_smooth_spinalcord
 =====================
 
-.. program-output:: sct_smooth_spinalcord -h
+.. argparse::
+   :ref: spinalcordtoolbox.scripts.sct_smooth_spinalcord.get_parser
+   :prog: sct_smooth_spinalcord
+   :markdownhelp:

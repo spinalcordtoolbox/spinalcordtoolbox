@@ -3,4 +3,7 @@
 sct_label_vertebrae
 ===================
 
-.. program-output:: sct_label_vertebrae -h
+.. argparse::
+   :ref: spinalcordtoolbox.scripts.sct_label_vertebrae.get_parser
+   :prog: sct_label_vertebrae
+   :markdownhelp:

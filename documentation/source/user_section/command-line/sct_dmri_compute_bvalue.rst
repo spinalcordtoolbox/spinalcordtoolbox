@@ -3,4 +3,7 @@
 sct_dmri_compute_bvalue
 =======================
 
-.. program-output:: sct_dmri_compute_bvalue -h
+.. argparse::
+   :ref: spinalcordtoolbox.scripts.sct_dmri_compute_bvalue.get_parser
+   :prog: sct_dmri_compute_bvalue
+   :markdownhelp:

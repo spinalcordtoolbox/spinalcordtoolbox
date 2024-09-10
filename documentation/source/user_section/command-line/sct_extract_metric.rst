@@ -3,4 +3,7 @@
 sct_extract_metric
 ==================
 
-.. program-output:: sct_extract_metric -h
+.. argparse::
+   :ref: spinalcordtoolbox.scripts.sct_extract_metric.get_parser
+   :prog: sct_extract_metric
+   :markdownhelp:

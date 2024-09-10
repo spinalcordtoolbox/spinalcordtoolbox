@@ -3,4 +3,7 @@
 sct_create_mask
 ===============
 
-.. program-output:: sct_create_mask -h
+.. argparse::
+   :ref: spinalcordtoolbox.scripts.sct_create_mask.get_parser
+   :prog: sct_create_mask
+   :markdownhelp:

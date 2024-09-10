@@ -3,4 +3,7 @@
 sct_maths
 =========
 
-.. program-output:: sct_maths -h
+.. argparse::
+   :ref: spinalcordtoolbox.scripts.sct_maths.get_parser
+   :prog: sct_maths
+   :markdownhelp:

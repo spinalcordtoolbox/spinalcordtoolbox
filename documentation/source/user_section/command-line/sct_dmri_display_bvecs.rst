@@ -3,4 +3,7 @@
 sct_dmri_display_bvecs
 ======================
 
-.. program-output:: sct_dmri_display_bvecs -h
+.. argparse::
+   :ref: spinalcordtoolbox.scripts.sct_dmri_display_bvecs.get_parser
+   :prog: sct_dmri_display_bvecs
+   :markdownhelp:

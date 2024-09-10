@@ -3,4 +3,7 @@
 sct_register_multimodal
 =======================
 
-.. program-output:: sct_register_multimodal -h
+.. argparse::
+   :ref: spinalcordtoolbox.scripts.sct_register_multimodal.get_parser
+   :prog: sct_register_multimodal
+   :markdownhelp:

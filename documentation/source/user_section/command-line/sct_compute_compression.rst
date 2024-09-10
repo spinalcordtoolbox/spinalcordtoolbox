@@ -3,4 +3,7 @@
 sct_compute_compression
 =======================
 
-.. program-output:: sct_compute_compression -h
+.. argparse::
+   :ref: spinalcordtoolbox.scripts.sct_compute_compression.get_parser
+   :prog: sct_compute_compression
+   :markdownhelp:

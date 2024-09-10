@@ -3,4 +3,7 @@
 sct_dmri_moco
 =============
 
-.. program-output:: sct_dmri_moco -h
+.. argparse::
+   :ref: spinalcordtoolbox.scripts.sct_dmri_moco.get_parser
+   :prog: sct_dmri_moco
+   :markdownhelp:

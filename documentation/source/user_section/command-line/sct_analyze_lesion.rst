@@ -3,4 +3,7 @@
 sct_analyze_lesion
 ==================
 
-.. program-output:: sct_analyze_lesion -h
+.. argparse::
+   :ref: spinalcordtoolbox.scripts.sct_analyze_lesion.get_parser
+   :prog: sct_analyze_lesion
+   :markdownhelp:

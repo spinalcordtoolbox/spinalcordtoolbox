@@ -3,4 +3,7 @@
 sct_register_to_template
 ========================
 
-.. program-output:: sct_register_to_template -h
+.. argparse::
+   :ref: spinalcordtoolbox.scripts.sct_register_to_template.get_parser
+   :prog: sct_register_to_template
+   :markdownhelp:

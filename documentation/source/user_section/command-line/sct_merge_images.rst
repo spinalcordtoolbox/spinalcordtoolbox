@@ -3,4 +3,7 @@
 sct_merge_images
 ================
 
-.. program-output:: sct_merge_images -h
+.. argparse::
+   :ref: spinalcordtoolbox.scripts.sct_merge_images.get_parser
+   :prog: sct_merge_images
+   :markdownhelp:

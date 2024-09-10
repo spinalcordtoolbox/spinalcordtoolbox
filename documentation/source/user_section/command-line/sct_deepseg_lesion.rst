@@ -3,4 +3,7 @@
 sct_deepseg_lesion
 ==================
 
-.. program-output:: sct_deepseg_lesion -h
+.. argparse::
+   :ref: spinalcordtoolbox.scripts.sct_deepseg_lesion.get_parser
+   :prog: sct_deepseg_lesion
+   :markdownhelp:

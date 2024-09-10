@@ -3,4 +3,7 @@
 sct_compute_hausdorff_distance
 ==============================
 
-.. program-output:: sct_compute_hausdorff_distance -h
+.. argparse::
+   :ref: spinalcordtoolbox.scripts.sct_compute_hausdorff_distance.get_parser
+   :prog: sct_compute_hausdorff_distance
+   :markdownhelp:

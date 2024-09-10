@@ -3,4 +3,7 @@
 sct_download_data
 =================
 
-.. program-output:: sct_download_data -h
+.. argparse::
+   :ref: spinalcordtoolbox.scripts.sct_download_data.get_parser
+   :prog: sct_download_data
+   :markdownhelp:
