@@ -579,30 +579,21 @@ class AnalyzeLesion:
         :param p_lst: list, pixel size of the lesion
         :param idx: int, index of the lesion
         """
-        # Get the midsagittal slice number (the number is RPI oriented which is fine because we reoriented the
-        # im_lesion_data to RPI using orient2rpi())
-        # Note that this number is the same across all lesions (idx) as the midsagittal slice is based on the spinal
-        # cord segmentation
-        mid_sagittal_sc_slice = self.midsagittal_sc_slice_rpi
-
-        # Get the lesion mask for the midsagittal slice
-        im_data_midsagittal = im_lesion_data[mid_sagittal_sc_slice, :, :]
+        # Fetch a list of axial slice numbers that are nonzero in the mid-sagittal slice (RPI)
+        im_data_midsagittal = im_lesion_data[self.midsagittal_sc_slice_rpi, :, :]  # 3D -> 2D, dim=[AP, SI]
+        nonzero_axial_slices = np.unique(np.where(im_data_midsagittal)[1])  # [1] -> SI
 
         # Check if the lesion exists in the midsagittal slice, if not, set the length to 'np.nan' and return
         if not np.any(im_data_midsagittal):
             length_cur = np.nan
         else:
             # Compute the length of the lesion along the superior-inferior axis in the midsagittal slice
-            # The length is computed as the sum of the angle corrected axial slice thickness (p_lst[2])
-            # Note: p_lst[2] is the pixel size in the S-I direction
-            # Note: '[1]' in 'np.unique(np.where(im_data_midsagittal)[1])' is used to get the unique axial slices (S-I
-            # direction) with the lesion
-            length_cur = np.sum([p_lst[2] / np.cos(self.angles_sagittal[axial_slice])
-                                 for axial_slice in np.unique(np.where(im_data_midsagittal)[1])])
+            # The length is computed as the sum of the angle corrected axial slice thicknesses
+            length_cur = np.sum([p_lst[2] / np.cos(self.angles_sagittal[s])  # p_lst[2] -> pixel size of SI axis
+                                 for s in nonzero_axial_slices])
 
-        # Save the length of the lesion along the superior-inferior axis in the midsagittal slice
         self.measure_pd.loc[idx, 'length_midsagittal_slice [mm]'] = length_cur
-        printv('  (S-I) length in the midsagittal slice: ' + str(np.round(length_cur, 2)) + ' mm',
+        printv(f'  (S-I) length in the midsagittal slice: {(np.round(length_cur, 2))} mm',
                self.verbose, type='info')
 
     def _measure_width_midsagittal_slice(self, im_lesion_data, p_lst, idx):
