@@ -29,7 +29,7 @@ You can try ``sct_deepseg_lesion`` on your own T2w or T2star image using the fol
 STIR and PSIR
 *************
 
-``sct_deepseg -task seg_sc_ms_lesion_stir_psir``: This algorithm was trained on sagittal STIR and PSIR images.
+The algorithm ``seg_sc_ms_lesion_stir_psir`` was trained on sagittal STIR and PSIR images.
 It is a region-based model, outputting a single segmentation image containing 2 classes representing the spinal cord and MS lesions. Details: https://github.com/ivadomed/canproco.
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/lesion-analysis/seg_sc_ms_lesion_stir_psir.gif
