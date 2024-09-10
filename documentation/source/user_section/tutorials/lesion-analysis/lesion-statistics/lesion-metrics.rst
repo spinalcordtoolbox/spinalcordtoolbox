@@ -33,8 +33,8 @@ TODO: Ask Andrew Smith for permission to use the figure
   :align: center
   :figwidth: 60%
 
-Running ``sct_analyze_lesion``
-------------------------------
+Compute statistics
+------------------
 
 To compute the statistics, run the following command
 
