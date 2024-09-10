@@ -1,6 +1,6 @@
 .. _lesion-segmentation:
 
-Lesion segmentation in spinal cord injury (SCI) or multiple sclerosis (MS)
+Lesion segmentation
 ##########################################################################
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/lesion-analysis/sciseg.png
