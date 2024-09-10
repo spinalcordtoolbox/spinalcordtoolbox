@@ -3,7 +3,7 @@ Before starting this tutorial
 
 This tutorial is intended to be run following the previous :ref:`lesion-segmentation` tutorial, as computing the lesion statistics relies on segmented lesion mask.
 
-You can either run :ref:`lesion-segmentation` tutorial first, or download the necessary files below:
+You can either run the :ref:`lesion-segmentation` tutorial first, or download the necessary files below:
 
 #. Make sure that you have the following files in your working directory:
 
