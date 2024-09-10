@@ -30,14 +30,15 @@ def get_parser():
     parser = SCTArgumentParser(
         description=textwrap.dedent("""
             Compute statistics on segmented lesions. The function assigns an ID value to each lesion (1, 2, 3, etc.) and then outputs morphometric measures for each lesion:
-                    - volume [mm^3]
-                    - length [mm]: length along the Superior-Inferior axis
-                    - max_equivalent_diameter [mm]: maximum diameter of the lesion, when approximating the lesion as a circle in the axial plane
-                    - max_axial_damage_ratio []: maximum ratio of the lesion area divided by the spinal cord area
-                    - dorsal_bridge_width [mm]: width of spared tissue dorsal to the spinal cord lesion (i.e. towards the posterior direction of the AP axis)
-                    - ventral_bridge_width [mm]: width of spared tissue ventral to the spinal cord lesion (i.e. towards the anterior direction of the AP axis)
 
-                    If the proportion of lesion in each region (e.g. WM and GM) does not sum up to 100%, it means that the registered template does not fully cover the lesion. In that case you might want to check the registration results.
+              - volume `[mm^3]`
+              - length `[mm]`: length along the Superior-Inferior axis
+              - max_equivalent_diameter `[mm]`: maximum diameter of the lesion, when approximating the lesion as a circle in the axial plane
+              - max_axial_damage_ratio `[]`: maximum ratio of the lesion area divided by the spinal cord area
+              - dorsal_bridge_width `[mm]`: width of spared tissue dorsal to the spinal cord lesion (i.e. towards the posterior direction of the AP axis)
+              - ventral_bridge_width `[mm]`: width of spared tissue ventral to the spinal cord lesion (i.e. towards the anterior direction of the AP axis)
+
+            If the proportion of lesion in each region (e.g. WM and GM) does not sum up to 100%, it means that the registered template does not fully cover the lesion. In that case you might want to check the registration results.
         """),  # noqa: E501 (line too long)
     )
 
