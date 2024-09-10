@@ -9,6 +9,8 @@ If specified, the function computes:
 
 .. note::
 
+   TODO: as we need to provide a template/atlas, which is covered by the next tutorial (see below), we can consider moving this tutorial after the template/atlas-based lesion segmentation tutorial.
+
    You can register the template and warp the atlas to the anatomical image using the ``sct_register_to_template`` and ``sct_warp_template`` functions, respectively.
    See :ref:`template-registration <template-registration>` for more information.
 
