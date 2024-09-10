@@ -12,7 +12,7 @@ The algorithm ``sct_deepseg_lesion`` was trained on T2w and T2star images. Detai
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/spinalcord-segmentation/sct_deepseg_sc_steps.png
    :align: center
-   :figwidth: 60%
+   :figwidth: 80%
 
 You can try ``sct_deepseg_lesion`` on your own T2w or T2star image using the following command:
 
