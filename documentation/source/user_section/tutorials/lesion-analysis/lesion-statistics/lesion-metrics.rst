@@ -24,8 +24,6 @@ The following morphometric measures are computed:
   :align: center
   :figwidth: 60%
 
-TODO: Ask Andrew Smith for permission to use the figure
-
 * ``dorsal_bridge_width [mm]`` : dorsal tissue bridges defined as the width of dorsal spared tissue (i.e. towards the posterior direction of the AP axis) at the minimum distance from the intramedullary lesion edge to the boundary between the spinal cord and cerebrospinal fluid
 * ``ventral_bridge_width [mm]`` : ventral tissue bridges defined as the width of ventral spared tissue (i.e. towards the anterior direction of the AP axis) at the minimum distance from the intramedullary lesion edge to the boundary between the spinal cord and cerebrospinal fluid
 
