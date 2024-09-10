@@ -71,9 +71,3 @@ As the model was trained on cropped images, we recommend cropping the input imag
     - ``-task`` : Task to perform. In this case, we use the ``seg_ms_lesion_mp2rage`` model
     - ``-qc`` : Directory for Quality Control reporting. QC reports allow us to evaluate the segmentation slice-by-slice
 
-----
-
-.. note::
-
-   The ``sct_deepseg_lesion`` and ``sct_deepseg -task seg_ms_lesion_mp2rage`` algorithms segment only the MS lesion(s).
-   You can use the contrast-agnostic model (``sct_deepseg -task seg_sc_contrast_agnostic``) or ``sct_deepseg_sc`` to segment the spinal cord.
