@@ -1,6 +1,9 @@
 Compute lesion morphometric measures
 ####################################
 
+Various morphometrics
+---------------------
+
 Here, we will see how to compute various morphometric measures on segmented lesions. For example, the number of lesions, lesion length, lesion volume, etc. The statistics will be output in an Excel (XLS) file.
 
 In the case of multiple lesions, the function assigns an ID value to each lesion (1, 2, 3, etc.) and then outputs morphometric measures for each lesion to an XLS file.
