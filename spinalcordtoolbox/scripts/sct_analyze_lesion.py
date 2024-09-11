@@ -34,6 +34,11 @@ def get_parser():
                     '- max_equivalent_diameter [mm]: maximum diameter of the lesion, when approximating the lesion as '
                     'a circle in the axial plane\n'
                     '- max_axial_damage_ratio []: maximum ratio of the lesion area divided by the spinal cord area\n'
+                    '- midsagittal_spinal_cord_slice: midsagittal slice number of the spinal cord\n'
+                    '- length_midsagittal_slice [mm]: length along the Superior-Inferior axis in the **midsagittal '
+                    'slice**\n'
+                    '- width_midsagittal_slice [mm]: width along the Anterior-Posterior axis the **midsagittal '
+                    'slice**\n'
                     '- dorsal_bridge_width [mm]: width of spared tissue dorsal to the spinal cord lesion '
                     '(i.e. towards the posterior direction of the AP axis)\n'
                     '- ventral_bridge_width [mm]: width of spared tissue ventral to the spinal cord lesion '
@@ -145,7 +150,8 @@ def get_parser():
 class AnalyzeLesion:
     def __init__(self, fname_mask, fname_sc, fname_ref, path_template, path_ofolder, perslice, verbose):
         self.fname_mask = fname_mask
-
+        self.midsagittal_sc_slice = None
+        self.midsagittal_sc_slice_rpi = None
         self.fname_sc = fname_sc
         self.fname_ref = fname_ref
         self.path_template = path_template
@@ -215,6 +221,7 @@ class AnalyzeLesion:
         #     no angle correction is needed
         if self.fname_sc is not None:
             self.angle_correction()
+            self.get_midsagittal_slice()
 
         # Compute lesion volume, equivalent diameter, (S-I) length, max axial nominal diameter, and tissue bridges
         # if registered template provided: across vertebral level, GM, WM, within WM/GM tracts...
@@ -354,7 +361,7 @@ class AnalyzeLesion:
         """
         volume = np.sum(im_data) * p_lst[0] * p_lst[1] * p_lst[2]
         self.measure_pd.loc[idx, 'volume [mm3]'] = volume
-        printv(f'  Volume : {round(volume, 2)} mm^3', self.verbose, type='info')
+        printv(f'  Volume: {round(volume, 2)} mm^3', self.verbose, type='info')
 
     def _measure_axial_damage_ratio(self, im_data, p_lst, idx):
         """
@@ -390,7 +397,7 @@ class AnalyzeLesion:
 
         # Save the maximum axial damage ratio
         self.measure_pd.loc[idx, 'max_axial_damage_ratio []'] = maximum_axial_damage_ratio
-        printv('  Maximum axial damage ratio : ' + str(np.round(maximum_axial_damage_ratio, 2)),
+        printv('  Maximum axial damage ratio: ' + str(np.round(maximum_axial_damage_ratio, 2)),
                self.verbose, type='info')
 
     def _measure_tissue_bridges(self, im_lesion_data, p_lst, idx):
@@ -423,19 +430,8 @@ class AnalyzeLesion:
         # outside the spinal cord mask)
         im_lesion_data = im_lesion_data * im_sc_data
 
-        # Get and print the midsagittal slice of the spinal cord (count all slices with the spinal cord mask and get
-        # the middle slice)
-        mid_sagittal_sc_slice = int(np.mean([np.min(np.unique(np.where(im_sc_data)[0])),
-                                             np.max(np.unique(np.where(im_sc_data)[0]))]))
-        # Note: as the midsagittal slice is computed from the spinal cord mask, it is the same for all lesions (all idx)
-        # TODO: consider whether it is necessary to print the midsagittal slice for each lesion as it is the same for
-        #  all lesions. This would require moving the print statement outside the loop across lesions.
-        # Convert the mid-sagittal slice from RPI to the original orientation
+        # Get the dimensions of the lesion mask
         dim = im_lesion_data.shape
-        # '0' because of the R-L direction (first in RPI)
-        mid_sagittal_sc_slice = rpi_slice_to_orig_orientation(dim, self.orientation, mid_sagittal_sc_slice, 0)
-        self.measure_pd.loc[idx, 'midsagittal_spinal_cord_slice'] = mid_sagittal_sc_slice
-        printv('  Midsagittal slice of the spinal cord: ' + str(mid_sagittal_sc_slice), self.verbose, type='info')
 
         # --------------------------------------
         # Get slices with the lesion
@@ -447,7 +443,7 @@ class AnalyzeLesion:
         # Note: we use [0] for the R-L direction as the orientation is RPI
         sagittal_lesion_slices = np.unique(np.where(im_lesion_data)[0])
         if self.verbose == 2:
-            # Convert the sagittal slices from RPI to the original orientation
+            # Convert the sagittal slice numbers from RPI to the original orientation
             # '0' because of the R-L direction (first in RPI)
             sagittal_lesion_slices_print = [rpi_slice_to_orig_orientation(dim, self.orientation, slice, 0)
                                             for slice in sagittal_lesion_slices]
@@ -540,7 +536,7 @@ class AnalyzeLesion:
             min_ventral_bridge_width_mm = float(df_temp['ventral_bridge_width_mm'].min())
             min_total_bridge_width_mm = min_dorsal_bridge_width_mm + min_ventral_bridge_width_mm
 
-            # Convert the sagittal and axial slices from RPI to the original orientation
+            # Convert the sagittal and axial slice numbers from RPI to the original orientation
             # '0' because of the R-L direction (first in RPI)
             sagittal_slice = rpi_slice_to_orig_orientation(dim, self.orientation, sagittal_slice, 0)
             # '2' because of the S-I direction (third in RPI)
@@ -565,10 +561,85 @@ class AnalyzeLesion:
     def _measure_length(self, im_data, p_lst, idx):
         """
         Measure the length of the lesion along the superior-inferior axis when taking into account the angle correction
+        The length is computed across all sagittal lesion (i.e., midsagittal and parasagittal) slices meaning that the
+        measurement is 3D.
+        For lesion length for the midsagittal slice only, see _measure_length_midsagittal_slice().
         """
         length_cur = np.sum([p_lst[2] / np.cos(self.angles_3d[zz]) for zz in np.unique(np.where(im_data)[2])])
         self.measure_pd.loc[idx, 'length [mm]'] = length_cur
-        printv('  (S-I) length : ' + str(np.round(length_cur, 2)) + ' mm', self.verbose, type='info')
+        printv('  (S-I) length: ' + str(np.round(length_cur, 2)) + ' mm', self.verbose, type='info')
+
+    def _measure_length_midsagittal_slice(self, im_lesion_data, p_lst, idx):
+        """
+        Measure the length of the lesion along the superior-inferior axis in the **midsagittal slice** when taking into
+        account the angle correction.
+
+        :param im_lesion_data: 3D numpy array: mask of the lesion. The orientation is assumed to be RPI (because we
+        reoriented the image to RPI using orient2rpi())
+        :param p_lst: list, pixel size of the lesion
+        :param idx: int, index of the lesion
+        """
+        # Fetch a list of axial slice numbers that are nonzero in the mid-sagittal slice (RPI)
+        im_data_midsagittal = im_lesion_data[self.midsagittal_sc_slice_rpi, :, :]  # 3D -> 2D, dim=[AP, SI]
+        nonzero_axial_slices = np.unique(np.where(im_data_midsagittal)[1])  # [1] -> SI
+
+        # Check if the lesion exists in the midsagittal slice, if not, set the length to 'np.nan' and return
+        if not np.any(im_data_midsagittal):
+            length_cur = np.nan
+        else:
+            # Compute the length of the lesion along the superior-inferior axis in the midsagittal slice
+            # The length is computed as the sum of the angle corrected axial slice thicknesses
+            length_cur = np.sum([p_lst[2] / np.cos(self.angles_sagittal[s])  # p_lst[2] -> pixel size of SI axis
+                                 for s in nonzero_axial_slices])
+
+        self.measure_pd.loc[idx, 'length_midsagittal_slice [mm]'] = length_cur
+        printv(f'  (S-I) length in the midsagittal slice: {(np.round(length_cur, 2))} mm',
+               self.verbose, type='info')
+
+    def _measure_width_midsagittal_slice(self, im_lesion_data, p_lst, idx):
+        """
+        Measure the width of the lesion along the anterior-posterior axis in the **midsagittal slice** when taking into
+        account the angle correction.
+        The width is defined as the maximum lesion width in the A-P axis across all axial slices with the lesion in
+        the midsagittal slice.
+
+        :param im_lesion_data: 3D numpy array: mask of the lesion. The orientation is assumed to be RPI (because we
+        reoriented the image to RPI using orient2rpi())
+        :param p_lst: list, pixel size of the lesion
+        :param idx: int, index of the lesion
+        """
+        # Fetch a list of axial slice numbers that are nonzero in the mid-sagittal slice (RPI)
+        im_data_midsagittal = im_lesion_data[self.midsagittal_sc_slice_rpi, :, :]  # 3D -> 2D, dim=[AP, SI]
+        nonzero_axial_slices = np.unique(np.where(im_data_midsagittal)[1])  # [1] -> SI
+
+        # Iterate across axial slices to compute lesion width
+        lesion_width_dict = {}
+        for axial_slice in nonzero_axial_slices:
+            # Get the lesion segmentation mask of the selected 2D axial slice
+            slice_lesion_data = im_lesion_data[self.midsagittal_sc_slice_rpi, :, axial_slice]
+            # Get the indices of the lesion mask for the selected axial slice to compute the lesion width.
+            # The lesion width is defined as max - min + 1
+            # Note: we intentionally use 'max - min + 1' instead of 'len(np.where(slice_lesion_data)[0])' because the
+            # 'len' approach would return the number of elements, which could be influenced, for example, by the
+            # presence of holes in the lesion mask.
+            # Context: https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4617#discussion_r1744031056
+            slice_min = np.where(slice_lesion_data)[0][0]     # [0] returns the most dorsal elements
+            slice_max = np.where(slice_lesion_data)[0][-1]    # [-1] returns the most ventral elements
+            lesion_width_dict[axial_slice] = slice_max - slice_min + 1
+
+        # Get the width in mm (apply the angle correction)
+        width_cur_dict = {axial_slice: p_lst[1] * np.cos(self.angles_sagittal[axial_slice]) * lesion_width
+                          for axial_slice, lesion_width in lesion_width_dict.items()}
+
+        # Get the maximum width across all axial slices
+        # Check if width_cur_dict is empty, if so, it means that the lesion does not exist in the midsagittal slice.
+        # In this case, set the width to 'np.nan'
+        width_cur = max(width_cur_dict.values()) if width_cur_dict else np.nan
+
+        # Save the width of the lesion along the anterior-posterior axis in the midsagittal slice
+        self.measure_pd.loc[idx, 'width_midsagittal_slice [mm]'] = width_cur
+        printv(f'  (A-P) width in the midsagittal slice: {str(np.round(width_cur, 2))} mm',
+               self.verbose, type='info')
 
     def _measure_diameter(self, im_data, p_lst, idx):
         """
@@ -577,7 +648,7 @@ class AnalyzeLesion:
         area_lst = [np.sum(im_data[:, :, zz]) * np.cos(self.angles_3d[zz]) * p_lst[0] * p_lst[1] for zz in range(im_data.shape[2])]
         diameter_cur = 2 * np.sqrt(max(area_lst) / np.pi)
         self.measure_pd.loc[idx, 'max_equivalent_diameter [mm]'] = diameter_cur
-        printv('  Max. equivalent diameter : ' + str(np.round(diameter_cur, 2)) + ' mm', self.verbose, type='info')
+        printv('  Max. equivalent diameter: ' + str(np.round(diameter_cur, 2)) + ' mm', self.verbose, type='info')
 
     def ___pve_weighted_avg(self, im_mask_data, im_atlas_data):
         return im_mask_data * im_atlas_data
@@ -765,9 +836,12 @@ class AnalyzeLesion:
             # For the tissue bridges, we need the spinal cord segmentation to compute the width of spared tissue ventral
             # and dorsal to the spinal cord lesion
             if self.fname_sc is not None:
+                self.measure_pd.loc[label_idx, 'midsagittal_spinal_cord_slice'] = self.midsagittal_sc_slice
                 self._measure_length(im_lesion_data_cur, p_lst, label_idx)
                 self._measure_diameter(im_lesion_data_cur, p_lst, label_idx)
                 self._measure_axial_damage_ratio(im_lesion_data_cur, p_lst, label_idx)
+                self._measure_length_midsagittal_slice(im_lesion_data_cur, p_lst, label_idx)
+                self._measure_width_midsagittal_slice(im_lesion_data_cur, p_lst, label_idx)
                 self._measure_tissue_bridges(im_lesion_data_cur, p_lst, label_idx)
             self._measure_volume(im_lesion_data_cur, p_lst, label_idx)
 
@@ -820,6 +894,20 @@ class AnalyzeLesion:
             tangent_vect = self._normalize(np.array([0, y_centerline_deriv[iz] * py, pz]))
             # compute the angle between the normal vector of the plane and the vector z
             self.angles_sagittal[iz] = np.arccos(np.vdot(tangent_vect, np.array([0, 0, 1])))
+
+    def get_midsagittal_slice(self):
+        """Get the midsagittal slice based on the spinal cord segmentation mask."""
+        # Get the RPI-oriented midsagittal slice number (to be reused in other functions)
+        im_sc_data = Image(self.fname_sc).data
+        nonzero_slices = np.unique(np.where(im_sc_data)[0])
+        self.midsagittal_sc_slice_rpi = int(np.mean([np.min(nonzero_slices), np.max(nonzero_slices)]))
+
+        # Convert the RPI-oriented slice number to the original orientation (for outputting to user)
+        self.midsagittal_sc_slice = rpi_slice_to_orig_orientation(dim=im_sc_data.shape,
+                                                                  orig_orientation=self.orientation,
+                                                                  slice_number=self.midsagittal_sc_slice_rpi,
+                                                                  axis=0)  # 0 = RL
+        printv(f'Midsagittal slice of the spinal cord: {self.midsagittal_sc_slice}', self.verbose, type='info')
 
     def label_lesion(self):
         printv('\nLabel connected regions of the masked image...', self.verbose, 'normal')
