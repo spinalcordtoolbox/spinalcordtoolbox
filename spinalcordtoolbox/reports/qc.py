@@ -75,9 +75,14 @@ class QcImage:
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
 
-    def no_seg_seg(self, mask, ax):
+    def no_seg_seg(self, mask, ax, cmap='gray', norm=None, colorbar=False, text=None):
         """Create figure with image overlay. Notably used by sct_registration_to_template"""
-        ax.imshow(mask, cmap='gray', interpolation=self.interpolation, aspect=self.aspect_mask)
+        fig_ax = ax.imshow(mask, cmap=cmap, norm=norm, interpolation=self.interpolation, aspect=self.aspect_mask)
+        if colorbar:
+            cax = ax.inset_axes([1.005, 0.07, 0.011, 0.86])
+            cbar = mpl_plt.colorbar(fig_ax, cax=cax, orientation='vertical', pad=0.01, shrink=0.5, aspect=1, ticks=[norm.vmin, norm.vmax])
+            cbar.ax.tick_params(labelsize=5, length=2, pad=1.7)
+            ax.text(1.5, 6, text, color='white', size=3.25)
         self._add_orientation_label(ax)
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
@@ -220,18 +225,26 @@ class QcImage:
                 * float(self.aspect_img))
         ]
 
-        fig = mpl_figure.Figure()
+        fig = mpl_plt.figure()
         fig.set_size_inches(size_fig[0], size_fig[1], forward=True)
         mpl_backend_agg.FigureCanvasAgg(fig)
-        ax = fig.add_axes((0, 0, 1, 1))
-        ax.imshow(img, cmap='gray', interpolation=self.interpolation, aspect=float(self.aspect_img))
-        self._add_orientation_label(ax)
-        ax.get_xaxis().set_visible(False)
-        ax.get_yaxis().set_visible(False)
+        kwargs = {}
+        ax_dim = (0, 0, 1, 1)
+        if self.process == 'sct_fmri_compute_tsnr':
+            vmin = min(int(np.amin(img)), int(np.amin(mask)))
+            vmax = max(int(np.amax(img)), int(np.amax(mask[0]))) - 2
+            kwargs['norm'] = mpl_colors.Normalize(vmin=vmin, vmax=vmax)
+            kwargs['cmap'] = 'seismic'
+            kwargs['colorbar'] = True
+            kwargs['text'] = 1
+            ax_dim = (0, 0, 0.93, 1)
+        ax = fig.add_axes(ax_dim)
+        QcImage.no_seg_seg(self, img, ax, **kwargs)
+
         logger.info(str(imgs_to_generate['path_background_img']))
         self._save(fig, str(imgs_to_generate['path_background_img']), dpi=self.dpi)
 
-        fig = mpl_figure.Figure()
+        fig = mpl_plt.figure()
         fig.set_size_inches(size_fig[0], size_fig[1], forward=True)
         mpl_backend_agg.FigureCanvasAgg(fig)
         for i, action in enumerate(self.action_list):
@@ -239,8 +252,10 @@ class QcImage:
             if self._stretch_contrast and action.__name__ in ("no_seg_seg",):
                 logger.debug("Mask type %s" % mask[i].dtype)
                 mask[i] = self._func_stretch_contrast(mask[i])
-            ax = fig.add_axes((0, 0, 1, 1), label=str(i))
-            action(self, mask[i], ax)
+            if self.process == 'sct_fmri_compute_tsnr':
+                kwargs['text'] = kwargs['text'] + 1
+            ax = fig.add_axes(ax_dim, label=str(i))
+            action(self, mask[i], ax, **kwargs)
         self._save(fig, str(imgs_to_generate['path_overlay_img']), dpi=self.dpi)
 
     def _make_QC_image_for_4d_volumes(self, images_after_moco, images_before_moco, imgs_to_generate):
@@ -436,8 +451,16 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
 
     # Get QC specifics based on SCT process
     # Axial orientation, switch between two input images
+    stretch_contrast = True
     if process in ['sct_register_multimodal', 'sct_register_to_template']:
         plane = 'Axial'
+        im_list = [Image(fname_in1), Image(fname_in2), Image(fname_seg)]
+        action_list = [QcImage.no_seg_seg]
+        def qcslice_layout(x): return x.mosaic()[:2]
+    # Axial orientation, switch between two input images and color bar and mean value in spinal cord
+    elif process in ['sct_fmri_compute_tsnr']:
+        plane = 'Axial'
+        stretch_contrast = False
         im_list = [Image(fname_in1), Image(fname_in2), Image(fname_seg)]
         action_list = [QcImage.no_seg_seg]
         def qcslice_layout(x): return x.mosaic()[:2]
@@ -566,7 +589,7 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
     qc_image.interpolation = 'none'
     qc_image.action_list = action_list
     qc_image.process = process
-    qc_image._stretch_contrast = True
+    qc_image._stretch_contrast = stretch_contrast
     qc_image._stretch_contrast_method = 'equalized'
     if 'equalized' not in ['equalized', 'contrast_stretching']:
         raise ValueError("Unrecognized stretch_contrast_method: {}.".format('equalized'),
