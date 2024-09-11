@@ -634,10 +634,7 @@ class AnalyzeLesion:
         # Get the maximum width across all axial slices
         # Check if width_cur_dict is empty, if so, it means that the lesion does not exist in the midsagittal slice.
         # In this case, set the width to 'np.nan'
-        if not width_cur_dict:
-            width_cur = np.nan
-        else:
-            width_cur = max(width_cur_dict.values())
+        width_cur = max(width_cur_dict.values()) if width_cur_dict else np.nan
 
         # Save the width of the lesion along the anterior-posterior axis in the midsagittal slice
         self.measure_pd.loc[idx, 'width_midsagittal_slice [mm]'] = width_cur
