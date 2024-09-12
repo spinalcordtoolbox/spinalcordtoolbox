@@ -11,7 +11,7 @@ In the case of multiple lesions, the function assigns an ID value to each lesion
 The following morphometric measures are computed:
 
 * ``volume [mm^3]`` : volume of the lesion
-* ``length [mm]`` : length of the lesion along the superior-inferior (SI) axis
+* ``length [mm]`` : length of the lesion along the Superior-Inferior (SI) axis
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/lesion-analysis/intramedullary-lesion-length.png
   :align: center
