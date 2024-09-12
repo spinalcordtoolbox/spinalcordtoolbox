@@ -277,6 +277,7 @@ def get_parser():
         metavar=Metavar.file,
         help=textwrap.dedent("""
             Filename of centerline to use for the propagation. Use format .txt or .nii; see file structure in documentation.
+
             Replace filename by 'viewer' to use interactive viewer for providing centerline. Example: -init-centerline viewer
         """),
     )
@@ -291,6 +292,7 @@ def get_parser():
         metavar=Metavar.file,
         help=textwrap.dedent("""
             Mask containing three center of the spinal cord, used to initiate the propagation.
+
             Replace filename by 'viewer' to use interactive viewer for providing mask. Example: -init-mask viewer
         """),
     )

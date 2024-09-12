@@ -276,6 +276,7 @@ def get_parser():
         default=[],
         help=textwrap.dedent("""
             Shape of the structuring element for the mathematical morphology operation. Default: ball.
+
             If a 2D shape {'disk', 'square'} is selected, -dim must be specified.
         """),
         required=False)

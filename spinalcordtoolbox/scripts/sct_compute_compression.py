@@ -67,6 +67,7 @@ def get_parser():
         required=True,
         help=textwrap.dedent("""
             Spinal cord or spinal canal segmentation mask to compute morphometrics from. If spinal cord segmentation is provided, MSCC is computed. If spinal canal segmentation (spinal cord + CSF) is provided, MCC is computed. Example: sub-001_T2w_seg.nii.gz
+
             Note: If no normalization is wanted (i.e., if the "-normalize-hc" flag is not specified),
             metric ratio will take the average along the segmentation centerline.
         """),  # noqa: E501 (line too long)
@@ -77,6 +78,7 @@ def get_parser():
         required=True,
         help=textwrap.dedent("""
             Vertebral labeling file. Example: sub-001_T2w_seg_labeled.nii.gz
+
             Note: The input and the vertebral labelling file must be in the same voxel coordinate system
             and must match the dimensions between each other.
         """),
@@ -87,6 +89,7 @@ def get_parser():
         required=True,
         help=textwrap.dedent("""
             NIfTI file that includes labels at the compression sites. Each compression site is denoted by a single voxel of value `1`.
+
             Example: sub-001_T2w_compression_labels.nii.gz Note: The input and the compression label file must be in the same voxel coordinate system and must match the dimensions between each other.
         """),  # noqa: E501 (line too long)
     )
@@ -103,7 +106,9 @@ def get_parser():
         type=int,
         choices=[0, 1],
         help=textwrap.dedent("""
-            Set to 1 to normalize the metrics using a database of healthy controls. Set to 0 to not normalize. Note: This flag should not be set to 1 when computing the MCC (i.e. using spinal canal segmentation). It should only be used when computing the MSCC (i.e. using spinal cord segmentation).
+            Set to 1 to normalize the metrics using a database of healthy controls. Set to 0 to not normalize.
+
+            Note: This flag should not be set to 1 when computing the MCC (i.e. using spinal canal segmentation). It should only be used when computing the MSCC (i.e. using spinal cord segmentation).
         """),  # noqa: E501 (line too long)
     )
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")

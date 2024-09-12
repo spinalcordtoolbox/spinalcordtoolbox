@@ -132,6 +132,7 @@ def get_parser():
         metavar=Metavar.file,
         help=textwrap.dedent("""
             Copy the NIfTI header of the source image (specified in -i) to the destination image (specified here) and save it into a new image (specified in -o).
+
             !! WARNING: This command should ONLY be run to fix a wrong header (e.g., where the qform and/or sform between an image and a mask of the image do not match). Also note that the image is NOT affected by this command, so if the dimensions of the source and destination images do not match, then you should probably NOT use this command.
         """),  # noqa: E501 (line too long)
         required=False)

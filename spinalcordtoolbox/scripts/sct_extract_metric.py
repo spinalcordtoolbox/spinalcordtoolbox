@@ -175,6 +175,7 @@ def get_parser():
         default=param_default.slices_of_interest,
         help=textwrap.dedent("""
             Slice range to estimate the metric from. First slice is 0. Example: 5:23
+
             You can also select specific slices using commas. Example: 0,2,3,5,12'
         """),
     )
@@ -185,6 +186,7 @@ def get_parser():
         default=param_default.perslice,
         help=textwrap.dedent("""
             Whether to output one metric per slice instead of a single output metric. 0 = no, 1 = yes.
+
             Please note that when methods ml or map are used, outputting a single metric per slice and then averaging them all is not the same as outputting a single metric at once across all slices.
         """),  # noqa: E501 (line too long)
     )
@@ -202,6 +204,7 @@ def get_parser():
         default=os.path.join(".", "label", "template", "PAM50_levels.nii.gz"),
         help=textwrap.dedent("""
             Vertebral labeling file. Only use with flag -vert.
+
             The input Image and the vertebral labelling file must in the same voxel coordinate system and must match the dimensions between each other.
         """),
     )
@@ -212,6 +215,7 @@ def get_parser():
         default=0,
         help=textwrap.dedent("""
             Whether to output one metric per vertebral level instead of a single output metric. 0 = no, 1 = yes.
+
             Please note that this flag needs to be used with the -vert option.
         """),
     )

@@ -154,6 +154,7 @@ def get_parser():
         type=parse_initz,
         help=textwrap.dedent("""
             Initialize using slice number and disc value. Example: 68,4 (slice 68 corresponds to disc C3/C4).
+
             WARNING: Slice number should correspond to superior-inferior direction (i.e. Z in RPI orientation, but Y in LIP orientation).
         """),
     )

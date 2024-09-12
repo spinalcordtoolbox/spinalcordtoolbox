@@ -61,6 +61,7 @@ def get_parser():
         required=False,
         help=textwrap.dedent("""
             Spinal cord centerline or segmentation file, which will be used to correct morphometric measures with cord angle with respect to slice. (e.g. 't2_seg.nii.gz')
+
             If provided, then the lesion volume, length, diameter, axial damage ratio, and tissue bridges will be computed. Otherwise, if not provided, then only the lesion volume will be computed.
         """),  # noqa: E501 (line too long)
         metavar=Metavar.file)

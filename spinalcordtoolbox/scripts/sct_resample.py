@@ -58,6 +58,7 @@ def get_parser():
         metavar=Metavar.str,
         help=textwrap.dedent("""
             Resampling factor in each dimensions (x,y,z). Separate with 'x'. Example: 0.5x0.5x1
+
             For 2x upsampling, set to 2. For 2x downsampling set to 0.5
         """),
     )
@@ -66,6 +67,7 @@ def get_parser():
         metavar=Metavar.str,
         help=textwrap.dedent("""
             New resolution in mm. Separate dimension with 'x'. Example: 0.1x0.1x5
+
             Note: Resampling can only approximate a desired `mm` resolution, given the limitations of discrete voxel data arrays.
         """),
         # Context: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4077
