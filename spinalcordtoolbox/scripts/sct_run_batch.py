@@ -55,8 +55,8 @@ def get_parser():
     parser.add_argument('-config', '-c',
                         help=textwrap.dedent("""
         A json (.json) or yaml (.yml|.yaml) file with arguments. All arguments to the configuration file are the same as the command line arguments, except all dashes (-) are replaced with underscores (_). Using command line flags can be used to override arguments provided in the configuration file, but this is discouraged. Please note that while quotes are optional for strings in YAML omitting them may cause parse errors.
-        Note that for the "exclude_list" (or "include_list") argument you can exclude/include
-        entire subjects or individual sessions; see examples below.
+
+        Note that for the "exclude_list" (or "include_list") argument you can exclude/include entire subjects or individual sessions; see examples below.
 
         Example YAML configuration:
           ```
@@ -146,12 +146,12 @@ def get_parser():
                             A path containing manual segmentations to be used by the script program."""))
     parser.add_argument('-script-args', default='',
                         help=textwrap.dedent("""
-                            A quoted string with extra arguments to pass to the script.
-                            For example "sct_run_batch -path-data data/ -script process_data.sh -script-args "ARG1 ARG2"".
+                            A quoted string with extra arguments to pass to the script. For example: "sct_run_batch -path-data data/ -script process_data.sh -script-args "ARG1 ARG2"".
+    
                             The arguments are retrieved by a script as "${2}", "${3}", etc.
 
                             - Note: "${1}" is reserved for the subject folder name, which is retrieved automatically.
-                            - Note: Do not use "~" in the path. Use "${HOME}" instead.)"""))
+                            - Note: Do not use "~" in the path. Use "${HOME}" instead.)"""))  # noqa 501 (line too long)
     parser.add_argument('-email-to',
                         help='Optional email address where sct_run_batch can send an alert on completion of the '
                         'batch processing.')

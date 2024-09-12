@@ -123,22 +123,13 @@ def get_parser():
         help=textwrap.dedent("""
             Method to extract metrics.
 
-              - ml: maximum likelihood.
-                 This method is recommended for large labels and low noise. Also, this method should only be used
-              with the PAM50 white/gray matter atlas, or with any custom atlas as long as the sum across all labels
-              equals 1, in each voxel part of the atlas.
-              - map: maximum a posteriori.
-                 Mean priors are estimated by maximum likelihood within three clusters
-              (white matter, gray matter and CSF). Tract and noise variance are set with flag -p.
-              This method should only be used with the PAM50 white/gray matter atlas, or with any custom atlas
-              as long as the sum across all labels equals 1, in each voxel part of the atlas.
+              - ml: maximum likelihood: This method is recommended for large labels and low noise. Also, this method should only be used with the PAM50 white/gray matter atlas, or with any custom atlas as long as the sum across all labels equals 1, in each voxel part of the atlas.
+              - map: maximum a posteriori: Mean priors are estimated by maximum likelihood within three clusters (white matter, gray matter and CSF). Tract and noise variance are set with flag -p. This method should only be used with the PAM50 white/gray matter atlas, or with any custom atlas as long as the sum across all labels equals 1, in each voxel part of the atlas.
               - wa: weighted average
               - bin: binarize mask (threshold=0.5)
-              - median: weighted median.
-                 This implementation of the median treats quantiles as a continuous (vs. discrete) function. For
-              more details, see https://pypi.org/project/wquantiles/
+              - median: weighted median: This implementation of the median treats quantiles as a continuous (vs. discrete) function. For more details, see https://pypi.org/project/wquantiles/
               - max: for each z-slice of the input data, extract the max value for each slice of the input data.
-        """),
+        """),  # noqa 501 (line too long)
     )
     optional.add_argument(
         '-append',

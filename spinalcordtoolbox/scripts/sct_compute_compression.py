@@ -68,8 +68,7 @@ def get_parser():
         help=textwrap.dedent("""
             Spinal cord or spinal canal segmentation mask to compute morphometrics from. If spinal cord segmentation is provided, MSCC is computed. If spinal canal segmentation (spinal cord + CSF) is provided, MCC is computed. Example: sub-001_T2w_seg.nii.gz
 
-            Note: If no normalization is wanted (i.e., if the "-normalize-hc" flag is not specified),
-            metric ratio will take the average along the segmentation centerline.
+            Note: If no normalization is wanted (i.e., if the "-normalize-hc" flag is not specified), metric ratio will take the average along the segmentation centerline.
         """),  # noqa: E501 (line too long)
     )
     mandatory.add_argument(
@@ -79,8 +78,7 @@ def get_parser():
         help=textwrap.dedent("""
             Vertebral labeling file. Example: sub-001_T2w_seg_labeled.nii.gz
 
-            Note: The input and the vertebral labelling file must be in the same voxel coordinate system
-            and must match the dimensions between each other.
+            Note: The input and the vertebral labelling file must be in the same voxel coordinate system and must match the dimensions between each other.
         """),
     )
     mandatory.add_argument(

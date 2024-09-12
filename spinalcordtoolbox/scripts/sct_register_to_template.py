@@ -77,12 +77,13 @@ def get_parser():
               3. iterative slice-wise non-linear registration (see sct_register_multimodal for details)
 
             To register a subject to the template, try the default command:
+
               sct_register_to_template -i data.nii.gz -s data_seg.nii.gz -l data_labels.nii.gz
 
-            If this default command does not produce satisfactory results, the '-param' argument should be tweaked according to the tips given here:
-              https://spinalcordtoolbox.com/en/latest/user_section/command-line.html#sct-register-multimodal
+            If this default command does not produce satisfactory results, the '-param' argument should be tweaked according to the tips given here: https://spinalcordtoolbox.com/en/latest/user_section/command-line.html#sct-register-multimodal
 
             The default registration method brings the subject image to the template, which can be problematic with highly non-isotropic images as it would induce large interpolation errors during the straightening procedure. Although the default method is recommended, you may want to register the template to the subject (instead of the subject to the template) by skipping the straightening procedure. To do so, use the parameter '-ref subject'. Example below:
+
               sct_register_to_template -i data.nii.gz -s data_seg.nii.gz -l data_labels.nii.gz -ref subject -param step=1,type=seg,algo=centermassrot,smooth=0:step=2,type=seg,algo=columnwise,smooth=0,smoothWarpXY=2
 
             Vertebral alignment (step 2) consists in aligning the vertebrae between the subject and the template.
@@ -92,8 +93,7 @@ def get_parser():
               - Vertebrae mid-body labels, created at the center of the spinal cord using the parameter '-l';
               - Posterior edge of the intervertebral discs, using the parameter '-ldisc'.
 
-            If only one label is provided, a simple translation will be applied between the subject label and the "
-            template label. No scaling will be performed.
+            If only one label is provided, a simple translation will be applied between the subject label and the template label. No scaling will be performed.
 
             If two labels are provided, a linear transformation (translation + rotation + superior-inferior linear scaling) will be applied. The strategy here is to define labels that cover the region of interest. For example, if you are interested in studying C2 to C6 levels, then provide one label at C2 and another at C6. However, note that if the two labels are very far apart (e.g. C2 and T12), there might be a mis-alignment of discs because a subject's intervertebral discs distance might differ from that of the template.
 
@@ -104,7 +104,7 @@ def get_parser():
 
             We recommend starting with 2 labels, then trying the other options on a case-by-case basis depending on your data.
 
-            More information about label creation can be found at https://spinalcordtoolbox.com/user_section/tutorials/vertebral-labeling.html"
+            More information about label creation can be found at https://spinalcordtoolbox.com/user_section/tutorials/vertebral-labeling.html
         """)  # noqa: E501 (line too long)
     )
 

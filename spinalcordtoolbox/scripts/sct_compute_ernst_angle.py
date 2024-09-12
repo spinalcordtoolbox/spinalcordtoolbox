@@ -56,7 +56,9 @@ class ErnstAngle:
 def get_parser():
     parser = SCTArgumentParser(
         description=textwrap.dedent("""
-            Function to compute the Ernst Angle. For examples of T1 values in the brain, see Wansapura et al. NMR relaxation times in the human brain at 3.0 tesla. Journal of magnetic resonance imaging : JMRI (1999) vol. 9 (4) pp. 531-8. T1 in WM: 832msT1 in GM: 1331ms
+            Function to compute the Ernst Angle.
+
+            For examples of T1 values in the brain, see Wansapura et al. NMR relaxation times in the human brain at 3.0 tesla. Journal of magnetic resonance imaging : JMRI (1999) vol. 9 (4) pp. 531-8. T1 in WM: 832msT1 in GM: 1331ms
         """),  # noqa: E501 (line too long)
     )
 

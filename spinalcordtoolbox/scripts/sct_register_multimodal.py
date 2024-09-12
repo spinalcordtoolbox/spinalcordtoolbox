@@ -57,12 +57,20 @@ def get_parser():
 
                      - For a registration step using segmentations, use the MeanSquares metric. Also, simple algorithm will be very efficient, for example centermass as a 'preregistration'.
                      - For a registration step using images of different contrast, use the Mutual Information (MI) metric.
-                     - Combine the steps by increasing the complexity of the transformation performed in each step, for example: -param step=1,type=seg,algo=slicereg,metric=MeanSquares:
-                    step=2,type=seg,algo=affine,metric=MeanSquares,gradStep=0.2:
-                    step=3,type=im,algo=syn,metric=MI,iter=5,shrink=2
+                     - Combine the steps by increasing the complexity of the transformation performed in each step, for example:
+
+                       ```
+                       -param step=1,type=seg,algo=slicereg,metric=MeanSquares:
+                              step=2,type=seg,algo=affine,metric=MeanSquares,gradStep=0.2:
+                              step=3,type=im,algo=syn,metric=MI,iter=5,shrink=2
+                       ```
                      - When image contrast is low, a good option is to perform registration only based on the image segmentation, i.e. using type=seg
-                     - Columnwise algorithm needs to be applied after a translation and rotation such as centermassrot algorithm. For example: -param step=1,type=seg,algo=centermassrot,metric=MeanSquares:
-                    step=2,type=seg,algo=columnwise,metric=MeanSquares
+                     - Columnwise algorithm needs to be applied after a translation and rotation such as centermassrot algorithm. For example:
+
+                      ```
+                      -param step=1,type=seg,algo=centermassrot,metric=MeanSquares:
+                             step=2,type=seg,algo=columnwise,metric=MeanSquares
+                      ```
         """),  # noqa: E501 (line too long)
     )
 
