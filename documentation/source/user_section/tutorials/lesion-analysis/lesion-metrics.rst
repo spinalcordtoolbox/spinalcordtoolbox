@@ -24,6 +24,7 @@ The following morphometric measures are computed:
   :align: center
   :figwidth: 60%
 
+* ``midsagittal_spinal_cord_slice`` : midsagittal slice of the spinal cord defined as the slice with the largest spinal cord area (computed from the spinal cord segmentation mask)
 * ``dorsal_bridge_width [mm]`` : dorsal tissue bridges defined as the width of dorsal spared tissue (i.e. towards the posterior direction of the AP axis) at the minimum distance from the intramedullary lesion edge to the boundary between the spinal cord and cerebrospinal fluid
 * ``ventral_bridge_width [mm]`` : ventral tissue bridges defined as the width of ventral spared tissue (i.e. towards the anterior direction of the AP axis) at the minimum distance from the intramedullary lesion edge to the boundary between the spinal cord and cerebrospinal fluid
 
