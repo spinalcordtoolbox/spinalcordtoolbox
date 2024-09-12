@@ -12,5 +12,8 @@ First, the tutorial shows how to segment lesions from input MRI images. Then, th
 .. toctree::
    :maxdepth: 1
 
-   lesion-analysis/lesion-segmentation
-   lesion-analysis/lesion-statistics
+   lesion-analysis/before-starting
+   lesion-analysis/lesion-segmentation-sci
+   lesion-analysis/lesion-segmentation-ms
+   lesion-analysis/lesion-metrics
+   lesion-analysis/lesion-metrics-template
