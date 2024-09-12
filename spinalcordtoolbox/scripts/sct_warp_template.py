@@ -151,13 +151,13 @@ def get_parser():
         '-d',
         metavar=Metavar.file,
         required=True,
-        help="Destination image the template will be warped to. Example: dwi_mean.nii.gz"
+        help="Destination image the template will be warped to. Example: `dwi_mean.nii.gz`"
     )
     mandatory.add_argument(
         '-w',
         metavar=Metavar.file,
         required=True,
-        help="Warping field. Example: warp_template2dmri.nii.gz"
+        help="Warping field. `Example: warp_template2dmri.nii.gz`"
     )
 
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")

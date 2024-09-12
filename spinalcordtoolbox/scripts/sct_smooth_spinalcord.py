@@ -63,13 +63,13 @@ def get_parser():
         '-i',
         metavar=Metavar.file,
         required=True,
-        help="Image to smooth. Example: data.nii.gz"
+        help="Image to smooth. Example: `data.nii.gz`"
     )
     mandatory.add_argument(
         '-s',
         metavar=Metavar.file,
         required=True,
-        help="Spinal cord centerline or segmentation. Example: data_centerline.nii.gz"
+        help="Spinal cord centerline or segmentation. Example: `data_centerline.nii.gz`"
     )
 
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
@@ -85,9 +85,9 @@ def get_parser():
         type=list_type(',', float),
         default=[0, 0, 3],
         help="Sigma (standard deviation) of the smoothing Gaussian kernel (in mm). For isotropic smoothing you only "
-             "need to specify a value (e.g. 2). For anisotropic smoothing specify a value for each axis, separated "
+             "need to specify a value (e.g. `2`). For anisotropic smoothing specify a value for each axis, separated "
              "with a comma. The order should follow axes Right-Left, Antero-Posterior, Superior-Inferior "
-             "(e.g.: 1,1,3). For no smoothing, set value to 0."
+             "(e.g.: `1,1,3`). For no smoothing, set value to `0`."
     )
     optional.add_argument(
         '-algo-fitting',
@@ -99,7 +99,7 @@ def get_parser():
     optional.add_argument(
         "-o",
         metavar=Metavar.file,
-        help="Output filename. Example: smooth_sc.nii.gz. By default, the suffix '_smooth' will be added to the input file name."),
+        help="Output filename. Example: `smooth_sc.nii.gz`. If not provided, the suffix `_smooth` will be added to the input file name."),
     optional.add_argument(
         '-r',
         type=int,

@@ -46,7 +46,7 @@ def get_parser():
         '-i',
         metavar=Metavar.file,
         required=True,
-        help="Image to resample. Can be 3D or 4D. (Cannot be 2D) Example: dwi.nii.gz"
+        help="Image to resample. Can be 3D or 4D. (Cannot be 2D) Example: `dwi.nii.gz`"
     )
 
     resample_types = parser.add_argument_group(
@@ -57,16 +57,16 @@ def get_parser():
         '-f',
         metavar=Metavar.str,
         help=textwrap.dedent("""
-            Resampling factor in each dimensions (x,y,z). Separate with 'x'. Example: 0.5x0.5x1
+            Resampling factor in each dimensions (x,y,z). Separate with `x`. Example: `0.5x0.5x1`
 
-            For 2x upsampling, set to 2. For 2x downsampling set to 0.5
+            For 2x upsampling, set to `2`. For 2x downsampling set to `0.5`
         """),
     )
     resample_types.add_argument(
         '-mm',
         metavar=Metavar.str,
         help=textwrap.dedent("""
-            New resolution in mm. Separate dimension with 'x'. Example: 0.1x0.1x5
+            New resolution in mm. Separate dimension with `x`. Example: `0.1x0.1x5`
 
             Note: Resampling can only approximate a desired `mm` resolution, given the limitations of discrete voxel data arrays.
         """),
@@ -75,7 +75,7 @@ def get_parser():
     resample_types.add_argument(
         '-vox',
         metavar=Metavar.str,
-        help="Resampling size in number of voxels in each dimensions (x,y,z). Separate with 'x'."
+        help="Resampling size in number of voxels in each dimensions (x,y,z). Separate with `x`."
     )
     resample_types.add_argument(
         '-ref',
@@ -100,7 +100,7 @@ def get_parser():
     optional.add_argument(
         '-o',
         metavar=Metavar.file,
-        help="Output file name. Example: dwi_resampled.nii.gz"
+        help="Output file name. Example: `dwi_resampled.nii.gz`"
     )
     optional.add_argument(
         '-v',

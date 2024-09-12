@@ -43,18 +43,20 @@ def get_parser():
 
             Metrics are normalized using the non-compressed levels above and below the compression site using the following equation:
 
+              ```
               ratio = (1 - mi/((ma+mb)/2))
+              ```
 
             Where mi: metric at the compression level, ma: metric above the compression level, mb: metric below the compression level.
 
-            Additionally, if the "-normalize-hc" flag is used, metrics are normalized using a database built from healthy control subjects. This database uses the PAM50 template as an anatomical reference system.
+            Additionally, if the `-normalize-hc` flag is used, metrics are normalized using a database built from healthy control subjects. This database uses the PAM50 template as an anatomical reference system.
 
             References:
               - Sandrine Bédard, Jan Valošek, Maryam Seif, Armin Curt, Simon Schading, Nikolai Pfender, Patrick Freund, Markus Hupp, Julien Cohen-Adad. Normalizing Spinal Cord Compression Morphometric Measures: Application in Degenerative Cervical Myelopathy. medRxiv 2024.03.13.24304177
                 https://doi.org/10.1101/2024.03.13.24304177
               - Miyanji F, Furlan JC, Aarabi B, Arnold PM, Fehlings MG. Acute cervical traumatic spinal cord injury: MR imaging findings correlated with neurologic outcome--prospective study with 100 consecutive patients. Radiology 2007;243[3]:820-827.
                 https://doi.org/10.1148/radiol.2433060583
-              - "-normalize-hc" flag:
+              - `-normalize-hc` flag:
                 Valošek J, Bédard S, Keřkovský M, Rohan T, Cohen-Adad J. A database of the healthy human spinal cord morphometry in the PAM50 template space. Imaging Neuroscience 2024; 2 1–15.
                 https://doi.org/10.1162/imag_a_00075
         """),  # noqa: E501 (line too long)
@@ -66,9 +68,9 @@ def get_parser():
         metavar=Metavar.file,
         required=True,
         help=textwrap.dedent("""
-            Spinal cord or spinal canal segmentation mask to compute morphometrics from. If spinal cord segmentation is provided, MSCC is computed. If spinal canal segmentation (spinal cord + CSF) is provided, MCC is computed. Example: sub-001_T2w_seg.nii.gz
+            Spinal cord or spinal canal segmentation mask to compute morphometrics from. If spinal cord segmentation is provided, MSCC is computed. If spinal canal segmentation (spinal cord + CSF) is provided, MCC is computed. Example: `sub-001_T2w_seg.nii.gz`
 
-            Note: If no normalization is wanted (i.e., if the "-normalize-hc" flag is not specified), metric ratio will take the average along the segmentation centerline.
+            Note: If no normalization is wanted (i.e., if the `-normalize-hc` flag is not specified), metric ratio will take the average along the segmentation centerline.
         """),  # noqa: E501 (line too long)
     )
     mandatory.add_argument(
@@ -76,7 +78,7 @@ def get_parser():
         metavar=Metavar.file,
         required=True,
         help=textwrap.dedent("""
-            Vertebral labeling file. Example: sub-001_T2w_seg_labeled.nii.gz
+            Vertebral labeling file. Example: `sub-001_T2w_seg_labeled.nii.gz`
 
             Note: The input and the vertebral labelling file must be in the same voxel coordinate system and must match the dimensions between each other.
         """),
@@ -86,9 +88,9 @@ def get_parser():
         metavar=Metavar.file,
         required=True,
         help=textwrap.dedent("""
-            NIfTI file that includes labels at the compression sites. Each compression site is denoted by a single voxel of value `1`.
+            NIfTI file that includes labels at the compression sites. Each compression site is denoted by a single voxel of value `1`. Example: `sub-001_T2w_compression_labels.nii.gz`
 
-            Example: sub-001_T2w_compression_labels.nii.gz Note: The input and the compression label file must be in the same voxel coordinate system and must match the dimensions between each other.
+            Note: The input and the compression label file must be in the same voxel coordinate system and must match the dimensions between each other.
         """),  # noqa: E501 (line too long)
     )
     mandatory.add_argument(
@@ -129,21 +131,21 @@ def get_parser():
         type=str,
         choices=['F', 'M'],
         help='Sex of healthy subject to use for the normalization. By default, both sexes are used. '
-             'Set the "-normalize-hc 1" to use this flag.'
+             'Set the `-normalize-hc 1` to use this flag.'
     )
     optional.add_argument(
         '-age',
         type=int,
         nargs=2,
         metavar="[0 100]",
-        help='Age range of healthy subjects to use for the normalization. Example: "-age 60 80". By default, all ages '
-             'are considered. Set the "-normalize-hc 1" to use this flag.'
+        help='Age range of healthy subjects to use for the normalization. Example: `-age 60 80"` By default, all ages '
+             'are considered. Set the `-normalize-hc 1` to use this flag.'
     )
     optional.add_argument(
         '-o',
         metavar=Metavar.file,
-        help='Output CSV file name. If not provided, the suffix "_compression_metrics" is added to the file name '
-             'provided by the flag "-i".'
+        help='Output CSV file name. If not provided, the suffix `_compression_metrics` is added to the file name '
+             'provided by the flag `-i`.'
     )
     optional.add_argument(
         "-h",

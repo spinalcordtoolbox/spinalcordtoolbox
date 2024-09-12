@@ -52,10 +52,10 @@ def get_parser():
         help=textwrap.dedent("""
             Contrast of the input. The `-c` option is only relevant for the following tasks:
 
-              - 'seg_tumor-edema-cavity_t1-t2': Specifies the contrast order of input images (e.g. -c t1 t2)
-              - 'seg_sc_ms_lesion_stir_psir': Specifies whether input should be inverted based on contrast (-c stir: no inversion, -c psir: inverted)
+              - `seg_tumor-edema-cavity_t1-t2`: Specifies the contrast order of input images (e.g. `-c t1 t2`)
+              - `seg_sc_ms_lesion_stir_psir`: Specifies whether input should be inverted based on contrast (`-c stir`: no inversion, `-c psir`: inverted)
 
-            Because all other models have only a single input contrast, the '-c' option is ignored for them.
+            Because all other models have only a single input contrast, the `-c` option is ignored for them.
         """),
         choices=('t1', 't2', 't2star', 'stir', 'psir'),
         metavar=Metavar.str)
@@ -70,7 +70,7 @@ def get_parser():
         "-task",
         nargs="+",
         help="Task to perform. It could either be a pre-installed task, task that could be installed, or a custom task."
-             " To list available tasks, run: sct_deepseg -list-tasks. To use a custom task, indicate the path to the "
+             " To list available tasks, run: `sct_deepseg -list-tasks`. To use a custom task, indicate the path to the "
              " ivadomed packaged model (see https://ivadomed.org/en/latest/pretrained_models.html#packaged-model-format for more details). "
              " More than one path can be indicated (separated with space) for cascaded application of the models.",
         metavar=Metavar.str)

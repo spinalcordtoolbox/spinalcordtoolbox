@@ -26,11 +26,15 @@ def get_parser():
 
             Example 1: Add two b=0 file at the beginning and one at the end of the DWI time series:
 
-            >> sct_dmri_concat_b0_and_dwi -i b0-1.nii b0-2.nii dmri.nii b0-65.nii -bvec bvecs.txt -bval bvals.txt -order b0 b0 dwi b0 -o dmri_concat.nii -obval bvals_concat.txt -obvec bvecs_concat.txt
+            ```
+            sct_dmri_concat_b0_and_dwi -i b0-1.nii b0-2.nii dmri.nii b0-65.nii -bvec bvecs.txt -bval bvals.txt -order b0 b0 dwi b0 -o dmri_concat.nii -obval bvals_concat.txt -obvec bvecs_concat.txt
+            ```
 
             Example 2: Concatenate two DWI series and add one b=0 file at the beginning:
 
-            >> sct_dmri_concat_b0_and_dwi -i b0-1.nii dmri1.nii dmri2.nii -bvec bvecs1.txt bvecs2.txt -bval bvals1.txt bvals2.txt -order b0 dwi dwi -o dmri_concat.nii -obval bvals_concat.txt -obvec bvecs_concat.txt
+            ```
+            sct_dmri_concat_b0_and_dwi -i b0-1.nii dmri1.nii dmri2.nii -bvec bvecs1.txt bvecs2.txt -bval bvals1.txt bvals2.txt -order b0 dwi dwi -o dmri_concat.nii -obval bvals_concat.txt -obvec bvecs_concat.txt
+            ```
         """),  # noqa: E501 (line too long)
     )
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
@@ -38,46 +42,46 @@ def get_parser():
         '-i',
         nargs='+',
         required=True,
-        help="Input 4d files, separated by space, listed in the right order of concatenation. Example: b0.nii dmri1.nii dmri2.nii",
+        help="Input 4d files, separated by space, listed in the right order of concatenation. Example: `b0.nii dmri1.nii dmri2.nii`",
         metavar=Metavar.file,
     )
     mandatory.add_argument(
         '-bval',
         nargs='+',
         required=True,
-        help="Bvals file(s). Example: bvals.txt",
+        help="Bvals file(s). Example: `bvals.txt`",
         metavar=Metavar.file,
     )
     mandatory.add_argument(
         '-bvec',
         nargs='+',
         required=True,
-        help="Bvecs file(s). Example: bvecs.txt",
+        help="Bvecs file(s). Example: `bvecs.txt`",
         metavar=Metavar.file,
     )
     mandatory.add_argument(
         '-order',
         nargs='+',
         required=True,
-        help="Order of b=0 and DWI files entered in flag '-i', separated by space. Example: b0 dwi dwi",
+        help="Order of b=0 and DWI files entered in flag `-i`, separated by space. Example: `b0 dwi dwi`",
         choices=['b0', 'dwi'],
     )
     mandatory.add_argument(
         '-o',
         required=True,
-        help="Output 4d concatenated file. Example: b0_dmri_concat.nii",
+        help="Output 4d concatenated file. Example: `b0_dmri_concat.nii`",
         metavar=Metavar.file,
     )
     mandatory.add_argument(
         '-obval',
         required=True,
-        help="Output concatenated bval file. Example: bval_concat.txt",
+        help="Output concatenated bval file. Example: `bval_concat.txt`",
         metavar=Metavar.file,
     )
     mandatory.add_argument(
         '-obvec',
         required=True,
-        help="Output concatenated bvec file. Example: bvec_concat.txt",
+        help="Output concatenated bvec file. Example: `bvec_concat.txt`",
         metavar=Metavar.file,
     )
 

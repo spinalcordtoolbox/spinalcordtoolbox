@@ -88,12 +88,12 @@ def get_parser():
         '-i',
         metavar=Metavar.file,
         required=True,
-        help="Input fMRI data. Example: fmri.nii.gz"
+        help="Input fMRI data. Example:` fmri.nii.gz`"
     )
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
         '-m',
-        help='Binary (or weighted) mask within which tSNR will be averaged. Example: fmri_moco_mean_seg.nii.gz',
+        help='Binary (or weighted) mask within which tSNR will be averaged. Example: `fmri_moco_mean_seg.nii.gz`',
         metavar=Metavar.file,
         )
     optional.add_argument(
@@ -114,12 +114,12 @@ def get_parser():
     optional.add_argument(
         '-o',
         metavar=Metavar.file,
-        help="tSNR data output file. Example: fmri_tsnr.nii.gz"
+        help="tSNR data output file. Example: `fmri_tsnr.nii.gz`"
     )
     optional.add_argument(
         '-qc',
         metavar=Metavar.str,
-        help='The path where the quality control generated content will be saved. Note: The "-m" parameter is '
+        help='The path where the quality control generated content will be saved. Note: The `-m` parameter is '
              'required to generate the QC report, as it is necessary to center the QC on the region of interest.',
         default=None)
     optional.add_argument(

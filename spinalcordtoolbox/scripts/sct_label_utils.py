@@ -54,7 +54,7 @@ def get_parser():
         '-ilabel',
         metavar=Metavar.file,
         help="File that contain labels that you want to correct. It is possible to add new points with this option. "
-             "Use with -create-viewer. Example: t2_labels_auto.nii.gz"
+             "Use with `-create-viewer`. Example: `t2_labels_auto.nii.gz`"
     )
 
     functions = parser.add_argument_group("\nLABEL FUNCTIONS")
@@ -79,7 +79,7 @@ def get_parser():
         '-create-add',
         metavar=Metavar.list,
         type=list_type(':', Coordinate),
-        help="Same as '-create', but add labels to the input image instead of creating a new image. "
+        help="Same as `-create`, but add labels to the input image instead of creating a new image. "
              "Example: 12,34,32,1:12,35,33,2"
     )
 
@@ -88,9 +88,9 @@ def get_parser():
         metavar=Metavar.list,
         type=list_type(':', list_type(',', int)),
         help=textwrap.dedent("""
-            Create labels on a cord segmentation (or centerline) image defined by '-i'. Each label should be specified using the form 'v1,v2' where 'v1' is value of the slice index along the inferior-superior axis, and 'v2' is the value of the label. Separate each label with ':'.
+            Create labels on a cord segmentation (or centerline) image defined by `-i`. Each label should be specified using the form `v1,v2` where `v1` is value of the slice index along the inferior-superior axis, and `v2` is the value of the label. Separate each label with `:`.
 
-            Example: '-create-seg 5,1:14,2:23,3' adds three labels at the axial slices 5, 14, and 23 (starting from the most inferior slice).
+            Example: `-create-seg 5,1:14,2:23,3` adds three labels at the axial slices 5, 14, and 23 (starting from the most inferior slice).
         """),  # noqa: E501 (line too long)
     )
 
@@ -99,9 +99,9 @@ def get_parser():
         metavar=Metavar.int,
         type=int,
         help=textwrap.dedent("""
-            Similar to '-create-seg'. This option takes a single label value, and will automatically select the mid-point slice in the inferior-superior direction (so there is no need for a slice index).
+            Similar to `-create-seg`. This option takes a single label value, and will automatically select the mid-point slice in the inferior-superior direction (so there is no need for a slice index).
 
-            This is useful for when you have centered the field of view of your data at a specific location. For example, if you already know that the C2-C3 disc is centered in the I-S direction, then you can enter '-create-seg-mid 3' for that label. This saves you the trouble of having to manually specify a slice index using '-create-seg'.
+            This is useful for when you have centered the field of view of your data at a specific location. For example, if you already know that the C2-C3 disc is centered in the I-S direction, then you can enter `-create-seg-mid 3` for that label. This saves you the trouble of having to manually specify a slice index using `-create-seg`.
         """),  # noqa: E501 (line too long)
     )
 
@@ -109,7 +109,7 @@ def get_parser():
         '-create-viewer',
         metavar=Metavar.list,
         help="Manually label from a GUI a list of labels IDs. Provide a comma-separated list "
-             "containing individual values and/or intervals. Example: '-create-viewer 1:4,6,8' "
+             "containing individual values and/or intervals. Example: `-create-viewer 1:4,6,8` "
              "will allow you to add labels [1,2,3,4,6,8] using the GUI."
     )
 
@@ -123,9 +123,9 @@ def get_parser():
         '-disc',
         metavar=Metavar.file,
         help=textwrap.dedent("""
-            Project disc labels ('-disc') onto a spinal cord segmentation ('-i') within the axial plane to create a labeled segmentation.
+            Project disc labels (`-disc`) onto a spinal cord segmentation (`-i`) within the axial plane to create a labeled segmentation.
 
-            - Note: Unlike 'sct_label_vertebrae -discfile', this function does NOT involve cord straightening.
+            - Note: Unlike `sct_label_vertebrae -discfile`, this function does NOT involve cord straightening.
             - Note: This method does NOT involve orthogonal projection onto the cord centerline. Details: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3395#issuecomment-1478435265
 
             The disc labeling follows the convention: https://spinalcordtoolbox.com/user_section/tutorials/vertebral-labeling/labeling-conventions.html
@@ -154,7 +154,7 @@ def get_parser():
         metavar=Metavar.list,
         type=list_type(',', int),
         help=textwrap.dedent("""
-            From vertebral labeling, create points that are centered at the mid-vertebral levels. Separate desired levels with ','. Example: 3,8
+            From vertebral labeling, create points that are centered at the mid-vertebral levels. Separate desired levels with `,`. Example: `3,8`
 
             To get all levels, enter 0.
         """),
@@ -173,13 +173,13 @@ def get_parser():
     func_group.add_argument(
         '-remove-reference',
         metavar=Metavar.file,
-        help="Remove labels from input image (-i) that are not in reference image (specified here)."
+        help="Remove labels from input image (`-i`) that are not in reference image (specified here)."
     )
     func_group.add_argument(
         '-remove-sym',
         metavar=Metavar.file,
-        help="Remove labels from input image (-i) and reference image (specified here) that don't match. You must "
-             "provide two output names separated by ','."
+        help="Remove labels from input image (`-i`) and reference image (specified here) that don't match. You must "
+             "provide two output names separated by `,`."
     )
     func_group.add_argument(
         '-remove',

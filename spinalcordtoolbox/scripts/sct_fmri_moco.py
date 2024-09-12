@@ -26,10 +26,9 @@ def get_parser():
         description=textwrap.dedent("""
             Motion correction of fMRI data. Some robust features include:
 
-              - group-wise (-g)
-              - slice-wise regularized along z using polynomial function (-p)
-                (For more info about the method, type: isct_antsSliceRegularizedRegistration)
-              - masking (-m)
+              - group-wise (`-g`)
+              - slice-wise regularized along z using polynomial function (`-p`). For more info about the method, type: `isct_antsSliceRegularizedRegistration`
+              - masking (`-m`)
               - iterative averaging of target volume
 
             The outputs of the motion correction process are:
@@ -46,7 +45,7 @@ def get_parser():
         '-i',
         metavar=Metavar.file,
         required=True,
-        help="Input data (4D). Example: fmri.nii.gz"
+        help="Input data (4D). Example: `fmri.nii.gz`"
     )
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
@@ -119,13 +118,13 @@ def get_parser():
         metavar=Metavar.folder,
         action=ActionCreateFolder,
         help="The path where the quality control generated content will be saved. (Note: "
-             "Both '-qc' and '-qc-seg' are required in order to generate a QC report.)"
+             "Both `-qc` and `-qc-seg` are required in order to generate a QC report.)"
     )
     optional.add_argument(
         '-qc-seg',
         metavar=Metavar.file,
         help="Segmentation of spinal cord to improve cropping in qc report. (Note: "
-             "Both '-qc' and '-qc-seg' are required in order to generate a QC report.)"
+             "Both `-qc` and `-qc-seg` are required in order to generate a QC report.)"
     )
     optional.add_argument(
         '-qc-fps',

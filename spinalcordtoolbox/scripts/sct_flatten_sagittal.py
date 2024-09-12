@@ -67,13 +67,13 @@ def get_parser():
         '-i',
         metavar=Metavar.file,
         required=True,
-        help="Input volume. Example: t2.nii.gz"
+        help="Input volume. Example: `t2.nii.gz`"
     )
     mandatory.add_argument(
         '-s',
         metavar=Metavar.file,
         required=True,
-        help="Spinal cord segmentation or centerline. Example: t2_seg.nii.gz"
+        help="Spinal cord segmentation or centerline. Example: `t2_seg.nii.gz`"
     )
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(

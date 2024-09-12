@@ -52,7 +52,7 @@ def get_parser():
     optional.add_argument(
         "-feature",
         metavar=Metavar.str,
-        help='List of GLCM texture features (separate arguments with ",").',
+        help='List of GLCM texture features (separate arguments with `,`).',
         required=False,
         default=ParamGLCM().feature)
     optional.add_argument(
@@ -64,8 +64,8 @@ def get_parser():
     optional.add_argument(
         "-angle",
         metavar=Metavar.list,
-        help='List of angles for GLCM computation, separate arguments with ",", in degrees (suggested distance values '
-             'between 0 and 179). Example: 0,90',
+        help='List of angles for GLCM computation, separate arguments with `,`, in degrees (suggested distance values '
+             'between 0 and 179). Example: `0,90`',
         required=False,
         default=ParamGLCM().angle)
     optional.add_argument(

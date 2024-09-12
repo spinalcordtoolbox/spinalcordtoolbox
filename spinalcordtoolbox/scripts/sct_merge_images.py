@@ -33,7 +33,7 @@ def get_parser():
 
     parser = SCTArgumentParser(
         description=(textwrap.dedent("""
-            Merge multiple source images (-i) onto destination space (-d). (All images are warped to the destination space and then added together.)
+            Merge multiple source images (`-i`) onto destination space (`-d`). (All images are warped to the destination space and then added together.)
 
             To deal with overlap during merging (e.g. multiple input images map to the same voxel regions in the destination space), the output voxels are divided by the sum of the partial volume values for each image.
 

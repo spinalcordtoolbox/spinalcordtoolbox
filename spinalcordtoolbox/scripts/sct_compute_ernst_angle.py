@@ -67,7 +67,7 @@ def get_parser():
         "-tr",
         type=float,
         required=True,
-        help='Value of TR (in ms) to get the Ernst Angle. Example: 2000',
+        help='Value of TR (in ms) to get the Ernst Angle. Example: `2000`',
         metavar=Metavar.float,
     )
 
@@ -80,7 +80,7 @@ def get_parser():
     optional.add_argument(
         "-t1",
         type=float,
-        help='T1 value (in ms). Example: 832.3',
+        help='T1 value (in ms). Example: `832.3`',
         required=False,
         metavar=Metavar.float,
         default=832.0)
@@ -89,7 +89,7 @@ def get_parser():
         type=float,
         nargs=2,
         metavar=Metavar.float,
-        help='Min/Max range of TR (in ms) separated with space. Only use with -v 2. Example: 500 3500',
+        help='Min/Max range of TR (in ms) separated with space. Only use with `-v 2`. Example: `500 3500`',
         default=[500, 3500],
         required=False)
     optional.add_argument(

@@ -19,7 +19,7 @@ from spinalcordtoolbox.math import binarize
 def get_parser():
     parser = SCTArgumentParser(
         description='Compute the Dice Coefficient. '
-                    'N.B.: indexing (in both time and space) starts with 0 not 1! Inputting -1 for a '
+                    'N.B.: indexing (in both time and space) starts with 0 not 1! Inputting `-1` for a '
                     'size will set it to the full image extent for that dimension.'
     )
 

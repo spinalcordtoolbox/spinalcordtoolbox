@@ -43,9 +43,9 @@ def get_parser():
         description=textwrap.dedent("""
             Motion correction of dMRI data. Some of the features to improve robustness were proposed in Xu et al. (https://dx.doi.org/10.1016/j.neuroimage.2012.11.014) and include:
 
-              - group-wise (-g)
-              - slice-wise regularized along z using polynomial function (-param). For more info about the method, type: isct_antsSliceRegularizedRegistration
-              - masking (-m)
+              - group-wise (`-g`)
+              - slice-wise regularized along z using polynomial function (-param). For more info about the method, type: `isct_antsSliceRegularizedRegistration`
+              - masking (`-m`)
               - iterative averaging of target volume
 
             The outputs of the motion correction process are:
@@ -109,14 +109,14 @@ def get_parser():
         '-param',
         metavar=Metavar.list,
         type=list_type(',', str),
-        help=f"Advanced parameters. Assign value with \"=\", and separate arguments with \",\".\n"
-             f"  - poly [int]: Degree of polynomial function used for regularization along Z. For no regularization "
+        help=f"Advanced parameters. Assign value with `=`, and separate arguments with `,`.\n"
+             f"  - `poly` [int]: Degree of polynomial function used for regularization along Z. For no regularization "
              f"set to 0. Default={param_default.poly}.\n"
-             f"  - smooth [mm]: Smoothing kernel. Default={param_default.smooth}.\n"
-             f"  - metric {{MI, MeanSquares, CC}}: Metric used for registration. Default={param_default.metric}.\n"
-             f"  - gradStep [float]: Searching step used by registration algorithm. The higher the more deformation "
+             f"  - `smooth` [mm]: Smoothing kernel. Default={param_default.smooth}.\n"
+             f"  - `metric` {{MI, MeanSquares, CC}}: Metric used for registration. Default={param_default.metric}.\n"
+             f"  - `gradStep` [float]: Searching step used by registration algorithm. The higher the more deformation "
              f"allowed. Default={param_default.gradStep}.\n"
-             f"  - sample [None or 0-1]: Sampling rate used for registration metric. "
+             f"  - `sample` [None or 0-1]: Sampling rate used for registration metric. "
              f"Default={param_default.sampling}.\n"
     )
     optional.add_argument(
@@ -152,13 +152,13 @@ def get_parser():
         metavar=Metavar.folder,
         action=ActionCreateFolder,
         help="The path where the quality control generated content will be saved. (Note: "
-             "Both '-qc' and '-qc-seg' are required in order to generate a QC report.)"
+             "Both `-qc` and `-qc-seg` are required in order to generate a QC report.)"
     )
     optional.add_argument(
         '-qc-seg',
         metavar=Metavar.file,
         help="Segmentation of spinal cord to improve cropping in qc report. (Note: "
-             "Both '-qc' and '-qc-seg' are required in order to generate a QC report.)"
+             "Both `-qc` and `-qc-seg` are required in order to generate a QC report.)"
     )
     optional.add_argument(
         '-qc-fps',

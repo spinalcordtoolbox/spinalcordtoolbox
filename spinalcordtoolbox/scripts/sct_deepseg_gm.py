@@ -35,7 +35,7 @@ def get_parser():
     mandatory.add_argument(
         "-i",
         required=True,
-        help="Image filename to segment (3D volume). Example: t2s.nii.gz.",
+        help="Image filename to segment (3D volume). Example: `t2s.nii.gz`.",
         metavar=Metavar.file
     )
 
@@ -47,7 +47,7 @@ def get_parser():
         help="Show this help message and exit")
     optional.add_argument(
         "-o",
-        help="Output segmentation file name. Example: sc_gm_seg.nii.gz",
+        help="Output segmentation file name. Example: `sc_gm_seg.nii.gz`",
         metavar=Metavar.file,
         default=None)
     misc = parser.add_argument_group('\nMISC')
@@ -76,7 +76,7 @@ def get_parser():
     misc.add_argument(
         "-thr",
         type=float,
-        help='Threshold to apply in the segmentation predictions, use 0 (zero) to disable it. Example: 0.999',
+        help='Threshold to apply in the segmentation predictions, use 0 (zero) to disable it. Example: `0.999`',
         metavar=Metavar.float,
         default=0.999)
     misc.add_argument(

@@ -57,7 +57,7 @@ def get_parser():
     mandatoryArguments.add_argument(
         '-i',
         required=True,
-        help='Image to create mask on. Only used to get header. Must be 3D. Example: data.nii.gz',
+        help='Image to create mask on. Only used to get header. Must be 3D. Example: `data.nii.gz`',
         metavar=Metavar.file,
     )
     mandatoryArguments.add_argument(
@@ -67,10 +67,10 @@ def get_parser():
         help=textwrap.dedent("""
             Process to generate mask.
 
-              - <coord,XxY>: Center mask at the X,Y coordinates. (e.g. "coord,20x15")
-              - <point,FILE>: Center mask at the X,Y coordinates of the label defined in input volume FILE. (e.g. "point,label.nii.gz")
-              - <center>: Center mask in the middle of the FOV (nx/2, ny/2).
-              - <centerline,FILE>: At each slice, the mask is centered at the spinal cord centerline, defined by the input segmentation FILE. (e.g. "centerline,t2_seg.nii.gz")
+              - `coord,XxY`: Center mask at the X,Y coordinates. (e.g. `coord,20x15`)
+              - `point,FILE`: Center mask at the X,Y coordinates of the label defined in input volume FILE. (e.g. `point,label.nii.gz`)
+              - `center`: Center mask in the middle of the FOV `[nx/2, ny/2]`.
+              - `centerline,FILE`: At each slice, the mask is centered at the spinal cord centerline, defined by the input segmentation FILE. (e.g. `centerline,t2_seg.nii.gz`)
         """),
         metavar=Metavar.str,
     )
@@ -83,8 +83,8 @@ def get_parser():
         help="Show this help message and exit")
     optional.add_argument(
         '-size',
-        help='Diameter of the mask in the axial plane, given in pixel (Example: 35) or in millimeter (Example: 35mm). '
-             'If shape=gaussian, size instead corresponds to "sigma" (Example: 45).',
+        help='Diameter of the mask in the axial plane, given in pixel (Example: `35`) or in millimeter (Example: `35mm`). '
+             'If shape=gaussian, size instead corresponds to "sigma" (Example: `45`).',
         metavar=Metavar.str,
         required=False,
         default=param_default.size)
@@ -97,7 +97,7 @@ def get_parser():
     optional.add_argument(
         '-o',
         metavar=Metavar.str,
-        help='Name of output mask, Example: data.nii',
+        help='Name of output mask, Example: `data.nii.gz`',
         required=False)
     optional.add_argument(
         "-r",

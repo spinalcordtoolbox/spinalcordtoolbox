@@ -23,7 +23,7 @@ def get_parser():
         '-bvec',
         metavar=Metavar.file,
         required=True,
-        help="Input bvecs file. Example: bvecs.txt"
+        help="Input bvecs file. Example: `bvecs.txt`"
     )
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
@@ -36,7 +36,7 @@ def get_parser():
         '-o',
         metavar=Metavar.file,
         default='',
-        help="Output bvecs file. By default, input file is overwritten. Example: bvecs_t.txt"
+        help="Output bvecs file. By default, input file is overwritten. Example: `bvecs_t.txt`"
     )
     optional.add_argument(
         '-v',

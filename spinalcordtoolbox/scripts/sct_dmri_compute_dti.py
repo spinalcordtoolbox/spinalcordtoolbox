@@ -22,19 +22,19 @@ def get_parser():
     mandatory.add_argument(
         "-i",
         required=True,
-        help='Input 4d file. Example: dmri.nii.gz',
+        help='Input 4d file. Example: `dmri.nii.gz`',
         metavar=Metavar.file,
     )
     mandatory.add_argument(
         "-bval",
         required=True,
-        help='Bvals file. Example: bvals.txt',
+        help='Bvals file. Example: `bvals.txt`',
         metavar=Metavar.file,
     )
     mandatory.add_argument(
         "-bvec",
         required=True,
-        help='Bvecs file. Example: bvecs.txt',
+        help='Bvecs file. Example: `bvecs.txt`',
         metavar=Metavar.file,
     )
 
@@ -49,8 +49,8 @@ def get_parser():
         help=textwrap.dedent("""
             Type of method to calculate the diffusion tensor:
 
-              - standard: Standard equation [Basser, Biophys J 1994]
-              - restore: Robust fitting with outlier detection [Chang, MRM 2005]
+              - `standard:` Standard equation [Basser, Biophys J 1994]
+              - `restore`: Robust fitting with outlier detection [Chang, MRM 2005]
         """),
         default='standard',
         choices=('standard', 'restore'))
@@ -63,7 +63,7 @@ def get_parser():
     optional.add_argument(
         '-m',
         metavar=Metavar.file,
-        help='Mask used to compute DTI in for faster processing. Example: mask.nii.gz')
+        help='Mask used to compute DTI in for faster processing. Example: `mask.nii.gz`')
     optional.add_argument(
         '-o',
         help='Output prefix.',

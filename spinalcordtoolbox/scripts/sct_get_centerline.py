@@ -38,7 +38,7 @@ def get_parser():
         '-i',
         metavar=Metavar.file,
         required=True,
-        help="Input image. Example: t1.nii.gz"
+        help="Input image. Example: `t1.nii.gz`"
     )
 
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
@@ -60,23 +60,23 @@ def get_parser():
         help=textwrap.dedent("""
             Method used for extracting the centerline.
 
-              - optic: automatic spinal cord detection method
-              - viewer: manual selection a few points followed by interpolation
-              - fitseg: fit a regularized centerline on an already-existing cord segmentation. This method will interpolate if any slices are missing. Also, if  '-extrapolation 1' is specified, this method will extrapolate beyond the segmentation boundaries (i.e., every axial slice will exhibit a centerline pixel).
+              - `optic`: automatic spinal cord detection method
+              - `viewer`: manual selection a few points followed by interpolation
+              - `fitseg`: fit a regularized centerline on an already-existing cord segmentation. This method will interpolate if any slices are missing. Also, if  `-extrapolation 1` is specified, this method will extrapolate beyond the segmentation boundaries (i.e., every axial slice will exhibit a centerline pixel).
         """),  # noqa: E501 (line too long)
     )
     optional.add_argument(
         "-centerline-algo",
         choices=['polyfit', 'bspline', 'linear', 'nurbs'],
         default='bspline',
-        help="Algorithm for centerline fitting. Only relevant with -method fitseg."
+        help="Algorithm for centerline fitting. Only relevant with `-method fitseg`."
     )
     optional.add_argument(
         "-centerline-smooth",
         metavar=Metavar.int,
         type=int,
         default=30,
-        help="Degree of smoothing for centerline fitting. Only for -centerline-algo {bspline, linear}."
+        help="Degree of smoothing for centerline fitting. Only for `-centerline-algo {bspline, linear}`."
     )
     optional.add_argument(
         "-centerline-soft",
@@ -84,7 +84,7 @@ def get_parser():
         type=int,
         choices=[0, 1],
         default=0,
-        help="Binary or soft centerline. 0 = binarized, 1 = soft. Only relevant with -method fitseg."
+        help="Binary or soft centerline. `0` = binarized, `1` = soft. Only relevant with `-method fitseg`."
     )
     optional.add_argument(
         "-space",
@@ -101,15 +101,15 @@ def get_parser():
         type=int,
         choices=[0, 1],
         default=0,
-        help="Extrapolate beyond the segmentation boundaries. 0 = no extrapolation, 1 = extrapolation. Only relevant with -method fitseg."
-             "Note: '-extrapolation 1' works best with lower-order (linear, nurbs) centerline fitting algorithms"
+        help="Extrapolate beyond the segmentation boundaries. `0` = no extrapolation, `1` = extrapolation. Only relevant with `-method fitseg`."
+             "Note: `-extrapolation 1` works best with lower-order (linear, nurbs) centerline fitting algorithms"
     )
     optional.add_argument(
         "-o",
         metavar=Metavar.file,
         help="File name for the centerline output file. If file extension is not provided, "
-             "'.nii.gz' will be used by default. If '-o' is not provided, then the output file will "
-             "be the input with suffix '_centerline'. Example: 'centerline_optic.nii.gz'"
+             "`.nii.gz` will be used by default. If `-o` is not provided, then the output file will "
+             "be the input with suffix `_centerline`. Example: `centerline_optic.nii.gz`"
     )
     optional.add_argument(
         "-gap",

@@ -64,8 +64,8 @@ def get_parser():
         help=textwrap.dedent("""
             Patch Radius used to generate p-neighbourhoods within Patch2Self. Notes:
 
-              - A radius of '0' will use 1x1x1 p-neighbourhoods, a radius of '1' will use 3x3x3 p-neighbourhoods, and so on.
-              - For anisotropic patch sizes, provide a comma-delimited list of 3 integers. (e.g. '-radius 0,1,0'). For isotropic patch sizes, provide a single int value (e.g. '-radius 0').
+              - A radius of `0` will use 1x1x1 p-neighbourhoods, a radius of `1` will use 3x3x3 p-neighbourhoods, and so on.
+              - For anisotropic patch sizes, provide a comma-delimited list of 3 integers. (e.g. `-radius 0,1,0`). For isotropic patch sizes, provide a single int value (e.g. `-radius 0`).
         """),  # noqa: E501 (line too long)
         metavar=Metavar.int,
         default="0",

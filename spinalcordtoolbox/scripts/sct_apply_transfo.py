@@ -50,7 +50,7 @@ def get_parser():
         nargs='+',
         required=True,
         help='Transformation(s), which can be warping fields (nifti image) or affine transformation matrix (text '
-             'file). Separate with space. Example: warp1.nii.gz warp2.nii.gz',
+             'file). Separate with space. Example: `warp1.nii.gz warp2.nii.gz`',
         metavar=Metavar.file,
     )
 
@@ -85,7 +85,7 @@ def get_parser():
         help=textwrap.dedent("""
             Interpolation method.
 
-            Note: The 'label' method is a special interpolation method designed for single-voxel labels (e.g. disc labels used as registration landmarks, compression labels, etc.). This method is necessary because classical interpolation may corrupt the values of single-voxel labels, or cause them to disappear entirely. The function works by dilating each label, applying the transformation using nearest neighbour interpolation, then extracting the center-of-mass of each transformed 'blob' to get a single-voxel output label. Because the output is a single-voxel label, the `-x label` method is not appropriate for multi-voxel labeled segmentations (such as spinal cord or lesion masks).
+            Note: The `label` method is a special interpolation method designed for single-voxel labels (e.g. disc labels used as registration landmarks, compression labels, etc.). This method is necessary because classical interpolation may corrupt the values of single-voxel labels, or cause them to disappear entirely. The function works by dilating each label, applying the transformation using nearest neighbour interpolation, then extracting the center-of-mass of each transformed 'blob' to get a single-voxel output label. Because the output is a single-voxel label, the `-x label` method is not appropriate for multi-voxel labeled segmentations (such as spinal cord or lesion masks).
         """),  # noqa: E501 (line too long)
         required=False,
         default='spline',

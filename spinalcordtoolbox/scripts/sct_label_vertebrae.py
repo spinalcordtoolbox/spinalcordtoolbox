@@ -153,7 +153,7 @@ def get_parser():
         metavar=Metavar.list,
         type=parse_initz,
         help=textwrap.dedent("""
-            Initialize using slice number and disc value. Example: 68,4 (slice 68 corresponds to disc C3/C4).
+            Initialize using slice number and disc value. Example: `68,4` (slice 68 corresponds to disc C3/C4).
 
             WARNING: Slice number should correspond to superior-inferior direction (i.e. Z in RPI orientation, but Y in LIP orientation).
         """),
@@ -170,14 +170,14 @@ def get_parser():
         metavar=Metavar.file,
         action=InitFileAction,
         dest=argparse.SUPPRESS,
-        help="Initialize labeling by providing a text file which includes either -initz or -initcenter flag."
+        help="Initialize labeling by providing a text file which includes either `-initz` or `-initcenter` flag."
     )
     optional.add_argument(
         '-initlabel',
         metavar=Metavar.file,
         help="Initialize vertebral labeling by providing a nifti file that has a single disc label. An example of "
              "such file is a single voxel with value '3', which would be located at the posterior tip of C2-C3 disc. "
-             "Such label file can be created using: sct_label_utils -i IMAGE_REF -create-viewer 3 ; or by using the "
+             "Such label file can be created using: `sct_label_utils -i IMAGE_REF -create-viewer 3`; or by using the "
              "Python module 'detect_c2c3' implemented in 'spinalcordtoolbox/vertebrae/detect_c2c3.py'."
     )
     optional.add_argument(
@@ -229,12 +229,12 @@ def get_parser():
         type=vertebral_detection_param,
         default=','.join(f'{key}={value}' for key, value in param_default.items()),
         help=textwrap.dedent("""
-            Advanced parameters. Assign value with "="; Separate arguments with ","
+            Advanced parameters. Assign value with `=`; Separate arguments with `,`
 
-              - shift_AP [mm]: AP shift of centerline for disc search
-              - size_AP [mm]: AP window size for disc search
-              - size_RL [mm]: RL window size for disc search
-              - size_IS [mm]: IS window size for disc search
+              - shift_AP `[mm]`: AP shift of centerline for disc search
+              - size_AP `[mm]`: AP window size for disc search
+              - size_RL `[mm]`: RL window size for disc search
+              - size_IS `[mm]`: IS window size for disc search
         """),
     )
     optional.add_argument(

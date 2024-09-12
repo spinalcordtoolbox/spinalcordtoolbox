@@ -150,15 +150,15 @@ def get_parser():
             "This program segments automatically the spinal cord on T1- and T2-weighted images, for any field of view. "
             "You must provide the type of contrast, the image as well as the output folder path. The segmentation "
             "follows the spinal cord centerline, which is provided by an automatic tool: Optic. The initialization of "
-            "the segmentation is made on the median slice of the centerline, and can be ajusted using the -init "
+            "the segmentation is made on the median slice of the centerline, and can be adjusted using the `-init` "
             "parameter. The initial radius of the tubular mesh that will be propagated should be adapted to size of "
             "the spinal cord on the initial propagation slice. \n"
             "\n"
             "Primary output is the binary mask of the spinal cord segmentation. This method must provide VTK "
-            "triangular mesh of the segmentation (option -mesh). Spinal cord centerline is available as a binary image "
-            "(-centerline-binary) or a text file with coordinates in world referential (-centerline-coord).\n"
+            "triangular mesh of the segmentation (option `-mesh`). Spinal cord centerline is available as a binary image "
+            "(`-centerline-binary`) or a text file with coordinates in world referential (`-centerline-coord`).\n"
             "\n"
-            "Cross-sectional areas along the spinal cord can be available (-cross). Several tips on segmentation "
+            "Cross-sectional areas along the spinal cord can be available (`-cross`). Several tips on segmentation "
             "correction can be found on the 'Correcting sct_propseg' page in the Tutorials section of the "
             "documentation.\n"
             "\n"
@@ -276,9 +276,9 @@ def get_parser():
         '-init-centerline',
         metavar=Metavar.file,
         help=textwrap.dedent("""
-            Filename of centerline to use for the propagation. Use format .txt or .nii; see file structure in documentation.
+            Filename of centerline to use for the propagation. Use format `.txt` or `.nii`; see file structure in documentation.
 
-            Replace filename by 'viewer' to use interactive viewer for providing centerline. Example: -init-centerline viewer
+            Replace filename by `viewer` to use interactive viewer for providing centerline. Example: `-init-centerline viewer`
         """),
     )
     optional.add_argument(
@@ -293,7 +293,7 @@ def get_parser():
         help=textwrap.dedent("""
             Mask containing three center of the spinal cord, used to initiate the propagation.
 
-            Replace filename by 'viewer' to use interactive viewer for providing mask. Example: -init-mask viewer
+            Replace filename by `viewer` to use interactive viewer for providing mask. Example: `-init-mask viewer`
         """),
     )
     optional.add_argument(
@@ -310,7 +310,7 @@ def get_parser():
         default=1.0,
         help="Rescale the image (only the header, not the data) in order to enable segmentation on spinal cords with "
              "dimensions different than that of humans (e.g., mice, rats, elephants, etc.). For example, if the "
-             "spinal cord is 2x smaller than that of human, then use -rescale 2"
+             "spinal cord is 2x smaller than that of human, then use `-rescale 2`"
     )
     optional.add_argument(
         '-radius',
@@ -623,7 +623,7 @@ def propseg(img_input, options_dict):
 
     # check status is not 0
     if not status == 0:
-        printv('Automatic cord detection failed. Please initialize using -init-centerline or -init-mask (see help)',
+        printv('Automatic cord detection failed. Please initialize using `-init-centerline` or `-init-mask` (see help)',
                1, 'error')
         sys.exit(1)
 
