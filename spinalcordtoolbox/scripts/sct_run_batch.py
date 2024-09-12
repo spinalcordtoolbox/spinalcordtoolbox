@@ -59,13 +59,16 @@ def get_parser():
         entire subjects or individual sessions; see examples below.
 
         Example YAML configuration:
-          path_data   : "~/sct_data"
-          path_output : "~/pipeline_results"
-          script      : "nature_paper_analysis.sh"
-          jobs        : -1
-          exclude_list : ["sub-01/ses-01", "sub-02", "ses-03"]      # this will exclude ses-01 for sub-01, all sessions for sub-02 and ses-03 for all subjects
+          ```
+          path_data    : "~/sct_data"
+          path_output  : "~/pipeline_results"
+          script       : "nature_paper_analysis.sh"
+          jobs         : -1
+          exclude_list : ["sub-01/ses-01", "sub-02", "ses-03"]  # this will exclude ses-01 for sub-01, all sessions for sub-02 and ses-03 for all subjects
+          ```
 
         Example JSON configuration:
+          ```
           {
               "path_data"   : "~/sct_data",
               "path_output" : "~/pipeline_results",
@@ -73,6 +76,7 @@ def get_parser():
               "jobs"        : -1,
               "exclude_list" : ["sub-01/ses-01", "sub-02", "ses-03"]
           }
+          ```
     """))  # noqa: E501 (line too long)
     parser.add_argument('-jobs', type=int, default=1,
                         help=textwrap.dedent("""
