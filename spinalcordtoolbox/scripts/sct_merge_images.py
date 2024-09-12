@@ -10,6 +10,7 @@
 import sys
 import os
 from typing import Sequence
+import textwrap
 
 import numpy as np
 
@@ -31,19 +32,16 @@ def get_parser():
     # Initialize the parser
 
     parser = SCTArgumentParser(
-        description=(
-            "Merge multiple source images (-i) onto destination space (-d). (All images are warped to the destination "
-            "space and then added together.)"
-            "\n"
-            "\nTo deal with overlap during merging (e.g. multiple input images map to the same voxel regions in the "
-            "destination space), the output voxels are divided by the sum of the partial volume values for each image."
-            "\n"
-            "\nSpecifically, the per-voxel calculation used is:"
-            "\n    im_out = (im_1*pv_1 + im_2*pv_2 + ...) / (pv_1 + pv_2 + ...)"
-            "\n"
-            "\nSo this function acts like a weighted average operator, only in destination voxels that share multiple "
-            "source voxels."
-        )
+        description=(textwrap.dedent("""
+            Merge multiple source images (-i) onto destination space (-d). (All images are warped to the destination space and then added together.)
+
+            To deal with overlap during merging (e.g. multiple input images map to the same voxel regions in the destination space), the output voxels are divided by the sum of the partial volume values for each image.
+
+            Specifically, the per-voxel calculation used is:
+              `im_out = (im_1*pv_1 + im_2*pv_2 + ...) / (pv_1 + pv_2 + ...)`
+
+            So this function acts like a weighted average operator, only in destination voxels that share multiple source voxels.
+        """))  # noqa
     )
     mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
     mandatory.add_argument(
