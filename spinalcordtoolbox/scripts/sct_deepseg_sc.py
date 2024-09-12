@@ -49,10 +49,11 @@ def get_parser():
         "-centerline",
         help=textwrap.dedent("""
             Method used for extracting the centerline:
-              svm: Automatic detection using Support Vector Machine algorithm.
-              cnn: Automatic detection using Convolutional Neural Network.
-              viewer: Semi-automatic detection using manual selection of a few points with an interactive viewer followed by regularization.
-              file: Use an existing centerline (use with flag -file_centerline)
+
+              - svm: Automatic detection using Support Vector Machine algorithm.
+              - cnn: Automatic detection using Convolutional Neural Network.
+              - viewer: Semi-automatic detection using manual selection of a few points with an interactive viewer followed by regularization.
+              - file: Use an existing centerline (use with flag -file_centerline)
         """),
         choices=('svm', 'cnn', 'viewer', 'file'),
         default="svm")

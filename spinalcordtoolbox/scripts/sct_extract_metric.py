@@ -232,6 +232,7 @@ def get_parser():
         default='',
         help=textwrap.dedent("""
             Advanced parameters for the 'map' method. Separate with comma. All items must be listed (separated with comma).
+
               - #1: standard deviation of metrics across labels
               - #2: standard deviation of the noise (assumed Gaussian)
         """),
@@ -257,6 +258,7 @@ def get_parser():
         default='',
         help=textwrap.dedent("""
             Method to use for normalization:
+
               - sbs: normalization slice-by-slice
               - whole: normalization by the metric value in the whole label for all slices.
         """),

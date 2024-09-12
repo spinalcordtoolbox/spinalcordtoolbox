@@ -39,6 +39,7 @@ def get_parser():
         required=True,
         help=textwrap.dedent("""
             Image to compute the SNR on. (Example: b0s.nii.gz)
+
               - For '-method diff' and '-method mult', the image must be 4D, as SNR will be computed along the 4th dimension.
               - For '-method single', the image can either be 3D or 4D. If a 4D image is passed, a specific 3D volume should be specified using the '-vol' argument.
         """),
@@ -78,6 +79,7 @@ def get_parser():
         '-vol',
         help=textwrap.dedent("""
             Volumes to compute SNR from. Separate with ',' (Example: '-vol 0,1'), or select range using ':' (Example: '-vol 2:50'). If this argument is not passed:
+
               - For '-method mult', all volumes will be used.
               - For '-method diff', the first two volumes will be used.
               - For '-method single', the first volume will be used.

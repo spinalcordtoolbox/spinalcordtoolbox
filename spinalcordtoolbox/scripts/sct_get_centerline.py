@@ -59,6 +59,7 @@ def get_parser():
         default='optic',
         help=textwrap.dedent("""
             Method used for extracting the centerline.
+
               - optic: automatic spinal cord detection method
               - viewer: manual selection a few points followed by interpolation
               - fitseg: fit a regularized centerline on an already-existing cord segmentation. This method will interpolate if any slices are missing. Also, if  '-extrapolation 1' is specified, this method will extrapolate beyond the segmentation boundaries (i.e., every axial slice will exhibit a centerline pixel).

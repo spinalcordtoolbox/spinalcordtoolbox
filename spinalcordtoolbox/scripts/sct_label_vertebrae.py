@@ -229,6 +229,7 @@ def get_parser():
         default=','.join(f'{key}={value}' for key, value in param_default.items()),
         help=textwrap.dedent("""
             Advanced parameters. Assign value with "="; Separate arguments with ","
+
               - shift_AP [mm]: AP shift of centerline for disc search
               - size_AP [mm]: AP window size for disc search
               - size_RL [mm]: RL window size for disc search

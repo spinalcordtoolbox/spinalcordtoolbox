@@ -96,10 +96,11 @@ def get_parser():
                         help=textwrap.dedent(f"""
                             Base directory for environment variables:
 
-                            PATH_DATA_PROCESSED={os.path.join('<path-output>', 'data_processed')}
-                            PATH_RESULTS={os.path.join('<path-output>', 'results')}
-                            PATH_QC={os.path.join('<path-output>', 'qc')}
-                            PATH_LOG={os.path.join('<path-output>', 'log')}
+                              - PATH_DATA_PROCESSED={os.path.join('<path-output>', 'data_processed')}
+                              - PATH_RESULTS={os.path.join('<path-output>', 'results')}
+                              - PATH_QC={os.path.join('<path-output>', 'qc')}
+                              - PATH_LOG={os.path.join('<path-output>', 'log')}
+
                             Which are respectively output paths for the processed data, results, quality control (QC) and logs"""))
     parser.add_argument('-batch-log', default='sct_run_batch_log.txt',
                         help='A log file for all terminal output produced by this script (not '

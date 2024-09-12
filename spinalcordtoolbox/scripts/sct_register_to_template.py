@@ -71,6 +71,7 @@ def get_parser():
             Register an anatomical image to the spinal cord MRI template (default: PAM50).
 
             The registration process includes three main registration steps:
+
               1. straightening of the image using the spinal cord segmentation (see sct_straighten_spinalcord for details);
               2. vertebral alignment between the image and the template, using labels along the spine;
               3. iterative slice-wise non-linear registration (see sct_register_multimodal for details)
@@ -87,6 +88,7 @@ def get_parser():
             Vertebral alignment (step 2) consists in aligning the vertebrae between the subject and the template.
 
             Two types of labels are possible:
+
               - Vertebrae mid-body labels, created at the center of the spinal cord using the parameter '-l';
               - Posterior edge of the intervertebral discs, using the parameter '-ldisc'.
 
@@ -96,6 +98,7 @@ def get_parser():
             If two labels are provided, a linear transformation (translation + rotation + superior-inferior linear scaling) will be applied. The strategy here is to define labels that cover the region of interest. For example, if you are interested in studying C2 to C6 levels, then provide one label at C2 and another at C6. However, note that if the two labels are very far apart (e.g. C2 and T12), there might be a mis-alignment of discs because a subject's intervertebral discs distance might differ from that of the template.
 
             If more than two labels are used, a non-linear registration will be applied to align the each intervertebral disc between the subject and the template, as described in sct_straighten_spinalcord. This the most accurate method, however it has some serious caveats:
+
               - This feature is not compatible with the parameter '-ref subject', where only a rigid registration is performed.
               - Due to the non-linear registration in the S-I direction, the warping field will be cropped above the top label and below the bottom label. Applying this warping field will result in a strange-looking registered image that has the same value above the top label and below the bottom label. But if you are not interested in these regions, you do not need to worry about it.
 

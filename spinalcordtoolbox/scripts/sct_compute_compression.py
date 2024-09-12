@@ -37,8 +37,9 @@ def get_parser():
     parser = SCTArgumentParser(
         description=textwrap.dedent("""
             Compute normalized morphometric metrics to assess:
-            \t- spinal cord compression using MSCC (maximum spinal cord compression)
-            \t- spinal canal stenosis using MCC (maximum canal compromise)
+
+              - spinal cord compression using MSCC (maximum spinal cord compression)
+              - spinal canal stenosis using MCC (maximum canal compromise)
 
             Metrics are normalized using the non-compressed levels above and below the compression site using the following equation:
 

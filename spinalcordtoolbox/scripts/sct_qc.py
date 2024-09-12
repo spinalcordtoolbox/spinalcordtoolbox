@@ -20,11 +20,12 @@ def get_parser():
         description='Generate Quality Control (QC) report following SCT processing.',
         epilog=textwrap.dedent("""
             Examples:
-              sct_qc -i t2.nii.gz -s t2_seg.nii.gz -p sct_deepseg_sc
-              sct_qc -i t2.nii.gz -s t2_pmj.nii.gz -p sct_detect_pmj
-              sct_qc -i t2.nii.gz -s t2_seg_labeled.nii.gz -p sct_label_vertebrae
-              sct_qc -i t2.nii.gz -s t2_seg.nii.gz -p sct_deepseg_sc -qc-dataset mydata -qc-subject sub-45
-              sct_qc -i t2.nii.gz -s t2_seg.nii.gz -d t2_lesion.nii.gz -p sct_deepseg_lesion -plane axial
+
+            - sct_qc -i t2.nii.gz -s t2_seg.nii.gz -p sct_deepseg_sc
+            - sct_qc -i t2.nii.gz -s t2_pmj.nii.gz -p sct_detect_pmj
+            - sct_qc -i t2.nii.gz -s t2_seg_labeled.nii.gz -p sct_label_vertebrae
+            - sct_qc -i t2.nii.gz -s t2_seg.nii.gz -p sct_deepseg_sc -qc-dataset mydata -qc-subject sub-45
+            - sct_qc -i t2.nii.gz -s t2_seg.nii.gz -d t2_lesion.nii.gz -p sct_deepseg_lesion -plane axial
         """),
     )
     parser.add_argument('-i',

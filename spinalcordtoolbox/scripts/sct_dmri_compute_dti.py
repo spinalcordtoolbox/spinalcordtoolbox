@@ -48,8 +48,9 @@ def get_parser():
         '-method',
         help=textwrap.dedent("""
             Type of method to calculate the diffusion tensor:
-              standard: Standard equation [Basser, Biophys J 1994]
-              restore: Robust fitting with outlier detection [Chang, MRM 2005]
+
+              - standard: Standard equation [Basser, Biophys J 1994]
+              - restore: Robust fitting with outlier detection [Chang, MRM 2005]
         """),
         default='standard',
         choices=('standard', 'restore'))

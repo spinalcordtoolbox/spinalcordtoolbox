@@ -34,9 +34,10 @@ def get_parser():
         required=True,
         help=textwrap.dedent("""
             Type of image contrast.
-              t2: T2w scan with isotropic or anisotropic resolution.
-              t2_ax: T2w scan with axial orientation and thick slices.
-              t2s: T2*w scan with axial orientation and thick slices.
+
+              - t2: T2w scan with isotropic or anisotropic resolution.
+              - t2_ax: T2w scan with axial orientation and thick slices.
+              - t2s: T2*w scan with axial orientation and thick slices.
         """),
         choices=('t2', 't2_ax', 't2s'),
     )
@@ -52,10 +53,11 @@ def get_parser():
         "-centerline",
         help=textwrap.dedent("""
             Method used for extracting the centerline:
-              svm: Automatic detection using Support Vector Machine algorithm.
-              cnn: Automatic detection using Convolutional Neural Network.
-              viewer: Semi-automatic detection using manual selection of a few points with an interactive viewer followed by regularization.
-              file: Use an existing centerline (use with flag -file_centerline)
+
+              - svm: Automatic detection using Support Vector Machine algorithm.
+              - cnn: Automatic detection using Convolutional Neural Network.
+              - viewer: Semi-automatic detection using manual selection of a few points with an interactive viewer followed by regularization.
+              - file: Use an existing centerline (use with flag -file_centerline)
         """),
         required=False,
         choices=('svm', 'cnn', 'viewer', 'file'),

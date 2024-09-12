@@ -42,12 +42,14 @@ def get_parser():
     parser = SCTArgumentParser(
         description=textwrap.dedent("""
             Motion correction of dMRI data. Some of the features to improve robustness were proposed in Xu et al. (https://dx.doi.org/10.1016/j.neuroimage.2012.11.014) and include:
+
               - group-wise (-g)
               - slice-wise regularized along z using polynomial function (-param). For more info about the method, type: isct_antsSliceRegularizedRegistration
               - masking (-m)
               - iterative averaging of target volume
 
             The outputs of the motion correction process are:
+
               - the motion-corrected dMRI volumes
               - the time average of the corrected dMRI volumes with b == 0
               - the time average of the corrected dMRI volumes with b != 0

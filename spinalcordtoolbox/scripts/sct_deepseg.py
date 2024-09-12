@@ -51,8 +51,10 @@ def get_parser():
         nargs="+",
         help=textwrap.dedent("""
             Contrast of the input. The `-c` option is only relevant for the following tasks:
+
               - 'seg_tumor-edema-cavity_t1-t2': Specifies the contrast order of input images (e.g. -c t1 t2)
               - 'seg_sc_ms_lesion_stir_psir': Specifies whether input should be inverted based on contrast (-c stir: no inversion, -c psir: inverted)
+
             Because all other models have only a single input contrast, the '-c' option is ignored for them.
         """),
         choices=('t1', 't2', 't2star', 'stir', 'psir'),
