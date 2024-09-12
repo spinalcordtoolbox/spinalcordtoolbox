@@ -26,6 +26,9 @@ Run the following command to segment the lesion using ``sct_deepseg_lesion`` fro
 
 :Output files/folders:
    - ``t2_lesionseg.nii.gz`` : 3D binary mask of the segmented lesion
+   - ``t2_res_RPI_seg.nii.gz`` : intermediate segmentation file -- you can ignore this file
+   - ``t2_RPI_seg.nii.gz`` : intermediate segmentation file -- you can ignore this file
+
 
 ----
 
