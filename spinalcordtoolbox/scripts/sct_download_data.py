@@ -40,8 +40,8 @@ def get_parser():
         metavar=Metavar.folder,
         action=ActionCreateFolder,
         help=textwrap.dedent("""
-             Path to a directory to save the downloaded data.
-             (If not provided, the dataset will be downloaded to the SCT installation directory by default. Directory will be created if it does not exist. Warning: existing data in the directory will be erased unless -k is provided.)
+            Path to a directory to save the downloaded data.
+            (If not provided, the dataset will be downloaded to the SCT installation directory by default. Directory will be created if it does not exist. Warning: existing data in the directory will be erased unless -k is provided.)
         """),  # noqa: E501 (line too long)
     )
     optional.add_argument(

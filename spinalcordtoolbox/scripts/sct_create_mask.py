@@ -66,10 +66,10 @@ def get_parser():
         required=True,
         help=textwrap.dedent("""
             Process to generate mask.
-               <coord,XxY>: Center mask at the X,Y coordinates. (e.g. "coord,20x15")
-               <point,FILE>: Center mask at the X,Y coordinates of the label defined in input volume FILE. (e.g. "point,label.nii.gz")
-               <center>: Center mask in the middle of the FOV (nx/2, ny/2).
-               <centerline,FILE>: At each slice, the mask is centered at the spinal cord centerline, defined by the input segmentation FILE. (e.g. "centerline,t2_seg.nii.gz")
+              <coord,XxY>: Center mask at the X,Y coordinates. (e.g. "coord,20x15")
+              <point,FILE>: Center mask at the X,Y coordinates of the label defined in input volume FILE. (e.g. "point,label.nii.gz")
+              <center>: Center mask in the middle of the FOV (nx/2, ny/2).
+              <centerline,FILE>: At each slice, the mask is centered at the spinal cord centerline, defined by the input segmentation FILE. (e.g. "centerline,t2_seg.nii.gz")
         """),
         metavar=Metavar.str,
     )

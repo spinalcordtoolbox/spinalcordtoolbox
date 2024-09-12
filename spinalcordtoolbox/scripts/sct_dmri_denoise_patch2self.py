@@ -23,12 +23,12 @@ patch2self = LazyLoader("patch2self", globals(), 'dipy.denoise.patch2self')
 def get_parser():
     parser = SCTArgumentParser(
         description=textwrap.dedent("""
-                    Utility function to denoise diffusion MRI images. Returns the denoised image and also the difference between the input and the output. The Patch2Self denoising algorithm is based on self-supervised denoising via statistical independence of noise, as described in the following publications:
+            Utility function to denoise diffusion MRI images. Returns the denoised image and also the difference between the input and the output. The Patch2Self denoising algorithm is based on self-supervised denoising via statistical independence of noise, as described in the following publications:
 
-                    - Fadnavis et al. Patch2Self: Denoising Diffusion MRI with Self-supervised Learning. NeurIPS, 2020, Vol. 33. (https://arxiv.org/abs/2011.01355)
-                    - Schilling et al. Patch2Self denoising of diffusion MRI in the cervical spinal cord improves intra-cord contrast, signal modelling, repeatability, and feature conspicuity. medRxiv, 2021. (https://www.medrxiv.org/content/10.1101/2021.10.04.21264389v2)
+              - Fadnavis et al. Patch2Self: Denoising Diffusion MRI with Self-supervised Learning. NeurIPS, 2020, Vol. 33. (https://arxiv.org/abs/2011.01355)
+              - Schilling et al. Patch2Self denoising of diffusion MRI in the cervical spinal cord improves intra-cord contrast, signal modelling, repeatability, and feature conspicuity. medRxiv, 2021. (https://www.medrxiv.org/content/10.1101/2021.10.04.21264389v2)
 
-                    The implementation is based on DIPY (https://docs.dipy.org/stable/examples_built/preprocessing/denoise_patch2self.html).
+            The implementation is based on DIPY (https://docs.dipy.org/stable/examples_built/preprocessing/denoise_patch2self.html).
         """),  # noqa: E501 (line too long)
     )
 
@@ -63,8 +63,8 @@ def get_parser():
         "-radius",
         help=textwrap.dedent("""
             Patch Radius used to generate p-neighbourhoods within Patch2Self. Notes:
-             - A radius of '0' will use 1x1x1 p-neighbourhoods, a radius of '1' will use 3x3x3 p-neighbourhoods, and so on.
-             - For anisotropic patch sizes, provide a comma-delimited list of 3 integers. (e.g. '-radius 0,1,0'). For isotropic patch sizes, provide a single int value (e.g. '-radius 0').
+              - A radius of '0' will use 1x1x1 p-neighbourhoods, a radius of '1' will use 3x3x3 p-neighbourhoods, and so on.
+              - For anisotropic patch sizes, provide a comma-delimited list of 3 integers. (e.g. '-radius 0,1,0'). For isotropic patch sizes, provide a single int value (e.g. '-radius 0').
         """),  # noqa: E501 (line too long)
         metavar=Metavar.int,
         default="0",

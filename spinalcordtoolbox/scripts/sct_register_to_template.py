@@ -140,27 +140,27 @@ def get_parser():
         '-l',
         metavar=Metavar.file,
         help=textwrap.dedent("""
-             One or two labels (preferred) located at the center of the spinal cord, on the mid-vertebral slice. Example: anat_labels.nii.gz
+            One or two labels (preferred) located at the center of the spinal cord, on the mid-vertebral slice. Example: anat_labels.nii.gz
 
-             For more information about label creation, please see: https://spinalcordtoolbox.com/user_section/tutorials/vertebral-labeling.html
+            For more information about label creation, please see: https://spinalcordtoolbox.com/user_section/tutorials/vertebral-labeling.html
         """)
     )
     optional.add_argument(
         '-ldisc',
         metavar=Metavar.file,
         help=textwrap.dedent("""
-             File containing disc labels. Labels can be located either at the posterior edge of the intervertebral discs, or at the orthogonal projection of each disc onto the spinal cord (e.g.: the file 'xxx_seg_labeled_discs.nii.gz' output by sct_label_vertebrae)
+            File containing disc labels. Labels can be located either at the posterior edge of the intervertebral discs, or at the orthogonal projection of each disc onto the spinal cord (e.g.: the file 'xxx_seg_labeled_discs.nii.gz' output by sct_label_vertebrae)
 
-             If you are using more than 2 labels, all discs covering the region of interest should be provided. E.g., if you are interested in levels C2 to C7, then you should provide disc labels 2,3,4,5,6,7. For more information about label creation, please refer to https://spinalcordtoolbox.com/user_section/tutorials/vertebral-labeling.html"
+            If you are using more than 2 labels, all discs covering the region of interest should be provided. E.g., if you are interested in levels C2 to C7, then you should provide disc labels 2,3,4,5,6,7. For more information about label creation, please refer to https://spinalcordtoolbox.com/user_section/tutorials/vertebral-labeling.html"
         """)  # noqa: E501 (line too long)
     )
     optional.add_argument(
         '-lspinal',
         metavar=Metavar.file,
         help=textwrap.dedent("""
-             Labels located in the center of the spinal cord, at the superior-inferior level corresponding to the mid-point of the spinal level. Example: anat_labels.nii.gz
+            Labels located in the center of the spinal cord, at the superior-inferior level corresponding to the mid-point of the spinal level. Example: anat_labels.nii.gz
 
-             Each label is a single voxel, which value corresponds to the spinal level (e.g.: 2 for spinal level 2). If you are using more than 2 labels, all spinal levels covering the region of interest should be provided (e.g., if you are interested in levels C2 to C7, then you should provide spinal level labels 2,3,4,5,6,7)."
+            Each label is a single voxel, which value corresponds to the spinal level (e.g.: 2 for spinal level 2). If you are using more than 2 labels, all spinal levels covering the region of interest should be provided (e.g., if you are interested in levels C2 to C7, then you should provide spinal level labels 2,3,4,5,6,7)."
         """)  # noqa: E501 (line too long)
     )
     optional.add_argument(

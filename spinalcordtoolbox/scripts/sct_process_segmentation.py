@@ -166,7 +166,7 @@ def get_parser():
         default=os.path.join('.', 'label', 'template', 'PAM50_levels.nii.gz'),
         help=textwrap.dedent("""
             Vertebral labeling file. Only use with flag -vert.
-        The input and the vertebral labelling file must in the same voxel coordinate system and must match the dimensions between each other.
+            The input and the vertebral labelling file must in the same voxel coordinate system and must match the dimensions between each other.
         """),
     )
     optional.add_argument(

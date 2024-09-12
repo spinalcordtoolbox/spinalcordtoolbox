@@ -54,53 +54,53 @@ def get_parser():
 
     parser.add_argument('-config', '-c',
                         help=textwrap.dedent("""
+        A json (.json) or yaml (.yml|.yaml) file with arguments. All arguments to the configuration file are the same as the command line arguments, except all dashes (-) are replaced with underscores (_). Using command line flags can be used to override arguments provided in the configuration file, but this is discouraged. Please note that while quotes are optional for strings in YAML omitting them may cause parse errors.
+        Note that for the "exclude_list" (or "include_list") argument you can exclude/include
+        entire subjects or individual sessions; see examples below.
 
-                        A json (.json) or yaml (.yml|.yaml) file with arguments. All arguments to the configuration file are the same as the command line arguments, except all dashes (-) are replaced with underscores (_). Using command line flags can be used to override arguments provided in the configuration file, but this is discouraged. Please note that while quotes are optional for strings in YAML omitting them may cause parse errors.
-                        Note that for the "exclude_list" (or "include_list") argument you can exclude/include
-                        entire subjects or individual sessions; see examples below.
+        Example YAML configuration:
+          path_data   : "~/sct_data"
+          path_output : "~/pipeline_results"
+          script      : "nature_paper_analysis.sh"
+          jobs        : -1
+          exclude_list : ["sub-01/ses-01", "sub-02", "ses-03"]      # this will exclude ses-01 for sub-01, all sessions for sub-02 and ses-03 for all subjects
 
-                            Example YAML configuration:
-                            path_data   : "~/sct_data"
-                            path_output : "~/pipeline_results"
-                            script      : "nature_paper_analysis.sh"
-                            jobs        : -1
-                            exclude_list : ["sub-01/ses-01", "sub-02", "ses-03"]      # this will exclude ses-01 for sub-01, all sessions for sub-02 and ses-03 for all subjects\n
-                            Example JSON configuration:
-                            {
-                            "path_data"   : "~/sct_data",
-                            "path_output" : "~/pipeline_results",
-                            "script"      : "nature_paper_analysis.sh",
-                            "jobs"        : -1,
-                            "exclude_list" : ["sub-01/ses-01", "sub-02", "ses-03"]
-                            }
-                        """))  # noqa: E501 (line too long)
+        Example JSON configuration:
+          {
+              "path_data"   : "~/sct_data",
+              "path_output" : "~/pipeline_results",
+              "script"      : "nature_paper_analysis.sh",
+              "jobs"        : -1,
+              "exclude_list" : ["sub-01/ses-01", "sub-02", "ses-03"]
+          }
+    """))  # noqa: E501 (line too long)
     parser.add_argument('-jobs', type=int, default=1,
                         help=textwrap.dedent("""
-                        The number of jobs to run in parallel. Either an integer greater than or equal to one specifying the number of cores, 0 or a negative integer specifying number of cores minus that number. For example "-jobs -1" will run with all the available cores minus one job in parallel. Set "-jobs 0" to use all available cores.
-                        This argument enables process-based parallelism, while "-itk-threads" enables thread-based parallelism. You may need to tweak both to find a balance that works best for your system."""),  # noqa: E501 (line too long)
+                            The number of jobs to run in parallel. Either an integer greater than or equal to one specifying the number of cores, 0 or a negative integer specifying number of cores minus that number. For example "-jobs -1" will run with all the available cores minus one job in parallel. Set "-jobs 0" to use all available cores.
+                            This argument enables process-based parallelism, while "-itk-threads" enables thread-based parallelism. You may need to tweak both to find a balance that works best for your system."""),  # noqa: E501 (line too long)
                         metavar=Metavar.int)
     parser.add_argument('-itk-threads', type=int, default=1,
                         help=textwrap.dedent("""
-                        Sets the environment variable "ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS".
-                        Number of threads to use for ITK based programs including ANTs. Increasing this can provide a performance boost for high-performance (multi-core) computing environments. However, increasing the number of threads may also result in a large increase in memory.
-                        This argument enables thread-based parallelism, while "-jobs" enables process-based parallelism. You may need to tweak both to find a balance that works best for your system."""),  # noqa: E501 (line too long)
+                            Sets the environment variable "ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS".
+                            Number of threads to use for ITK based programs including ANTs. Increasing this can provide a performance boost for high-performance (multi-core) computing environments. However, increasing the number of threads may also result in a large increase in memory.
+                            This argument enables thread-based parallelism, while "-jobs" enables process-based parallelism. You may need to tweak both to find a balance that works best for your system."""),  # noqa: E501 (line too long)
                         metavar=Metavar.int)
     parser.add_argument('-path-data', help=textwrap.dedent("""
-                        Setting for environment variable: PATH_DATA
-                        Path containing subject directories in a consistent format)""")),
+                            Setting for environment variable: PATH_DATA
+                            Path containing subject directories in a consistent format)""")),
     parser.add_argument('-subject-prefix', default='sub-',
                         help='Subject prefix, defaults to "sub-" which is the prefix used for BIDS directories. '
                         'If the subject directories do not share a common prefix, an empty string can be '
                         'passed here.')
     parser.add_argument('-path-output', default='.',
                         help=textwrap.dedent(f"""
-                        Base directory for environment variables:
+                            Base directory for environment variables:
 
-                        PATH_DATA_PROCESSED={os.path.join('<path-output>', 'data_processed')}
-                        PATH_RESULTS={os.path.join('<path-output>', 'results')}
-                        PATH_QC={os.path.join('<path-output>', 'qc')}
-                        PATH_LOG={os.path.join('<path-output>', 'log')}
-                        Which are respectively output paths for the processed data, results, quality control (QC) and logs"""))
+                            PATH_DATA_PROCESSED={os.path.join('<path-output>', 'data_processed')}
+                            PATH_RESULTS={os.path.join('<path-output>', 'results')}
+                            PATH_QC={os.path.join('<path-output>', 'qc')}
+                            PATH_LOG={os.path.join('<path-output>', 'log')}
+                            Which are respectively output paths for the processed data, results, quality control (QC) and logs"""))
     parser.add_argument('-batch-log', default='sct_run_batch_log.txt',
                         help='A log file for all terminal output produced by this script (not '
                         'necessarily including the individual job outputs. File will be relative '
@@ -111,8 +111,8 @@ def get_parser():
                         'Cannot be used with `include-list`.')
     parser.add_argument('-include-list',
                         help=textwrap.dedent("""
-                        Optional space separated list of subjects or sessions to include. Only process subjects or sessions if they are on this list. Inclusions are processed before exclusions. Cannot be used with `include`. You can combine subjects and sessions; see examples.
-                        Examples: '-include-list sub-001 sub-002' or '-include-list sub-001/ses-01 ses-02'"""),  # noqa: E501 (line too long)
+                            Optional space separated list of subjects or sessions to include. Only process subjects or sessions if they are on this list. Inclusions are processed before exclusions. Cannot be used with `include`. You can combine subjects and sessions; see examples.
+                            Examples: '-include-list sub-001 sub-002' or '-include-list sub-001/ses-01 ses-02'"""),  # noqa: E501 (line too long)
                         nargs='+')
     parser.add_argument('-exclude',
                         help='Optional regex used to filter the list of subject directories. Only process '
@@ -120,8 +120,8 @@ def get_parser():
                         'after inclusions. Cannot be used with `exclude-list`')
     parser.add_argument('-exclude-list',
                         help=textwrap.dedent("""
-            Optional space separated list of subjects or sessions to exclude. Only process subjects or sessions if they are not on this list. Inclusions are processed before exclusions. Cannot be used with `exclude`. You can combine subjects and sessions; see examples.
-                        Examples: "-exclude-list sub-003 sub-004" or "-exclude-list sub-003/ses-01 ses-02"
+                            Optional space separated list of subjects or sessions to exclude. Only process subjects or sessions if they are not on this list. Inclusions are processed before exclusions. Cannot be used with `exclude`. You can combine subjects and sessions; see examples.
+                            Examples: "-exclude-list sub-003 sub-004" or "-exclude-list sub-003/ses-01 ses-02"
         """),  # noqa: E501 (line too long)
                         nargs='+')
     parser.add_argument('-ignore-ses', action='store_true',
@@ -136,10 +136,10 @@ def get_parser():
     parser.add_argument('-script-args', default='',
                         help=textwrap.dedent("""
                             A quoted string with extra arguments to pass to the script.
-                             For example "sct_run_batch -path-data data/ -script process_data.sh -script-args "ARG1 ARG2"".
-                             The arguments are retrieved by a script as "${2}", "${3}", etc.
-                             Note: "${1}" is reserved for the subject folder name, which is retrieved automatically.
-                             Note: Do not use "~" in the path. Use "${HOME}" instead.)"""))
+                            For example "sct_run_batch -path-data data/ -script process_data.sh -script-args "ARG1 ARG2"".
+                            The arguments are retrieved by a script as "${2}", "${3}", etc.
+                            Note: "${1}" is reserved for the subject folder name, which is retrieved automatically.
+                            Note: Do not use "~" in the path. Use "${HOME}" instead.)"""))
     parser.add_argument('-email-to',
                         help='Optional email address where sct_run_batch can send an alert on completion of the '
                         'batch processing.')

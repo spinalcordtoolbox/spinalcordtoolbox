@@ -50,10 +50,10 @@ def get_parser():
     # Initialize the parser
     parser = SCTArgumentParser(
         description=textwrap.dedent("""
-                    Smooth the spinal cord along its centerline. Steps are:
-                      1) Spinal cord is straightened (using centerline),
-                      2) a Gaussian kernel is applied in the superior-inferior direction,
-                      3) then cord is de-straightened as originally.
+            Smooth the spinal cord along its centerline. Steps are:
+              1) Spinal cord is straightened (using centerline),
+              2) a Gaussian kernel is applied in the superior-inferior direction,
+              3) then cord is de-straightened as originally.
         """),
     )
 

@@ -25,17 +25,17 @@ def get_parser():
     parser = SCTArgumentParser(
         description=textwrap.dedent("""
             Motion correction of fMRI data. Some robust features include:
-                      - group-wise (-g)
-                      - slice-wise regularized along z using polynomial function (-p)
-                        (For more info about the method, type: isct_antsSliceRegularizedRegistration)
-                      - masking (-m)
-                      - iterative averaging of target volume
+              - group-wise (-g)
+              - slice-wise regularized along z using polynomial function (-p)
+                (For more info about the method, type: isct_antsSliceRegularizedRegistration)
+              - masking (-m)
+              - iterative averaging of target volume
 
-                    The outputs of the motion correction process are:
-                      - the motion-corrected fMRI volumes
-                      - the time average of the corrected fMRI volumes
-                      - a time-series with 1 voxel in the XY plane, for the X and Y motion direction (two separate files), as required for FSL analysis.
-                      - a TSV file with one row for each time point, with the slice-wise average of the motion correction magnitude for that time point, that can be used for Quality Control.
+            The outputs of the motion correction process are:
+              - the motion-corrected fMRI volumes
+              - the time average of the corrected fMRI volumes
+              - a time-series with 1 voxel in the XY plane, for the X and Y motion direction (two separate files), as required for FSL analysis.
+              - a TSV file with one row for each time point, with the slice-wise average of the motion correction magnitude for that time point, that can be used for Quality Control.
         """),  # noqa: E501 (line too long)
     )
 

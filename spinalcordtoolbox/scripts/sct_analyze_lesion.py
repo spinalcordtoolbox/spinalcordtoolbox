@@ -61,7 +61,7 @@ def get_parser():
         required=False,
         help=textwrap.dedent("""
             Spinal cord centerline or segmentation file, which will be used to correct morphometric measures with cord angle with respect to slice. (e.g. 't2_seg.nii.gz')
-             If provided, then the lesion volume, length, diameter, axial damage ratio, and tissue bridges will be computed. Otherwise, if not provided, then only the lesion volume will be computed.
+            If provided, then the lesion volume, length, diameter, axial damage ratio, and tissue bridges will be computed. Otherwise, if not provided, then only the lesion volume will be computed.
         """),  # noqa: E501 (line too long)
         metavar=Metavar.file)
     optional.add_argument(
@@ -79,8 +79,8 @@ def get_parser():
                a. for each lesion, the proportion of that lesion within each vertebral level and each region of the template (e.g. GM, WM, WM tracts). Each cell contains a percentage value representing how much of the lesion volume exists within the region indicated by the row/column (rows represent vertebral levels, columns represent ROIs). The percentage values are summed to totals in both the bottom row and the right column, and the sum of all cells is 100 (i.e. 100 percent of the lesion), found in the bottom-right.
                b. the proportions of each ROI (e.g. vertebral level, GM, WM) occupied by lesions.
 
-             These percentage values are stored in different pages of the output `lesion_analysis.xls` spreadsheet;
-             one page for each lesion (a.) plus a final page summarizing the total ROI occupation of all lesions (b.)
+            These percentage values are stored in different pages of the output `lesion_analysis.xls` spreadsheet;
+            one page for each lesion (a.) plus a final page summarizing the total ROI occupation of all lesions (b.)
         """),  # noqa: E501 (line too long)
         metavar=Metavar.str,
         default=None,

@@ -122,21 +122,22 @@ def get_parser():
         default=param_default.method,
         help=textwrap.dedent("""
             Method to extract metrics.
-               - ml: maximum likelihood.
+
+              - ml: maximum likelihood.
                  This method is recommended for large labels and low noise. Also, this method should only be used
               with the PAM50 white/gray matter atlas, or with any custom atlas as long as the sum across all labels
               equals 1, in each voxel part of the atlas.
-               - map: maximum a posteriori.
+              - map: maximum a posteriori.
                  Mean priors are estimated by maximum likelihood within three clusters
               (white matter, gray matter and CSF). Tract and noise variance are set with flag -p.
               This method should only be used with the PAM50 white/gray matter atlas, or with any custom atlas
               as long as the sum across all labels equals 1, in each voxel part of the atlas.
-               - wa: weighted average
-               - bin: binarize mask (threshold=0.5)
-               - median: weighted median.
+              - wa: weighted average
+              - bin: binarize mask (threshold=0.5)
+              - median: weighted median.
                  This implementation of the median treats quantiles as a continuous (vs. discrete) function. For
               more details, see https://pypi.org/project/wquantiles/
-               - max: for each z-slice of the input data, extract the max value for each slice of the input data.
+              - max: for each z-slice of the input data, extract the max value for each slice of the input data.
         """),
     )
     optional.add_argument(
@@ -174,7 +175,7 @@ def get_parser():
         default=param_default.slices_of_interest,
         help=textwrap.dedent("""
             Slice range to estimate the metric from. First slice is 0. Example: 5:23
-             You can also select specific slices using commas. Example: 0,2,3,5,12'
+            You can also select specific slices using commas. Example: 0,2,3,5,12'
         """),
     )
     optional.add_argument(
@@ -183,8 +184,8 @@ def get_parser():
         choices=(0, 1),
         default=param_default.perslice,
         help=textwrap.dedent("""
-             Whether to output one metric per slice instead of a single output metric. 0 = no, 1 = yes.
-             Please note that when methods ml or map are used, outputting a single metric per slice and then averaging them all is not the same as outputting a single metric at once across all slices.
+            Whether to output one metric per slice instead of a single output metric. 0 = no, 1 = yes.
+            Please note that when methods ml or map are used, outputting a single metric per slice and then averaging them all is not the same as outputting a single metric at once across all slices.
         """),  # noqa: E501 (line too long)
     )
     optional.add_argument(
@@ -201,7 +202,7 @@ def get_parser():
         default=os.path.join(".", "label", "template", "PAM50_levels.nii.gz"),
         help=textwrap.dedent("""
             Vertebral labeling file. Only use with flag -vert.
-             The input Image and the vertebral labelling file must in the same voxel coordinate system and must match the dimensions between each other.
+            The input Image and the vertebral labelling file must in the same voxel coordinate system and must match the dimensions between each other.
         """),
     )
     optional.add_argument(
@@ -211,7 +212,7 @@ def get_parser():
         default=0,
         help=textwrap.dedent("""
             Whether to output one metric per vertebral level instead of a single output metric. 0 = no, 1 = yes.
-             Please note that this flag needs to be used with the -vert option.
+            Please note that this flag needs to be used with the -vert option.
         """),
     )
     optional.add_argument(
@@ -231,8 +232,8 @@ def get_parser():
         default='',
         help=textwrap.dedent("""
             Advanced parameters for the 'map' method. Separate with comma. All items must be listed (separated with comma).
-               - #1: standard deviation of metrics across labels
-               - #2: standard deviation of the noise (assumed Gaussian)
+              - #1: standard deviation of metrics across labels
+              - #2: standard deviation of the noise (assumed Gaussian)
         """),
     )
     advanced.add_argument(
@@ -256,8 +257,8 @@ def get_parser():
         default='',
         help=textwrap.dedent("""
             Method to use for normalization:
-               - sbs: normalization slice-by-slice
-               - whole: normalization by the metric value in the whole label for all slices.
+              - sbs: normalization slice-by-slice
+              - whole: normalization by the metric value in the whole label for all slices.
         """),
     )
     advanced.add_argument(
