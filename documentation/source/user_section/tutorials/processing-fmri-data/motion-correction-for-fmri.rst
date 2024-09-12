@@ -17,7 +17,7 @@ SCT features a complex motion correction algorithm, which is inspired by `[Xu et
 Applying the algorithm
 ----------------------
 
-To apply the algorithm, we use the ``sct_fmri_moco`` command:
+To apply the algorithm, we use the :ref:`sct_fmri_moco` command:
 
 
 .. code::

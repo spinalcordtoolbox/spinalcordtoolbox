@@ -7,7 +7,7 @@ Quantify spinal cord compression
   :align: center
   :figwidth: 80%
 
-This section demonstrates how to compute normalized morphometric measures to assess spinal cord compression using the ``sct_compute_compression`` command.
+This section demonstrates how to compute normalized morphometric measures to assess spinal cord compression using the :ref:`sct_compute_compression` command.
 
 
 .. toctree::

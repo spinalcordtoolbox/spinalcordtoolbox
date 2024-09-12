@@ -1,13 +1,13 @@
 .. TODO:
 
-   Is this one-page tutorial necessary? It is basically just telling users that the ``sct_flatten_sagittal`` tool exists. (Compared to other tutorials, which demonstrate multi-step workflows.)
+   Is this one-page tutorial necessary? It is basically just telling users that the :ref:`sct_flatten_sagittal` tool exists. (Compared to other tutorials, which demonstrate multi-step workflows.)
 
    So, I am thinking that maybe this page will be unnecessary once we organize the "Command-Line Tools" page into one-page-per-script. We could simply have all of this information on the dedicated "sct_flatten_sagittal" page instead, and save the "Tutorials" for complex workflows only.
 
 Visualizing misaligned cords with 2D sagittal flattening
 ########################################################
 
-Because some subjects (especially those with scoliosis) might not be perfectly aligned in the medial plane, it can sometimes be difficult to view the spinal cord when inspecting a subject's images using individual 2D slices. To address this problem, the function ``sct_flatten_sagittal`` applies slice-wise deformation to align the cord in the medial plane.
+Because some subjects (especially those with scoliosis) might not be perfectly aligned in the medial plane, it can sometimes be difficult to view the spinal cord when inspecting a subject's images using individual 2D slices. To address this problem, the function :ref:`sct_flatten_sagittal` applies slice-wise deformation to align the cord in the medial plane.
 
 Downloading the files for this tutorial
 ---------------------------------------
@@ -30,7 +30,7 @@ Next, open up your terminal and run the following command:
 
 :Input arguments:
    - ``-i`` : The input image.
-   - ``-s`` : A spinal cord segmentation mask corresponding to the input image. This is needed as ``sct_flatten_sagittal`` uses the centerline of the cord to align the image in the medial plane.
+   - ``-s`` : A spinal cord segmentation mask corresponding to the input image. This is needed as :ref:`sct_flatten_sagittal` uses the centerline of the cord to align the image in the medial plane.
 
 :Output files/folders:
    - ``t1_flatten.nii.gz`` : The input image, transformed in a way that ensures that the center medial (L-R) slice depicts the entire spinal cord.
@@ -40,4 +40,4 @@ Next, open up your terminal and run the following command:
 
 .. note::
 
-   This process should be used for visualization purposes only, as it does not preserve the internal structure of the cord. If you would like to properly align the cord along the RL and AP direction for analysis, we recommend you use ``sct_straighten_spinalcord`` instead, as that transformation is reversible.
+   This process should be used for visualization purposes only, as it does not preserve the internal structure of the cord. If you would like to properly align the cord along the RL and AP direction for analysis, we recommend you use :ref:`sct_straighten_spinalcord` instead, as that transformation is reversible.

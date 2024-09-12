@@ -3,7 +3,7 @@ Coregistering T1w with T2w
 
 Now that we've preprocessed our images, we can register the T1w image with the T2w image.
 
-To co-register the two images together, we will compute two different transformations: One to bring the T1w image into the T2w space (forward warping field), and one to bring the T2w image into the T1w space (inverse warping field). To perform coregistration, we use the ``sct_register_multimodal`` command. Multiple algorithms are available, and here we demonstrate SCT's deep learning-based registration method, which works well for registering two images with very different contrasts. Another advantage of the deep learning method compared to ANTs is that fewer parameters need to be tweaked (i.e., it works better "out of the box").
+To co-register the two images together, we will compute two different transformations: One to bring the T1w image into the T2w space (forward warping field), and one to bring the T2w image into the T1w space (inverse warping field). To perform coregistration, we use the :ref:`sct_register_multimodal` command. Multiple algorithms are available, and here we demonstrate SCT's deep learning-based registration method, which works well for registering two images with very different contrasts. Another advantage of the deep learning method compared to ANTs is that fewer parameters need to be tweaked (i.e., it works better "out of the box").
 
 .. code:: sh
 
@@ -14,7 +14,7 @@ To co-register the two images together, we will compute two different transforma
    - ``-i`` : Source image.
    - ``-d`` : Destination image.
    - ``-param`` : Here, we use very basic registration parameters as an example. (For more complex configurations, please refer to the :ref:`customizing-registration-section` section.)
-      - ``step=1`` : As ``sct_register_multimodal`` can perform multi-step registration, each step is prefixed with ``step=#``. (In this example, though, we only use a single-step registration.)
+      - ``step=1`` : As :ref:`sct_register_multimodal` can perform multi-step registration, each step is prefixed with ``step=#``. (In this example, though, we only use a single-step registration.)
       - ``type=im`` : Since this registration method only uses the input images ``-i`` and ``-d`` during registration, we specify ``type=im``, rather than ``type=seg`` or ``type=imseg``.
       - ``algo=dl`` : This corresponds to the contrast agnostic, deep learning (DL) registration method.
    - ``-qc`` : Directory for Quality Control reporting. QC reports allow us to evaluate the results slice-by-slice.
@@ -31,4 +31,4 @@ Once the command has finished, at the bottom of your terminal there will be inst
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/contrast-agnostic-registration/coregistration-t1-t2.png
    :align: center
 
-   Input/output images for ``sct_register_multimodal``
+   Input/output images for :ref:`sct_register_multimodal`

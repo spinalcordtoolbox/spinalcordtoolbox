@@ -18,7 +18,7 @@ First we compute the mean of the 4D fMRI data to obtain a coarse 3D approximatio
 
 :Input arguments:
    - ``-i`` : The input image.
-   - ``-mean`` : The dimension to compute the mean across. In this case, ``sct_maths`` will assume that the fMRI image is a 4D stack of 3D volumes, with dimension ``[x, y, z, t]``. Therefore, ``-mean t`` will average the 3D volumes across the temporal dimension.
+   - ``-mean`` : The dimension to compute the mean across. In this case, :ref:`sct_maths` will assume that the fMRI image is a 4D stack of 3D volumes, with dimension ``[x, y, z, t]``. Therefore, ``-mean t`` will average the 3D volumes across the temporal dimension.
    - ``-o``: The filename of the output image.
 
 :Output files/folders:
@@ -28,7 +28,7 @@ First we compute the mean of the 4D fMRI data to obtain a coarse 3D approximatio
 Generating a spinal cord segmentation
 -------------------------------------
 
-Due to the low contrast between spinal cord and cerebrospinal fluid of fMRI data, it is difficult to directly obtain a spinal cord segmentation for fMRI data using ``sct_deepseg_sc``. So, as a workaround, we will instead obtain a spinal cord segmentation for another contrast (T2), then transform it to the space of the fMRI data.
+Due to the low contrast between spinal cord and cerebrospinal fluid of fMRI data, it is difficult to directly obtain a spinal cord segmentation for fMRI data using :ref:`sct_deepseg_sc`. So, as a workaround, we will instead obtain a spinal cord segmentation for another contrast (T2), then transform it to the space of the fMRI data.
 
 
 Generating a T2 segmentation
@@ -50,7 +50,7 @@ Generating a T2 segmentation
 Transforming the T2 segmentation to the fMRI space
 ==================================================
 
-Since the segmentation image will only be used to coarsely highlight the region of interest, a complex transformation is not necessary, so we supply the ``-identity`` to ``sct_register_multimodal`` to speed up processing.
+Since the segmentation image will only be used to coarsely highlight the region of interest, a complex transformation is not necessary, so we supply the ``-identity`` to :ref:`sct_register_multimodal` to speed up processing.
 
 .. code::
 

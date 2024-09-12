@@ -3,7 +3,7 @@ Coregistering MT0 with MT1
 
 Prior to computing the MTR, we will first align the MT0 image with the MT1 image. (Here, "MT0" refers to the image without the magnetization transfer pulse, and "MT1" refers to the image with the pulse.)
 
-To align the images, we will coregister them together. In other words, we will compute two different transformations: One to bring the MT0 image into the MT1 space, and one to bring the MT1 image into the MT0 space. To perform coregistration, we use the ``sct_register_multimodal`` command.
+To align the images, we will coregister them together. In other words, we will compute two different transformations: One to bring the MT0 image into the MT1 space, and one to bring the MT1 image into the MT0 space. To perform coregistration, we use the :ref:`sct_register_multimodal` command.
 
 .. code:: sh
 
@@ -30,4 +30,4 @@ Once the command has finished, at the bottom of your terminal there will be inst
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/mtr-computation/mt-registration-mt0-mt1.png
    :align: center
 
-   Input/output images for ``sct_register_multimodal``
+   Input/output images for :ref:`sct_register_multimodal`

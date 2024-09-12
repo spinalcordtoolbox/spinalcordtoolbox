@@ -20,4 +20,4 @@ Once the command has finished, at the bottom of your terminal there will be inst
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/spinalcord-segmentation/t2_propseg_before_after.png
    :align: center
 
-   Output of ``sct_deepseg_sc``
+   Output of :ref:`sct_deepseg_sc`

@@ -24,7 +24,7 @@ As before, you can use the ``-create-viewer`` option, this time providing multip
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/vertebral-labeling/vertebral-labeling-manual-all.png
    :align: center
 
-   Input/output images for ``sct_label_utils -create-viewer 3,4,5``
+   Input/output images for :ref:`sct_label_utils` ``-create-viewer 3,4,5``
 
 .. note::
 
