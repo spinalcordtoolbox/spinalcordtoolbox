@@ -24,7 +24,7 @@ The following morphometric measures are computed:
   :align: center
   :figwidth: 60%
 
-* ``midsagittal_spinal_cord_slice`` : midsagittal slice of the spinal cord defined as the slice with the largest spinal cord area (computed from the spinal cord segmentation mask)
+* ``midsagittal_spinal_cord_slice`` : midsagittal slice of the spinal cord defined based on the spinal cord segmentation
 * ``length_midsagittal_slice [mm]`` : length of the lesion along the Superior-Inferior (SI) axis in the midsagittal slice
 * ``width_midsagittal_slice [mm]`` : width of the lesion along the Anterior-Posterior (AP) axis in the midsagittal slice
 * ``dorsal_bridge_width [mm]`` : dorsal tissue bridges defined as the width of dorsal spared tissue (i.e. towards the posterior direction of the AP axis) at the minimum distance from the intramedullary lesion edge to the boundary between the spinal cord and cerebrospinal fluid
