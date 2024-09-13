@@ -55,7 +55,11 @@ Run the following command to compute the lesion statistics:
 
 Details:
 
-* **maximum axial damage ratio:** `Smith, A.C., et al. Spinal Cord (2021) <https://doi.org/10.1038/s41393-020-00561-w>`_
-* **tissue bridges:** `Enamundram, N.K.*, Valošek, J.*, et al. arXiv (2024) <https://doi.org/10.48550/arXiv.2407.17265>`_, `Huber, E., et al. Ann Neurol. (2017) <https://doi.org/10.1002/ana.24932>`_, `Pfyffer, D., et al. Lancet Neurol. (2024) <https://doi.org/10.1016/S1474-4422%2824%2900173-X>`_
-
-TODO: check with collaborators what references to include for maximum axial damage ratio and tissue bridges
+* **maximum axial damage ratio:**
+  * `Smith, A.C., et al. Spinal Cord (2021) <https://doi.org/10.1038/s41393-020-00561-w>`_
+* **tissue bridges:**
+  * `Huber, E., et al. Ann Neurol. (2017) <https://doi.org/10.1002/ana.24932>`_
+  * `Pfyffer, D., et al. Neurology (2019) <https://doi.org/10.1212/WNL.0000000000008318>`_
+  * `O'Dell, D.R., et al. J Spinal Cord Med (2020) <https://doi.org/10.1080/10790268.2018.1527079>`_
+  * `Pfyffer, D., et al. Lancet Neurol. (2024) <https://doi.org/10.1016/S1474-4422%2824%2900173-X>`_
+  * `Enamundram, N.K., Valošek, J., et al. arXiv (2024) <https://doi.org/10.48550/arXiv.2407.17265>`_
