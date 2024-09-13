@@ -30,7 +30,7 @@ def get_parser():
         description='Compute statistics on segmented lesions. The function assigns an ID value to each lesion (1, 2, '
                     '3, etc.) and then outputs morphometric measures for each lesion:\n'
                     '- volume [mm^3]\n'
-                    '- length [mm]: length along the Superior-Inferior axis\n'
+                    '- length [mm]: maximal length of the lesion along the Superior-Inferior (SI) axis across all slices\n'
                     '- max_equivalent_diameter [mm]: maximum diameter of the lesion, when approximating the lesion as '
                     'a circle in the axial plane\n'
                     '- max_axial_damage_ratio []: maximum ratio of the lesion area divided by the spinal cord area\n'
