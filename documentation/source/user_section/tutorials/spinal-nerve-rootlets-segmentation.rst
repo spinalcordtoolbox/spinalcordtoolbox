@@ -11,5 +11,5 @@ This tutorial demonstrates how to use SCT's command-line script to perform spina
 .. toctree::
    :maxdepth: 1
 
-   lesion-analysis/before-starting
-   lesion-analysis/rootlets-segmentation
+   spinal-nerve-rootlets-segmentation/before-starting
+   spinal-nerve-rootlets-segmentation/rootlets-segmentation
