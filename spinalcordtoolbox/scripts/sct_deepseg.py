@@ -111,9 +111,9 @@ Project URL: [{models.TASKS[task]["url"]}]({models.TASKS[task]["url"]})
 
         seg = parser_dict[task].add_argument_group('\nTASKS')
         seg.add_argument(
-            "-install", "-install-task",
+            "-install",
             help="Install models that are required for specified task.",
-            choices=list(models.TASKS.keys()))
+            action="store_true")
         seg.add_argument(
             "-custom-url",
             nargs="+",  # NB: `nargs="+"` won't work for installing custom ensemble models, but we no longer have any
@@ -219,8 +219,8 @@ def main(argv: Sequence[str]):
     if arguments.list_tasks:
         models.display_list_tasks()
 
-    if arguments.install is not None:
-        models_to_install = models.TASKS[arguments.install]['models']
+    if arguments.install:
+        models_to_install = models.TASKS[arguments.task]['models']
         if arguments.custom_url:
             if len(arguments.custom_url) != len(models_to_install):
                 parser.error(f"Expected {len(models_to_install)} URL(s) for task {arguments.install}, "
