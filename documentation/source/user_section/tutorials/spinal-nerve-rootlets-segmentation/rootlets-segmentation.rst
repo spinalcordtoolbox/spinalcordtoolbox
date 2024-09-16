@@ -24,4 +24,4 @@ Run the following command to segment the spinal nerve rootlets from the input im
 
 Details:
 
- * `Valošek, J., et al. Imaging Neuroscience (2024) <https://doi.org/10.1162/imag_a_00218>`_
+* `Valošek, J., et al. Imaging Neuroscience (2024) <https://doi.org/10.1162/imag_a_00218>`_
