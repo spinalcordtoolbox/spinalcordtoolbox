@@ -8,7 +8,7 @@ This model was trained on 3D T2-weighted images and provides level-specific sema
 
 Run the following command to segment the spinal nerve rootlets from the input image:
 
- .. code:: sh
+.. code:: sh
     sct_deepseg -i t2.nii.gz -task seg_spinal_rootlets_t2w -qc ~/qc_singleSubj
 
 :Input arguments:
