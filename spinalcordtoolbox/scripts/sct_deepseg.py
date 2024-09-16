@@ -92,18 +92,6 @@ Project URL: [{models.TASKS[task]["url"]}]({models.TASKS[task]["url"]})
                  f"data must be cropped around the spinal cord. ({models.CROP_MESSAGE})",
             metavar=Metavar.file)
         input_output.add_argument(
-            "-c",
-            nargs="+",
-            help=textwrap.dedent("""
-                Contrast of the input. The `-c` option is only relevant for the following tasks:
-
-                  - `seg_tumor-edema-cavity_t1-t2`: Specifies the contrast order of input images (e.g. `-c t1 t2`)
-
-                Because all other models have only a single input contrast, the `-c` option is ignored for them.
-            """),
-            choices=('t1', 't2', 't2star'),
-            metavar=Metavar.str)
-        input_output.add_argument(
             "-o",
             help="Output file name. In case of multi-class segmentation, class-specific suffixes will be added. By default,"
                  "the suffix specified in the packaged model will be added and output extension will be .nii.gz.",
@@ -201,6 +189,14 @@ Project URL: [{models.TASKS[task]["url"]}]({models.TASKS[task]["url"]})
             default='Axial',
             help="Plane of the output QC. If Sagittal, you must also provide the -s option. Default: Axial.")
 
+    # Add options that only apply to a specific task
+    parser_dict['seg_tumor-edema-cavity_t1-t2'].add_argument(
+        "-c",
+        nargs="+",
+        help="Contrast of the input. Specifies the contrast order of input images (e.g. `-c t1 t2`)",
+        choices=('t1', 't2', 't2star'),
+        metavar=Metavar.str)
+
     return parser
 
 
@@ -288,7 +284,7 @@ def main(argv: Sequence[str]):
 
         # Order input images (only relevant for 'seg_tumor-edema-cavity_t1-t2')
         # TODO: Fix contrast-related behavior as per https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4445
-        if 'seg_tumor-edema-cavity_t1-t2' in arguments.task[0] and arguments.c is not None:
+        if 'seg_tumor-edema-cavity_t1-t2' in arguments.task[0] and hasattr(arguments, "c"):
             input_filenames = []
             for required_contrast in models.MODELS[name_model]['contrasts']:
                 for provided_contrast, input_filename in zip(arguments.c, arguments.i):
