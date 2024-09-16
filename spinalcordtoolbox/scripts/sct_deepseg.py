@@ -34,124 +34,17 @@ logger = logging.getLogger(__name__)
 
 
 def get_parser():
+    # Initialize the top-level `sct_deepseg` argparser
     parser = SCTArgumentParser(
         description="Segment an anatomical structure or pathologies according to the specified deep learning model.",
         epilog=models.list_tasks_string()
     )
-
-    input_output = parser.add_argument_group("INPUT/OUTPUT")
-    input_output.add_argument(
-        "-i",
-        nargs="+",
-        help=f"Image to segment. Can be multiple images (separated with space)."
-             f"\n\nNote: If choosing `-task seg_ms_lesion_mp2rage`, then the input "
-             f"data must be cropped around the spinal cord. ({models.CROP_MESSAGE})",
-        metavar=Metavar.file)
-    input_output.add_argument(
-        "-c",
-        nargs="+",
-        help=textwrap.dedent("""
-            Contrast of the input. The `-c` option is only relevant for the following tasks:
-
-              - `seg_tumor-edema-cavity_t1-t2`: Specifies the contrast order of input images (e.g. `-c t1 t2`)
-
-            Because all other models have only a single input contrast, the `-c` option is ignored for them.
-        """),
-        choices=('t1', 't2', 't2star'),
-        metavar=Metavar.str)
-    input_output.add_argument(
-        "-o",
-        help="Output file name. In case of multi-class segmentation, class-specific suffixes will be added. By default,"
-             "the suffix specified in the packaged model will be added and output extension will be .nii.gz.",
-        metavar=Metavar.str)
-
-    seg = parser.add_argument_group('TASKS')
-    seg.add_argument(
-        "-task",
-        nargs="+",
-        help="Task to perform. It could either be a pre-installed task, task that could be installed, or a custom task."
-             " To list available tasks, run: `sct_deepseg -list-tasks`. To use a custom task, indicate the path to the "
-             " packaged model. Models created with different frameworks ([ivadomed](https://ivadomed.org/), "
-             "[nnUNet](https://github.com/MIC-DKFZ/nnUNet), and [monai](https://monai.io)) are supported."
-             " More than one path can be indicated (separated with space) for cascaded application of the models.",
-        metavar=Metavar.str)
-    seg.add_argument(
+    parser.add_argument(
         "-list-tasks",
         action='store_true',
         help="Display a list of tasks, along with detailed descriptions (including information on how the model was "
              "trained, what data it was trained on, any performance evaluations, associated papers, etc.)")
-    seg.add_argument(
-        "-install", "-install-task",
-        help="Install models that are required for specified task.",
-        choices=list(models.TASKS.keys()))
-    seg.add_argument(
-        "-custom-url",
-        nargs="+",  # NB: `nargs="+"` won't work for installing custom ensemble models, but we no longer have any
-        help="URL(s) pointing to the `.zip` asset for a model release. This option can be used with `-install` to "
-             "install a specific version of a model. To use this option, navigate to the 'Releases' page of the model, "
-             "find release you wish to install, and right-click + copy the URL of the '.zip' listed under 'Assets'.\n"
-             "NB: For multi-model tasks, provide multiple URLs. For single models, just provide one URL.\n"
-             "Example:\n"
-             "'sct_deepseg -install seg_spinal_rootlets_t2w -custom-url "
-             "https://github.com/ivadomed/model-spinal-rootlets/releases/download/r20240523/model-spinal-rootlets_ventral_D106_r20240523.zip'\n"
-             "'sct_deepseg -i sub-amu01_T2w.nii.gz -task seg_spinal_rootlets_t2w'")
-
-    misc = parser.add_argument_group('PARAMETERS')
-    misc.add_argument(
-        "-thr",
-        type=float,
-        dest='binarize_prediction',
-        help="Binarize segmentation with specified threshold. Set to 0 for no thresholding (i.e., soft segmentation). "
-             "Default value is model-specific and was set during optimization "
-             "(more info at https://github.com/sct-pipeline/deepseg-threshold).",
-        metavar=Metavar.float,
-        default=None)
-    misc.add_argument(
-        "-r",
-        type=int,
-        help="Remove temporary files.",
-        choices=(0, 1),
-        default=1)
-    misc.add_argument(
-        "-largest",
-        dest='keep_largest',
-        type=int,
-        help="Keep the largest connected-objects from the output segmentation. Specify the number of objects to keep."
-             "To keep all objects, set to 0",
-        default=None)
-    misc.add_argument(
-        "-fill-holes",
-        type=int,
-        help="Fill small holes in the segmentation.",
-        choices=(0, 1),
-        default=None)
-    misc.add_argument(
-        "-remove-small",
-        type=str,
-        nargs="+",
-        help="Minimal object size to keep with unit (mm3 or vox). A single value can be provided or one value per "
-             "prediction class. Single value example: 1mm3, 5vox. Multiple values example: 10 20 10vox (remove objects "
-             "smaller than 10 voxels for class 1 and 3, and smaller than 20 voxels for class 2).",
-        default=None)
-
-    misc = parser.add_argument_group('MISC')
-    misc.add_argument(
-        '-qc',
-        metavar=Metavar.folder,
-        action=ActionCreateFolder,
-        help="The path where the quality control generated content will be saved."
-    )
-    misc.add_argument(
-        '-qc-dataset',
-        metavar=Metavar.str,
-        help="If provided, this string will be mentioned in the QC report as the dataset the process was run on."
-    )
-    misc.add_argument(
-        '-qc-subject',
-        metavar=Metavar.str,
-        help="If provided, this string will be mentioned in the QC report as the subject the process was run on."
-    )
-    misc.add_argument(
+    parser.add_argument(
         '-v',
         metavar=Metavar.int,
         type=int,
@@ -159,17 +52,154 @@ def get_parser():
         default=1,
         # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
         help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
-    misc.add_argument(
+    parser.add_argument(
         "-h",
         "--help",
         action="help",
         help="Show this help message and exit")
-    misc.add_argument(
-        "-qc-plane",
-        metavar=Metavar.str,
-        choices=('Axial', 'Sagittal'),
-        default='Axial',
-        help="Plane of the output QC. If Sagittal, you must also provide the -s option. Default: Axial.")
+
+    # Initialize the `subparsers` "special action object" that can be used to create subparsers
+    # See https://docs.python.org/3/library/argparse.html#sub-commands for more details.
+    parser_dict = {}
+    subparsers = parser.add_subparsers(help=textwrap.dedent("""
+        Segmentation task to perform.
+            - To install a task, run `sct_deepseg TASK_NAME -install`
+            - To segment an image, run `sct_deepseg TASK_NAME -i input.nii.gz`
+            - To view additional options for a given task, run `sct_deepseg TASK_NAME -h`
+    """), metavar="TASK_NAME", dest="task")
+
+    # Generate 1 subparser per task, and add the following arguments to all subparsers
+    # Even if all subparsers share these arguments, it's better to duplicate them, since it allows for the usage:
+    #    `sct_deepseg TASK_NAME -i input.nii.gz`
+    # In other words, the arguments can come after the task name, which matches current usage. Otherwise, we would have
+    # to use the following usage instead, which feels weird when we're using subcommands:
+    #    `sct_deepseg -i input.nii.gz TASK_NAME`
+    for task in models.TASKS.keys():
+        parser_dict[task] = subparsers.add_parser(task, description=(f"""
+{models.TASKS[task]["description"]}
+
+{models.TASKS[task]["long_description"]}
+
+Project URL: [{models.TASKS[task]["url"]}]({models.TASKS[task]["url"]})
+        """))
+
+        input_output = parser_dict[task].add_argument_group("\nINPUT/OUTPUT")
+        input_output.add_argument(
+            "-i",
+            nargs="+",
+            help=f"Image to segment. Can be multiple images (separated with space)."
+                 f"\n\nNote: If choosing `-task seg_ms_lesion_mp2rage`, then the input "
+                 f"data must be cropped around the spinal cord. ({models.CROP_MESSAGE})",
+            metavar=Metavar.file)
+        input_output.add_argument(
+            "-c",
+            nargs="+",
+            help=textwrap.dedent("""
+                Contrast of the input. The `-c` option is only relevant for the following tasks:
+
+                  - `seg_tumor-edema-cavity_t1-t2`: Specifies the contrast order of input images (e.g. `-c t1 t2`)
+
+                Because all other models have only a single input contrast, the `-c` option is ignored for them.
+            """),
+            choices=('t1', 't2', 't2star'),
+            metavar=Metavar.str)
+        input_output.add_argument(
+            "-o",
+            help="Output file name. In case of multi-class segmentation, class-specific suffixes will be added. By default,"
+                 "the suffix specified in the packaged model will be added and output extension will be .nii.gz.",
+            metavar=Metavar.str)
+
+        seg = parser_dict[task].add_argument_group('\nTASKS')
+        seg.add_argument(
+            "-install", "-install-task",
+            help="Install models that are required for specified task.",
+            choices=list(models.TASKS.keys()))
+        seg.add_argument(
+            "-custom-url",
+            nargs="+",  # NB: `nargs="+"` won't work for installing custom ensemble models, but we no longer have any
+            help="URL(s) pointing to the `.zip` asset for a model release. This option can be used with `-install` to "
+                 "install a specific version of a model. To use this option, navigate to the 'Releases' page of the model, "
+                 "find release you wish to install, and right-click + copy the URL of the '.zip' listed under 'Assets'.\n"
+                 "NB: For multi-model tasks, provide multiple URLs. For single models, just provide one URL.\n"
+                 "Example:\n"
+                 "'sct_deepseg -install seg_spinal_rootlets_t2w -custom-url "
+                 "https://github.com/ivadomed/model-spinal-rootlets/releases/download/r20240523/model-spinal-rootlets_ventral_D106_r20240523.zip'\n"
+                 "'sct_deepseg -i sub-amu01_T2w.nii.gz -task seg_spinal_rootlets_t2w'")
+
+        misc = parser_dict[task].add_argument_group('\nPARAMETERS')
+        misc.add_argument(
+            "-thr",
+            type=float,
+            dest='binarize_prediction',
+            help="Binarize segmentation with specified threshold. Set to 0 for no thresholding (i.e., soft segmentation). "
+                 "Default value is model-specific and was set during optimization "
+                 "(more info at https://github.com/sct-pipeline/deepseg-threshold).",
+            metavar=Metavar.float,
+            default=None)
+        misc.add_argument(
+            "-r",
+            type=int,
+            help="Remove temporary files.",
+            choices=(0, 1),
+            default=1)
+        misc.add_argument(
+            "-largest",
+            dest='keep_largest',
+            type=int,
+            help="Keep the largest connected-objects from the output segmentation. Specify the number of objects to keep."
+                 "To keep all objects, set to 0",
+            default=None)
+        misc.add_argument(
+            "-fill-holes",
+            type=int,
+            help="Fill small holes in the segmentation.",
+            choices=(0, 1),
+            default=None)
+        misc.add_argument(
+            "-remove-small",
+            type=str,
+            nargs="+",
+            help="Minimal object size to keep with unit (mm3 or vox). A single value can be provided or one value per "
+                 "prediction class. Single value example: 1mm3, 5vox. Multiple values example: 10 20 10vox (remove objects "
+                 "smaller than 10 voxels for class 1 and 3, and smaller than 20 voxels for class 2).",
+            default=None)
+
+        misc = parser_dict[task].add_argument_group('\nMISC')
+        misc.add_argument(
+            '-qc',
+            metavar=Metavar.folder,
+            action=ActionCreateFolder,
+            help="The path where the quality control generated content will be saved."
+        )
+        misc.add_argument(
+            '-qc-dataset',
+            metavar=Metavar.str,
+            help="If provided, this string will be mentioned in the QC report as the dataset the process was run on."
+        )
+        misc.add_argument(
+            '-qc-subject',
+            metavar=Metavar.str,
+            help="If provided, this string will be mentioned in the QC report as the subject the process was run on."
+        )
+        misc.add_argument(
+            '-v',
+            metavar=Metavar.int,
+            type=int,
+            choices=[0, 1, 2],
+            default=1,
+            # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
+            help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
+        misc.add_argument(
+            "-h",
+            "--help",
+            action="help",
+            help="Show this help message and exit")
+        misc.add_argument(
+            "-qc-plane",
+            metavar=Metavar.str,
+            choices=('Axial', 'Sagittal'),
+            default='Axial',
+            help="Plane of the output QC. If Sagittal, you must also provide the -s option. Default: Axial.")
 
     return parser
 
@@ -180,11 +210,10 @@ def main(argv: Sequence[str]):
     verbose = arguments.v
     set_loglevel(verbose=verbose, caller_module_name=__name__)
 
-    if (arguments.list_tasks is False
-            and arguments.install is None
-            and (arguments.i is None or arguments.task is None)):
-        parser.error("You must specify either '-list-tasks', '-install-task', "
-                     "or both '-i' + '-task'.")
+    if (arguments.task is None or (arguments.task and not (arguments.install or arguments.i))
+            and not arguments.list_tasks):
+        parser.error("You must specify either a task name + '-install', a task name + an image ('-i'), or "
+                     "'-list-tasks'.")
 
     # Deal with task long description
     if arguments.list_tasks:
