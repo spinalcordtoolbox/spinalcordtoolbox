@@ -22,5 +22,6 @@ Run the following command to segment the spinal nerve rootlets from the input im
     - ``t2_seg.json`` : JSON file containing details about the segmentation model
 
 
- Details:
+Details:
+
  * `Valošek, J., et al. Imaging Neuroscience (2024) <https://doi.org/10.1162/imag_a_00218>`_
