@@ -39,6 +39,7 @@ We provide the following hands-on tutorials for SCT's command-line tools.
 #. :doc:`Atlas-based analysis <tutorials/atlas-based-analysis>`
 #. :doc:`Diffusion-weighted MRI (Motion correction, DTI computation) <tutorials/diffusion-weighted-mri>`
 #. :doc:`Functional MRI (Motion correction, Spinal level labeling) <tutorials/processing-fmri-data>`
+#. :doc:`Spinal Nerve Rootlets Segmentation <tutorials/spinal-nerve-rootlets-segmentation>`
 #. :doc:`Other features <tutorials/other-features>`
 
    * :doc:`Spinal cord smoothing <tutorials/other-features/spinalcord-smoothing>`
