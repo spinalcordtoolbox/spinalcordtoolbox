@@ -111,9 +111,9 @@ Project URL: [{models.TASKS[task]["url"]}]({models.TASKS[task]["url"]})
 
         seg = parser_dict[task].add_argument_group('\nTASKS')
         seg.add_argument(
-            "-install", "-install-task",
+            "-install",
             help="Install models that are required for specified task.",
-            choices=list(models.TASKS.keys()))
+            action="store_true")
 
         misc = parser_dict[task].add_argument_group('\nPARAMETERS')
         misc.add_argument(
@@ -202,8 +202,8 @@ def main(argv: Sequence[str]):
     if arguments.list_tasks:
         models.display_list_tasks()
 
-    if arguments.install is not None:
-        for name_model in models.TASKS[arguments.install]['models']:
+    if arguments.install:
+        for name_model in models.TASKS[arguments.task_name]['models']:
             models.install_model(name_model)
         exit(0)
 
