@@ -188,7 +188,7 @@ class SCTArgumentParser(argparse.ArgumentParser):
         TODO: Centralize `-v`, `-r`, and `-h` arguments here too, as they're copied
               and pasted across all SCT scripts.
     """
-    def __init__(self, description, epilog=None, argument_default=None):
+    def __init__(self, description, epilog=None, argument_default=None, *args, **kwargs):
         super(SCTArgumentParser, self).__init__(
             description=description,
             epilog=epilog,
@@ -196,7 +196,9 @@ class SCTArgumentParser(argparse.ArgumentParser):
             argument_default=argument_default,
             # Disable "add_help", because it won't properly add '-h' to our custom argument groups
             # (We use custom argument groups because of https://stackoverflow.com/a/24181138)
-            add_help=False
+            add_help=False,
+            *args,
+            **kwargs
         )
 
         # Update "usage:" message to match how SCT scripts are actually called (no '.py')
