@@ -77,5 +77,6 @@ If you would prefer to learn how to use SCT in a guided workshop setting, we pro
    tutorials/atlas-based-analysis
    tutorials/diffusion-weighted-mri
    tutorials/processing-fmri-data
+   tutorials/spinal-nerve-rootlets-segmentation
    tutorials/other-features
    tutorials/analysis-pipelines-with-sct
