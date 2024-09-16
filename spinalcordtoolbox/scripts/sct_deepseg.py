@@ -233,23 +233,16 @@ def main(argv: Sequence[str]):
         if not os.path.isfile(file):
             parser.error("This file does not exist: {}".format(file))
 
-    # Verify if the task is part of the "official" tasks, or if it is pointing to paths containing custom models
-    if len(arguments.task) == 1 and arguments.task[0] in models.TASKS:
-        # Check if all input images are provided
-        required_contrasts = models.get_required_contrasts(arguments.task[0])
-        n_contrasts = len(required_contrasts)
-        # Get pipeline model names
-        name_models = models.TASKS[arguments.task[0]]['models']
-    else:
-        n_contrasts = len(arguments.i)
-        name_models = arguments.task
+    # Get pipeline model names
+    name_models = models.TASKS[arguments.task]['models']
 
     # Check if all input images have been specified (only relevant for 'seg_tumor-edema-cavity_t1-t2')
-    # TODO: Fix contrast-related behavior as per https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4445
-    if 'seg_tumor-edema-cavity_t1-t2' in arguments.task[0] and len(arguments.i) != n_contrasts:
-        parser.error(
-            "{} input files found. Please provide all required input files for the task {}, i.e. contrasts: {}."
-            .format(len(arguments.i), arguments.task, ', '.join(required_contrasts)))
+    if 'seg_tumor-edema-cavity_t1-t2' in arguments.task:
+        required_contrasts = models.get_required_contrasts(arguments.task)
+        if len(arguments.i) != len(required_contrasts):
+            parser.error(
+                "{} input files found. Please provide all required input files for the task {}, i.e. contrasts: {}."
+                .format(len(arguments.i), arguments.task, ', '.join(required_contrasts)))
 
     # Check modality order
     if len(arguments.i) > 1 and arguments.c is None:
@@ -284,7 +277,7 @@ def main(argv: Sequence[str]):
 
         # Order input images (only relevant for 'seg_tumor-edema-cavity_t1-t2')
         # TODO: Fix contrast-related behavior as per https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4445
-        if 'seg_tumor-edema-cavity_t1-t2' in arguments.task[0] and hasattr(arguments, "c"):
+        if 'seg_tumor-edema-cavity_t1-t2' in arguments.task and hasattr(arguments, "c"):
             input_filenames = []
             for required_contrast in models.MODELS[name_model]['contrasts']:
                 for provided_contrast, input_filename in zip(arguments.c, arguments.i):
@@ -293,7 +286,7 @@ def main(argv: Sequence[str]):
         else:
             input_filenames = arguments.i.copy()
 
-        if 'seg_sc_epi' in arguments.task[0]:
+        if 'seg_sc_epi' in arguments.task:
             for image in arguments.i:
                 image_shape = Image(image).data.shape
                 if len(image_shape) == 4:
@@ -325,7 +318,7 @@ def main(argv: Sequence[str]):
                 path_model, model_type, input_filenames, thr,
                 # NOTE: contrast-agnostic nnunet model sometimes predicts pixels outside the cord, we want to
                 # set keep_largest object as the default behaviour when using this model
-                keep_largest=1 if arguments.task[0] == 'seg_sc_contrast_agnostic' else arguments.keep_largest,
+                keep_largest=1 if arguments.task == 'seg_sc_contrast_agnostic' else arguments.keep_largest,
                 fill_holes_in_pred=arguments.fill_holes,
                 remove_small=arguments.remove_small,
                 use_gpu=use_gpu, remove_temp_files=arguments.r)
@@ -389,7 +382,7 @@ def main(argv: Sequence[str]):
             iterator = zip(input_filenames, output_filenames, [None] * len(input_filenames))
         # Special case: totalspineseg which outputs 5 files per 1 input file
         # Just use the 5th image ([4]) which represents the step2 output
-        elif arguments.task[0] == 'totalspineseg':
+        elif arguments.task == 'totalspineseg':
             assert len(output_filenames) == 5 * len(input_filenames)
             iterator = zip(input_filenames, output_filenames[4::5], [None] * len(input_filenames))
         # Other models typically have 2 outputs per input (e.g. SC + lesion), so use both segs
@@ -398,7 +391,7 @@ def main(argv: Sequence[str]):
             iterator = zip(input_filenames, output_filenames[0::2], output_filenames[1::2])
 
         # Create one QC report per input image, with one or two segs per image
-        species = 'mouse' if any(s in arguments.task[0] for s in ['mouse', 'mice']) else 'human'  # used for resampling
+        species = 'mouse' if any(s in arguments.task for s in ['mouse', 'mice']) else 'human'  # used for resampling
         for fname_in, fname_seg1, fname_seg2 in iterator:
             qc2.sct_deepseg(
                 fname_input=fname_in,
