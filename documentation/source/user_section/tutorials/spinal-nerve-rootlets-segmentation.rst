@@ -1,6 +1,6 @@
 .. _spinal-nerve-rootlets-segmentation:
 
-Spinal Nerve Rootlets Segmentation
+Spinal nerve rootlets segmentation
 ##################################
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/rootlets/rootlets_seg.gif

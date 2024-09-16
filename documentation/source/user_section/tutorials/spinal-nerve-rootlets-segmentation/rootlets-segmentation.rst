@@ -1,4 +1,4 @@
-Spinal Nerve Rootlets Segmentation
+Spinal nerve rootlets segmentation
 ##################################
 
 SCT provides a deep learning model for the segmentation of spinal nerve rootlets from T2*-weighted images.
