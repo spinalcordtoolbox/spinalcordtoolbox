@@ -33,7 +33,7 @@ models = LazyLoader("models", globals(), 'spinalcordtoolbox.deepseg.models')
 logger = logging.getLogger(__name__)
 
 
-def get_parser():
+def get_parser(subparser_to_return=None):
     # Initialize the top-level `sct_deepseg` argparser
     parser = SCTArgumentParser(
         description="Segment an anatomical structure or pathologies according to the specified deep learning model.",
@@ -197,7 +197,57 @@ Project URL: [{models.TASKS[task]["url"]}]({models.TASKS[task]["url"]})
         choices=('t1', 't2', 't2star'),
         metavar=Metavar.str)
 
-    return parser
+    if subparser_to_return:
+        return parser_dict[subparser_to_return]
+    else:
+        return parser
+
+
+# Define subparsers to be used in the "gallery of tasks" documentation for each task.
+# NB: This sucks! It's possible to programmatically generate subparsers from the list of task names. However, this
+#     does not mesh with `sphinx-argparse`, which requires a function that returns the parser. So... here are the funcs.
+#     I don't like that this duplicates the hardcoded list of task names, but at least this will get thoroughly tested
+#     via the auto-documentation. (Assuming we create a new gallery entry each time.)
+def seg_sc_t2star():                 # noqa E302 (2 blank lines)
+    return get_parser('seg_sc_t2star')
+def seg_mice_sc():                   # noqa E302 (2 blank lines)
+    return get_parser('seg_mice_sc')
+def seg_mice_gm():                   # noqa E302 (2 blank lines)
+    return get_parser('seg_mice_gm')
+def seg_tumor_t2():                  # noqa E302 (2 blank lines)
+    return get_parser('seg_tumor_t2')
+def seg_ms_sc_mp2rage():             # noqa E302 (2 blank lines)
+    return get_parser('seg_ms_sc_mp2rage')
+def seg_tumor_edema_cavity_t1_t2():  # noqa E302 (2 blank lines)
+    return get_parser('seg_tumor-edema-cavity_t1-t2')
+def seg_exvivo_gm_wm_t2():           # noqa E302 (2 blank lines)
+    return get_parser('seg_exvivo_gm-wm_t2')
+def seg_gm_sc_7t_t2star():           # noqa E302 (2 blank lines)
+    return get_parser('seg_gm_sc_7t_t2star')
+def seg_lumbar_sc_t2w():             # noqa E302 (2 blank lines)
+    return get_parser('seg_lumbar_sc_t2w')
+def seg_sc_contrast_agnostic():      # noqa E302 (2 blank lines)
+    return get_parser('seg_sc_contrast_agnostic')
+def seg_sc_lesion_t2w_sci():         # noqa E302 (2 blank lines)
+    return get_parser('seg_sc_lesion_t2w_sci')
+def seg_spinal_rootlets_t2w():       # noqa E302 (2 blank lines)
+    return get_parser('seg_spinal_rootlets_t2w')
+def seg_mouse_gm_wm_t1w():           # noqa E302 (2 blank lines)
+    return get_parser('seg_mouse_gm_wm_t1w')
+def seg_sc_ms_lesion_stir_psir():    # noqa E302 (2 blank lines)
+    return get_parser('seg_sc_ms_lesion_stir_psir')
+def seg_sc_epi():                    # noqa E302 (2 blank lines)
+    return get_parser('seg_sc_epi')
+def seg_ms_lesion_mp2rage():         # noqa E302 (2 blank lines)
+    return get_parser('seg_ms_lesion_mp2rage')
+def canal_t2w():                     # noqa E302 (2 blank lines)
+    return get_parser('canal_t2w')
+def seg_ms_lesion():                 # noqa E302 (2 blank lines)
+    return get_parser('seg_ms_lesion')
+def seg_sc_ms_lesion_axial_t2w():    # noqa E302 (2 blank lines)
+    return get_parser('seg_sc_ms_lesion_axial_t2w')
+def totalspineseg():                 # noqa E302 (2 blank lines)
+    return get_parser('totalspineseg')
 
 
 def main(argv: Sequence[str]):

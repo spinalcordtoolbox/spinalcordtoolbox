@@ -4,7 +4,7 @@ canal_t2w
 =========
                 
 .. argparse::
-   :ref: spinalcordtoolbox.scripts.sct_deepseg.get_parser
-   :prog: sct_deepseg -h
+   :ref: spinalcordtoolbox.scripts.sct_deepseg.canal_t2w
+   :prog: sct_deepseg canal_t2w
    :markdownhelp:
    :noepilog:

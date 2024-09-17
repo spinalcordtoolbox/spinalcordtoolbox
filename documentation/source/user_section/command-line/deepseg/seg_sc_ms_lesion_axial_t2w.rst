@@ -4,7 +4,7 @@ seg_sc_ms_lesion_axial_t2w
 ==========================
 
 .. argparse::
-   :ref: spinalcordtoolbox.scripts.sct_deepseg.get_parser
-   :prog: sct_deepseg -h
+   :ref: spinalcordtoolbox.scripts.sct_deepseg.seg_sc_ms_lesion_axial_t2w
+   :prog: sct_deepseg seg_sc_ms_lesion_axial_t2w
    :markdownhelp:
    :noepilog:
