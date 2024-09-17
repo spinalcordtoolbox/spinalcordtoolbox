@@ -4,8 +4,7 @@ seg_mice_sc
 ===========
                 
 .. argparse::
-   :ref: spinalcordtoolbox.scripts.sct_deepseg.get_parser
-   :prog: sct_deepseg -h
+   :ref: spinalcordtoolbox.scripts.sct_deepseg.seg_mice_sc
+   :prog: sct_deepseg seg_mice_sc
    :markdownhelp:
-   :noepilog:
                 

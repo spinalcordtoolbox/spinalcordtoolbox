@@ -4,8 +4,7 @@ seg_gm_sc_7t_t2star
 ===================
                 
 .. argparse::
-   :ref: spinalcordtoolbox.scripts.sct_deepseg.get_parser
-   :prog: sct_deepseg -h
+   :ref: spinalcordtoolbox.scripts.sct_deepseg.seg_gm_sc_7t_t2star
+   :prog: sct_deepseg seg_gm_sc_7t_t2star
    :markdownhelp:
-   :noepilog:
                 
