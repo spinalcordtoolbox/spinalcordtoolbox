@@ -446,11 +446,14 @@ def is_up_to_date(path_model):
     if model_name not in MODELS:
         logger.warning(f"Model name '{model_name}' from source.json does not match model names in SCT source code.")
         return False
-    if "custom" in source_dict and source_dict["custom"] is True:
-        return True  # Don't reinstall the model if the 'custom' flag is set (since custom URLs would fail comparison)
 
     expected_model_urls = MODELS[model_name]['url'].copy()
     actual_model_urls = source_dict["model_urls"]
+
+    if "custom" in source_dict and source_dict["custom"] is True:
+        logger.warning(f"Using custom model from URL '{actual_model_urls}'.")
+        return True  # Don't reinstall the model if the 'custom' flag is set (since custom URLs would fail comparison)
+
     # Single-seed models
     if isinstance(expected_model_urls, list) and isinstance(actual_model_urls, str):
         if actual_model_urls not in expected_model_urls:
