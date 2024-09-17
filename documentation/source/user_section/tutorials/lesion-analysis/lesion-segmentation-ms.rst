@@ -46,7 +46,7 @@ You can try ``seg_sc_ms_lesion_stir_psir`` on your *own* STIR or PSIR image usin
 
 .. code:: sh
 
-   sct_deepseg -i psir.nii.gz -task seg_sc_ms_lesion_stir_psir -qc ./qc
+   sct_deepseg seg_sc_ms_lesion_stir_psir  -i psir.nii.gz -qc ./qc
 
 :Input arguments:
    - ``-i`` : Input PSIR (or STIR) image
@@ -68,9 +68,9 @@ As the model was trained on cropped images, we recommend cropping the input imag
 
 .. code:: sh
 
-   sct_deepseg -i IMAGE_UNIT1 -task seg_sc_contrast_agnostic -o IMAGE_seg
+   sct_deepseg seg_sc_contrast_agnostic -i IMAGE_UNIT1 -o IMAGE_seg
    sct_crop_image -i IMAGE_UNIT1 -m IMAGE_seg -dilate 30x30x5
-   sct_deepseg -i IMAGE_UNIT1 -task seg_ms_lesion_mp2rage -qc ./qc
+   sct_deepseg seg_ms_lesion_mp2rage -i IMAGE_UNIT1 -qc ./qc
 
 :Input arguments:
     - ``-i`` : Input MP2RAGE UNIT1 image

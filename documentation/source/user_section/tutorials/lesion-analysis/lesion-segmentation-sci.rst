@@ -2,7 +2,7 @@ Lesion segmentation in spinal cord injury (SCI)
 ###############################################
 
 SCT provides a deep learning model called ``SCIseg`` for segmenting lesions in spinal cord injury (SCI) patients.
-The model is available in SCT v6.2 and higher via ``sct_deepseg -task seg_sc_lesion_t2w_sci``. In SCT v6.4, the model was updated to ``SCIsegV2``, the command remains the same.
+The model is available in SCT v6.2 and higher via ``sct_deepseg -task seg_sc_lesion_t2w_sci``. In SCT v6.4, the model was updated to ``SCIsegV2``, the command remains the same. In SCT v7.0, the command was changed to ``sct_deepseg seg_sc_lesion_t2w_sci``.
 
 The model was trained on raw T2-weighted images of SCI patients comprising traumatic (acute preoperative, intermediate, chronic) and non-traumatic (ischemic SCI and degenerative cervical myelopathy, DCM) SCI lesions.
 
@@ -18,7 +18,7 @@ Run the following command to segment the lesion using ``SCIseg`` from the input 
 
 .. code:: sh
 
-   sct_deepseg -i t2.nii.gz -task seg_sc_lesion_t2w_sci -qc ~/qc_singleSubj
+   sct_deepseg seg_sc_lesion_t2w_sci -i t2.nii.gz -qc ~/qc_singleSubj
 
 :Input arguments:
    - ``-i`` : Input T2w image with fake lesion

@@ -24,7 +24,7 @@ Spinal cord segmentation can be performed by running the following sample comman
 
 .. code::
 
-   sct_deepseg -task seg_sc_contrast_agnostic -i input.nii.gz
+   sct_deepseg seg_sc_contrast_agnostic -i input.nii.gz
 
 You can replace "``seg_sc_contrast_agnostic``" with any of the task names in the table below to perform different tasks. Click on a task below for more information.
 
@@ -58,7 +58,7 @@ Gray matter segmentation can be performed by running the following sample comman
 
 .. code::
 
-   sct_deepseg -task seg_gm_sc_7t_t2star -i input.nii.gz
+   sct_deepseg seg_gm_sc_7t_t2star -i input.nii.gz
 
 You can replace "``seg_gm_sc_7t_t2star``" with any of the task names in the table below to perform different tasks. Click on a task below for more information.
 
@@ -99,7 +99,7 @@ Pathology segmentation can be performed by running the following sample command:
 
 .. code::
 
-   sct_deepseg -task seg_sc_lesion_t2w_sci -i input.nii.gz
+   sct_deepseg seg_sc_lesion_t2w_sci -i input.nii.gz
 
 You can replace "``seg_sc_lesion_t2w_sci``" with any of the task names in the table below to perform different tasks. Click on a task below for more information.
 
@@ -129,7 +129,7 @@ Multiple structures may be segmented by running the following sample command:
 
 .. code::
 
-   sct_deepseg -task seg_spinal_rootlets_t2w -i input.nii.gz
+   sct_deepseg seg_spinal_rootlets_t2w -i input.nii.gz
 
 You can replace "``seg_spinal_rootlets_t2w``" with any of the task names in the table below to perform different tasks. Click on a task below for more information.
 
@@ -149,7 +149,7 @@ Spinal Canal segmentation can be performed by running the following sample comma
 
 .. code::
 
-   sct_deepseg -task canal_t2w -i input.nii.gz
+   sct_deepseg canal_t2w -i input.nii.gz
 
 
 .. list-table::

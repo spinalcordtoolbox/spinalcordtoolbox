@@ -2,7 +2,7 @@ Spinal nerve rootlets segmentation
 ##################################
 
 SCT provides a deep learning model for the segmentation of spinal nerve rootlets from T2*-weighted images.
-The model is available in SCT v6.2 and higher via ``sct_deepseg -task seg_spinal_rootlets_t2w``.
+The model is available in SCT v6.2 and higher via ``sct_deepseg -task seg_spinal_rootlets_t2w``. In SCT v7.0, the command was changed to ``sct_deepseg seg_sc_lesion_t2w_sci``.
 
 This model was trained on 3D T2-weighted images and provides level-specific semantic segmentation (i.e., 2: C2 rootlet, 3: C3 rootlet, etc.) of the dorsal spinal nerve rootlets.
 
@@ -10,7 +10,7 @@ Run the following command to segment the spinal nerve rootlets from the input im
 
 .. code:: sh
 
-   sct_deepseg -i t2.nii.gz -task seg_spinal_rootlets_t2w -qc ~/qc_singleSubj
+   sct_deepseg seg_spinal_rootlets_t2w -i t2.nii.gz -qc ~/qc_singleSubj
 
 :Input arguments:
     - ``-i`` : Input T2w image

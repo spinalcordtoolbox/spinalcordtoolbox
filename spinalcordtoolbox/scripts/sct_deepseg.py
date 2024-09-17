@@ -88,7 +88,7 @@ Project URL: [{models.TASKS[task]["url"]}]({models.TASKS[task]["url"]})
             "-i",
             nargs="+",
             help=f"Image to segment. Can be multiple images (separated with space)."
-                 f"\n\nNote: If choosing `-task seg_ms_lesion_mp2rage`, then the input "
+                 f"\n\nNote: If choosing `seg_ms_lesion_mp2rage`, then the input "
                  f"data must be cropped around the spinal cord. ({models.CROP_MESSAGE})",
             metavar=Metavar.file)
         input_output.add_argument(
@@ -112,7 +112,7 @@ Project URL: [{models.TASKS[task]["url"]}]({models.TASKS[task]["url"]})
                  "Example:\n"
                  "'sct_deepseg -install seg_spinal_rootlets_t2w -custom-url "
                  "https://github.com/ivadomed/model-spinal-rootlets/releases/download/r20240523/model-spinal-rootlets_ventral_D106_r20240523.zip'\n"
-                 "'sct_deepseg -i sub-amu01_T2w.nii.gz -task seg_spinal_rootlets_t2w'")
+                 "'sct_deepseg seg_spinal_rootlets_t2w -i sub-amu01_T2w.nii.gz")
 
         misc = parser_dict[task].add_argument_group('\nPARAMETERS')
         misc.add_argument(
@@ -298,7 +298,7 @@ def main(argv: Sequence[str]):
             model_type = models.check_model_software_type(path_models[0])  # NB: [0] -> Fetch first model from ensemble
         except ValueError:
             printv(f"Model type could not be determined. Directory '{path_model}' may be missing necessary files."
-                   f"Please redownload the model using `sct_deepseg -install-task` before continuing.", type="error")
+                   f"Please redownload the model using `sct_deepseg TASK_NAME -install` before continuing.", type="error")
 
         # Control GPU usage based on SCT-specific environment variable
         # NB: We use 'SCT_USE_GPU' as a "hidden option" to turn on GPU inference internally.
