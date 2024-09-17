@@ -72,7 +72,7 @@ def test_segment_nifti_binary_seg(fname_image, fname_seg_manual, fname_out, task
     # Ignore warnings from ivadomed model source code changing
     warnings.filterwarnings("ignore", category=SourceChangeWarning)
     fname_out = str(tmp_path/fname_out)  # tmp_path for automatic cleanup
-    args = ['-i', fname_image, '-task', task, '-o', fname_out, '-qc', str(tmp_path/'qc')]
+    args = [task, '-i', fname_image, '-o', fname_out, '-qc', str(tmp_path/'qc')]
     if thr is not None:
         args.extend(['-thr', str(thr)])
     if 'seg_sc' in task:
@@ -111,7 +111,7 @@ def test_segment_nifti_softseg(fname_image, fname_seg_manual, fname_out, task, t
     # Ignore warnings from ivadomed model source code changing
     warnings.filterwarnings("ignore", category=SourceChangeWarning)
     fname_out = str(tmp_path/fname_out)  # tmp_path for automatic cleanup
-    sct_deepseg.main(argv=['-i', fname_image, '-task', task, '-o', fname_out, '-qc', str(tmp_path/'qc'),
+    sct_deepseg.main(argv=[task, '-i', fname_image, '-o', fname_out, '-qc', str(tmp_path/'qc'),
                            '-thr', str(thr), '-largest', '1', '-remove-small', '5mm3'])
     # Make sure output file exists
     assert os.path.isfile(fname_out)
@@ -134,7 +134,7 @@ def test_segment_nifti_softseg_error_with_fill_holes(tmp_path):
     warnings.filterwarnings("ignore", category=SourceChangeWarning)
     fname_out = str(tmp_path/'t2_seg_deepseg.nii.gz')  # tmp_path for automatic cleanup
     with pytest.raises(AssertionError):
-        sct_deepseg.main(argv=['-i', sct_test_path('t2', 't2.nii.gz'), '-task', 'seg_sc_contrast_agnostic',
+        sct_deepseg.main(argv=['seg_sc_contrast_agnostic', '-i', sct_test_path('t2', 't2.nii.gz'),
                                '-o', fname_out, '-qc', str(tmp_path/'qc'),
                                '-thr', '0', '-fill-holes', '1'])
 
@@ -167,7 +167,7 @@ def test_segment_nifti_multiclass(fname_image, fnames_seg_manual, fname_out, suf
         pytest.skip("Mouse data must be manually downloaded to run this test.")
 
     fname_out = str(tmp_path / fname_out)
-    sct_deepseg.main(['-i', fname_image, '-task', task, '-thr', str(thr), '-o', fname_out, '-qc', str(tmp_path/'qc'),
+    sct_deepseg.main([task, '-i', fname_image, '-thr', str(thr), '-o', fname_out, '-qc', str(tmp_path/'qc'),
                       '-largest', '1'])
     # The `-o` argument takes a single filename, even though one (or more!) files might be output.
     # If multiple output files will be produced, `sct_deepseg` will take this singular `-o` and add suffixes to it.

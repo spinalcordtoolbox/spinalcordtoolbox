@@ -381,7 +381,7 @@ def sct_deepseg_spinal_rootlets_t2w(
     species: str,
 ):
     """
-    Generate a QC report for `sct_deepseg -task seg_spinal_rootlets_t2w`.
+    Generate a QC report for `sct_deepseg seg_spinal_rootlets_t2w`.
 
     This refactor is based off of the `listed_seg` method in qc.py, adapted to support multiple images.
     """

@@ -317,7 +317,7 @@ def main(argv: Sequence[str]):
             model_type = models.check_model_software_type(path_models[0])  # NB: [0] -> Fetch first model from ensemble
         except ValueError:
             printv(f"Model type could not be determined. Directory '{path_model}' may be missing necessary files."
-                   f"Please redownload the model using `sct_deepseg -install-task` before continuing.", type="error")
+                   f"Please redownload the model using `sct_deepseg TASK_NAME -install` before continuing.", type="error")
 
         # Control GPU usage based on SCT-specific environment variable
         # NB: We use 'SCT_USE_GPU' as a "hidden option" to turn on GPU inference internally.
