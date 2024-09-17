@@ -603,7 +603,7 @@ def moco(param):
             file_data_splitZ_splitT_moco.append(add_suffix(file_data_splitZ_splitT[it], '_moco'))
             # deal with masking (except in the 'apply' case, where masking is irrelevant)
             input_mask = None
-            if file_mask != '' and not param.todo == 'apply':
+            if file_mask != '' and param.todo != 'apply':
                 input_mask = im_maskz_list[iz]
 
             # run 3D registration
