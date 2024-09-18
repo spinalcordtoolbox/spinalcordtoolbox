@@ -102,7 +102,8 @@ def get_parser():
         '-m',
         metavar=Metavar.file,
         default=param_default.fname_mask,
-        help='Binary mask to limit voxels considered by the registration metric. Example: dmri_mask.nii.gz',
+        help='Binary mask to limit voxels considered by the registration metric. You may also provide a softmask '
+             '(nonbinary, [0, 1]), and it will be binarized at 0.5. Example: dmri_mask.nii.gz',
     )
     optional.add_argument(
         '-param',
