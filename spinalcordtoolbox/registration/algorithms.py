@@ -17,7 +17,7 @@ from scipy.ndimage import gaussian_filter, gaussian_filter1d, convolve
 from scipy.io import loadmat
 
 import spinalcordtoolbox.image as image
-from spinalcordtoolbox.math import laplacian
+from spinalcordtoolbox.math import laplacian, binarize
 from spinalcordtoolbox.registration.landmarks import register_landmarks
 from spinalcordtoolbox.registration import core
 from spinalcordtoolbox.scripts import sct_resample
@@ -146,16 +146,16 @@ class ParamregMultiStep:
 def register_step_ants_slice_regularized_registration(src, dest, step, metricSize, fname_mask='', verbose=1):
     """
     """
-    # NB: If the mask is soft, fname_mask will be returned as None, so that it won't be further applied via '-x'
-    if fname_mask:
-        dest, fname_mask = image.apply_mask_if_soft(dest, fname_mask)
-
     # Find the min (and max) z-slice index below which (and above which) slices only have voxels below a given
     # threshold.
     list_fname = [src, dest]
     if fname_mask:
-        list_fname.append(fname_mask)
-        mask_options = ['-x', fname_mask]
+        img_mask = image.Image(fname_mask)
+        img_mask.data = binarize(img_mask.data, bin_thr=0.5)
+        fname_mask_bin = image.add_suffix(fname_mask, "_bin")
+        img_mask.save(fname_mask_bin)
+        list_fname.append(fname_mask_bin)
+        mask_options = ['-x', fname_mask_bin]
     else:
         mask_options = []
 
