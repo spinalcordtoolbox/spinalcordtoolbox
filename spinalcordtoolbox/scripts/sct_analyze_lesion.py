@@ -627,8 +627,8 @@ class AnalyzeLesion:
             slice_max = np.where(slice_lesion_data)[0][-1]    # [-1] returns the most ventral elements
             lesion_width_dict[axial_slice] = slice_max - slice_min + 1
 
-        # Get the width in mm (apply the angle correction)
-        width_cur_dict = {axial_slice: p_lst[1] * np.cos(self.angles_sagittal[axial_slice]) * lesion_width
+        # Get the width in mm and apply the angle correction
+        width_cur_dict = {axial_slice: p_lst[1] * np.cos(self.angles_sagittal[axial_slice]) * lesion_width  # p_lst[1] -> pixel size of AP axis
                           for axial_slice, lesion_width in lesion_width_dict.items()}
 
         # Get the maximum width across all axial slices
