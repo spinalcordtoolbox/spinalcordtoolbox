@@ -5,7 +5,7 @@ Before starting this tutorial
 
    * ``single_subject/data/t2/t2.nii.gz``: A T2w anatomical image.
 
-   You can get these files by downloading `data_rootlets-segmentation.zip <https://github.com/spinalcordtoolbox/sct_tutorial_data/archive/refs/heads/jv/add-rootlets-files.zip>`_.
+   You can get this file by downloading `data_rootlets-segmentation.zip <https://github.com/spinalcordtoolbox/sct_tutorial_data/archive/refs/heads/jv/add-rootlets-files.zip>`_.
 
 #. Open a terminal and navigate to the ``single_subject/data/t2/`` directory:
 
