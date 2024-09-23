@@ -8,6 +8,7 @@
 import os
 import sys
 from typing import Sequence
+import textwrap
 
 import numpy as np
 
@@ -32,15 +33,15 @@ def get_parser():
         )
     )
 
-    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
     mandatory.add_argument(
         '-i',
         metavar=Metavar.file,
         required=True,
-        help="Input image. Example: t1.nii.gz"
+        help="Input image. Example: `t1.nii.gz`"
     )
 
-    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
         "--help",
@@ -56,25 +57,26 @@ def get_parser():
         "-method",
         choices=['optic', 'viewer', 'fitseg'],
         default='optic',
-        help="Method used for extracting the centerline.\n"
-             "  - optic: automatic spinal cord detection method\n"
-             "  - viewer: manual selection a few points followed by interpolation\n"
-             "  - fitseg: fit a regularized centerline on an already-existing cord segmentation. This method "
-             "will interpolate if any slices are missing. Also, if  '-extrapolation 1' is specified, this method will "
-             "extrapolate beyond the segmentation boundaries (i.e., every axial slice will exhibit a centerline pixel)."
+        help=textwrap.dedent("""
+            Method used for extracting the centerline.
+
+              - `optic`: automatic spinal cord detection method
+              - `viewer`: manual selection a few points followed by interpolation
+              - `fitseg`: fit a regularized centerline on an already-existing cord segmentation. This method will interpolate if any slices are missing. Also, if  `-extrapolation 1` is specified, this method will extrapolate beyond the segmentation boundaries (i.e., every axial slice will exhibit a centerline pixel).
+        """),  # noqa: E501 (line too long)
     )
     optional.add_argument(
         "-centerline-algo",
         choices=['polyfit', 'bspline', 'linear', 'nurbs'],
         default='bspline',
-        help="Algorithm for centerline fitting. Only relevant with -method fitseg."
+        help="Algorithm for centerline fitting. Only relevant with `-method fitseg`."
     )
     optional.add_argument(
         "-centerline-smooth",
         metavar=Metavar.int,
         type=int,
         default=30,
-        help="Degree of smoothing for centerline fitting. Only for -centerline-algo {bspline, linear}."
+        help="Degree of smoothing for centerline fitting. Only for `-centerline-algo {bspline, linear}`."
     )
     optional.add_argument(
         "-centerline-soft",
@@ -82,7 +84,7 @@ def get_parser():
         type=int,
         choices=[0, 1],
         default=0,
-        help="Binary or soft centerline. 0 = binarized, 1 = soft. Only relevant with -method fitseg."
+        help="Binary or soft centerline. `0` = binarized, `1` = soft. Only relevant with `-method fitseg`."
     )
     optional.add_argument(
         "-extrapolation",
@@ -90,15 +92,15 @@ def get_parser():
         type=int,
         choices=[0, 1],
         default=0,
-        help="Extrapolate beyond the segmentation boundaries. 0 = no extrapolation, 1 = extrapolation. Only relevant with -method fitseg."
-             "Note: '-extrapolation 1' works best with lower-order (linear, nurbs) centerline fitting algorithms"
+        help="Extrapolate beyond the segmentation boundaries. `0` = no extrapolation, `1` = extrapolation. Only relevant with `-method fitseg`."
+             "Note: `-extrapolation 1` works best with lower-order (linear, nurbs) centerline fitting algorithms"
     )
     optional.add_argument(
         "-o",
         metavar=Metavar.file,
         help="File name for the centerline output file. If file extension is not provided, "
-             "'.nii.gz' will be used by default. If '-o' is not provided, then the output file will "
-             "be the input with suffix '_centerline'. Example: 'centerline_optic.nii.gz'"
+             "`.nii.gz` will be used by default. If `-o` is not provided, then the output file will "
+             "be the input with suffix `_centerline`. Example: `centerline_optic.nii.gz`"
     )
     optional.add_argument(
         "-gap",

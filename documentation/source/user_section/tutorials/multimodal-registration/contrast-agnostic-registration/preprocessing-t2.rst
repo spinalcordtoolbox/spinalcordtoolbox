@@ -64,4 +64,4 @@ This cropped image will be used during coregistration.
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/contrast-agnostic-registration/preprocessing-t2.png
    :align: center
 
-   Input/output images for ``sct_create_mask`` and ``sct_crop_image``
+   Input/output images for :ref:`sct_create_mask` and :ref:`sct_crop_image`

@@ -1,7 +1,7 @@
 Spinal cord segmentation for MT1 data
 #####################################
 
-First, we will run the ``sct_deepseg_sc`` command to segment the spinal cord from the MT1 image (i.e. the image that has the RF off-resonance pulse applied).
+First, we will run the :ref:`sct_deepseg_sc` command to segment the spinal cord from the MT1 image (i.e. the image that has the RF off-resonance pulse applied).
 
 .. code:: sh
 
@@ -20,4 +20,4 @@ Once the command has finished, at the bottom of your terminal there will be inst
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/registering-additional-contrasts/io-sct_deepseg_sc.png
    :align: center
 
-   Input/output images for ``sct_deepseg_sc``
+   Input/output images for :ref:`sct_deepseg_sc`

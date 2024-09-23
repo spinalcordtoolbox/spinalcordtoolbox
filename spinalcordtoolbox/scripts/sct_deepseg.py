@@ -17,6 +17,7 @@ import os
 import sys
 import logging
 from typing import Sequence
+import textwrap
 
 from spinalcordtoolbox.reports import qc2
 from spinalcordtoolbox.image import splitext, Image, check_image_kind
@@ -39,7 +40,7 @@ def get_parser():
         epilog=models.list_tasks_string()
     )
 
-    input_output = parser.add_argument_group("\nINPUT/OUTPUT")
+    input_output = parser.add_argument_group("INPUT/OUTPUT")
     input_output.add_argument(
         "-i",
         nargs="+",
@@ -48,11 +49,14 @@ def get_parser():
     input_output.add_argument(
         "-c",
         nargs="+",
-        help="Contrast of the input. The `-c` option is only relevant for the following tasks:"
-             "\n   - 'seg_tumor-edema-cavity_t1-t2': Specifies the contrast order of input images (e.g. -c t1 t2)"
-             "\n   - 'seg_sc_ms_lesion_stir_psir': Specifies whether input should be inverted based on contrast "
-             "(-c stir: no inversion, -c psir: inverted)"
-             "\nBecause all other models have only a single input contrast, the '-c' option is ignored for them.",
+        help=textwrap.dedent("""
+            Contrast of the input. The `-c` option is only relevant for the following tasks:
+
+              - `seg_tumor-edema-cavity_t1-t2`: Specifies the contrast order of input images (e.g. `-c t1 t2`)
+              - `seg_sc_ms_lesion_stir_psir`: Specifies whether input should be inverted based on contrast (`-c stir`: no inversion, `-c psir`: inverted)
+
+            Because all other models have only a single input contrast, the `-c` option is ignored for them.
+        """),
         choices=('t1', 't2', 't2star', 'stir', 'psir'),
         metavar=Metavar.str)
     input_output.add_argument(
@@ -61,12 +65,12 @@ def get_parser():
              "the suffix specified in the packaged model will be added and output extension will be .nii.gz.",
         metavar=Metavar.str)
 
-    seg = parser.add_argument_group('\nTASKS')
+    seg = parser.add_argument_group('TASKS')
     seg.add_argument(
         "-task",
         nargs="+",
         help="Task to perform. It could either be a pre-installed task, task that could be installed, or a custom task."
-             " To list available tasks, run: sct_deepseg -list-tasks. To use a custom task, indicate the path to the "
+             " To list available tasks, run: `sct_deepseg -list-tasks`. To use a custom task, indicate the path to the "
              " ivadomed packaged model (see https://ivadomed.org/en/latest/pretrained_models.html#packaged-model-format for more details). "
              " More than one path can be indicated (separated with space) for cascaded application of the models.",
         metavar=Metavar.str)
@@ -80,7 +84,7 @@ def get_parser():
         help="Install models that are required for specified task.",
         choices=list(models.TASKS.keys()))
 
-    misc = parser.add_argument_group('\nPARAMETERS')
+    misc = parser.add_argument_group('PARAMETERS')
     misc.add_argument(
         "-thr",
         type=float,
@@ -118,7 +122,7 @@ def get_parser():
              "smaller than 10 voxels for class 1 and 3, and smaller than 20 voxels for class 2).",
         default=None)
 
-    misc = parser.add_argument_group('\nMISC')
+    misc = parser.add_argument_group('MISC')
     misc.add_argument(
         '-qc',
         metavar=Metavar.folder,

@@ -24,4 +24,4 @@ Once the command has finished, at the bottom of your terminal there will be inst
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/registering-additional-contrasts/io-sct_warp_template.png
    :align: center
 
-   Input/output images for ``sct_warp_template``
+   Input/output images for :ref:`sct_warp_template`

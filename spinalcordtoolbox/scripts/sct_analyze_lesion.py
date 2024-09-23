@@ -10,6 +10,7 @@ import sys
 import pickle
 import warnings
 from typing import Sequence
+import textwrap
 
 import numpy as np
 from skimage.measure import label
@@ -27,23 +28,24 @@ pd = LazyLoader("pd", globals(), "pandas")
 
 def get_parser():
     parser = SCTArgumentParser(
-        description='Compute statistics on segmented lesions. The function assigns an ID value to each lesion (1, 2, '
-                    '3, etc.) and then outputs morphometric measures for each lesion:\n'
-                    '- volume [mm^3]\n'
-                    '- length [mm]: length along the Superior-Inferior axis\n'
-                    '- max_equivalent_diameter [mm]: maximum diameter of the lesion, when approximating the lesion as '
-                    'a circle in the axial plane\n'
-                    '- max_axial_damage_ratio []: maximum ratio of the lesion area divided by the spinal cord area\n'
-                    '- dorsal_bridge_width [mm]: width of spared tissue dorsal to the spinal cord lesion '
-                    '(i.e. towards the posterior direction of the AP axis)\n'
-                    '- ventral_bridge_width [mm]: width of spared tissue ventral to the spinal cord lesion '
-                    '(i.e. towards the anterior direction of the AP axis)\n\n'
-                    'If the proportion of lesion in each region (e.g. WM and GM) does not sum up to 100%, it means '
-                    'that the registered template does not fully cover the lesion. In that case you might want to '
-                    'check the registration results.'
+        description=textwrap.dedent("""
+            Compute statistics on segmented lesions. The function assigns an ID value to each lesion (1, 2, 3, etc.) and then outputs morphometric measures for each lesion:
+
+              - volume `[mm^3]`: volume of the lesion
+              - length `[mm]`: maximal length along the Superior-Inferior (SI) axis across all slices
+              - max_equivalent_diameter `[mm]`: maximum diameter of the lesion, when approximating the lesion as a circle in the axial plane
+              - max_axial_damage_ratio `[]`: maximum ratio of the lesion area divided by the spinal cord area
+              - midsagittal_spinal_cord_slice: midsagittal slice number of the spinal cord defined based on the spinal cord segmentation
+              - length_midsagittal_slice [mm]: length of the lesion along the Superior-Inferior (SI) axis in the **midsagittal slice**
+              - width_midsagittal_slice [mm]: width of the lesion along the Anterior-Posterior (AP) axis the **midsagittal slice**
+              - dorsal_bridge_width `[mm]`: width of spared tissue dorsal to the spinal cord lesion (i.e. towards the posterior direction of the AP axis)
+              - ventral_bridge_width `[mm]`: width of spared tissue ventral to the spinal cord lesion (i.e. towards the anterior direction of the AP axis)
+
+            If the proportion of lesion in each region (e.g. WM and GM) does not sum up to 100%, it means that the registered template does not fully cover the lesion. In that case you might want to check the registration results.
+        """),  # noqa: E501 (line too long)
     )
 
-    mandatory_arguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatory_arguments = parser.add_argument_group("MANDATORY ARGUMENTS")
     mandatory_arguments.add_argument(
         "-m",
         required=True,
@@ -51,7 +53,7 @@ def get_parser():
         metavar=Metavar.file,
     )
 
-    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
         "--help",
@@ -60,11 +62,11 @@ def get_parser():
     optional.add_argument(
         "-s",
         required=False,
-        help="Spinal cord centerline or segmentation file, which will be used to correct morphometric measures with "
-             "cord angle with respect to slice. (e.g. 't2_seg.nii.gz')\n"
-             "If provided, then the lesion volume, length, diameter, axial damage ratio, and tissue bridges will be "
-             "computed. "
-             "Otherwise, if not provided, then only the lesion volume will be computed.",
+        help=textwrap.dedent("""
+            Spinal cord centerline or segmentation file, which will be used to correct morphometric measures with cord angle with respect to slice. (e.g. `t2_seg.nii.gz`)
+
+            If provided, then the lesion volume, length, diameter, axial damage ratio, and tissue bridges will be computed. Otherwise, if not provided, then only the lesion volume will be computed.
+        """),  # noqa: E501 (line too long)
         metavar=Metavar.file)
     optional.add_argument(
         "-i",
@@ -75,24 +77,20 @@ def get_parser():
         required=False)
     optional.add_argument(
         "-f",
-        help="Path to folder containing the atlas/template registered to the anatomical image. If provided, the "
-             "function computes:\n"
-             "\n"
-             "  a. for each lesion, the proportion of that lesion within each vertebral level and each region "
-             "of the template (e.g. GM, WM, WM tracts). Each cell contains a percentage value representing how much of "
-             "the lesion volume exists within the region indicated by the row/column (rows represent vertebral levels, "
-             "columns represent ROIs). The percentage values are summed to totals in both the bottom row and the right "
-             "column, and the sum of all cells is 100 (i.e. 100 percent of the lesion), found in the bottom-right.\n"
-             "  b. the proportions of each ROI (e.g. vertebral level, GM, WM) occupied by lesions.\n"
-             "\n"
-             "These percentage values are stored in different pages of the output `lesion_analysis.xls` spreadsheet;"
-             "one page for each lesion (a.) plus a final page summarizing the total ROI occupation of all lesions (b.)",
+        help=textwrap.dedent("""
+            Path to folder containing the atlas/template registered to the anatomical image. If provided, the function computes:
+
+              - a. for each lesion, the proportion of that lesion within each vertebral level and each region of the template (e.g. GM, WM, WM tracts). Each cell contains a percentage value representing how much of the lesion volume exists within the region indicated by the row/column (rows represent vertebral levels, columns represent ROIs). The percentage values are summed to totals in both the bottom row and the right column, and the sum of all cells is 100 (i.e. 100 percent of the lesion), found in the bottom-right.
+              - b. the proportions of each ROI (e.g. vertebral level, GM, WM) occupied by lesions.
+
+            These percentage values are stored in different pages of the output `lesion_analysis.xls` spreadsheet; one page for each lesion (a.) plus a final page summarizing the total ROI occupation of all lesions (b.)
+        """),  # noqa: E501 (line too long)
         metavar=Metavar.str,
         default=None,
         required=False)
     optional.add_argument(
         "-perslice",
-        help="Specify whether to aggregate atlas metrics ('-f' option) per slice (`-perslice 1`) or per vertebral "
+        help="Specify whether to aggregate atlas metrics (`-f` option) per slice (`-perslice 1`) or per vertebral "
              "level (default behavior).",
         metavar=Metavar.int,
         type=int,

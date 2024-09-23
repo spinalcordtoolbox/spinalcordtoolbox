@@ -8,6 +8,7 @@
 import os
 import sys
 from typing import Sequence
+import textwrap
 
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.utils.sys import init_sct, list2cmdline, set_loglevel
@@ -17,12 +18,15 @@ from spinalcordtoolbox.utils.shell import SCTArgumentParser
 def get_parser():
     parser = SCTArgumentParser(
         description='Generate Quality Control (QC) report following SCT processing.',
-        epilog='Examples:\n'
-               'sct_qc -i t2.nii.gz -s t2_seg.nii.gz -p sct_deepseg_sc\n'
-               'sct_qc -i t2.nii.gz -s t2_pmj.nii.gz -p sct_detect_pmj\n'
-               'sct_qc -i t2.nii.gz -s t2_seg_labeled.nii.gz -p sct_label_vertebrae\n'
-               'sct_qc -i t2.nii.gz -s t2_seg.nii.gz -p sct_deepseg_sc -qc-dataset mydata -qc-subject sub-45\n'
-               'sct_qc -i t2.nii.gz -s t2_seg.nii.gz -d t2_lesion.nii.gz -p sct_deepseg_lesion -plane axial'
+        epilog=textwrap.dedent("""
+            Examples:
+
+            - `sct_qc -i t2.nii.gz -s t2_seg.nii.gz -p sct_deepseg_sc`
+            - `sct_qc -i t2.nii.gz -s t2_pmj.nii.gz -p sct_detect_pmj`
+            - `sct_qc -i t2.nii.gz -s t2_seg_labeled.nii.gz -p sct_label_vertebrae`
+            - `sct_qc -i t2.nii.gz -s t2_seg.nii.gz -p sct_deepseg_sc -qc-dataset mydata -qc-subject sub-45`
+            - `sct_qc -i t2.nii.gz -s t2_seg.nii.gz -d t2_lesion.nii.gz -p sct_deepseg_lesion -plane axial`
+        """),
     )
     parser.add_argument('-i',
                         metavar='IMAGE',
@@ -45,7 +49,7 @@ def get_parser():
                              'process (e.g., sct_straighten_spinalcord)',
                         required=False)
     parser.add_argument('-plane',
-                        help='Plane of the output QC. Only relevant for -p sct_deepseg_lesion.',
+                        help='Plane of the output QC. Only relevant for `-p sct_deepseg_lesion`.',
                         choices=('axial', 'sagittal'),
                         required=False)
     parser.add_argument('-resample',
@@ -55,15 +59,14 @@ def get_parser():
                         type=float,
                         required=False)
     parser.add_argument('-text-labels',
-                        help="If set to 0, text won't be drawn on top of labels. Only relevant for -p "
-                             "sct_label_vertebrae.",
+                        help="If set to 0, text won't be drawn on top of labels. Only relevant for `-p sct_label_vertebrae`.",
                         choices=(0, 1),
                         default=1,
                         type=int,
                         required=False)
     parser.add_argument('-qc',
                         metavar='QC',
-                        help='Path to save QC report. Default: ./qc',
+                        help='Path to save QC report. Default: `./qc`',
                         required=False,
                         default=os.path.join('.', 'qc'))
     parser.add_argument('-qc-dataset',
@@ -100,7 +103,7 @@ def main(argv: Sequence[str]):
     set_loglevel(verbose=verbose, caller_module_name=__name__)
 
     if arguments.p == 'sct_deepseg_lesion' and arguments.plane is None:
-        parser.error('Please provide the plane of the output QC with -plane')
+        parser.error('Please provide the plane of the output QC with `-plane`')
 
     generate_qc(fname_in1=arguments.i,
                 fname_in2=arguments.d,

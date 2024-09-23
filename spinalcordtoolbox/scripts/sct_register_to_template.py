@@ -13,6 +13,7 @@ import sys
 import os
 import time
 from typing import Sequence
+import textwrap
 
 import numpy as np
 
@@ -66,77 +67,66 @@ paramregmulti = ParamregMultiStep([step0, step1, step2])
 def get_parser():
     param = Param()
     parser = SCTArgumentParser(
-        description=(
-            "Register an anatomical image to the spinal cord MRI template (default: PAM50).\n"
-            "\n"
-            "The registration process includes three main registration steps:\n"
-            "  1. straightening of the image using the spinal cord segmentation (see sct_straighten_spinalcord for "
-            "details);\n"
-            "  2. vertebral alignment between the image and the template, using labels along the spine;\n"
-            "  3. iterative slice-wise non-linear registration (see sct_register_multimodal for details)\n"
-            "\n"
-            "To register a subject to the template, try the default command:\n"
-            "  sct_register_to_template -i data.nii.gz -s data_seg.nii.gz -l data_labels.nii.gz\n"
-            "\n"
-            "If this default command does not produce satisfactory results, the '-param' "
-            "argument should be tweaked according to the tips given here:\n"
-            "  https://spinalcordtoolbox.com/en/latest/user_section/command-line.html#sct-register-multimodal\n"
-            "\n"
-            "The default registration method brings the subject image to the template, which can be problematic with "
-            "highly non-isotropic images as it would induce large interpolation errors during the straightening "
-            "procedure. Although the default method is recommended, you may want to register the template to the "
-            "subject (instead of the subject to the template) by skipping the straightening procedure. To do so, use "
-            "the parameter '-ref subject'. Example below:\n"
-            "  sct_register_to_template -i data.nii.gz -s data_seg.nii.gz -l data_labels.nii.gz -ref subject -param "
-            "step=1,type=seg,algo=centermassrot,smooth=0:step=2,type=seg,algo=columnwise,smooth=0,smoothWarpXY=2\n"
-            "\n"
-            "Vertebral alignment (step 2) consists in aligning the vertebrae between the subject and the template. "
-            "Two types of labels are possible:\n"
-            "  - Vertebrae mid-body labels, created at the center of the spinal cord using the parameter '-l';\n"
-            "  - Posterior edge of the intervertebral discs, using the parameter '-ldisc'.\n"
-            "\n"
-            "If only one label is provided, a simple translation will be applied between the subject label and the "
-            "template label. No scaling will be performed. \n"
-            "\n"
-            "If two labels are provided, a linear transformation (translation + rotation + superior-inferior linear "
-            "scaling) will be applied. The strategy here is to define labels that cover the region of interest. For "
-            "example, if you are interested in studying C2 to C6 levels, then provide one label at C2 and another at "
-            "C6. However, note that if the two labels are very far apart (e.g. C2 and T12), there might be a "
-            "mis-alignment of discs because a subject's intervertebral discs distance might differ from that of the "
-            "template.\n"
-            "\n"
-            "If more than two labels are used, a non-linear registration will be applied to align the each "
-            "intervertebral disc between the subject and the template, as described in "
-            "sct_straighten_spinalcord. This the most accurate method, however it has some serious caveats: \n"
-            "  - This feature is not compatible with the parameter '-ref subject', where only a rigid registration is performed.\n"
-            "  - Due to the non-linear registration in the S-I direction, the warping field will be cropped above the "
-            "top label and below the bottom label. Applying this warping field will result in a strange-looking "
-            "registered image that has the same value above the top label and below the bottom label. But if you are "
-            "not interested in these regions, you do not need to worry about it.\n"
-            "\n"
-            "We recommend starting with 2 labels, then trying the other "
-            "options on a case-by-case basis depending on your data.\n"
-            "\n"
-            "More information about label creation can be found at "
-            "https://spinalcordtoolbox.com/user_section/tutorials/vertebral-labeling.html"
-        )
+        description=textwrap.dedent("""
+            Register an anatomical image to the spinal cord MRI template (default: PAM50).
+
+            The registration process includes three main registration steps:
+
+              1. straightening of the image using the spinal cord segmentation (see sct_straighten_spinalcord for details);
+              2. vertebral alignment between the image and the template, using labels along the spine;
+              3. iterative slice-wise non-linear registration (see sct_register_multimodal for details)
+
+            To register a subject to the template, try the default command:
+
+              ```
+              sct_register_to_template -i data.nii.gz -s data_seg.nii.gz -l data_labels.nii.gz
+              ```
+
+            If this default command does not produce satisfactory results, the `-param` argument should be tweaked according to the tips given here: https://spinalcordtoolbox.com/en/latest/user_section/command-line.html#sct-register-multimodal
+
+            The default registration method brings the subject image to the template, which can be problematic with highly non-isotropic images as it would induce large interpolation errors during the straightening procedure. Although the default method is recommended, you may want to register the template to the subject (instead of the subject to the template) by skipping the straightening procedure. To do so, use the parameter `-ref subject`. Example below:
+
+              ```
+              sct_register_to_template -i data.nii.gz -s data_seg.nii.gz -l data_labels.nii.gz -ref subject -param step=1,type=seg,algo=centermassrot,smooth=0:step=2,type=seg,algo=columnwise,smooth=0,smoothWarpXY=2
+              ```
+
+            Vertebral alignment (step 2) consists in aligning the vertebrae between the subject and the template.
+
+            Two types of labels are possible:
+
+              - Vertebrae mid-body labels, created at the center of the spinal cord using the parameter `-l`;
+              - Posterior edge of the intervertebral discs, using the parameter `-ldisc`.
+
+            If only one label is provided, a simple translation will be applied between the subject label and the template label. No scaling will be performed.
+
+            If two labels are provided, a linear transformation (translation + rotation + superior-inferior linear scaling) will be applied. The strategy here is to define labels that cover the region of interest. For example, if you are interested in studying C2 to C6 levels, then provide one label at C2 and another at C6. However, note that if the two labels are very far apart (e.g. C2 and T12), there might be a mis-alignment of discs because a subject's intervertebral discs distance might differ from that of the template.
+
+            If more than two labels are used, a non-linear registration will be applied to align the each intervertebral disc between the subject and the template, as described in sct_straighten_spinalcord. This the most accurate method, however it has some serious caveats:
+
+              - This feature is not compatible with the parameter `-ref subject`, where only a rigid registration is performed.
+              - Due to the non-linear registration in the S-I direction, the warping field will be cropped above the top label and below the bottom label. Applying this warping field will result in a strange-looking registered image that has the same value above the top label and below the bottom label. But if you are not interested in these regions, you do not need to worry about it.
+
+            We recommend starting with 2 labels, then trying the other options on a case-by-case basis depending on your data.
+
+            More information about label creation can be found at https://spinalcordtoolbox.com/user_section/tutorials/vertebral-labeling.html
+        """)  # noqa: E501 (line too long)
     )
 
-    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
     mandatory.add_argument(
         '-i',
         metavar=Metavar.file,
         required=True,
-        help="Input anatomical image. Example: anat.nii.gz"
+        help="Input anatomical image. Example: `anat.nii.gz`"
     )
     mandatory.add_argument(
         '-s',
         metavar=Metavar.file,
         required=True,
-        help="Spinal cord segmentation. Example: anat_seg.nii.gz"
+        help="Spinal cord segmentation. Example: `anat_seg.nii.gz`"
     )
 
-    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
         "--help",
@@ -149,38 +139,36 @@ def get_parser():
         type=int,
         help="Segmentation file ID to use for registration. The ID is an integer indicated in the file "
              "'template/info_label.txt'. This 'info_label.txt' file corresponds to the template indicated by the flag "
-             "'-t'. By default, the spinal cord segmentation is used (ID=3), but if available, a different segmentation"
+             "`-t`. By default, the spinal cord segmentation is used (ID=3), but if available, a different segmentation"
              " such as white matter segmentation could produce better registration results.",
         default=3
         )
     optional.add_argument(
         '-l',
         metavar=Metavar.file,
-        help="One or two labels (preferred) located at the center of the spinal cord, on the mid-vertebral slice. "
-             "Example: anat_labels.nii.gz\n"
-             "For more information about label creation, please see: "
-             "https://spinalcordtoolbox.com/user_section/tutorials/vertebral-labeling.html"
+        help=textwrap.dedent("""
+            One or two labels (preferred) located at the center of the spinal cord, on the mid-vertebral slice. Example: `anat_labels.nii.gz`
+
+            For more information about label creation, please see: https://spinalcordtoolbox.com/user_section/tutorials/vertebral-labeling.html
+        """)
     )
     optional.add_argument(
         '-ldisc',
         metavar=Metavar.file,
-        help="File containing disc labels. Labels can be located either at the posterior edge "
-             "of the intervertebral discs, or at the orthogonal projection of each disc onto "
-             "the spinal cord (e.g.: the file 'xxx_seg_labeled_discs.nii.gz' output by sct_label_vertebrae).\n"
-             "If you are using more than 2 labels, all discs covering the region of interest should be provided. "
-             "E.g., if you are interested in levels C2 to C7, then you should provide disc labels 2,3,4,5,6,7. "
-             "For more information about label creation, please refer to "
-             "https://spinalcordtoolbox.com/user_section/tutorials/vertebral-labeling.html"
+        help=textwrap.dedent("""
+            File containing disc labels. Labels can be located either at the posterior edge of the intervertebral discs, or at the orthogonal projection of each disc onto the spinal cord (e.g.: the file `xxx_seg_labeled_discs.nii.gz` output by sct_label_vertebrae)
+
+            If you are using more than 2 labels, all discs covering the region of interest should be provided. E.g., if you are interested in levels C2 to C7, then you should provide disc labels 2,3,4,5,6,7. For more information about label creation, please refer to https://spinalcordtoolbox.com/user_section/tutorials/vertebral-labeling.html
+        """)  # noqa: E501 (line too long)
     )
     optional.add_argument(
         '-lspinal',
         metavar=Metavar.file,
-        help="Labels located in the center of the spinal cord, at the superior-inferior level corresponding to the "
-             "mid-point of the spinal level. Example: anat_labels.nii.gz\n"
-             "Each label is a single voxel, which value corresponds to the spinal level (e.g.: 2 for spinal level 2). "
-             "If you are using more than 2 labels, all spinal levels covering the region of interest should be "
-             "provided (e.g., if you are interested in levels C2 to C7, then you should provide spinal level labels "
-             "2,3,4,5,6,7)."
+        help=textwrap.dedent("""
+            Labels located in the center of the spinal cord, at the superior-inferior level corresponding to the mid-point of the spinal level. Example: `anat_labels.nii.gz`
+
+            Each label is a single voxel, which value corresponds to the spinal level (e.g.: 2 for spinal level 2). If you are using more than 2 labels, all spinal levels covering the region of interest should be provided (e.g., if you are interested in levels C2 to C7, then you should provide spinal level labels 2,3,4,5,6,7)."
+        """)  # noqa: E501 (line too long)
     )
     optional.add_argument(
         '-ofolder',

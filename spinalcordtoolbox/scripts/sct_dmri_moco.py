@@ -26,6 +26,7 @@
 import sys
 import os
 from typing import Sequence
+import textwrap
 
 from spinalcordtoolbox.moco import ParamMoco, moco_wrapper
 from spinalcordtoolbox.utils.sys import init_sct, set_loglevel
@@ -39,25 +40,25 @@ def get_parser():
     param_default = ParamMoco(is_diffusion=True, group_size=3, metric='MI', smooth='1')
 
     parser = SCTArgumentParser(
-        description="Motion correction of dMRI data. Some of the features to improve robustness were proposed in Xu et "
-                    "al. (https://dx.doi.org/10.1016/j.neuroimage.2012.11.014) and include:\n"
-                    "  - group-wise (-g)\n"
-                    "  - slice-wise regularized along z using polynomial function (-param). For more info about the "
-                    "method, type: isct_antsSliceRegularizedRegistration\n"
-                    "  - masking (-m)\n"
-                    "  - iterative averaging of target volume\n"
-                    "\n"
-                    "The outputs of the motion correction process are:\n"
-                    "  - the motion-corrected dMRI volumes\n"
-                    "  - the time average of the corrected dMRI volumes with b == 0\n"
-                    "  - the time average of the corrected dMRI volumes with b != 0\n"
-                    "  - a time-series with 1 voxel in the XY plane, for the X and Y motion direction (two separate "
-                    "files), as required for FSL analysis.\n"
-                    "  - a TSV file with one row for each time point, with the slice-wise average of the "
-                    "motion correction magnitude for that time point, that can be used for Quality Control.\n"
+        description=textwrap.dedent("""
+            Motion correction of dMRI data. Some of the features to improve robustness were proposed in Xu et al. (https://dx.doi.org/10.1016/j.neuroimage.2012.11.014) and include:
+
+              - group-wise (`-g`)
+              - slice-wise regularized along z using polynomial function (-param). For more info about the method, type: `isct_antsSliceRegularizedRegistration`
+              - masking (`-m`)
+              - iterative averaging of target volume
+
+            The outputs of the motion correction process are:
+
+              - the motion-corrected dMRI volumes
+              - the time average of the corrected dMRI volumes with b == 0
+              - the time average of the corrected dMRI volumes with b != 0
+              - a time-series with 1 voxel in the XY plane, for the X and Y motion direction (two separate files), as required for FSL analysis.
+              - a TSV file with one row for each time point, with the slice-wise average of the motion correction magnitude for that time point, that can be used for Quality Control.
+        """),  # noqa: E501 (line too long)
     )
 
-    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
     mandatory.add_argument(
         '-i',
         metavar=Metavar.file,
@@ -71,7 +72,7 @@ def get_parser():
         help='Bvecs file. Example: bvecs.txt'
     )
 
-    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
         "--help",
@@ -108,14 +109,14 @@ def get_parser():
         '-param',
         metavar=Metavar.list,
         type=list_type(',', str),
-        help=f"Advanced parameters. Assign value with \"=\", and separate arguments with \",\".\n"
-             f"  - poly [int]: Degree of polynomial function used for regularization along Z. For no regularization "
+        help=f"Advanced parameters. Assign value with `=`, and separate arguments with `,`.\n"
+             f"  - `poly` [int]: Degree of polynomial function used for regularization along Z. For no regularization "
              f"set to 0. Default={param_default.poly}.\n"
-             f"  - smooth [mm]: Smoothing kernel. Default={param_default.smooth}.\n"
-             f"  - metric {{MI, MeanSquares, CC}}: Metric used for registration. Default={param_default.metric}.\n"
-             f"  - gradStep [float]: Searching step used by registration algorithm. The higher the more deformation "
+             f"  - `smooth` [mm]: Smoothing kernel. Default={param_default.smooth}.\n"
+             f"  - `metric` {{MI, MeanSquares, CC}}: Metric used for registration. Default={param_default.metric}.\n"
+             f"  - `gradStep` [float]: Searching step used by registration algorithm. The higher the more deformation "
              f"allowed. Default={param_default.gradStep}.\n"
-             f"  - sample [None or 0-1]: Sampling rate used for registration metric. "
+             f"  - `sample` [None or 0-1]: Sampling rate used for registration metric. "
              f"Default={param_default.sampling}.\n"
     )
     optional.add_argument(
@@ -151,13 +152,13 @@ def get_parser():
         metavar=Metavar.folder,
         action=ActionCreateFolder,
         help="The path where the quality control generated content will be saved. (Note: "
-             "Both '-qc' and '-qc-seg' are required in order to generate a QC report.)"
+             "Both `-qc` and `-qc-seg` are required in order to generate a QC report.)"
     )
     optional.add_argument(
         '-qc-seg',
         metavar=Metavar.file,
         help="Segmentation of spinal cord to improve cropping in qc report. (Note: "
-             "Both '-qc' and '-qc-seg' are required in order to generate a QC report.)"
+             "Both `-qc` and `-qc-seg` are required in order to generate a QC report.)"
     )
     optional.add_argument(
         '-qc-fps',

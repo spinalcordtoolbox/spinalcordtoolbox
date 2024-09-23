@@ -112,7 +112,7 @@ def get_parser():
                     'A->B and B->C to yield A->C, then you have to input warping fields in this order: A->B B->C.',
     )
 
-    mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatoryArguments = parser.add_argument_group("MANDATORY ARGUMENTS")
     mandatoryArguments.add_argument(
         "-d",
         required=True,
@@ -123,16 +123,16 @@ def get_parser():
         "-w",
         required=True,
         help='Transformation(s), which can be warping fields (nifti image) or affine transformation matrix (text '
-             'file). Separate with space. Example: warp1.nii.gz warp2.nii.gz',
+             'file). Separate with space. Example: `warp1.nii.gz warp2.nii.gz`',
         nargs='+',
         metavar=Metavar.file)
 
-    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
     optional.add_argument(
         "-winv",
-        help='Affine transformation(s) listed in flag -w which should be inverted before being used. Note that this '
+        help='Affine transformation(s) listed in flag `-w` which should be inverted before being used. Note that this '
              'only concerns affine transformation (not warping fields). If you would like to use an inverse warping '
-             'field, then directly input the inverse warping field in flag -w.',
+             'field, then directly input the inverse warping field in flag `-w`.',
         nargs='*',
         metavar=Metavar.file,
         default=[])

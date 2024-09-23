@@ -45,7 +45,7 @@ The resulting 3D volume can then be used to obtain a cord segmentation.
 
 .. note::
 
-   Keep in mind that this segmentation was created from a non-motion-corrected mean dMRI image. While this segmentation is useful for coarsely highlighting the spinal cord, it won't be applicable once motion correction is applied to the dMRI image, so you will need to re-run ``sct_deepseg_sc`` on the motion-corrected mean image later on.
+   Keep in mind that this segmentation was created from a non-motion-corrected mean dMRI image. While this segmentation is useful for coarsely highlighting the spinal cord, it won't be applicable once motion correction is applied to the dMRI image, so you will need to re-run :ref:`sct_deepseg_sc` on the motion-corrected mean image later on.
 
 Creating a mask around the spinal cord
 --------------------------------------

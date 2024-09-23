@@ -1,7 +1,7 @@
 Computing the white matter segmentation
 #######################################
 
-In the previous step, we used ``sct_deepseg_gm`` to segment the gray matter. However, to get the white matter, we essentially need the "inverse" volume. (In other words, the full spinal cord segmentation minus the gray matter segmentation.)
+In the previous step, we used :ref:`sct_deepseg_gm` to segment the gray matter. However, to get the white matter, we essentially need the "inverse" volume. (In other words, the full spinal cord segmentation minus the gray matter segmentation.)
 
 Segmenting the full spinal cord
 -------------------------------
@@ -34,7 +34,7 @@ Now that we have the spinal cord segmentation, we can subtract the gray matter a
 
 :Input arguments:
    - ``-i`` : Input image. (The full segmentation of the spinal cord.)
-   - ``-sub`` : Flag to invoke the "subtract" functionality of ``sct_maths``, subtracting ``t2s_gmseg.nii.gz`` from the input image.
+   - ``-sub`` : Flag to invoke the "subtract" functionality of :ref:`sct_maths`, subtracting ``t2s_gmseg.nii.gz`` from the input image.
    - ``-o`` : The filename of the output image.
 
 :Output files/folders:
