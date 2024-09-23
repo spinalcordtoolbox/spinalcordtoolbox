@@ -45,7 +45,7 @@ def get_parser():
         """),  # noqa: E501 (line too long)
     )
 
-    mandatory_arguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatory_arguments = parser.add_argument_group("MANDATORY ARGUMENTS")
     mandatory_arguments.add_argument(
         "-m",
         required=True,
@@ -53,7 +53,7 @@ def get_parser():
         metavar=Metavar.file,
     )
 
-    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
         "--help",

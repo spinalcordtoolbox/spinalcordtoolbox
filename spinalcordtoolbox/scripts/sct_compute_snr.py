@@ -33,7 +33,7 @@ def get_parser():
                     ' signal-to-noise ratios in MR images: Influence of multichannel coils, parallel '
                     'imaging, and reconstruction filters. J Magn Reson Imaging 2007; 26(2): 375-385].'
     )
-    mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatoryArguments = parser.add_argument_group("MANDATORY ARGUMENTS")
     mandatoryArguments.add_argument(
         '-i',
         required=True,
@@ -44,7 +44,7 @@ def get_parser():
               - For `-method single`, the image can either be 3D or 4D. If a 4D image is passed, a specific 3D volume should be specified using the `-vol` argument.
         """),
         metavar=Metavar.file)
-    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
         "--help",

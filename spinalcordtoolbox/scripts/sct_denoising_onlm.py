@@ -41,7 +41,7 @@ def get_parser():
                     'Engineering and Technology, 2011). The implementation is based on Dipy (https://dipy.org/).'
     )
 
-    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
     mandatory.add_argument(
         "-i",
         default=None,
@@ -50,7 +50,7 @@ def get_parser():
         metavar=Metavar.file,
     )
 
-    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
         "--help",

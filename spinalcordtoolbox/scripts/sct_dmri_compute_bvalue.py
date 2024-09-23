@@ -49,7 +49,7 @@ def get_parser():
         description='Calculate b-value (in mm^2/s).'
     )
 
-    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
     mandatory.add_argument(
         "-g",
         type=float,
@@ -72,7 +72,7 @@ def get_parser():
         metavar=Metavar.float,
     )
 
-    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
         "--help",

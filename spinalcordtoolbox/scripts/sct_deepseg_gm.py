@@ -31,7 +31,7 @@ def get_parser():
                     'dilated convolutions. Sci Rep 2018;8(1):5966.'
     )
 
-    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
     mandatory.add_argument(
         "-i",
         required=True,
@@ -39,7 +39,7 @@ def get_parser():
         metavar=Metavar.file
     )
 
-    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
         "--help",
@@ -50,7 +50,7 @@ def get_parser():
         help="Output segmentation file name. Example: `sc_gm_seg.nii.gz`",
         metavar=Metavar.file,
         default=None)
-    misc = parser.add_argument_group('\nMISC')
+    misc = parser.add_argument_group('MISC')
     misc.add_argument(
         '-qc',
         help="The path where the quality control generated content will be saved.",

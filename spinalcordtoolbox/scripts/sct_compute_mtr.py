@@ -20,7 +20,7 @@ def get_parser():
         description='Compute magnetization transfer ratio (MTR). Output is given in percentage.'
     )
 
-    mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatoryArguments = parser.add_argument_group("MANDATORY ARGUMENTS")
     mandatoryArguments.add_argument(
         '-mt0',
         required=True,
@@ -34,7 +34,7 @@ def get_parser():
         metavar=Metavar.float,
     )
 
-    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
     optional.add_argument(
         "-thr",
         type=float,

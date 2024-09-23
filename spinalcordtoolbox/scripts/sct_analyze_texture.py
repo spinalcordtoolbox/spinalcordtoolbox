@@ -29,7 +29,7 @@ def get_parser():
                     'called fnameInput_feature_distance_mean.nii.gz, is output.'
     )
 
-    mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatoryArguments = parser.add_argument_group("MANDATORY ARGUMENTS")
     mandatoryArguments.add_argument(
         "-i",
         required=True,
@@ -43,7 +43,7 @@ def get_parser():
         help='Image mask Example: t2_seg.nii.gz',
     )
 
-    optional = parser.add_argument_group("\nOPTIONALS ARGUMENTS")
+    optional = parser.add_argument_group("OPTIONALS ARGUMENTS")
     optional.add_argument(
         "-h",
         "--help",

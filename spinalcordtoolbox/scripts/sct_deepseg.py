@@ -40,7 +40,7 @@ def get_parser():
         epilog=models.list_tasks_string()
     )
 
-    input_output = parser.add_argument_group("\nINPUT/OUTPUT")
+    input_output = parser.add_argument_group("INPUT/OUTPUT")
     input_output.add_argument(
         "-i",
         nargs="+",
@@ -65,7 +65,7 @@ def get_parser():
              "the suffix specified in the packaged model will be added and output extension will be .nii.gz.",
         metavar=Metavar.str)
 
-    seg = parser.add_argument_group('\nTASKS')
+    seg = parser.add_argument_group('TASKS')
     seg.add_argument(
         "-task",
         nargs="+",
@@ -84,7 +84,7 @@ def get_parser():
         help="Install models that are required for specified task.",
         choices=list(models.TASKS.keys()))
 
-    misc = parser.add_argument_group('\nPARAMETERS')
+    misc = parser.add_argument_group('PARAMETERS')
     misc.add_argument(
         "-thr",
         type=float,
@@ -122,7 +122,7 @@ def get_parser():
              "smaller than 10 voxels for class 1 and 3, and smaller than 20 voxels for class 2).",
         default=None)
 
-    misc = parser.add_argument_group('\nMISC')
+    misc = parser.add_argument_group('MISC')
     misc.add_argument(
         '-qc',
         metavar=Metavar.folder,
