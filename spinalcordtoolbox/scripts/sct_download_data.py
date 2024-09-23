@@ -7,6 +7,7 @@
 
 import sys
 from typing import Sequence
+import textwrap
 
 from spinalcordtoolbox.download import install_named_dataset, DATASET_DICT, list_datasets, install_default_datasets
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder
@@ -18,7 +19,7 @@ def get_parser():
         description="Download binaries from the web.",
         epilog=list_datasets(),
     )
-    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
     mandatory.add_argument(
         '-d',
         required=True,
@@ -27,7 +28,7 @@ def get_parser():
         help="Name of the dataset, as listed in the table below. If 'default' is specified, then all default datasets "
              "will be re-downloaded. (Default datasets are critical datasets downloaded during installation.)"
     )
-    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
         "--help",
@@ -38,9 +39,11 @@ def get_parser():
         '-o',
         metavar=Metavar.folder,
         action=ActionCreateFolder,
-        help="Path to a directory to save the downloaded data.\n"
-             "(If not provided, the dataset will be downloaded to the SCT installation directory by default. Directory will be created if it does not exist. Warning: existing "
-             "data in the directory will be erased unless -k is provided.)\n"
+        help=textwrap.dedent("""
+            Path to a directory to save the downloaded data.
+
+            (If not provided, the dataset will be downloaded to the SCT installation directory by default. Directory will be created if it does not exist. Warning: existing data in the directory will be erased unless `-k` is provided.)
+        """),  # noqa: E501 (line too long)
     )
     optional.add_argument(
         '-k',

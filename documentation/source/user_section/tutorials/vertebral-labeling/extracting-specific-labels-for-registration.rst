@@ -3,7 +3,7 @@
 Extracting specific labels for registration
 ###########################################
 
-Following the recommendations from the :ref:`previous page<how-many-labels>`, we can use ``sct_label_utils`` to create a new label image containing just 2 of the vertebral levels.
+Following the recommendations from the :ref:`previous page<how-many-labels>`, we can use :ref:`sct_label_utils` to create a new label image containing just 2 of the vertebral levels.
 
 .. code:: sh
 
@@ -22,4 +22,4 @@ Once the command has finished, if you have ``fsleyes`` installed, at the bottom 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/vertebral-labeling/io-sct_label_utils.png
    :align: center
 
-   Input/output images for ``sct_label_utils``
+   Input/output images for :ref:`sct_label_utils`

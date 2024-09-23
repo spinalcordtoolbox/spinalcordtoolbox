@@ -52,7 +52,7 @@ The easiest way to try out different versions of SCT is using Git.
 2. Run the installer.
 
    - You can click "Next" for most of the options in the installer.
-   - However, on the "Adjusting your PATH environment" page, we strongly recommend that you choose the "Use Git and optional Unix tools from the Command Prompt". Selecting this option will provide you with useful Unix utilities such as ``bash``, ``cd``, ``ls``, and more that combine nicely with SCT's command-line tools. In particular, ``bash`` will allow ``sct_run_batch`` to execute bash scripts for batch processing of subjects.
+   - However, on the "Adjusting your PATH environment" page, we strongly recommend that you choose the "Use Git and optional Unix tools from the Command Prompt". Selecting this option will provide you with useful Unix utilities such as ``bash``, ``cd``, ``ls``, and more that combine nicely with SCT's command-line tools. In particular, ``bash`` will allow :ref:`sct_run_batch` to execute bash scripts for batch processing of subjects.
    - **Note:** If you prefer, you may instead choose to :ref:`install Cygwin<installing_cygwin>` (rather than selecting the "Use Git and optional Unix tools" option) in order to gain access to these same Unix utilities.
 
 3. After the installation has finished, open your Start Menu and type Command Prompt, then run it. In the Command Prompt window, type ``git --version`` and press enter.
@@ -69,7 +69,7 @@ The easiest way to try out different versions of SCT is using Git.
 
 3. Once the installer finishes, follow the instructions given at the end of the Command Prompt window, which will instruct you to create the SCT_DIR variable, and to add the SCT installation folder to the PATH variable.
 
-4. Finally, in the Command Prompt window, type ``sct_check_dependencies`` and press enter. Make sure that you see a status report containing all "OKs" before continuing.
+4. Finally, in the Command Prompt window, type :ref:`sct_check_dependencies` and press enter. Make sure that you see a status report containing all "OKs" before continuing.
 
 5. You are now free to use SCT's command line tools to process your data. If you would like to learn how to use SCT, we recommend starting with SCT's :ref:`tutorials` pages.
 
@@ -80,7 +80,7 @@ The easiest way to try out different versions of SCT is using Git.
 
 .. note:: You do not need to install Cygwin if you already selected the "Use Git and optional Unix tools from the Command Prompt" option during the Git installation step.
 
-Cygwin is a collection of useful Unix utilities such as ``bash``, ``cd``, ``ls``, and more that combine nicely with SCT's command-line tools. In particular, ``bash`` will allow ``sct_run_batch`` to execute bash scripts for batch processing of subjects.
+Cygwin is a collection of useful Unix utilities such as ``bash``, ``cd``, ``ls``, and more that combine nicely with SCT's command-line tools. In particular, ``bash`` will allow :ref:`sct_run_batch` to execute bash scripts for batch processing of subjects.
 
 1. Download the Cygwin installer from `the Cygwin installation page <https://www.cygwin.com/install.html>`_.
 
@@ -251,7 +251,7 @@ If you would like to use SCT's GUI features, or if you would like to try FSLeyes
       echo "export LIBGL_ALWAYS_INDIRECT=0" >> ~/.bashrc
       source ~/.bashrc
 
-#. Finally, run the ``sct_check_dependencies`` command in Ubuntu to verify that matplotlib and PyQt figures can be opened by SCT.
+#. Finally, run the :ref:`sct_check_dependencies` command in Ubuntu to verify that matplotlib and PyQt figures can be opened by SCT.
 
 #. Optionally, you can install FSLeyes using the following commands:
 

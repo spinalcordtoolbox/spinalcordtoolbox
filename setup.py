@@ -49,7 +49,8 @@ setup(
             'sphinx-copybutton',
             'furo==2023.09.10',
             'recommonmark',
-            'sphinx'
+            'sphinx',
+            'sphinx_argparse',
         ],
     },
     entry_points=dict(

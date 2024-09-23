@@ -49,30 +49,30 @@ def get_parser():
         description='Calculate b-value (in mm^2/s).'
     )
 
-    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
     mandatory.add_argument(
         "-g",
         type=float,
         required=True,
-        help="Amplitude of diffusion gradients (in mT/m). Example: 40",
+        help="Amplitude of diffusion gradients (in mT/m). Example: `40`",
         metavar=Metavar.float,
     )
     mandatory.add_argument(
         "-b",
         type=float,
         required=True,
-        help="Big delta: time between both diffusion gradients (in ms). Example: 40",
+        help="Big delta: time between both diffusion gradients (in ms). Example: `40`",
         metavar=Metavar.float,
     )
     mandatory.add_argument(
         "-d",
         type=float,
         required=True,
-        help="Small delta: duration of each diffusion gradient (in ms). Example: 30",
+        help="Small delta: duration of each diffusion gradient (in ms). Example: `30`",
         metavar=Metavar.float,
     )
 
-    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
         "--help",

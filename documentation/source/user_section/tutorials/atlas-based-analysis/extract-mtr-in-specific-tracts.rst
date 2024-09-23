@@ -14,7 +14,7 @@ Next, we will extract the MTR from the right and left corticospinal tracts.
    - ``-i`` : Image to extract values from.
    - ``-f`` : File or folder used to pick out specific regions from the input image. In this case, we supply the folder of the white matter atlas that was transformed to the space of the MTR data.
    - ``-method`` : We specify ``map`` to choose the Maximum a Posteriori method, which helps to account for the partial volume effect. This method is most suitable for small regions. This method should only be used with the PAM50 white/gray matter atlas (or with any custom atlas) as long as the sum across all overlapping labels equals 1 in each voxel part of the atlas.
-   - ``-l`` : The IDs of the label (or group of labels) to compute metrics for. In this case, labels 4 and 5 correspond to the left and right lateral corticospinal tracts. You can see the full list of labels to choose from by running ``sct_extract_metric -list-labels``.
+   - ``-l`` : The IDs of the label (or group of labels) to compute metrics for. In this case, labels 4 and 5 correspond to the left and right lateral corticospinal tracts. You can see the full list of labels to choose from by running :ref:`sct_extract_metric` ``-list-labels``.
    - ``-z`` : This argument further restricts the metric computation to specific slices. In this case, 16 slices in total (5:15) will be used for the averaging process.
    - ``-o`` : The name of the output file.
 
@@ -39,7 +39,7 @@ Finally, we extract the MTR from the dorsal columns.
    - ``-i`` : Image to extract values from.
    - ``-f`` : File or folder used to pick out specific regions from the input image. In this case, we supply the folder of the white matter atlas that was transformed to the space of the MTR data.
    - ``-method`` : We specify ``map`` to choose the Maximum a Posteriori method, which helps to account for the partial volume effect. This method is most suitable for small regions. This method should only be used with the PAM50 white/gray matter atlas (or with any custom atlas) as long as the sum across all overlapping labels equals 1 in each voxel part of the atlas.
-   - ``-l`` : The IDs of the label (or group of labels) to extract metrics for. In this case, label 53 is a combined label that represents labels 0:3 (or, the left and right fasciculus cuneatus and left and right fasciculus gracilis together). You can see the full list of labels to choose from by running ``sct_extract_metric -list-labels``.
+   - ``-l`` : The IDs of the label (or group of labels) to extract metrics for. In this case, label 53 is a combined label that represents labels 0:3 (or, the left and right fasciculus cuneatus and left and right fasciculus gracilis together). You can see the full list of labels to choose from by running :ref:`sct_extract_metric` ``-list-labels``.
    - ``-vert`` : This argument further restricts the metric extraction to specific vertebral levels. In this case, 3 levels in total (C2-C4) will be used for the averaging process.
    - ``-vertfile``: This argument specifies the vertebral label file to use when extracting metrics.
    - ``-o`` : The name of the output file.

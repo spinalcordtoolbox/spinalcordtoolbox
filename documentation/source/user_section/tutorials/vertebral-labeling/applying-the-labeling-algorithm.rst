@@ -1,7 +1,7 @@
 Applying the labeling algorithm
 ###############################
 
-To apply ``sct_label_vertebrae`` to our T2 data, the following command is used:
+To apply :ref:`sct_label_vertebrae` to our T2 data, the following command is used:
 
 .. code:: sh
 
@@ -26,4 +26,4 @@ Once the command has finished, at the bottom of your terminal there will be inst
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/vertebral-labeling/io-sct_label_vertebrae.png
    :align: center
 
-   Input/output images for ``sct_label_vertebrae``
+   Input/output images for :ref:`sct_label_vertebrae`

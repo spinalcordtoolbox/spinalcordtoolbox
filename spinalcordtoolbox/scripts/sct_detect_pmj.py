@@ -47,12 +47,12 @@ def get_parser():
                     'position. If the PMJ is not detected, nothing is output.'
     )
 
-    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
     mandatory.add_argument(
         "-i",
         required=True,
         metavar=Metavar.file,
-        help='Input image. Example: t2.nii.gz',
+        help='Input image. Example: `t2.nii.gz`',
     )
     mandatory.add_argument(
         "-c",
@@ -61,7 +61,7 @@ def get_parser():
         help="Type of image contrast, if your contrast is not in the available options (t1, t2), "
              "use t1 (cord bright/ CSF dark) or t2 (cord dark / CSF bright)",
     )
-    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
         "--help",
@@ -72,18 +72,18 @@ def get_parser():
         metavar=Metavar.file,
         help='SC segmentation or centerline mask. '
              'Provide this mask helps the detection of the PMJ by indicating the position of the SC '
-             'in the Right-to-Left direction. Example: t2_seg.nii.gz',
+             'in the Right-to-Left direction. Example: `t2_seg.nii.gz`',
         required=False)
     optional.add_argument(
         "-ofolder",
         metavar=Metavar.folder,
-        help='Output folder. Example: My_Output_Folder',
+        help='Output folder. Example: `My_Output_Folder`',
         action=ActionCreateFolder,
         required=False)
     optional.add_argument(
         '-o',
         metavar=Metavar.file,
-        help='Output filename. Example: pmj.nii.gz '),
+        help='Output filename. Example: `pmj.nii.gz`'),
     optional.add_argument(
         '-qc',
         metavar=Metavar.str,

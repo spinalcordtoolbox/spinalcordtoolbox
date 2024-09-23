@@ -14,6 +14,7 @@ import os
 import logging
 import argparse
 from typing import Sequence
+import textwrap
 
 import numpy as np
 from matplotlib.ticker import MaxNLocator
@@ -61,7 +62,7 @@ def get_parser():
         description=(
             "Compute the following morphometric measures based on the spinal cord segmentation:\n"
             "  - area [mm^2]: Cross-sectional area, measured by counting pixels in each slice. Partial volume can be "
-            "accounted for by inputing a mask comprising values within [0,1]. Can be normalized when specifying the flag -normalize\n"
+            "accounted for by inputing a mask comprising values within [0,1]. Can be normalized when specifying the flag `-normalize`\n"
             "  - angle_AP, angle_RL: Estimated angle between the cord centerline and the axial slice. This angle is "
             "used to correct for morphometric information.\n"
             "  - diameter_AP, diameter_RL: Finds the major and minor axes of the cord and measure their length.\n"
@@ -82,28 +83,28 @@ def get_parser():
             "their corresponding uncorrected values to get a sense of the limits on precision.\n"
             "\n"
             "To select the region to compute metrics over, choose one of the following arguments:\n"
-            "   1. '-z': Select axial slices based on slice index.\n"
-            "   2. '-pmj' + '-pmj-distance' + '-pmj-extent': Select axial slices based on distance from pontomedullary "
+            "   1. `-z`: Select axial slices based on slice index.\n"
+            "   2. `-pmj` + `-pmj-distance` + `-pmj-extent`: Select axial slices based on distance from pontomedullary "
             "junction.\n"
             "      (For options 1 and 2, you can also add '-perslice' to compute metrics for each axial slice, rather "
             "than averaging.)\n"
-            "   3. '-vert' + '-vertfile': Select a region based on vertebral labels instead of individual slices.\n"
-            "      (For option 3, you can also add '-perlevel' to compute metrics for each vertebral level, rather "
+            "   3. `-vert` + `-vertfile`: Select a region based on vertebral labels instead of individual slices.\n"
+            "      (For option 3, you can also add `-perlevel` to compute metrics for each vertebral level, rather "
             "than averaging.)\n"
             "\n"
             "References:\n"
-            "  - '-pmj'/'-normalize':\n"
+            "  - `-pmj`/`-normalize`:\n"
             "    Bédard S, Cohen-Adad J. Automatic measure and normalization of spinal cord cross-sectional area using "
             "the pontomedullary junction. Frontiers in Neuroimaging 2022.\n"
             "    https://doi.org/10.3389/fnimg.2022.1031253\n"
-            "  - '-normalize-PAM50':\n"
+            "  - `-normalize-PAM50`:\n"
             "    Valošek J, Bédard S, Keřkovský M, Rohan T, Cohen-Adad J. A database of the healthy human spinal cord "
             "morphometry in the PAM50 template space. Imaging Neuroscience 2024; 2 1–15.\n"
             "    https://doi.org/10.1162/imag_a_00075"
         )
     )
 
-    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
     mandatory.add_argument(
         '-i',
         metavar=Metavar.file,
@@ -112,7 +113,7 @@ def get_parser():
              "Example: seg.nii.gz"
     )
 
-    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
         "--help",
@@ -163,9 +164,11 @@ def get_parser():
         '-vertfile',
         metavar=Metavar.str,
         default=os.path.join('.', 'label', 'template', 'PAM50_levels.nii.gz'),
-        help="Vertebral labeling file. Only use with flag -vert.\n"
-        "The input and the vertebral labelling file must in the same voxel coordinate system "
-        "and must match the dimensions between each other. "
+        help=textwrap.dedent("""
+            Vertebral labeling file. Only use with flag `-vert`.
+
+            The input and the vertebral labelling file must in the same voxel coordinate system and must match the dimensions between each other.
+        """),
     )
     optional.add_argument(
         '-perlevel',
@@ -174,7 +177,7 @@ def get_parser():
         choices=[0, 1],
         default=0,
         help="Set to 1 to output one metric per vertebral level instead of a single output metric. This flag needs "
-             "to be used with flag -vert."
+             "to be used with flag `-vert`."
     )
     optional.add_argument(
         '-angle-corr',
@@ -200,14 +203,14 @@ def get_parser():
         '-centerline-algo',
         choices=['polyfit', 'bspline', 'linear', 'nurbs'],
         default='bspline',
-        help="Algorithm for centerline fitting. Only relevant with -angle-corr 1."
+        help="Algorithm for centerline fitting. Only relevant with `-angle-corr 1`."
     )
     optional.add_argument(
         '-centerline-smooth',
         metavar=Metavar.int,
         type=int,
         default=30,
-        help="Degree of smoothing for centerline fitting. Only use with -centerline-algo {bspline, linear}."
+        help="Degree of smoothing for centerline fitting. Only use with `-centerline-algo {bspline, linear}`."
     )
     optional.add_argument(
         '-pmj',
@@ -221,7 +224,7 @@ def get_parser():
         type=float,
         metavar=Metavar.float,
         help="Distance (mm) from Ponto-Medullary Junction (PMJ) to the center of the mask used to compute morphometric "
-             "measures. (To be used with flag '-pmj'.)"
+             "measures. (To be used with flag `-pmj`.)"
     )
     optional.add_argument(
         '-pmj-extent',
@@ -229,7 +232,7 @@ def get_parser():
         metavar=Metavar.float,
         default=20.0,
         help="Extent (in mm) for the mask used to compute morphometric measures. Each slice covered by the mask is "
-             "included in the calculation. (To be used with flag '-pmj' and '-pmj-distance'.)"
+             "included in the calculation. (To be used with flag `-pmj` and `-pmj-distance`.)"
     )
     optional.add_argument(
         '-normalize',
@@ -241,7 +244,7 @@ def get_parser():
              "    1. sex, brain-volume, thalamus-volume.\n"
              "    2. sex, brain-volume.\n"
              "Specify each value for the subject after the corresponding predictor.\n"
-             "Example:\n    -normalize sex 0 brain-volume 960606.0 thalamus-volume 13942.0 \n"
+             "Example:\n    `-normalize sex 0 brain-volume 960606.0 thalamus-volume 13942.0` \n"
              "*brain-volume and thalamus-volume are in mm^3. For sex, female: 0, male: 1.\n"
              "\n"
              "The models were generated using T1w brain images from 804 healthy (non-pathological) participants "
@@ -257,7 +260,7 @@ def get_parser():
         type=int,
         choices=[0, 1],
         default=0,
-        help="Set to 1 to bring the metrics in the PAM50 anatomical dimensions perslice. -vertfile and -perslice need to be specified."
+        help="Set to 1 to bring the metrics in the PAM50 anatomical dimensions perslice. `-vertfile` and `-perslice` need to be specified."
     )
     optional.add_argument(
         '-qc',
@@ -265,14 +268,14 @@ def get_parser():
         type=os.path.abspath,
         action=ActionCreateFolder,
         help="The path where the quality control generated content will be saved."
-             " The QC report is only available for PMJ-based CSA (with flag '-pmj')."
+             " The QC report is only available for PMJ-based CSA (with flag `-pmj`)."
     )
     optional.add_argument(
         '-qc-image',
         metavar=Metavar.str,
         help="Input image to display in QC report. Typically, it would be the "
              "source anatomical image used to generate the spinal cord "
-             "segmentation. This flag is mandatory if using flag '-qc'."
+             "segmentation. This flag is mandatory if using flag `-qc`."
     )
     optional.add_argument(
         '-qc-dataset',
