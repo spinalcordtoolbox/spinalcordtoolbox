@@ -31,13 +31,13 @@ def get_parser():
         description=textwrap.dedent("""
             Compute statistics on segmented lesions. The function assigns an ID value to each lesion (1, 2, 3, etc.) and then outputs morphometric measures for each lesion:
 
-              - volume `[mm^3]`
-              - length `[mm]`: length along the Superior-Inferior axis
+              - volume `[mm^3]`: volume of the lesion
+              - length `[mm]`: maximal length along the Superior-Inferior (SI) axis across all slices
               - max_equivalent_diameter `[mm]`: maximum diameter of the lesion, when approximating the lesion as a circle in the axial plane
               - max_axial_damage_ratio `[]`: maximum ratio of the lesion area divided by the spinal cord area
-              - midsagittal_spinal_cord_slice: midsagittal slice number of the spinal cord
-              - length_midsagittal_slice [mm]: length along the Superior-Inferior axis in the **midsagittal slice**
-              - width_midsagittal_slice [mm]: width along the Anterior-Posterior axis the **midsagittal slice**
+              - midsagittal_spinal_cord_slice: midsagittal slice number of the spinal cord defined based on the spinal cord segmentation
+              - length_midsagittal_slice [mm]: length of the lesion along the Superior-Inferior (SI) axis in the **midsagittal slice**
+              - width_midsagittal_slice [mm]: width of the lesion along the Anterior-Posterior (AP) axis the **midsagittal slice**
               - dorsal_bridge_width `[mm]`: width of spared tissue dorsal to the spinal cord lesion (i.e. towards the posterior direction of the AP axis)
               - ventral_bridge_width `[mm]`: width of spared tissue ventral to the spinal cord lesion (i.e. towards the anterior direction of the AP axis)
 

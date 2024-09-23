@@ -130,7 +130,7 @@ def get_parser():
         '-m',
         metavar=Metavar.file,
         help="Mask that can be created with sct_create_mask to improve accuracy over region of interest. This mask "
-             "will be used on the destination image. Example: `mask.nii.gz`"
+             "will be used on the destination image. Masks will be binarized at 0.5. Example: `mask.nii.gz`"
     )
     optional.add_argument(
         '-o',
