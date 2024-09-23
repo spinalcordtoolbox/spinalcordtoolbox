@@ -41,16 +41,16 @@ def get_parser():
                     'Engineering and Technology, 2011). The implementation is based on Dipy (https://dipy.org/).'
     )
 
-    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
     mandatory.add_argument(
         "-i",
         default=None,
         required=True,
-        help="Input NIFTI image to be denoised. Example: image_input.nii.gz",
+        help="Input NIFTI image to be denoised. Example: `image_input.nii.gz`",
         metavar=Metavar.file,
     )
 
-    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
         "--help",
@@ -67,7 +67,7 @@ def get_parser():
         type=int,
         help="Threshold value for what to be considered as noise. "
              "The standard deviation of the noise is calculated for values below this limit. "
-             "Not relevant if -std value is precised. Default is 80.",
+             "Not relevant if `-std` value is precised. Default: `80`.",
         metavar=Metavar.int,
         required=False,
         default="80")
@@ -76,7 +76,7 @@ def get_parser():
         type=float,
         help="Standard deviation of the noise. "
              "If not specified, it is calculated using a background of point of values "
-             "below the threshold value (parameter d).",
+             "below the threshold value (parameter `-d`).",
         metavar=Metavar.float)
     optional.add_argument(
         "-o",

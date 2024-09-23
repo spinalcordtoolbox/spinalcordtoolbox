@@ -3,7 +3,7 @@
 Segmenting the gray and white matter for T2* data
 #################################################
 
-This tutorial demonstrates how to segment the gray and white matter using the ``sct_deepseg_gm`` tool.
+This tutorial demonstrates how to segment the gray and white matter using the :ref:`sct_deepseg_gm` tool.
 
 Gray matter segmentation can be used to compute metrics such as cross-sectional area (CSA) of the gray matter. It can also be used to refine the template registration by accounting for the spinal cord gray matter shape.
 

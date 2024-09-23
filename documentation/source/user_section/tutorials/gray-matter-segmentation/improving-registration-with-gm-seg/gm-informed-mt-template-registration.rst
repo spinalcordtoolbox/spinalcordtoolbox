@@ -11,7 +11,7 @@ First, we return to the ``mt`` directory.
 
    cd ../mt
 
-Next, we run ``sct_register_multimodal`` to compute the transformation between the MT space and the PAM50 template space.
+Next, we run :ref:`sct_register_multimodal` to compute the transformation between the MT space and the PAM50 template space.
 
 .. code:: sh
 

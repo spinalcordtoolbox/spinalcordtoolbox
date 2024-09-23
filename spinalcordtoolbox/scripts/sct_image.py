@@ -8,6 +8,7 @@
 import os
 import sys
 from typing import Sequence
+import textwrap
 
 import numpy as np
 from nibabel import Nifti1Image
@@ -30,7 +31,7 @@ DIM_LIST = ['x', 'y', 'z', 't']
 def get_parser():
     parser = SCTArgumentParser(
         description='Perform manipulations on images (e.g., pad, change space, split along dimension). '
-                    'Inputs can be a number, a 4d image, or several 3d images separated with ","'
+                    'Inputs can be a number, a 4d image, or several 3d images separated with `,`'
     )
 
     mandatory = parser.add_argument_group('MANDATORY ARGUMENTS')
@@ -38,9 +39,9 @@ def get_parser():
         '-i',
         nargs='+',
         metavar=Metavar.file,
-        help='Input file(s). Example: "data.nii.gz"\n'
-             'Note: Only "-concat", "-omc" or "-stitch" support multiple input files. In those cases, separate filenames using '
-             'spaces. Example usage: "sct_image -i data1.nii.gz data2.nii.gz -concat"',
+        help='Input file(s). Example: `data.nii.gz`\n'
+             'Note: Only `-concat`, `-omc` or `-stitch` support multiple input files. In those cases, separate filenames using '
+             'spaces. Example usage: `sct_image -i data1.nii.gz data2.nii.gz -concat`',
         required=True)
     optional = parser.add_argument_group('OPTIONAL ARGUMENTS')
     optional.add_argument(
@@ -51,20 +52,20 @@ def get_parser():
     optional.add_argument(
         '-o',
         metavar=Metavar.file,
-        help='Output file. Example: data_pad.nii.gz',
+        help='Output file. Example: `data_pad.nii.gz`',
         required=False)
 
     image = parser.add_argument_group('IMAGE OPERATIONS')
     image.add_argument(
         '-pad',
         metavar=Metavar.list,
-        help='Pad 3D image. Specify padding as: "x,y,z" (in voxel). Example: "0,0,1"',
+        help='Pad 3D image. Specify padding as: `x,y,z` (in voxel). Example: `0,0,1`',
         required=False)
     image.add_argument(
         '-pad-asym',
         metavar=Metavar.list,
-        help='Pad 3D image with asymmetric padding. Specify padding as: "x_i,x_f,y_i,y_f,z_i,z_f" (in voxel). '
-             'Example: "0,0,5,10,1,1"',
+        help='Pad 3D image with asymmetric padding. Specify padding as: `x_i,x_f,y_i,y_f,z_i,z_f` (in voxel). '
+             'Example: `0,0,5,10,1,1`',
         required=False)
     image.add_argument(
         '-split',
@@ -87,29 +88,29 @@ def get_parser():
         metavar=Metavar.folder,
         action=ActionCreateFolder,
         help="The path where the quality control generated content will be saved. "
-             "(Note: QC reporting is only available for 'sct_image -stitch')."
+             "(Note: QC reporting is only available for `sct_image -stitch`)."
     )
     image.add_argument(
         '-qc-dataset',
         metavar=Metavar.str,
         help="If provided, this string will be mentioned in the QC report as the dataset the process was run on. "
-             "(Note: QC reporting is only available for 'sct_image -stitch')."
+             "(Note: QC reporting is only available for `sct_image -stitch`)."
     )
     image.add_argument(
         '-qc-subject',
         metavar=Metavar.str,
         help='If provided, this string will be mentioned in the QC report as the subject the process was run on. '
-             "(Note: QC reporting is only available for 'sct_image -stitch')."
+             "(Note: QC reporting is only available for `sct_image -stitch`)."
     )
     image.add_argument(
         '-remove-vol',
         metavar=Metavar.list,
-        help='Remove specific volumes from a 4d volume. Separate with ",". Example: "0,5,10"',
+        help='Remove specific volumes from a 4d volume. Separate with `,`. Example: `0,5,10`',
         required=False)
     image.add_argument(
         '-keep-vol',
         metavar=Metavar.list,
-        help='Keep specific volumes from a 4d volume (remove others). Separate with ",". Example: "1,2,3,11"',
+        help='Keep specific volumes from a 4d volume (remove others). Separate with `,`. Example: `1,2,3,11`',
         required=False)
     image.add_argument(
         '-type',
@@ -129,12 +130,11 @@ def get_parser():
     header.add_argument(
         '-copy-header',
         metavar=Metavar.file,
-        help='Copy the NIfTI header of the source image (specified in -i) to the destination image (specified here) '
-             'and save it into a new image (specified in -o).\n'
-             '!! WARNING: This command should ONLY be run to fix a wrong header (e.g., where the qform and/or sform '
-             'between an image and a mask of the image do not match). Also note that the image is NOT affected by '
-             'this command, so if the dimensions of the source and destination images do not match, then you should '
-             'probably NOT use this command.',
+        help=textwrap.dedent("""
+            Copy the NIfTI header of the source image (specified in `-i`) to the destination image (specified here) and save it into a new image (specified in `-o`).
+
+            !! WARNING: This command should ONLY be run to fix a wrong header (e.g., where the qform and/or sform between an image and a mask of the image do not match). Also note that the image is NOT affected by this command, so if the dimensions of the source and destination images do not match, then you should probably NOT use this command.
+        """),  # noqa: E501 (line too long)
         required=False)
     affine_fixes = header.add_mutually_exclusive_group(required=False)
     affine_fixes.add_argument(
@@ -172,23 +172,23 @@ def get_parser():
         required=False)
     orientation.add_argument(
         '-flip',
-        help="Flip an axis of the image's data array. (This will not change the header orientation string.)\n"
-             " - WARNING: This option should only be used to fix the data array when it does not match the orientation "
-             "string in the header. We recommend that you investigate and understand where the mismatch originated "
-             "from in the first place before using this option.\n"
-             " - Example: For an image with 'RPI' in its header, `-flip x` will flip the LR axis of the data array.",
+        help=textwrap.dedent("""
+            Flip an axis of the image's data array. (This will not change the header orientation string.)
+
+              - WARNING: This option should only be used to fix the data array when it does not match the orientation string in the header. We recommend that you investigate and understand where the mismatch originated from in the first place before using this option.
+              - Example: For an image with 'RPI' in its header, `-flip x` will flip the LR axis of the data array.
+        """),  # noqa: E501 (line too long)
         choices=DIM_LIST,
         required=False)
     orientation.add_argument(
         '-transpose',
         metavar="ax1,ax2,ax3",
-        help="Transpose the axes (x,y,z) of the image's data array. (This will not change the header orientation "
-             "string.)\n"
-             " - WARNING: This option should only be used to fix the data array when it does not match the orientation "
-             "string in the header. We recommend that you investigate and understand where the mismatch originated "
-             "from in the first place before using this option.\n"
-             " - Example: For a 3D image with 'RPI' in its header, `-transpose z,y,x` will swap the LR and SI axes of "
-             "the data array.",
+        help=textwrap.dedent("""
+            Transpose the axes (x,y,z) of the image's data array. (This will not change the header orientation string.)
+
+              - WARNING: This option should only be used to fix the data array when it does not match the orientation string in the header. We recommend that you investigate and understand where the mismatch originated from in the first place before using this option.
+              - Example: For a 3D image with 'RPI' in its header, `-transpose z,y,x` will swap the LR and SI axes of the data array.
+        """),  # noqa: E501 (line too long)
         type=list_type(',', str),
         required=False)
 
@@ -197,7 +197,7 @@ def get_parser():
         '-mcs',
         action='store_true',
         help='Multi-component split: Split ITK warping field into three separate displacement fields. '
-             'The suffix _X, _Y and _Z will be added to the input file name.',
+             'The suffixes `_X`, `_Y` and `_Z` will be added to the input file name.',
         required=False)
     multi.add_argument(
         '-omc',
@@ -219,8 +219,8 @@ def get_parser():
         '(ref). The target file is necessary for the case where the warp is in a different space than the target. For '
         'example, the inverse warps generated by `sct_straighten_spinalcord`. This feature has not been extensively '
         'validated so consider checking the results of `applywarp` against `sct_apply_transfo` before using in FSL '
-        'pipelines. Example syntax: "sct_image -i WARP_SRC2DEST -to-fsl IM_SRC (IM_DEST) -o WARP_FSL", '
-        'followed by FSL: "applywarp -i IM_SRC -r IM_DEST -w WARP_FSL --abs -o IM_SRC2DEST" ',
+        'pipelines. Example syntax: `sct_image -i WARP_SRC2DEST -to-fsl IM_SRC (IM_DEST) -o WARP_FSL`, '
+        'followed by FSL: `applywarp -i IM_SRC -r IM_DEST -w WARP_FSL --abs -o IM_SRC2DEST` ',
         nargs='*',
         required=False)
 

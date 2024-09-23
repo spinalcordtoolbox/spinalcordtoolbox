@@ -3,7 +3,7 @@
 Registration Option 1: Reusing previous warping fields
 ######################################################
 
-Say that you have already registered some T2 anatomical data, and you have MT data from the same session that you would also like to register to the template. In that case, there is no need to run ``sct_register_to_template`` again, because you can reuse the warping field between the template and the T2 anatomical space. This has several benefits:
+Say that you have already registered some T2 anatomical data, and you have MT data from the same session that you would also like to register to the template. In that case, there is no need to run :ref:`sct_register_to_template` again, because you can reuse the warping field between the template and the T2 anatomical space. This has several benefits:
 
 * It provides consistency between contrasts, as the "affine" part of the transformation (in other words, the matching between the vertebral levels of the data and template) will be the same for both contrasts.
 * It saves processing time, because you can skip the vertebral labeling step and part of the registration process.
@@ -15,7 +15,7 @@ For the purpose of this tutorial, we will register the MT data alongside the T2 
 
    ``Template->T2`` (blue) + ``T2->MT1`` (green) = ``Template->MT1`` (the desired result)
 
-Since we are starting the MT registration with an initial transformation already applied, all that remains is fine-tuning for the MT data. So, here we use a different command: ``sct_register_multimodal``. This command is designed to register any two images together, so it can be seen as the generalized counterpart to ``sct_register_to_template``.
+Since we are starting the MT registration with an initial transformation already applied, all that remains is fine-tuning for the MT data. So, here we use a different command: :ref:`sct_register_multimodal`. This command is designed to register any two images together, so it can be seen as the generalized counterpart to :ref:`sct_register_to_template`.
 
 .. code:: sh
 
