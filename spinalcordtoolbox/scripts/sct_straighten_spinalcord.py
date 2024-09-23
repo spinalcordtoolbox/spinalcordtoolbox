@@ -136,7 +136,7 @@ def get_parser():
         "-param",
         metavar=Metavar.list,
         help=textwrap.dedent("""
-            Parameters for spinal cord straightening. Separate arguments with \\.
+            Parameters for spinal cord straightening. Separate arguments with ','.
 
               - `precision`: Float `[1, inf)` Precision factor of straightening, related to the number of slices. Increasing this parameter increases the precision along with increased computational time. Not taken into account with Hanning fitting method. Default=`2`
               - `threshold_distance`: Float `[0, inf)` Threshold at which voxels are not considered into displacement. Increase this threshold if the image is blackout around the spinal cord too much. Default=`10`
