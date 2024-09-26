@@ -47,7 +47,7 @@ def test_model_dict():
     (sct_test_path('t2', 't2.nii.gz'),
      sct_test_path('t2', 't2_seg-manual.nii.gz'),
      't2_seg_deepseg.nii.gz',
-     'sc_contrast_agnostic',
+     'spinalcord',
      None),
     (sct_test_path('t2', 't2.nii.gz'),
      sct_test_path('t2', 't2_seg-deepseg_rootlets.nii.gz'),
@@ -101,7 +101,7 @@ def test_segment_nifti_binary_seg(fname_image, fname_seg_manual, fname_out, task
     (sct_test_path('t2', 't2.nii.gz'),
      sct_test_path('t2', 't2_seg-manual.nii.gz'),
      't2_seg_deepseg.nii.gz',
-     'sc_contrast_agnostic',
+     'spinalcord',
      0),
 ])
 def test_segment_nifti_softseg(fname_image, fname_seg_manual, fname_out, task, thr, tmp_path):
@@ -134,7 +134,7 @@ def test_segment_nifti_softseg_error_with_fill_holes(tmp_path):
     warnings.filterwarnings("ignore", category=SourceChangeWarning)
     fname_out = str(tmp_path/'t2_seg_deepseg.nii.gz')  # tmp_path for automatic cleanup
     with pytest.raises(AssertionError):
-        sct_deepseg.main(argv=['sc_contrast_agnostic', '-i', sct_test_path('t2', 't2.nii.gz'),
+        sct_deepseg.main(argv=['spinalcord', '-i', sct_test_path('t2', 't2.nii.gz'),
                                '-o', fname_out, '-qc', str(tmp_path/'qc'),
                                '-thr', '0', '-fill-holes', '1'])
 

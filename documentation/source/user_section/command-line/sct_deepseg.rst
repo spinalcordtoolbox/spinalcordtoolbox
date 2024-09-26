@@ -8,8 +8,8 @@ Here we provide a gallery of each model available in the ``sct_deepseg`` CLI too
 Spinal cord segmentation
 ------------------------
 
-.. |sc_contrast_agnostic| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/spinalcord-segmentation/image_contrasts.png
-   :target: deepseg/sc_contrast_agnostic.html
+.. |spinalcord| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/spinalcord-segmentation/image_contrasts.png
+   :target: deepseg/spinalcord.html
 
 .. |lumbar_sc_t2w| image:: https://cdn.flintrehab.com/uploads/2020/12/lumbar-spinal-cord-injury-1.jpg
    :target: deepseg/lumbar_sc_t2w.html
@@ -33,7 +33,7 @@ Spinal cord segmentation
    :align: center
    :widths: 25 25 25 25
 
-   * - |sc_contrast_agnostic| Contrast agnostic
+   * - |spinalcord| Contrast agnostic
      - |lumbar_sc_t2w| Lumbar (T2)
      - |sc_epi| EPI
      - |sc_lesion_t2w_sci| SCI (T2)
@@ -116,7 +116,7 @@ Vertebrae
    deepseg/mouse_gm_wm_t1w
    deepseg/ms_lesion_mp2rage
    deepseg/ms_sc_mp2rage
-   deepseg/sc_contrast_agnostic
+   deepseg/spinalcord
    deepseg/sc_epi
    deepseg/sc_lesion_t2w_sci
    deepseg/sc_ms_lesion_stir_psir

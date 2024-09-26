@@ -1,10 +1,10 @@
 
                 
-sc_contrast_agnostic
+spinalcord
 ====================
                 
 .. argparse::
-   :ref: spinalcordtoolbox.scripts.sct_deepseg.sc_contrast_agnostic
-   :prog: sct_deepseg sc_contrast_agnostic
+   :ref: spinalcordtoolbox.scripts.sct_deepseg.spinalcord
+   :prog: sct_deepseg spinalcord
    :markdownhelp:
                 
