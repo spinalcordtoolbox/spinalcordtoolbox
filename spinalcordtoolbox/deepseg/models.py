@@ -120,7 +120,7 @@ MODELS = {
     #       - Models do not have a `.json` sidecar file, since they were not developed with ivadomed
     #       - So, threshold value is stored here, within the model dict
     #       - Binarization is applied within SCT code
-    "model_seg_sc_contrast_agnostic_softseg_monai": {
+    "model_seg_spinalcord_softseg_monai": {
         "url": [
             "https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/releases/download/v2.5/model_contrast-agnostic_20240930-1002.zip"
         ],
@@ -282,7 +282,7 @@ TASKS = {
                              'manual spinal cord segmentations) of 11 healthy (non-pathological) patients.',
          'url': 'https://github.com/ivadomed/lumbar_seg_EPFL',
          'models': ['model_seg_epfl_t2w_lumbar_sc']},
-    'sc_contrast_agnostic':
+    'spinalcord':
         {'description': 'Spinal cord segmentation agnostic to MRI contrasts',
          'long_description': 'This model for contrast agnostic spinal cord segmentation uses an nnUNet '
                              'architecture, and was created with the MONAI package. Training data consists of healthy '
@@ -291,7 +291,7 @@ TASKS = {
                              'following contrasts: [T1w, T2w, T2star, MTon_MTS, GRE_T1w, DWI, mp2rage_UNIT1], but '
                              'other contrasts that are close visual matches may also work well with this model.',
          'url': 'https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/',
-         'models': ['model_seg_sc_contrast_agnostic_softseg_monai']},
+         'models': ['model_seg_spinalcord_softseg_monai']},
     'sc_lesion_t2w_sci':
         {'description': 'Intramedullary SCI lesion and cord segmentation in T2w MRI',
          'long_description': 'This segmentation model for spinal cord injury segmentation uses a 3D U-Net '
@@ -350,7 +350,7 @@ TASKS = {
                              'Switzerland and Center for Magnetic Resonance in Biology and Medicine, CRMBM-CEMEREM, UMR 7339, CNRS,  '
                              'Aix-Marseille University, Marseille, France). '
                              'To crop the data you can first segment the spinal cord using the contrast agnostic model, This could be '
-                             'done using: "sct_deepseg sc_contrast_agnostic -i IMAGE_UNIT1 -o IMAGE_UNIT1_sc", then crop the '
+                             'done using: "sct_deepseg spinalcord -i IMAGE_UNIT1 -o IMAGE_UNIT1_sc", then crop the '
                              'IMAGE_UNIT1 image with 30 mm of dilation on axial orientation around the spinal cord. This could be done using: '
                              '"sct_crop_image -i IMAGE_UNIT1 -m IMAGE_seg -dilate 30x30x5" . Note that 30 is only for 1mm isotropic '
                              'resolution, for images with another resolution divide 30/your_axial_resolution.',

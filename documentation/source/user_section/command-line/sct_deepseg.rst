@@ -8,8 +8,8 @@ Here we provide a gallery of each model available in the ``sct_deepseg`` CLI too
 Spinal cord
 -----------
 
-.. |sc_contrast_agnostic| image:: https://i.imgur.com/1QXBTWf.png
-   :target: deepseg/sc_contrast_agnostic.html
+.. |spinalcord| image:: https://i.imgur.com/1QXBTWf.png
+   :target: deepseg/spinalcord.html
 
 .. |lumbar_sc_t2w| image:: https://i.imgur.com/aVJNqp1.png
    :target: deepseg/lumbar_sc_t2w.html
@@ -27,15 +27,15 @@ Spinal cord segmentation can be performed by running the following sample comman
 
 .. code::
 
-   sct_deepseg -task sc_contrast_agnostic -i input.nii.gz
+   sct_deepseg -task spinalcord -i input.nii.gz
 
-You can replace "``sc_contrast_agnostic``" with any of the task names in the table below to perform different tasks. Click on a task below for more information.
+You can replace "``spinalcord``" with any of the task names in the table below to perform different tasks. Click on a task below for more information.
 
 .. list-table::
    :align: center
    :widths: 25 25 25
 
-   * - |sc_contrast_agnostic| ``sc_contrast_agnostic``
+   * - |spinalcord| ``spinalcord``
      - |lumbar_sc_t2w| ``lumbar_sc_t2w``
      - |sc_epi| ``sc_epi``
    * - |ms_sc_mp2rage| ``ms_sc_mp2rage``
@@ -143,7 +143,7 @@ Rootlets segmentation can be performed by running the following sample command:
    :hidden:
    :maxdepth: 2
 
-   deepseg/sc_contrast_agnostic
+   deepseg/spinalcord
    deepseg/ms_sc_mp2rage
    deepseg/sc_epi
    deepseg/mice_sc
