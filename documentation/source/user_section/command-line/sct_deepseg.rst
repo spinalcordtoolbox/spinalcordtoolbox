@@ -17,6 +17,9 @@ Spinal cord
 .. |seg_sc_epi| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/epi_bold.png
    :target: deepseg/seg_sc_epi.html
 
+.. |seg_sc_t2star| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/sc_t2star.png
+    :target: deepseg/seg_sc_t2star.html
+
 .. |mice_sc| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/mouse_t1.png
    :target: deepseg/mice_sc.html
 
@@ -35,8 +38,8 @@ You can replace "``seg_sc_contrast_agnostic``" with any of the task names in the
    * - |seg_sc_contrast_agnostic| ``seg_sc_contrast_agnostic``
      - |seg_lumbar_sc_t2w| ``seg_lumbar_sc_t2w``
      - |seg_sc_epi| ``seg_sc_epi``
-   * - |mice_sc| ``mice_sc``
-     -
+   * - |seg_sc_t2star| ``seg_sc_t2star``
+     - |mice_sc| ``mice_sc``
      -
 
 Gray matter
@@ -195,6 +198,7 @@ If you absolutely require these models, you can downgrade to version of SCT list
    deepseg/seg_sc_contrast_agnostic
    deepseg/seg_ms_sc_mp2rage
    deepseg/seg_sc_epi
+   deepseg/seg_sc_t2star
    deepseg/seg_mice_sc
    deepseg/seg_lumbar_sc_t2w
    deepseg/seg_exvivo_gm_wm_t2
