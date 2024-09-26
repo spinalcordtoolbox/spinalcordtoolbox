@@ -1,7 +1,7 @@
 
                 
-gm_wm_exvivo_t2
-===============
+``sct_deepseg gm_wm_exvivo_t2``
+===============================
                 
 .. argparse::
    :ref: spinalcordtoolbox.scripts.sct_deepseg.gm_wm_exvivo_t2

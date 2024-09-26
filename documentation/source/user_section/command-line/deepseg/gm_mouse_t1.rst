@@ -1,7 +1,7 @@
 
                 
-gm_mouse_t1
-===========
+``sct_deepseg gm_mouse_t1``
+===========================
                 
 .. argparse::
    :ref: spinalcordtoolbox.scripts.sct_deepseg.gm_mouse_t1

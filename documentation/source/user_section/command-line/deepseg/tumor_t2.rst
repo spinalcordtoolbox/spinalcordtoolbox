@@ -1,7 +1,7 @@
 
                 
-tumor_t2
-========
+``sct_deepseg tumor_t2``
+========================
                 
 .. argparse::
    :ref: spinalcordtoolbox.scripts.sct_deepseg.tumor_t2

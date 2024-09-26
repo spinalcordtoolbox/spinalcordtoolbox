@@ -1,7 +1,7 @@
 
                 
-sc_epi
-======
+``sct_deepseg sc_epi``
+======================
                 
 .. argparse::
    :ref: spinalcordtoolbox.scripts.sct_deepseg.sc_epi
