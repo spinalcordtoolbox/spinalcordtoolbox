@@ -52,7 +52,7 @@ def test_model_dict():
     (sct_test_path('t2', 't2.nii.gz'),
      sct_test_path('t2', 't2_seg-deepseg_rootlets.nii.gz'),
      't2_seg_deepseg.nii.gz',
-     'spinal_rootlets_t2w',
+     'rootlets_t2',
      None),
     (sct_test_path('t2', 't2.nii.gz'),  # dummy image since no EPI test data
      None,  # no ground truth, just test if it runs
@@ -62,7 +62,7 @@ def test_model_dict():
     (sct_test_path('t2', 't2.nii.gz'),  # dummy image since no MP2RAGE test data
      None,  # no ground truth, just test if it runs
      't2_seg_deepseg.nii.gz',
-     'ms_lesion_mp2rage',
+     'lesion_MS_mp2rage',
      None),
 ])
 def test_segment_nifti_binary_seg(fname_image, fname_seg_manual, fname_out, task, thr, tmp_path):
@@ -145,13 +145,13 @@ def test_segment_nifti_softseg_error_with_fill_holes(tmp_path):
       sct_test_path('t2', 't2_fake_lesion_lesion_seg.nii.gz')],
      't2_deepseg.nii.gz',
      ["_sc_seg", "_lesion_seg"],
-     'sc_lesion_t2w_sci',
+     'lesion_sc_SCI_t2',
      0.5),
     (sct_test_path('t1', 't1_mouse.nii.gz'),
      [None, None],
      't1_deepseg.nii.gz',
      ["_GM_seg", "_WM_seg"],
-     'mouse_gm_wm_t1w',
+     'gm_wm_mouse_t1',
      0.5),
 ])
 def test_segment_nifti_multiclass(fname_image, fnames_seg_manual, fname_out, suffixes, task, thr,
