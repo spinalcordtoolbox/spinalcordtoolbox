@@ -42,27 +42,27 @@ def test_model_dict():
     (sct_test_path('t2s', 't2s.nii.gz'),
      sct_test_path('t2s', 't2s_seg-deepseg.nii.gz'),
      't2s_seg_deepseg.nii.gz',
-     'seg_sc_t2star',
+     'sc_t2star',
      0.9),
     (sct_test_path('t2', 't2.nii.gz'),
      sct_test_path('t2', 't2_seg-manual.nii.gz'),
      't2_seg_deepseg.nii.gz',
-     'seg_sc_contrast_agnostic',
+     'sc_contrast_agnostic',
      None),
     (sct_test_path('t2', 't2.nii.gz'),
      sct_test_path('t2', 't2_seg-deepseg_rootlets.nii.gz'),
      't2_seg_deepseg.nii.gz',
-     'seg_spinal_rootlets_t2w',
+     'spinal_rootlets_t2w',
      None),
     (sct_test_path('t2', 't2.nii.gz'),  # dummy image since no EPI test data
      None,  # no ground truth, just test if it runs
      't2_seg_deepseg.nii.gz',
-     'seg_sc_epi',
+     'sc_epi',
      None),
     (sct_test_path('t2', 't2.nii.gz'),  # dummy image since no MP2RAGE test data
      None,  # no ground truth, just test if it runs
      't2_seg_deepseg.nii.gz',
-     'seg_ms_lesion_mp2rage',
+     'ms_lesion_mp2rage',
      None),
 ])
 def test_segment_nifti_binary_seg(fname_image, fname_seg_manual, fname_out, task, thr, tmp_path):
@@ -75,7 +75,7 @@ def test_segment_nifti_binary_seg(fname_image, fname_seg_manual, fname_out, task
     args = [task, '-i', fname_image, '-o', fname_out, '-qc', str(tmp_path/'qc')]
     if thr is not None:
         args.extend(['-thr', str(thr)])
-    if 'seg_sc' in task:
+    if 'sc' in task:
         # TODO: Replace the "general" testing of these arguments with specific tests with specific input data
         args.extend(['-largest', '1', '-fill-holes', '1', '-remove-small', '5mm3'])
     sct_deepseg.main(argv=args)
@@ -101,7 +101,7 @@ def test_segment_nifti_binary_seg(fname_image, fname_seg_manual, fname_out, task
     (sct_test_path('t2', 't2.nii.gz'),
      sct_test_path('t2', 't2_seg-manual.nii.gz'),
      't2_seg_deepseg.nii.gz',
-     'seg_sc_contrast_agnostic',
+     'sc_contrast_agnostic',
      0),
 ])
 def test_segment_nifti_softseg(fname_image, fname_seg_manual, fname_out, task, thr, tmp_path):
@@ -134,7 +134,7 @@ def test_segment_nifti_softseg_error_with_fill_holes(tmp_path):
     warnings.filterwarnings("ignore", category=SourceChangeWarning)
     fname_out = str(tmp_path/'t2_seg_deepseg.nii.gz')  # tmp_path for automatic cleanup
     with pytest.raises(AssertionError):
-        sct_deepseg.main(argv=['seg_sc_contrast_agnostic', '-i', sct_test_path('t2', 't2.nii.gz'),
+        sct_deepseg.main(argv=['sc_contrast_agnostic', '-i', sct_test_path('t2', 't2.nii.gz'),
                                '-o', fname_out, '-qc', str(tmp_path/'qc'),
                                '-thr', '0', '-fill-holes', '1'])
 
@@ -145,13 +145,13 @@ def test_segment_nifti_softseg_error_with_fill_holes(tmp_path):
       sct_test_path('t2', 't2_fake_lesion_lesion_seg.nii.gz')],
      't2_deepseg.nii.gz',
      ["_sc_seg", "_lesion_seg"],
-     'seg_sc_lesion_t2w_sci',
+     'sc_lesion_t2w_sci',
      0.5),
     (sct_test_path('t1', 't1_mouse.nii.gz'),
      [None, None],
      't1_deepseg.nii.gz',
      ["_GM_seg", "_WM_seg"],
-     'seg_mouse_gm_wm_t1w',
+     'mouse_gm_wm_t1w',
      0.5),
 ])
 def test_segment_nifti_multiclass(fname_image, fnames_seg_manual, fname_out, suffixes, task, thr,
