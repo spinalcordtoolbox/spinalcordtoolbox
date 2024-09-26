@@ -88,7 +88,7 @@ Project URL: [{models.TASKS[task]["url"]}]({models.TASKS[task]["url"]})
             "-i",
             nargs="+",
             help=f"Image to segment. Can be multiple images (separated with space)."
-                 f"\n\nNote: If choosing `seg_ms_lesion_mp2rage`, then the input "
+                 f"\n\nNote: If choosing `ms_lesion_mp2rage`, then the input "
                  f"data must be cropped around the spinal cord. ({models.CROP_MESSAGE})",
             metavar=Metavar.file)
         input_output.add_argument(
@@ -110,9 +110,9 @@ Project URL: [{models.TASKS[task]["url"]}]({models.TASKS[task]["url"]})
                  "find release you wish to install, and right-click + copy the URL of the '.zip' listed under 'Assets'.\n"
                  "NB: For multi-model tasks, provide multiple URLs. For single models, just provide one URL.\n"
                  "Example:\n"
-                 "'sct_deepseg -install seg_spinal_rootlets_t2w -custom-url "
+                 "'sct_deepseg -install spinal_rootlets_t2w -custom-url "
                  "https://github.com/ivadomed/model-spinal-rootlets/releases/download/r20240523/model-spinal-rootlets_ventral_D106_r20240523.zip'\n"
-                 "'sct_deepseg seg_spinal_rootlets_t2w -i sub-amu01_T2w.nii.gz")
+                 "'sct_deepseg spinal_rootlets_t2w -i sub-amu01_T2w.nii.gz")
 
         misc = parser_dict[task].add_argument_group('\nPARAMETERS')
         misc.add_argument(
@@ -190,7 +190,7 @@ Project URL: [{models.TASKS[task]["url"]}]({models.TASKS[task]["url"]})
             help="Plane of the output QC. If Sagittal, you must also provide the -s option. Default: Axial.")
 
     # Add options that only apply to a specific task
-    parser_dict['seg_tumor-edema-cavity_t1-t2'].add_argument(
+    parser_dict['tumor-edema-cavity_t1-t2'].add_argument(
         "-c",
         nargs="+",
         help="Contrast of the input. Specifies the contrast order of input images (e.g. `-c t1 t2`)",
@@ -208,40 +208,40 @@ Project URL: [{models.TASKS[task]["url"]}]({models.TASKS[task]["url"]})
 #     does not mesh with `sphinx-argparse`, which requires a function that returns the parser. So... here are the funcs.
 #     I don't like that this duplicates the hardcoded list of task names, but at least this will get thoroughly tested
 #     via the auto-documentation. (Assuming we create a new gallery entry each time.)
-def seg_sc_t2star():                 # noqa E302 (2 blank lines)
-    return get_parser('seg_sc_t2star')
-def seg_mice_sc():                   # noqa E302 (2 blank lines)
-    return get_parser('seg_mice_sc')
-def seg_mice_gm():                   # noqa E302 (2 blank lines)
-    return get_parser('seg_mice_gm')
-def seg_tumor_t2():                  # noqa E302 (2 blank lines)
-    return get_parser('seg_tumor_t2')
-def seg_tumor_edema_cavity_t1_t2():  # noqa E302 (2 blank lines)
-    return get_parser('seg_tumor-edema-cavity_t1-t2')
-def seg_exvivo_gm_wm_t2():           # noqa E302 (2 blank lines)
-    return get_parser('seg_exvivo_gm-wm_t2')
-def seg_gm_sc_7t_t2star():           # noqa E302 (2 blank lines)
-    return get_parser('seg_gm_sc_7t_t2star')
-def seg_lumbar_sc_t2w():             # noqa E302 (2 blank lines)
-    return get_parser('seg_lumbar_sc_t2w')
-def seg_sc_contrast_agnostic():      # noqa E302 (2 blank lines)
-    return get_parser('seg_sc_contrast_agnostic')
-def seg_sc_lesion_t2w_sci():         # noqa E302 (2 blank lines)
-    return get_parser('seg_sc_lesion_t2w_sci')
-def seg_spinal_rootlets_t2w():       # noqa E302 (2 blank lines)
-    return get_parser('seg_spinal_rootlets_t2w')
-def seg_mouse_gm_wm_t1w():           # noqa E302 (2 blank lines)
-    return get_parser('seg_mouse_gm_wm_t1w')
-def seg_sc_epi():                    # noqa E302 (2 blank lines)
-    return get_parser('seg_sc_epi')
-def seg_ms_lesion_mp2rage():         # noqa E302 (2 blank lines)
-    return get_parser('seg_ms_lesion_mp2rage')
+def sc_t2star():                 # noqa E302 (2 blank lines)
+    return get_parser('sc_t2star')
+def mice_sc():                   # noqa E302 (2 blank lines)
+    return get_parser('mice_sc')
+def mice_gm():                   # noqa E302 (2 blank lines)
+    return get_parser('mice_gm')
+def tumor_t2():                  # noqa E302 (2 blank lines)
+    return get_parser('tumor_t2')
+def tumor_edema_cavity_t1_t2():  # noqa E302 (2 blank lines)
+    return get_parser('tumor-edema-cavity_t1-t2')
+def exvivo_gm_wm_t2():           # noqa E302 (2 blank lines)
+    return get_parser('exvivo_gm-wm_t2')
+def gm_sc_7t_t2star():           # noqa E302 (2 blank lines)
+    return get_parser('gm_sc_7t_t2star')
+def lumbar_sc_t2w():             # noqa E302 (2 blank lines)
+    return get_parser('lumbar_sc_t2w')
+def sc_contrast_agnostic():      # noqa E302 (2 blank lines)
+    return get_parser('sc_contrast_agnostic')
+def sc_lesion_t2w_sci():         # noqa E302 (2 blank lines)
+    return get_parser('sc_lesion_t2w_sci')
+def spinal_rootlets_t2w():       # noqa E302 (2 blank lines)
+    return get_parser('spinal_rootlets_t2w')
+def mouse_gm_wm_t1w():           # noqa E302 (2 blank lines)
+    return get_parser('mouse_gm_wm_t1w')
+def sc_epi():                    # noqa E302 (2 blank lines)
+    return get_parser('sc_epi')
+def ms_lesion_mp2rage():         # noqa E302 (2 blank lines)
+    return get_parser('ms_lesion_mp2rage')
 def canal_t2w():                     # noqa E302 (2 blank lines)
     return get_parser('canal_t2w')
-def seg_ms_lesion():                 # noqa E302 (2 blank lines)
-    return get_parser('seg_ms_lesion')
-def seg_sc_ms_lesion_axial_t2w():    # noqa E302 (2 blank lines)
-    return get_parser('seg_sc_ms_lesion_axial_t2w')
+def ms_lesion():                 # noqa E302 (2 blank lines)
+    return get_parser('ms_lesion')
+def sc_ms_lesion_axial_t2w():    # noqa E302 (2 blank lines)
+    return get_parser('sc_ms_lesion_axial_t2w')
 def totalspineseg():                 # noqa E302 (2 blank lines)
     return get_parser('totalspineseg')
 
@@ -282,8 +282,8 @@ def main(argv: Sequence[str]):
     # Get pipeline model names
     name_models = models.TASKS[arguments.task]['models']
 
-    # Check if all input images have been specified (only relevant for 'seg_tumor-edema-cavity_t1-t2')
-    if 'seg_tumor-edema-cavity_t1-t2' in arguments.task:
+    # Check if all input images have been specified (only relevant for 'tumor-edema-cavity_t1-t2')
+    if 'tumor-edema-cavity_t1-t2' in arguments.task:
         required_contrasts = models.get_required_contrasts(arguments.task)
         if len(arguments.i) != len(required_contrasts):
             parser.error(
@@ -321,9 +321,9 @@ def main(argv: Sequence[str]):
             if not models.is_valid(path_models):
                 parser.error("The input model is invalid: {}".format(path_models))
 
-        # Order input images (only relevant for 'seg_tumor-edema-cavity_t1-t2')
+        # Order input images (only relevant for 'tumor-edema-cavity_t1-t2')
         # TODO: Fix contrast-related behavior as per https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4445
-        if 'seg_tumor-edema-cavity_t1-t2' in arguments.task and hasattr(arguments, "c"):
+        if 'tumor-edema-cavity_t1-t2' in arguments.task and hasattr(arguments, "c"):
             input_filenames = []
             for required_contrast in models.MODELS[name_model]['contrasts']:
                 for provided_contrast, input_filename in zip(arguments.c, arguments.i):
@@ -332,7 +332,7 @@ def main(argv: Sequence[str]):
         else:
             input_filenames = arguments.i.copy()
 
-        if 'seg_sc_epi' in arguments.task:
+        if 'sc_epi' in arguments.task:
             for image in arguments.i:
                 image_shape = Image(image).data.shape
                 if len(image_shape) == 4:
@@ -364,7 +364,7 @@ def main(argv: Sequence[str]):
                 path_model, model_type, input_filenames, thr,
                 # NOTE: contrast-agnostic nnunet model sometimes predicts pixels outside the cord, we want to
                 # set keep_largest object as the default behaviour when using this model
-                keep_largest=1 if arguments.task == 'seg_sc_contrast_agnostic' else arguments.keep_largest,
+                keep_largest=1 if arguments.task == 'sc_contrast_agnostic' else arguments.keep_largest,
                 fill_holes_in_pred=arguments.fill_holes,
                 remove_small=arguments.remove_small,
                 use_gpu=use_gpu, remove_temp_files=arguments.r)
