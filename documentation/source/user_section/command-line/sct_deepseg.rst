@@ -23,11 +23,6 @@ Spinal cord segmentation
 .. |sc_mouse_t1| image:: https://www.hfsp.org/sites/default/files/webfm/Articles/Kathe2021b.jpg
    :target: deepseg/sc_mouse_t1.html
 
-.. |gm_sc_7t_t2star| image:: https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRZGptCJRlgdsQCEL5T0T2Djoa1XPRWHLg51A&s
-   :target: deepseg/gm_sc_7t_t2star.html
-
-.. |lesion_sc_SCI_t2| image:: https://media.springernature.com/lw685/springer-static/image/art%3A10.1038%2Fsc.2011.107/MediaObjects/41393_2012_Article_BFsc2011107_Fig10_HTML.jpg
-   :target: deepseg/lesion_sc_SCI_t2.html
 
 .. list-table::
    :align: center
@@ -36,18 +31,18 @@ Spinal cord segmentation
    * - |spinalcord| Contrast agnostic
      - |sc_lumbar_t2| Lumbar (T2)
      - |sc_epi| EPI
-     - |lesion_sc_SCI_t2| SCI (T2)
-   * - |gm_sc_7t_t2star| 7T (T2*)
      - |sc_MS_mp2rage| MS (MP2RAGE)
-     - |sc_mouse_t1| Mice
+   * - |sc_mouse_t1| Mice (T1)
+     -
+     -
      -
 
 
 Gray matter segmentation
 ------------------------
 
-.. |gm_mouse_t1| image:: https://media.springernature.com/lw685/springer-static/image/art%3A10.1038%2Fsc.2011.107/MediaObjects/41393_2012_Article_BFsc2011107_Fig10_HTML.jpg
-   :target: deepseg/gm_mouse_t1
+.. |gm_sc_7t_t2star| image:: https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRZGptCJRlgdsQCEL5T0T2Djoa1XPRWHLg51A&s
+   :target: deepseg/gm_sc_7t_t2star.html
 
 .. |gm_wm_exvivo_t2| image:: https://media.springernature.com/lw685/springer-static/image/art%3A10.1038%2Fsc.2011.107/MediaObjects/41393_2012_Article_BFsc2011107_Fig10_HTML.jpg
    :target: deepseg/gm_wm_exvivo_t2
@@ -55,39 +50,51 @@ Gray matter segmentation
 .. |gm_wm_mouse_t1| image:: https://media.springernature.com/lw685/springer-static/image/art%3A10.1038%2Fsc.2011.107/MediaObjects/41393_2012_Article_BFsc2011107_Fig10_HTML.jpg
    :target: deepseg/gm_wm_mouse_t1
 
+.. |gm_mouse_t1| image:: https://media.springernature.com/lw685/springer-static/image/art%3A10.1038%2Fsc.2011.107/MediaObjects/41393_2012_Article_BFsc2011107_Fig10_HTML.jpg
+   :target: deepseg/gm_mouse_t1
+
+
 .. list-table::
    :align: center
    :widths: 25 25 25 25
 
-   * - |gm_wm_exvivo_t2| Ex-vivo GM/WM (T2)
-     - |gm_mouse_t1| Mice GM
-     - |gm_wm_mouse_t1| Mice GM/WM
-     -
+   * - |gm_sc_7t_t2star| 7T GM (T2*)
+     - |gm_wm_exvivo_t2| Ex-vivo GM/WM (T2)
+     - |gm_wm_mouse_t1| Mice GM/WM (T1)
+     - |gm_mouse_t1| Mice GM (T1)
 
 
 Tumors/lesions
 --------------
 
-.. |tumor_t2| image:: https://media.springernature.com/lw685/springer-static/image/art%3A10.1038%2Fsc.2011.107/MediaObjects/41393_2012_Article_BFsc2011107_Fig10_HTML.jpg
-   :target: deepseg/tumor_t2
+.. |lesion_sc_SCI_t2| image:: https://media.springernature.com/lw685/springer-static/image/art%3A10.1038%2Fsc.2011.107/MediaObjects/41393_2012_Article_BFsc2011107_Fig10_HTML.jpg
+   :target: deepseg/lesion_sc_SCI_t2.html
 
-.. |tumor_edema_cavity_t1_t2| image:: https://media.springernature.com/lw685/springer-static/image/art%3A10.1038%2Fsc.2011.107/MediaObjects/41393_2012_Article_BFsc2011107_Fig10_HTML.jpg
-   :target: deepseg/tumor_edema_cavity_t1_t2
+.. |lesion_sc_MS_stir_psir| image:: https://media.springernature.com/lw685/springer-static/image/art%3A10.1038%2Fsc.2011.107/MediaObjects/41393_2012_Article_BFsc2011107_Fig10_HTML.jpg
+   :target: deepseg/lesion_sc_MS_stir_psir
 
 .. |lesion_MS_mp2rage| image:: https://media.springernature.com/lw685/springer-static/image/art%3A10.1038%2Fsc.2011.107/MediaObjects/41393_2012_Article_BFsc2011107_Fig10_HTML.jpg
    :target: deepseg/lesion_MS_mp2rage
 
-.. |lesion_sc_MS_stir_psir| image:: https://media.springernature.com/lw685/springer-static/image/art%3A10.1038%2Fsc.2011.107/MediaObjects/41393_2012_Article_BFsc2011107_Fig10_HTML.jpg
-   :target: deepseg/lesion_sc_MS_stir_psir
+.. |tumor_edema_cavity_t1_t2| image:: https://media.springernature.com/lw685/springer-static/image/art%3A10.1038%2Fsc.2011.107/MediaObjects/41393_2012_Article_BFsc2011107_Fig10_HTML.jpg
+   :target: deepseg/tumor_edema_cavity_t1_t2
+
+.. |tumor_t2| image:: https://media.springernature.com/lw685/springer-static/image/art%3A10.1038%2Fsc.2011.107/MediaObjects/41393_2012_Article_BFsc2011107_Fig10_HTML.jpg
+   :target: deepseg/tumor_t2
+
 
 .. list-table::
    :align: center
    :widths: 25 25 25 25
 
-   * - |lesion_MS_mp2rage| MS lesions (MP2RAGE)
+   * - |lesion_sc_SCI_t2| SCI lesions (T2)
      - |lesion_sc_MS_stir_psir| MS lesions (STIR/PSIR)
+     - |lesion_MS_mp2rage| MS lesions (MP2RAGE)
      - |tumor_edema_cavity_t1_t2| Tumor/edema/cavity
-     - |tumor_t2| Tumor (T2)
+   * - |tumor_t2| Tumor (T2)
+     -
+     -
+     -
 
 Vertebrae
 ---------
@@ -108,18 +115,18 @@ Vertebrae
    :hidden:
    :maxdepth: 2
 
+   deepseg/spinalcord
+   deepseg/sc_MS_mp2rage
+   deepseg/sc_epi
+   deepseg/sc_mouse_t1
+   deepseg/sc_lumbar_t2
    deepseg/gm_wm_exvivo_t2
    deepseg/gm_sc_7t_t2star
-   deepseg/sc_lumbar_t2
    deepseg/gm_mouse_t1
-   deepseg/sc_mouse_t1
    deepseg/gm_wm_mouse_t1
-   deepseg/lesion_MS_mp2rage
-   deepseg/sc_MS_mp2rage
-   deepseg/spinalcord
-   deepseg/sc_epi
    deepseg/lesion_sc_SCI_t2
    deepseg/lesion_sc_MS_stir_psir
-   deepseg/rootlets_t2
+   deepseg/lesion_MS_mp2rage
    deepseg/tumor_edema_cavity_t1_t2
    deepseg/tumor_t2
+   deepseg/rootlets_t2
