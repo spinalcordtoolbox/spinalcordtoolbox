@@ -183,13 +183,13 @@ Project URL: [{models.TASKS[task]["url"]}]({models.TASKS[task]["url"]})
             help="Show this help message and exit")
 
     # Add options that only apply to a specific task
-    parser_dict['seg_tumor-edema-cavity_t1-t2'].add_argument(
+    parser_dict['tumor-edema-cavity_t1-t2'].add_argument(
         "-c",
         nargs="+",
         help="Contrast of the input. Specifies the contrast order of input images (e.g. `-c t1 t2`)",
         choices=('t1', 't2', 't2star'),
         metavar=Metavar.str)
-    parser_dict['seg_sc_ms_lesion_stir_psir'].add_argument(
+    parser_dict['sc_ms_lesion_stir_psir'].add_argument(
         "-c",
         help="Contrast of the input. Specifies whether input should be inverted "
              "(`-c stir`: no inversion, `-c psir`: inverted)",
@@ -207,38 +207,38 @@ Project URL: [{models.TASKS[task]["url"]}]({models.TASKS[task]["url"]})
 #     does not mesh with `sphinx-argparse`, which requires a function that returns the parser. So... here are the funcs.
 #     I don't like that this duplicates the hardcoded list of task names, but at least this will get thoroughly tested
 #     via the auto-documentation. (Assuming we create a new gallery entry each time.)
-def seg_sc_t2star():                 # noqa E302 (2 blank lines)
-    return get_parser('seg_sc_t2star')
-def seg_mice_sc():                   # noqa E302 (2 blank lines)
-    return get_parser('seg_mice_sc')
-def seg_mice_gm():                   # noqa E302 (2 blank lines)
-    return get_parser('seg_mice_gm')
-def seg_tumor_t2():                  # noqa E302 (2 blank lines)
-    return get_parser('seg_tumor_t2')
-def seg_ms_sc_mp2rage():             # noqa E302 (2 blank lines)
-    return get_parser('seg_ms_sc_mp2rage')
-def seg_tumor_edema_cavity_t1_t2():  # noqa E302 (2 blank lines)
-    return get_parser('seg_tumor-edema-cavity_t1-t2')
-def seg_exvivo_gm_wm_t2():           # noqa E302 (2 blank lines)
-    return get_parser('seg_exvivo_gm-wm_t2')
-def seg_gm_sc_7t_t2star():           # noqa E302 (2 blank lines)
-    return get_parser('seg_gm_sc_7t_t2star')
-def seg_lumbar_sc_t2w():             # noqa E302 (2 blank lines)
-    return get_parser('seg_lumbar_sc_t2w')
-def seg_sc_contrast_agnostic():      # noqa E302 (2 blank lines)
-    return get_parser('seg_sc_contrast_agnostic')
-def seg_sc_lesion_t2w_sci():         # noqa E302 (2 blank lines)
-    return get_parser('seg_sc_lesion_t2w_sci')
-def seg_spinal_rootlets_t2w():       # noqa E302 (2 blank lines)
-    return get_parser('seg_spinal_rootlets_t2w')
-def seg_mouse_gm_wm_t1w():           # noqa E302 (2 blank lines)
-    return get_parser('seg_mouse_gm_wm_t1w')
-def seg_sc_ms_lesion_stir_psir():    # noqa E302 (2 blank lines)
-    return get_parser('seg_sc_ms_lesion_stir_psir')
-def seg_sc_epi():                    # noqa E302 (2 blank lines)
-    return get_parser('seg_sc_epi')
-def seg_ms_lesion_mp2rage():         # noqa E302 (2 blank lines)
-    return get_parser('seg_ms_lesion_mp2rage')
+def sc_t2star():                 # noqa E302 (2 blank lines)
+    return get_parser('sc_t2star')
+def mice_sc():                   # noqa E302 (2 blank lines)
+    return get_parser('mice_sc')
+def mice_gm():                   # noqa E302 (2 blank lines)
+    return get_parser('mice_gm')
+def tumor_t2():                  # noqa E302 (2 blank lines)
+    return get_parser('tumor_t2')
+def ms_sc_mp2rage():             # noqa E302 (2 blank lines)
+    return get_parser('ms_sc_mp2rage')
+def tumor_edema_cavity_t1_t2():  # noqa E302 (2 blank lines)
+    return get_parser('tumor-edema-cavity_t1-t2')
+def exvivo_gm_wm_t2():           # noqa E302 (2 blank lines)
+    return get_parser('exvivo_gm-wm_t2')
+def gm_sc_7t_t2star():           # noqa E302 (2 blank lines)
+    return get_parser('gm_sc_7t_t2star')
+def lumbar_sc_t2w():             # noqa E302 (2 blank lines)
+    return get_parser('lumbar_sc_t2w')
+def sc_contrast_agnostic():      # noqa E302 (2 blank lines)
+    return get_parser('sc_contrast_agnostic')
+def sc_lesion_t2w_sci():         # noqa E302 (2 blank lines)
+    return get_parser('sc_lesion_t2w_sci')
+def spinal_rootlets_t2w():       # noqa E302 (2 blank lines)
+    return get_parser('spinal_rootlets_t2w')
+def mouse_gm_wm_t1w():           # noqa E302 (2 blank lines)
+    return get_parser('mouse_gm_wm_t1w')
+def sc_ms_lesion_stir_psir():    # noqa E302 (2 blank lines)
+    return get_parser('sc_ms_lesion_stir_psir')
+def sc_epi():                    # noqa E302 (2 blank lines)
+    return get_parser('sc_epi')
+def ms_lesion_mp2rage():         # noqa E302 (2 blank lines)
+    return get_parser('ms_lesion_mp2rage')
 
 
 def main(argv: Sequence[str]):
@@ -277,8 +277,8 @@ def main(argv: Sequence[str]):
     # Get pipeline model names
     name_models = models.TASKS[arguments.task]['models']
 
-    # Check if all input images have been specified (only relevant for 'seg_tumor-edema-cavity_t1-t2')
-    if 'seg_tumor-edema-cavity_t1-t2' in arguments.task:
+    # Check if all input images have been specified (only relevant for 'tumor-edema-cavity_t1-t2')
+    if 'tumor-edema-cavity_t1-t2' in arguments.task:
         required_contrasts = models.get_required_contrasts(arguments.task)
         if len(arguments.i) != len(required_contrasts):
             parser.error(
@@ -316,9 +316,9 @@ def main(argv: Sequence[str]):
             if not models.is_valid(path_models):
                 parser.error("The input model is invalid: {}".format(path_models))
 
-        # Order input images (only relevant for 'seg_tumor-edema-cavity_t1-t2')
+        # Order input images (only relevant for 'tumor-edema-cavity_t1-t2')
         # TODO: Fix contrast-related behavior as per https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4445
-        if 'seg_tumor-edema-cavity_t1-t2' in arguments.task and hasattr(arguments, "c"):
+        if 'tumor-edema-cavity_t1-t2' in arguments.task and hasattr(arguments, "c"):
             input_filenames = []
             for required_contrast in models.MODELS[name_model]['contrasts']:
                 for provided_contrast, input_filename in zip(arguments.c, arguments.i):
@@ -328,11 +328,11 @@ def main(argv: Sequence[str]):
             input_filenames = arguments.i.copy()
 
         # Inversion workaround for regular PSIR input to canproco STIR/PSIR model
-        if 'seg_sc_ms_lesion_stir_psir' in arguments.task:
+        if 'sc_ms_lesion_stir_psir' in arguments.task:
             contrast = arguments.c[0] if arguments.c else None  # default is empty list
             if not contrast:
                 parser.error(
-                    "Task 'seg_sc_ms_lesion_stir_psir' requires the flag `-c` to identify whether the input is "
+                    "Task 'sc_ms_lesion_stir_psir' requires the flag `-c` to identify whether the input is "
                     "STIR or PSIR. If `-c psir` is passed, the input will be inverted.")
             elif contrast == "psir":
                 logger.warning("Inverting input PSIR image (multiplying data array by -1)...")
@@ -345,9 +345,9 @@ def main(argv: Sequence[str]):
                     input_filenames[i] = path_img_tmp
             else:
                 if contrast != "stir":
-                    parser.error("Task 'seg_sc_ms_lesion_stir_psir' requires the flag `-c` to be either psir or stir.")
+                    parser.error("Task 'sc_ms_lesion_stir_psir' requires the flag `-c` to be either psir or stir.")
 
-        if 'seg_sc_epi' in arguments.task:
+        if 'sc_epi' in arguments.task:
             for image in arguments.i:
                 image_shape = Image(image).data.shape
                 if len(image_shape) == 4:
