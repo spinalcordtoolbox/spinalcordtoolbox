@@ -1,7 +1,7 @@
 
                 
-gm_sc_7t_t2star
-===============
+``sct_deepseg gm_sc_7t_t2star``
+===============================
                 
 .. argparse::
    :ref: spinalcordtoolbox.scripts.sct_deepseg.gm_sc_7t_t2star
