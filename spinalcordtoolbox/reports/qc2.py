@@ -271,7 +271,7 @@ def sct_deepseg(
         dataset=dataset,
         subject=subject,
     ) as imgs_to_generate:
-        if "seg_spinal_rootlets_t2w" in argv:
+        if "spinal_rootlets_t2w" in argv:
             sct_deepseg_spinal_rootlets_t2w(
                 imgs_to_generate, fname_input, fname_seg, fname_seg2, species)
         else:
@@ -381,7 +381,7 @@ def sct_deepseg_spinal_rootlets_t2w(
     species: str,
 ):
     """
-    Generate a QC report for `sct_deepseg seg_spinal_rootlets_t2w`.
+    Generate a QC report for `sct_deepseg spinal_rootlets_t2w`.
 
     This refactor is based off of the `listed_seg` method in qc.py, adapted to support multiple images.
     """
