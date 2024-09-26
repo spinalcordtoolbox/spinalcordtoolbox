@@ -1,7 +1,7 @@
 
                 
-rootlets_t2
-===========
+``sct_deepseg rootlets_t2``
+===========================
                 
 .. argparse::
    :ref: spinalcordtoolbox.scripts.sct_deepseg.rootlets_t2
