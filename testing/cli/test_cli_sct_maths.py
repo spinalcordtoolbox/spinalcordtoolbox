@@ -1,16 +1,55 @@
 # pytest unit tests for sct_maths
 
+import os
 import pytest
 import traceback as tb
 import logging
 
 import numpy as np
 
-from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.image import Image, compute_dice
 from spinalcordtoolbox.utils.sys import sct_test_path
 from spinalcordtoolbox.scripts import sct_maths
 
 logger = logging.getLogger(__name__)
+
+
+@pytest.mark.parametrize("ofolder", ["tmp_path", None])
+@pytest.mark.parametrize("args_to_test, fname_in, fname_gt", [
+    (["-denoise", "1"],       sct_test_path("t2", "t2.nii.gz"), None),  # TODO: Add gt
+    (["-otsu-median", "5,5"], sct_test_path("t2", "t2.nii.gz"), None),  # TODO: Add gt
+], ids=["-denoise", "-otsu-median"])
+def test_sct_maths_basic(args_to_test, fname_in, fname_gt, ofolder, tmp_path):
+    """Basic test to ensure core functionality runs without error."""
+    # base args to test
+    args = ["-i", fname_in]
+    args.extend(args_to_test)
+
+    # test all combinations of both (user-supplied and default) output filenames/folders
+    fname_out = "img_out.nii.gz"
+    path_out = (str(tmp_path) if ofolder == "tmp_path" else os.getcwd())
+    args.extend(["-o", os.path.join(path_out, fname_out) if ofolder else fname_out])
+
+    # run script
+    sct_maths.main(argv=args)
+
+    # test all output files exist
+    outfiles = [fname_out]
+    for outfile in outfiles:
+        assert os.path.exists(os.path.join(path_out, outfile))
+
+    # test against ground truth (if specified)
+    if fname_gt:
+        im_out = Image(os.path.join(path_out, fname_out))
+        im_gt = Image(fname_gt)
+        # replace with allclose, etc. depending on ground truth
+        dice_segmentation = compute_dice(im_out, im_gt, mode='3d', zboundaries=False)
+        assert dice_segmentation > 0.95
+
+    # remove output files if tmp_path wasn't used
+    if ofolder != "tmp_path":
+        for outfile in outfiles:
+            os.unlink(os.path.join(path_out, outfile))
 
 
 @pytest.mark.sct_testing
