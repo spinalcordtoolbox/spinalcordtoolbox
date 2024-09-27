@@ -8,19 +8,19 @@ Here we provide a gallery of each model available in the ``sct_deepseg`` CLI too
 Spinal cord segmentation
 ------------------------
 
-.. |spinalcord| image:: https://i.imgur.com/vQJdviX.jpeg
+.. |spinalcord| image:: https://i.imgur.com/1QXBTWf.png
    :target: deepseg/spinalcord.html
 
-.. |sc_lumbar_t2| image:: https://i.imgur.com/EXOPZPb.jpeg
+.. |sc_lumbar_t2| image:: https://i.imgur.com/aVJNqp1.png
    :target: deepseg/sc_lumbar_t2.html
 
-.. |sc_epi| image:: https://i.imgur.com/g9VGjrw.jpeg
+.. |sc_epi| image:: https://i.imgur.com/zj9idbJ.png
    :target: deepseg/sc_epi.html
 
-.. |sc_MS_mp2rage| image:: https://i.imgur.com/0O35rtJ.jpeg
+.. |sc_MS_mp2rage| image:: https://i.imgur.com/cqsrFWF.png
    :target: deepseg/sc_MS_mp2rage.html
 
-.. |sc_mouse_t1| image:: https://i.imgur.com/3VppULd.jpeg
+.. |sc_mouse_t1| image:: https://i.imgur.com/MaajGC2.png
    :target: deepseg/sc_mouse_t1.html
 
 
@@ -41,16 +41,16 @@ Spinal cord segmentation
 Gray matter segmentation
 ------------------------
 
-.. |gm_sc_7t_t2star| image:: https://i.imgur.com/P38vpwz.jpeg
+.. |gm_sc_7t_t2star| image:: https://i.imgur.com/EQ6cEsv.png
    :target: deepseg/gm_sc_7t_t2star.html
 
-.. |gm_wm_exvivo_t2| image:: https://i.imgur.com/FjLU1eh.jpeg
+.. |gm_wm_exvivo_t2| image:: https://i.imgur.com/m4wB6Lk.png
    :target: deepseg/gm_wm_exvivo_t2
 
-.. |gm_wm_mouse_t1| image:: https://i.imgur.com/bodh8fh.jpeg
+.. |gm_wm_mouse_t1| image:: https://i.imgur.com/BMAHSD0.png
    :target: deepseg/gm_wm_mouse_t1
 
-.. |gm_mouse_t1| image:: https://i.imgur.com/K2rXz8z.jpeg
+.. |gm_mouse_t1| image:: https://i.imgur.com/oooqyjh.png
    :target: deepseg/gm_mouse_t1
 
 
@@ -67,19 +67,19 @@ Gray matter segmentation
 Tumors/lesions
 --------------
 
-.. |lesion_sc_SCI_t2| image:: https://i.imgur.com/ZTvbby2.jpeg
+.. |lesion_sc_SCI_t2| image:: https://i.imgur.com/fZncKDj.png
    :target: deepseg/lesion_sc_SCI_t2.html
 
-.. |lesion_sc_MS_stir_psir| image:: https://i.imgur.com/0PVuS7l.jpeg
+.. |lesion_sc_MS_stir_psir| image:: https://i.imgur.com/1U8LgQ0.png
    :target: deepseg/lesion_sc_MS_stir_psir
 
-.. |lesion_MS_mp2rage| image:: https://i.imgur.com/XIv0ywY.jpeg
+.. |lesion_MS_mp2rage| image:: https://i.imgur.com/1mP1IYt.png
    :target: deepseg/lesion_MS_mp2rage
 
-.. |tumor_edema_cavity_t1_t2| image:: https://i.imgur.com/KAkgCRR.jpeg
+.. |tumor_edema_cavity_t1_t2| image:: https://i.imgur.com/dFq8gkq.png
    :target: deepseg/tumor_edema_cavity_t1_t2
 
-.. |tumor_t2| image:: https://i.imgur.com/pAUU9fl.jpeg
+.. |tumor_t2| image:: https://i.imgur.com/CbYVizW.png
    :target: deepseg/tumor_t2
 
 
@@ -99,7 +99,7 @@ Tumors/lesions
 Vertebrae
 ---------
 
-.. |rootlets_t2| image:: https://i.imgur.com/HYqGTnE.jpeg
+.. |rootlets_t2| image:: https://i.imgur.com/bQBFKVs.png
    :target: deepseg/rootlets_t2
 
 .. list-table::
