@@ -25,7 +25,7 @@ def get_parser():
                     "segmentation of the spinal cord and intramedullary multiple sclerosis lesions with convolutional "
                     "neural networks. Neuroimage. 2019 Jan 1;184:901-915."
     )
-    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
     mandatory.add_argument(
         "-i",
         required=True,
@@ -39,7 +39,7 @@ def get_parser():
         choices=('t1', 't2', 't2s', 'dwi'),
     )
 
-    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
         "--help",

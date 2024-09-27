@@ -62,7 +62,7 @@ def get_parser():
         """),  # noqa: E501 (line too long)
     )
 
-    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
     mandatory.add_argument(
         '-i',
         metavar=Metavar.file,
@@ -111,7 +111,7 @@ def get_parser():
             Note: This flag should not be set to 1 when computing the MCC (i.e. using spinal canal segmentation). It should only be used when computing the MSCC (i.e. using spinal cord segmentation).
         """),  # noqa: E501 (line too long)
     )
-    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
     optional.add_argument(
         '-extent',
         type=float,

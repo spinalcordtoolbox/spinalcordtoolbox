@@ -22,7 +22,7 @@ def get_parser():
                     'neural networks. Neuroimage. 2018 Oct 6;184:901-915.'
     )
 
-    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
     mandatory.add_argument(
         "-i",
         required=True,
@@ -42,7 +42,7 @@ def get_parser():
         choices=('t2', 't2_ax', 't2s'),
     )
 
-    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
         "--help",

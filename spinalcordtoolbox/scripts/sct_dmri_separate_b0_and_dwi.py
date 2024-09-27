@@ -37,7 +37,7 @@ def get_parser():
                     "(_b0 and _dwi) appended to the input file name."
     )
 
-    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
     mandatory.add_argument(
         '-i',
         metavar=Metavar.file,
@@ -51,7 +51,7 @@ def get_parser():
         help="Bvecs file. Example: `bvecs.txt`"
     )
 
-    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
         "--help",

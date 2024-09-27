@@ -26,7 +26,8 @@ The following studies have used SCT:
 2024
 ----
 
--  Miscioscia *et al.* `The contribution of paramagnetic rim and cortical lesions to physical and cognitive disability at multiple sclerosis clinical onset: evaluating the power of MRI and OCT biomarkers <https://doi.org/10.1007/s00415-024-12622-8>`_, J. Neurol. 2024
+-  Emmenegger *et al.* `Progressive cervical cord atrophy parallels cognitive decline in Alzheimer’s disease <https://doi.org/10.1038/s41598-024-67389-9>`_, **Sci. Rep.** 2024
+-  Miscioscia *et al.* `The contribution of paramagnetic rim and cortical lesions to physical and cognitive disability at multiple sclerosis clinical onset: evaluating the power of MRI and OCT biomarkers <https://doi.org/10.1007/s00415-024-12622-8>`_, **J. Neurol.** 2024
 -  Li *et al.* `Contribution of changes in the spinal cord and brain to the onset and progression of hand clumsiness symptoms in cervical spondylotic myelopathy <https://doi.org/10.3171/2024.4.SPINE231238>`_, **J. Neurosurg. Spine** 2024
 -  Schading-Sassenhausen *et al.* `Optimization of cervical cord synthetic T1-weighted MRI for enhancing clinical application in neurodegenerative spinal cord disorders <https://doi.org/10.1162/imag_a_00225>`_, **Imaging Neuroscience** 2024
 -  Chernysh *et al.* `Utility of Diffusion Tensor Imaging for Prognosis and Management of Cervical Spondylotic Myelopathy: A PRISMA Review <https://doi.org/10.1016/j.wneu.2024.07.032>`_, **World Neurosurg.** 2024

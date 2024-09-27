@@ -653,6 +653,7 @@ if [[ "$INSTALL_GPU_TORCH" == "yes" ]]; then
     echo "Ignoring '-g' option on macOS: CUDA is not supported by PyTorch on this system"
   else
     grep -v "download.pytorch.org/whl/cpu" "$REQUIREMENTS_FILE" > "$TMP_DIR/requirements_gpu.txt"
+    perl -pi -e 's/monai\[nibabel\]/monai[nibabel,cucim]/' "$TMP_DIR/requirements_gpu.txt"
     REQUIREMENTS_FILE="$TMP_DIR/requirements_gpu.txt"
   fi
 fi

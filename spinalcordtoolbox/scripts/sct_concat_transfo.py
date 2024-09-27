@@ -112,7 +112,7 @@ def get_parser():
                     'A->B and B->C to yield A->C, then you have to input warping fields in this order: A->B B->C.',
     )
 
-    mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatoryArguments = parser.add_argument_group("MANDATORY ARGUMENTS")
     mandatoryArguments.add_argument(
         "-d",
         required=True,
@@ -127,7 +127,7 @@ def get_parser():
         nargs='+',
         metavar=Metavar.file)
 
-    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
     optional.add_argument(
         "-winv",
         help='Affine transformation(s) listed in flag `-w` which should be inverted before being used. Note that this '

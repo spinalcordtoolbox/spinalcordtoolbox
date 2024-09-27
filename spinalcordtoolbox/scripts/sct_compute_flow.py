@@ -25,7 +25,7 @@ Further features are planned for this script. Please refer to this issue for mor
         """)
     )
 
-    mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatoryArguments = parser.add_argument_group("MANDATORY ARGUMENTS")
     mandatoryArguments.add_argument(
         "-i",
         required=True,
@@ -39,7 +39,7 @@ Further features are planned for this script. Please refer to this issue for mor
         metavar=Metavar.float,
     )
 
-    optional = parser.add_argument_group('\nOPTIONAL ARGUMENTS')
+    optional = parser.add_argument_group('OPTIONAL ARGUMENTS')
     optional.add_argument(
         '-o',
         metavar=Metavar.file,

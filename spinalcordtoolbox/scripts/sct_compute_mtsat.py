@@ -28,7 +28,7 @@ def get_parser():
                     'MRI. Magn Reson Med 2008;60(6):1396-1407.'
     )
 
-    mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatoryArguments = parser.add_argument_group("MANDATORY ARGUMENTS")
     mandatoryArguments.add_argument(
         "-mt",
         required=True,
@@ -48,7 +48,7 @@ def get_parser():
         metavar=Metavar.file,
     )
 
-    optional = parser.add_argument_group('\nOPTIONAL ARGUMENTS')
+    optional = parser.add_argument_group('OPTIONAL ARGUMENTS')
     optional.add_argument(
         "-h",
         "--help",

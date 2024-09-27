@@ -37,7 +37,7 @@ def dmri_mask(tmp_path):
     """Mask image for testing."""
     path_out = str(tmp_path / 'mask.nii')
     sct_create_mask.main(argv=['-i', sct_test_path('dmri', 'dmri_T0000.nii.gz'),
-                               '-p', 'center', '-size', '5mm', '-f', 'gaussian',
+                               '-p', 'coord,21x17', '-size', '15mm', '-f', 'gaussian',
                                '-o', path_out])
 
     return path_out
@@ -53,13 +53,13 @@ def test_sct_dmri_moco_with_mask_check_params(tmp_path, dmri_mask):
 
     lresults = genfromtxt(tmp_path / "moco_params.tsv", skip_header=1, delimiter='\t')
     lgroundtruth = [
-        0.019113331035413624,
-        0.014628855607724655,
-        0.014628855607724655,
-        0.014628855607724655,
-        0.126981499856721,
-        0.126981499856721,
-        0.126981499856721,
+        0.01207862,
+        0.01163640,
+        0.01163640,
+        0.01163640,
+        0.16997247,
+        0.16997247,
+        0.16997247,
     ]
     assert allclose(lresults, lgroundtruth)
 

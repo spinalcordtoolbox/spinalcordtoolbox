@@ -79,7 +79,7 @@ def get_parser():
             "s`ct_extract_metric -i mtr.nii.gz -f "
             "my_mask.nii.gz -z 1:4 -method wa`")
     )
-    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
     mandatory.add_argument(
         '-i',
         metavar=Metavar.file,
@@ -87,7 +87,7 @@ def get_parser():
         help="Image file to extract metrics from. Example: `FA.nii.gz`"
     )
 
-    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
         "--help",
@@ -220,7 +220,7 @@ def get_parser():
         help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode"
     )
 
-    advanced = parser.add_argument_group("\nFOR ADVANCED USERS")
+    advanced = parser.add_argument_group("FOR ADVANCED USERS")
     advanced.add_argument(
         '-param',
         metavar=Metavar.str,

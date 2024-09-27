@@ -33,7 +33,7 @@ def get_parser():
         description="Utility functions for label images."
     )
 
-    req_group = parser.add_argument_group("\nREQUIRED I/O")
+    req_group = parser.add_argument_group("REQUIRED I/O")
     req_group.add_argument(
         '-i',
         metavar=Metavar.file,
@@ -41,7 +41,7 @@ def get_parser():
         help="Input image (Required) Example: t2_labels.nii.gz"
     )
 
-    io_group = parser.add_argument_group("\nOPTIONAL I/O")
+    io_group = parser.add_argument_group("OPTIONAL I/O")
 
     io_group.add_argument(
         '-o',
@@ -57,7 +57,7 @@ def get_parser():
              "Use with `-create-viewer`. Example: `t2_labels_auto.nii.gz`"
     )
 
-    functions = parser.add_argument_group("\nLABEL FUNCTIONS")
+    functions = parser.add_argument_group("LABEL FUNCTIONS")
     func_group = functions.add_mutually_exclusive_group(required=True)
 
     func_group.add_argument(
@@ -194,7 +194,7 @@ def get_parser():
         help="Keep labels of specific value (specified here) from reference image."
     )
 
-    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
         "--help",

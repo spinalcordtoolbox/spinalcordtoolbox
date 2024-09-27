@@ -177,7 +177,7 @@ def get_parser():
         description='Check the installation and environment variables of the toolbox and its dependencies.'
     )
 
-    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
         "--help",

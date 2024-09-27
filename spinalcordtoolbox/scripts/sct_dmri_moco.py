@@ -58,7 +58,7 @@ def get_parser():
         """),  # noqa: E501 (line too long)
     )
 
-    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
     mandatory.add_argument(
         '-i',
         metavar=Metavar.file,
@@ -72,7 +72,7 @@ def get_parser():
         help='Bvecs file. Example: bvecs.txt'
     )
 
-    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
         "--help",
@@ -103,7 +103,8 @@ def get_parser():
         '-m',
         metavar=Metavar.file,
         default=param_default.fname_mask,
-        help='Binary mask to limit voxels considered by the registration metric. Example: dmri_mask.nii.gz',
+        help='Binary mask to limit voxels considered by the registration metric. You may also provide a softmask '
+             '(nonbinary, [0, 1]), and it will be binarized at 0.5. Example: dmri_mask.nii.gz',
     )
     optional.add_argument(
         '-param',

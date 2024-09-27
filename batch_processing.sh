@@ -203,23 +203,21 @@ sct_dmri_separate_b0_and_dwi -i dmri.nii.gz -bvec bvecs.txt
 sct_register_multimodal -i ../t2/t2_seg.nii.gz -d dmri_dwi_mean.nii.gz -identity 1 -x nn
 # create mask to help moco and for faster processing
 sct_create_mask -i dmri_dwi_mean.nii.gz -p centerline,t2_seg_reg.nii.gz -size 35mm
-# crop data
-sct_crop_image -i dmri.nii.gz -m mask_dmri_dwi_mean.nii.gz -o dmri_crop.nii.gz
 # motion correction
 # Tips: if data have very low SNR you can increase the number of successive images that are averaged into group with "-g". Also see: sct_dmri_moco -h
-sct_dmri_moco -i dmri_crop.nii.gz -bvec bvecs.txt
+sct_dmri_moco -i dmri.nii.gz -bvec bvecs.txt -m mask_dmri_dwi_mean.nii.gz
 # segment spinal cord
-sct_deepseg_sc -i dmri_crop_moco_dwi_mean.nii.gz -c dwi -qc "$SCT_BP_QC_FOLDER"
-# Generate QC for sct_dmri_moco ('dmri_crop_moco_dwi_mean_seg.nii.gz' is needed to align each slice in the QC mosaic)
-sct_qc -i dmri_crop.nii.gz -d dmri_crop_moco.nii.gz -s dmri_crop_moco_dwi_mean_seg.nii.gz -p sct_dmri_moco -qc "$SCT_BP_QC_FOLDER"
+sct_deepseg_sc -i dmri_moco_dwi_mean.nii.gz -c dwi -qc "$SCT_BP_QC_FOLDER"
+# Generate QC for sct_dmri_moco ('dmri_moco_dwi_mean_seg.nii.gz' is needed to align each slice in the QC mosaic)
+sct_qc -i dmri.nii.gz -d dmri_moco.nii.gz -s dmri_moco_dwi_mean_seg.nii.gz -p sct_dmri_moco -qc "$SCT_BP_QC_FOLDER"
 # Register template to dwi
 # Tips: Again, here, we prefer to stick to segmentation-based registration. If there are susceptibility distortions in your EPI, then you might consider adding a third step with bsplinesyn or syn transformation for local adjustment.
-sct_register_multimodal -i "$SCT_DIR/data/PAM50/template/PAM50_t1.nii.gz" -iseg "$SCT_DIR/data/PAM50/template/PAM50_cord.nii.gz" -d dmri_crop_moco_dwi_mean.nii.gz -dseg dmri_crop_moco_dwi_mean_seg.nii.gz -param step=1,type=seg,algo=centermass:step=2,type=seg,algo=bsplinesyn,metric=MeanSquares,smooth=1,iter=3 -initwarp ../t2/warp_template2anat.nii.gz -initwarpinv ../t2/warp_anat2template.nii.gz -qc "$SCT_BP_QC_FOLDER" -owarp warp_template2dmri.nii.gz -owarpinv warp_dmri2template.nii.gz
+sct_register_multimodal -i "$SCT_DIR/data/PAM50/template/PAM50_t1.nii.gz" -iseg "$SCT_DIR/data/PAM50/template/PAM50_cord.nii.gz" -d dmri_moco_dwi_mean.nii.gz -dseg dmri_moco_dwi_mean_seg.nii.gz -param step=1,type=seg,algo=centermass:step=2,type=seg,algo=bsplinesyn,metric=MeanSquares,smooth=1,iter=3 -initwarp ../t2/warp_template2anat.nii.gz -initwarpinv ../t2/warp_anat2template.nii.gz -qc "$SCT_BP_QC_FOLDER" -owarp warp_template2dmri.nii.gz -owarpinv warp_dmri2template.nii.gz
 # Warp template and white matter atlas
-sct_warp_template -d dmri_crop_moco_dwi_mean.nii.gz -w warp_template2dmri.nii.gz -qc "$SCT_BP_QC_FOLDER"
+sct_warp_template -d dmri_moco_dwi_mean.nii.gz -w warp_template2dmri.nii.gz -qc "$SCT_BP_QC_FOLDER"
 # Compute DTI metrics
 # Tips: The flag -method "restore" allows you to estimate the tensor with robust fit (see: sct_dmri_compute_dti -h)
-sct_dmri_compute_dti -i dmri_crop_moco.nii.gz -bval bvals.txt -bvec bvecs.txt
+sct_dmri_compute_dti -i dmri_moco.nii.gz -bval bvals.txt -bvec bvecs.txt
 # Compute FA within right and left lateral corticospinal tracts from slices 2 to 14 using weighted average method
 sct_extract_metric -i dti_FA.nii.gz -z 2:14 -method wa -l 4,5 -o fa_in_cst.csv
 # Bring metric to template space (e.g. for group mapping)
@@ -237,21 +235,19 @@ sct_maths -i fmri.nii.gz -mean t -o fmri_mean.nii.gz
 sct_get_centerline -i fmri_mean.nii.gz -c t2s
 # Create mask around the cord to help motion correction and for faster processing
 sct_create_mask -i fmri_mean.nii.gz -p centerline,fmri_mean_centerline.nii.gz -size 35mm
-# Crop data
-sct_crop_image -i fmri.nii.gz -m mask_fmri_mean.nii.gz -o fmri_crop.nii.gz
 # Motion correction
 # Tips: Here data have sufficient SNR and there is visible motion between two consecutive scans, so motion correction is more efficient with -g 1 (i.e. not average consecutive scans)
-sct_fmri_moco -i fmri_crop.nii.gz -g 1
+sct_fmri_moco -i fmri.nii.gz -g 1 -m mask_fmri_mean.nii.gz
 # Segment spinal cord manually
 #   Since these data have very poor cord/CSF contrast, it is difficult to segment the cord properly using sct_deepseg_sc
 #   and hence in this case we do it manually. The file is called: fmri_crop_moco_mean_seg_manual.nii.gz
 #   There is no command for this step, because the file is included in the 'sct_example_data' dataset.
 # Generate QC for sct_fmri_moco ('fmri_crop_moco_mean_seg_manual.nii.gz' is needed to align each slice in the QC mosaic)
-sct_qc -i fmri_crop.nii.gz -d fmri_crop_moco.nii.gz -s fmri_crop_moco_mean_seg_manual.nii.gz -p sct_fmri_moco -qc "$SCT_BP_QC_FOLDER"
+sct_qc -i fmri.nii.gz -d fmri_moco.nii.gz -s fmri_crop_moco_mean_seg_manual.nii.gz -p sct_fmri_moco -qc "$SCT_BP_QC_FOLDER"
 # Register template->fmri
-sct_register_multimodal -i "$SCT_DIR/data/PAM50/template/PAM50_t2.nii.gz" -iseg "$SCT_DIR/data/PAM50/template/PAM50_cord.nii.gz" -d fmri_crop_moco_mean.nii.gz -dseg fmri_crop_moco_mean_seg_manual.nii.gz -param step=1,type=seg,algo=slicereg,metric=MeanSquares,smooth=2:step=2,type=im,algo=bsplinesyn,metric=MeanSquares,iter=5,gradStep=0.5 -initwarp ../t2/warp_template2anat.nii.gz -initwarpinv ../t2/warp_anat2template.nii.gz -qc "$SCT_BP_QC_FOLDER" -owarp warp_template2fmri.nii.gz -owarpinv warp_fmri2template.nii.gz
+sct_register_multimodal -i "$SCT_DIR/data/PAM50/template/PAM50_t2.nii.gz" -iseg "$SCT_DIR/data/PAM50/template/PAM50_cord.nii.gz" -d fmri_moco_mean.nii.gz -dseg fmri_crop_moco_mean_seg_manual.nii.gz -param step=1,type=seg,algo=slicereg,metric=MeanSquares,smooth=2:step=2,type=im,algo=bsplinesyn,metric=MeanSquares,iter=5,gradStep=0.5 -initwarp ../t2/warp_template2anat.nii.gz -initwarpinv ../t2/warp_anat2template.nii.gz -qc "$SCT_BP_QC_FOLDER" -owarp warp_template2fmri.nii.gz -owarpinv warp_fmri2template.nii.gz
 # Warp template, including spinal levels (here we don't need the WM atlas)
-sct_warp_template -d fmri_crop_moco_mean.nii.gz -w warp_template2fmri.nii.gz -a 0
+sct_warp_template -d fmri_moco_mean.nii.gz -w warp_template2fmri.nii.gz -a 0
 # Note, once you have computed fMRI statistics in the subject's space, you can use
 # warp_fmri2template.nii.gz to bring the statistical maps on the template space, for group analysis.
 

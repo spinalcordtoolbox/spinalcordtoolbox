@@ -101,6 +101,15 @@ Project URL: [{models.TASKS[task]["url"]}]({models.TASKS[task]["url"]})
             "-install",
             help="Install models that are required for specified task.",
             action="store_true")
+        seg.add_argument(
+            "-custom-url",
+            nargs="+",  # NB: `nargs="+"` won't work for installing custom ensemble models, but we no longer have any
+            help=textwrap.dedent("""
+                URL(s) pointing to the `.zip` asset for a model release. This option can be used with `-install` to install a specific version of a model. To use this option, navigate to the 'Releases' page of the model, find release you wish to install, and right-click + copy the URL of the '.zip' listed under 'Assets'.
+
+                NB: For multi-model tasks, provide multiple URLs. For single models, just provide one URL.
+                Example: '-custom-url github.com/ivadomed/model-sc/releases/download/r20230101/model.zip'
+            """))  # noqa: E501 (line too long)
 
         misc = parser_dict[task].add_argument_group('\nPARAMETERS')
         misc.add_argument(
@@ -245,9 +254,17 @@ def main(argv: Sequence[str]):
     if arguments.list_tasks:
         models.display_list_tasks()
 
-    if arguments.install:
-        for name_model in models.TASKS[arguments.task]['models']:
-            models.install_model(name_model)
+    if arguments.install is not None:
+        models_to_install = models.TASKS[arguments.task]['models']
+        if arguments.custom_url:
+            if len(arguments.custom_url) != len(models_to_install):
+                parser.error(f"Expected {len(models_to_install)} URL(s) for task {arguments.install}, "
+                             f"but got {len(arguments.custom_url)} URL(s) instead.")
+            for name_model, custom_url in zip(models_to_install, arguments.custom_url):
+                models.install_model(name_model, custom_url)
+        else:
+            for name_model in zip(models_to_install):
+                models.install_model(name_model)
         exit(0)
 
     # Deal with input/output
