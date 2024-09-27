@@ -254,7 +254,7 @@ def main(argv: Sequence[str]):
     if arguments.list_tasks:
         models.display_list_tasks()
 
-    if arguments.install is not None:
+    if arguments.install:
         models_to_install = models.TASKS[arguments.task]['models']
         if arguments.custom_url:
             if len(arguments.custom_url) != len(models_to_install):
@@ -263,7 +263,7 @@ def main(argv: Sequence[str]):
             for name_model, custom_url in zip(models_to_install, arguments.custom_url):
                 models.install_model(name_model, custom_url)
         else:
-            for name_model in zip(models_to_install):
+            for name_model in models_to_install:
                 models.install_model(name_model)
         exit(0)
 
