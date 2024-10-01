@@ -28,19 +28,19 @@ def test_sct_maths_basic(args_to_test, fname_in, fname_gt, ofolder, tmp_path):
     # test all combinations of both (user-supplied and default) output filenames/folders
     fname_out = "img_out.nii.gz"
     path_out = (str(tmp_path) if ofolder == "tmp_path" else os.getcwd())
-    args.extend(["-o", os.path.join(path_out, fname_out) if ofolder else fname_out])
+    fpath_out = os.path.join(path_out, fname_out)
+    # sct_maths doesn't have an -ofolder argument, so we simulate it by passing the absolute path (if ofolder)
+    args.extend(["-o", fpath_out if ofolder else fname_out])
 
     # run script
     sct_maths.main(argv=args)
 
     # test all output files exist
-    outfiles = [fname_out]
-    for outfile in outfiles:
-        assert os.path.exists(os.path.join(path_out, outfile))
+    assert os.path.exists(fpath_out)
 
     # test against ground truth (if specified)
     if fname_gt:
-        im_out = Image(os.path.join(path_out, fname_out))
+        im_out = Image(fpath_out)
         im_gt = Image(fname_gt)
         # replace with allclose, etc. depending on ground truth
         dice_segmentation = compute_dice(im_out, im_gt, mode='3d', zboundaries=False)
@@ -48,8 +48,7 @@ def test_sct_maths_basic(args_to_test, fname_in, fname_gt, ofolder, tmp_path):
 
     # remove output files if tmp_path wasn't used
     if ofolder != "tmp_path":
-        for outfile in outfiles:
-            os.unlink(os.path.join(path_out, outfile))
+        os.unlink(fpath_out)
 
 
 @pytest.mark.sct_testing
