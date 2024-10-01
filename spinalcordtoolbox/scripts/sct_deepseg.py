@@ -189,7 +189,7 @@ def main(argv: Sequence[str]):
             for name_model, custom_url in zip(models_to_install, arguments.custom_url):
                 models.install_model(name_model, custom_url)
         else:
-            for name_model in zip(models_to_install):
+            for name_model in models_to_install:
                 models.install_model(name_model)
         exit(0)
 
