@@ -75,13 +75,19 @@ def get_parser(subparser_to_return=None):
     # to use the following usage instead, which feels weird when we're using subcommands:
     #    `sct_deepseg -i input.nii.gz TASK_NAME`
     for task in models.TASKS.keys():
+        optional_ref = (f"{models.TASKS[task]['citation']}\n\n" if models.TASKS[task]['citation'] else "")
         parser_dict[task] = subparsers.add_parser(task, description=(f"""
 {models.TASKS[task]["description"]}
 
 {models.TASKS[task]["long_description"]}
 
-Project URL: [{models.TASKS[task]["url"]}]({models.TASKS[task]["url"]})
-        """))
+## Reference
+
+{optional_ref}Project URL: [{models.TASKS[task]["url"]}]({models.TASKS[task]["url"]})
+
+## Usage
+
+"""))
 
         input_output = parser_dict[task].add_argument_group("\nINPUT/OUTPUT")
         input_output.add_argument(
