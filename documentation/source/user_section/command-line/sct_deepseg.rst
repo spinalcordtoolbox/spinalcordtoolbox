@@ -23,6 +23,13 @@ Spinal cord
 .. |sc_mouse_t1| image:: https://i.imgur.com/MaajGC2.png
    :target: deepseg/sc_mouse_t1.html
 
+Spinal cord segmentation can be performed by running the following sample command:
+
+.. code::
+
+   sct_deepseg spinalcord -i input.nii.gz
+
+You can replace "``spinalcord``" with any of the task names in the table below to perform different tasks. Click on a task below for more information.
 
 .. list-table::
    :align: center
@@ -53,6 +60,13 @@ Gray matter
 .. |gm_mouse_t1| image:: https://i.imgur.com/oooqyjh.png
    :target: deepseg/gm_mouse_t1
 
+Gray matter segmentation can be performed by running the following sample command:
+
+.. code::
+
+   sct_deepseg gm_sc_7t_t2star -i input.nii.gz
+
+You can replace "``gm_sc_7t_t2star``" with any of the task names in the table below to perform different tasks. Click on a task below for more information.
 
 .. list-table::
    :align: center
@@ -82,6 +96,13 @@ Pathologies
 .. |tumor_t2| image:: https://i.imgur.com/CbYVizW.png
    :target: deepseg/tumor_t2
 
+Pathology segmentation can be performed by running the following sample command:
+
+.. code::
+
+   sct_deepseg lesion_sc_SCI_t2 -i input.nii.gz
+
+You can replace "``lesion_sc_SCI_t2``" with any of the task names in the table below to perform different tasks. Click on a task below for more information.
 
 .. list-table::
    :align: center
@@ -101,6 +122,14 @@ Other structures
 
 .. |rootlets_t2| image:: https://i.imgur.com/bQBFKVs.png
    :target: deepseg/rootlets_t2
+
+Rootlets segmentation can be performed by running the following sample command:
+
+.. code::
+
+   sct_deepseg rootlets_t2 -i input.nii.gz
+
+You can replace "``rootlets_t2``" with any of the task names in the table below to perform different tasks. Click on a task below for more information.
 
 .. list-table::
    :align: center
