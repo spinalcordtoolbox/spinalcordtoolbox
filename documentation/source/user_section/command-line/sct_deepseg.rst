@@ -5,8 +5,8 @@ sct_deepseg
 
 Here we provide a gallery of each model available in the ``sct_deepseg`` CLI tool.
 
-Spinal cord segmentation
-------------------------
+Spinal cord
+-----------
 
 .. |spinalcord| image:: https://i.imgur.com/1QXBTWf.png
    :target: deepseg/spinalcord.html
@@ -38,8 +38,8 @@ Spinal cord segmentation
      -
 
 
-Gray matter segmentation
-------------------------
+Gray matter
+-----------
 
 .. |gm_sc_7t_t2star| image:: https://i.imgur.com/EQ6cEsv.png
    :target: deepseg/gm_sc_7t_t2star.html
@@ -64,8 +64,8 @@ Gray matter segmentation
      - |gm_mouse_t1| ``gm_mouse_t1``
 
 
-Tumors/lesions
---------------
+Pathologies
+-----------
 
 .. |lesion_sc_SCI_t2| image:: https://i.imgur.com/fZncKDj.png
    :target: deepseg/lesion_sc_SCI_t2.html
@@ -96,8 +96,8 @@ Tumors/lesions
      -
      -
 
-Vertebrae
----------
+Other structures
+----------------
 
 .. |rootlets_t2| image:: https://i.imgur.com/bQBFKVs.png
    :target: deepseg/rootlets_t2
