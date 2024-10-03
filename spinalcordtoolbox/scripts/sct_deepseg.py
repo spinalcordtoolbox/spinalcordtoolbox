@@ -18,6 +18,7 @@ import sys
 import logging
 from typing import Sequence
 import textwrap
+import functools
 
 from spinalcordtoolbox.reports import qc2
 from spinalcordtoolbox.image import splitext, Image, check_image_kind
@@ -209,42 +210,9 @@ def get_parser(subparser_to_return=None):
 
 
 # Define subparsers to be used in the "gallery of tasks" documentation for each task.
-# NB: This sucks! It's possible to programmatically generate subparsers from the list of task names. However, this
-#     does not mesh with `sphinx-argparse`, which requires a function that returns the parser. So... here are the funcs.
-#     I don't like that this duplicates the hardcoded list of task names, but at least this will get thoroughly tested
-#     via the auto-documentation. (Assuming we create a new gallery entry each time.)
-def sc_t2star():                 # noqa E302 (2 blank lines)
-    return get_parser('sc_t2star')
-def sc_mouse_t1():                   # noqa E302 (2 blank lines)
-    return get_parser('sc_mouse_t1')
-def gm_mouse_t1():                   # noqa E302 (2 blank lines)
-    return get_parser('gm_mouse_t1')
-def tumor_t2():                  # noqa E302 (2 blank lines)
-    return get_parser('tumor_t2')
-def sc_MS_mp2rage():             # noqa E302 (2 blank lines)
-    return get_parser('sc_MS_mp2rage')
-def tumor_edema_cavity_t1_t2():  # noqa E302 (2 blank lines)
-    return get_parser('tumor_edema_cavity_t1_t2')
-def gm_wm_exvivo_t2():           # noqa E302 (2 blank lines)
-    return get_parser('gm_wm_exvivo_t2')
-def gm_sc_7t_t2star():           # noqa E302 (2 blank lines)
-    return get_parser('gm_sc_7t_t2star')
-def sc_lumbar_t2():             # noqa E302 (2 blank lines)
-    return get_parser('sc_lumbar_t2')
-def spinalcord():      # noqa E302 (2 blank lines)
-    return get_parser('spinalcord')
-def lesion_sc_SCI_t2():         # noqa E302 (2 blank lines)
-    return get_parser('lesion_sc_SCI_t2')
-def rootlets_t2():       # noqa E302 (2 blank lines)
-    return get_parser('rootlets_t2')
-def gm_wm_mouse_t1():           # noqa E302 (2 blank lines)
-    return get_parser('gm_wm_mouse_t1')
-def lesion_sc_MS_stir_psir():    # noqa E302 (2 blank lines)
-    return get_parser('lesion_sc_MS_stir_psir')
-def sc_epi():                    # noqa E302 (2 blank lines)
-    return get_parser('sc_epi')
-def lesion_MS_mp2rage():         # noqa E302 (2 blank lines)
-    return get_parser('lesion_MS_mp2rage')
+# `sphinx-argparse` requires a function of no arguments that returns the parser, so here they are
+for task in models.TASKS.keys():
+    globals()[task] = functools.partial(get_parser, task)
 
 
 def main(argv: Sequence[str]):
