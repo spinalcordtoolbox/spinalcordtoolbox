@@ -101,7 +101,7 @@ def get_parser(subparser_to_return=None):
         input_output.add_argument(
             "-o",
             help="Output file name. In case of multi-class segmentation, class-specific suffixes will be added. By default,"
-                 "the suffix specified in the packaged model will be added and output extension will be .nii.gz.",
+                 "the suffix specified in the packaged model will be added and output extension will be `.nii.gz`.",
             metavar=Metavar.str)
 
         seg = subparser.add_argument_group('\nTASKS')
@@ -114,12 +114,12 @@ def get_parser(subparser_to_return=None):
             nargs="+",  # NB: `nargs="+"` won't work for installing custom ensemble models, but we no longer have any
             help="URL(s) pointing to the `.zip` asset for a model release. This option can be used with `-install` to "
                  "install a specific version of a model. To use this option, navigate to the 'Releases' page of the model, "
-                 "find release you wish to install, and right-click + copy the URL of the '.zip' listed under 'Assets'.\n"
+                 "find release you wish to install, and right-click + copy the URL of the `.zip` listed under 'Assets'.\n"
                  "NB: For multi-model tasks, provide multiple URLs. For single models, just provide one URL.\n"
                  "Example:\n"
-                 "'sct_deepseg -install rootlets_t2 -custom-url "
-                 "https://github.com/ivadomed/model-spinal-rootlets/releases/download/r20240523/model-spinal-rootlets_ventral_D106_r20240523.zip'\n"
-                 "'sct_deepseg rootlets_t2 -i sub-amu01_T2w.nii.gz")
+                 "`sct_deepseg -install rootlets_t2 -custom-url "
+                 "https://github.com/ivadomed/model-spinal-rootlets/releases/download/r20240523/model-spinal-rootlets_ventral_D106_r20240523.zip`\n"
+                 "`sct_deepseg rootlets_t2 -i sub-amu01_T2w.nii.gz`")
 
         misc = subparser.add_argument_group('\nPARAMETERS')
         misc.add_argument(
