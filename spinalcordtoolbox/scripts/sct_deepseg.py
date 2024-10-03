@@ -75,22 +75,22 @@ def get_parser(subparser_to_return=None):
     # In other words, the arguments can come after the task name, which matches current usage. Otherwise, we would have
     # to use the following usage instead, which feels weird when we're using subcommands:
     #    `sct_deepseg -i input.nii.gz TASK_NAME`
-    for task in models.TASKS.keys():
-        optional_ref = (f"{models.TASKS[task]['citation']}\n\n" if models.TASKS[task]['citation'] else "")
-        parser_dict[task] = subparsers.add_parser(task, description=(f"""
-{models.TASKS[task]["description"]}
+    for task_name, task_dict in models.TASKS.items():
+        optional_ref = (f"{task_dict['citation']}\n\n" if task_dict['citation'] else "")
+        subparser = parser_dict[task_name] = subparsers.add_parser(task_name, description=(f"""
+{task_dict["description"]}
 
-{models.TASKS[task]["long_description"]}
+{task_dict["long_description"]}
 
 ## Reference
 
-{optional_ref}Project URL: [{models.TASKS[task]["url"]}]({models.TASKS[task]["url"]})
+{optional_ref}Project URL: [{task_dict["url"]}]({task_dict["url"]})
 
 ## Usage
 
 """))
 
-        input_output = parser_dict[task].add_argument_group("\nINPUT/OUTPUT")
+        input_output = subparser.add_argument_group("\nINPUT/OUTPUT")
         input_output.add_argument(
             "-i",
             nargs="+",
@@ -104,7 +104,7 @@ def get_parser(subparser_to_return=None):
                  "the suffix specified in the packaged model will be added and output extension will be .nii.gz.",
             metavar=Metavar.str)
 
-        seg = parser_dict[task].add_argument_group('\nTASKS')
+        seg = subparser.add_argument_group('\nTASKS')
         seg.add_argument(
             "-install",
             help="Install models that are required for specified task.",
@@ -121,7 +121,7 @@ def get_parser(subparser_to_return=None):
                  "https://github.com/ivadomed/model-spinal-rootlets/releases/download/r20240523/model-spinal-rootlets_ventral_D106_r20240523.zip'\n"
                  "'sct_deepseg rootlets_t2 -i sub-amu01_T2w.nii.gz")
 
-        misc = parser_dict[task].add_argument_group('\nPARAMETERS')
+        misc = subparser.add_argument_group('\nPARAMETERS')
         misc.add_argument(
             "-thr",
             type=float,
@@ -159,7 +159,7 @@ def get_parser(subparser_to_return=None):
                  "smaller than 10 voxels for class 1 and 3, and smaller than 20 voxels for class 2).",
             default=None)
 
-        misc = parser_dict[task].add_argument_group('\nMISC')
+        misc = subparser.add_argument_group('\nMISC')
         misc.add_argument(
             '-qc',
             metavar=Metavar.folder,
