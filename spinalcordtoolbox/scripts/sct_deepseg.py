@@ -100,7 +100,7 @@ def get_parser(subparser_to_return=None):
         input_output.add_argument(
             "-o",
             help="Output file name. In case of multi-class segmentation, class-specific suffixes will be added. By default,"
-                 "the suffix specified in the packaged model will be added and output extension will be .nii.gz.",
+                 "the suffix specified in the packaged model will be added and output extension will be `.nii.gz`.",
             metavar=Metavar.str)
 
         seg = subparser.add_argument_group('\nTASKS')
@@ -112,10 +112,10 @@ def get_parser(subparser_to_return=None):
             "-custom-url",
             nargs="+",  # NB: `nargs="+"` won't work for installing custom ensemble models, but we no longer have any
             help=textwrap.dedent("""
-                URL(s) pointing to the `.zip` asset for a model release. This option can be used with `-install` to install a specific version of a model. To use this option, navigate to the 'Releases' page of the model, find release you wish to install, and right-click + copy the URL of the '.zip' listed under 'Assets'.
+                URL(s) pointing to the `.zip` asset for a model release. This option can be used with `-install` to install a specific version of a model. To use this option, navigate to the 'Releases' page of the model, find release you wish to install, and right-click + copy the URL of the `.zip` listed under 'Assets'.
 
                 NB: For multi-model tasks, provide multiple URLs. For single models, just provide one URL.
-                Example: '-custom-url github.com/ivadomed/model-sc/releases/download/r20230101/model.zip'
+                Example: `-custom-url github.com/ivadomed/model-sc/releases/download/r20230101/model.zip`
             """))  # noqa: E501 (line too long)
 
         misc = subparser.add_argument_group('\nPARAMETERS')
