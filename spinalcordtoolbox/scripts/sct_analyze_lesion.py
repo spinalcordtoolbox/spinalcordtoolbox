@@ -583,14 +583,11 @@ class AnalyzeLesion:
         im_data_midsagittal = im_lesion_data[self.midsagittal_sc_slice_rpi, :, :]  # 3D -> 2D, dim=[AP, SI]
         nonzero_axial_slices = np.unique(np.where(im_data_midsagittal)[1])  # [1] -> SI
 
-        # Check if the lesion exists in the midsagittal slice, if not, set the length to 'np.nan' and return
-        if not np.any(im_data_midsagittal):
-            length_cur = np.nan
-        else:
-            # Compute the length of the lesion along the superior-inferior axis in the midsagittal slice
-            # The length is computed as the sum of the angle corrected axial slice thicknesses
-            length_cur = np.sum([p_lst[2] / np.cos(self.angles_sagittal[s])  # p_lst[2] -> pixel size of SI axis
-                                 for s in nonzero_axial_slices])
+        # Compute the length of the lesion along the superior-inferior axis in the midsagittal slice
+        # The length is computed as the sum of the angle corrected axial slice thicknesses
+        # Note: if there is no lesion in the midsagittal slice, the length will be 0 (because np.sum([]) = 0.0)
+        length_cur = np.sum([p_lst[2] / np.cos(self.angles_sagittal[s])  # p_lst[2] -> pixel size of SI axis
+                             for s in nonzero_axial_slices])
 
         self.measure_pd.loc[idx, 'length_midsagittal_slice [mm]'] = length_cur
         printv(f'  (S-I) length in the midsagittal slice: {(np.round(length_cur, 2))} mm',
@@ -633,8 +630,8 @@ class AnalyzeLesion:
 
         # Get the maximum width across all axial slices
         # Check if width_cur_dict is empty, if so, it means that the lesion does not exist in the midsagittal slice.
-        # In this case, set the width to 'np.nan'
-        width_cur = max(width_cur_dict.values()) if width_cur_dict else np.nan
+        # In this case, set the width to 0
+        width_cur = max(width_cur_dict.values()) if width_cur_dict else 0
 
         # Save the width of the lesion along the anterior-posterior axis in the midsagittal slice
         self.measure_pd.loc[idx, 'width_midsagittal_slice [mm]'] = width_cur
