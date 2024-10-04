@@ -109,7 +109,11 @@ jobs:
 
     - name: Run sct_testing
       run: |
-        sct_testing
+        # NB: The below threading fixes are technically duplicated inside of the `sct_denoise_onlm`
+        #     script itself. However, the issue is that the threading seems to leak outside of the individual
+        #     test, meaning that even if the nlmeans test passes, the next test will immediately fail.
+        #     So, we set environment variables in the context of `pytest` too.
+        OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 sct_testing
 
   create-release:
     needs: test-release

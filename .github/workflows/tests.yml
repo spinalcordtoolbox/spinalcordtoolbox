@@ -260,7 +260,11 @@ jobs:
          ./.ci.sh -c
      - name: Run pytest test suite
        run: |
-         ./.ci.sh -t
+         # NB: The below threading fixes are technically duplicated inside of the `sct_denoise_onlm`
+         #     script itself. However, the issue is that the threading seems to leak outside of the individual
+         #     test, meaning that even if the nlmeans test passes, the next test will immediately fail.
+         #     So, we set environment variables in the context of `pytest` too.
+         OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 ./.ci.sh -t
 
   macos-14:
     name: macOS 14.0 (Sonoma)
@@ -282,7 +286,11 @@ jobs:
           ./.ci.sh -c
       - name: Run pytest test suite
         run: |
-          ./.ci.sh -t
+          # NB: The below threading fixes are technically duplicated inside of the `sct_denoise_onlm`
+          #     script itself. However, the issue is that the threading seems to leak outside of the individual
+          #     test, meaning that even if the nlmeans test passes, the next test will immediately fail.
+          #     So, we set environment variables in the context of `pytest` too.
+          OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 ./.ci.sh -t
 
   windows-wsl-ubuntu-22_04:
     # with the help of https://github.com/marketplace/actions/setup-wsl
