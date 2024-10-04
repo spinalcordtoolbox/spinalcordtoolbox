@@ -11,7 +11,7 @@ Now that the atlas has been warped to the MT space, it can be used to extract MT
    - ``-i`` : Image to extract values from.
    - ``-f`` : File or folder used to pick out specific regions from the input image. In this case, we supply the folder of the white matter atlas that was transformed to the space of the MTR data.
    - ``-method`` : We specify ``map`` to choose the Maximum a Posteriori method, which helps to account for the partial volume effect. This method is most suitable for small regions. This method should only be used with the PAM50 white/gray matter atlas (or with any custom atlas) as long as the sum across all overlapping labels equals 1 in each voxel part of the atlas.
-   - ``-l`` : The IDs of the label (or group of labels) to compute metrics for. In this case, label 51 is a combined label that represents all of the WM tracts together. You can see the full list of labels to choose from by running ``sct_extract_metric -list-labels``.
+   - ``-l`` : The IDs of the label (or group of labels) to compute metrics for. In this case, label 51 is a combined label that represents all of the WM tracts together. You can see the full list of labels to choose from by running :ref:`sct_extract_metric` ``-list-labels``.
    - ``-o`` : The name of the output file.
 
 .. csv-table:: ``mtr_in_wm.csv``: MTR values in white matter

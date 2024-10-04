@@ -3,7 +3,7 @@
 Adding landmark labels for template matching
 ############################################
 
-Typically, registering an image to the PAM50 template involves using ``sct_label_vertebrae`` to automatically label vertebrae, then selecting 2 intervertebral disc labels to use for matching with the PAM50 template. However, the lumbar region has more variability in cord/disc positioning compared to the cervical and thoracic regions. So, using discs as registration landmarks presents a dilemma: How do we handle variability in the position of the `cauda equina <https://en.wikipedia.org/wiki/Cauda_equina>`_ relative to the L1-L2 disc?
+Typically, registering an image to the PAM50 template involves using :ref:`sct_label_vertebrae` to automatically label vertebrae, then selecting 2 intervertebral disc labels to use for matching with the PAM50 template. However, the lumbar region has more variability in cord/disc positioning compared to the cervical and thoracic regions. So, using discs as registration landmarks presents a dilemma: How do we handle variability in the position of the `cauda equina <https://en.wikipedia.org/wiki/Cauda_equina>`_ relative to the L1-L2 disc?
 
 Notably, in the PAM50 template, the `conus medullaris <https://en.wikipedia.org/wiki/Conus_medullaris>`_ (i.e. the terminal end of the spinal cord) is aligned with the L1-L2 disc. However, for your subjects, the spinal cord may end above or below this point. So, if registration were based on disc landmarks alone, then the tapered region of the spinal cord may end up misaligned with the template.
 
@@ -26,8 +26,8 @@ As a demonstration, this section will show you how to manually label one disc (T
 
 There are multiple recommended ways of manually creating labels:
 
-1. Using ``sct_label_utils -create-viewer``, which will provide you with a GUI window to select point-wise labels.
-2. Determining the coordinates by inspecting the image using a separate 3D image viewer, then adding them via the command line using ``sct_label_utils -create``
+1. Using :ref:`sct_label_utils` ``-create-viewer``, which will provide you with a GUI window to select point-wise labels.
+2. Determining the coordinates by inspecting the image using a separate 3D image viewer, then adding them via the command line using :ref:`sct_label_utils` ``-create``
 3. Using the "Edit Mode -> Create Mask" options of a 3D image viewer such as FSLeyes.
 
 Option 1 is the easiest to use when voxel-perfect accuracy is not 100% necessary. However, if you need to precisely locate a specific voxel, we recommend options 2 or 3.
@@ -71,4 +71,4 @@ The command below will add labels for the T9-T10 disc (numerical ID 17) and the 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/lumbar-registration/io_labeling.png
    :align: center
 
-   Input/output images for ``sct_label_utils -create``
+   Input/output images for :ref:`sct_label_utils` ``-create``

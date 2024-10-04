@@ -1,7 +1,7 @@
 Applying the gray matter segmentation algorithm
 ###############################################
 
-``sct_deepseg_gm`` can be applied to T2* data using the following command:
+:ref:`sct_deepseg_gm` can be applied to T2* data using the following command:
 
 .. code::
 

@@ -17,7 +17,7 @@ If the fully automated approach fails, you can instead use a semi-automated appr
 :Output files/folders:
    * ``label_c2c3.nii.gz`` : An image containing the single-voxel label as selected in the GUI coordinate picker.
 
-You can then pass this resulting file to the ``sct_label_vertebrae`` function via the ``-initlabel`` argument. This replaces the C2-C3 detection part of the algorithm, but preserves the remaining automated labeling steps.
+You can then pass this resulting file to the :ref:`sct_label_vertebrae` function via the ``-initlabel`` argument. This replaces the C2-C3 detection part of the algorithm, but preserves the remaining automated labeling steps.
 
 .. code:: sh
 
@@ -26,4 +26,4 @@ You can then pass this resulting file to the ``sct_label_vertebrae`` function vi
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/vertebral-labeling/vertebral-labeling-manual-c2c3.png
    :align: center
 
-   Input/output images for ``sct_label_vertebrae --initlabel label_c2c3.nii.gz``
+   Input/output images for :ref:`sct_label_vertebrae` ``--initlabel label_c2c3.nii.gz``

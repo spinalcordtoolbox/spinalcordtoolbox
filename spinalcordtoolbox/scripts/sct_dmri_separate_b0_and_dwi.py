@@ -37,21 +37,21 @@ def get_parser():
                     "(_b0 and _dwi) appended to the input file name."
     )
 
-    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
     mandatory.add_argument(
         '-i',
         metavar=Metavar.file,
         required=True,
-        help="Diffusion data. Example: dmri.nii.gz"
+        help="Diffusion data. Example: `dmri.nii.gz`"
     )
     mandatory.add_argument(
         '-bvec',
         metavar=Metavar.file,
         required=True,
-        help="Bvecs file. Example: bvecs.txt"
+        help="Bvecs file. Example: `bvecs.txt`"
     )
 
-    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
         "--help",
@@ -69,20 +69,20 @@ def get_parser():
         '-bval',
         metavar=Metavar.file,
         default="",
-        help='bvals file. Used to identify low b-values (in case different from 0). Example: bvals.txt',
+        help='bvals file. Used to identify low b-values (in case different from 0). Example: `bvals.txt`',
     )
     optional.add_argument(
         '-bvalmin',
         type=float,
         metavar=Metavar.float,
-        help='B-value threshold (in s/mm2) below which data is considered as b=0. Example: 50.0',
+        help='B-value threshold (in s/mm2) below which data is considered as b=0. Example: `50.0`',
     )
     optional.add_argument(
         '-ofolder',
         metavar=Metavar.folder,
         action=ActionCreateFolder,
         default='.',
-        help='Output folder. Example: dmri_separate_results',
+        help='Output folder. Example: `dmri_separate_results`',
     )
     optional.add_argument(
         "-r",

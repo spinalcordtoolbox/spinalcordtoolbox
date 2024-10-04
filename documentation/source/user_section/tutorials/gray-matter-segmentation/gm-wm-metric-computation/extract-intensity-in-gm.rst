@@ -1,7 +1,7 @@
 Using binary masks to extract intensity values for gray and white matter
 ########################################################################
 
-SCT also offers another tool called ``sct_extract_metric`` that allows you to extract and aggregate voxel values from specific regions within images.
+SCT also offers another tool called :ref:`sct_extract_metric` that allows you to extract and aggregate voxel values from specific regions within images.
 
 Here, we can use this tool (alongside the gray and white matter masks) to extract intensity values from the gray and white matter regions of the T2* anatomical image.
 

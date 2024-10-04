@@ -4,426 +4,127 @@
 Command-Line Tools
 ##################
 
-
-Summary of Tools
-****************
-
 The command-line tools are named ``sct_*``; to see all the commands available from SCT, start a new Terminal and type ``sct`` then press "tab".
+
+Each command-line tool has a dedicated documentation page where you will find its "help text", with each page linked below. To quickly search the help text of all of the tools at once, please navigate to the :ref:`all_tools` page and type Ctrl+F to search.
 
 
 Segmentation
 ============
 
-- sct_create_mask_ - Create mask along z direction.
-- sct_deepseg_ - Segment an anatomical structure or pathologies according using a deep learning model created with `ivadomed <https://ivadomed.org/>`_.
-- sct_deepseg_gm_ - Segment spinal cord gray matter using deep learning.
-- sct_deepseg_lesion_ - Segment multiple sclerosis lesions.
-- sct_deepseg_sc_ - Segment spinal cord using deep learning.
-- sct_get_centerline_ - Extracts the spinal cord centerline.
-- sct_propseg_ - Segment spinal cord using propagation of deformation model (PropSeg).
+- :ref:`sct_create_mask` - Create mask along z direction.
+- :ref:`sct_deepseg` - Segment an anatomical structure or pathologies according using a deep learning model created with `ivadomed <https://ivadomed.org/>`_.
+- :ref:`sct_deepseg_gm` - Segment spinal cord gray matter using deep learning.
+- :ref:`sct_deepseg_lesion` - Segment multiple sclerosis lesions.
+- :ref:`sct_deepseg_sc` - Segment spinal cord using deep learning.
+- :ref:`sct_get_centerline` - Extracts the spinal cord centerline.
+- :ref:`sct_propseg` - Segment spinal cord using propagation of deformation model (PropSeg).
 
 Segmentation Analysis
 =====================
 
-- sct_analyze_lesion_ - Compute statistics on segmented lesions.
-- sct_compute_hausdorff_distance_ - Compute the Hausdorff's distance between two binary images.
-- sct_compute_compression_ - Compute spinal cord compression morphometrics.
-- sct_dice_coefficient_ - Compute the Dice Coefficient to estimate overlap between two binary images.
-- sct_process_segmentation_ - Perform various types of processing from the spinal cord segmentation.
+- :ref:`sct_analyze_lesion` - Compute statistics on segmented lesions.
+- :ref:`sct_compute_hausdorff_distance` - Compute the Hausdorff's distance between two binary images.
+- :ref:`sct_compute_compression` - Compute spinal cord compression morphometrics.
+- :ref:`sct_dice_coefficient` - Compute the Dice Coefficient to estimate overlap between two binary images.
+- :ref:`sct_process_segmentation` - Perform various types of processing from the spinal cord segmentation.
 
 Labeling
 ========
 
-- sct_detect_pmj_ - Detection of the Ponto-Medullary Junction (PMJ).
-- sct_label_vertebrae_ - Label vertebral levels
-- sct_label_utils_ - Collection of tools to create or process labels
+- :ref:`sct_detect_pmj` - Detection of the Ponto-Medullary Junction (PMJ).
+- :ref:`sct_label_vertebrae` - Label vertebral levels
+- :ref:`sct_label_utils` - Collection of tools to create or process labels
 
 Registration
 ============
 
-- sct_apply_transfo_ - Apply transformations.
-- sct_get_centerline_ - Reconstruct spinal cord centerline.
-- sct_register_multimodal_ - Register two images together (non-linear, constrained in axial plane)
-- sct_register_to_template_ - Register an image with an anatomical template (eg. the `PAM50 template <https://pubmed.ncbi.nlm.nih.gov/29061527/>`_).
-- sct_straighten_spinalcord_ - Straighten spinal cord from centerline
-- sct_warp_template_ - Warps the template and all atlases to a destination image.
+- :ref:`sct_apply_transfo` - Apply transformations.
+- :ref:`sct_get_centerline` - Reconstruct spinal cord centerline.
+- :ref:`sct_register_multimodal` - Register two images together (non-linear, constrained in axial plane)
+- :ref:`sct_register_to_template` - Register an image with an anatomical template (eg. the `PAM50 template <https://pubmed.ncbi.nlm.nih.gov/29061527/>`_).
+- :ref:`sct_straighten_spinalcord` - Straighten spinal cord from centerline
+- :ref:`sct_warp_template` - Warps the template and all atlases to a destination image.
 
 Diffusion MRI
 =============
 
-- sct_dmri_compute_bvalue_ - Calculate b-value (in mm^2/s).
-- sct_dmri_concat_bvals_ - Concatenate bval files in time.
-- sct_dmri_concat_bvecs_ - Concatenate bvec files in time.
-- sct_dmri_compute_dti_ - Compute Diffusion Tensor Images (DTI) using `dipy <https://dipy.org/>`_.
-- sct_dmri_denoise_patch2self_ - Denoise images using `dipy <https://dipy.org/>`_.
-- sct_dmri_display_bvecs_ - Display scatter plot of gradient directions from bvecs file.
-- sct_dmri_moco_ - Slice-wise motion correction of DWI data.
-- sct_dmri_separate_b0_and_dwi_ - Separate b=0 and DW images from diffusion dataset.
-- sct_dmri_transpose_bvecs_ - Transpose bvecs file.
+- :ref:`sct_dmri_compute_bvalue` - Calculate b-value (in mm^2/s).
+- :ref:`sct_dmri_concat_bvals` - Concatenate bval files in time.
+- :ref:`sct_dmri_concat_bvecs` - Concatenate bvec files in time.
+- :ref:`sct_dmri_compute_dti` - Compute Diffusion Tensor Images (DTI) using `dipy <https://dipy.org/>`_.
+- :ref:`sct_dmri_denoise_patch2self` - Denoise images using `dipy <https://dipy.org/>`_.
+- :ref:`sct_dmri_display_bvecs` - Display scatter plot of gradient directions from bvecs file.
+- :ref:`sct_dmri_moco` - Slice-wise motion correction of DWI data.
+- :ref:`sct_dmri_separate_b0_and_dwi` - Separate b=0 and DW images from diffusion dataset.
+- :ref:`sct_dmri_transpose_bvecs` - Transpose bvecs file.
 
 Magnetization transfer
 ======================
 
-- sct_compute_mtr_ - Compute magnetization transfer ratio (MTR).
-- sct_compute_mtsat_ - Compute MTsat and T1map `[Helms et al. Magn Reson Med 2008] <https://pubmed.ncbi.nlm.nih.gov/19025906/>`_.
+- :ref:`sct_compute_mtr` - Compute magnetization transfer ratio (MTR).
+- :ref:`sct_compute_mtsat` - Compute MTsat and T1map `[Helms et al. Magn Reson Med 2008] <https://pubmed.ncbi.nlm.nih.gov/19025906/>`_.
 
 Functional MRI
 ==============
 
-- sct_fmri_compute_tsnr_ - Compute the temporal signal-to-noise ratio from fMRI nifti files.
-- sct_fmri_moco_ - Correct fMRI data for motion.
+- :ref:`sct_fmri_compute_tsnr` - Compute the temporal signal-to-noise ratio from fMRI nifti files.
+- :ref:`sct_fmri_moco` - Correct fMRI data for motion.
 
 Metric processing
 =================
 
-- sct_analyze_texture_ - Extraction of grey level co-occurence matrix (GLCM) texture features from an image within a given mask.
-- sct_extract_metric_ - Estimate metric value within tracts, taking into account partial volume effect.
+- :ref:`sct_analyze_texture` - Extraction of grey level co-occurence matrix (GLCM) texture features from an image within a given mask.
+- :ref:`sct_extract_metric` - Estimate metric value within tracts, taking into account partial volume effect.
 
 Image manipulation
 ==================
 
-- sct_convert_ - Convert image file to another type.
-- sct_crop_image_ - Tools to crop an image, either via command line or via a Graphical User Interface (GUI).
-- sct_denoising_onlm_ - Utility function to denoise images.
-- sct_flatten_sagittal_ - Flatten the spinal cord in the sagittal plane (to make nice pictures).
-- sct_image_ - Performs various operations on images (split, pad, etc.).
-- sct_maths_ - Performs mathematical operations on images (threshold, smooth, etc.).
-- sct_merge_images_ - Merge images to the same space.
-- sct_resample_ - Anisotropic resampling of 3D or 4D data.
-- sct_smooth_spinalcord_ - Smooth the spinal cord along its centerline.
+- :ref:`sct_convert` - Convert image file to another type.
+- :ref:`sct_crop_image` - Tools to crop an image, either via command line or via a Graphical User Interface (GUI).
+- :ref:`sct_denoising_onlm` - Utility function to denoise images.
+- :ref:`sct_flatten_sagittal` - Flatten the spinal cord in the sagittal plane (to make nice pictures).
+- :ref:`sct_image` - Performs various operations on images (split, pad, etc.).
+- :ref:`sct_maths` - Performs mathematical operations on images (threshold, smooth, etc.).
+- :ref:`sct_merge_images` - Merge images to the same space.
+- :ref:`sct_resample` - Anisotropic resampling of 3D or 4D data.
+- :ref:`sct_smooth_spinalcord` - Smooth the spinal cord along its centerline.
 
 Miscellaneous
 =============
 
-- sct_compute_ernst_angle_ - Compute Ernst angle.
-- sct_compute_snr_ - Compute SNR using methods described in `[Dietrich et al. JMRI 2007]
+- :ref:`sct_compute_ernst_angle` - Compute Ernst angle.
+- :ref:`sct_compute_snr` - Compute SNR using methods described in `[Dietrich et al. JMRI 2007]
   <https://pubmed.ncbi.nlm.nih.gov/17622966/>`_.
-- sct_download_data_ - Download binaries from the web.
-- sct_qc_ - Generate Quality Control (QC) report following SCT processing.
-- sct_run_batch_ - Wrapper to processing scripts, which loops across subjects.
+- :ref:`sct_download_data` - Download binaries from the web.
+- :ref:`sct_qc` - Generate Quality Control (QC) report following SCT processing.
+- :ref:`sct_run_batch` - Wrapper to processing scripts, which loops across subjects.
 
 System tools
 ============
 
-- sct_check_dependencies_ - Check installation and compatibility of SCT.
-- sct_version_ - Display SCT version.
-
-
-Main Tools
-**********
-
-
-sct_analyze_lesion
-==================
-
-.. program-output:: sct_analyze_lesion -h
-
-
-sct_analyze_texture
-===================
-
-.. program-output:: sct_analyze_texture -h
-
-
-sct_apply_transfo
-=================
-
-.. program-output:: sct_apply_transfo -h
-
-
-sct_compute_ernst_angle
-=======================
-
-.. program-output:: sct_compute_ernst_angle -h
-
-
-sct_compute_hausdorff_distance
-==============================
-
-.. program-output:: sct_compute_hausdorff_distance -h
-
-
-sct_compute_compression
-=======================
-
-.. program-output:: sct_compute_compression -h
-
-
-sct_compute_mtr
-===============
-
-.. program-output:: sct_compute_mtr -h
-
-
-sct_compute_mtsat
-=================
-
-.. program-output:: sct_compute_mtsat -h
-
-
-sct_compute_snr
-===============
-
-.. program-output:: sct_compute_snr -h
-
-
-sct_convert
-==============
-
-.. program-output:: sct_convert -h
-
-
-sct_create_mask
-===============
-
-.. program-output:: sct_create_mask -h
-
-
-sct_crop_image
-==============
-
-.. program-output:: sct_crop_image -h
-
-
-sct_deepseg
-===========
-
-.. program-output:: sct_deepseg -h
-
-
-sct_deepseg_gm
-==============
-
-.. program-output:: sct_deepseg_gm -h
-
-
-sct_deepseg_lesion
-==================
-
-.. program-output:: sct_deepseg_lesion -h
-
-
-sct_deepseg_sc
-==============
-
-.. program-output:: sct_deepseg_sc -h
-
-
-sct_denoising_onlm
-==================
-
-.. program-output:: sct_denoising_onlm -h
-
-
-sct_detect_pmj
-==============
-
-.. program-output:: sct_detect_pmj -h
-
-
-sct_dice_coefficient
-====================
-
-.. program-output:: sct_dice_coefficient -h
-
-
-sct_dmri_compute_bvalue
-=======================
-
-.. program-output:: sct_dmri_compute_bvalue -h
-
-
-sct_dmri_compute_dti
-====================
-
-.. program-output:: sct_dmri_compute_dti -h
-
-
-sct_dmri_concat_bvals
-=====================
-
-.. program-output:: sct_dmri_concat_bvals -h
-
-
-sct_dmri_concat_bvecs
-=====================
-
-.. program-output:: sct_dmri_concat_bvecs -h
-
-
-sct_dmri_denoise_patch2self
-===========================
-
-.. program-output:: sct_dmri_denoise_patch2self -h
-
-
-sct_dmri_display_bvecs
-======================
-
-.. program-output:: sct_dmri_display_bvecs -h
-
-
-sct_dmri_moco
-=============
-
-.. program-output:: sct_dmri_moco -h
-
-
-sct_dmri_separate_b0_and_dwi
-============================
-
-.. image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/command-line/sct_dmri_separate_b0_and_dwi_example.png
-
-.. program-output:: sct_dmri_separate_b0_and_dwi -h
-
-
-sct_dmri_transpose_bvecs
-========================
-
-.. program-output:: sct_dmri_transpose_bvecs -h
-
-
-sct_download_data
-=================
-
-.. program-output:: sct_download_data -h
-
-
-sct_extract_metric
-==================
-
-.. program-output:: sct_extract_metric -h
-
-
-sct_flatten_sagittal
-====================
-
-.. program-output:: sct_flatten_sagittal -h
-
-
-sct_fmri_compute_tsnr
-=====================
-
-.. program-output:: sct_fmri_compute_tsnr -h
-
-
-sct_fmri_moco
-=============
-
-.. program-output:: sct_fmri_moco -h
-
-
-sct_get_centerline
-==================
-
-.. program-output:: sct_get_centerline -h
-
-
-sct_image
-=========
-
-.. program-output:: sct_image -h
-
-
-sct_label_utils
-===============
-
-.. program-output:: sct_label_utils -h
-
-
-sct_label_vertebrae
-===================
-
-.. program-output:: sct_label_vertebrae -h
-
-
-sct_maths
-=========
-
-.. program-output:: sct_maths -h
-
-
-sct_merge_images
-================
-
-.. program-output:: sct_merge_images -h
-
-
-sct_process_segmentation
-========================
-
-.. program-output:: sct_process_segmentation -h
-
-
-sct_propseg
-===========
-
-.. image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/command-line/sct_propseg_example.png
-
-.. program-output:: sct_propseg -h
-
-
-sct_qc
-======
-
-.. program-output:: sct_qc -h
-
-
-sct_register_multimodal
-=======================
-
-.. program-output:: sct_register_multimodal -h
-
-
-sct_register_to_template
-========================
-
-.. program-output:: sct_register_to_template -h
-
-
-sct_resample
-============
-
-.. program-output:: sct_resample -h
-
-
-sct_run_batch
-=============
-
-.. program-output:: sct_run_batch -h
-
-
-sct_smooth_spinalcord
-=====================
-
-.. program-output:: sct_smooth_spinalcord -h
-
-
-sct_straighten_spinalcord
-=========================
-
-.. program-output:: sct_straighten_spinalcord -h
-
-
-sct_warp_template
-=================
-
-.. program-output:: sct_warp_template -h
-
-
-
-
-System Commands
-***************
-
-
-sct_check_dependencies
-======================
-
-.. program-output:: sct_check_dependencies -h
-
-
-sct_version
-===========
-
-.. program-output:: sct_version
+- :ref:`sct_check_dependencies` - Check installation and compatibility of SCT.
+- :ref:`sct_version` - Display SCT version.
+
+
+.. Note: The toctree below is required by Sphinx for the sidebar. However, the automatically generated sidebar isn't ideal, because ":maxdepth: 2" shows too many sections, but ":maxdepth: 1" doesn't show enough. To get around this, we set the toctree as `:hidden:`, then manually create a secondary TOC using bullet point lists (see above). This manual method produces e a good-looking hybrid of both of the 'max-depth' options.
+
+.. Note 2: Both the hidden toctree (below) and the manual TOC (above) should be updated together. Make sure to use short titles in each section's page (since these will automatically be shown in the sidebar). But, feel free to use longer titles in the manual TOC, where there is more space.
+
+
+.. toctree::
+   :hidden:
+   :maxdepth: 2
+
+   command-line/index/segmentation
+   command-line/index/segmentation-analysis
+   command-line/index/labeling
+   command-line/index/registration
+   command-line/index/diffusion-mri
+   command-line/index/magnetization-transfer
+   command-line/index/functional-mri
+   command-line/index/metric-processing
+   command-line/index/image-manipulation
+   command-line/index/miscellaneous
+   command-line/index/system
+   command-line/all_tools

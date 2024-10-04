@@ -222,7 +222,7 @@ class ActionCreateFolder(argparse.Action):
     already exists, do nothing.
 
     The action will strip off trailing slashes from the folder's name.
-    Source: https://argparse-actions.readthedocs.io/en/latest/
+    Source: archive.is/pgUKF (`argparse_actions` -> project now 404s)
     """
     @staticmethod
     def create_folder(folder_name):
