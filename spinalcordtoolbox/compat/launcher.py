@@ -25,6 +25,11 @@ def main():
     if "ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS" not in os.environ:
         env["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = str(multiprocessing.cpu_count())
 
+    # Try proposed fix for `dipy==1.9.0` OpenMP macOS hanging issues
+    # See: https://github.com/dipy/dipy/issues/3125#issuecomment-2265199980
+    env['OPENBLAS_NUM_THREADS'] = "1"
+    env['OMP_NUM_THREADS'] = "1"
+
     # Needed to allow `sct_check_dependencies` to import voxelmorph/neurite without
     # failing due to a missing `tensorflow` dependency (since the backend defaults to TF)
     env['VXM_BACKEND'] = 'pytorch'
