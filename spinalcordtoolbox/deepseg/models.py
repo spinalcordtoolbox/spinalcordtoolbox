@@ -383,7 +383,7 @@ def folder(name_model):
     return os.path.join(__deepseg_dir__, name_model)
 
 
-def install_model(name_model):
+def install_model(name_model, custom_url=None):
     """
     Download and install specified model under SCT installation dir.
 
@@ -391,7 +391,7 @@ def install_model(name_model):
     :return: None
     """
     logger.info("\nINSTALLING MODEL: {}".format(name_model))
-    url_field = MODELS[name_model]['url']
+    url_field = MODELS[name_model]['url'] if not custom_url else [custom_url]  # [] -> mimic a list of mirror URLs
     # List of mirror URLs corresponding to a single model
     if isinstance(url_field, list):
         model_urls = url_field
@@ -409,7 +409,10 @@ def install_model(name_model):
     # Write `source.json` (for model provenance / updating)
     source_dict = {
         'model_name': name_model,
-        'model_urls': urls_used
+        'model_urls': urls_used,
+        # NB: If a custom URL is used, then it would just get overwritten as "out of date" when running the task
+        #     So, we add a flag to tell `sct_deepseg` *not* to reinstall the model if a custom URL was used.
+        'custom': bool(custom_url)
     }
     with open(os.path.join(folder(name_model), "source.json"), "w") as fp:
         json.dump(source_dict, fp, indent=4)
@@ -443,8 +446,14 @@ def is_up_to_date(path_model):
     if model_name not in MODELS:
         logger.warning(f"Model name '{model_name}' from source.json does not match model names in SCT source code.")
         return False
+
     expected_model_urls = MODELS[model_name]['url'].copy()
     actual_model_urls = source_dict["model_urls"]
+
+    if "custom" in source_dict and source_dict["custom"] is True:
+        logger.warning(f"Using custom model from URL '{actual_model_urls}'.")
+        return True  # Don't reinstall the model if the 'custom' flag is set (since custom URLs would fail comparison)
+
     # Single-seed models
     if isinstance(expected_model_urls, list) and isinstance(actual_model_urls, str):
         if actual_model_urls not in expected_model_urls:
