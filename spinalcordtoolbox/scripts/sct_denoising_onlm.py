@@ -11,6 +11,7 @@ from typing import Sequence
 
 import numpy as np
 import nibabel as nib
+from threadpoolctl import threadpool_limits
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.utils.fs import extract_fname
@@ -137,24 +138,25 @@ def main(argv: Sequence[str]):
     # mask = data[:, :, :] > noise_threshold
     # data = data[:, :, :]
 
-    if arguments.std is not None:
-        sigma = std_noise
-        # Application of NLM filter to the image
-        printv('Applying Non-local mean filter...')
-        if param.parameter == 'Rician':
-            den = nlmeans.nlmeans(data, sigma=sigma, mask=None, rician=True, block_radius=block_radius)
+    with threadpool_limits(limits=1, user_api=None):  # None -> limits apply to OpenMP/BLAS/etc.
+        if arguments.std is not None:
+            sigma = std_noise
+            # Application of NLM filter to the image
+            printv('Applying Non-local mean filter...')
+            if param.parameter == 'Rician':
+                den = nlmeans.nlmeans(data, sigma=sigma, mask=None, rician=True, block_radius=block_radius)
+            else:
+                den = nlmeans.nlmeans(data, sigma=sigma, mask=None, rician=False, block_radius=block_radius)
         else:
-            den = nlmeans.nlmeans(data, sigma=sigma, mask=None, rician=False, block_radius=block_radius)
-    else:
-        # # Process for manual detecting of background
-        mask = data > noise_threshold
-        sigma = np.std(data[~mask])
-        # Application of NLM filter to the image
-        printv('Applying Non-local mean filter...')
-        if param.parameter == 'Rician':
-            den = nlmeans.nlmeans(data, sigma=sigma, mask=mask, rician=True, block_radius=block_radius)
-        else:
-            den = nlmeans.nlmeans(data, sigma=sigma, mask=mask, rician=False, block_radius=block_radius)
+            # # Process for manual detecting of background
+            mask = data > noise_threshold
+            sigma = np.std(data[~mask])
+            # Application of NLM filter to the image
+            printv('Applying Non-local mean filter...')
+            if param.parameter == 'Rician':
+                den = nlmeans.nlmeans(data, sigma=sigma, mask=mask, rician=True, block_radius=block_radius)
+            else:
+                den = nlmeans.nlmeans(data, sigma=sigma, mask=mask, rician=False, block_radius=block_radius)
 
     t = time()
     printv("total time: %s" % (time() - t))
