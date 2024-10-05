@@ -14,6 +14,7 @@ import sys
 import os
 import argparse
 from typing import Sequence
+import textwrap
 
 import numpy as np
 
@@ -71,22 +72,22 @@ def get_parser():
             "https://spinalcordtoolbox.com/en/latest/overview/concepts/pam50.html#white-and-grey-matter-atlas-pam50-atlas\n"
             "\n"
             "To compute FA within labels 0, 2 and 3 within vertebral levels C2 to C7 using binary method:\n"
-            "sct_extract_metric -i dti_FA.nii.gz -l 0,2,3 -vert 2:7 -method bin\n"
+            "`sct_extract_metric -i dti_FA.nii.gz -l 0,2,3 -vert 2:7 -method bin`\n"
             "\n"
             "To compute average MTR in a region defined by a single label file (could be binary or 0-1 "
             "weighted mask) between slices 1 and 4:\n"
-            "sct_extract_metric -i mtr.nii.gz -f "
-            "my_mask.nii.gz -z 1:4 -method wa")
+            "s`ct_extract_metric -i mtr.nii.gz -f "
+            "my_mask.nii.gz -z 1:4 -method wa`")
     )
-    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
     mandatory.add_argument(
         '-i',
         metavar=Metavar.file,
         required=True,
-        help="Image file to extract metrics from. Example: FA.nii.gz"
+        help="Image file to extract metrics from. Example: `FA.nii.gz`"
     )
 
-    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
         "--help",
@@ -104,37 +105,31 @@ def get_parser():
         '-l',
         metavar=Metavar.str,
         default='',
-        help="Label IDs to extract the metric from. Default = all labels. Separate labels with ','. To select a group "
-             "of consecutive labels use ':'. Example: 1:3 is equivalent to 1,2,3. Maximum Likelihood (or MAP) is "
+        help="Label IDs to extract the metric from. Default = all labels. Separate labels with `,`. To select a group "
+             "of consecutive labels use `:`. Example: `1:3` is equivalent to `1,2,3`. Maximum Likelihood (or MAP) is "
              "computed using all tracts, but only values of the selected tracts are reported."
     )
     optional.add_argument(
         '-list-labels',
         action=_ListLabelsAction,
         nargs=0,
-        help="List available labels. These labels are defined in the file 'info_label.txt' located in the folder "
-             "specified by the flag '-f'."
+        help="List available labels. These labels are defined in the file `info_label.txt` located in the folder "
+             "specified by the flag `-f`."
     )
     optional.add_argument(
         '-method',
         choices=['ml', 'map', 'wa', 'bin', 'median', 'max'],
         default=param_default.method,
-        help="Method to extract metrics.\n"
-             "  - ml: maximum likelihood.\n"
-             "    This method is recommended for large labels and low noise. Also, this method should only be used"
-             " with the PAM50 white/gray matter atlas, or with any custom atlas as long as the sum across all labels"
-             " equals 1, in each voxel part of the atlas.\n"
-             "  - map: maximum a posteriori.\n"
-             "    Mean priors are estimated by maximum likelihood within three clusters"
-             " (white matter, gray matter and CSF). Tract and noise variance are set with flag -p."
-             " This method should only be used with the PAM50 white/gray matter atlas, or with any custom atlas"
-             " as long as the sum across all labels equals 1, in each voxel part of the atlas.\n"
-             "  - wa: weighted average\n"
-             "  - bin: binarize mask (threshold=0.5)\n"
-             "  - median: weighted median.\n"
-             "    This implementation of the median treats quantiles as a continuous (vs. discrete) function. For"
-             " more details, see https://pypi.org/project/wquantiles/ \n"
-             "  - max: for each z-slice of the input data, extract the max value for each slice of the input data."
+        help=textwrap.dedent("""
+            Method to extract metrics.
+
+              - `ml`: maximum likelihood: This method is recommended for large labels and low noise. Also, this method should only be used with the PAM50 white/gray matter atlas, or with any custom atlas as long as the sum across all labels equals 1, in each voxel part of the atlas.
+              - `map`: maximum a posteriori: Mean priors are estimated by maximum likelihood within three clusters (white matter, gray matter and CSF). Tract and noise variance are set with flag `-p`. This method should only be used with the PAM50 white/gray matter atlas, or with any custom atlas as long as the sum across all labels equals 1, in each voxel part of the atlas.
+              - `wa`: weighted average
+              - `bin`: binarize mask (threshold=0.5)
+              - `median`: weighted median: This implementation of the median treats quantiles as a continuous (vs. discrete) function. For more details, see https://pypi.org/project/wquantiles/
+              - `max`: for each z-slice of the input data, extract the max value for each slice of the input data.
+        """),  # noqa 501 (line too long)
     )
     optional.add_argument(
         '-append',
@@ -148,14 +143,14 @@ def get_parser():
         type=int,
         choices=(0, 1),
         default=0,
-        help="Whether to combine multiple labels into a single estimation. 0 = no, 1 = yes"
+        help="Whether to combine multiple labels into a single estimation. `0` = no, `1` = yes"
     )
     optional.add_argument(
         '-o',
         metavar=Metavar.file,
         default=param_default.fname_output,
-        help="File name of the output result file collecting the metric estimation results. Include the '.csv' "
-             "file extension in the file name. Example: extract_metric.csv"
+        help="File name of the output result file collecting the metric estimation results. Include the `.csv` "
+             "file extension in the file name. Example: `extract_metric.csv`"
     )
     optional.add_argument(
         '-output-map',
@@ -169,17 +164,22 @@ def get_parser():
         '-z',
         metavar=Metavar.str,
         default=param_default.slices_of_interest,
-        help="Slice range to estimate the metric from. First slice is 0. Example: 5:23\n"
-             "You can also select specific slices using commas. Example: 0,2,3,5,12'"
+        help=textwrap.dedent("""
+            Slice range to estimate the metric from. First slice is 0. Example: `5:23`
+
+            You can also select specific slices using commas. Example: `0,2,3,5,12`
+        """),
     )
     optional.add_argument(
         '-perslice',
         type=int,
         choices=(0, 1),
         default=param_default.perslice,
-        help="Whether to output one metric per slice instead of a single output metric. 0 = no, 1 = yes.\n"
-             "Please note that when methods ml or map are used, outputting a single metric per slice and then "
-             "averaging them all is not the same as outputting a single metric at once across all slices."
+        help=textwrap.dedent("""
+            Whether to output one metric per slice instead of a single output metric. `0` = no, `1` = yes.
+
+            Please note that when methods ml or map are used, outputting a single metric per slice and then averaging them all is not the same as outputting a single metric at once across all slices.
+        """),  # noqa: E501 (line too long)
     )
     optional.add_argument(
         '-vert',
@@ -193,17 +193,22 @@ def get_parser():
         '-vertfile',
         metavar=Metavar.file,
         default=os.path.join(".", "label", "template", "PAM50_levels.nii.gz"),
-        help="Vertebral labeling file. Only use with flag -vert.\n"
-             "The input Image and the vertebral labelling file must in the same voxel coordinate system "
-             "and must match the dimensions between each other."
+        help=textwrap.dedent("""
+            Vertebral labeling file. Only use with flag `-vert`.
+
+            The input Image and the vertebral labelling file must in the same voxel coordinate system and must match the dimensions between each other.
+        """),
     )
     optional.add_argument(
         '-perlevel',
         type=int,
         metavar=Metavar.int,
         default=0,
-        help="Whether to output one metric per vertebral level instead of a single output metric. 0 = no, 1 = yes.\n"
-             "Please note that this flag needs to be used with the -vert option."
+        help=textwrap.dedent("""
+            Whether to output one metric per vertebral level instead of a single output metric. `0` = no, `1` = yes.
+
+            Please note that this flag needs to be used with the -vert option.
+        """),
     )
     optional.add_argument(
         '-v',
@@ -215,15 +220,17 @@ def get_parser():
         help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode"
     )
 
-    advanced = parser.add_argument_group("\nFOR ADVANCED USERS")
+    advanced = parser.add_argument_group("FOR ADVANCED USERS")
     advanced.add_argument(
         '-param',
         metavar=Metavar.str,
         default='',
-        help="Advanced parameters for the 'map' method. Separate with comma. All items must be listed (separated "
-             "with comma).\n"
-             "  - #1: standard deviation of metrics across labels\n"
-             "  - #2: standard deviation of the noise (assumed Gaussian)"
+        help=textwrap.dedent("""
+            Advanced parameters for the `map` method. All values must be provided, and separated with `,`.
+
+              - First value: standard deviation of metrics across labels
+              - Second value: standard deviation of the noise (assumed Gaussian)
+        """),
     )
     advanced.add_argument(
         '-fix-label',
@@ -244,9 +251,12 @@ def get_parser():
         '-norm-method',
         choices=['sbs', 'whole'],
         default='',
-        help="Method to use for normalization:\n"
-             "  - sbs: normalization slice-by-slice\n"
-             "  - whole: normalization by the metric value in the whole label for all slices."
+        help=textwrap.dedent("""
+            Method to use for normalization:
+
+              - `sbs`: normalization slice-by-slice
+              - `whole`: normalization by the metric value in the whole label for all slices.
+        """),
     )
     advanced.add_argument(
         '-mask-weighted',

@@ -22,7 +22,7 @@ def get_parser():
         description='Convert image file to another type.'
     )
 
-    mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatoryArguments = parser.add_argument_group("MANDATORY ARGUMENTS")
     mandatoryArguments.add_argument(
         "-i",
         required=True,
@@ -36,7 +36,7 @@ def get_parser():
         metavar=Metavar.str,
     )
 
-    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
         "--help",

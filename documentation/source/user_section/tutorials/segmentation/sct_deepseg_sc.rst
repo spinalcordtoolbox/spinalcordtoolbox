@@ -1,7 +1,7 @@
 Algorithm #2: ``sct_deepseg_sc``
 ################################
 
-As its name suggests, ``sct_deepseg_sc`` is based on deep learning. It is a newer algorithm, having been introduced to SCT in 2018. The steps of the algorithm are as follows:
+As its name suggests, :ref:`sct_deepseg_sc` is based on deep learning. It is a newer algorithm, having been introduced to SCT in 2018. The steps of the algorithm are as follows:
 
 :1. Spinal cord detection:
    First, a convolutional neural network is used to generate a probablistic heatmap for the location of the spinal cord.

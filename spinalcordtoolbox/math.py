@@ -15,7 +15,10 @@ from scipy.ndimage import gaussian_filter, gaussian_laplace, label, generate_bin
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.utils.sys import LazyLoader
 
-dipy = LazyLoader("dipy", globals(), "dipy")
+dipy_patch2self = LazyLoader("dipy_patch2self", globals(), "dipy.denoise.patch2self")
+dipy_mask = LazyLoader("dipy_mask", globals(), "dipy.segment.mask")
+dipy_nlmeans = LazyLoader("dipy_nlmeans", globals(), "dipy.denoise.nlmeans")
+dipy_noise = LazyLoader("dipy_noise", globals(), "dipy.denoise.noise_estimate")
 skl_metrics = LazyLoader("skl_metrics", globals(), "sklearn.metrics")
 scipy_stats = LazyLoader("scipy_stats", globals(), "scipy.stats")
 
@@ -250,7 +253,7 @@ def adap(data, block_size, offset):
 
 
 def otsu_median(data, size, n_iter):
-    data, mask = dipy.segment.mask.median_otsu(data, size, n_iter)
+    data, mask = dipy_mask.median_otsu(data, size, n_iter)
     return mask
 
 
@@ -313,8 +316,8 @@ def denoise_nlmeans(data_in, patch_radius=1, block_radius=5):
     block_radius_max = min(data_in.shape) - 1
     block_radius = block_radius_max if block_radius > block_radius_max else block_radius
 
-    sigma = dipy.denoise.noise_estimate.estimate_sigma(data_in)
-    denoised = dipy.denoise.nlmeans.nlmeans(data_in, sigma, patch_radius=patch_radius, block_radius=block_radius)
+    sigma = dipy_noise.estimate_sigma(data_in)
+    denoised = dipy_nlmeans.nlmeans(data_in, sigma, patch_radius=patch_radius, block_radius=block_radius)
 
     return denoised
 
@@ -342,7 +345,7 @@ def denoise_patch2self(data_in, bvals_in, patch_radius=0, model='ols'):
         for more info about patch_radius and model, please refer to the dipy website:
         https://docs.dipy.org/stable/examples_built/preprocessing/denoise_patch2self.html
     """
-    denoised = dipy.denoise.patch2self.patch2self(data_in, bvals_in, patch_radius=patch_radius, model=model)
+    denoised = dipy_patch2self.patch2self(data_in, bvals_in, patch_radius=patch_radius, model=model)
 
     return denoised
 

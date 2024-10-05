@@ -1,11 +1,9 @@
-.. _sct_deepseg:
-
 Specialized segmentation models: ``sct_deepseg``
 ################################################
 
-The ``sct_deepseg`` script is separate from ``sct_deepseg_sc``, and provides access to specialized models created by the ivadomed project (https://ivadomed.org). These specialized models focus on tasks outside of basic spinal cord segmentation. In recent versions, new models for the segmentation of spinal tumors, human multi-class SC & GM at 7T, MS lesion segmentation on MP2RAGE, mouse SC, etc. have been added.
+The :ref:`sct_deepseg` script is separate from :ref:`sct_deepseg_sc`, and provides access to specialized models created by the ivadomed project (https://ivadomed.org). These specialized models focus on tasks outside of basic spinal cord segmentation. In recent versions, new models for the segmentation of spinal tumors, human multi-class SC & GM at 7T, MS lesion segmentation on MP2RAGE, mouse SC, etc. have been added.
 
-You can list the available tasks by running ``sct_deepseg -h``, or you view detailed descriptions of each task by running ``sct_deepseg -list-tasks``.
+You can list the available tasks by running :ref:`sct_deepseg` ``-h``, or you view detailed descriptions of each task by running :ref:`sct_deepseg` ``-list-tasks``.
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/spinalcord-segmentation/sct_deepseg_models.png
    :align: center
