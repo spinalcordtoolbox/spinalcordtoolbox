@@ -893,26 +893,18 @@ class AnalyzeLesion:
             self.angles_sagittal[iz] = np.arccos(np.vdot(tangent_vect, np.array([0, 0, 1])))
 
     def get_midsagittal_slice(self):
-        """Get the midsagittal slice based on the spinal cord segmentation mask."""
+        """Get the midsagittal slice based on the lesion segmentation mask."""
         # Get the RPI-oriented midsagittal slice number (to be reused in other functions)
-        im_sc_data = Image(self.fname_sc).data
-        nonzero_slices = np.unique(np.where(im_sc_data)[0])     # RPI image: [0] -> RL (sagittal)
-        # If the list is odd-length, use the middle slice
-        # If the list is even-length, select the slice with the larger cord area from two middle slices
-        mid_idx = len(nonzero_slices) // 2
-        if len(nonzero_slices) % 2:
-            self.midsagittal_sc_slice_rpi = nonzero_slices[mid_idx]
-        else:
-            slice1, slice2 = nonzero_slices[mid_idx - 1:mid_idx + 1]
-            self.midsagittal_sc_slice_rpi = slice1 if np.sum(im_sc_data[slice1, :, :]) > np.sum(
-                im_sc_data[slice2, :, :]) else slice2
-
+        im_lesion_data = Image(self.fname_label).data
+        # Get the slice with the largest lesion area
+        nonzero_slices = np.unique(np.where(im_lesion_data)[0])     # RPI image: [0] -> RL (sagittal)
+        self.midsagittal_sc_slice_rpi = nonzero_slices[np.argmax([np.sum(im_lesion_data[slice, :, :]) for slice in nonzero_slices])]
         # Convert the RPI-oriented slice number to the original orientation (for outputting to user)
-        self.midsagittal_sc_slice = rpi_slice_to_orig_orientation(dim=im_sc_data.shape,
+        self.midsagittal_sc_slice = rpi_slice_to_orig_orientation(dim=im_lesion_data.shape,
                                                                   orig_orientation=self.orientation,
                                                                   slice_number=self.midsagittal_sc_slice_rpi,
                                                                   axis=0)  # 0 = RL
-        printv(f'Midsagittal slice of the spinal cord: {self.midsagittal_sc_slice}', self.verbose, type='info')
+        printv(f'Midsagittal slice of the lesion cord: {self.midsagittal_sc_slice}', self.verbose, type='info')
 
     def label_lesion(self):
         printv('\nLabel connected regions of the masked image...', self.verbose, 'normal')
