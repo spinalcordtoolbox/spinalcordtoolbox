@@ -20,6 +20,7 @@ We provide the following hands-on tutorials for SCT's command-line tools.
    * :doc:`tutorials/shape-analysis/normalize-morphometrics-compression`
 
 #. :doc:`Lesion analysis <tutorials/lesion-analysis>`
+#. :doc:`Spinal Nerve Rootlets Segmentation <tutorials/spinal-nerve-rootlets-segmentation>`
 #. :doc:`Registration to template <tutorials/registration-to-template>`
 
    * :doc:`tutorials/registration-to-template/template-registration`
@@ -40,7 +41,6 @@ We provide the following hands-on tutorials for SCT's command-line tools.
 #. :doc:`Atlas-based analysis <tutorials/atlas-based-analysis>`
 #. :doc:`Diffusion-weighted MRI (Motion correction, DTI computation) <tutorials/diffusion-weighted-mri>`
 #. :doc:`Functional MRI (Motion correction, Spinal level labeling) <tutorials/processing-fmri-data>`
-#. :doc:`Spinal Nerve Rootlets Segmentation <tutorials/spinal-nerve-rootlets-segmentation>`
 #. :doc:`Other features <tutorials/other-features>`
 
    * :doc:`Spinal cord smoothing <tutorials/other-features/spinalcord-smoothing>`
@@ -73,12 +73,12 @@ If you would prefer to learn how to use SCT in a guided workshop setting, we pro
    tutorials/vertebral-labeling
    tutorials/shape-analysis
    tutorials/lesion-analysis
+   tutorials/spinal-nerve-rootlets-segmentation
    tutorials/registration-to-template
    tutorials/multimodal-registration
    tutorials/gray-matter-segmentation
    tutorials/atlas-based-analysis
    tutorials/diffusion-weighted-mri
    tutorials/processing-fmri-data
-   tutorials/spinal-nerve-rootlets-segmentation
    tutorials/other-features
    tutorials/analysis-pipelines-with-sct
