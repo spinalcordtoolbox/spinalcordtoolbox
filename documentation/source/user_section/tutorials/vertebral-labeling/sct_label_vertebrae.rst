@@ -3,7 +3,7 @@
 Labeling algorithm: ``sct_label_vertebrae``
 ###########################################
 
-SCT provides the ``sct_label_vertebrae`` command for vertebral labeling.
+SCT provides the :ref:`sct_label_vertebrae` command for vertebral labeling.
 
 Algorithm steps
 ---------------
@@ -24,4 +24,4 @@ Features
    :align: center
    :figwidth: 400px
 
-   ``sct_label_vertebrae`` is able to label vertebral levels despite missing discs due to instrumentation.
+   :ref:`sct_label_vertebrae` is able to label vertebral levels despite missing discs due to instrumentation.

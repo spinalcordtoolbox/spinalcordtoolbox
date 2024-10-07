@@ -27,4 +27,4 @@ Once the command has finished, at the bottom of your terminal there will be inst
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/template-registration/io-sct_register_to_template.png
    :align: center
 
-   Input/output images for ``sct_register_to_template``
+   Input/output images for :ref:`sct_register_to_template`

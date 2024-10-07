@@ -42,6 +42,8 @@ import logging
 # This class is also in use as-is in many downstream DL packages, signifying its reliability. For example:
 #  - https://github.com/bentoml/BentoML/blob/df2c7b86decbdff053002bddf7beb228d012a895/src/bentoml/_internal/utils/lazy_loader.py
 
+# FIXME: The LazyLoader class only allows you to access attributes of the lazy-loaded module (functions, classes,
+#  constants). It *DOES NOT* allow you to access submodules. So, make sure to lazy-load the lowest-level module needed.
 
 class LazyLoader(types.ModuleType):
     """Lazily import a module, mainly to avoid pulling in large dependencies.

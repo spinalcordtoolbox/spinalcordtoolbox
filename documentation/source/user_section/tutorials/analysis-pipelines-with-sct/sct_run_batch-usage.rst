@@ -10,7 +10,7 @@ In your working directory, you should have the batch processing script, a config
    ls data
    # Output should be: sub-01  sub-03  sub-05
 
-In order to apply the ``process_data.sh`` script to the multi-subject dataset, we can use an SCT tool called ``sct_run_batch``. This command loops across each subject directory and launches the script individually for each subject.
+In order to apply the ``process_data.sh`` script to the multi-subject dataset, we can use an SCT tool called :ref:`sct_run_batch`. This command loops across each subject directory and launches the script individually for each subject.
 
 Running this command will take 10-30m depending on the capabilities of your processor.
 
@@ -19,10 +19,10 @@ Running this command will take 10-30m depending on the capabilities of your proc
    sct_run_batch -script process_data.sh -config config.yml
 
 :Input arguments:
-   - ``-script`` : The path to the script you wish to run. This script should be written to accept a single argument (a path to the subject folder). That way, ``sct_run_batch`` can launch the script once for each subject, passing along each subject folder as an argument to the script.
-   - ``-config`` : A config file containing input arguments for ``sct_run_batch``. Inside this file, you will find:
+   - ``-script`` : The path to the script you wish to run. This script should be written to accept a single argument (a path to the subject folder). That way, :ref:`sct_run_batch` can launch the script once for each subject, passing along each subject folder as an argument to the script.
+   - ``-config`` : A config file containing input arguments for :ref:`sct_run_batch`. Inside this file, you will find:
 
-     - ``path-data`` : Path to the folder containing the BIDS dataset. ``sct_run_batch`` will look for subject folders inside, so that it can loop across subjects.
+     - ``path-data`` : Path to the folder containing the BIDS dataset. :ref:`sct_run_batch` will look for subject folders inside, so that it can loop across subjects.
      - ``subject-prefix`` : The prefix that each subject folder has.
      - ``path-output`` : Path to save the output to. This path is what determines the output directories for results, QC reports, and logs.
      - ``path-segmanual`` : Path to the folder containing manually-corrected segmentations.
@@ -36,6 +36,6 @@ Running this command will take 10-30m depending on the capabilities of your proc
 
 .. note::
 
-   We strongly recommend using a config file as shown here (rather than passing arguments directly to ``sct_run_batch``) because it helps with reproducibility.
+   We strongly recommend using a config file as shown here (rather than passing arguments directly to :ref:`sct_run_batch`) because it helps with reproducibility.
 
-   To learn about the full list of options that are available to tweak in your config file, run ``sct_run_batch -h``.
+   To learn about the full list of options that are available to tweak in your config file, run :ref:`sct_run_batch` ``-h``.
