@@ -514,13 +514,19 @@ done
 # Create directory
 mkdir -p "$SCT_DIR"
 # check if directory was created
+PERMISSION_ADVICE="\n\nMake sure that you own the folder you're writing to, and that the folder has write permissions.
+\nTo ensure this, either change the installation directory, or consider running the following commands:
+    sudo chown $USER $(dirname "$SCT_DIR")
+    sudo chown $USER $SCT_DIR
+    sudo chmod +w $(dirname "$SCT_DIR")
+    sudo chmod +w $SCT_DIR"
 if [[ -d "$SCT_DIR" ]]; then
   # check write permission
   if [[ ! -w "$SCT_DIR" ]]; then
-    die "ERROR: $SCT_DIR exists but does not have write permission."
+    die "ERROR: $SCT_DIR exists but does not have write permission.$PERMISSION_ADVICE"
   fi
 else
-  die "ERROR: $SCT_DIR cannot be created. Make sure you have write permission."
+  die "ERROR: $SCT_DIR cannot be created.$PERMISSION_ADVICE"
 fi
 
 # Copy files to destination directory
