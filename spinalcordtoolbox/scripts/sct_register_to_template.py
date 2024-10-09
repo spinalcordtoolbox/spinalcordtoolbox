@@ -17,7 +17,7 @@ import textwrap
 
 import numpy as np
 
-from spinalcordtoolbox.registration.core import register_wrapper
+from spinalcordtoolbox.registration.core import register_wrapper, register
 from spinalcordtoolbox.registration.algorithms import Paramreg, ParamregMultiStep
 from spinalcordtoolbox.registration.labeling import (add_dummy_orthogonal_labels, check_labels,
                                                      project_labels_on_spinalcord, resample_labels)
@@ -60,6 +60,7 @@ step0 = Paramreg(step='0', type='label', dof='Tx_Ty_Tz_Rx_Ry_Rz_Sz')  # affine, 
 step1 = Paramreg(step='1', type='imseg', algo='centermassrot', rot_method='pcahog')
 step2 = Paramreg(step='2', type='seg', algo='bsplinesyn', metric='MeanSquares', iter='3', smooth='1', slicewise='0')
 paramregmulti = ParamregMultiStep([step0, step1, step2])
+step_rootlets = Paramreg(step='1', algo='bsplinesyn', metric='MeanSquares', iter='20x10x5',shrink='4x2x1', smooth='1x1x1', slicewise='0', deformation='0x0x1', gradStep='0.1')
 
 
 # PARSER
@@ -302,19 +303,19 @@ def main(argv: Sequence[str]):
     if arguments.l is not None:
         fname_landmarks = arguments.l
         label_type = 'body'
+    elif arguments.lrootlets is not None:
+        fname_rootlets = arguments.lrootlets
+        label_type = 'rootlet'
+        if arguments.ldisc is not None:
+            fname_landmarks  = arguments.ldisc
+        else:
+            raise ValueError('Single disc label should be provided with rootlets labels.')
     elif arguments.ldisc is not None:
         fname_landmarks = arguments.ldisc
         label_type = 'disc'
     elif arguments.lspinal is not None:
         fname_landmarks = arguments.lspinal
         label_type = 'spinal'
-    elif arguments.lrootlets is not None
-        fname_rootlets = arguments.lrootlets
-        label_type = 'rootlet'
-        if arguments.ldisc is not None:
-            fname_landmarks  = arguments.lspinal
-        else:
-            raise ValueError('Single disc label should be provided with rootlets labels.')
     else:
         printv('ERROR: Labels should be provided.', 1, 'error')
 
@@ -356,6 +357,8 @@ def main(argv: Sequence[str]):
     elif label_type == 'rootlet':
         # point-wise intervertebral disc labels
         file_template_labeling = get_file_label(os.path.join(path_template, 'template'), id_label=10)
+        file_template_labeling_rootlets = get_file_label(os.path.join(path_template, 'template'), id_label=16)
+        fname_template_labeling_rootlets = os.path.join(path_template, 'template', file_template_labeling_rootlets)  # MAYBE MOVE DOWN
     else:
         # spinal cord mask with discrete vertebral levels
         file_template_labeling = get_file_label(os.path.join(path_template, 'template'), id_label=7)
@@ -378,23 +381,25 @@ def main(argv: Sequence[str]):
     check_file_exist(fname_template, verbose)
     check_file_exist(fname_template_labeling, verbose)
     check_file_exist(fname_template_seg, verbose)
+    if label_type == 'rootlet':
+        check_file_exist(fname_template_labeling_rootlets, verbose)
     path_data, file_data, ext_data = extract_fname(fname_data)
 
     # printv(arguments)
     printv('\nCheck parameters:', verbose)
     printv('  Data:                 ' + fname_data, verbose)
-    printv('  Landmarks:            ' + fname_landmarks, verbose)
+    printv('  Landmarks:            ' + fname_landmarks, verbose)  # TODO add rootlets
     printv('  Segmentation:         ' + fname_seg, verbose)
     printv('  Path template:        ' + path_template, verbose)
     printv('  Remove temp files:    ' + str(param.remove_temp_files), verbose)
 
     # check input labels
-    labels = check_labels(fname_landmarks, label_type=label_type)
+    labels = check_labels(fname_landmarks, label_type=label_type)  # TODO add check if rootlets
 
     level_alignment = False
     if len(labels) > 2 and label_type in ['disc', 'spinal']:
         level_alignment = True
-
+    # TODO: add check that label len(label) is one for rootlets 
     path_tmp = tmp_create(basename="register-to-template")
 
     # set temporary file names
@@ -404,6 +409,9 @@ def main(argv: Sequence[str]):
     ftmp_template = 'template.nii'
     ftmp_template_seg = 'template_seg.nii.gz'
     ftmp_template_label = 'template_label.nii.gz'
+    if label_type == 'rootlet':
+        ftmp_rootlets = 'rootlets.nii.gz'
+        ftmp_template_rootlets = 'template_rootlets.nii.gz'
 
     # copy files to temporary folder
     printv('\nCopying input data to tmp folder and convert to nii...', verbose)
@@ -414,6 +422,10 @@ def main(argv: Sequence[str]):
         Image(fname_template, check_sform=True).save(os.path.join(path_tmp, ftmp_template))
         Image(fname_template_seg, check_sform=True).save(os.path.join(path_tmp, ftmp_template_seg))
         Image(fname_template_labeling, check_sform=True).save(os.path.join(path_tmp, ftmp_template_label))
+        if label_type == 'rootlet':  # TODO find someting better that so many if cases
+            Image(fname_rootlets, check_sform=True).save(os.path.join(path_tmp, ftmp_rootlets))
+            Image(fname_template_labeling_rootlets, check_sform=True).save(os.path.join(path_tmp, ftmp_template_rootlets))
+
     except ValueError as e:
         printv("\nImages could not be saved to temporary folder. Aborting registration.\n"
                f"    {e.__class__.__name__}: '{e}'", 1, 'error')
@@ -472,6 +484,12 @@ def main(argv: Sequence[str]):
     img_tmp_label = Image(ftmp_label).change_orientation("RPI")
     ftmp_label = add_suffix(img_tmp_label.absolutepath, "_rpi")
     img_tmp_label.save(ftmp_label, mutable=True)
+
+    if label_type == 'rootlet':
+        img_tmp_rootlets = Image(ftmp_rootlets).change_orientation("RPI")
+        ftmp_rootlets = add_suffix(img_tmp_rootlets.absolutepath, "_rpi")
+        img_tmp_rootlets.save(ftmp_rootlets, mutable=True)
+
 
     # Switch between modes: subject->template or template->subject
     if ref == 'template':
@@ -662,6 +680,78 @@ def main(argv: Sequence[str]):
             '-v', '0',
         ])
         ftmp_seg = add_suffix(ftmp_seg, '_straightAffine')
+        if label_type == 'rootlet':
+            sct_apply_transfo.main(argv=[
+                '-i', ftmp_rootlets,
+                '-o', add_suffix(ftmp_rootlets, '_straightAffine'),
+                '-d', ftmp_template,
+                '-w', 'warp_curve2straightAffine.nii.gz',
+                '-x', 'nn',  #TODO to validate
+                '-v', '0',
+            ])
+            ftmp_rootlets= add_suffix(ftmp_rootlets, '_straightAffine')
+        
+        # Register spinal rootlets to template: TODO: maybe consider cropping before
+        if label_type == 'rootlet':
+            src = ftmp_rootlets
+            dest = ftmp_template_rootlets
+            scr_regStep = add_suffix(src, '_regStep' + str(step_rootlets.step))
+            metricSize = '4'
+            # TODO: condsider cropping before reg --> will maybe be faster
+            
+            cmd_rootlets = ['isct_antsRegistration',
+                '--dimensionality', '3',
+                '--transform', step_rootlets.algo + '[' + step_rootlets.gradStep
+                + ',26,0,3' + ']',
+                '--metric', step_rootlets.metric + '[' + dest + ',' + src + ',1,' + metricSize + ']',
+                '--convergence', step_rootlets.iter,
+                '--shrink-factors', step_rootlets.shrink,
+                '--smoothing-sigmas', step_rootlets.smooth + 'mm',
+                '--restrict-deformation', step_rootlets.deformation,
+                '--output', '[step' + str(step_rootlets.step) + ',' + scr_regStep + ']',
+                '--interpolation', 'nearestNeighbor',
+                '--verbose', ('1' if verbose >= 1 else '0'),
+                ]
+            print(cmd_rootlets)
+            status, output = run_proc(cmd_rootlets, verbose, is_sct_binary=True)
+            print('HERE:', os.getcwd())
+            print(output)
+            if status != 0:
+                raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
+            # Apply transformation
+            printv('\nApply transformation after rootlets adjustment...', verbose)
+            sct_apply_transfo.main(argv=[
+                '-i', ftmp_data,
+                '-o', add_suffix(ftmp_data, '_Rootlets'),
+                '-d', ftmp_template,
+                '-w', 'step10Warp.nii.gz',
+                '-v', '0',
+            ])
+            ftmp_data = add_suffix(ftmp_data, '_Rootlets')
+            sct_apply_transfo.main(argv=[
+                '-i', ftmp_seg,
+                '-o', add_suffix(ftmp_seg, '_Rootlets'),
+                '-d', ftmp_template,
+                '-w', 'step10Warp.nii.gz',
+                '-x', 'linear',
+                '-v', '0',
+            ])
+            ftmp_seg = add_suffix(ftmp_seg, '_Rootlets')
+            
+            printv('\nConcatenate transformations: curve --> straight --> affine --> rootlets', verbose)
+            dimensionality = len(Image("template.nii").hdr.get_data_shape())
+            cmd = [
+                'isct_ComposeMultiTransform',
+                str(dimensionality),
+                'warp_curve2straightAffine.nii.gz', # TODO: change for rootlets something to debug
+                '-R', 'template.nii',
+                'step10Warp.nii.gz',
+                'warp_curve2straightAffine.nii.gz',
+            ]
+            status, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
+            if status != 0:
+                raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
+
 
         """
         # Benjamin: Issue from Allan Martin, about the z=0 slice that is screwed up, caused by the affine transform.
@@ -749,7 +839,7 @@ def main(argv: Sequence[str]):
                 'warp_template2anat.nii.gz',
                 '-R', 'data.nii',
                 'warp_straight2curve.nii.gz',
-                '-i', 'straight2templateAffine.txt',
+                '-i', 'straight2templateAffine.txt', # TODO: fix with rootlets, won't consider rootlte ajustment
                 warp_inverse,
             ]
             status, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
