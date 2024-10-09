@@ -171,6 +171,15 @@ def get_parser():
         """)  # noqa: E501 (line too long)
     )
     optional.add_argument(
+        '-lrootlets',
+        metavar=Metavar.file,
+        help=textwrap.dedent("""
+            Dorsal nerve rootlets from C2 to C8  Example: `anat_rootlets.nii.gz`
+
+            Each value corresponds to the spinal level (e.g.: 2 for spinal level 2). If you are using more than 2 labels, all spinal levels covering the region of interest should be provided (e.g., if you are interested in levels C2 to C7, then you should provide spinal level labels 2,3,4,5,6,7)."
+        """)  # noqa: E501 (line too long)
+    )
+    optional.add_argument(
         '-ofolder',
         metavar=Metavar.folder,
         action=ActionCreateFolder,
@@ -299,6 +308,13 @@ def main(argv: Sequence[str]):
     elif arguments.lspinal is not None:
         fname_landmarks = arguments.lspinal
         label_type = 'spinal'
+    elif arguments.lrootlets is not None
+        fname_rootlets = arguments.lrootlets
+        label_type = 'rootlet'
+        if arguments.ldisc is not None:
+            fname_landmarks  = arguments.lspinal
+        else:
+            raise ValueError('Single disc label should be provided with rootlets labels.')
     else:
         printv('ERROR: Labels should be provided.', 1, 'error')
 
@@ -335,6 +351,9 @@ def main(argv: Sequence[str]):
         # point-wise spinal level labels
         file_template_labeling = get_file_label(os.path.join(path_template, 'template'), id_label=14)
     elif label_type == 'disc':
+        # point-wise intervertebral disc labels
+        file_template_labeling = get_file_label(os.path.join(path_template, 'template'), id_label=10)
+    elif label_type == 'rootlet':
         # point-wise intervertebral disc labels
         file_template_labeling = get_file_label(os.path.join(path_template, 'template'), id_label=10)
     else:
@@ -421,6 +440,7 @@ def main(argv: Sequence[str]):
 
     # if only one label is present, force affine transformation to be Tx,Ty,Tz only (no scaling)
     if len(labels) == 1:
+        print('\nHERE\n')
         paramregmulti.steps['0'].dof = 'Tx_Ty_Tz'
         printv('WARNING: Only one label is present. Forcing initial transformation to: ' + paramregmulti.steps['0'].dof,
                1, 'warning')
