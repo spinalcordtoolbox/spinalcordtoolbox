@@ -222,8 +222,11 @@ def main(argv: Sequence[str]):
     verbose = arguments.v
     set_loglevel(verbose=verbose, caller_module_name=__name__)
 
-    if (arguments.task is None or (arguments.task and not (arguments.install or arguments.i))
-            and not arguments.list_tasks):
+    if not (
+        arguments.list_tasks
+        or (arguments.task and arguments.install)
+        or (arguments.task and arguments.i)
+    ):
         parser.error("You must specify either a task name + '-install', a task name + an image ('-i'), or "
                      "'-list-tasks'.")
 
