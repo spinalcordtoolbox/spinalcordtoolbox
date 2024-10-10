@@ -232,6 +232,7 @@ def main(argv: Sequence[str]):
     # Deal with task long description
     if arguments.list_tasks:
         models.display_list_tasks()
+        exit(0)
 
     if arguments.install:
         models_to_install = models.TASKS[arguments.task]['models']
