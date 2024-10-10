@@ -261,7 +261,7 @@ TASKS = {
          'url': 'https://github.com/ivadomed/model_seg_sctumor-edema-cavity_t2-t1_unet3d-multichannel',
          'models': ['findcord_tumor', 'model_seg_sctumor-edema-cavity_t2-t1_unet3d-multichannel'],
          'citation': textwrap.dedent("""
-             ```
+             ```bibtex
              @article{LEMAY2021102766,
                       title={Automatic multiclass intramedullary spinal cord tumor segmentation on MRI with deep learning},
                       journal={NeuroImage: Clinical},
@@ -304,7 +304,7 @@ TASKS = {
          'url': 'https://github.com/ivadomed/model_seg_gm-wm_t2star_7t_unet3d-multiclass',
          'models': ['model_7t_multiclass_gm_sc_unet2d'],
          'citation': textwrap.dedent("""
-             ```
+             ```bibtex
              @misc{medina20212d,
                    title={2D Multi-Class Model for Gray and White Matter Segmentation of the Cervical Spinal Cord at 7T},
                    author={Nilser J. Laines Medina and Charley Gros and Julien Cohen-Adad and Virginie Callot and Arnaud Le Troter},
@@ -337,7 +337,7 @@ TASKS = {
          'url': 'https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/',
          'models': ['model_seg_spinalcord_softseg_monai'],
          'citation': textwrap.dedent("""
-             ```
+             ```bibtex
              @misc{bédard2024contrastagnosticsoftsegmentationspinal,
                    title={Towards contrast-agnostic soft segmentation of the spinal cord},
                    author={Sandrine Bédard and Enamundram Naga Karthik and Charidimos Tsagkas and Emanuele Pravatà and Cristina Granziera and Andrew Smith and Kenneth Arnold Weber II au2 and Julien Cohen-Adad},
@@ -361,7 +361,7 @@ TASKS = {
          'url': 'https://github.com/ivadomed/model_seg_sci',
          'models': ['model_seg_SCI_multiclass_lesion_sc_nnunet'],
          'citation': textwrap.dedent("""
-             ```
+             ```bibtex
              @misc{karthik2024scisegv2universaltoolsegmentation,
                    title={SCIsegV2: A Universal Tool for Segmentation of Intramedullary Lesions in Spinal Cord Injury},
                    author={Enamundram Naga Karthik and Jan Valošek and Lynn Farner and Dario Pfyffer and Simon Schading-Sassenhausen and Anna Lebret and Gergely David and Andrew C. Smith and Kenneth A. Weber II au2 and Maryam Seif and RHSCIR Network Imaging Group and Patrick Freund and Julien Cohen-Adad},
@@ -397,7 +397,7 @@ TASKS = {
          'url': 'https://github.com/ivadomed/model_seg_mouse-sc_wm-gm_t1',
          'models': ['model_seg_gm_wm_mouse_nnunet'],
          'citation': textwrap.dedent("""
-             ```
+             ```bibtex
              @software{cohen_adad_2024_10819207,
                        author={Cohen-Adad, Julien},
                        title={{Segmentation model of ex vivo mouse spinal cord white and gray matter}},
@@ -450,7 +450,7 @@ TASKS = {
          'url': 'https://github.com/ivadomed/model_seg_ms_mp2rage',
          'models': ['model_seg_lesion_MS_mp2rage'],
          'citation': textwrap.dedent("""
-             ```
+             ```bibtex
              @article{10.1162/imag_a_00218,
                       author = {Valošek, Jan and Mathieu, Theo and Schlienger, Raphaëlle and Kowalczyk, Olivia S. and Cohen-Adad, Julien},
                       title = "{Automatic Segmentation of the Spinal Cord Nerve Rootlets}",
