@@ -1,4 +1,4 @@
-.. _sct_download_data: 
+.. _sct_download_data:
 
 sct_download_data
 =================
