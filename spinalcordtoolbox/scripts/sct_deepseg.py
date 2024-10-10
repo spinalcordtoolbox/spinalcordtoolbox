@@ -256,7 +256,7 @@ def main(argv: Sequence[str]):
     name_models = models.TASKS[arguments.task]['models']
 
     # Check if all input images have been specified (only relevant for 'tumor_edema_cavity_t1_t2')
-    if 'tumor_edema_cavity_t1_t2' in arguments.task:
+    if arguments.task == 'tumor_edema_cavity_t1_t2':
         required_contrasts = models.get_required_contrasts(arguments.task)
         if len(arguments.i) != len(required_contrasts):
             parser.error(
@@ -296,7 +296,7 @@ def main(argv: Sequence[str]):
 
         # Order input images (only relevant for 'tumor_edema_cavity_t1_t2')
         # TODO: Fix contrast-related behavior as per https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4445
-        if 'tumor_edema_cavity_t1_t2' in arguments.task and hasattr(arguments, "c"):
+        if arguments.task == 'tumor_edema_cavity_t1_t2' and hasattr(arguments, "c"):
             input_filenames = []
             for required_contrast in models.MODELS[name_model]['contrasts']:
                 for provided_contrast, input_filename in zip(arguments.c, arguments.i):
@@ -306,7 +306,7 @@ def main(argv: Sequence[str]):
             input_filenames = arguments.i.copy()
 
         # Inversion workaround for regular PSIR input to canproco STIR/PSIR model
-        if 'lesion_sc_MS_stir_psir' in arguments.task:
+        if arguments.task == 'lesion_sc_MS_stir_psir':
             contrast = arguments.c[0] if arguments.c else None  # default is empty list
             if not contrast:
                 parser.error(
@@ -325,7 +325,7 @@ def main(argv: Sequence[str]):
                 if contrast != "stir":
                     parser.error("Task 'lesion_sc_MS_stir_psir' requires the flag `-c` to be either psir or stir.")
 
-        if 'sc_epi' in arguments.task:
+        if arguments.task == 'sc_epi':
             for image in arguments.i:
                 image_shape = Image(image).data.shape
                 if len(image_shape) == 4:
