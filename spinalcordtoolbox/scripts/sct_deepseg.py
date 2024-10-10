@@ -195,12 +195,14 @@ def get_parser(subparser_to_return=None):
         nargs="+",
         help="Contrast of the input. Specifies the contrast order of input images (e.g. `-c t1 t2`)",
         choices=('t1', 't2', 't2star'),
+        required=True,
         metavar=Metavar.str)
     parser_dict['lesion_sc_MS_stir_psir'].add_argument(
         "-c",
         help="Contrast of the input. Specifies whether input should be inverted "
              "(`-c stir`: no inversion, `-c psir`: inverted)",
         choices=('stir', 'psir'),
+        required=True,
         metavar=Metavar.str)
 
     if subparser_to_return:
@@ -255,19 +257,16 @@ def main(argv: Sequence[str]):
     # Get pipeline model names
     name_models = models.TASKS[arguments.task]['models']
 
-    # Check if all input images have been specified (only relevant for 'tumor_edema_cavity_t1_t2')
+    # Check if all input images and contrasts have been specified (only relevant for 'tumor_edema_cavity_t1_t2')
     if arguments.task == 'tumor_edema_cavity_t1_t2':
         required_contrasts = models.get_required_contrasts(arguments.task)
         if len(arguments.i) != len(required_contrasts):
             parser.error(
                 "{} input files found. Please provide all required input files for the task {}, i.e. contrasts: {}."
                 .format(len(arguments.i), arguments.task, ', '.join(required_contrasts)))
-
-    # Check modality order
-    if len(arguments.i) > 1 and arguments.c is None:
-        parser.error(
-            "Please specify the order in which you put the contrasts in the input images (-i) with flag -c, e.g., "
-            "-c t1 t2")
+        if len(arguments.c) != len(arguments.i):
+            parser.error(f"{len(arguments.i)} input files provided, but {len(arguments.c)} contrasts passed. "
+                         f"Number of contrasts should match the number of inputs.")
 
     # Run pipeline by iterating through the models
     fname_prior = None
@@ -296,7 +295,7 @@ def main(argv: Sequence[str]):
 
         # Order input images (only relevant for 'tumor_edema_cavity_t1_t2')
         # TODO: Fix contrast-related behavior as per https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4445
-        if arguments.task == 'tumor_edema_cavity_t1_t2' and arguments.c is not None:
+        if arguments.task == 'tumor_edema_cavity_t1_t2':
             input_filenames = []
             for required_contrast in models.MODELS[name_model]['contrasts']:
                 for provided_contrast, input_filename in zip(arguments.c, arguments.i):
@@ -307,12 +306,7 @@ def main(argv: Sequence[str]):
 
         # Inversion workaround for regular PSIR input to canproco STIR/PSIR model
         if arguments.task == 'lesion_sc_MS_stir_psir':
-            contrast = arguments.c[0] if arguments.c else None  # default is empty list
-            if not contrast:
-                parser.error(
-                    "Task 'lesion_sc_MS_stir_psir' requires the flag `-c` to identify whether the input is "
-                    "STIR or PSIR. If `-c psir` is passed, the input will be inverted.")
-            elif contrast == "psir":
+            if arguments.c == "psir":
                 logger.warning("Inverting input PSIR image (multiplying data array by -1)...")
                 tmpdir = tmp_create("sct_deepseg-inverted-psir")
                 for i, fname_in in enumerate(input_filenames.copy()):
@@ -321,9 +315,6 @@ def main(argv: Sequence[str]):
                     path_img_tmp = os.path.join(tmpdir, os.path.basename(fname_in))
                     im_in.save(path_img_tmp)
                     input_filenames[i] = path_img_tmp
-            else:
-                if contrast != "stir":
-                    parser.error("Task 'lesion_sc_MS_stir_psir' requires the flag `-c` to be either psir or stir.")
 
         if arguments.task == 'sc_epi':
             for image in arguments.i:
