@@ -293,8 +293,7 @@ def main(argv: Sequence[str]):
             if not models.is_valid(path_models):
                 parser.error("The input model is invalid: {}".format(path_models))
 
-        # Order input images (only relevant for 'tumor_edema_cavity_t1_t2')
-        # TODO: Fix contrast-related behavior as per https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4445
+        # Order input images (only relevant for 'tumor-edema-cavity_t1-t2')
         if arguments.task == 'tumor_edema_cavity_t1_t2':
             input_filenames = []
             for required_contrast in models.MODELS[name_model]['contrasts']:
