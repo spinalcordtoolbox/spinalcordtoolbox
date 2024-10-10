@@ -202,6 +202,7 @@ def get_parser(subparser_to_return=None):
         nargs="+",
         help="Contrast of the input. Specifies the contrast order of input images (e.g. `-c t1 t2`)",
         choices=('t1', 't2', 't2star'),
+        required=True,
         metavar=Metavar.str)
 
     if subparser_to_return:
@@ -256,19 +257,16 @@ def main(argv: Sequence[str]):
     # Get pipeline model names
     name_models = models.TASKS[arguments.task]['models']
 
-    # Check if all input images have been specified (only relevant for 'tumor-edema-cavity_t1-t2')
+    # Check if all input images and contrasts have been specified (only relevant for 'tumor-edema-cavity_t1-t2')
     if arguments.task == 'tumor_edema_cavity_t1_t2':
         required_contrasts = models.get_required_contrasts(arguments.task)
         if len(arguments.i) != len(required_contrasts):
             parser.error(
                 "{} input files found. Please provide all required input files for the task {}, i.e. contrasts: {}."
                 .format(len(arguments.i), arguments.task, ', '.join(required_contrasts)))
-
-    # Check modality order
-    if len(arguments.i) > 1 and arguments.c is None:
-        parser.error(
-            "Please specify the order in which you put the contrasts in the input images (-i) with flag -c, e.g., "
-            "-c t1 t2")
+        if len(arguments.c) != len(arguments.i):
+            parser.error(f"{len(arguments.i)} input files provided, but {len(arguments.c)} contrasts passed. "
+                         f"Number of contrasts should match the number of inputs.")
 
     # Run pipeline by iterating through the models
     fname_prior = None
@@ -297,7 +295,7 @@ def main(argv: Sequence[str]):
 
         # Order input images (only relevant for 'tumor_edema_cavity_t1_t2')
         # TODO: Fix contrast-related behavior as per https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4445
-        if arguments.task in 'tumor_edema_cavity_t1_t2' and arguments.c is not None:
+        if arguments.task == 'tumor_edema_cavity_t1_t2':
             input_filenames = []
             for required_contrast in models.MODELS[name_model]['contrasts']:
                 for provided_contrast, input_filename in zip(arguments.c, arguments.i):
