@@ -256,8 +256,8 @@ def main(argv: Sequence[str]):
     # Get pipeline model names
     name_models = models.TASKS[arguments.task]['models']
 
-    # Check if all input images have been specified (only relevant for 'tumor_edema_cavity_t1_t2')
-    if 'tumor_edema_cavity_t1_t2' in arguments.task:
+    # Check if all input images have been specified (only relevant for 'tumor-edema-cavity_t1-t2')
+    if arguments.task == 'tumor_edema_cavity_t1_t2':
         required_contrasts = models.get_required_contrasts(arguments.task)
         if len(arguments.i) != len(required_contrasts):
             parser.error(
@@ -297,7 +297,7 @@ def main(argv: Sequence[str]):
 
         # Order input images (only relevant for 'tumor_edema_cavity_t1_t2')
         # TODO: Fix contrast-related behavior as per https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4445
-        if 'tumor_edema_cavity_t1_t2' in arguments.task and hasattr(arguments, "c"):
+        if arguments.task in 'tumor_edema_cavity_t1_t2' and hasattr(arguments, "c"):
             input_filenames = []
             for required_contrast in models.MODELS[name_model]['contrasts']:
                 for provided_contrast, input_filename in zip(arguments.c, arguments.i):
@@ -306,7 +306,7 @@ def main(argv: Sequence[str]):
         else:
             input_filenames = arguments.i.copy()
 
-        if 'sc_epi' in arguments.task:
+        if arguments.task == 'sc_epi':
             for image in arguments.i:
                 image_shape = Image(image).data.shape
                 if len(image_shape) == 4:
