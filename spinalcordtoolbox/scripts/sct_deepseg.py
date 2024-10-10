@@ -296,7 +296,7 @@ def main(argv: Sequence[str]):
 
         # Order input images (only relevant for 'tumor_edema_cavity_t1_t2')
         # TODO: Fix contrast-related behavior as per https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4445
-        if arguments.task == 'tumor_edema_cavity_t1_t2' and hasattr(arguments, "c"):
+        if arguments.task == 'tumor_edema_cavity_t1_t2' and arguments.c is not None:
             input_filenames = []
             for required_contrast in models.MODELS[name_model]['contrasts']:
                 for provided_contrast, input_filename in zip(arguments.c, arguments.i):
