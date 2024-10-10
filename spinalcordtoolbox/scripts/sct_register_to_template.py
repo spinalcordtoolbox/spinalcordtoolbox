@@ -28,7 +28,7 @@ from spinalcordtoolbox.image import Image, add_suffix, generate_output_file
 from spinalcordtoolbox.centerline.core import ParamCenterline
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.resampling import resample_file
-from spinalcordtoolbox.math import binarize
+from spinalcordtoolbox.math import binarize, dilate
 from spinalcordtoolbox.utils.fs import (copy, extract_fname, check_file_exist, rmtree,
                                         cache_save, cache_signature, cache_valid, tmp_create)
 from spinalcordtoolbox.utils.shell import (SCTArgumentParser, ActionCreateFolder, Metavar, list_type,
@@ -60,7 +60,7 @@ step0 = Paramreg(step='0', type='label', dof='Tx_Ty_Tz_Rx_Ry_Rz_Sz')  # affine, 
 step1 = Paramreg(step='1', type='imseg', algo='centermassrot', rot_method='pcahog')
 step2 = Paramreg(step='2', type='seg', algo='bsplinesyn', metric='MeanSquares', iter='3', smooth='1', slicewise='0')
 paramregmulti = ParamregMultiStep([step0, step1, step2])
-step_rootlets = Paramreg(step='1', algo='bsplinesyn', metric='MeanSquares', iter='20x10x5',shrink='4x2x1', smooth='1x1x1', slicewise='0', deformation='0x0x1', gradStep='0.1')
+step_rootlets = Paramreg(step='1', algo='bsplinesyn', metric='MeanSquares', iter='20x10x5',shrink='4x2x1', smooth='0x0x0', slicewise='0', deformation='0x0x1', gradStep='0.1')
 
 
 # PARSER
@@ -452,7 +452,6 @@ def main(argv: Sequence[str]):
 
     # if only one label is present, force affine transformation to be Tx,Ty,Tz only (no scaling)
     if len(labels) == 1:
-        print('\nHERE\n')
         paramregmulti.steps['0'].dof = 'Tx_Ty_Tz'
         printv('WARNING: Only one label is present. Forcing initial transformation to: ' + paramregmulti.steps['0'].dof,
                1, 'warning')
@@ -680,54 +679,90 @@ def main(argv: Sequence[str]):
             '-v', '0',
         ])
         ftmp_seg = add_suffix(ftmp_seg, '_straightAffine')
+
+        # Register spinal rootlets to template: TODO: maybe consider cropping before
         if label_type == 'rootlet':
+            # TODO: remove centerofmassrot --> bad
+            # TODO: maybe change angle for 0
+            paramregmulti_centerofmassrot = ParamregMultiStep([step0, step1])
+            paramregmulti_centerofmassrot.steps['1'].rot_dest = 0
+            # Centerofmassrot step here (consider removing before last step) to help align rootlets
+            printv('Running centerofmassrot')
+            ftmp_data, ftmp_template_rot, warp_forward_rot, warp_inverse_rot = register_wrapper(
+                ftmp_data, ftmp_template, param, paramregmulti_centerofmassrot, fname_src_seg=ftmp_seg, fname_dest_seg=ftmp_template_seg,
+                same_space=True)
+            # TODO: merge warping field and apply to rootlets
+            # Concatenate transformations: curve --> straight --> affine --> rotation
+            printv('\nConcatenate transformations: curve --> straight --> affine --> rot ...', verbose)
+
+            dimensionality = len(Image("template.nii").hdr.get_data_shape())
+            cmd = [
+                'isct_ComposeMultiTransform',
+                str(dimensionality),
+                'warp_curve2straightAffine.nii.gz',
+                '-R', 'template.nii',
+                warp_forward_rot,
+                'warp_curve2straightAffine.nii.gz',
+            ]
+            status, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
+            if status != 0:
+                raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
+
+            # Apply transformation to rootlets and image
             sct_apply_transfo.main(argv=[
                 '-i', ftmp_rootlets,
-                '-o', add_suffix(ftmp_rootlets, '_straightAffine'),
+                '-o', add_suffix(ftmp_rootlets, '_straightAffine_rot'),
                 '-d', ftmp_template,
                 '-w', 'warp_curve2straightAffine.nii.gz',
                 '-x', 'nn',  #TODO to validate
                 '-v', '0',
             ])
-            ftmp_rootlets= add_suffix(ftmp_rootlets, '_straightAffine')
-        
-        # Register spinal rootlets to template: TODO: maybe consider cropping before
-        if label_type == 'rootlet':
-            src = ftmp_rootlets
-            dest = ftmp_template_rootlets
-            scr_regStep = add_suffix(src, '_regStep' + str(step_rootlets.step))
-            metricSize = '4'
+            ftmp_rootlets= add_suffix(ftmp_rootlets, '_straightAffine_rot')
+
+            sct_apply_transfo.main(argv=[
+                '-i', ftmp_seg,
+                '-o', add_suffix(ftmp_seg, '_rot'),
+                '-d', ftmp_template,
+                '-w', warp_forward_rot,
+                '-x', 'linear',
+                '-v', '0',
+            ])
+            ftmp_seg = add_suffix(ftmp_seg, '_rot')
+
+
+            # Dilate rootlets masks:
+            src_mask = Image(dilate(Image(ftmp_rootlets), size=2, shape='ball'), hdr=Image(ftmp_rootlets).hdr).save(add_suffix(ftmp_rootlets, '_dil'))
+            src_mask = add_suffix(ftmp_rootlets, '_dil')
+            dest_mask = Image(dilate(Image(ftmp_template_rootlets), size=2, shape='ball'), hdr=Image(ftmp_template_rootlets).hdr).save(add_suffix(ftmp_template_rootlets, '_dil'))
+            dest_mask = add_suffix(ftmp_template_rootlets, '_dil')
+            src_im = ftmp_data
+            dest_im = ftmp_template
+            scr_regStep = add_suffix(src_im, '_regStep' + str(step_rootlets.step))
+            metricSize = '4'  # TODO: maybe try 0
             # TODO: condsider cropping before reg --> will maybe be faster
             
             cmd_rootlets = ['isct_antsRegistration',
                 '--dimensionality', '3',
                 '--transform', step_rootlets.algo + '[' + step_rootlets.gradStep
                 + ',26,0,3' + ']',
-                '--metric', step_rootlets.metric + '[' + dest + ',' + src + ',1,' + metricSize + ']',
+                '--metric', step_rootlets.metric + '[' + dest_im + ',' + src_im + ',1,' + metricSize + ']',
                 '--convergence', step_rootlets.iter,
                 '--shrink-factors', step_rootlets.shrink,
                 '--smoothing-sigmas', step_rootlets.smooth + 'mm',
                 '--restrict-deformation', step_rootlets.deformation,
-                '--output', '[step' + str(step_rootlets.step) + ',' + scr_regStep + ']',
-                '--interpolation', 'nearestNeighbor',
+                '--output', '[step' + str(step_rootlets.step) + ',' + add_suffix(ftmp_data, '_Rootlets') + ']',
+                '--interpolation', 'linear',
+                '--masks', '[' + dest_mask + ',' + src_mask + ']',
                 '--verbose', ('1' if verbose >= 1 else '0'),
                 ]
             print(cmd_rootlets)
             status, output = run_proc(cmd_rootlets, verbose, is_sct_binary=True)
-            print('HERE:', os.getcwd())
             print(output)
             if status != 0:
-                raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
+                raise RuntimeError(f"Subprocess call {cmd_rootlets} returned non-zero: {output}")
             # Apply transformation
-            printv('\nApply transformation after rootlets adjustment...', verbose)
-            sct_apply_transfo.main(argv=[
-                '-i', ftmp_data,
-                '-o', add_suffix(ftmp_data, '_Rootlets'),
-                '-d', ftmp_template,
-                '-w', 'step10Warp.nii.gz',
-                '-v', '0',
-            ])
             ftmp_data = add_suffix(ftmp_data, '_Rootlets')
+            printv('\nApply transformation after rootlets adjustment...', verbose)
             sct_apply_transfo.main(argv=[
                 '-i', ftmp_seg,
                 '-o', add_suffix(ftmp_seg, '_Rootlets'),
