@@ -452,14 +452,14 @@ TASKS = {
          'citation': textwrap.dedent("""
              ```bibtex
              @article{10.1162/imag_a_00218,
-                      author = {Valošek, Jan and Mathieu, Theo and Schlienger, Raphaëlle and Kowalczyk, Olivia S. and Cohen-Adad, Julien},
-                      title = "{Automatic Segmentation of the Spinal Cord Nerve Rootlets}",
-                      journal = {Imaging Neuroscience},
-                      year = {2024},
-                      month = {06},
-                      issn = {2837-6056},
-                      doi = {10.1162/imag_a_00218},
-                      url = {https://doi.org/10.1162/imag_a_00218},
+                      author={Valošek, Jan and Mathieu, Theo and Schlienger, Raphaëlle and Kowalczyk, Olivia S. and Cohen-Adad, Julien},
+                      title="{Automatic Segmentation of the Spinal Cord Nerve Rootlets}",
+                      journal={Imaging Neuroscience},
+                      year={2024},
+                      month={06},
+                      issn={2837-6056},
+                      doi={10.1162/imag_a_00218},
+                      url={https://doi.org/10.1162/imag_a_00218},
              }
              ```
          """),
