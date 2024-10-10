@@ -516,7 +516,7 @@ mkdir -p "$SCT_DIR"
 # check if directory was created
 PERMISSION_ADVICE="\n\nMake sure that you own the folder you're writing to, and that the folder has write permissions.
 \nTo ensure this, either change the installation directory, or consider running the following commands:
-    sudo chown $USER \"$(dirname "$SCT_DIR")\" \"$SCT_DIR\"
+    sudo chown \"$USER\" \"$(dirname "$SCT_DIR")\" \"$SCT_DIR\"
     sudo chmod u+w \"$(dirname "$SCT_DIR")\" \"$SCT_DIR\"
 if [[ -d "$SCT_DIR" ]]; then
   # check write permission
