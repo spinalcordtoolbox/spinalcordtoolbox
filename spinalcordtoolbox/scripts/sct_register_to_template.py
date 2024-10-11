@@ -60,7 +60,7 @@ step0 = Paramreg(step='0', type='label', dof='Tx_Ty_Tz_Rx_Ry_Rz_Sz')  # affine, 
 step1 = Paramreg(step='1', type='imseg', algo='centermassrot', rot_method='pcahog')
 step2 = Paramreg(step='2', type='seg', algo='bsplinesyn', metric='MeanSquares', iter='3', smooth='1', slicewise='0')
 paramregmulti = ParamregMultiStep([step0, step1, step2])
-step_rootlets = Paramreg(step='1', algo='bsplinesyn', metric='MeanSquares', iter='20x10x5',shrink='4x2x1', smooth='0x0x0', slicewise='0', deformation='0x0x1', gradStep='0.1')
+step_rootlets = Paramreg(step='1', algo='bsplinesyn', metric='MeanSquares', iter='30x20',shrink='4x2', smooth='1x0', slicewise='0', deformation='0x0x1', gradStep='0.1')
 
 
 # PARSER
@@ -682,53 +682,17 @@ def main(argv: Sequence[str]):
 
         # Register spinal rootlets to template: TODO: maybe consider cropping before
         if label_type == 'rootlet':
-            # TODO: remove centerofmassrot --> bad
-            # TODO: maybe change angle for 0
-            paramregmulti_centerofmassrot = ParamregMultiStep([step0, step1])
-            paramregmulti_centerofmassrot.steps['1'].rot_dest = 0
-            # Centerofmassrot step here (consider removing before last step) to help align rootlets
-            printv('Running centerofmassrot')
-            ftmp_data, ftmp_template_rot, warp_forward_rot, warp_inverse_rot = register_wrapper(
-                ftmp_data, ftmp_template, param, paramregmulti_centerofmassrot, fname_src_seg=ftmp_seg, fname_dest_seg=ftmp_template_seg,
-                same_space=True)
-            # TODO: merge warping field and apply to rootlets
-            # Concatenate transformations: curve --> straight --> affine --> rotation
-            printv('\nConcatenate transformations: curve --> straight --> affine --> rot ...', verbose)
-
-            dimensionality = len(Image("template.nii").hdr.get_data_shape())
-            cmd = [
-                'isct_ComposeMultiTransform',
-                str(dimensionality),
-                'warp_curve2straightAffine.nii.gz',
-                '-R', 'template.nii',
-                warp_forward_rot,
-                'warp_curve2straightAffine.nii.gz',
-            ]
-            status, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
-            if status != 0:
-                raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
 
             # Apply transformation to rootlets and image
             sct_apply_transfo.main(argv=[
                 '-i', ftmp_rootlets,
-                '-o', add_suffix(ftmp_rootlets, '_straightAffine_rot'),
+                '-o', add_suffix(ftmp_rootlets, '_straightAffine'),
                 '-d', ftmp_template,
                 '-w', 'warp_curve2straightAffine.nii.gz',
                 '-x', 'nn',  #TODO to validate
                 '-v', '0',
             ])
-            ftmp_rootlets= add_suffix(ftmp_rootlets, '_straightAffine_rot')
-
-            sct_apply_transfo.main(argv=[
-                '-i', ftmp_seg,
-                '-o', add_suffix(ftmp_seg, '_rot'),
-                '-d', ftmp_template,
-                '-w', warp_forward_rot,
-                '-x', 'linear',
-                '-v', '0',
-            ])
-            ftmp_seg = add_suffix(ftmp_seg, '_rot')
-
+            ftmp_rootlets= add_suffix(ftmp_rootlets, '_straightAffine')
 
             # Dilate rootlets masks:
             src_mask = Image(dilate(Image(ftmp_rootlets), size=2, shape='ball'), hdr=Image(ftmp_rootlets).hdr).save(add_suffix(ftmp_rootlets, '_dil'))
@@ -755,9 +719,10 @@ def main(argv: Sequence[str]):
                 '--masks', '[' + dest_mask + ',' + src_mask + ']',
                 '--verbose', ('1' if verbose >= 1 else '0'),
                 ]
-            print(cmd_rootlets)
+            printv('\nRegistering with rootlets masks in z...', verbose)
+            printv(cmd_rootlets, verbose)
             status, output = run_proc(cmd_rootlets, verbose, is_sct_binary=True)
-            print(output)
+            printv(output, verbose)
             if status != 0:
                 raise RuntimeError(f"Subprocess call {cmd_rootlets} returned non-zero: {output}")
             # Apply transformation
@@ -773,6 +738,17 @@ def main(argv: Sequence[str]):
             ])
             ftmp_seg = add_suffix(ftmp_seg, '_Rootlets')
             
+            sct_apply_transfo.main(argv=[
+                '-i', ftmp_rootlets,
+                '-o', add_suffix(ftmp_rootlets, '_Rootlets'),
+                '-d', ftmp_template,
+                '-w', 'step10Warp.nii.gz',
+                '-x', 'nn',  #TODO to validate
+                '-v', '0',
+            ])
+            ftmp_rootlets= add_suffix(ftmp_rootlets, '_Rootlets')
+
+
             printv('\nConcatenate transformations: curve --> straight --> affine --> rootlets', verbose)
             dimensionality = len(Image("template.nii").hdr.get_data_shape())
             cmd = [
