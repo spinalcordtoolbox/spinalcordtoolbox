@@ -36,11 +36,10 @@ jobs:
     # so this only checks for new/changed links in the PR
     - name: Check for broken links
       run: |
-        set -eu -o pipefail
-        git diff origin/master... |
-          sed '/^diff.*CHANGES.md/,/^diff/ d' |
-          (grep '^+' || (($? == 1)) ) |
-          (grep -Eio '\b(https?)://[-a-z0-9+&@#/%?=~_|$!:,.;]*[a-z0-9+&@#/%=~_|$]' || (($? == 1)) ) |
-          sed 's/^/diff;/' |
-          xargs -rn 1 .github/workflows/check-url.sh
+        touch valid_urls.txt redirected_urls.txt invalid_urls.txt
+        find . -type f \( -name "*.txt" -o -name "*.md" -o -name "*.py" -o -name "*.rst" \) \
+          \( \! -name 'CHANGES.md' \) \( \! -name 'requirements.txt' \) \( \! -name 'requirements-freeze.txt' \) |
+          xargs grep -Eio "\b(https?)://[-a-z0-9+&@#/%?=~_|$!:,.;]*[a-z0-9+&@#/%=~_|$]" |
+          sed 's/:/;/' |
+          xargs -n 1 ./.github/workflows/check-url.sh
         test ! -s invalid_urls.txt
