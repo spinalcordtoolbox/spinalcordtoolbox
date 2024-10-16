@@ -60,7 +60,7 @@ step0 = Paramreg(step='0', type='label', dof='Tx_Ty_Tz_Rx_Ry_Rz_Sz')  # affine, 
 step1 = Paramreg(step='1', type='imseg', algo='centermassrot', rot_method='pcahog')
 step2 = Paramreg(step='2', type='seg', algo='bsplinesyn', metric='MeanSquares', iter='3', smooth='1', slicewise='0')
 paramregmulti = ParamregMultiStep([step0, step1, step2])
-step_rootlets = Paramreg(step='1', algo='bsplinesyn', metric='MeanSquares', iter='30x20',shrink='4x2', smooth='1x0', slicewise='0', deformation='0x0x1', gradStep='0.1')
+step_rootlets = Paramreg(step='1', algo='bsplinesyn', metric='CC', iter='10x10x6',shrink='8x4x2', smooth='0x0x0', slicewise='0', deformation='0x0x1', gradStep='0.1')
 
 
 # PARSER
@@ -695,9 +695,9 @@ def main(argv: Sequence[str]):
             ftmp_rootlets= add_suffix(ftmp_rootlets, '_straightAffine')
 
             # Dilate rootlets masks:
-            src_mask = Image(dilate(Image(ftmp_rootlets), size=2, shape='ball'), hdr=Image(ftmp_rootlets).hdr).save(add_suffix(ftmp_rootlets, '_dil'))
+            src_mask = Image(dilate(Image(ftmp_rootlets), size=3, shape='ball'), hdr=Image(ftmp_rootlets).hdr).save(add_suffix(ftmp_rootlets, '_dil'))
             src_mask = add_suffix(ftmp_rootlets, '_dil')
-            dest_mask = Image(dilate(Image(ftmp_template_rootlets), size=2, shape='ball'), hdr=Image(ftmp_template_rootlets).hdr).save(add_suffix(ftmp_template_rootlets, '_dil'))
+            dest_mask = Image(dilate(Image(ftmp_template_rootlets), size=3, shape='ball'), hdr=Image(ftmp_template_rootlets).hdr).save(add_suffix(ftmp_template_rootlets, '_dil'))
             dest_mask = add_suffix(ftmp_template_rootlets, '_dil')
             src_im = ftmp_data
             dest_im = ftmp_template
@@ -708,7 +708,7 @@ def main(argv: Sequence[str]):
             cmd_rootlets = ['isct_antsRegistration',
                 '--dimensionality', '3',
                 '--transform', step_rootlets.algo + '[' + step_rootlets.gradStep
-                + ',26,0,3' + ']',
+                + '1,3' + ']', # TODO: try 1,3 as in other sct_algo ',26,0,3'
                 '--metric', step_rootlets.metric + '[' + dest_im + ',' + src_im + ',1,' + metricSize + ']',
                 '--convergence', step_rootlets.iter,
                 '--shrink-factors', step_rootlets.shrink,
@@ -728,11 +728,23 @@ def main(argv: Sequence[str]):
             # Apply transformation
             ftmp_data = add_suffix(ftmp_data, '_Rootlets')
             printv('\nApply transformation after rootlets adjustment...', verbose)
+            # Average perslice warping field
+            cmd_split = ['sct_image', '-i', 'step10Warp.nii.gz', '-mcs']
+            status, output = run_proc(cmd_split, verbose, is_sct_binary=True)
+            printv(output, verbose)
+            cmd_avg = "python ~/code/model-spinal-rootlets/utilities/reg2template/landmarks_nonlin.py -src step10Warp_Z.nii.gz -o step10Warp_Z_mean.nii.gz"
+            status, output = run_proc(cmd_avg, verbose)
+            printv(output, verbose)
+            cmd_split = ['sct_image', '-i',
+                        'step10Warp_X.nii.gz','step10Warp_Y.nii.gz', 'step10Warp_Z_mean.nii.gz',
+                        '-omc', '-o', 'step10Warp_zmean.nii.gz']
+            status, output = run_proc(cmd_split, verbose, is_sct_binary=True)
+            printv(output, verbose)
             sct_apply_transfo.main(argv=[
                 '-i', ftmp_seg,
                 '-o', add_suffix(ftmp_seg, '_Rootlets'),
                 '-d', ftmp_template,
-                '-w', 'step10Warp.nii.gz',
+                '-w', 'step10Warp_zmean.nii.gz',#'step10Warp.nii.gz',
                 '-x', 'linear',
                 '-v', '0',
             ])
@@ -742,7 +754,7 @@ def main(argv: Sequence[str]):
                 '-i', ftmp_rootlets,
                 '-o', add_suffix(ftmp_rootlets, '_Rootlets'),
                 '-d', ftmp_template,
-                '-w', 'step10Warp.nii.gz',
+                '-w', 'step10Warp_zmean.nii.gz',#'step10Warp.nii.gz',
                 '-x', 'nn',  #TODO to validate
                 '-v', '0',
             ])
@@ -756,7 +768,7 @@ def main(argv: Sequence[str]):
                 str(dimensionality),
                 'warp_curve2straightAffine.nii.gz', # TODO: change for rootlets something to debug
                 '-R', 'template.nii',
-                'step10Warp.nii.gz',
+                'step10Warp_zmean.nii.gz',#'step10Warp.nii.gz',
                 'warp_curve2straightAffine.nii.gz',
             ]
             status, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
