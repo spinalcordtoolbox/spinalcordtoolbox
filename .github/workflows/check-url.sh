@@ -12,6 +12,9 @@ URL=$(cut -d ";" -f 2 <<< "$1")
 CURL_ARGS=(--head --silent --insecure)
 # Explicitly write out the HTTP code to stdout, while redirecting the response output to /dev/null
 HTTP_CODE_ONLY=(--write-out '%{http_code}' --output /dev/null)
+# Override default behavior (exponential backoff + 10m limit) since we don't need that many retries
+# We still keep a 5m limit, though, because --retry respects the Retry-After field, which may be greater than 30s.
+RETRY_ARGS=(--retry 2 --retry-delay 30 --retry-max-time 300)
 
 # Make sure to check both URL *and* redirections (--location) for excluded domains
 full_info=$(curl "${CURL_ARGS[@]}" --location -- "$URL")
@@ -22,13 +25,13 @@ if [[ "$full_info + $URL" =~ 'drive.google.com'|'pipeline-hemis'|'sciencedirect.
 fi
 
 # Get the status code for the original URL
-status_code=$(curl "${CURL_ARGS[@]}" "${HTTP_CODE_ONLY[@]}" -- "$URL")
+status_code=$(curl "${CURL_ARGS[@]}" "${HTTP_CODE_ONLY[@]}" "${RETRY_ARGS[@]}" -- "$URL")
 
 # If there is a redirection, then re-run curl with --location, then continue to check success/failure
 if [[ $status_code -ge 300 && $status_code -le 399 ]];then
     echo "($status_code) $URL ($filename)" >> redirected_urls.txt
     echo -e "$filename: \x1B[33m⚠️  Warning - Redirection - code: $status_code for URL $URL --> $LOCATION \x1B[0m"
-    status_code=$(curl "${CURL_ARGS[@]}" "${HTTP_CODE_ONLY[@]}" --location -- "$URL")
+    status_code=$(curl "${CURL_ARGS[@]}" "${HTTP_CODE_ONLY[@]}" "${RETRY_ARGS[@]}" --location -- "$URL")
     URL=$LOCATION
 fi
 
