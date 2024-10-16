@@ -6,23 +6,29 @@ fi
 
 filename=$(cut -d ";" -f 1 <<< "$1")
 URL=$(cut -d ";" -f 2 <<< "$1")
+# --head: Sends a HEAD request. We use this to be good netizens, since we only need the header to check the response code.
+# --silent: Hides the curl progress bar, which is unnecessary noise when testing >600 urls.
+# --insecure: Skip SSL verification. Since we're only checking the headers, this should be safe to do. (https://curl.se/docs/sslcerts.html)
+CURL_ARGS=(--head --silent --insecure)
+# Explicitly write out the HTTP code to stdout, while redirecting the response output to /dev/null
+HTTP_CODE_ONLY=(--write-out '%{http_code}' --output /dev/null)
 
 # Make sure to check both URL *and* redirections (--location) for excluded domains
-full_info=$(curl -I --silent --insecure --location -- "$URL")
-LOCATION=$(curl -I --silent --insecure -- "$URL" | perl -n -e '/^[Ll]ocation: (.*)$/ && print "$1\n"')
+full_info=$(curl "${CURL_ARGS[@]}" --location -- "$URL")
+LOCATION=$(curl "${CURL_ARGS[@]}" -- "$URL" | perl -n -e '/^[Ll]ocation: (.*)$/ && print "$1\n"')
 if [[ "$full_info + $URL" =~ 'drive.google.com'|'pipeline-hemis'|'sciencedirect.com'|'wiley.com'|'sagepub.com'|'ncbi.nlm.nih.gov'|'oxfordjournals.org'|'docker.com'|'ieeexplore.ieee.org'|'liebertpub.com'|'tandfonline.com'|'pnas.org'|'neurology.org'|'academic.oup.com'|'journals.lww.com'|'science.org'|'pubs.rsna.org'|'direct.mit.edu'|'archive.ph'|'mirror.centos.org'|'vault.centos.org'|'%s' ]]; then
     echo -e "$filename: \x1B[33m⚠️  Warning - Skipping: $URL --> $LOCATION\x1B[0m"
     exit 0
 fi
 
 # Get the status code for the original URL
-status_code=$(curl --write-out '%{http_code}' -I --silent --insecure --output /dev/null -- "$URL")
+status_code=$(curl "${CURL_ARGS[@]}" "${HTTP_CODE_ONLY[@]}" -- "$URL")
 
 # If there is a redirection, then re-run curl with --location, then continue to check success/failure
 if [[ $status_code -ge 300 && $status_code -le 399 ]];then
     echo "($status_code) $URL ($filename)" >> redirected_urls.txt
     echo -e "$filename: \x1B[33m⚠️  Warning - Redirection - code: $status_code for URL $URL --> $LOCATION \x1B[0m"
-    status_code=$(curl --write-out '%{http_code}' -I --silent --insecure --location --output /dev/null -- "$URL")
+    status_code=$(curl "${CURL_ARGS[@]}" "${HTTP_CODE_ONLY[@]}" --location -- "$URL")
     URL=$LOCATION
 fi
 
