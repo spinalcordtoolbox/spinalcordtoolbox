@@ -16,13 +16,13 @@ if [[ "$full_info + $URL" =~ 'drive.google.com'|'pipeline-hemis'|'sciencedirect.
 fi
 
 # Get the status code for the original URL
-status_code=$(curl --write-out '%{http_code}' --silent --insecure --output /dev/null -- "$URL")
+status_code=$(curl --write-out '%{http_code}' -I --silent --insecure --output /dev/null -- "$URL")
 
 # If there is a redirection, then re-run curl with --location, then continue to check success/failure
 if [[ $status_code -ge 300 && $status_code -le 399 ]];then
     echo "($status_code) $URL ($filename)" >> redirected_urls.txt
     echo -e "$filename: \x1B[33m⚠️  Warning - Redirection - code: $status_code for URL $URL --> $LOCATION \x1B[0m"
-    status_code=$(curl --write-out '%{http_code}' --silent --insecure --location --output /dev/null -- "$URL")
+    status_code=$(curl --write-out '%{http_code}' -I --silent --insecure --location --output /dev/null -- "$URL")
     URL=$LOCATION
 fi
 
