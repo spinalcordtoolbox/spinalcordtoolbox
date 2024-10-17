@@ -708,13 +708,13 @@ def main(argv: Sequence[str]):
             cmd_rootlets = ['isct_antsRegistration',
                 '--dimensionality', '3',
                 '--transform', step_rootlets.algo + '[' + step_rootlets.gradStep
-                + '1,3' + ']', # TODO: try 1,3 as in other sct_algo ',26,0,3'
+                + ',26,0,3' + ']', # TODO: try 1,3 as in other sct_algo ',26,0,3'
                 '--metric', step_rootlets.metric + '[' + dest_im + ',' + src_im + ',1,' + metricSize + ']',
                 '--convergence', step_rootlets.iter,
                 '--shrink-factors', step_rootlets.shrink,
                 '--smoothing-sigmas', step_rootlets.smooth + 'mm',
                 '--restrict-deformation', step_rootlets.deformation,
-                '--output', '[step' + str(step_rootlets.step) + ',' + add_suffix(ftmp_data, '_Rootlets') + ']',
+                '--output', '[step' + str(step_rootlets.step) + ',' + add_suffix(ftmp_data, '_Rootlets_alldir') + ']',
                 '--interpolation', 'linear',
                 '--masks', '[' + dest_mask + ',' + src_mask + ']',
                 '--verbose', ('1' if verbose >= 1 else '0'),
@@ -725,8 +725,6 @@ def main(argv: Sequence[str]):
             printv(output, verbose)
             if status != 0:
                 raise RuntimeError(f"Subprocess call {cmd_rootlets} returned non-zero: {output}")
-            # Apply transformation
-            ftmp_data = add_suffix(ftmp_data, '_Rootlets')
             printv('\nApply transformation after rootlets adjustment...', verbose)
             # Average perslice warping field
             cmd_split = ['sct_image', '-i', 'step10Warp.nii.gz', '-mcs']
@@ -740,6 +738,17 @@ def main(argv: Sequence[str]):
                         '-omc', '-o', 'step10Warp_zmean.nii.gz']
             status, output = run_proc(cmd_split, verbose, is_sct_binary=True)
             printv(output, verbose)
+
+            # Apply transformation
+            sct_apply_transfo.main(argv=[
+                '-i', ftmp_data,
+                '-o', add_suffix(ftmp_data, '_Rootlets'),
+                '-d', ftmp_template,
+                '-w', 'step10Warp_zmean.nii.gz',#'step10Warp.nii.gz',
+                '-x', 'linear',
+                '-v', '0',
+            ])
+            ftmp_data = add_suffix(ftmp_data, '_Rootlets')
             sct_apply_transfo.main(argv=[
                 '-i', ftmp_seg,
                 '-o', add_suffix(ftmp_seg, '_Rootlets'),
