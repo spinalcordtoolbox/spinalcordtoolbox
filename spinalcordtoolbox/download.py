@@ -403,7 +403,7 @@ def list_datasets():
     """
     color = {True: 'LightGreen', False: 'LightRed'}
     table = f"{'DATASET NAME':<30s}{'TYPE':<20s}\n"
-    table += f"{'-' * 50}\n"
+    table += f"- {'-' * 46} -\n"
     sorted_datasets = sorted(DATASET_DICT,
                              key=lambda k: DATASET_DICT[k]['download_type'] + k)
     for dataset_name in sorted_datasets:
