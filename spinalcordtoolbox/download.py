@@ -366,8 +366,27 @@ def install_named_dataset(dataset_name, dest_folder=None, keep=False):
                          f"{sorted(list(DATASET_DICT.keys()), key=str.casefold)}")
 
     urls = DATASET_DICT[dataset_name]["mirrors"]
+
+    # Fetch default location if user doesn't specify output
     if dest_folder is None:
         dest_folder = DATASET_DICT[dataset_name]["default_location"]
+
+    # Otherwise, ensure we don't accidentally overwrite a critical user folder
+    else:
+        if os.path.isdir(dest_folder) and os.listdir(dest_folder) and not keep:
+            logger.warning(f"Output directory '{dest_folder}' exists and is non-empty. Contents will be erased.")
+            while True:
+                answer = input("Do you wish to overwrite this directory? ([Y]es/[N]o): ")
+                if answer.lower() in ["y", "yes"]:
+                    break  # keep = False
+                elif answer.lower() in ["n", "no"]:
+                    keep = True
+                    break
+                else:
+                    logger.warning(f"Invalid input '{answer}'")
+
+            logger.warning("Note: You can suppress this message by specifying `-k` (keep) or by deleting the "
+                           "directory in advance.")
 
     install_data(urls, dest_folder, keep)
 
