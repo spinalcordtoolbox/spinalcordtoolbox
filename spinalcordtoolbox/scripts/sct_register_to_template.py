@@ -357,8 +357,10 @@ def main(argv: Sequence[str]):
     elif label_type == 'rootlet':
         # point-wise intervertebral disc labels
         file_template_labeling = get_file_label(os.path.join(path_template, 'template'), id_label=10)
-        file_template_labeling_rootlets = get_file_label(os.path.join(path_template, 'template'), id_label=17)#, id_label=16)
+        file_template_labeling_rootlets = get_file_label(os.path.join(path_template, 'template'), id_label=16)
         fname_template_labeling_rootlets = os.path.join(path_template, 'template', file_template_labeling_rootlets)  # MAYBE MOVE DOWN
+        file_template_labeling_rootlets_midpoints = get_file_label(os.path.join(path_template, 'template'), id_label=17)
+        fname_template_labeling_rootlets_midpoints = os.path.join(path_template, 'template', file_template_labeling_rootlets_midpoints)  # MAYBE MOVE DOWN
     else:
         # spinal cord mask with discrete vertebral levels
         file_template_labeling = get_file_label(os.path.join(path_template, 'template'), id_label=7)
@@ -414,6 +416,7 @@ def main(argv: Sequence[str]):
     if label_type == 'rootlet':
         ftmp_rootlets = 'rootlets.nii.gz'
         ftmp_template_rootlets = 'template_rootlets.nii.gz'
+        ftmp_template_rootlets_midpoints = 'template_rootlets_midpoints.nii.gz'
 
     # copy files to temporary folder
     printv('\nCopying input data to tmp folder and convert to nii...', verbose)
@@ -427,6 +430,8 @@ def main(argv: Sequence[str]):
         if label_type == 'rootlet':  # TODO find someting better that so many if cases
             Image(fname_rootlets, check_sform=True).save(os.path.join(path_tmp, ftmp_rootlets))
             Image(fname_template_labeling_rootlets, check_sform=True).save(os.path.join(path_tmp, ftmp_template_rootlets))
+            Image(fname_template_labeling_rootlets_midpoints, check_sform=True).save(os.path.join(path_tmp, ftmp_template_rootlets_midpoints))
+
 
     except ValueError as e:
         printv("\nImages could not be saved to temporary folder. Aborting registration.\n"
@@ -589,7 +594,7 @@ def main(argv: Sequence[str]):
                 sc_straight.discs_ref_filename = ftmp_template_label
                 if label_type == 'rootlet':
                     sc_straight.discs_input_filename = ftmp_rootlets
-                    sc_straight.discs_ref_filename = ftmp_template_rootlets
+                    sc_straight.discs_ref_filename = ftmp_template_rootlets_midpoints
             sc_straight.straighten()
             cache_save("straightening.cache", cache_sig)
 
@@ -684,7 +689,7 @@ def main(argv: Sequence[str]):
             '-v', '0',
         ])
         ftmp_seg = add_suffix(ftmp_seg, '_straightAffine')
-
+        #TODO here
         """
         # Benjamin: Issue from Allan Martin, about the z=0 slice that is screwed up, caused by the affine transform.
         # Solution found: remove slices below and above landmarks to avoid rotation effects
