@@ -397,12 +397,9 @@ def main(argv: Sequence[str]):
 
     # check input labels
     labels = check_labels(fname_landmarks, label_type=label_type)  # TODO add check if rootlets
-    print(label_type, labels, len(labels))
     level_alignment = False
     if len(labels) > 2 and label_type in ['disc', 'spinal', 'rootlet']:
         level_alignment = True
-        print("\nlevel alignement = TRUE")
-    print(level_alignment)
     # TODO: add check that label len(label) is one for rootlets 
     path_tmp = tmp_create(basename="register-to-template")
 
@@ -593,7 +590,7 @@ def main(argv: Sequence[str]):
                 sc_straight.discs_input_filename = ftmp_label
                 sc_straight.discs_ref_filename = ftmp_template_label
                 if label_type == 'rootlet':
-                    sc_straight.discs_input_filename = ftmp_rootlets
+                    sc_straight.discs_input_filename = ftmp_label  # are rootlets mid points
                     sc_straight.discs_ref_filename = ftmp_template_rootlets_midpoints
             sc_straight.straighten()
             cache_save("straightening.cache", cache_sig)
@@ -689,7 +686,112 @@ def main(argv: Sequence[str]):
             '-v', '0',
         ])
         ftmp_seg = add_suffix(ftmp_seg, '_straightAffine')
-        #TODO here
+        
+        # Register spinal rootlets to template: TODO: maybe consider cropping before
+        if label_type == 'rootlet':
+
+            # Apply transformation to rootlets and image
+            sct_apply_transfo.main(argv=[
+                '-i', ftmp_rootlets,
+                '-o', add_suffix(ftmp_rootlets, '_straightAffine'),
+                '-d', ftmp_template,
+                '-w', 'warp_curve2straightAffine.nii.gz',
+                '-x', 'nn',  #TODO to validate
+                '-v', '0',
+            ])
+            ftmp_rootlets= add_suffix(ftmp_rootlets, '_straightAffine')
+
+            # Dilate rootlets masks:
+            src_mask = Image(dilate(Image(ftmp_rootlets), size=3, shape='ball'), hdr=Image(ftmp_rootlets).hdr).save(add_suffix(ftmp_rootlets, '_dil'))
+            src_mask = add_suffix(ftmp_rootlets, '_dil')
+            dest_mask = Image(dilate(Image(ftmp_template_rootlets), size=3, shape='ball'), hdr=Image(ftmp_template_rootlets).hdr).save(add_suffix(ftmp_template_rootlets, '_dil'))
+            dest_mask = add_suffix(ftmp_template_rootlets, '_dil')
+            src_im = ftmp_data
+            dest_im = ftmp_template
+            scr_regStep = add_suffix(src_im, '_regStep' + str(step_rootlets.step))
+            metricSize = '4'  # TODO: maybe try 0
+            # TODO: condsider cropping before reg --> will maybe be faster
+            
+            cmd_rootlets = ['isct_antsRegistration',
+                '--dimensionality', '3',
+                '--transform', step_rootlets.algo + '[' + step_rootlets.gradStep
+                + ',26,0,3' + ']', # TODO: try 1,3 as in other sct_algo ',26,0,3'
+                '--metric', step_rootlets.metric + '[' + dest_im + ',' + src_im + ',1,' + metricSize + ']',
+                '--convergence', step_rootlets.iter,
+                '--shrink-factors', step_rootlets.shrink,
+                '--smoothing-sigmas', step_rootlets.smooth + 'mm',
+                '--restrict-deformation', step_rootlets.deformation,
+                '--output', '[step' + str(step_rootlets.step) + ',' + add_suffix(ftmp_data, '_Rootlets_alldir') + ']',
+                '--interpolation', 'linear',
+                '--masks', '[' + dest_mask + ',' + src_mask + ']',
+                '--verbose', ('1' if verbose >= 1 else '0'),
+                ]
+            printv('\nRegistering with rootlets masks in z...', verbose)
+            printv(cmd_rootlets, verbose)
+            status, output = run_proc(cmd_rootlets, verbose, is_sct_binary=True)
+            printv(output, verbose)
+            if status != 0:
+                raise RuntimeError(f"Subprocess call {cmd_rootlets} returned non-zero: {output}")
+            printv('\nApply transformation after rootlets adjustment...', verbose)
+            # Average perslice warping field
+            cmd_split = ['sct_image', '-i', 'step10Warp.nii.gz', '-mcs']
+            status, output = run_proc(cmd_split, verbose, is_sct_binary=True)
+            printv(output, verbose)
+            cmd_avg = "python ~/code/model-spinal-rootlets/utilities/reg2template/landmarks_nonlin.py -src step10Warp_Z.nii.gz -o step10Warp_Z_mean.nii.gz"
+            status, output = run_proc(cmd_avg, verbose)
+            printv(output, verbose)
+            cmd_split = ['sct_image', '-i',
+                        'step10Warp_X.nii.gz','step10Warp_Y.nii.gz', 'step10Warp_Z_mean.nii.gz',
+                        '-omc', '-o', 'step10Warp_zmean.nii.gz']
+            status, output = run_proc(cmd_split, verbose, is_sct_binary=True)
+            printv(output, verbose)
+
+            # Apply transformation
+            sct_apply_transfo.main(argv=[
+                '-i', ftmp_data,
+                '-o', add_suffix(ftmp_data, '_Rootlets'),
+                '-d', ftmp_template,
+                '-w', 'step10Warp_zmean.nii.gz',#'step10Warp.nii.gz',
+                '-x', 'linear',
+                '-v', '0',
+            ])
+            ftmp_data = add_suffix(ftmp_data, '_Rootlets')
+            sct_apply_transfo.main(argv=[
+                '-i', ftmp_seg,
+                '-o', add_suffix(ftmp_seg, '_Rootlets'),
+                '-d', ftmp_template,
+                '-w', 'step10Warp_zmean.nii.gz',#'step10Warp.nii.gz',
+                '-x', 'linear',
+                '-v', '0',
+            ])
+            ftmp_seg = add_suffix(ftmp_seg, '_Rootlets')
+            
+            sct_apply_transfo.main(argv=[
+                '-i', ftmp_rootlets,
+                '-o', add_suffix(ftmp_rootlets, '_Rootlets'),
+                '-d', ftmp_template,
+                '-w', 'step10Warp_zmean.nii.gz',#'step10Warp.nii.gz',
+                '-x', 'nn',  #TODO to validate
+                '-v', '0',
+            ])
+            ftmp_rootlets= add_suffix(ftmp_rootlets, '_Rootlets')
+
+
+            printv('\nConcatenate transformations: curve --> straight --> affine --> rootlets', verbose)
+            dimensionality = len(Image("template.nii").hdr.get_data_shape())
+            cmd = [
+                'isct_ComposeMultiTransform',
+                str(dimensionality),
+                'warp_curve2straightAffine.nii.gz', # TODO: change for rootlets something to debug
+                '-R', 'template.nii',
+                'step10Warp_zmean.nii.gz',#'step10Warp.nii.gz',
+                'warp_curve2straightAffine.nii.gz',
+            ]
+            status, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
+            if status != 0:
+                raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
+
+
         """
         # Benjamin: Issue from Allan Martin, about the z=0 slice that is screwed up, caused by the affine transform.
         # Solution found: remove slices below and above landmarks to avoid rotation effects
