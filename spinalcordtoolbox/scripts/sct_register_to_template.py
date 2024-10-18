@@ -357,7 +357,7 @@ def main(argv: Sequence[str]):
     elif label_type == 'rootlet':
         # point-wise intervertebral disc labels
         file_template_labeling = get_file_label(os.path.join(path_template, 'template'), id_label=10)
-        file_template_labeling_rootlets = get_file_label(os.path.join(path_template, 'template'), id_label=16)
+        file_template_labeling_rootlets = get_file_label(os.path.join(path_template, 'template'), id_label=17)#, id_label=16)
         fname_template_labeling_rootlets = os.path.join(path_template, 'template', file_template_labeling_rootlets)  # MAYBE MOVE DOWN
     else:
         # spinal cord mask with discrete vertebral levels
