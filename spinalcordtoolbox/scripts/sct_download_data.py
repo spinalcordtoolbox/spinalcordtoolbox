@@ -77,7 +77,7 @@ def main(argv: Sequence[str]):
         dest_folder = arguments.o
 
         # Make sure we don't accidentally overwrite a critical user folder
-        if os.path.isdir(dest_folder) and os.listdir(dest_folder) and not keep:
+        if dest_folder is not None and os.path.isdir(dest_folder) and os.listdir(dest_folder) and not keep:
             printv(f"Output directory '{dest_folder}' exists and is non-empty. Contents will be erased.",
                    type="warning")
 
