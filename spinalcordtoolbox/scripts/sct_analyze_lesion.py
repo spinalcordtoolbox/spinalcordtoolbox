@@ -553,7 +553,7 @@ class AnalyzeLesion:
 
     def _measure_length(self, im_data, p_lst, idx):
         """
-        Measure the length of the lesion along the superior-inferior axis when taking into account the angle correction
+        Measure the length of the lesion along the superior-inferior axis when taking into account the angle correction.
         The length is computed across all sagittal lesion (i.e., midsagittal and parasagittal) slices meaning that the
         measurement is 3D.
         For lesion length for the midsagittal slice only, see _measure_length_midsagittal_slice().
@@ -598,7 +598,7 @@ class AnalyzeLesion:
         :param p_lst: list, pixel size of the lesion
         :param idx: int, index of the lesion
         """
-        # Fetch a list of axial slice numbers that are nonzero in the mid-sagittal slice (RPI)
+        # Get a list of axial slice numbers that are nonzero in the mid-sagittal slice (RPI)
         im_data_midsagittal = im_lesion_data[self.midsagittal_sc_slice_rpi, :, :]  # 3D -> 2D, dim=[AP, SI]
         nonzero_axial_slices = np.unique(np.where(im_data_midsagittal)[1])  # [1] -> SI
 
