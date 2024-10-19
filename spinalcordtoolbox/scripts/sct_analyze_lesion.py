@@ -641,8 +641,8 @@ class AnalyzeLesion:
             # 'len' approach would return the number of elements, which could be influenced, for example, by the
             # presence of holes in the lesion mask.
             # Context: https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4617#discussion_r1744031056
-            slice_min = np.where(slice_lesion_data)[0][0]     # [0] returns the most dorsal elements
-            slice_max = np.where(slice_lesion_data)[0][-1]    # [-1] returns the most ventral elements
+            slice_min = np.min(np.where(slice_lesion_data)[0])      # np.min returns the most dorsal (posterior) element
+            slice_max = np.max(np.where(slice_lesion_data)[0])      # np.max returns the most ventral (anterior) element
             lesion_width_dict[axial_slice] = slice_max - slice_min + 1
 
         # Get the width in mm and apply the angle correction
