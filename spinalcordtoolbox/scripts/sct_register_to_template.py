@@ -737,7 +737,7 @@ def main(argv: Sequence[str]):
             cmd_split = ['sct_image', '-i', 'step10Warp.nii.gz', '-mcs']
             status, output = run_proc(cmd_split, verbose, is_sct_binary=True)
             printv(output, verbose)
-            cmd_avg = "python ~/code/rootlets-informed-reg2template/average_z_warping_field.py.py -i step10Warp_Z.nii.gz -o step10Warp_Z_mean.nii.gz"
+            cmd_avg = "python ~/code/rootlets-informed-reg2template/average_z_warping_field.py -i step10Warp_Z.nii.gz -o step10Warp_Z_mean.nii.gz"
             status, output = run_proc(cmd_avg, verbose)
             printv(output, verbose)
             cmd_split = ['sct_image', '-i',
