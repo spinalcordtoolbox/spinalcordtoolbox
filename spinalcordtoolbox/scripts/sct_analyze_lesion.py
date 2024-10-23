@@ -948,10 +948,10 @@ class AnalyzeLesion:
     def get_midsagittal_slice(self):
         """
         Get the midsagittal slice from the RPI-oriented image based on the following logic:
-            1. Get the lesion mask center of mass in the z-axis (S-I direction). For example slice 50.
+            1. Get the lesion mask center of mass in the z-axis (S-I direction). For example, slice 50.
             2. Take two axial slices above and below the lesion center of mass in the z-axis (S-I direction). For
                 example, an interval of slices 48 and 52 (i.e., 48, 49, 50, 51, 52).
-            3. For each of these slice (i.e., 48, 49, 50, 51, 52), compute the spinal cord center of mass in the x-axis
+            3. For each of these slices (i.e., 48, 49, 50, 51, 52), compute the spinal cord center of mass in the x-axis
             (R-L direction), for example:
                     y_centermass(at z=48) = 110
                     y_centermass(at z=49) = 111
