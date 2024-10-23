@@ -5,6 +5,7 @@
 # Copyright (c) 2015 Polytechnique Montreal <www.neuro.polymtl.ca>
 # License: see the file LICENSE
 
+import os
 import sys
 from typing import Sequence
 import textwrap
@@ -72,7 +73,28 @@ def main(argv: Sequence[str]):
     if arguments.d == "default":
         install_default_datasets(keep=arguments.k)
     else:
-        install_named_dataset(arguments.d, dest_folder=arguments.o, keep=arguments.k)
+        keep = arguments.k
+        dest_folder = arguments.o
+
+        # Make sure we don't accidentally overwrite a critical user folder
+        if dest_folder is not None and os.path.isdir(dest_folder) and os.listdir(dest_folder) and not keep:
+            printv(f"Output directory '{dest_folder}' exists and is non-empty. Contents will be erased.",
+                   type="warning")
+
+            while True:
+                answer = input("Do you wish to overwrite this directory? ([Y]es/[N]o): ")
+                if answer.lower() in ["y", "yes"]:
+                    break  # keep = False
+                elif answer.lower() in ["n", "no"]:
+                    keep = True
+                    break
+                else:
+                    printv(f"Invalid input '{answer}'", type="warning")
+
+            printv("Note: You can suppress this message by specifying `-k` (keep) or by deleting the "
+                   "directory in advance.", type="warning")
+
+        install_named_dataset(arguments.d, dest_folder=dest_folder, keep=keep)
 
     printv('Done!\n', verbose)
 
