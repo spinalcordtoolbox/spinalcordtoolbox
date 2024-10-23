@@ -27,7 +27,7 @@ In the broader ecosystem of MRI software, there are two common conventions for r
 
   * Originates from Insight Toolkit (ITK), so it's also referred to as the ITK format.
   * Used by SCT and Advanced Normalization Tools (ANTs).
-  * Defined in the "Vector-Valued Datasets" section of the `NIFTI1 Specification <https://nifti.nimh.nih.gov/pub/dist/src/niftilib/nifti1.h>`_.
+  * Defined in the "Vector-Valued Datasets" section of the `NIFTI1 Specification <https://web.archive.org/web/20241009085040/https://nifti.nimh.nih.gov/pub/dist/src/niftilib/nifti1.h>`_.
 
 * **4D vector format**, ``[x, y, z, v]``:
 
