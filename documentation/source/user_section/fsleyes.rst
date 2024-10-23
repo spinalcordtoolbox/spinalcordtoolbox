@@ -5,7 +5,7 @@ FSLeyes Integration
 *******************
 
 `FSLeyes <https://fsl.fmrib.ox.ac.uk/fsl/docs/#/utilities/fsleyes>`_
-is part of the larger `FSL <https://fsl.fmrib.ox.ac.uk/fsl/docs>`_ package, which is a library
+is part of the larger `FSL <https://fsl.fmrib.ox.ac.uk/fsl/docs/#/>`_ package, which is a library
 containing tools for FMRI, MRI, and DTI brain imaging data. ``FSLeyes`` is the image viewer for this package, and can
 be installed as either part of the ``FSL`` package, or as a standalone app.
 
