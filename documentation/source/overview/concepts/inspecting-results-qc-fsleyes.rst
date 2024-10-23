@@ -67,7 +67,7 @@ This workflow is especially useful if you are performing multi-subject batch ana
 FSLeyes
 *******
 
-If you have the `FSLeyes <https://web.archive.org/web/20230130154018/https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FSLeyes>`_ tool installed, then some of SCT's scripts will also print a ``fsleyes`` command as part of their output.
+If you have the `FSLeyes <https://fsl.fmrib.ox.ac.uk/fsl/docs/#/utilities/fsleyes>`_ tool installed, then some of SCT's scripts will also print a ``fsleyes`` command as part of their output.
 
 .. code:: sh
 
