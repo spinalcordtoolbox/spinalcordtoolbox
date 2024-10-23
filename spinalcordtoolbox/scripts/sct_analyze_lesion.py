@@ -14,6 +14,7 @@ import textwrap
 
 import numpy as np
 from skimage.measure import label
+from scipy.ndimage import center_of_mass
 
 from spinalcordtoolbox.image import Image, rpi_slice_to_orig_orientation
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
@@ -143,8 +144,8 @@ def get_parser():
 class AnalyzeLesion:
     def __init__(self, fname_mask, fname_sc, fname_ref, path_template, path_ofolder, perslice, verbose):
         self.fname_mask = fname_mask
-        self.midsagittal_sc_slice = None
-        self.midsagittal_sc_slice_rpi = None
+        self.midsagittal_slice = None
+        self.interpolated_lesion_midsagittal = None
         self.fname_sc = fname_sc
         self.fname_ref = fname_ref
         self.path_template = path_template
@@ -914,19 +915,82 @@ class AnalyzeLesion:
             # compute the angle between the normal vector of the plane and the vector z
             self.angles_sagittal[iz] = np.arccos(np.vdot(tangent_vect, np.array([0, 0, 1])))
 
+    def _interpolate_slices(self, im_data, slice1, slice2, interpolation_factor):
+        """
+        Interpolate two slices using linear interpolation
+        :param im_data: 3D numpy array (lesion or spinal cord mask) in the RPI orientation
+        :param slice1: int, first slice to interpolate
+        :param slice2: int, second slice to interpolate
+        :param interpolation_factor: float, interpolation factor
+        :return: 2D numpy array, (interpolated slice)
+        """
+        slice1_data = im_data[slice1, :, :]  # RPI --> selecting in the 1st dimension (RL) to get sagittal slice
+        slice2_data = im_data[slice2, :, :]  # RPI --> selecting in the 1st dimension (RL) to get sagittal slice
+
+        # # Sanity check -- to be removed
+        # import matplotlib.pyplot as plt
+        # fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(8, 4))
+        # ax1.imshow(slice1_data, cmap='gray', vmin=0, vmax=1)
+        # ax1.axis('off')
+        # ax2.imshow(slice2_data, cmap='gray', vmin=0, vmax=1)
+        # ax2.axis('off')
+        # ax3.imshow((1 - interpolation_factor) * slice1_data + interpolation_factor * slice2_data, cmap='gray', vmin=0, vmax=1)
+        # ax3.axis('off')
+        # plt.tight_layout()
+        # plt.show()
+
+        return (1 - interpolation_factor) * slice1_data + interpolation_factor * slice2_data
+
     def get_midsagittal_slice(self):
-        """Get the midsagittal slice based on the lesion segmentation mask."""
-        # Get the RPI-oriented midsagittal slice number (to be reused in other functions)
+        """
+        Get the midsagittal slice from the RPI-oriented image based on the following logic:
+            1. Get the lesion mask center of mass in the z-axis (S-I direction). For example slice 50.
+            2. Take two axial slices above and below the lesion center of mass in the z-axis (S-I direction). For
+                example, an interval of slices 48 and 52 (i.e., 48, 49, 50, 51, 52).
+            3. For each of these slice (i.e., 48, 49, 50, 51, 52), compute the spinal cord center of mass in the x-axis
+            (R-L direction), for example:
+                    y_centermass(at z=48) = 110
+                    y_centermass(at z=49) = 111
+                    y_centermass(at z=50) = 112
+                    y_centermass(at z=51) = 112
+                    y_centermass(at z=52) = 116
+            4. Compute the mean across the slices of the spinal cord center of mass. For example, 112.2. Note that this
+            mean can be a float.
+            5. Interpolate the lesion and spinal cord masks using linear interpolation to the mean spinal cord center
+            of mass, i.e., 112.2. To do so, we do:
+                5a. Find the two closest slices to the mean spinal cord center of mass. For example, slice 112 and
+                slice 113.
+                5b. Get the interpolation factor, for example, 0.2 (112.2 - 112 --> 0.2).
+                5c. Interpolate the lesion and spinal cord masks.
+        """
+        # Get the RPI-oriented lesion and spinal cord masks
         im_lesion_data = Image(self.fname_label).data
-        # Get the slice with the largest lesion area
-        nonzero_slices = np.unique(np.where(im_lesion_data)[0])     # RPI image: [0] -> RL (sagittal)
-        self.midsagittal_sc_slice_rpi = nonzero_slices[np.argmax([np.sum(im_lesion_data[slice, :, :]) for slice in nonzero_slices])]
-        # Convert the RPI-oriented slice number to the original orientation (for outputting to user)
-        self.midsagittal_sc_slice = rpi_slice_to_orig_orientation(dim=im_lesion_data.shape,
-                                                                  orig_orientation=self.orientation,
-                                                                  slice_number=self.midsagittal_sc_slice_rpi,
-                                                                  axis=0)  # 0 = RL
-        printv(f'Midsagittal slice of the lesion cord: {self.midsagittal_sc_slice}', self.verbose, type='info')
+        im_sc_data = Image(self.fname_sc).data
+
+        # 1. Get lesion center of mass in the z-axis (S-I direction)
+        lesion_center_of_mass_z = int(round(center_of_mass(im_lesion_data)[2]))   # [2] --> S-I
+        # 2. Take two axial slices above and below the lesion center of mass in the z-axis (S-I direction)
+        # TODO: try other number of slices above and below the lesion center of mass
+        z_range = np.arange(lesion_center_of_mass_z - 2, lesion_center_of_mass_z + 3)   # 5 slices in total
+        # 3: Compute the spinal cord center of mass in the x-axis (R-L direction) for each z slice
+        spinal_cord_center_of_mass_x = []
+        for z in z_range:
+            spinal_cord_slice = im_sc_data[:, :, z]     # RPI --> selecting in the 3rd dimension (SI) to get axial slice
+            if np.any(spinal_cord_slice):  # Avoid empty slices
+                spinal_cord_center_of_mass_x.append(center_of_mass(spinal_cord_slice)[0])   # [0] --> R-L
+        # 4. Compute the mean of spinal cord center of mass (in the x-axis (R-L direction))
+        mean_spinal_cord_center_of_mass_x = np.mean(spinal_cord_center_of_mass_x)
+        self.midsagittal_slice = mean_spinal_cord_center_of_mass_x      # store it to output in the output XLS file
+        # 5. Interpolate the lesion and cord masks using linear interpolation to the mean spinal cord center of mass
+        # 5a. Find the two closest slices to mean_spinal_cord_center_of_mass_x
+        slice1 = int(np.floor(mean_spinal_cord_center_of_mass_x))   # e.g., 112.2 --> 112
+        slice2 = int(np.ceil(mean_spinal_cord_center_of_mass_x))    # e.g., 112.2 --> 113
+        # 5b. Get the interpolation factor, for example, 112.2 - 112 --> 0.2
+        interpolation_factor = mean_spinal_cord_center_of_mass_x - int(mean_spinal_cord_center_of_mass_x)   # e.g., 0.2
+        # 5c. Interpolate the lesion and spinal cord masks
+        self.interpolated_lesion_midsagittal = self._interpolate_slices(im_lesion_data, slice1, slice2, interpolation_factor)
+        # TODO: store also the interpolated spinal cord mask to use it for tissue bridges calculation --> tissue bridges code will need refactoring
+        im_sc_interpolated = self._interpolate_slices(im_sc_data, slice1, slice2, interpolation_factor)
 
     def label_lesion(self):
         printv('\nLabel connected regions of the masked image...', self.verbose, 'normal')
