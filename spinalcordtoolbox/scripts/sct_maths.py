@@ -459,14 +459,16 @@ def main(argv: Sequence[str]):
                         list_data = get_data_arrays(data.shape, arg_value)
                     except ValueError as e:
                         printv(f"ERROR: -{arg_name}: {e}", 1, 'error')
-                    data += np.sum(list_data, axis=0)
+                    # the addition can't use += because the dtypes could be different
+                    data = data + np.sum(list_data, axis=0)
 
             elif arg_name == "sub":
                 try:
                     list_data = get_data_arrays(data.shape, arg_value)
                 except ValueError as e:
                     printv(f"ERROR: -{arg_name}: {e}", 1, 'error')
-                data -= np.sum(list_data, axis=0)
+                # the subtraction can't use -= because the dtypes could be different
+                data = data - np.sum(list_data, axis=0)
 
             elif arg_name == "mul":
                 if data.ndim == 4 and not arg_value:
@@ -477,14 +479,16 @@ def main(argv: Sequence[str]):
                         list_data = get_data_arrays(data.shape, arg_value)
                     except ValueError as e:
                         printv(f"ERROR: -{arg_name}: {e}", 1, 'error')
-                    data *= np.prod(list_data, axis=0)
+                    # the multiplication can't use *= because the dtypes could be different
+                    data = data * np.prod(list_data, axis=0)
 
             elif arg_name == "div":
                 try:
                     list_data = get_data_arrays(data.shape, arg_value)
                 except ValueError as e:
                     printv(f"ERROR: -{arg_name}: {e}", 1, 'error')
-                data /= np.prod(list_data, axis=0)
+                # the division can't use /= because the dtypes could be different
+                data = data / np.prod(list_data, axis=0)
 
             elif arg_name == "mean":
                 axis = ('x', 'y', 'z', 't').index(arg_value)
