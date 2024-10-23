@@ -36,7 +36,7 @@ def get_parser():
               - length `[mm]`: maximal length along the Superior-Inferior (SI) axis across all slices
               - max_equivalent_diameter `[mm]`: maximum diameter of the lesion, when approximating the lesion as a circle in the axial plane
               - max_axial_damage_ratio `[]`: maximum ratio of the lesion area divided by the spinal cord area
-              - midsagittal_spinal_cord_slice: midsagittal slice number of the spinal cord defined based on the spinal cord segmentation
+              - midsagittal_slice: midsagittal slice number of the spinal cord defined based on the spinal cord segmentation at the level of the lesion
               - length_midsagittal_slice [mm]: length of the lesion along the Superior-Inferior (SI) axis in the **midsagittal slice**
               - width_midsagittal_slice [mm]: width of the lesion along the Anterior-Posterior (AP) axis the **midsagittal slice**
               - dorsal_bridge_width `[mm]`: width of spared tissue dorsal to the spinal cord lesion (i.e. towards the posterior direction of the AP axis)
@@ -573,10 +573,12 @@ class AnalyzeLesion:
         :param p_lst: list, pixel size of the lesion
         :param idx: int, index of the lesion
         """
-        # Fetch a list of axial slice numbers that are nonzero in the mid-sagittal slice (RPI)
-        im_data_midsagittal = im_lesion_data[self.midsagittal_sc_slice_rpi, :, :]  # 3D -> 2D, dim=[AP, SI]
+        # Fetch a list of axial slice numbers that are nonzero in the interpolated mid-sagittal slice
+        im_data_midsagittal = self.interpolated_lesion_midsagittal  # 2D, dim=[AP, SI]
         nonzero_axial_slices = np.unique(np.where(im_data_midsagittal)[1])  # [1] -> SI
 
+        # TODO: weight the length by the lesion intensity to take into account the lesion intensity gradient
+        #  introduced by the interpolation
         # Compute the length of the lesion along the superior-inferior axis in the midsagittal slice
         # The length is computed as the sum of the angle corrected axial slice thicknesses
         # Note: if there is no lesion in the midsagittal slice, the length will be 0 (because np.sum([]) = 0.0)
@@ -627,15 +629,17 @@ class AnalyzeLesion:
         :param p_lst: list, pixel size of the lesion
         :param idx: int, index of the lesion
         """
-        # Get a list of axial slice numbers that are nonzero in the mid-sagittal slice (RPI)
-        im_data_midsagittal = im_lesion_data[self.midsagittal_sc_slice_rpi, :, :]  # 3D -> 2D, dim=[AP, SI]
+        # Get a list of axial slice numbers that are nonzero in the interpolated mid-sagittal slice
+        im_data_midsagittal = self.interpolated_lesion_midsagittal  # 2D, dim=[AP, SI]
         nonzero_axial_slices = np.unique(np.where(im_data_midsagittal)[1])  # [1] -> SI
 
+        # TODO: weight the length by the lesion intensity to take into account the lesion intensity gradient
+        #  introduced by the interpolation
         # Iterate across axial slices to compute lesion width
         lesion_width_dict = {}
         for axial_slice in nonzero_axial_slices:
             # Get the lesion segmentation mask of the selected 2D axial slice
-            slice_lesion_data = im_lesion_data[self.midsagittal_sc_slice_rpi, :, axial_slice]
+            slice_lesion_data = im_data_midsagittal[:, axial_slice]     # 1D, dim=[AP]
             # Get the indices of the lesion mask for the selected axial slice to compute the lesion width.
             # The lesion width is defined as max - min + 1
             # Note: we intentionally use 'max - min + 1' instead of 'len(np.where(slice_lesion_data)[0])' because the
@@ -855,7 +859,7 @@ class AnalyzeLesion:
             # For the tissue bridges, we need the spinal cord segmentation to compute the width of spared tissue ventral
             # and dorsal to the spinal cord lesion
             if self.fname_sc is not None:
-                self.measure_pd.loc[label_idx, 'midsagittal_spinal_cord_slice'] = self.midsagittal_sc_slice
+                self.measure_pd.loc[label_idx, 'midsagittal_slice'] = self.midsagittal_slice
                 self._measure_length(im_lesion_data_cur, p_lst, label_idx)
                 self._measure_width(im_lesion_data_cur, p_lst, label_idx)
                 self._measure_diameter(im_lesion_data_cur, p_lst, label_idx)
