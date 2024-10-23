@@ -14,7 +14,7 @@ CURL_ARGS=(--head --silent --insecure)
 HTTP_CODE_ONLY=(--write-out '%{http_code}' --output /dev/null)
 # Override default behavior (exponential backoff + 10m limit) since we don't need that many retries
 # We still keep a 5m limit, though, because --retry respects the Retry-After field, which may be greater than 30s.
-RETRY_ARGS=(--retry 2 --retry-delay 30 --retry-max-time 300)
+RETRY_ARGS=(--retry 2 --retry-delay 30 --retry-max-time 300 --retry-all-errors)
 
 # Make sure to check both URL *and* redirections (--location) for excluded domains
 full_info=$(curl "${CURL_ARGS[@]}" --location -- "$URL")
