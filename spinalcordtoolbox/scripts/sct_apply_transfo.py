@@ -160,7 +160,7 @@ class Transform:
                     and Image(list_warp[idx_warp]).header.get_intent()[0] != 'vector':
                 raise ValueError("Displacement field in {} is invalid: should be encoded"
                                  " in a 5D file with vector intent code"
-                                 " (see https://nifti.nimh.nih.gov/pub/dist/src/niftilib/nifti1.h"
+                                 " (see https://web.archive.org/web/20241009085040/https://nifti.nimh.nih.gov/pub/dist/src/niftilib/nifti1.h"
                                  .format(path_warp))
         # need to check if last warping field is an affine transfo
         isLastAffine = False

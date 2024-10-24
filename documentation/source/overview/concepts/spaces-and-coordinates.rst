@@ -78,7 +78,7 @@ References
 - `An introduction to the NIFTI file format. <https://brainder.org/2012/09/23/the-nifti-file-format/>`_
   See *§ Orientation information* and around.
 
-- `Official definition of the nifti1 header <https://nifti.nimh.nih.gov/pub/dist/src/niftilib/nifti1.h>`_
+- `Official definition of the nifti1 header <https://web.archive.org/web/20241009085040/https://nifti.nimh.nih.gov/pub/dist/src/niftilib/nifti1.h>`_
   See *§ 3D IMAGE (VOLUME) ORIENTATION AND LOCATION IN SPACE*
 
 - `nipy/nibabel's documentation on coordinate systems
