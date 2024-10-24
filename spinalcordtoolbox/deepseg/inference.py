@@ -118,7 +118,7 @@ def segment_non_ivadomed(path_model, model_type, input_filenames, threshold, kee
     device = torch.device("cuda" if use_gpu else "cpu")
 
     # load model from checkpoint
-    net = create_net(path_model, device)
+    net = create_net(path_model, model_type, device)
 
     im_lst, target_lst = [], []
     for fname_in in input_filenames:
