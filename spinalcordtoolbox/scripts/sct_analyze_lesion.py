@@ -577,13 +577,18 @@ class AnalyzeLesion:
         im_data_midsagittal = self.interpolated_lesion_midsagittal  # 2D, dim=[AP, SI]
         nonzero_axial_slices = np.unique(np.where(im_data_midsagittal)[1])  # [1] -> SI
 
-        # TODO: weight the length by the lesion intensity to take into account the lesion intensity gradient
-        #  introduced by the interpolation
-        # Compute the length of the lesion along the superior-inferior axis in the midsagittal slice
-        # The length is computed as the sum of the angle corrected axial slice thicknesses
-        # Note: if there is no lesion in the midsagittal slice, the length will be 0 (because np.sum([]) = 0.0)
-        length_cur = np.sum([p_lst[2] / np.cos(self.angles_sagittal[s])  # p_lst[2] -> pixel size of SI axis
-                             for s in nonzero_axial_slices])
+        lengths = []
+        # Loop across SI dimension
+        for axial_slice in nonzero_axial_slices:
+            array = im_data_midsagittal[:, axial_slice]  # 2D -> 1D; dim=[AP]
+            # Compute the mean of nonzero values
+            mean_nonzero = np.mean(array[array > 0])
+            # Compute the length for a given axial slice when taking into account the angle correction.
+            # Moreover, the length is weighted to account for the softness (caused by the interpolation of two slices)
+            length = mean_nonzero * p_lst[2] / np.cos(self.angles_sagittal[axial_slice])  # p_lst[2] -> pixel size of SI axis
+            lengths.append(length)
+
+        length_cur = np.sum(lengths)
 
         self.measure_pd.loc[idx, 'length_midsagittal_slice [mm]'] = length_cur
         printv(f'  (S-I) length in the midsagittal slice: {(np.round(length_cur, 2))} mm',
