@@ -638,22 +638,12 @@ class AnalyzeLesion:
         im_data_midsagittal = self.interpolated_lesion_midsagittal  # 2D, dim=[AP, SI]
         nonzero_axial_slices = np.unique(np.where(im_data_midsagittal)[1])  # [1] -> SI
 
-        # TODO: weight the length by the lesion intensity to take into account the lesion intensity gradient
-        #  introduced by the interpolation
         # Iterate across axial slices to compute lesion width
         lesion_width_dict = {}
         for axial_slice in nonzero_axial_slices:
-            # Get the lesion segmentation mask of the selected 2D axial slice
-            slice_lesion_data = im_data_midsagittal[:, axial_slice]     # 1D, dim=[AP]
-            # Get the indices of the lesion mask for the selected axial slice to compute the lesion width.
-            # The lesion width is defined as max - min + 1
-            # Note: we intentionally use 'max - min + 1' instead of 'len(np.where(slice_lesion_data)[0])' because the
-            # 'len' approach would return the number of elements, which could be influenced, for example, by the
-            # presence of holes in the lesion mask.
-            # Context: https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4617#discussion_r1744031056
-            slice_min = np.min(np.where(slice_lesion_data)[0])      # np.min returns the most dorsal (posterior) element
-            slice_max = np.max(np.where(slice_lesion_data)[0])      # np.max returns the most ventral (anterior) element
-            lesion_width_dict[axial_slice] = slice_max - slice_min + 1
+            array = im_data_midsagittal[:, axial_slice]  # 2D -> 1D; dim=[AP]
+            # Compute weighted sum of nonzero values
+            lesion_width_dict[axial_slice] = np.sum(array[array > 0]) / len(array[array > 0])
 
         # Get the width in mm and apply the angle correction
         width_cur_dict = {axial_slice: p_lst[1] * np.cos(self.angles_sagittal[axial_slice]) * lesion_width  # p_lst[1] -> pixel size of AP axis
