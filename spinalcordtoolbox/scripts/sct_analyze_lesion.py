@@ -644,8 +644,8 @@ class AnalyzeLesion:
         lesion_width_dict = {}
         for axial_slice in nonzero_axial_slices:
             array = im_data_midsagittal[:, axial_slice]  # 2D -> 1D; dim=[AP]
-            # Compute weighted sum of nonzero values
-            lesion_width_dict[axial_slice] = np.sum(array[array > 0]) / len(array[array > 0])
+            # Compute sum of nonzero values (as the pixels are floats, the sum is "weighted")
+            lesion_width_dict[axial_slice] = np.sum(array[array > 0])
 
         # Get the width in mm and apply the angle correction
         width_cur_dict = {axial_slice: p_lst[1] * np.cos(self.angles_sagittal[axial_slice]) * lesion_width  # p_lst[1] -> pixel size of AP axis
