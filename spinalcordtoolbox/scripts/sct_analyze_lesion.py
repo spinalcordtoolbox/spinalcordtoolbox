@@ -216,6 +216,8 @@ class AnalyzeLesion:
         if self.fname_sc is not None:
             self.angle_correction()
             self.get_midsagittal_slice()
+            # TODO: the midsagittal slice is now determined based on the lesion mask center of mass, i.e., it might
+            #  be different across lesions. --> move the call above to the loop over lesions inside self.measure()
 
         # Compute lesion volume, equivalent diameter, (S-I) length, max axial nominal diameter, and tissue bridges
         # if registered template provided: across vertebral level, GM, WM, within WM/GM tracts...
