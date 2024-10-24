@@ -27,12 +27,12 @@ In the broader ecosystem of MRI software, there are two common conventions for r
 
   * Originates from Insight Toolkit (ITK), so it's also referred to as the ITK format.
   * Used by SCT and Advanced Normalization Tools (ANTs).
-  * Defined in the "Vector-Valued Datasets" section of the `NIFTI1 Specification <https://nifti.nimh.nih.gov/pub/dist/src/niftilib/nifti1.h>`_.
+  * Defined in the "Vector-Valued Datasets" section of the `NIFTI1 Specification <https://web.archive.org/web/20241009085040/https://nifti.nimh.nih.gov/pub/dist/src/niftilib/nifti1.h>`_.
 
 * **4D vector format**, ``[x, y, z, v]``:
 
   * Used by the FMRIB Software Library (FSL) and Statistical Parametric Mapping (SPM) software packages.
-  * Defined in the "Deformation model" section of the `FSLWiki <https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FNIRT/UserGuide#Deformation_model>`_
+  * Defined in the "Deformation model" section of the `FSLWiki <https://web.archive.org/web/20230130154018/https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FNIRT/UserGuide#Deformation_model>`_
 
 For both formats, the ``v`` axis will be of size 3:
 
@@ -43,7 +43,7 @@ For both formats, the ``v`` axis will be of size 3:
 Compatibility with non-ITK software (FSL, SPM)
 ==============================================
 
-SCT generates warping fields in the 5D composite ITK format. This format is not compatible with non-ITK software that expects the 4D vector format (such as the `FSL command applywarp <https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FNIRT/UserGuide#Now_what.3F_--_applywarp.21>`_). So, you will need to convert the warping field using :ref:`sct_image`.
+SCT generates warping fields in the 5D composite ITK format. This format is not compatible with non-ITK software that expects the 4D vector format (such as the `FSL command applywarp <https://web.archive.org/web/20230130154018/https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FNIRT/UserGuide#Now_what.3F_--_applywarp.21>`_). So, you will need to convert the warping field using :ref:`sct_image`.
 
 
 
