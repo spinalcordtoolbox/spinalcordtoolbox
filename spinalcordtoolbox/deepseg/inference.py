@@ -169,7 +169,7 @@ def segment_monai(path_img, tmpdir, predictor, device: torch.device):
     crop_size = (64, 192, -1)
     inference_roi_size = (64, 192, 320)
     # NOTE: this is hard-coded to "edge" based on extensive experiments comparing "edge" vs "zero" padding
-    # at test-time. 
+    # at test-time.
     pad_mode = "edge"
 
     # define the dataset and dataloader

@@ -94,7 +94,7 @@ def create_nnunet_from_plans(path_model, model_type, device: torch.device):
     }
 
     if model_type == 'monai':
-        # NOTE: starting from contrast-agnostic v2.5, the monai-based nnunet model has more features at 
+        # NOTE: starting from contrast-agnostic v2.5, the monai-based nnunet model has more features at
         # the deeper layers of the network, hence update the max features in the `plans` dict
         plans["unet_max_num_features"] = 384
 
