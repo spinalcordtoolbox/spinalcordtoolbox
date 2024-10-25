@@ -981,13 +981,10 @@ class AnalyzeLesion:
         slice2 = center_slice           # e.g., for 112.2 --> 112; for 112.9 --> 113
         slice3 = center_slice + 1       # e.g., for 112.2 --> 113; for 112.9 --> 114
         # 5b. Calculate weights for each slice based on distance to the mean
-        # Convert positions to centered coordinates (slice centers)
-        pos1, pos2, pos3 = slice1 + 0.5, slice2 + 0.5, slice3 + 0.5
-        target_pos = mean_spinal_cord_center_of_mass_x + 0.5
-        # Calculate distances to target position
-        d1 = abs(target_pos - pos1)
-        d2 = abs(target_pos - pos2)
-        d3 = abs(target_pos - pos3)
+        # Calculate distances to target position (mean_spinal_cord_center_of_mass_x)
+        d1 = abs(mean_spinal_cord_center_of_mass_x - slice1)    # e.g., for 112.2 --> |112.2 - 111.0| = 1.2
+        d2 = abs(mean_spinal_cord_center_of_mass_x - slice2)    # e.g., for 112.2 --> |112.2 - 112.0| = 0.2
+        d3 = abs(mean_spinal_cord_center_of_mass_x - slice3)    # e.g., for 112.2 --> |112.2 - 113.0| = 0.8
         # Convert distances to weights using inverse distance weighting
         if d1 == 0 or d2 == 0 or d3 == 0:
             # If target exactly matches one of the slice centers, use only that slice
