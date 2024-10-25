@@ -917,31 +917,22 @@ class AnalyzeLesion:
             # compute the angle between the normal vector of the plane and the vector z
             self.angles_sagittal[iz] = np.arccos(np.vdot(tangent_vect, np.array([0, 0, 1])))
 
-    def _interpolate_slices(self, im_data, slice1, slice2, interpolation_factor):
+    def _interpolate_slices(self, im_data, slice1, slice2, slice3, weights):
         """
-        Interpolate two slices using linear interpolation
+        Interpolate three slices using weighted interpolation
         :param im_data: 3D numpy array (lesion or spinal cord mask) in the RPI orientation
         :param slice1: int, first slice to interpolate
-        :param slice2: int, second slice to interpolate
-        :param interpolation_factor: float, interpolation factor
+        :param slice2: int, middle slice to interpolate
+        :param slice3: int, third slice to interpolate
+        :param weights: tuple of 3 floats, interpolation weights for each slice (should sum to 1)
         :return: 2D numpy array, (interpolated slice)
         """
         slice1_data = im_data[slice1, :, :]  # RPI --> selecting in the 1st dimension (RL) to get sagittal slice
-        slice2_data = im_data[slice2, :, :]  # RPI --> selecting in the 1st dimension (RL) to get sagittal slice
+        slice2_data = im_data[slice2, :, :]
+        slice3_data = im_data[slice3, :, :]
 
-        # # Sanity check -- to be removed
-        # import matplotlib.pyplot as plt
-        # fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(8, 4))
-        # ax1.imshow(slice1_data, cmap='gray', vmin=0, vmax=1)
-        # ax1.axis('off')
-        # ax2.imshow(slice2_data, cmap='gray', vmin=0, vmax=1)
-        # ax2.axis('off')
-        # ax3.imshow((1 - interpolation_factor) * slice1_data + interpolation_factor * slice2_data, cmap='gray', vmin=0, vmax=1)
-        # ax3.axis('off')
-        # plt.tight_layout()
-        # plt.show()
-
-        return (1 - interpolation_factor) * slice1_data + interpolation_factor * slice2_data
+        # Weighted sum of the three slices
+        return weights[0] * slice1_data + weights[1] * slice2_data + weights[2] * slice3_data
 
     def get_midsagittal_slice(self):
         """
@@ -960,10 +951,10 @@ class AnalyzeLesion:
             mean can be a float.
             5. Interpolate the lesion and spinal cord masks using linear interpolation to the mean spinal cord center
             of mass, i.e., 112.2. To do so, we do:
-                5a. Find the two closest slices to the mean spinal cord center of mass. For example, slice 112 and
-                slice 113.
-                5b. Get the interpolation factor, for example, 0.2 (112.2 - 112 --> 0.2).
-                5c. Interpolate the lesion and spinal cord masks.
+                5a. Find the three closest slices to the mean spinal cord center of mass.
+                    For example, 112.2 --> 111, 112, 113.
+                5b. Calculate weights for each slice based on distance to the mean
+                5c. Interpolate the lesion and spinal cord masks
         """
         # Get the RPI-oriented lesion and spinal cord masks
         im_lesion_data = Image(self.fname_label).data
@@ -984,15 +975,37 @@ class AnalyzeLesion:
         mean_spinal_cord_center_of_mass_x = np.mean(spinal_cord_center_of_mass_x)
         self.midsagittal_slice = mean_spinal_cord_center_of_mass_x      # store it to output in the output XLS file
         # 5. Interpolate the lesion and cord masks using linear interpolation to the mean spinal cord center of mass
-        # 5a. Find the two closest slices to mean_spinal_cord_center_of_mass_x
-        slice1 = int(np.floor(mean_spinal_cord_center_of_mass_x))   # e.g., 112.2 --> 112
-        slice2 = int(np.ceil(mean_spinal_cord_center_of_mass_x))    # e.g., 112.2 --> 113
-        # 5b. Get the interpolation factor, for example, 112.2 - 112 --> 0.2
-        interpolation_factor = mean_spinal_cord_center_of_mass_x - int(mean_spinal_cord_center_of_mass_x)   # e.g., 0.2
+        # 5a. Find the three closest slices to mean_spinal_cord_center_of_mass_x
+        center_slice = round(mean_spinal_cord_center_of_mass_x)    # e.g., 112.2 --> 112; 112.9 --> 113
+        slice1 = center_slice - 1       # e.g., for 112.2 --> 111; for 112.9 --> 112
+        slice2 = center_slice           # e.g., for 112.2 --> 112; for 112.9 --> 113
+        slice3 = center_slice + 1       # e.g., for 112.2 --> 113; for 112.9 --> 114
+        # 5b. Calculate weights for each slice based on distance to the mean
+        # Convert positions to centered coordinates (slice centers)
+        pos1, pos2, pos3 = slice1 + 0.5, slice2 + 0.5, slice3 + 0.5
+        target_pos = mean_spinal_cord_center_of_mass_x + 0.5
+        # Calculate distances to target position
+        d1 = abs(target_pos - pos1)
+        d2 = abs(target_pos - pos2)
+        d3 = abs(target_pos - pos3)
+        # Convert distances to weights using inverse distance weighting
+        if d1 == 0 or d2 == 0 or d3 == 0:
+            # If target exactly matches one of the slice centers, use only that slice
+            weights = [1.0 if d == 0 else 0.0 for d in (d1, d2, d3)]
+        else:
+            # Calculate weights using inverse distance to ensure:
+            #   - Slices closer to our target position should have more influence
+            #   - Slices farther away should have less influence
+            #   - The influence decreases smoothly with distance
+            w1 = 1.0 / d1
+            w2 = 1.0 / d2
+            w3 = 1.0 / d3
+            # Normalize weights to sum to 1
+            total = w1 + w2 + w3
+            weights = [w1 / total, w2 / total, w3 / total]
         # 5c. Interpolate the lesion and spinal cord masks
-        self.interpolated_lesion_midsagittal = self._interpolate_slices(im_lesion_data, slice1, slice2, interpolation_factor)
+        self.interpolated_lesion_midsagittal = self._interpolate_slices(im_lesion_data, slice1, slice2, slice3, weights)
         # TODO: store also the interpolated spinal cord mask to use it for tissue bridges calculation --> tissue bridges code will need refactoring
-        im_sc_interpolated = self._interpolate_slices(im_sc_data, slice1, slice2, interpolation_factor)
 
     def label_lesion(self):
         printv('\nLabel connected regions of the masked image...', self.verbose, 'normal')
