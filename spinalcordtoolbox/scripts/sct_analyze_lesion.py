@@ -994,12 +994,13 @@ class AnalyzeLesion:
             #   - Slices closer to our target position should have more influence
             #   - Slices farther away should have less influence
             #   - The influence decreases smoothly with distance
-            w1 = 1.0 / d1
-            w2 = 1.0 / d2
-            w3 = 1.0 / d3
+            w1 = 1.0 / d1       # e.g., for 112.2 --> 1/1.2 = 0.833
+            w2 = 1.0 / d2       # e.g., for 112.2 --> 1/0.2 = 5.000
+            w3 = 1.0 / d3       # e.g., for 112.2 --> 1/0.8 = 1.250
             # Normalize weights to sum to 1
-            total = w1 + w2 + w3
-            weights = [w1 / total, w2 / total, w3 / total]
+            total = w1 + w2 + w3       # e.g., for 112.2 --> 0.833 + 5.000 + 1.250 = 7.083
+            weights = [w1 / total, w2 / total, w3 / total]      # e.g., for 112.2 --> 0.833/7.083, 5.000/7.083, 1.250/7.083 --> 0.118, 0.707, 0.176
+            # As seen above, the middle slice (112) is the closest to the target position (112.2) and has the highest weight
         # 5c. Interpolate the lesion and spinal cord masks
         self.interpolated_lesion_midsagittal = self._interpolate_slices(im_lesion_data, slice1, slice2, slice3, weights)
         # TODO: store also the interpolated spinal cord mask to use it for tissue bridges calculation --> tissue bridges code will need refactoring
