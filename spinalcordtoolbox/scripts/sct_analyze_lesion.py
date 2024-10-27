@@ -498,7 +498,7 @@ class AnalyzeLesion:
             # Get all axial slices (S-I direction) with the lesion for the selected sagittal slice
             # In other words, we will iterate through the lesion in S-I direction and compute tissue bridges for each
             # axial slice with the lesion
-            axial_lesion_slices = np.unique(np.where(im_lesion_data[sagittal_slice, :, :])[1]) # 2D, dim=[AP, SI] --> [1]
+            axial_lesion_slices = np.unique(np.where(im_lesion_data[sagittal_slice, :, :])[1])  # 2D, dim=[AP, SI] --> [1]
             # Iterate across axial slices to compute tissue bridges
             for axial_slice in axial_lesion_slices:
                 # Get the lesion segmentation mask of the selected 2D axial slice
