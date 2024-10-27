@@ -665,7 +665,6 @@ class AnalyzeLesion:
         printv(f'  (A-P) width : {str(np.round(width_cur, 2))} mm',
                self.verbose, type='info')
 
-
     def _measure_width_midsagittal_slice(self, p_lst, idx):
         """
         Measure the width of the lesion along the anterior-posterior axis in the interpolated **midsagittal slice**
