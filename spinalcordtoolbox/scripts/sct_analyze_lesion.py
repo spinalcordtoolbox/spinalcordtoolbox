@@ -144,7 +144,7 @@ def get_parser():
 class AnalyzeLesion:
     def __init__(self, fname_mask, fname_sc, fname_ref, path_template, path_ofolder, perslice, verbose):
         self.fname_mask = fname_mask
-        self.midsagittal_slice = None
+        self.interpolated_midsagittal_slice = None
         self.interpolation_slices = None
         self.interpolation_weights = None
         self.interpolated_lesion_midsagittal = None
@@ -896,8 +896,8 @@ class AnalyzeLesion:
             # For the tissue bridges, we need the spinal cord segmentation to compute the width of spared tissue ventral
             # and dorsal to the spinal cord lesion
             if self.fname_sc is not None:
-                printv('  Interpolated midsagittal slice = ' + str(self.midsagittal_slice), self.verbose, 'info')
-                self.measure_pd.loc[label_idx, 'interpolated_midsagittal_slice'] = self.midsagittal_slice
+                printv('  Interpolated midsagittal slice = ' + str(self.interpolated_midsagittal_slice), self.verbose, 'info')
+                self.measure_pd.loc[label_idx, 'interpolated_midsagittal_slice'] = self.interpolated_midsagittal_slice
                 self._measure_length(im_lesion_data_cur, p_lst, label_idx)
                 self._measure_width(im_lesion_data_cur, p_lst, label_idx)
                 self._measure_diameter(im_lesion_data_cur, p_lst, label_idx)
@@ -1010,7 +1010,7 @@ class AnalyzeLesion:
                 spinal_cord_center_of_mass_x.append(center_of_mass(spinal_cord_slice)[0])   # [0] --> R-L
         # 4. Compute the mean of spinal cord center of mass (in the x-axis (R-L direction))
         mean_spinal_cord_center_of_mass_x = np.mean(spinal_cord_center_of_mass_x)
-        self.midsagittal_slice = mean_spinal_cord_center_of_mass_x      # store it to output in the output XLS file
+        self.interpolated_midsagittal_slice = mean_spinal_cord_center_of_mass_x     # store it to output in the output XLS file
         # 5. Interpolate the lesion and cord masks using linear interpolation to the mean spinal cord center of mass
         # 5a. Find the three closest slices to mean_spinal_cord_center_of_mass_x
         center_slice = round(mean_spinal_cord_center_of_mass_x)    # e.g., 112.2 --> 112; 112.9 --> 113
