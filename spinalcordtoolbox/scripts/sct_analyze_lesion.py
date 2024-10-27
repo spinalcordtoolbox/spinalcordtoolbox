@@ -443,7 +443,7 @@ class AnalyzeLesion:
 
     def _measure_tissue_bridges(self, im_lesion_data, p_lst, idx):
         """
-        Measure the tissue bridges (widths of spared tissue ventral and dorsal to the spinal cord lesion).
+        Measure tissue bridges defined as width of spared tissue ventral and dorsal to the spinal cord lesion.
         Tissue bridges are quantified as the width of spared tissue at the **minimum** distance from cerebrospinal fluid
         (i.e., the spinal cord boundary) to the lesion boundary.
 
@@ -477,9 +477,6 @@ class AnalyzeLesion:
         # --------------------------------------
         # Get slices with the lesion
         # --------------------------------------
-        # We decided to use all sagittal slices containing the lesion to compute the tissue bridges
-        # In other words, we compute the tissue bridges from the midsagittal slice and also from all parasagittal slices
-
         # Get slices with lesion
         # Note: we use [0] for the R-L direction as the orientation is RPI
         sagittal_lesion_slices = np.unique(np.where(im_lesion_data)[0])
@@ -501,8 +498,7 @@ class AnalyzeLesion:
             # Get all axial slices (S-I direction) with the lesion for the selected sagittal slice
             # In other words, we will iterate through the lesion in S-I direction and compute tissue bridges for each
             # axial slice with the lesion
-            # Note: we use [1] for the S-I direction as the orientation is RPI
-            axial_lesion_slices = np.unique(np.where(im_lesion_data[sagittal_slice, :, :])[1])
+            axial_lesion_slices = np.unique(np.where(im_lesion_data[sagittal_slice, :, :])[1]) # 2D, dim=[AP, SI] --> [1]
             # Iterate across axial slices to compute tissue bridges
             for axial_slice in axial_lesion_slices:
                 # Get the lesion segmentation mask of the selected 2D axial slice
@@ -615,8 +611,8 @@ class AnalyzeLesion:
 
     def _measure_length_midsagittal_slice(self, p_lst, idx):
         """
-        Measure the length of the lesion along the superior-inferior axis in the **midsagittal slice** when taking into
-        account the angle correction.
+        Measure the length of the lesion along the superior-inferior axis in the interpolated **midsagittal slice**
+        when taking into account the angle correction.
 
         :param p_lst: list, pixel size of the lesion
         :param idx: int, index of the lesion
@@ -672,8 +668,8 @@ class AnalyzeLesion:
 
     def _measure_width_midsagittal_slice(self, p_lst, idx):
         """
-        Measure the width of the lesion along the anterior-posterior axis in the **midsagittal slice** when taking into
-        account the angle correction.
+        Measure the width of the lesion along the anterior-posterior axis in the interpolated **midsagittal slice**
+        when taking into account the angle correction.
         The width is defined as the maximum lesion width in the A-P axis across all axial slices with the lesion in
         the midsagittal slice.
 
