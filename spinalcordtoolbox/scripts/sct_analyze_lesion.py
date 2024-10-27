@@ -398,14 +398,57 @@ class AnalyzeLesion:
         printv('  Maximum axial damage ratio: ' + str(np.round(maximum_axial_damage_ratio, 2)),
                self.verbose, type='info')
 
+    def _measure_interpolated_tissue_bridges(self, tissue_bridges_df, p_lst, idx):
+        """
+        Compute the interpolated tissue bridges.
+        As the `_measure_tissue_bridges` function already computes tissue bridges for all sagittal slices containing the
+        lesion, we can reuse these values to interpolate the tissue bridges.
+        Note that for the interpolation, we consider only the sagittal slices used for the interpolation
+        (`self.interpolation_slices`), i.e., not for all sagittal slices containing the lesion.
+        """
+        # Interpolated tissue bridges
+        interpolated_dorsal_bridge_width_mm = {}
+        interpolated_ventral_bridge_width_mm = {}
+        # Loop across unique axial slices (S-I direction) to interpolate the tissue bridges from the three sagittal
+        # slices. Note that here, we get axial slices with the lesion only for the sagittal slices used for the
+        # interpolation, i.e., not for all sagittal slices containing the lesion.
+        axial_slices = np.unique(tissue_bridges_df[tissue_bridges_df['sagittal_slice'].isin(self.interpolation_slices)]
+                                 ['axial_slice'])
+        for axial_slice in axial_slices:
+            # Get bridges for the 3 sagittal slices used for the interpolation
+            # Filter for current axial slice once
+            slice_data = tissue_bridges_df[tissue_bridges_df['axial_slice'] == axial_slice]
+            # Create a lookup series for the current axial slice
+            dorsal_lookup = slice_data.set_index('sagittal_slice')['dorsal_bridge_width']
+            ventral_lookup = slice_data.set_index('sagittal_slice')['ventral_bridge_width']
+            # Get widths for the three sagittal slices. If there is no bridge for given slices, use 0.
+            dorsal_bridges = [dorsal_lookup.get(sag_slice, 0) for sag_slice in self.interpolation_slices]
+            ventral_bridges = [ventral_lookup.get(sag_slice, 0) for sag_slice in self.interpolation_slices]
+            # Interpolate tissue bridges
+            dorsal_bridge_interpolated = self._interpolate_values(*dorsal_bridges)
+            ventral_bridge_interpolated = self._interpolate_values(*ventral_bridges)
+            # Get the width of the tissue bridges in mm (by multiplying by p_lst[1]) and use np.cos(self.angles_sagittal[SLICE])
+            # to correct for the angle of the spinal cord with respect to the axial slice
+            interpolated_dorsal_bridge_width_mm[axial_slice] = (dorsal_bridge_interpolated * p_lst[1] *
+                                                                np.cos(self.angles_sagittal[axial_slice]))
+            interpolated_ventral_bridge_width_mm[axial_slice] = (ventral_bridge_interpolated * p_lst[1] *
+                                                                 np.cos(self.angles_sagittal[axial_slice]))
+        # Get minimum dorsal and ventral bridge widths
+        min_interpolated_dorsal_bridge_width_mm = np.min(list(interpolated_dorsal_bridge_width_mm.values()))
+        min_interpolated_ventral_bridge_width_mm = np.min(list(interpolated_ventral_bridge_width_mm.values()))
+
+        # Save the minimum tissue bridges
+        self.measure_pd.loc[idx, 'interpolated_dorsal_bridge_width [mm]'] = min_interpolated_dorsal_bridge_width_mm
+        self.measure_pd.loc[idx, 'interpolated_ventral_bridge_width [mm]'] = min_interpolated_ventral_bridge_width_mm
+
     def _measure_tissue_bridges(self, im_lesion_data, p_lst, idx):
         """
         Measure the tissue bridges (widths of spared tissue ventral and dorsal to the spinal cord lesion).
         Tissue bridges are quantified as the width of spared tissue at the **minimum** distance from cerebrospinal fluid
         (i.e., the spinal cord boundary) to the lesion boundary.
 
-        NOTE: we compute the tissue bridges for all sagittal slices containing the lesion (i.e., for the midsagittal and
-        parasagittal slices).
+        NOTE: we compute the tissue bridges for all sagittal slices containing the lesion (i.e., including parasagittal
+        slices). Then, we compute also interpolated tissue bridges, see `_measure_interpolated_tissue_bridges`.
 
         Since we assume the input is in RPI orientation, then bridge widths are computed across the Y axis
         (AP axis), with dorsal == posterior (-Y) and ventral == anterior (+Y).
@@ -495,6 +538,9 @@ class AnalyzeLesion:
         tissue_bridges_df = pd.DataFrame(list(tissue_bridges_dict.values()), index=index)
         # 3. Reset the index to make 'sagittal_slice' and 'axial_slice' as columns
         tissue_bridges_df.reset_index(inplace=True)
+
+        # Interpolated tissue bridges
+        self._measure_interpolated_tissue_bridges(tissue_bridges_df, p_lst, idx)
 
         # Get slices of minimum dorsal and ventral tissue bridges for each sagittal slice
         # NOTE: we get minimum because tissue bridges are quantified as the width of spared tissue at the minimum
