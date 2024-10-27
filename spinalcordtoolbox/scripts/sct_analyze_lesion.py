@@ -1037,8 +1037,9 @@ class AnalyzeLesion:
             w3 = 1.0 / d3       # e.g., for 112.2 --> 1/0.8 = 1.250
             # Normalize weights to sum to 1
             total = w1 + w2 + w3       # e.g., for 112.2 --> 0.833 + 5.000 + 1.250 = 7.083
-            self.interpolation_weights = [w1 / total, w2 / total, w3 / total]      # e.g., for 112.2 --> 0.833/7.083, 5.000/7.083, 1.250/7.083 --> 0.118, 0.707, 0.176
+            weights = [w1 / total, w2 / total, w3 / total]      # e.g., for 112.2 --> 0.833/7.083, 5.000/7.083, 1.250/7.083 --> 0.118, 0.707, 0.176
             # As seen above, the middle slice (112) is the closest to the target position (112.2) and has the highest weight
+        self.interpolation_weights = weights    # store it to be used by the `_interpolate_values` function
         # 5c. Interpolate the lesion and spinal cord masks
         self.interpolated_lesion_midsagittal = self._interpolate_values(im_lesion_data[slice1, :, :],
                                                                         im_lesion_data[slice2, :, :],
