@@ -145,6 +145,8 @@ class AnalyzeLesion:
     def __init__(self, fname_mask, fname_sc, fname_ref, path_template, path_ofolder, perslice, verbose):
         self.fname_mask = fname_mask
         self.midsagittal_slice = None
+        self.interpolation_slices = None
+        self.interpolation_weights = None
         self.interpolated_lesion_midsagittal = None
         self.fname_sc = fname_sc
         self.fname_ref = fname_ref
@@ -977,6 +979,7 @@ class AnalyzeLesion:
         slice1 = center_slice - 1       # e.g., for 112.2 --> 111; for 112.9 --> 112
         slice2 = center_slice           # e.g., for 112.2 --> 112; for 112.9 --> 113
         slice3 = center_slice + 1       # e.g., for 112.2 --> 113; for 112.9 --> 114
+        self.interpolation_slices = [slice1, slice2, slice3]     # store it to be used for tissue bridges
         # 5b. Calculate weights for each slice based on distance to the mean
         # Calculate distances to target position (mean_spinal_cord_center_of_mass_x)
         d1 = abs(mean_spinal_cord_center_of_mass_x - slice1)    # e.g., for 112.2 --> |112.2 - 111.0| = 1.2
@@ -996,7 +999,7 @@ class AnalyzeLesion:
             w3 = 1.0 / d3       # e.g., for 112.2 --> 1/0.8 = 1.250
             # Normalize weights to sum to 1
             total = w1 + w2 + w3       # e.g., for 112.2 --> 0.833 + 5.000 + 1.250 = 7.083
-            weights = [w1 / total, w2 / total, w3 / total]      # e.g., for 112.2 --> 0.833/7.083, 5.000/7.083, 1.250/7.083 --> 0.118, 0.707, 0.176
+            self.interpolation_weights = [w1 / total, w2 / total, w3 / total]      # e.g., for 112.2 --> 0.833/7.083, 5.000/7.083, 1.250/7.083 --> 0.118, 0.707, 0.176
             # As seen above, the middle slice (112) is the closest to the target position (112.2) and has the highest weight
         # 5c. Interpolate the lesion and spinal cord masks
         self.interpolated_lesion_midsagittal = self._interpolate_values(im_lesion_data[slice1, :, :],
