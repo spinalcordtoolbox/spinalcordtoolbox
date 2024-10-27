@@ -613,13 +613,11 @@ class AnalyzeLesion:
         self.measure_pd.loc[idx, 'length [mm]'] = length_cur
         printv('  (S-I) length: ' + str(np.round(length_cur, 2)) + ' mm', self.verbose, type='info')
 
-    def _measure_length_midsagittal_slice(self, im_lesion_data, p_lst, idx):
+    def _measure_length_midsagittal_slice(self, p_lst, idx):
         """
         Measure the length of the lesion along the superior-inferior axis in the **midsagittal slice** when taking into
         account the angle correction.
 
-        :param im_lesion_data: 3D numpy array: mask of the lesion. The orientation is assumed to be RPI (because we
-        reoriented the image to RPI using orient2rpi())
         :param p_lst: list, pixel size of the lesion
         :param idx: int, index of the lesion
         """
@@ -672,15 +670,13 @@ class AnalyzeLesion:
                self.verbose, type='info')
 
 
-    def _measure_width_midsagittal_slice(self, im_lesion_data, p_lst, idx):
+    def _measure_width_midsagittal_slice(self, p_lst, idx):
         """
         Measure the width of the lesion along the anterior-posterior axis in the **midsagittal slice** when taking into
         account the angle correction.
         The width is defined as the maximum lesion width in the A-P axis across all axial slices with the lesion in
         the midsagittal slice.
 
-        :param im_lesion_data: 3D numpy array: mask of the lesion. The orientation is assumed to be RPI (because we
-        reoriented the image to RPI using orient2rpi())
         :param p_lst: list, pixel size of the lesion
         :param idx: int, index of the lesion
         """
@@ -910,8 +906,8 @@ class AnalyzeLesion:
                 self._measure_width(im_lesion_data_cur, p_lst, label_idx)
                 self._measure_diameter(im_lesion_data_cur, p_lst, label_idx)
                 self._measure_axial_damage_ratio(im_lesion_data_cur, p_lst, label_idx)
-                self._measure_length_midsagittal_slice(im_lesion_data_cur, p_lst, label_idx)
-                self._measure_width_midsagittal_slice(im_lesion_data_cur, p_lst, label_idx)
+                self._measure_length_midsagittal_slice(p_lst, label_idx)
+                self._measure_width_midsagittal_slice(p_lst, label_idx)
                 self._measure_tissue_bridges(im_lesion_data_cur, p_lst, label_idx)
             self._measure_volume(im_lesion_data_cur, p_lst, label_idx)
 
