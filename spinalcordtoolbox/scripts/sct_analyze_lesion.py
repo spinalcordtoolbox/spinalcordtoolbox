@@ -901,7 +901,7 @@ class AnalyzeLesion:
             # and dorsal to the spinal cord lesion
             if self.fname_sc is not None:
                 printv('  Interpolated midsagittal slice = ' + str(self.midsagittal_slice), self.verbose, 'info')
-                self.measure_pd.loc[label_idx, 'midsagittal_slice'] = self.midsagittal_slice
+                self.measure_pd.loc[label_idx, 'interpolated_midsagittal_slice'] = self.midsagittal_slice
                 self._measure_length(im_lesion_data_cur, p_lst, label_idx)
                 self._measure_width(im_lesion_data_cur, p_lst, label_idx)
                 self._measure_diameter(im_lesion_data_cur, p_lst, label_idx)
