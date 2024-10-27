@@ -516,10 +516,6 @@ def sct_analyze_lesion(
         # Get the number of slices containing the lesion. For example, if a lesion cover slices 7,8,9, get 3
         num_of_sag_slices = max_sag_slice - min_sag_slice + 1
 
-        # Get the midsagittal slice of the spinal cord
-        # Note: as the midsagittal slice is the same for all lesions, we can pick the first lesion ([0]) to get it
-        mid_sagittal_sc_slice = measure_pd.loc[0, 'midsagittal_spinal_cord_slice']
-
         #  Create a figure
         #  The figure has one row per lesion and one column per sagittal slice containing the lesion
         fig, axes = mpl_plt.subplots(num_of_lesions,
@@ -560,11 +556,7 @@ def sct_analyze_lesion(
 
                 # Add title for each column
                 if idx_row == 0:
-                    if sagittal_slice == mid_sagittal_sc_slice:
-                        axes[idx_row, idx_col].set_title(f'Midsagittal slice\n'
-                                                         f'Sagittal slice #{sagittal_slice}')
-                    else:
-                        axes[idx_row, idx_col].set_title(f'Sagittal slice #{sagittal_slice}')
+                    axes[idx_row, idx_col].set_title(f'Sagittal slice #{sagittal_slice}')
 
                 # Add title to each row, (i.e., y-axis)
                 if idx_col == 0:
