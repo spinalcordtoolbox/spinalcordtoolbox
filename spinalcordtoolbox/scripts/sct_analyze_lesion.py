@@ -917,22 +917,19 @@ class AnalyzeLesion:
             # compute the angle between the normal vector of the plane and the vector z
             self.angles_sagittal[iz] = np.arccos(np.vdot(tangent_vect, np.array([0, 0, 1])))
 
-    def _interpolate_slices(self, im_data, slice1, slice2, slice3, weights):
+    def _interpolate_values(self, data1, data2, data3):
         """
-        Interpolate three slices using weighted interpolation
-        :param im_data: 3D numpy array (lesion or spinal cord mask) in the RPI orientation
-        :param slice1: int, first slice to interpolate
-        :param slice2: int, middle slice to interpolate
-        :param slice3: int, third slice to interpolate
-        :param weights: tuple of 3 floats, interpolation weights for each slice (should sum to 1)
-        :return: 2D numpy array, (interpolated slice)
+        Interpolate inputs using weighted interpolation.
+        Inputs can be either 2D numpy arrays (for interpolating slices) or single int64 (for interpolating tissue bridges).
+        :param data1: 2D numpy array (slice 1) or single int64 (tissue bridge for slice 1)
+        :param data2: 2D numpy array (slice 2) or single int64 (tissue bridge for slice 2)
+        :param data3: 2D numpy array (slice 3) or single int64 (tissue bridge for slice 3)
+        :return: 2D numpy array (interpolated slice) or single float64 (interpolated tissue bridge)
         """
-        slice1_data = im_data[slice1, :, :]  # RPI --> selecting in the 1st dimension (RL) to get sagittal slice
-        slice2_data = im_data[slice2, :, :]
-        slice3_data = im_data[slice3, :, :]
-
         # Weighted sum of the three slices
-        return weights[0] * slice1_data + weights[1] * slice2_data + weights[2] * slice3_data
+        return (self.interpolation_weights[0] * data1 +
+                self.interpolation_weights[1] * data2 +
+                self.interpolation_weights[2] * data3)
 
     def get_midsagittal_slice(self):
         """
@@ -1002,8 +999,9 @@ class AnalyzeLesion:
             weights = [w1 / total, w2 / total, w3 / total]      # e.g., for 112.2 --> 0.833/7.083, 5.000/7.083, 1.250/7.083 --> 0.118, 0.707, 0.176
             # As seen above, the middle slice (112) is the closest to the target position (112.2) and has the highest weight
         # 5c. Interpolate the lesion and spinal cord masks
-        self.interpolated_lesion_midsagittal = self._interpolate_slices(im_lesion_data, slice1, slice2, slice3, weights)
-        # TODO: store also the interpolated spinal cord mask to use it for tissue bridges calculation --> tissue bridges code will need refactoring
+        self.interpolated_lesion_midsagittal = self._interpolate_values(im_lesion_data[slice1, :, :],
+                                                                        im_lesion_data[slice2, :, :],
+                                                                        im_lesion_data[slice3, :, :])
 
     def label_lesion(self):
         printv('\nLabel connected regions of the masked image...', self.verbose, 'normal')
