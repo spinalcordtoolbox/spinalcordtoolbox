@@ -5,6 +5,7 @@ import datetime
 
 import numpy as np
 import nibabel as nib
+import pytest
 
 import spinalcordtoolbox.math as sct_math
 from spinalcordtoolbox.image import Image
@@ -43,7 +44,8 @@ def dummy_blob(size_arr=(9, 9, 9), pixdim=(1, 1, 1), coordvox=None):
     return img
 
 
-def test_dilate():
+@pytest.mark.parametrize('islabel', [False, True])
+def test_dilate(islabel):
 
     # Create dummy image with single pixel in the middle
     im = dummy_blob(size_arr=(9, 9, 9), coordvox=(4, 4, 4))
@@ -51,31 +53,31 @@ def test_dilate():
         im.save('tmp_dummy_im_' + datetime.now().strftime("%Y%m%d%H%M%S%f") + '.nii.gz')
 
     # cube (only asserting along one dimension for convenience)
-    data_dil = sct_math.dilate(im.data, size=1, shape='cube')
+    data_dil = sct_math.dilate(im.data, size=1, shape='cube', islabel=islabel)
     assert np.array_equal(data_dil[4, 2:7, 4], np.array([0, 0, 1, 0, 0]))
-    data_dil = sct_math.dilate(im.data, size=2, shape='cube')
+    data_dil = sct_math.dilate(im.data, size=2, shape='cube', islabel=islabel)
     assert np.array_equal(data_dil[4, 2:7, 4], np.array([0, 1, 1, 0, 0]))
-    data_dil = sct_math.dilate(im.data, size=3, shape='cube')
+    data_dil = sct_math.dilate(im.data, size=3, shape='cube', islabel=islabel)
     assert np.array_equal(data_dil[4, 2:7, 4], np.array([0, 1, 1, 1, 0]))
 
     # ball (only asserting along one dimension for convenience)
-    data_dil = sct_math.dilate(im.data, size=0, shape='ball')
+    data_dil = sct_math.dilate(im.data, size=0, shape='ball', islabel=islabel)
     assert np.array_equal(data_dil[4, 2:7, 4], np.array([0, 0, 1, 0, 0]))
-    data_dil = sct_math.dilate(im.data, size=1, shape='ball')
+    data_dil = sct_math.dilate(im.data, size=1, shape='ball', islabel=islabel)
     assert np.array_equal(data_dil[4, 2:7, 4], np.array([0, 1, 1, 1, 0]))
-    data_dil = sct_math.dilate(im.data, size=2, shape='ball')
+    data_dil = sct_math.dilate(im.data, size=2, shape='ball', islabel=islabel)
     assert np.array_equal(data_dil[4, 2:7, 4], np.array([1, 1, 1, 1, 1]))
 
     # square in xy plane
-    data_dil = sct_math.dilate(im.data, size=1, shape='disk', dim=1)
+    data_dil = sct_math.dilate(im.data, size=1, shape='disk', dim=1, islabel=islabel)
     assert np.array_equal(data_dil[2:7, 4, 4], np.array([0, 1, 1, 1, 0]))
     assert np.array_equal(data_dil[4, 4, 2:7], np.array([0, 1, 1, 1, 0]))
-    data_dil = sct_math.dilate(im.data, size=1, shape='disk', dim=2)
+    data_dil = sct_math.dilate(im.data, size=1, shape='disk', dim=2, islabel=islabel)
     assert np.array_equal(data_dil[4, 2:7, 4], np.array([0, 1, 1, 1, 0]))
     assert np.array_equal(data_dil[2:7, 4, 4], np.array([0, 1, 1, 1, 0]))
 
     # test with Image as input
-    im_dil = sct_math.dilate(im, size=1, shape='cube')
+    im_dil = sct_math.dilate(im, size=1, shape='cube', islabel=islabel)
     assert np.array_equal(im_dil.data[4, 2:7, 4], np.array([0, 0, 1, 0, 0]))
 
 
