@@ -99,7 +99,7 @@ def dice(im1, im2):
     return 2. * intersection.sum() / (im1.sum() + im2.sum())
 
 
-def dilate(data, size, shape, dim=None):
+def dilate(data, size, shape, dim=None, islabel=False):
     """
     Dilate data using ball structuring element
 
@@ -113,14 +113,34 @@ def dilate(data, size, shape, dim=None):
     """
     if isinstance(data, Image):
         im_out = data.copy()
-        im_out.data = dilate(data.data, size, shape, dim)
+        im_out.data = dilate(data.data, size, shape, dim, islabel)
         return im_out
     else:
         footprint = _get_footprint(shape, size, dim)
-        if data.dtype in ['uint8', 'uint16']:
-            return rank.maximum(data, footprint=footprint)
+        if islabel:
+            return _dilate_point_labels(data, size=size, footprint=footprint)
         else:
-            return dilation(data, footprint=footprint, out=None)
+            if data.dtype in ['uint8', 'uint16']:
+                return rank.maximum(data, footprint=footprint)
+            else:
+                return dilation(data, footprint=footprint, out=None)
+
+
+def _dilate_point_labels(data, size, footprint):
+    """
+    A more efficient dilation algorithm when we know the image is mostly nonzero (i.e. point label image)
+    """
+    data_out = data.copy()
+    for (x, y, z) in np.argwhere(data != 0):
+        x_min, x_max = (max(0, x - size)), (min(data.shape[0], x + size + 1))
+        y_min, y_max = (max(0, y - size)), (min(data.shape[1], y + size + 1))
+        z_min, z_max = (max(0, z - size)), (min(data.shape[2], z + size + 1))
+        data_out[x_min:x_max, y_min:y_max, z_min:z_max] = dilation(
+            data_out[x_min:x_max, y_min:y_max, z_min:z_max],
+            footprint=footprint,
+            out=None
+        )
+    return data_out
 
 
 def erode(data, size, shape, dim=None):
