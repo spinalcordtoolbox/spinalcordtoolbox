@@ -155,7 +155,6 @@ class AnalyzeLesion:
         self.interpolated_midsagittal_slice = None      # target float sagittal slice number used for the interpolation. This number is based on the spinal cord center of mass.
         self.interpolation_slices = None                # three sagittal slices used for the interpolation
         self.interpolation_weights = None               # weights for the interpolation to weight the three sagittal slices
-        self.interpolated_lesion_midsagittal = None     # 2D numpy array with the interpolated lesion
 
         if not set(np.unique(Image(fname_mask).data)) == set([0.0, 1.0]):
             if set(np.unique(Image(fname_mask).data)) == set([0.0]):
@@ -217,9 +216,6 @@ class AnalyzeLesion:
         #     no angle correction is needed
         if self.fname_sc is not None:
             self.angle_correction()
-            self.get_midsagittal_slice()
-            # TODO: the midsagittal slice is now determined based on the lesion mask center of mass, i.e., it might
-            #  be different across lesions. --> move the call above to the loop over lesions inside self.measure()
 
         # Compute lesion volume, equivalent diameter, (S-I) length, max axial nominal diameter, and tissue bridges
         # if registered template provided: across vertebral level, GM, WM, within WM/GM tracts...
@@ -609,16 +605,23 @@ class AnalyzeLesion:
         self.measure_pd.loc[idx, 'length [mm]'] = length_cur
         printv('  (S-I) length: ' + str(np.round(length_cur, 2)) + ' mm', self.verbose, type='info')
 
-    def _measure_length_midsagittal_slice(self, p_lst, idx):
+    def _measure_length_midsagittal_slice(self, im_lesion_data, p_lst, idx):
         """
         Measure the length of the lesion along the superior-inferior axis in the interpolated **midsagittal slice**
         when taking into account the angle correction.
 
+        :param im_lesion_data: 3D numpy array, binary mask of the currently processed lesion
         :param p_lst: list, pixel size of the lesion
         :param idx: int, index of the lesion
         """
+        # Interpolate the currently processed lesion; 3D --> 2D, dim=[AP, SI]
+        # NOTE: although we interpolate each lesion separately, the interpolation is always done for the same three
+        # sagittal slices (self.interpolation_slices) for all lesions. This ensures that we measure all lesions from
+        # the same midsagittal slice (in this case, interpolated slice, of course).
+        im_data_midsagittal = self._interpolate_values(im_lesion_data[self.interpolation_slices[0], :, :],
+                                                       im_lesion_data[self.interpolation_slices[1], :, :],
+                                                       im_lesion_data[self.interpolation_slices[2], :, :])
         # Fetch a list of axial slice numbers that are nonzero in the interpolated mid-sagittal slice
-        im_data_midsagittal = self.interpolated_lesion_midsagittal  # 2D, dim=[AP, SI]
         nonzero_axial_slices = np.unique(np.where(im_data_midsagittal)[1])  # [1] -> SI
 
         lengths = []
@@ -665,18 +668,26 @@ class AnalyzeLesion:
         printv(f'  (A-P) width : {str(np.round(width_cur, 2))} mm',
                self.verbose, type='info')
 
-    def _measure_width_midsagittal_slice(self, p_lst, idx):
+    def _measure_width_midsagittal_slice(self, im_lesion_data, p_lst, idx):
         """
         Measure the width of the lesion along the anterior-posterior axis in the interpolated **midsagittal slice**
         when taking into account the angle correction.
         The width is defined as the maximum lesion width in the A-P axis across all axial slices with the lesion in
         the midsagittal slice.
 
+        :param im_lesion_data: 3D numpy array, binary mask of the currently processed lesion
         :param p_lst: list, pixel size of the lesion
         :param idx: int, index of the lesion
         """
+        # TODO: the code block below is the same as in `_measure_length_midsagittal_slice` --> reduce redundancy
+        # Interpolate the currently processed lesion; 3D --> 2D, dim=[AP, SI]
+        # NOTE: although we interpolate each lesion separately, the interpolation is always done for the same three
+        # sagittal slices (self.interpolation_slices) for all lesions. This ensures that we measure all lesions from
+        # the same midsagittal slice (in this case, interpolated slice, of course).
+        im_data_midsagittal = self._interpolate_values(im_lesion_data[self.interpolation_slices[0], :, :],
+                                                       im_lesion_data[self.interpolation_slices[1], :, :],
+                                                       im_lesion_data[self.interpolation_slices[2], :, :])
         # Get a list of axial slice numbers that are nonzero in the interpolated mid-sagittal slice
-        im_data_midsagittal = self.interpolated_lesion_midsagittal  # 2D, dim=[AP, SI]
         nonzero_axial_slices = np.unique(np.where(im_data_midsagittal)[1])  # [1] -> SI
 
         # Iterate across axial slices to compute lesion width
@@ -883,6 +894,19 @@ class AnalyzeLesion:
                 atlas_data_dct[tract_id] = img_cur_copy.data
                 del img_cur
 
+        # iteration across each lesion to get the largest lesion
+        # TODO: this is just a temporary solution to get the largest lesion. This section can be merged with the for
+        #  loop below and volume of each lesion can be computed using the `self._measure_volume` function.
+        lesion_volumes = {}
+        for lesion_label in label_lst:
+            im_lesion_data_cur = np.copy(im_lesion_data == lesion_label)
+            lesion_volumes[lesion_label] = np.sum(im_lesion_data_cur) * p_lst[0] * p_lst[1] * p_lst[2]
+        # Get the index of the largest lesion
+        largest_lesion_idx = max(lesion_volumes, key=lesion_volumes.get)
+        # Get the midsagittal slice using the largest lesion
+        im_lesion_data_largest_lesion = np.copy(im_lesion_data == largest_lesion_idx)
+        self.get_midsagittal_slice(im_lesion_data_largest_lesion)
+
         # iteration across each lesion to measure statistics
         for lesion_label in label_lst:
             im_lesion_data_cur = np.copy(im_lesion_data == lesion_label)
@@ -901,8 +925,8 @@ class AnalyzeLesion:
                 self._measure_width(im_lesion_data_cur, p_lst, label_idx)
                 self._measure_diameter(im_lesion_data_cur, p_lst, label_idx)
                 self._measure_axial_damage_ratio(im_lesion_data_cur, p_lst, label_idx)
-                self._measure_length_midsagittal_slice(p_lst, label_idx)
-                self._measure_width_midsagittal_slice(p_lst, label_idx)
+                self._measure_length_midsagittal_slice(im_lesion_data_cur, p_lst, label_idx)
+                self._measure_width_midsagittal_slice(im_lesion_data_cur, p_lst, label_idx)
                 self._measure_tissue_bridges(im_lesion_data_cur, p_lst, label_idx)
             self._measure_volume(im_lesion_data_cur, p_lst, label_idx)
 
@@ -970,10 +994,10 @@ class AnalyzeLesion:
                 self.interpolation_weights[1] * data2 +
                 self.interpolation_weights[2] * data3)
 
-    def get_midsagittal_slice(self):
+    def get_midsagittal_slice(self, im_lesion_data):
         """
         Get the midsagittal slice from the RPI-oriented image based on the following logic:
-            1. Get the lesion mask center of mass in the z-axis (S-I direction). For example, slice 50.
+            1. Get center of mass in the z-axis (S-I direction) for the largest lesion. For example, slice 50.
             2. Take two axial slices above and below the lesion center of mass in the z-axis (S-I direction). For
                 example, an interval of slices 48 and 52 (i.e., 48, 49, 50, 51, 52).
             3. For each of these slices (i.e., 48, 49, 50, 51, 52), compute the spinal cord center of mass in the x-axis
@@ -989,11 +1013,10 @@ class AnalyzeLesion:
             of mass, i.e., 112.2. To do so, we do:
                 5a. Find the three closest slices to the mean spinal cord center of mass.
                     For example, 112.2 --> 111, 112, 113.
-                5b. Calculate weights for each slice based on distance to the mean
-                5c. Interpolate the lesion and spinal cord masks
+                5b. Calculate weights for each slice based on distance to the mean to be used for interpolation.
+        :param im_lesion_data: 3D numpy array, RPI-oriented mask of the largest lesion
         """
-        # Get the RPI-oriented lesion and spinal cord masks
-        im_lesion_data = Image(self.fname_label).data
+        # Get the RPI-oriented spinal cord mask
         im_sc_data = Image(self.fname_sc).data
 
         # 1. Get lesion center of mass in the z-axis (S-I direction)
@@ -1039,10 +1062,6 @@ class AnalyzeLesion:
             weights = [w1 / total, w2 / total, w3 / total]      # e.g., for 112.2 --> 0.833/7.083, 5.000/7.083, 1.250/7.083 --> 0.118, 0.707, 0.176
             # As seen above, the middle slice (112) is the closest to the target position (112.2) and has the highest weight
         self.interpolation_weights = weights    # store it to be used by the `_interpolate_values` function
-        # 5c. Interpolate the lesion and spinal cord masks
-        self.interpolated_lesion_midsagittal = self._interpolate_values(im_lesion_data[slice1, :, :],
-                                                                        im_lesion_data[slice2, :, :],
-                                                                        im_lesion_data[slice3, :, :])
 
     def label_lesion(self):
         printv('\nLabel connected regions of the masked image...', self.verbose, 'normal')
