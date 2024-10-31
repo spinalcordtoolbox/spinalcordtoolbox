@@ -631,7 +631,7 @@ class AnalyzeLesion:
             # Compute the mean of nonzero values
             mean_nonzero = np.mean(array[array > 0])
             # Compute the length for a given axial slice when taking into account the angle correction.
-            # Moreover, the length is weighted to account for the softness (caused by the interpolation of two slices)
+            # Moreover, the length is weighted to account for the softness (caused by the interpolation)
             length = mean_nonzero * p_lst[2] / np.cos(self.angles_sagittal[axial_slice])  # p_lst[2] -> pixel size of SI axis
             lengths.append(length)
 
