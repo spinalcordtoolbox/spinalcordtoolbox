@@ -118,7 +118,7 @@ def dilate(data, size, shape, dim=None, islabel=False):
     else:
         footprint = _get_footprint(shape, size, dim)
         if islabel:
-            return _dilate_point_labels(data, size=size, footprint=footprint)
+            return _dilate_point_labels(data, shape=shape, size=size, footprint=footprint)
         else:
             if data.dtype in ['uint8', 'uint16']:
                 return rank.maximum(data, footprint=footprint)
@@ -126,20 +126,42 @@ def dilate(data, size, shape, dim=None, islabel=False):
                 return dilation(data, footprint=footprint, out=None)
 
 
-def _dilate_point_labels(data, size, footprint):
+def _dilate_point_labels(data, shape, size, footprint):
     """
     A more efficient dilation algorithm when we know the image is mostly nonzero (i.e. point label image)
     """
+    # NB1: "size" means different things for different shapes, hence we compute the radius on a per-shape basis
+    # NB2: For even-length square/cubes, the radius will be n+0.5, but this gets handled by later calls to `int()`
+    radius = {'square': (size - 1) / 2, 'cube': (size - 1) / 2, 'disk': size, 'ball': size}[shape]
     data_out = data.copy()
     for (x, y, z) in np.argwhere(data != 0):
-        x_min, x_max = (max(0, x - size)), (min(data.shape[0], x + size + 1))
-        y_min, y_max = (max(0, y - size)), (min(data.shape[1], y + size + 1))
-        z_min, z_max = (max(0, z - size)), (min(data.shape[2], z + size + 1))
-        data_out[x_min:x_max, y_min:y_max, z_min:z_max] = dilation(
-            data_out[x_min:x_max, y_min:y_max, z_min:z_max],
-            footprint=footprint,
-            out=None
+        # Compute the (relative) extents of the bounding box, i.e. the left-right offsets: | <-> [x,y,z] <-> |
+        # NB: If the footprint would go outside the image boundaries, then we make bbox offsets < radius using `min()`
+        bbox = (
+            (min(radius, x), min(radius, data.shape[0] - 1 - x)),  # x offsets: | <-> x <-> |
+            (min(radius, y), min(radius, data.shape[1] - 1 - y)),  # y offsets: | <-> y <-> |
+            (min(radius, z), min(radius, data.shape[2] - 1 - z)),  # z offsets: | <-> z <-> |
         )
+
+        # Extract a patch out of the image with [x,y,z] at the center
+        x_min, x_max = int(x - bbox[0][0]), int(x + bbox[0][1] + 1)
+        y_min, y_max = int(y - bbox[1][0]), int(y + bbox[1][1] + 1)
+        z_min, z_max = int(z - bbox[2][0]), int(z + bbox[2][1] + 1)
+        data_patch = data_out[x_min:x_max, y_min:y_max, z_min:z_max]
+
+        # Extract an identically-sized patch out of the dilation footprint, with [c1,c2,c3] at the center
+        c = [(s-1)/2 for s in footprint.shape]
+        fp_x_min, fp_x_max = int(c[0] - bbox[0][0]), int(c[0] + bbox[0][1] + 1)
+        fp_y_min, fp_y_max = int(c[1] - bbox[1][0]), int(c[1] + bbox[1][1] + 1)
+        fp_z_min, fp_z_max = int(c[2] - bbox[2][0]), int(c[2] + bbox[2][1] + 1)
+        footprint_patch = footprint[fp_x_min:fp_x_max, fp_y_min:fp_y_max, fp_z_min:fp_z_max]
+
+        # Multiply the footprint by the [x,y,z] voxel value to simulate dilation of the voxel
+        dilated_voxel = footprint_patch * data_out[x, y, z]
+
+        # Take the maximum of both patches. This will dilate the center voxel while also preserving close-by voxels.
+        data_out[x_min:x_max, y_min:y_max, z_min:z_max] = np.maximum(data_patch, dilated_voxel)
+
     return data_out
 
 
