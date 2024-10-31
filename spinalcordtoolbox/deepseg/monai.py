@@ -43,7 +43,7 @@ nnunet_plans = {
 }
 
 
-def create_nnunet_from_plans(path_model, model_type, device: torch.device):
+def create_nnunet_from_plans(path_model, device: torch.device):
     """
     Adapted from nnUNet's source code:
     https://github.com/MIC-DKFZ/nnUNet/blob/master/nnunetv2/utilities/get_network_from_plans.py#L9
@@ -92,11 +92,6 @@ def create_nnunet_from_plans(path_model, model_type, device: torch.device):
         if network_class != ResidualEncoderUNet else 'n_blocks_per_stage': plans["n_conv_per_stage_encoder"],
         'n_conv_per_stage_decoder': plans["n_conv_per_stage_decoder"]
     }
-
-    if model_type == 'monai':
-        # NOTE: starting from contrast-agnostic v2.5, the monai-based nnunet model has more features at
-        # the deeper layers of the network, hence update the max features in the `plans` dict
-        plans["unet_max_num_features"] = 384
 
     # network class name!!
     model = network_class(
