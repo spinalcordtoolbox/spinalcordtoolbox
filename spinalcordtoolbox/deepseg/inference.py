@@ -288,7 +288,7 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device):
     # for rootlets model (which has labels 'lvl1', 'lvl2', etc.), save the image directly without splitting
     is_rootlet_model = all((label == f"lvl{i}") for i, label in enumerate(labels.keys(), start=1))
     if is_rootlet_model:
-        targets = ["_seg"]
+        targets = ["_rootlets"]
         outputs = [img_out]
     # for the other multiclass models (SCI lesion/SC, mouse GM/WM, etc.), save 1 image per label
     else:
