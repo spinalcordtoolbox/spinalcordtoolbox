@@ -355,7 +355,6 @@ class AnalyzeLesion:
         """
         volume = np.sum(im_data) * p_lst[0] * p_lst[1] * p_lst[2]
         self.measure_pd.loc[idx, 'volume [mm3]'] = volume
-        printv(f'  Volume: {round(volume, 2)} mm^3', self.verbose, type='info')
 
     def _measure_axial_damage_ratio(self, im_data, p_lst, idx):
         """
@@ -894,16 +893,16 @@ class AnalyzeLesion:
                 atlas_data_dct[tract_id] = img_cur_copy.data
                 del img_cur
 
-        # iteration across each lesion to get the largest lesion
-        # TODO: this is just a temporary solution to get the largest lesion. This section can be merged with the for
-        #  loop below and volume of each lesion can be computed using the `self._measure_volume` function.
-        lesion_volumes = {}
+        # iterate across lesions to get the largest lesion for the midsagittal slice interpolation
         for lesion_label in label_lst:
             im_lesion_data_cur = np.copy(im_lesion_data == lesion_label)
-            lesion_volumes[lesion_label] = np.sum(im_lesion_data_cur) * p_lst[0] * p_lst[1] * p_lst[2]
+            label_idx = self.measure_pd[self.measure_pd.label == lesion_label].index
+            self._measure_volume(im_lesion_data_cur, p_lst, label_idx)
         # Get the index of the largest lesion
-        largest_lesion_idx = max(lesion_volumes, key=lesion_volumes.get)
-        # Get the midsagittal slice using the largest lesion
+        largest_lesion_idx = self.measure_pd.loc[pd.to_numeric(self.measure_pd['volume [mm3]']).idxmax()]['label']
+        printv(f'Largest lesion index: {largest_lesion_idx}', self.verbose, 'info')
+        # Get sagittal slices and compute weights to be used for the midsagittal slice interpolation
+        # NOTE: the interpolation will be done separately for each lesion in the for loop below
         im_lesion_data_largest_lesion = np.copy(im_lesion_data == largest_lesion_idx)
         self.midsagittal_slice_interpolation(im_lesion_data_largest_lesion)
 
@@ -928,7 +927,8 @@ class AnalyzeLesion:
                 self._measure_length_midsagittal_slice(im_lesion_data_cur, p_lst, label_idx)
                 self._measure_width_midsagittal_slice(im_lesion_data_cur, p_lst, label_idx)
                 self._measure_tissue_bridges(im_lesion_data_cur, p_lst, label_idx)
-            self._measure_volume(im_lesion_data_cur, p_lst, label_idx)
+            printv(f'  Volume: {round(self.measure_pd.loc[label_idx, "volume [mm3]"].values[0], 2)} mm^3',
+                   self.verbose, type='info')
 
             # compute lesion distribution for each lesion
             if self.path_template is not None:
