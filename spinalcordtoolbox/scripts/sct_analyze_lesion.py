@@ -616,20 +616,16 @@ class AnalyzeLesion:
         :param p_lst: list, pixel size of the lesion
         :param idx: int, index of the lesion
         """
-        # Interpolate the currently processed lesion; 3D --> 2D, dim=[AP, SI]
+        # Interpolate the currently processed lesion
         # NOTE: although we interpolate each lesion separately, the interpolation is always done for the same three
         # sagittal slices (self.interpolation_slices) for all lesions. This ensures that we measure all lesions from
         # the same midsagittal slice (in this case, interpolated slice, of course).
-        im_data_midsagittal = self._interpolate_values(im_lesion_data[self.interpolation_slices[0], :, :],
-                                                       im_lesion_data[self.interpolation_slices[1], :, :],
-                                                       im_lesion_data[self.interpolation_slices[2], :, :])
-        # Fetch a list of axial slice numbers that are nonzero in the interpolated mid-sagittal slice
-        nonzero_axial_slices = np.unique(np.where(im_data_midsagittal)[1])  # [1] -> SI
+        im_lesion_interpolated, nonzero_axial_slices = self._interpolate_lesion(im_lesion_data)
 
         lengths = []
         # Loop across SI dimension
         for axial_slice in nonzero_axial_slices:
-            array = im_data_midsagittal[:, axial_slice]  # 2D -> 1D; dim=[AP]
+            array = im_lesion_interpolated[:, axial_slice]  # 2D -> 1D; dim=[AP]
             # Compute the mean of nonzero values
             mean_nonzero = np.mean(array[array > 0])
             # Compute the length for a given axial slice when taking into account the angle correction.
@@ -681,21 +677,16 @@ class AnalyzeLesion:
         :param p_lst: list, pixel size of the lesion
         :param idx: int, index of the lesion
         """
-        # TODO: the code block below is the same as in `_measure_length_midsagittal_slice` --> reduce redundancy
-        # Interpolate the currently processed lesion; 3D --> 2D, dim=[AP, SI]
+        # Interpolate the currently processed lesion
         # NOTE: although we interpolate each lesion separately, the interpolation is always done for the same three
         # sagittal slices (self.interpolation_slices) for all lesions. This ensures that we measure all lesions from
         # the same midsagittal slice (in this case, interpolated slice, of course).
-        im_data_midsagittal = self._interpolate_values(im_lesion_data[self.interpolation_slices[0], :, :],
-                                                       im_lesion_data[self.interpolation_slices[1], :, :],
-                                                       im_lesion_data[self.interpolation_slices[2], :, :])
-        # Get a list of axial slice numbers that are nonzero in the interpolated mid-sagittal slice
-        nonzero_axial_slices = np.unique(np.where(im_data_midsagittal)[1])  # [1] -> SI
+        im_lesion_interpolated, nonzero_axial_slices = self._interpolate_lesion(im_lesion_data)
 
         # Iterate across axial slices to compute lesion width
         lesion_width_dict = {}
         for axial_slice in nonzero_axial_slices:
-            array = im_data_midsagittal[:, axial_slice]  # 2D -> 1D; dim=[AP]
+            array = im_lesion_interpolated[:, axial_slice]  # 2D -> 1D; dim=[AP]
             # Compute sum of nonzero values (as the pixels are floats, the sum is "weighted")
             lesion_width_dict[axial_slice] = np.sum(array[array > 0])
 
@@ -998,6 +989,22 @@ class AnalyzeLesion:
         return (self.interpolation_weights[0] * data1 +
                 self.interpolation_weights[1] * data2 +
                 self.interpolation_weights[2] * data3)
+
+    def _interpolate_lesion(self, im_lesion_data):
+        """
+        Interpolate the currently processed lesion
+        :param im_lesion_data: 3D numpy array, binary mask of the currently processed lesion
+        :return: 2D numpy array, interpolated lesion
+        :return: list, axial slices that are nonzero in the interpolated midsagittal slice
+        """
+        # Interpolate the three sagittal slices; 3D --> 2D, dim=[AP, SI]
+        im_lesion_interpolated = self._interpolate_values(im_lesion_data[self.interpolation_slices[0], :, :],
+                                                          im_lesion_data[self.interpolation_slices[1], :, :],
+                                                          im_lesion_data[self.interpolation_slices[2], :, :])
+        # Fetch a list of axial slice numbers that are nonzero in the interpolated midsagittal slice
+        nonzero_axial_slices = np.unique(np.where(im_lesion_interpolated)[1])  # [1] -> SI
+
+        return im_lesion_interpolated, nonzero_axial_slices
 
     def midsagittal_slice_interpolation(self, im_lesion_data):
         """
