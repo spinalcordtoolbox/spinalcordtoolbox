@@ -905,7 +905,7 @@ class AnalyzeLesion:
         largest_lesion_idx = max(lesion_volumes, key=lesion_volumes.get)
         # Get the midsagittal slice using the largest lesion
         im_lesion_data_largest_lesion = np.copy(im_lesion_data == largest_lesion_idx)
-        self.get_midsagittal_slice(im_lesion_data_largest_lesion)
+        self.midsagittal_slice_interpolation(im_lesion_data_largest_lesion)
 
         # iteration across each lesion to measure statistics
         for lesion_label in label_lst:
@@ -994,7 +994,7 @@ class AnalyzeLesion:
                 self.interpolation_weights[1] * data2 +
                 self.interpolation_weights[2] * data3)
 
-    def get_midsagittal_slice(self, im_lesion_data):
+    def midsagittal_slice_interpolation(self, im_lesion_data):
         """
         Get the midsagittal slice from the RPI-oriented image based on the following logic:
             1. Get center of mass in the z-axis (S-I direction) for the largest lesion. For example, slice 50.
