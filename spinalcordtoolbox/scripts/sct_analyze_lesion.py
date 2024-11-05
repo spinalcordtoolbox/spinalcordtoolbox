@@ -352,6 +352,9 @@ class AnalyzeLesion:
     def _measure_volume(self, im_data, p_lst, idx):
         """
         Measure the volume of the lesion
+        :param im_data: 3D numpy array, binary mask of the currently processed lesion
+        :param p_lst: list, pixel size of the lesion
+        :param idx: int, index of the currently processed lesion
         """
         volume = np.sum(im_data) * p_lst[0] * p_lst[1] * p_lst[2]
         self.measure_pd.loc[idx, 'volume [mm3]'] = volume
