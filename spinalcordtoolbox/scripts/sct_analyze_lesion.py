@@ -996,55 +996,74 @@ class AnalyzeLesion:
 
     def midsagittal_slice_interpolation(self, im_lesion_data):
         """
-        Get the midsagittal slice from the RPI-oriented image based on the following logic:
-            1. Get center of mass in the z-axis (S-I direction) for the largest lesion. For example, slice 50.
-            2. Take two axial slices above and below the lesion center of mass in the z-axis (S-I direction). For
-                example, an interval of slices 48 and 52 (i.e., 48, 49, 50, 51, 52).
-            3. For each of these slices (i.e., 48, 49, 50, 51, 52), compute the spinal cord center of mass in the x-axis
-            (R-L direction), for example:
-                    y_centermass(at z=48) = 110
-                    y_centermass(at z=49) = 111
-                    y_centermass(at z=50) = 112
-                    y_centermass(at z=51) = 112
-                    y_centermass(at z=52) = 116
-            4. Compute the mean across the slices of the spinal cord center of mass. For example, 112.2. Note that this
-            mean can be a float.
-            5. Interpolate the lesion and spinal cord masks using linear interpolation to the mean spinal cord center
-            of mass, i.e., 112.2. To do so, we do:
-                5a. Find the three closest slices to the mean spinal cord center of mass.
-                    For example, 112.2 --> 111, 112, 113.
-                5b. Calculate weights for each slice based on distance to the mean to be used for interpolation.
+        Mid-sagittal slice interpolation.
+        This function computes and stores:
+            - `self.interpolation_slices`: list of three sagittal slices used for interpolation
+            - `self.interpolation_weights`: list of three weights used for interpolation
+        Steps:
+            1. Find lesion center of mass in superior-inferior axis (z direction). For example, 211.
+            2. Define analysis range (2 axial slices above and below the lesion center of mass) around lesion center
+                mass in superior-inferior axis (z direction). For example, 209, 210, 211, 212, 213.
+            3. For each of these slices (i.e., 209, 210, 211, 212, 213):
+                a. Get axial slice of spinal cord at position z
+                b. Compute center of mass in right-left axis (x direction), for example:
+                        y_centermass(at z=209) = 8.6
+                        y_centermass(at z=210) = 8.6
+                        y_centermass(at z=211) = 8.9
+                        y_centermass(at z=212) = 8.8
+                        y_centermass(at z=213) = 9.6
+                c. Store x-coordinate of center of mass
+            4.	Calculate target position in right-left axis (x direction) for the interpolation, for example:
+                        x_target = Mean([8.6, 8.6, 8.9, 8.8, 8.6])
+                        x_target = 8.7
+            5. Interpolate the lesion:
+                a. Select three closest sagittal slices (right-left axis) to x_target, for example:
+                        slice_1 = 8; slice_2 = 9; slice_3 = 10
+                b. For each selected sagittal slice, calculate inverse distance weight, for example:
+                        d1 = |8.7 - 8| = 0.7
+                        d2 = |8.7 - 9| = 0.3
+                        d3 = |8.7 - 10| = 1.3
+                        w1 = 1 / 0.7 = 1.429
+                        w2 = 1 / 0.3 = 3.333
+                        w3 = 1 / 1.3 = 0.769
+                c. Normalize weights to sum to 1, for example:
+                        Total = 1.429 + 3.333 + 0.769 = 5.531
+                        w1_norm = 1.429/5.531 = 0.258
+                        w2_norm = 3.333/5.531 = 0.603
+                        w3_norm = 0.769/5.531 = 0.139
         :param im_lesion_data: 3D numpy array, RPI-oriented mask of the largest lesion
         """
         # Get the RPI-oriented spinal cord mask
         im_sc_data = Image(self.fname_sc).data
 
-        # 1. Get lesion center of mass in the z-axis (S-I direction)
-        lesion_center_of_mass_z = int(round(center_of_mass(im_lesion_data)[2]))   # [2] --> S-I
-        # 2. Take two axial slices above and below the lesion center of mass in the z-axis (S-I direction)
+        # 1. Find lesion center of mass in S-I axis (z direction)
+        z_center = int(round(center_of_mass(im_lesion_data)[2]))   # [2] --> S-I
+        # 2. Define analysis range (2 axial slices above and below the lesion center of mass) around lesion center
+        # mass in S-I axis (z direction)
         # TODO: try other number of slices above and below the lesion center of mass
-        z_range = np.arange(lesion_center_of_mass_z - 2, lesion_center_of_mass_z + 3)   # 5 slices in total
-        # 3: Compute the spinal cord center of mass in the x-axis (R-L direction) for each z slice
-        spinal_cord_center_of_mass_x = []
+        z_range = np.arange(z_center - 2, z_center + 3)   # 5 slices in total
+        # 3: For each of these slices, compute the spinal cord center of mass in the x-axis (R-L direction)
+        stored_x_coordinates = []
         for z in z_range:
             spinal_cord_slice = im_sc_data[:, :, z]     # RPI --> selecting in the 3rd dimension (SI) to get axial slice
             if np.any(spinal_cord_slice):  # Avoid empty slices
-                spinal_cord_center_of_mass_x.append(center_of_mass(spinal_cord_slice)[0])   # [0] --> R-L
-        # 4. Compute the mean of spinal cord center of mass (in the x-axis (R-L direction))
-        mean_spinal_cord_center_of_mass_x = np.mean(spinal_cord_center_of_mass_x)
-        self.interpolated_midsagittal_slice = mean_spinal_cord_center_of_mass_x     # store it to output in the output XLS file
-        # 5. Interpolate the lesion and cord masks using linear interpolation to the mean spinal cord center of mass
-        # 5a. Find the three closest slices to mean_spinal_cord_center_of_mass_x
-        center_slice = round(mean_spinal_cord_center_of_mass_x)    # e.g., 112.2 --> 112; 112.9 --> 113
-        slice1 = center_slice - 1       # e.g., for 112.2 --> 111; for 112.9 --> 112
-        slice2 = center_slice           # e.g., for 112.2 --> 112; for 112.9 --> 113
-        slice3 = center_slice + 1       # e.g., for 112.2 --> 113; for 112.9 --> 114
+                stored_x_coordinates.append(center_of_mass(spinal_cord_slice)[0])   # [0] --> R-L
+        # 4. Calculate target position in right-left axis (x direction) for the interpolation (mean of spinal cord
+        # center of mass (in the x-axis (R-L direction))
+        x_target = np.mean(stored_x_coordinates)    # e.g., for [8.6, 8.6, 8.9, 8.8, 9.6] --> 8.7
+        self.interpolated_midsagittal_slice = x_target     # store it to output in the output XLS file
+        # 5. Interpolate the lesion
+        # 5a. Select three closest sagittal slices (right-left axis) to x_target
+        center_slice = round(x_target)  # e.g., 8.7 --> 9
+        slice1 = center_slice - 1       # e.g., 8
+        slice2 = center_slice           # e.g., 9
+        slice3 = center_slice + 1       # e.g., 10
         self.interpolation_slices = [slice1, slice2, slice3]     # store it to be used for tissue bridges
-        # 5b. Calculate weights for each slice based on distance to the mean
+        # 5b. For each selected sagittal slice (i.e., 8, 9, 10), calculate inverse distance weight
         # Calculate distances to target position (mean_spinal_cord_center_of_mass_x)
-        d1 = abs(mean_spinal_cord_center_of_mass_x - slice1)    # e.g., for 112.2 --> |112.2 - 111.0| = 1.2
-        d2 = abs(mean_spinal_cord_center_of_mass_x - slice2)    # e.g., for 112.2 --> |112.2 - 112.0| = 0.2
-        d3 = abs(mean_spinal_cord_center_of_mass_x - slice3)    # e.g., for 112.2 --> |112.2 - 113.0| = 0.8
+        d1 = abs(x_target - slice1)    # e.g., |8.7 - 8| = 0.7
+        d2 = abs(x_target - slice2)    # e.g., |8.7 - 9| = 0.3
+        d3 = abs(x_target - slice3)    # e.g., |8.7 - 10| = 1.3
         # Convert distances to weights using inverse distance weighting
         if d1 == 0 or d2 == 0 or d3 == 0:
             # If target exactly matches one of the slice centers, use only that slice
@@ -1054,13 +1073,13 @@ class AnalyzeLesion:
             #   - Slices closer to our target position should have more influence
             #   - Slices farther away should have less influence
             #   - The influence decreases smoothly with distance
-            w1 = 1.0 / d1       # e.g., for 112.2 --> 1/1.2 = 0.833
-            w2 = 1.0 / d2       # e.g., for 112.2 --> 1/0.2 = 5.000
-            w3 = 1.0 / d3       # e.g., for 112.2 --> 1/0.8 = 1.250
+            w1 = 1.0 / d1       # e.g., 1 / 0.7 = 1.429
+            w2 = 1.0 / d2       # e.g., 1 / 0.3 = 3.333
+            w3 = 1.0 / d3       # e.g., 1 / 1.3 = 0.769
             # Normalize weights to sum to 1
-            total = w1 + w2 + w3       # e.g., for 112.2 --> 0.833 + 5.000 + 1.250 = 7.083
-            weights = [w1 / total, w2 / total, w3 / total]      # e.g., for 112.2 --> 0.833/7.083, 5.000/7.083, 1.250/7.083 --> 0.118, 0.707, 0.176
-            # As seen above, the middle slice (112) is the closest to the target position (112.2) and has the highest weight
+            total = w1 + w2 + w3       # e.g., 1.429 + 3.333 + 0.769 = 5.531
+            weights = [w1 / total, w2 / total, w3 / total]      # e.g., 1.429/5.531, 3.333/5.531, 0.769/5.531 --> 0.258, 0.603, 0.139
+            # As seen above, the middle slice (9) is the closest to the target position (8.7) and has the highest weight
         self.interpolation_weights = weights    # store it to be used by the `_interpolate_values` function
 
     def label_lesion(self):
