@@ -908,6 +908,9 @@ class AnalyzeLesion:
         # NOTE: the interpolation will be done separately for each lesion in the for loop below
         im_lesion_data_largest_lesion = np.copy(im_lesion_data == largest_lesion_idx)
         self.midsagittal_slice_interpolation(im_lesion_data_largest_lesion)
+        # NOTE: the interpolated midsagittal slice is the same for all lesions
+        printv(f'Interpolated midsagittal slice (same across lesions) = '
+               f'{round(self.interpolated_midsagittal_slice, 2)}', self.verbose, 'info')
 
         # iteration across each lesion to measure statistics
         for lesion_label in label_lst:
@@ -921,7 +924,6 @@ class AnalyzeLesion:
             # For the tissue bridges, we need the spinal cord segmentation to compute the width of spared tissue ventral
             # and dorsal to the spinal cord lesion
             if self.fname_sc is not None:
-                printv('  Interpolated midsagittal slice = ' + str(self.interpolated_midsagittal_slice), self.verbose, 'info')
                 self.measure_pd.loc[label_idx, 'interpolated_midsagittal_slice'] = self.interpolated_midsagittal_slice
                 self._measure_length(im_lesion_data_cur, p_lst, label_idx)
                 self._measure_width(im_lesion_data_cur, p_lst, label_idx)
