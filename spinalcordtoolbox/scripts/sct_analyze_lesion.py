@@ -643,8 +643,8 @@ class AnalyzeLesion:
 
         length_cur = np.sum(lengths)
 
-        self.measure_pd.loc[idx, 'length_midsagittal_slice [mm]'] = length_cur
-        printv(f'  (S-I) length in the midsagittal slice: {(np.round(length_cur, 2))} mm',
+        self.measure_pd.loc[idx, 'length_interpolated_midsagittal_slice [mm]'] = length_cur
+        printv(f'  (S-I) length in the interpolated midsagittal slice: {(np.round(length_cur, 2))} mm',
                self.verbose, type='info')
 
     def _measure_width(self, im_data, p_lst, idx):
@@ -708,8 +708,8 @@ class AnalyzeLesion:
         width_cur = max(width_cur_dict.values()) if width_cur_dict else 0
 
         # Save the width of the lesion along the anterior-posterior axis in the midsagittal slice
-        self.measure_pd.loc[idx, 'width_midsagittal_slice [mm]'] = width_cur
-        printv(f'  (A-P) width in the midsagittal slice: {str(np.round(width_cur, 2))} mm',
+        self.measure_pd.loc[idx, 'width_interpolated_midsagittal_slice [mm]'] = width_cur
+        printv(f'  (A-P) width in the interpolated midsagittal slice: {str(np.round(width_cur, 2))} mm',
                self.verbose, type='info')
 
     def _measure_diameter(self, im_data, p_lst, idx):
