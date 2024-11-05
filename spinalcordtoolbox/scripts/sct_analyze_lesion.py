@@ -322,10 +322,17 @@ class AnalyzeLesion:
         #     printv(f'  Minimum dorsal bridge width [mm]: {np.round(min_dorsal_bridge, 2)}', self.verbose, type='info')
         #     printv(f'  Minimum ventral bridge width [mm]: {np.round(min_ventral_bridge, 2)}', self.verbose, type='info')
 
+        # Total volume across lesions --> sum
         total_volume = np.round(np.sum(self.measure_pd['volume [mm3]']), 2)
+        # Composite length across lesions --> sum
+        total_length = np.round(np.sum(self.measure_pd['length [mm]']), 2)
+        # Take max width across lesions --> max
+        max_width = np.round(np.max(self.measure_pd['width [mm]']), 2)
         lesion_count = len(self.measure_pd['volume [mm3]'].values)
 
         printv('\nTotal volume = ' + str(total_volume) + ' mm^3', self.verbose, 'info')
+        printv('Total length = ' + str(total_length) + ' mm', self.verbose, 'info')
+        printv('Max width = ' + str(max_width) + ' mm', self.verbose, 'info')
         printv('Lesion count = ' + str(lesion_count), self.verbose, 'info')
 
     def reorient(self):
