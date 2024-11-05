@@ -151,7 +151,8 @@ class AnalyzeLesion:
         self.verbose = verbose
         self.wrk_dir = os.getcwd()
         # NOTE: the tissue bridges are NOT included in self.measure_keys because we do not want to average them
-        self.measure_keys = ['volume [mm3]', 'length [mm]', 'max_equivalent_diameter [mm]', 'max_axial_damage_ratio []']
+        self.measure_keys = ['volume [mm3]', 'length [mm]', 'width [mm]',
+                             'max_equivalent_diameter [mm]', 'max_axial_damage_ratio []']
         self.interpolated_midsagittal_slice = None      # target float sagittal slice number used for the interpolation. This number is based on the spinal cord center of mass.
         self.interpolation_slices = None                # three sagittal slices used for the interpolation
         self.interpolation_weights = None               # weights for the interpolation to weight the three sagittal slices
