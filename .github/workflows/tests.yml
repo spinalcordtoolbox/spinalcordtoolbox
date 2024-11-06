@@ -247,9 +247,9 @@ jobs:
         run: |
           ./.ci.sh -t
 
-  macos-12:
-   name: macOS 12.0 (Monterey)
-   runs-on: macos-12
+  macos-13:
+   name: macOS 13.0 (Ventura)
+   runs-on: macos-13
    steps:
      - uses: actions/checkout@v4
      - name: Install SCT
