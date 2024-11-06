@@ -49,7 +49,7 @@ Run the following command to compute the lesion statistics:
    - ``-qc`` : Directory for Quality Control reporting. QC report contains a figure for the tissue bridges
 
 :Output files:
-   - ``t2_lesion_analysis.xls`` : XLS file containing the morphometric measures
+   - ``t2_lesion_analysis.xlsx`` : XLSX file containing the morphometric measures
    - ``t2_lesion_analysis.pkl`` : Python Pickle file containing the morphometric measures
    - ``t2_lesion_label.nii.gz`` : 3D mask of the segmented lesion with lesion IDs (1, 2, 3, etc.)
 

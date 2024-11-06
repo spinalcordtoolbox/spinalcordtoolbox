@@ -229,4 +229,4 @@ def test_sct_analyze_lesion_with_template(dummy_lesion, tmp_path):
     sct_analyze_lesion.main(argv=['-m', path_lesion,
                                   '-f', str(tmp_path),
                                   '-ofolder', str(tmp_path)])
-    assert os.path.isfile(tmp_path / "lesion_analysis.xls")
+    assert os.path.isfile(tmp_path / "lesion_analysis.xlsx")
