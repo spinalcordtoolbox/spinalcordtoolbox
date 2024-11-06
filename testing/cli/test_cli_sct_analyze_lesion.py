@@ -135,8 +135,12 @@ def test_sct_analyze_lesion_matches_expected_dummy_lesion_measurements(dummy_les
                                   '-ofolder', str(tmp_path),
                                   '-qc', str(tmp_path / "qc")])
 
-    # Load analysis results from pickled pandas.Dataframe
+    # Test presence of output files
     _, fname, _ = extract_fname(path_lesion)
+    for suffix in ['_analysis.pkl', '_analysis.xlsx', '_label.nii.gz']:
+        assert os.path.isfile(tmp_path / f"{fname}{suffix}")
+
+    # Load analysis results from pickled pandas.Dataframe
     with open(tmp_path/f"{fname}_analysis.pkl", 'rb') as f:
         measurements = pickle.load(f)['measures']
 
@@ -186,8 +190,12 @@ def test_sct_analyze_lesion_matches_expected_dummy_lesion_measurements_without_s
                                   '-ofolder', str(tmp_path),
                                   '-qc', str(tmp_path / 'qc')])  # A warning will be printed because no SC seg
 
-    # Load analysis results from pickled pandas.Dataframe
+    # Test presence of output files
     _, fname, _ = extract_fname(path_lesion)
+    for suffix in ['_analysis.pkl', '_analysis.xlsx', '_label.nii.gz']:
+        assert os.path.isfile(tmp_path / f"{fname}{suffix}")
+
+    # Load analysis results from pickled pandas.Dataframe
     with open(tmp_path/f"{fname}_analysis.pkl", 'rb') as f:
         measurements = pickle.load(f)['measures']
 
@@ -229,4 +237,6 @@ def test_sct_analyze_lesion_with_template(dummy_lesion, tmp_path):
     sct_analyze_lesion.main(argv=['-m', path_lesion,
                                   '-f', str(tmp_path),
                                   '-ofolder', str(tmp_path)])
-    assert os.path.isfile(tmp_path / "lesion_analysis.xlsx")
+    _, fname, _ = extract_fname(path_lesion)
+    for suffix in ['_analysis.pkl', '_analysis.xlsx', '_label.nii.gz']:
+        assert os.path.isfile(tmp_path / f"{fname}{suffix}")
