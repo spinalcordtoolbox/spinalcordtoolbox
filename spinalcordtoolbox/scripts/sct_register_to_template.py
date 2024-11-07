@@ -60,7 +60,9 @@ step0 = Paramreg(step='0', type='label', dof='Tx_Ty_Tz_Rx_Ry_Rz_Sz')  # affine, 
 step1 = Paramreg(step='1', type='imseg', algo='centermassrot', rot_method='pcahog')
 step2 = Paramreg(step='2', type='seg', algo='bsplinesyn', metric='MeanSquares', iter='3', smooth='1', slicewise='0')
 paramregmulti = ParamregMultiStep([step0, step1, step2])
-step_rootlets = Paramreg(step='1', algo='bsplinesyn', metric='CC', iter='10x10x10',shrink='8x4x2', smooth='0x0x0', slicewise='0', deformation='0x0x1', gradStep='0.1')
+
+step_rootlets = Paramreg(step='1', metric='CC', iter='6x6x3',shrink='8x4x2', smooth='0x0x0', slicewise='0', deformation='0x0x1', gradStep='0.1')
+
 
 
 # PARSER
@@ -359,6 +361,8 @@ def main(argv: Sequence[str]):
         file_template_labeling = get_file_label(os.path.join(path_template, 'template'), id_label=10)
         file_template_labeling_rootlets = get_file_label(os.path.join(path_template, 'template'), id_label=16)
         fname_template_labeling_rootlets = os.path.join(path_template, 'template', file_template_labeling_rootlets)  # MAYBE MOVE DOWN
+        file_template_labeling_rootlets_midpoints = get_file_label(os.path.join(path_template, 'template'), id_label=17)
+        fname_template_labeling_rootlets_midpoints = os.path.join(path_template, 'template', file_template_labeling_rootlets_midpoints)  # MAYBE MOVE DOWN
     else:
         # spinal cord mask with discrete vertebral levels
         file_template_labeling = get_file_label(os.path.join(path_template, 'template'), id_label=7)
@@ -395,9 +399,8 @@ def main(argv: Sequence[str]):
 
     # check input labels
     labels = check_labels(fname_landmarks, label_type=label_type)  # TODO add check if rootlets
-
     level_alignment = False
-    if len(labels) > 2 and label_type in ['disc', 'spinal']:
+    if len(labels) > 2 and label_type in ['disc', 'spinal', 'rootlet']:
         level_alignment = True
     # TODO: add check that label len(label) is one for rootlets 
     path_tmp = tmp_create(basename="register-to-template")
@@ -412,6 +415,7 @@ def main(argv: Sequence[str]):
     if label_type == 'rootlet':
         ftmp_rootlets = 'rootlets.nii.gz'
         ftmp_template_rootlets = 'template_rootlets.nii.gz'
+        ftmp_template_rootlets_midpoints = 'template_rootlets_midpoints.nii.gz'
 
     # copy files to temporary folder
     printv('\nCopying input data to tmp folder and convert to nii...', verbose)
@@ -425,6 +429,8 @@ def main(argv: Sequence[str]):
         if label_type == 'rootlet':  # TODO find someting better that so many if cases
             Image(fname_rootlets, check_sform=True).save(os.path.join(path_tmp, ftmp_rootlets))
             Image(fname_template_labeling_rootlets, check_sform=True).save(os.path.join(path_tmp, ftmp_template_rootlets))
+            Image(fname_template_labeling_rootlets_midpoints, check_sform=True).save(os.path.join(path_tmp, ftmp_template_rootlets_midpoints))
+
 
     except ValueError as e:
         printv("\nImages could not be saved to temporary folder. Aborting registration.\n"
@@ -585,7 +591,9 @@ def main(argv: Sequence[str]):
                 sc_straight.use_straight_reference = True
                 sc_straight.discs_input_filename = ftmp_label
                 sc_straight.discs_ref_filename = ftmp_template_label
-
+                if label_type == 'rootlet':
+                    sc_straight.discs_input_filename = ftmp_label  # are rootlets mid points # TODO : change for other argument!!!
+                    sc_straight.discs_ref_filename = ftmp_template_rootlets_midpoints
             sc_straight.straighten()
             cache_save("straightening.cache", cache_sig)
 
@@ -667,6 +675,7 @@ def main(argv: Sequence[str]):
             '-o', add_suffix(ftmp_data, '_straightAffine'),
             '-d', ftmp_template,
             '-w', 'warp_curve2straightAffine.nii.gz',
+            '-x', 'linear',
             '-v', '0',
         ])
         ftmp_data = add_suffix(ftmp_data, '_straightAffine')
@@ -679,7 +688,7 @@ def main(argv: Sequence[str]):
             '-v', '0',
         ])
         ftmp_seg = add_suffix(ftmp_seg, '_straightAffine')
-
+        
         # Register spinal rootlets to template: TODO: maybe consider cropping before
         if label_type == 'rootlet':
 
@@ -703,12 +712,11 @@ def main(argv: Sequence[str]):
             dest_im = ftmp_template
             scr_regStep = add_suffix(src_im, '_regStep' + str(step_rootlets.step))
             metricSize = '4'  # TODO: maybe try 0
-            # TODO: condsider cropping before reg --> will maybe be faster
             
             cmd_rootlets = ['isct_antsRegistration',
                 '--dimensionality', '3',
-                '--transform', step_rootlets.algo + '[' + step_rootlets.gradStep
-                + ',26,0,3' + ']', # TODO: try 1,3 as in other sct_algo ',26,0,3'
+                '--transform', 'bsplinesyn' + '[' + step_rootlets.gradStep
+                + ',26,0,3' + ']',
                 '--metric', step_rootlets.metric + '[' + dest_im + ',' + src_im + ',1,' + metricSize + ']',
                 '--convergence', step_rootlets.iter,
                 '--shrink-factors', step_rootlets.shrink,
@@ -730,7 +738,8 @@ def main(argv: Sequence[str]):
             cmd_split = ['sct_image', '-i', 'step10Warp.nii.gz', '-mcs']
             status, output = run_proc(cmd_split, verbose, is_sct_binary=True)
             printv(output, verbose)
-            cmd_avg = "python ~/code/model-spinal-rootlets/utilities/reg2template/landmarks_nonlin.py -src step10Warp_Z.nii.gz -o step10Warp_Z_mean.nii.gz"
+            # TODO: include this script inside sct_image maybe?
+            cmd_avg = "python ~/code/rootlets-informed-reg2template/average_z_warping_field.py -i step10Warp_Z.nii.gz -o step10Warp_Z_mean.nii.gz"
             status, output = run_proc(cmd_avg, verbose)
             printv(output, verbose)
             cmd_split = ['sct_image', '-i',
@@ -744,7 +753,7 @@ def main(argv: Sequence[str]):
                 '-i', ftmp_data,
                 '-o', add_suffix(ftmp_data, '_Rootlets'),
                 '-d', ftmp_template,
-                '-w', 'step10Warp_zmean.nii.gz',#'step10Warp.nii.gz',
+                '-w', 'step10Warp_zmean.nii.gz',
                 '-x', 'linear',
                 '-v', '0',
             ])
@@ -753,7 +762,7 @@ def main(argv: Sequence[str]):
                 '-i', ftmp_seg,
                 '-o', add_suffix(ftmp_seg, '_Rootlets'),
                 '-d', ftmp_template,
-                '-w', 'step10Warp_zmean.nii.gz',#'step10Warp.nii.gz',
+                '-w', 'step10Warp_zmean.nii.gz',
                 '-x', 'linear',
                 '-v', '0',
             ])
@@ -763,12 +772,11 @@ def main(argv: Sequence[str]):
                 '-i', ftmp_rootlets,
                 '-o', add_suffix(ftmp_rootlets, '_Rootlets'),
                 '-d', ftmp_template,
-                '-w', 'step10Warp_zmean.nii.gz',#'step10Warp.nii.gz',
-                '-x', 'nn',  #TODO to validate
+                '-w', 'step10Warp_zmean.nii.gz',
+                '-x', 'nn',
                 '-v', '0',
             ])
             ftmp_rootlets= add_suffix(ftmp_rootlets, '_Rootlets')
-
 
             printv('\nConcatenate transformations: curve --> straight --> affine --> rootlets', verbose)
             dimensionality = len(Image("template.nii").hdr.get_data_shape())
@@ -777,7 +785,7 @@ def main(argv: Sequence[str]):
                 str(dimensionality),
                 'warp_curve2straightAffine.nii.gz', # TODO: change for rootlets something to debug
                 '-R', 'template.nii',
-                'step10Warp_zmean.nii.gz',#'step10Warp.nii.gz',
+                'step10Warp_zmean.nii.gz',
                 'warp_curve2straightAffine.nii.gz',
             ]
             status, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
