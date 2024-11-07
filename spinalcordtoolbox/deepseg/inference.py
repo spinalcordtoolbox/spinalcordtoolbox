@@ -238,6 +238,9 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device):
         model_orientation = "RPI"
     elif "RegionBasedLesionSeg" in predictor.plans_manager.dataset_name:
         model_orientation = "AIL"
+    elif "msLesionAgnostic" in predictor.plans_manager.dataset_name:
+        # For model_seg_ms_lesion in release r20241101: https://github.com/ivadomed/ms-lesion-agnostic/releases/tag/r20241101
+        model_orientation = "RPI"
     else:
         model_orientation = "LPI"
 
