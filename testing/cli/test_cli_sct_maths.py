@@ -79,6 +79,38 @@ def test_sct_maths_symmetrize(dim, tmp_path):
                           (im_in.data + np.flip(im_in.data, axis=int(dim))) / 2.0)
 
 
+def test_arithmetic_mixed_dtype(tmp_path):
+    """Test whether arithmetic operations can be performed on images with different dtypes without crashing."""
+    # make a dummy integer image
+    path_im_int = str(tmp_path / "im_int.nii.gz")
+    Image(np.ones((2, 3, 4), dtype=int)).save(path_im_int)
+
+    # make a dummy floating point image
+    path_im_float = str(tmp_path / "im_float.nii.gz")
+    Image(np.ones((2, 3, 4), dtype=float)).save(path_im_float)
+
+    # output filename, will be overwritten several times
+    path_im_out = str(tmp_path / "im_out.nii.gz")
+
+    # for each operation, test various combinations
+    for op in ["-add", "-sub", "-mul", "-div"]:
+        sct_maths.main([
+            "-i", path_im_int,
+            op, path_im_float, path_im_int,
+            "-o", path_im_out,
+        ])
+        sct_maths.main([
+            "-i", path_im_int,
+            op, path_im_int, path_im_float,
+            "-o", path_im_out,
+        ])
+        sct_maths.main([
+            "-i", path_im_float,
+            op, path_im_int,
+            "-o", path_im_out,
+        ])
+
+
 def run_arithmetic_operation(tmp_path, dims, ops):
     """Generate some dummy data, then run -add/-sub/-mul/-div on the data."""
     assert len(dims) > 1  # dim[0] -> -i, dim[1:] -> ops

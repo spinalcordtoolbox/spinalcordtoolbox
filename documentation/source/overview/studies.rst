@@ -26,6 +26,12 @@ The following studies have used SCT:
 2024
 ----
 
+-  Combes *et al.* `Spiral volumetric optoacoustic tomography of reduced oxygen saturation in the spinal cord of M83 mouse model of Parkinson’s disease <https://doi.org/10.1007/s00259-024-06938-w>`_, **Eur. J. Nucl. Med. Mol. Imaging** 2024 
+-  Papinutto *et al.* `A simplified approach to define cervical vertebral levels in spinal cord MRI studies <https://doi.org/10.1111/jon.13240>`_, **J. Neuroimaging** 2024
+-  Dewey *et al.* `Super-Resolution in Clinically Available Spinal Cord MRIs Enables Automated Atrophy Analysis <https://doi.org/10.3174/ajnr.A8526>`_, **AJNR Am. J. Neuroradiol.** 2024
+-  Haynes *et al.* `Tract-specific magnetization transfer ratio provides insights into the severity of degenerative cervical myelopathy <https://doi.org/10.1038/s41393-024-01036-y>`_, **Spinal Cord** 2024
+-  Lebret *et al.* `Spinal cord blood perfusion deficit is associated with clinical impairment after spinal cord injury <https://doi.org/10.1089/neu.2024.0267>`_, **J. Neurotrauma** 2024
+-  Filimonova *et al.* `White matter spinal tracts impairment in patients with degenerative cervical myelopathy evaluated with the magnetization transfer saturation MRI technique <https://doi.org/10.1038/s41393-024-01025-1>`_, **Spinal Cord** 2024
 -  Emmenegger *et al.* `Progressive cervical cord atrophy parallels cognitive decline in Alzheimer’s disease <https://doi.org/10.1038/s41598-024-67389-9>`_, **Sci. Rep.** 2024
 -  Miscioscia *et al.* `The contribution of paramagnetic rim and cortical lesions to physical and cognitive disability at multiple sclerosis clinical onset: evaluating the power of MRI and OCT biomarkers <https://doi.org/10.1007/s00415-024-12622-8>`_, **J. Neurol.** 2024
 -  Li *et al.* `Contribution of changes in the spinal cord and brain to the onset and progression of hand clumsiness symptoms in cervical spondylotic myelopathy <https://doi.org/10.3171/2024.4.SPINE231238>`_, **J. Neurosurg. Spine** 2024

@@ -168,6 +168,8 @@ def segment_monai(path_img, tmpdir, predictor, device: torch.device):
     # define inference patch size and center crop size
     crop_size = (64, 192, -1)
     inference_roi_size = (64, 192, 320)
+    # NOTE: this is hard-coded to "edge" based on extensive experiments comparing "edge" vs "zero" padding
+    # at test-time.
     pad_mode = "edge"
 
     # define the dataset and dataloader
@@ -288,13 +290,11 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device):
     # for rootlets model (which has labels 'lvl1', 'lvl2', etc.), save the image directly without splitting
     is_rootlet_model = all((label == f"lvl{i}") for i, label in enumerate(labels.keys(), start=1))
     if is_rootlet_model:
-        targets = ["_seg"]
-        fnames_out = [fname_prediction]
-        logger.info(f"Saving results to: {fname_prediction}")
-        img_out.save(fname_prediction)
+        targets = ["_rootlets"]
+        outputs = [img_out]
     # for the other multiclass models (SCI lesion/SC, mouse GM/WM, etc.), save 1 image per label
     else:
-        targets, fnames_out = [], []
+        targets, outputs = [], []
         for label, label_values in labels.items():
             # Binarize data array by matching array values with label values
             # e.g. if `label_values == [1, 2]`, then for the data array, 0 -> False and 1,2 -> True
@@ -303,12 +303,16 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device):
             label_values = label_values if isinstance(label_values, list) else [label_values]      # convert to list
             bool_array = np.logical_or.reduce([img_out.data == int(val) for val in label_values])  # 'OR' each label val
             img_bin = Image(bool_array.astype(np.uint8), hdr=img_out.hdr)
-            # Save the image using the label name from the dataset.json file
             target = f"_{label}_seg"
-            fname_out = add_suffix(fname_prediction, target)
-            logger.info(f"Saving results to: {fname_out}")
-            img_bin.save(fname_out)
             targets.append(target)
-            fnames_out.append(fname_out)
+            outputs.append(img_bin)
+
+    # Save each image using the suffixes determined above
+    fnames_out = []
+    for target, img_out in zip(targets, outputs):
+        fname_out = add_suffix(fname_prediction, target)
+        logger.info(f"Saving results to: {fname_out}")
+        img_out.save(fname_out)
+        fnames_out.append(fname_out)
 
     return fnames_out, targets

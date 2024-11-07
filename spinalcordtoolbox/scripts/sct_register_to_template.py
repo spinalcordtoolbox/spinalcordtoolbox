@@ -85,7 +85,7 @@ def get_parser():
               sct_register_to_template -i data.nii.gz -s data_seg.nii.gz -l data_labels.nii.gz
               ```
 
-            If this default command does not produce satisfactory results, the `-param` argument should be tweaked according to the tips given here: https://spinalcordtoolbox.com/en/latest/user_section/command-line.html#sct-register-multimodal
+            If this default command does not produce satisfactory results, the `-param` argument should be tweaked according to the tips given here: https://spinalcordtoolbox.com/user_section/command-line.html#sct-register-multimodal
 
             The default registration method brings the subject image to the template, which can be problematic with highly non-isotropic images as it would induce large interpolation errors during the straightening procedure. Although the default method is recommended, you may want to register the template to the subject (instead of the subject to the template) by skipping the straightening procedure. To do so, use the parameter `-ref subject`. Example below:
 

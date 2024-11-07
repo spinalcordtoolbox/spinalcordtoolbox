@@ -4,18 +4,18 @@
 FSLeyes Integration
 *******************
 
-`FSLeyes <https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FSLeyes>`_
-is part of the larger `FSL <https://fsl.fmrib.ox.ac.uk/fsl/fslwiki>`_ package, which is a library
+`FSLeyes <https://fsl.fmrib.ox.ac.uk/fsl/docs/#/utilities/fsleyes>`_
+is part of the larger `FSL <https://fsl.fmrib.ox.ac.uk/fsl/docs/#/>`_ package, which is a library
 containing tools for FMRI, MRI, and DTI brain imaging data. ``FSLeyes`` is the image viewer for this package, and can
 be installed as either part of the ``FSL`` package, or as a standalone app.
 
-Previously, SCT provided instructions on how to install FSLeyes into the SCT environment. However, we now request that you install FSLeyes separately and manage the installation on your own. You can find installation instructions for FSLeyes at `this link <https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FSLeyes>`_.
+Previously, SCT provided instructions on how to install FSLeyes into the SCT environment. However, we now request that you install FSLeyes separately and manage the installation on your own. You can find installation instructions for FSLeyes at `this link <https://fsl.fmrib.ox.ac.uk/fsl/docs/#/utilities/fsleyes>`_.
 
 .. warning::
 
    If you choose to install FSLeyes via a complete FSL installation, you will need to update 'wxpython' (an internal package used by FSLeyes). This is because the version of 'wxpython' that comes with FSL is out of date (`more info here <https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3988#issuecomment-1373918661>`_).
 
-   To update, please run one of the the following commands (`depending on your FSL version <https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FSLeyes>`_):
+   To update, please run one of the the following commands (`depending on your FSL version <https://fsl.fmrib.ox.ac.uk/fsl/docs/#/utilities/fsleyes>`_):
 
    .. note:: The terminal commands in these instructions may require administrative privileges, depending on where you have installed FSL.
 

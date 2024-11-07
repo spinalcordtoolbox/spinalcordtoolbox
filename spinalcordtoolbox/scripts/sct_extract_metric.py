@@ -69,7 +69,7 @@ def get_parser():
             "\n"
             "The labels used by default are taken from the PAM50 template. To learn about the available PAM50 "
             "white/grey matter atlas labels and their corresponding ID values, please refer to: "
-            "https://spinalcordtoolbox.com/en/latest/overview/concepts/pam50.html#white-and-grey-matter-atlas-pam50-atlas\n"
+            "https://spinalcordtoolbox.com/overview/concepts/pam50.html#white-and-grey-matter-atlas-pam50-atlas\n"
             "\n"
             "To compute FA within labels 0, 2 and 3 within vertebral levels C2 to C7 using binary method:\n"
             "`sct_extract_metric -i dti_FA.nii.gz -l 0,2,3 -vert 2:7 -method bin`\n"
