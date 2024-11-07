@@ -792,6 +792,36 @@ def main(argv: Sequence[str]):
             if status != 0:
                 raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
 
+            # INVERSE WARPING FIELD
+           # warp_straight2curve.nii.gz
+                       # Average perslice warping field
+            cmd_split = ['sct_image', '-i', 'step10InverseWarp.nii.gz', '-mcs']
+            status, output = run_proc(cmd_split, verbose, is_sct_binary=True)
+            printv(output, verbose)
+            # TODO: include this script inside sct_image maybe?
+            cmd_avg = "python ~/code/rootlets-informed-reg2template/average_z_warping_field.py -i step10InverseWarp_Z.nii.gz -o step10InverseWarp_Z_mean.nii.gz"
+            status, output = run_proc(cmd_avg, verbose)
+            printv(output, verbose)
+            cmd_split = ['sct_image', '-i',
+                        'step10InverseWarp_X.nii.gz','step10InverseWarp_Y.nii.gz', 'step10InverseWarp_Z_mean.nii.gz',
+                        '-omc', '-o', 'step10InverseWarp_zmean.nii.gz']
+            status, output = run_proc(cmd_split, verbose, is_sct_binary=True)
+            printv(output, verbose)
+
+            # Concatenate: 
+            printv('\nConcatenate transformations: rootlets --> affine --> straight --> curve', verbose)
+            dimensionality = len(Image("data.nii").hdr.get_data_shape())
+            cmd = [
+                'isct_ComposeMultiTransform',
+                str(dimensionality),
+                'warp_straight2curve.nii.gz',
+                '-R', 'data.nii',
+                'step10Warp_zmean.nii.gz',
+                'warp_straight2curve.nii.gz',
+            ]
+            status, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
+            if status != 0:
+                raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
 
         """
         # Benjamin: Issue from Allan Martin, about the z=0 slice that is screwed up, caused by the affine transform.
@@ -867,10 +897,6 @@ def main(argv: Sequence[str]):
         if level_alignment:
             dimensionality = len(Image("data.nii").hdr.get_data_shape())
             cmd = ['isct_ComposeMultiTransform', f"{dimensionality}", 'warp_template2anat.nii.gz', '-R', 'data.nii', 'warp_straight2curve.nii.gz', warp_inverse]
-            status, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
-            if status != 0:
-                raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
-
         else:
             dimensionality = len(Image("data.nii").hdr.get_data_shape())
             cmd = [
@@ -882,9 +908,10 @@ def main(argv: Sequence[str]):
                 '-i', 'straight2templateAffine.txt', # TODO: fix with rootlets, won't consider rootlte ajustment
                 warp_inverse,
             ]
-            status, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
-            if status != 0:
-                raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
+        status, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
+        print(output)
+        if status != 0:
+            raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
 
     # register template->subject
     else:
