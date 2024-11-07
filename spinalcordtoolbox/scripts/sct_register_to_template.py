@@ -710,7 +710,6 @@ def main(argv: Sequence[str]):
             dest_im = ftmp_template
             scr_regStep = add_suffix(src_im, '_regStep' + str(step_rootlets.step))
             metricSize = '4'  # TODO: maybe try 0
-            # TODO: condsider cropping before reg --> will maybe be faster
             
             cmd_rootlets = ['isct_antsRegistration',
                 '--dimensionality', '3',
@@ -737,6 +736,7 @@ def main(argv: Sequence[str]):
             cmd_split = ['sct_image', '-i', 'step10Warp.nii.gz', '-mcs']
             status, output = run_proc(cmd_split, verbose, is_sct_binary=True)
             printv(output, verbose)
+            # TODO: include this script inside sct_image maybe?
             cmd_avg = "python ~/code/rootlets-informed-reg2template/average_z_warping_field.py -i step10Warp_Z.nii.gz -o step10Warp_Z_mean.nii.gz"
             status, output = run_proc(cmd_avg, verbose)
             printv(output, verbose)
@@ -751,7 +751,7 @@ def main(argv: Sequence[str]):
                 '-i', ftmp_data,
                 '-o', add_suffix(ftmp_data, '_Rootlets'),
                 '-d', ftmp_template,
-                '-w', 'step10Warp_zmean.nii.gz',#'step10Warp.nii.gz',
+                '-w', 'step10Warp_zmean.nii.gz',
                 '-x', 'linear',
                 '-v', '0',
             ])
@@ -760,7 +760,7 @@ def main(argv: Sequence[str]):
                 '-i', ftmp_seg,
                 '-o', add_suffix(ftmp_seg, '_Rootlets'),
                 '-d', ftmp_template,
-                '-w', 'step10Warp_zmean.nii.gz',#'step10Warp.nii.gz',
+                '-w', 'step10Warp_zmean.nii.gz',
                 '-x', 'linear',
                 '-v', '0',
             ])
@@ -770,12 +770,11 @@ def main(argv: Sequence[str]):
                 '-i', ftmp_rootlets,
                 '-o', add_suffix(ftmp_rootlets, '_Rootlets'),
                 '-d', ftmp_template,
-                '-w', 'step10Warp_zmean.nii.gz',#'step10Warp.nii.gz',
-                '-x', 'nn',  #TODO to validate
+                '-w', 'step10Warp_zmean.nii.gz',
+                '-x', 'nn',
                 '-v', '0',
             ])
             ftmp_rootlets= add_suffix(ftmp_rootlets, '_Rootlets')
-
 
             printv('\nConcatenate transformations: curve --> straight --> affine --> rootlets', verbose)
             dimensionality = len(Image("template.nii").hdr.get_data_shape())
@@ -784,7 +783,7 @@ def main(argv: Sequence[str]):
                 str(dimensionality),
                 'warp_curve2straightAffine.nii.gz', # TODO: change for rootlets something to debug
                 '-R', 'template.nii',
-                'step10Warp_zmean.nii.gz',#'step10Warp.nii.gz',
+                'step10Warp_zmean.nii.gz',
                 'warp_curve2straightAffine.nii.gz',
             ]
             status, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
