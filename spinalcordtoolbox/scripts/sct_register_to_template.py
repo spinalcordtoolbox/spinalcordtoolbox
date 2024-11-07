@@ -689,7 +689,7 @@ def main(argv: Sequence[str]):
         ])
         ftmp_seg = add_suffix(ftmp_seg, '_straightAffine')
         
-        # Register spinal rootlets to template: TODO: maybe consider cropping before
+        # Register spinal rootlets to template:
         if label_type == 'rootlet':
 
             # Apply transformation to rootlets and image
@@ -698,7 +698,7 @@ def main(argv: Sequence[str]):
                 '-o', add_suffix(ftmp_rootlets, '_straightAffine'),
                 '-d', ftmp_template,
                 '-w', 'warp_curve2straightAffine.nii.gz',
-                '-x', 'nn',  #TODO to validate
+                '-x', 'nn',
                 '-v', '0',
             ])
             ftmp_rootlets= add_suffix(ftmp_rootlets, '_straightAffine')
@@ -711,7 +711,7 @@ def main(argv: Sequence[str]):
             src_im = ftmp_data
             dest_im = ftmp_template
             scr_regStep = add_suffix(src_im, '_regStep' + str(step_rootlets.step))
-            metricSize = '4'  # TODO: maybe try 0
+            metricSize = '4'
             
             cmd_rootlets = ['isct_antsRegistration',
                 '--dimensionality', '3',
