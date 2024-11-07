@@ -25,15 +25,13 @@ Spinal cord segmentation
 
 .. list-table::
    :align: center
-   :widths: 25 25 25 25
+   :widths: 25 25 25
 
    * - |seg_sc_contrast_agnostic| ``seg_sc_contrast_agnostic``
      - |seg_lumbar_sc_t2w| ``seg_lumbar_sc_t2w``
      - |seg_sc_epi| ``seg_sc_epi``
-     - |ms_sc_mp2rage| ``ms_sc_mp2rage``
-   * - |mice_sc| ``mice_sc``
-     -
-     -
+   * - |ms_sc_mp2rage| ``ms_sc_mp2rage``
+     - |mice_sc| ``mice_sc``
      -
 
 
@@ -54,12 +52,14 @@ Gray matter segmentation
 
 .. list-table::
    :align: center
-   :widths: 25 25 25 25
+   :widths: 25 25 25
 
    * - |seg_gm_sc_7t_t2star| ``seg_gm_sc_7t_t2star``
      - |seg_exvivo_gm_wm_t2| ``seg_exvivo_gm_wm_t2``
      - |seg_mouse_gm_wm_t1w| ``seg_mouse_gm_wm_t1w``
-     - |mice_gm| ``mice_gm``
+   * - |mice_gm| ``mice_gm``
+     -
+     -
 
 
 Tumors/lesions
@@ -82,15 +82,13 @@ Tumors/lesions
 
 .. list-table::
    :align: center
-   :widths: 25 25 25 25
+   :widths: 25 25 25
 
    * - |seg_sc_lesion_t2w_sci| ``seg_sc_lesion_t2w_sci``
      - |seg_sc_ms_lesion_stir_psir| ``seg_sc_ms_lesion_stir_psir``
      - |seg_ms_lesion_mp2rage| ``seg_ms_lesion_mp2rage``
-     - |seg_tumor_edema_cavity_t1_t2| ``seg_tumor_edema_cavity_t1_t2``
-   * - |tumor_t2| ``tumor_t2``
-     -
-     -
+   * - |seg_tumor_edema_cavity_t1_t2| ``seg_tumor_edema_cavity_t1_t2``
+     - |tumor_t2| ``tumor_t2``
      -
 
 
@@ -102,12 +100,12 @@ Vertebrae
 
 .. list-table::
    :align: center
-   :widths: 25 25 25 25
+   :widths: 25 25 25
 
    * - |seg_spinal_rootlets_t2w| ``seg_spinal_rootlets_t2w``
      -
      -
-     -
+
 
 .. toctree::
    :hidden:
