@@ -109,6 +109,33 @@ def get_parser():
     return parser
 
 
+def isct_antsApplyTransforms(dimensionality,
+                             fname_input,
+                             fname_output,
+                             fname_reference,
+                             transforms,
+                             interpolation_args,
+                             verbose):
+    """
+    Wrapper for CLI binary that allows for pre/postprocessing steps.
+
+    Note: Most logic should still go in `sct_apply_transfo`, because our SCT
+    script is essentially one big wrapper script for the ANTs call. Only use
+    this wrapper to fix bugs in the binary itself, or to compensate for
+    missing behavior/options in the ANTs source code. This wrapper should more
+    or less function like the original binary (with only minor tweaks added).
+    """
+    run_proc(['isct_antsApplyTransforms',
+              '-d', dimensionality,
+              '-i', fname_input,
+              '-o', fname_output,
+              '-t'] + transforms +  # list of transforms
+             ['-r', fname_reference] +
+             interpolation_args,  # list of ['-n', interp_type]
+             verbose=verbose,
+             is_sct_binary=True)
+
+
 class Transform:
     def __init__(self, input_filename, fname_dest, output_filename, list_warp, list_warpinv=[], verbose=0, crop=0,
                  interp='spline', remove_temp_files=1, debug=0):
@@ -204,14 +231,15 @@ class Transform:
                 fname_src = fname_dilated_labels
 
             printv("\nApply transformation and resample to destination space...", verbose)
-            run_proc(['isct_antsApplyTransforms',
-                      '-d', dim,
-                      '-i', fname_src,
-                      '-o', fname_out,
-                      '-t'
-                      ] + fname_warp_list_invert + ['-r', fname_dest] + interp,
-                     verbose=verbose,
-                     is_sct_binary=True)
+            isct_antsApplyTransforms(
+                dimensionality=dim,
+                fname_input=fname_src,
+                fname_output=fname_out,
+                transforms=fname_warp_list_invert,
+                fname_reference=fname_dest,
+                interpolation_args=interp,
+                verbose=verbose,
+            )
 
         # if 4d, loop across the T dimension
         else:
@@ -250,14 +278,15 @@ class Transform:
                 file_data_split = 'data_T' + str(it).zfill(4) + '.nii'
                 file_data_split_reg = 'data_reg_T' + str(it).zfill(4) + '.nii'
 
-                status, output = run_proc(['isct_antsApplyTransforms',
-                                           '-d', '3',
-                                           '-i', file_data_split,
-                                           '-o', file_data_split_reg,
-                                           '-t',
-                                           ] + fname_warp_list_invert_tmp + [
-                    '-r', file_dest + ext_dest,
-                ] + interp, verbose, is_sct_binary=True)
+                isct_antsApplyTransforms(
+                    dimensionality='3',
+                    fname_input=file_data_split,
+                    fname_output=file_data_split_reg,
+                    transforms=fname_warp_list_invert_tmp,
+                    fname_reference=(file_dest + ext_dest),
+                    interpolation_args=interp,
+                    verbose=verbose,
+                )
 
             # Merge files back
             printv('\nMerge file back...', verbose)
