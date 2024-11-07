@@ -14,6 +14,8 @@ import functools
 from typing import Sequence
 import textwrap
 
+import numpy as np
+
 from spinalcordtoolbox.image import Image, generate_output_file, add_suffix
 from spinalcordtoolbox.cropping import ImageCropper
 from spinalcordtoolbox.math import dilate
@@ -125,6 +127,7 @@ def isct_antsApplyTransforms(dimensionality,
     missing behavior/options in the ANTs source code. This wrapper should more
     or less function like the original binary (with only minor tweaks added).
     """
+    dtype_in = Image(fname_input).data.dtype
     run_proc(['isct_antsApplyTransforms',
               '-d', dimensionality,
               '-i', fname_input,
@@ -134,6 +137,16 @@ def isct_antsApplyTransforms(dimensionality,
              interpolation_args,  # list of ['-n', interp_type]
              verbose=verbose,
              is_sct_binary=True)
+    # Preserve input datatype if output data can be safely cast to it
+    # Note: This is mostly relevant for integer input images + NearestNeighbour
+    #       interpolation, since ANTs will automatically cast to float, but
+    #       we usually want to preserve the integer datatype.
+    im_out = Image(fname_output)
+    if np.array_equal(im_out.data, im_out.data.astype(dtype_in)):
+        im_out.data = im_out.data.astype(dtype_in)
+        im_out.save(verbose=0)
+    # FIXME: Consider returning an `Image` type if the extra save/loads
+    #        add significant overhead to `sct_apply_transfo`.
 
 
 class Transform:
