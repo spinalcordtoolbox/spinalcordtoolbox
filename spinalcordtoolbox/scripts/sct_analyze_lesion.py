@@ -156,8 +156,8 @@ class AnalyzeLesion:
         self.measure_keys = ['volume [mm3]', 'length [mm]', 'width [mm]',
                              'max_equivalent_diameter [mm]', 'max_axial_damage_ratio []']
         self.interpolated_midsagittal_slice = None      # target float sagittal slice number used for the interpolation. This number is based on the spinal cord center of mass.
-        self.interpolation_slices = None                # three sagittal slices used for the interpolation
-        self.interpolation_weights = None               # weights for the interpolation to weight the three sagittal slices
+        self.interpolation_slices = None                # sagittal slices used for the interpolation
+        self.interpolation_factor = None                # factor used for the interpolation of sagittal slices
 
         if not set(np.unique(Image(fname_mask).data)) == set([0.0, 1.0]):
             if set(np.unique(Image(fname_mask).data)) == set([0.0]):
@@ -368,7 +368,7 @@ class AnalyzeLesion:
         # Interpolated tissue bridges
         interpolated_dorsal_bridge_width_mm = {}
         interpolated_ventral_bridge_width_mm = {}
-        # Loop across unique axial slices (S-I direction) to interpolate the tissue bridges from the three sagittal
+        # Loop across unique axial slices (S-I direction) to interpolate the tissue bridges from the two sagittal
         # slices. Note that here, we get axial slices with the lesion only for the sagittal slices used for the
         # interpolation, i.e., not for all sagittal slices containing the lesion.
         axial_slices = np.unique(tissue_bridges_df[tissue_bridges_df['sagittal_slice'].isin(self.interpolation_slices)]
@@ -380,7 +380,7 @@ class AnalyzeLesion:
             # Create a lookup series for the current axial slice
             dorsal_lookup = slice_data.set_index('sagittal_slice')['dorsal_bridge_width']
             ventral_lookup = slice_data.set_index('sagittal_slice')['ventral_bridge_width']
-            # Get widths for the three sagittal slices. If there is no bridge for given slices, use 0.
+            # Get widths for the two sagittal slices. If there is no bridge for given slices, use 0.
             dorsal_bridges = [dorsal_lookup.get(sag_slice, 0) for sag_slice in self.interpolation_slices]
             ventral_bridges = [ventral_lookup.get(sag_slice, 0) for sag_slice in self.interpolation_slices]
             # Interpolate tissue bridges
@@ -578,7 +578,7 @@ class AnalyzeLesion:
         :param idx: int, index of the lesion
         """
         # Interpolate the currently processed lesion
-        # NOTE: although we interpolate each lesion separately, the interpolation is always done for the same three
+        # NOTE: although we interpolate each lesion separately, the interpolation is always done for the same two
         # sagittal slices (self.interpolation_slices) for all lesions. This ensures that we measure all lesions from
         # the same midsagittal slice (in this case, interpolated slice, of course).
         im_lesion_interpolated, nonzero_axial_slices = self._interpolate_lesion(im_lesion_data)
@@ -639,7 +639,7 @@ class AnalyzeLesion:
         :param idx: int, index of the lesion
         """
         # Interpolate the currently processed lesion
-        # NOTE: although we interpolate each lesion separately, the interpolation is always done for the same three
+        # NOTE: although we interpolate each lesion separately, the interpolation is always done for the same two
         # sagittal slices (self.interpolation_slices) for all lesions. This ensures that we measure all lesions from
         # the same midsagittal slice (in this case, interpolated slice, of course).
         im_lesion_interpolated, nonzero_axial_slices = self._interpolate_lesion(im_lesion_data)
@@ -937,19 +937,17 @@ class AnalyzeLesion:
             # compute the angle between the normal vector of the plane and the vector z
             self.angles_sagittal[iz] = np.arccos(np.vdot(tangent_vect, np.array([0, 0, 1])))
 
-    def _interpolate_values(self, data1, data2, data3):
+    def _interpolate_values(self, data1, data2):
         """
-        Interpolate inputs using weighted interpolation.
+        Interpolate inputs using linear interpolation.
         Inputs can be either 2D numpy arrays (for interpolating slices) or single int64 (for interpolating tissue bridges).
         :param data1: 2D numpy array (slice 1) or single int64 (tissue bridge for slice 1)
         :param data2: 2D numpy array (slice 2) or single int64 (tissue bridge for slice 2)
-        :param data3: 2D numpy array (slice 3) or single int64 (tissue bridge for slice 3)
         :return: 2D numpy array (interpolated slice) or single float64 (interpolated tissue bridge)
         """
-        # Weighted sum of the three slices
-        return (self.interpolation_weights[0] * data1 +
-                self.interpolation_weights[1] * data2 +
-                self.interpolation_weights[2] * data3)
+
+        return (1 - self.interpolation_factor) * data1 + self.interpolation_factor * data2
+
 
     def _interpolate_lesion(self, im_lesion_data):
         """
@@ -958,10 +956,9 @@ class AnalyzeLesion:
         :return: 2D numpy array, interpolated lesion
         :return: list, axial slices that are nonzero in the interpolated midsagittal slice
         """
-        # Interpolate the three sagittal slices; 3D --> 2D, dim=[AP, SI]
+        # Interpolate the two sagittal slices; 3D --> 2D, dim=[AP, SI]
         im_lesion_interpolated = self._interpolate_values(im_lesion_data[self.interpolation_slices[0], :, :],
-                                                          im_lesion_data[self.interpolation_slices[1], :, :],
-                                                          im_lesion_data[self.interpolation_slices[2], :, :])
+                                                          im_lesion_data[self.interpolation_slices[1], :, :])
         # Fetch a list of axial slice numbers that are nonzero in the interpolated midsagittal slice
         nonzero_axial_slices = np.unique(np.where(im_lesion_interpolated)[1])  # [1] -> SI
 
@@ -971,8 +968,8 @@ class AnalyzeLesion:
         """
         Mid-sagittal slice interpolation.
         This function computes and stores:
-            - `self.interpolation_slices`: list of three sagittal slices used for interpolation
-            - `self.interpolation_weights`: list of three weights used for interpolation
+            - `self.interpolation_slices`: list of two sagittal slices used for interpolation
+            - `self.interpolation_factor`: float, interpolation factor
         Steps:
             1. Find lesion center of mass in superior-inferior axis (z direction). For example, 211.
             2. Define analysis range (2 axial slices above and below the lesion center of mass) around lesion center
@@ -990,20 +987,16 @@ class AnalyzeLesion:
                         x_target = Mean([8.6, 8.6, 8.9, 8.8, 8.6])
                         x_target = 8.7
             5. Interpolate the lesion:
-                a. Select three closest sagittal slices (right-left axis) to x_target, for example:
-                        slice_1 = 8; slice_2 = 9; slice_3 = 10
-                b. For each selected sagittal slice, calculate inverse distance weight, for example:
-                        d1 = |8.7 - 8| = 0.7
-                        d2 = |8.7 - 9| = 0.3
-                        d3 = |8.7 - 10| = 1.3
-                        w1 = 1 / 0.7 = 1.429
-                        w2 = 1 / 0.3 = 3.333
-                        w3 = 1 / 1.3 = 0.769
-                c. Normalize weights to sum to 1, for example:
-                        Total = 1.429 + 3.333 + 0.769 = 5.531
-                        w1_norm = 1.429/5.531 = 0.258
-                        w2_norm = 3.333/5.531 = 0.603
-                        w3_norm = 0.769/5.531 = 0.139
+                a. Select two closest sagittal slices (right-left axis) to x_target using floor and ceiling functions,
+                    for example:
+                        slice_1_idx = 8; slice_2_idx = 9
+                b. Compute interpolation factor, for example:
+                        factor = 8.7 – int(8.7)
+                        factor = 8.7 – 8.0
+                        factor = 0.7
+                c. Calculate the interpolated slice:
+                        interp_slice = (1 – 0.7) * slice_1 + 0.7 * slice_2
+                        (slice_1 and slice_2 are 2D arrays)
         :param im_lesion_data: 3D numpy array, RPI-oriented mask of the largest lesion
         """
         # Get the RPI-oriented spinal cord mask
@@ -1026,34 +1019,11 @@ class AnalyzeLesion:
         x_target = np.mean(stored_x_coordinates)    # e.g., for [8.6, 8.6, 8.9, 8.8, 9.6] --> 8.7
         self.interpolated_midsagittal_slice = x_target     # store it to output in the output XLS file
         # 5. Interpolate the lesion
-        # 5a. Select three closest sagittal slices (right-left axis) to x_target
-        center_slice = round(x_target)  # e.g., 8.7 --> 9
-        slice1 = center_slice - 1       # e.g., 8
-        slice2 = center_slice           # e.g., 9
-        slice3 = center_slice + 1       # e.g., 10
-        self.interpolation_slices = [slice1, slice2, slice3]     # store it to be used for tissue bridges
-        # 5b. For each selected sagittal slice (i.e., 8, 9, 10), calculate inverse distance weight
-        # Calculate distances to target position (mean_spinal_cord_center_of_mass_x)
-        d1 = abs(x_target - slice1)    # e.g., |8.7 - 8| = 0.7
-        d2 = abs(x_target - slice2)    # e.g., |8.7 - 9| = 0.3
-        d3 = abs(x_target - slice3)    # e.g., |8.7 - 10| = 1.3
-        # Convert distances to weights using inverse distance weighting
-        if d1 == 0 or d2 == 0 or d3 == 0:
-            # If target exactly matches one of the slice centers, use only that slice
-            weights = [1.0 if d == 0 else 0.0 for d in (d1, d2, d3)]
-        else:
-            # Calculate weights using inverse distance to ensure:
-            #   - Slices closer to our target position should have more influence
-            #   - Slices farther away should have less influence
-            #   - The influence decreases smoothly with distance
-            w1 = 1.0 / d1       # e.g., 1 / 0.7 = 1.429
-            w2 = 1.0 / d2       # e.g., 1 / 0.3 = 3.333
-            w3 = 1.0 / d3       # e.g., 1 / 1.3 = 0.769
-            # Normalize weights to sum to 1
-            total = w1 + w2 + w3       # e.g., 1.429 + 3.333 + 0.769 = 5.531
-            weights = [w1 / total, w2 / total, w3 / total]      # e.g., 1.429/5.531, 3.333/5.531, 0.769/5.531 --> 0.258, 0.603, 0.139
-            # As seen above, the middle slice (9) is the closest to the target position (8.7) and has the highest weight
-        self.interpolation_weights = weights    # store it to be used by the `_interpolate_values` function
+        slice1 = int(np.floor(x_target))     # e.g., 8
+        slice2 = int(np.ceil(x_target))      # e.g., 9
+        interpolation_factor = x_target - int(x_target)    # e.g., 8.7 - 8 = 0.7
+        self.interpolation_slices = [slice1, slice2]     # store it to be used for tissue bridges
+        self.interpolation_factor = interpolation_factor    # store it to be used by the `_interpolate_values` function
 
     def label_lesion(self):
         printv('\nLabel connected regions of the masked image...', self.verbose, 'normal')
