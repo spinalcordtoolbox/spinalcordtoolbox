@@ -60,7 +60,7 @@ step0 = Paramreg(step='0', type='label', dof='Tx_Ty_Tz_Rx_Ry_Rz_Sz')  # affine, 
 step1 = Paramreg(step='1', type='imseg', algo='centermassrot', rot_method='pcahog')
 step2 = Paramreg(step='2', type='seg', algo='bsplinesyn', metric='MeanSquares', iter='3', smooth='1', slicewise='0')
 paramregmulti = ParamregMultiStep([step0, step1, step2])
-step_rootlets = Paramreg(step='1', algo='bsplinesyn', metric='CC', iter='6x6x3',shrink='8x4x2', smooth='0x0x0', slicewise='0', deformation='0x0x1', gradStep='0.1')
+step_rootlets = Paramreg(step='1', metric='CC', iter='6x6x3',shrink='8x4x2', smooth='0x0x0', slicewise='0', deformation='0x0x1', gradStep='0.1')
 
 
 # PARSER
@@ -590,7 +590,7 @@ def main(argv: Sequence[str]):
                 sc_straight.discs_input_filename = ftmp_label
                 sc_straight.discs_ref_filename = ftmp_template_label
                 if label_type == 'rootlet':
-                    sc_straight.discs_input_filename = ftmp_label  # are rootlets mid points
+                    sc_straight.discs_input_filename = ftmp_label  # are rootlets mid points # TODO : change for other argument!!!
                     sc_straight.discs_ref_filename = ftmp_template_rootlets_midpoints
             sc_straight.straighten()
             cache_save("straightening.cache", cache_sig)
@@ -714,8 +714,8 @@ def main(argv: Sequence[str]):
             
             cmd_rootlets = ['isct_antsRegistration',
                 '--dimensionality', '3',
-                '--transform', step_rootlets.algo + '[' + step_rootlets.gradStep
-                + ',26,0,3' + ']', # TODO: try 1,3 as in other sct_algo ',26,0,3'
+                '--transform', 'bsplinesyn' + '[' + step_rootlets.gradStep
+                + ',26,0,3' + ']',
                 '--metric', step_rootlets.metric + '[' + dest_im + ',' + src_im + ',1,' + metricSize + ']',
                 '--convergence', step_rootlets.iter,
                 '--shrink-factors', step_rootlets.shrink,
