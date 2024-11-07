@@ -23,6 +23,14 @@ Spinal cord
 .. |mice_sc| image:: https://i.imgur.com/MaajGC2.png
    :target: deepseg/mice_sc.html
 
+Spinal cord segmentation can be performed by running the following sample command:
+
+.. code::
+
+   sct_deepseg -task seg_sc_contrast_agnostic -i input.nii.gz
+
+You can replace "``seg_sc_contrast_agnostic``" with any of the task names in the table below to perform different tasks. Click on a task below for more information.
+
 .. list-table::
    :align: center
    :widths: 25 25 25
@@ -49,6 +57,14 @@ Gray matter
 
 .. |mice_gm| image:: https://i.imgur.com/oooqyjh.png
    :target: deepseg/seg_mice_gm.html
+
+Gray matter segmentation can be performed by running the following sample command:
+
+.. code::
+
+   sct_deepseg -task seg_gm_sc_7t_t2star -i input.nii.gz
+
+You can replace "``seg_gm_sc_7t_t2star``" with any of the task names in the table below to perform different tasks. Click on a task below for more information.
 
 .. list-table::
    :align: center
@@ -80,6 +96,15 @@ Pathologies
 .. |tumor_t2| image:: https://i.imgur.com/CbYVizW.png
    :target: deepseg/seg_tumor_t2.html
 
+Pathology segmentation can be performed by running the following sample command:
+
+.. code::
+
+   sct_deepseg -task seg_sc_lesion_t2w_sci -i input.nii.gz
+
+You can replace "``seg_sc_lesion_t2w_sci``" with any of the task names in the table below to perform different tasks. Click on a task below for more information.
+
+
 .. list-table::
    :align: center
    :widths: 25 25 25
@@ -97,6 +122,13 @@ Other structures
 
 .. |seg_spinal_rootlets_t2w| image:: https://i.imgur.com/bQBFKVs.png
    :target: deepseg/seg_spinal_rootlets_t2w.html
+
+Rootlets segmentation can be performed by running the following sample command:
+
+.. code::
+
+   sct_deepseg -task seg_spinal_rootlets_t2w -i input.nii.gz
+
 
 .. list-table::
    :align: center
