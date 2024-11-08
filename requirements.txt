@@ -54,6 +54,7 @@ requirements-parser
 scipy
 scikit-image
 scikit-learn
+totalspineseg
 xlwt
 tqdm
 transforms3d
