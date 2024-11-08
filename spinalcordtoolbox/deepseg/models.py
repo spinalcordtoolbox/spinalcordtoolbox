@@ -18,6 +18,8 @@ from pathlib import Path
 from spinalcordtoolbox import download
 from spinalcordtoolbox.utils.sys import stylize, __deepseg_dir__
 
+from totalspineseg.init_inference import init_inference
+
 
 logger = logging.getLogger(__name__)
 
@@ -180,6 +182,13 @@ MODELS = {
          ],
          "description": "Segmentation of spinal cord MS lesions on MP2RAGE UNIT1 contrast",
          "contrasts": ["UNIT1"],
+         "thr": None,  # Images are already binarized
+         "default": False,
+     },
+    "totalspineseg": {
+         "url": [],
+         "description": "Instance segmentation of vertebrae, intervertebral discs (IVDs), spinal cord, and spinal canal on multi-contrasts MRI scans.",
+         "contrasts": ["any"],
          "thr": None,  # Images are already binarized
          "default": False,
      },
@@ -356,6 +365,13 @@ TASKS = {
                              'resolution, for images with another resolution divide 30/your_axial_resolution.',
          'url': 'https://github.com/ivadomed/model_seg_ms_mp2rage',
          'models': ['model_seg_ms_lesion_mp2rage']},
+    'totalspineseg':
+        {'description': 'Intervertebral discs labeling and vertebrae segmentation',
+         'long_description': 'TotalSpineSeg is a tool for automatic instance segmentation of all vertebrae, intervertebral discs (IVDs), '
+                             'spinal cord, and spinal canal in MRI images. It is robust to various MRI contrasts, acquisition orientations, ' 
+                             'and resolutions. The model used in TotalSpineSeg is based on nnU-Net as the backbone for training and inference.',
+         'url': 'https://github.com/neuropoly/totalspineseg',
+         'models': ['totalspineseg']},
 }
 
 
@@ -391,31 +407,35 @@ def install_model(name_model, custom_url=None):
     :return: None
     """
     logger.info("\nINSTALLING MODEL: {}".format(name_model))
-    url_field = MODELS[name_model]['url'] if not custom_url else [custom_url]  # [] -> mimic a list of mirror URLs
-    # List of mirror URLs corresponding to a single model
-    if isinstance(url_field, list):
-        model_urls = url_field
-        # Make sure to preserve the internal folder structure for nnUNet-based models (to allow re-use with 3D Slicer)
-        urls_used = download.install_data(model_urls, folder(name_model), dirs_to_preserve=("nnUNetTrainer",))
-    # Dict of lists, with each list corresponding to a different model seed for ensembling
+    # Check if model is totalspineseg
+    if name_model == 'totalspineseg':
+        init_inference(quiet=False)
     else:
-        if not isinstance(url_field, dict):
-            raise ValueError("Invalid url field in MODELS")
-        urls_used = {}
-        for seed_name, model_urls in url_field.items():
-            logger.info(f"\nInstalling '{seed_name}'...")
-            urls_used[seed_name] = download.install_data(model_urls,
+        url_field = MODELS[name_model]['url'] if not custom_url else [custom_url]  # [] -> mimic a list of mirror URLs
+        # List of mirror URLs corresponding to a single model
+        if isinstance(url_field, list):
+            model_urls = url_field
+            # Make sure to preserve the internal folder structure for nnUNet-based models (to allow re-use with 3D Slicer)
+            urls_used = download.install_data(model_urls, folder(name_model), dirs_to_preserve=("nnUNetTrainer",))
+        # Dict of lists, with each list corresponding to a different model seed for ensembling
+        else:
+            if not isinstance(url_field, dict):
+                raise ValueError("Invalid url field in MODELS")
+            urls_used = {}
+            for seed_name, model_urls in url_field.items():
+                logger.info(f"\nInstalling '{seed_name}'...")
+                urls_used[seed_name] = download.install_data(model_urls,
                                                          folder(os.path.join(name_model, seed_name)), keep=True)
-    # Write `source.json` (for model provenance / updating)
-    source_dict = {
-        'model_name': name_model,
-        'model_urls': urls_used,
-        # NB: If a custom URL is used, then it would just get overwritten as "out of date" when running the task
-        #     So, we add a flag to tell `sct_deepseg` *not* to reinstall the model if a custom URL was used.
-        'custom': bool(custom_url)
-    }
-    with open(os.path.join(folder(name_model), "source.json"), "w") as fp:
-        json.dump(source_dict, fp, indent=4)
+        # Write `source.json` (for model provenance / updating)
+        source_dict = {
+            'model_name': name_model,
+            'model_urls': urls_used,
+            # NB: If a custom URL is used, then it would just get overwritten as "out of date" when running the task
+            #     So, we add a flag to tell `sct_deepseg` *not* to reinstall the model if a custom URL was used.
+            'custom': bool(custom_url)
+        }
+        with open(os.path.join(folder(name_model), "source.json"), "w") as fp:
+            json.dump(source_dict, fp, indent=4)
 
 
 def install_default_models():
