@@ -183,6 +183,15 @@ MODELS = {
          "thr": None,  # Images are already binarized
          "default": False,
      },
+    "model_seg_canal_t2w": {
+        "url": [
+            "https://github.com/ivadomed/model-canal-seg/releases/download/r20241031/model-canal-seg_r20241030.zip"
+        ],
+        "description": "Segmentation of spinal canal on T2w contrast",
+        "contrasts": ["t2"],
+        "thr": None,  # Images are already binarized
+        "default": False,
+    },
 }
 
 
@@ -356,6 +365,12 @@ TASKS = {
                              'resolution, for images with another resolution divide 30/your_axial_resolution.',
          'url': 'https://github.com/ivadomed/model_seg_ms_mp2rage',
          'models': ['model_seg_ms_lesion_mp2rage']},
+    'model_seg_canal_t2w':
+        {'description': 'Segmentation of spinal canal on T2w contrast',
+         'long_description': 'This model segments the spinal canal on T2w contrast using a 3D nnUNet architecture.'
+                             'TODO: Abel',
+         'url': 'https://github.com/ivadomed/model-canal-seg',
+         'models': ['model_seg_canal_t2w']},
 }
 
 
