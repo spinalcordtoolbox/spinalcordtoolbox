@@ -191,7 +191,7 @@ MODELS = {
          "contrasts": ["any"],
          "thr": None,  # Images are already binarized
          "default": False,
-     },    
+     },
 }
 
 
