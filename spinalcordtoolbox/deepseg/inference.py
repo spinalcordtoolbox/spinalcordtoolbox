@@ -316,3 +316,8 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device):
         fnames_out.append(fname_out)
 
     return fnames_out, targets
+
+
+def segment_totalspineseg(input_filenames):
+
+    return
