@@ -17,7 +17,7 @@ import textwrap
 
 import numpy as np
 
-from spinalcordtoolbox.registration.core import register_wrapper, register
+from spinalcordtoolbox.registration.core import register_wrapper
 from spinalcordtoolbox.registration.algorithms import Paramreg, ParamregMultiStep
 from spinalcordtoolbox.registration.labeling import (add_dummy_orthogonal_labels, check_labels,
                                                      project_labels_on_spinalcord, resample_labels)
@@ -60,9 +60,7 @@ step0 = Paramreg(step='0', type='label', dof='Tx_Ty_Tz_Rx_Ry_Rz_Sz')  # affine, 
 step1 = Paramreg(step='1', type='imseg', algo='centermassrot', rot_method='pcahog')
 step2 = Paramreg(step='2', type='seg', algo='bsplinesyn', metric='MeanSquares', iter='3', smooth='1', slicewise='0')
 paramregmulti = ParamregMultiStep([step0, step1, step2])
-
-step_rootlets = Paramreg(step='1', metric='CC', iter='6x6x3',shrink='8x4x2', smooth='0x0x0', slicewise='0', deformation='0x0x1', gradStep='0.1')
-
+step_rootlets = Paramreg(step='1', metric='CC', iter='6x6x3', shrink='8x4x2', smooth='0x0x0', slicewise='0', deformation='0x0x1', gradStep='0.1')
 
 
 # PARSER
@@ -309,7 +307,7 @@ def main(argv: Sequence[str]):
         fname_rootlets = arguments.lrootlets
         label_type = 'rootlet'
         if arguments.ldisc is not None:
-            fname_landmarks  = arguments.ldisc
+            fname_landmarks = arguments.ldisc
         else:
             raise ValueError('Single disc label should be provided with rootlets labels.')
     elif arguments.ldisc is not None:
@@ -402,7 +400,7 @@ def main(argv: Sequence[str]):
     level_alignment = False
     if len(labels) > 2 and label_type in ['disc', 'spinal', 'rootlet']:
         level_alignment = True
-    # TODO: add check that label len(label) is one for rootlets 
+    # TODO: add check that label len(label) is one for rootlets
     path_tmp = tmp_create(basename="register-to-template")
 
     # set temporary file names
@@ -430,7 +428,6 @@ def main(argv: Sequence[str]):
             Image(fname_rootlets, check_sform=True).save(os.path.join(path_tmp, ftmp_rootlets))
             Image(fname_template_labeling_rootlets, check_sform=True).save(os.path.join(path_tmp, ftmp_template_rootlets))
             Image(fname_template_labeling_rootlets_midpoints, check_sform=True).save(os.path.join(path_tmp, ftmp_template_rootlets_midpoints))
-
 
     except ValueError as e:
         printv("\nImages could not be saved to temporary folder. Aborting registration.\n"
@@ -494,7 +491,6 @@ def main(argv: Sequence[str]):
         img_tmp_rootlets = Image(ftmp_rootlets).change_orientation("RPI")
         ftmp_rootlets = add_suffix(img_tmp_rootlets.absolutepath, "_rpi")
         img_tmp_rootlets.save(ftmp_rootlets, mutable=True)
-
 
     # Switch between modes: subject->template or template->subject
     if ref == 'template':
@@ -688,7 +684,7 @@ def main(argv: Sequence[str]):
             '-v', '0',
         ])
         ftmp_seg = add_suffix(ftmp_seg, '_straightAffine')
-        
+
         # Register spinal rootlets to template:
         if label_type == 'rootlet':
 
@@ -701,7 +697,7 @@ def main(argv: Sequence[str]):
                 '-x', 'nn',
                 '-v', '0',
             ])
-            ftmp_rootlets= add_suffix(ftmp_rootlets, '_straightAffine')
+            ftmp_rootlets = add_suffix(ftmp_rootlets, '_straightAffine')
 
             # Dilate rootlets masks:
             src_mask = Image(dilate(Image(ftmp_rootlets), size=3, shape='ball'), hdr=Image(ftmp_rootlets).hdr).save(add_suffix(ftmp_rootlets, '_dil'))
@@ -710,23 +706,22 @@ def main(argv: Sequence[str]):
             dest_mask = add_suffix(ftmp_template_rootlets, '_dil')
             src_im = ftmp_data
             dest_im = ftmp_template
-            scr_regStep = add_suffix(src_im, '_regStep' + str(step_rootlets.step))
             metricSize = '4'
-            
+
             cmd_rootlets = ['isct_antsRegistration',
-                '--dimensionality', '3',
-                '--transform', 'bsplinesyn' + '[' + step_rootlets.gradStep
-                + ',26,0,3' + ']',
-                '--metric', step_rootlets.metric + '[' + dest_im + ',' + src_im + ',1,' + metricSize + ']',
-                '--convergence', step_rootlets.iter,
-                '--shrink-factors', step_rootlets.shrink,
-                '--smoothing-sigmas', step_rootlets.smooth + 'mm',
-                '--restrict-deformation', step_rootlets.deformation,
-                '--output', '[step' + str(step_rootlets.step) + ',' + add_suffix(ftmp_data, '_Rootlets_alldir') + ']',
-                '--interpolation', 'linear',
-                '--masks', '[' + dest_mask + ',' + src_mask + ']',
-                '--verbose', ('1' if verbose >= 1 else '0'),
-                ]
+                            '--dimensionality', '3',
+                            '--transform', 'bsplinesyn' + '[' + step_rootlets.gradStep
+                            + ',26,0,3' + ']',
+                            '--metric', step_rootlets.metric + '[' + dest_im + ',' + src_im + ',1,' + metricSize + ']',
+                            '--convergence', step_rootlets.iter,
+                            '--shrink-factors', step_rootlets.shrink,
+                            '--smoothing-sigmas', step_rootlets.smooth + 'mm',
+                            '--restrict-deformation', step_rootlets.deformation,
+                            '--output', '[step' + str(step_rootlets.step) + ',' + add_suffix(ftmp_data, '_Rootlets_alldir') + ']',
+                            '--interpolation', 'linear',
+                            '--masks', '[' + dest_mask + ',' + src_mask + ']',
+                            '--verbose', ('1' if verbose >= 1 else '0'),
+                            ]
             printv('\nRegistering with rootlets masks in z...', verbose)
             printv(cmd_rootlets, verbose)
             status, output = run_proc(cmd_rootlets, verbose, is_sct_binary=True)
@@ -743,8 +738,8 @@ def main(argv: Sequence[str]):
             status, output = run_proc(cmd_avg, verbose)
             printv(output, verbose)
             cmd_split = ['sct_image', '-i',
-                        'step10Warp_X.nii.gz','step10Warp_Y.nii.gz', 'step10Warp_Z_mean.nii.gz',
-                        '-omc', '-o', 'step10Warp_zmean.nii.gz']
+                         'step10Warp_X.nii.gz', 'step10Warp_Y.nii.gz', 'step10Warp_Z_mean.nii.gz',
+                         '-omc', '-o', 'step10Warp_zmean.nii.gz']
             status, output = run_proc(cmd_split, verbose, is_sct_binary=True)
             printv(output, verbose)
 
@@ -767,7 +762,7 @@ def main(argv: Sequence[str]):
                 '-v', '0',
             ])
             ftmp_seg = add_suffix(ftmp_seg, '_Rootlets')
-            
+
             sct_apply_transfo.main(argv=[
                 '-i', ftmp_rootlets,
                 '-o', add_suffix(ftmp_rootlets, '_Rootlets'),
@@ -776,14 +771,14 @@ def main(argv: Sequence[str]):
                 '-x', 'nn',
                 '-v', '0',
             ])
-            ftmp_rootlets= add_suffix(ftmp_rootlets, '_Rootlets')
+            ftmp_rootlets = add_suffix(ftmp_rootlets, '_Rootlets')
 
             printv('\nConcatenate transformations: curve --> straight --> affine --> rootlets', verbose)
             dimensionality = len(Image("template.nii").hdr.get_data_shape())
             cmd = [
                 'isct_ComposeMultiTransform',
                 str(dimensionality),
-                'warp_curve2straightAffine.nii.gz', # TODO: change for rootlets something to debug
+                'warp_curve2straightAffine.nii.gz',
                 '-R', 'template.nii',
                 'step10Warp_zmean.nii.gz',
                 'warp_curve2straightAffine.nii.gz',
@@ -793,8 +788,7 @@ def main(argv: Sequence[str]):
                 raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
 
             # INVERSE WARPING FIELD
-           # warp_straight2curve.nii.gz
-                       # Average perslice warping field
+            # Average perslice warping field
             cmd_split = ['sct_image', '-i', 'step10InverseWarp.nii.gz', '-mcs']
             status, output = run_proc(cmd_split, verbose, is_sct_binary=True)
             printv(output, verbose)
@@ -803,12 +797,12 @@ def main(argv: Sequence[str]):
             status, output = run_proc(cmd_avg, verbose)
             printv(output, verbose)
             cmd_split = ['sct_image', '-i',
-                        'step10InverseWarp_X.nii.gz','step10InverseWarp_Y.nii.gz', 'step10InverseWarp_Z_mean.nii.gz',
-                        '-omc', '-o', 'step10InverseWarp_zmean.nii.gz']
+                         'step10InverseWarp_X.nii.gz', 'step10InverseWarp_Y.nii.gz', 'step10InverseWarp_Z_mean.nii.gz',
+                         '-omc', '-o', 'step10InverseWarp_zmean.nii.gz']
             status, output = run_proc(cmd_split, verbose, is_sct_binary=True)
             printv(output, verbose)
 
-            # Concatenate: 
+            # Concatenate:
             printv('\nConcatenate transformations: rootlets --> affine --> straight --> curve', verbose)
             dimensionality = len(Image("data.nii").hdr.get_data_shape())
             cmd = [
@@ -905,7 +899,7 @@ def main(argv: Sequence[str]):
                 'warp_template2anat.nii.gz',
                 '-R', 'data.nii',
                 'warp_straight2curve.nii.gz',
-                '-i', 'straight2templateAffine.txt', # TODO: fix with rootlets, won't consider rootlte ajustment
+                '-i', 'straight2templateAffine.txt',
                 warp_inverse,
             ]
         status, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
