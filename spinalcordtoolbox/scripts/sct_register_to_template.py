@@ -810,8 +810,8 @@ def main(argv: Sequence[str]):
                 str(dimensionality),
                 'warp_straight2curve.nii.gz',
                 '-R', 'data.nii',
-                'step10Warp_zmean.nii.gz',
                 'warp_straight2curve.nii.gz',
+                'step10Warp_zmean.nii.gz'
             ]
             status, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
             if status != 0:
