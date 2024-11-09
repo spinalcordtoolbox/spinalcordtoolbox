@@ -367,13 +367,13 @@ TASKS = {
          'models': ['model_seg_ms_lesion_mp2rage']},
     'model_seg_canal_t2w':
         {'description': 'Segmentation of spinal canal on T2w contrast',
-         'long_description':'This model segments the spinal canal, or in an anatomic definition the dural sac, on T2w contrast.'
-                            'Uses a 3D U-Net, trained with the nnUNetV2 framework. It is a single-class model outputting the binary canal segmentation.'
-                            'Training consisted of an active learning procedure, correcting segmentations with ITK Snap. Last training'
-                            'procedure can be found here : https://github.com/ivadomed/model-canal-seg/issues/14'
-                            'Images used present different resolutions, FOV, and pathologies. A script is added as post-processing to'
-                            'keep the largest connected component of the segmentation, since spinal canal is connected, to avoid'
-                            'false positives segmentations of other anatomical structures.', 
+         'long_description': 'This model segments the spinal canal, or in an anatomic definition the dural sac, on T2w contrast.'
+                             'Uses a 3D U-Net, trained with the nnUNetV2 framework. It is a single-class model outputting the binary canal segmentation.'
+                             'Training consisted of an active learning procedure, correcting segmentations with ITK Snap. Last training'
+                             'procedure can be found here : https://github.com/ivadomed/model-canal-seg/issues/14'
+                             'Images used present different resolutions, FOV, and pathologies. A script is added as post-processing to'
+                             'keep the largest connected component of the segmentation, since spinal canal is connected, to avoid'
+                             'false positives segmentations of other anatomical structures.',
          'url': 'https://github.com/ivadomed/model-canal-seg',
          'models': ['model_seg_canal_t2w']},
 }
