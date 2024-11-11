@@ -10,8 +10,10 @@ import os
 import shutil
 import time
 from pathlib import Path
+import psutil
 
 from ivadomed import inference as imed_inference
+from totalspineseg.inference import inference as tss_inference
 import nibabel as nib
 import numpy as np
 import torch
@@ -107,7 +109,11 @@ def segment_and_average_volumes(model_paths, input_filenames, options, use_gpu=F
 def segment_non_ivadomed(path_model, model_type, input_filenames, threshold, keep_largest, fill_holes_in_pred,
                          remove_small, use_gpu=False, remove_temp_files=True):
     # MONAI and NNUnet have similar structure, and so we use nnunet+inference functions with the same signature
-    if model_type == "monai":
+    # NB: For TotalSpineSeg, we don't need to create the network ourselves
+    if "totalspineseg" in path_model:
+        def create_net(pm, _): return pm  # just echo `path_model` back as 'net'
+        inference = segment_totalspineseg
+    elif model_type == "monai":
         create_net = ds_monai.create_nnunet_from_plans
         inference = segment_monai
     else:
@@ -318,6 +324,43 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device):
     return fnames_out, targets
 
 
-def segment_totalspineseg(input_filenames):
+def segment_totalspineseg(path_img, tmpdir, predictor, device):
+    # for totalspineseg, the 'predictor' is just the model path
+    path_model = predictor
 
-    return
+    # Copy the file to the temporary directory using shutil.copyfile
+    path_img_tmp = os.path.join(tmpdir, os.path.basename(path_img))
+    shutil.copyfile(path_img, path_img_tmp)
+    logger.info(f'Copied {path_img} to {path_img_tmp}')
+
+    # Create directory for nnUNet prediction
+    tmpdir_nnunet = os.path.join(tmpdir, 'nnUNet_prediction')
+    os.mkdir(tmpdir_nnunet)
+
+    tss_inference(
+        # totalspineseg expects pathlib.Path objects
+        input_path=Path(path_img_tmp),
+        output_path=Path(tmpdir_nnunet),
+        data_path=Path(path_model),
+        # totalspineseg expects the device type, not torch.device
+        device=device.type,
+        # The remaining args mimic the default arguments of totalspineseg's argparse
+        output_iso=False,
+        loc_path=None,
+        suffix="",
+        loc_suffix="",
+        step1_only=False,
+        max_workers=os.cpu_count(),
+        max_workers_nnunet=int(max(
+            min(os.cpu_count(),
+                psutil.virtual_memory().total / 2**30 // 8),
+            1
+        )),
+        quiet=False,
+    )
+    fnames_out, targets = [], []
+    for output_dirname in ["step1_canal", "step1_cord", "step1_levels", "step1_output", "step2_output"]:
+        fnames_out.append(os.path.join(tmpdir_nnunet, output_dirname, os.path.basename(path_img)))
+        targets.append(f"_{output_dirname}")
+
+    return fnames_out, targets
