@@ -153,6 +153,12 @@ def test_segment_nifti_softseg_error_with_fill_holes(tmp_path):
      ["_GM_seg", "_WM_seg"],
      'seg_mouse_gm_wm_t1w',
      0.5),
+    (sct_test_path('t2', 't2.nii.gz'),
+     [None, None, None, None, None],
+     't2_deepseg.nii.gz',
+     ["_step1_canal", "_step1_cord", "_step1_levels", "_step1_output", "_step2_output"],
+     'totalspineseg',
+     0),
 ])
 def test_segment_nifti_multiclass(fname_image, fnames_seg_manual, fname_out, suffixes, task, thr,
                                   tmp_path):
