@@ -90,6 +90,9 @@ Pathologies
 .. |seg_ms_lesion_mp2rage| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/ms_lesion_mp2rage.png
    :target: deepseg/seg_ms_lesion_mp2rage.html
 
+.. |seg_ms_lesion| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/ms_lesion.png
+   :target: deepseg/seg_ms_lesion.html
+
 .. |seg_tumor_edema_cavity_t1_t2| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/tumor_edema_cavity_t1_t2.png
    :target: deepseg/seg_tumor_edema_cavity_t1_t2.html
 
@@ -112,9 +115,9 @@ You can replace "``seg_sc_lesion_t2w_sci``" with any of the task names in the ta
    * - |seg_sc_lesion_t2w_sci| ``seg_sc_lesion_t2w_sci``
      - |seg_sc_ms_lesion_stir_psir| ``seg_sc_ms_lesion_stir_psir``
      - |seg_ms_lesion_mp2rage| ``seg_ms_lesion_mp2rage``
-   * - |seg_tumor_edema_cavity_t1_t2| ``seg_tumor_edema_cavity_t1_t2``
+   * - |seg_ms_lesion| ``seg_ms_lesion``
+     - |seg_tumor_edema_cavity_t1_t2| ``seg_tumor_edema_cavity_t1_t2``
      - |tumor_t2| ``tumor_t2``
-     -
 
 
 Other structures
@@ -155,6 +158,7 @@ Rootlets segmentation can be performed by running the following sample command:
    deepseg/seg_sc_lesion_t2w_sci
    deepseg/seg_sc_ms_lesion_stir_psir
    deepseg/seg_ms_lesion_mp2rage
+   deepseg/seg_ms_lesion
    deepseg/seg_tumor_edema_cavity_t1_t2
    deepseg/seg_tumor_t2
    deepseg/seg_spinal_rootlets_t2w
