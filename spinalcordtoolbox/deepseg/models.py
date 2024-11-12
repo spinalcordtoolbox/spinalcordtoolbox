@@ -365,7 +365,7 @@ TASKS = {
                              'resolution, for images with another resolution divide 30/your_axial_resolution.',
          'url': 'https://github.com/ivadomed/model_seg_ms_mp2rage',
          'models': ['model_seg_ms_lesion_mp2rage']},
-    'model_seg_canal_t2w':
+    'canal_t2w':
         {'description': 'Segmentation of spinal canal on T2w contrast',
          'long_description': 'This model segments the spinal canal, or in an anatomic definition the dural sac, on T2w contrast.'
                              'Uses a 3D U-Net, trained with the nnUNetV2 framework. It is a single-class model outputting the binary canal segmentation.'
