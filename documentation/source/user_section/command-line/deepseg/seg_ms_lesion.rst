@@ -1,6 +1,6 @@
 
                 
-seg_ms_lesion_mp2rage
+seg_ms_lesion
 =====================
                 
 .. argparse::
