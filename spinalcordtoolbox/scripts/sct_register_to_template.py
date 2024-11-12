@@ -172,7 +172,7 @@ def get_parser():
         """)  # noqa: E501 (line too long)
     )
     optional.add_argument(
-        '-lrootlets',
+        '-lrootlet',
         metavar=Metavar.file,
         help=textwrap.dedent("""
             Dorsal nerve rootlets from C2 to C8  Example: `anat_rootlets.nii.gz`
@@ -303,8 +303,8 @@ def main(argv: Sequence[str]):
     if arguments.l is not None:
         fname_landmarks = arguments.l
         label_type = 'body'
-    elif arguments.lrootlets is not None:
-        fname_rootlets = arguments.lrootlets
+    elif arguments.lrootlet is not None:
+        fname_rootlets = arguments.lrootlet
         label_type = 'rootlet'
         if arguments.ldisc is not None:
             fname_landmarks = arguments.ldisc
