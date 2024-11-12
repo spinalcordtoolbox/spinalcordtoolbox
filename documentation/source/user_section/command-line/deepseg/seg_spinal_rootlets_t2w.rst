@@ -8,4 +8,3 @@ seg_spinal_rootlets_t2w
    :prog: sct_deepseg -h
    :markdownhelp:
    :noepilog:
-                
