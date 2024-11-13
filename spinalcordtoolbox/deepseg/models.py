@@ -128,6 +128,15 @@ MODELS = {
         "contrasts": ["any"],
         "thr": 0.5,  # Softseg model -> threshold at 0.5
         "default": False,
+        "citation": textwrap.dedent("""
+                                    #######################################################################
+                                    Please cite the following paper when using the contrast-agnostic model:
+
+                                    Bédard*, S., Karthik*, E.N., Tsagkas, C., Pravatà, E., Granziera, C., Smith, A.C., Weber, K.A., & Cohen-Adad, J. (2023). 
+                                    Towards contrast-agnostic soft segmentation of the spinal cord. ArXiv, abs/2310.15402. https://arxiv.org/abs/2310.15402
+                                    #######################################################################
+                                """),
+                                    
     },
     "model_seg_sci_multiclass_sc_lesion_nnunet": {
         "url": [
@@ -475,6 +484,18 @@ def is_up_to_date(path_model):
         return False
     logger.info(f"Model '{model_name}' is up to date (Source: {actual_model_urls})")
     return True
+
+
+def get_citation_info(name_model):
+    """
+    Get citation information for a given model.
+
+    :param name_model: str: Name of model.
+    :return: str: Citation information.
+    """
+    if name_model not in MODELS:
+        raise ValueError(f"Model '{name_model}' not found in MODELS")
+    return MODELS[name_model].get('citation', None)
 
 
 def is_valid(path_models):

@@ -231,6 +231,10 @@ def main(argv: Sequence[str]):
     for name_model in name_models:
         # Check if this is an official model
         if name_model in list(models.MODELS.keys()):
+            # Fetch citation information for the model
+            citation = models.get_citation_info(name_model)
+            if citation:
+                printv(citation, verbose=verbose)
             # If it is, check if it is installed
             path_model = models.folder(name_model)
             path_models = models.find_model_folder_paths(path_model)
