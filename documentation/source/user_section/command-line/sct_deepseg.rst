@@ -135,7 +135,25 @@ Rootlets segmentation can be performed by running the following sample command:
    :widths: 25 25 25
 
    * - |seg_spinal_rootlets_t2w| ``seg_spinal_rootlets_t2w``
+     - 
      -
+
+.. |canal_t2w| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/spinal_canal_t2.png
+   :target: deepseg/canal_t2w.html
+
+Spinal Canal segmentation can be performed by running the following sample command:
+
+.. code::
+
+   sct_deepseg -task canal_t2w -i input.nii.gz
+
+
+.. list-table::
+   :align: center
+   :widths: 25 25 25
+
+   * - |canal_t2w| ``canal_t2w``
+     - 
      -
 
 
@@ -158,3 +176,4 @@ Rootlets segmentation can be performed by running the following sample command:
    deepseg/seg_tumor_edema_cavity_t1_t2
    deepseg/seg_tumor_t2
    deepseg/seg_spinal_rootlets_t2w
+   deepseg/canal_t2w

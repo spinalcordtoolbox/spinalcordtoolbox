@@ -8,4 +8,3 @@ canal_t2w
    :prog: sct_deepseg -h
    :markdownhelp:
    :noepilog:
-                
