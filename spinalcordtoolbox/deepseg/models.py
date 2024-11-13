@@ -122,7 +122,7 @@ MODELS = {
     #       - Binarization is applied within SCT code
     "model_seg_sc_contrast_agnostic_softseg_monai": {
         "url": [
-            "https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/releases/download/v2.5/model_contrast-agnostic_20240930-1002.zip"
+            "https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/releases/download/r20241113/model_contrast_agnostic_20241018-0508.zip"
         ],
         "description": "Spinal cord segmentation agnostic to MRI contrasts using MONAI-based nnUNet model",
         "contrasts": ["any"],
