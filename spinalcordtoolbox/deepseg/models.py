@@ -132,11 +132,10 @@ MODELS = {
                                     #######################################################################
                                     Please cite the following paper when using the contrast-agnostic model:
 
-                                    Bédard*, S., Karthik*, E.N., Tsagkas, C., Pravatà, E., Granziera, C., Smith, A.C., Weber, K.A., & Cohen-Adad, J. (2023). 
+                                    Bédard*, S., Karthik*, E.N., Tsagkas, C., Pravatà, E., Granziera, C., Smith, A.C., Weber, K.A., & Cohen-Adad, J. (2023).
                                     Towards contrast-agnostic soft segmentation of the spinal cord. ArXiv, abs/2310.15402. https://arxiv.org/abs/2310.15402
                                     #######################################################################
                                 """),
-                                    
     },
     "model_seg_sci_multiclass_sc_lesion_nnunet": {
         "url": [
