@@ -236,9 +236,9 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device):
     # Check if predictor.dataset_json['orientation'] key exists, if so, read the orientation from there
     # NOTE: the 'orientation' key-value pair needs to be manually added to the dataset.json file
     # TODO: document this on our intranet (https://intranet.neuro.polymtl.ca/data/deeplearning-models.html#packaging-models)
-    if 'orientation' in predictor.dataset_json:
-        model_orientation = predictor.dataset_json['orientation']
-        print(f"Model orientation (based on dataset.json): {model_orientation}")
+    if 'image_orientation' in predictor.dataset_json:
+        model_orientation = predictor.dataset_json['image_orientation']
+        print(f"Orientation (based on dataset.json): {model_orientation}")
     else:
         if "SCI" in predictor.plans_manager.dataset_name:
             model_orientation = "RPI"
