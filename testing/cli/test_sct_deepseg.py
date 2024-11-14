@@ -69,7 +69,6 @@ def test_model_dict():
      't2_seg_deepseg.nii.gz',
      'seg_ms_lesion',
      None),
-
 ])
 def test_segment_nifti_binary_seg(fname_image, fname_seg_manual, fname_out, task, thr, tmp_path):
     """
