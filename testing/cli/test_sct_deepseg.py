@@ -64,7 +64,7 @@ def test_model_dict():
      't2_seg_deepseg.nii.gz',
      'seg_ms_lesion_mp2rage',
      None),
-    (sct_test_path('t2', 't2.nii.gz'), 
+    (sct_test_path('t2', 't2.nii.gz'),
      None, # no ground truth, just test if it runs
      't2_seg_deepseg.nii.gz',
      'seg_ms_lesion',
