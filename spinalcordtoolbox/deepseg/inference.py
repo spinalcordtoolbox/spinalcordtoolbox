@@ -240,9 +240,7 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device):
         model_orientation = predictor.dataset_json['image_orientation']
         print(f"Orientation (based on dataset.json): {model_orientation}")
     else:
-        if "SCI" in predictor.plans_manager.dataset_name:
-            model_orientation = "RPI"
-        elif "RegionBasedLesionSeg" in predictor.plans_manager.dataset_name:
+        if "RegionBasedLesionSeg" in predictor.plans_manager.dataset_name:
             model_orientation = "AIL"
         else:
             model_orientation = "LPI"
