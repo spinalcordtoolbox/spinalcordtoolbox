@@ -140,7 +140,7 @@ def isct_antsApplyTransforms(dimensionality,
     # counter ANTs behavior of always outputting float64 images
     im_out = Image(fname_output)
     input_is_int = issubclass(Image(fname_input).data.dtype.type, np.integer)
-    if input_is_int and 'NearestNeighbour' in interpolation_args:
+    if input_is_int and 'NearestNeighbor' in interpolation_args:
         im_out.data = im_out.data.astype(dtype_in)
         im_out.save(verbose=0)
     # FIXME: Consider returning an `Image` type if the extra save/loads
