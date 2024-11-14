@@ -238,7 +238,7 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device):
     # TODO: document this on our intranet (https://intranet.neuro.polymtl.ca/data/deeplearning-models.html#packaging-models)
     if 'image_orientation' in predictor.dataset_json:
         model_orientation = predictor.dataset_json['image_orientation']
-        print(f"Model orientation (based on dataset.json): {model_orientation}")
+        print(f"Orientation (based on dataset.json): {model_orientation}")
     else:
         if "SCI" in predictor.plans_manager.dataset_name:
             model_orientation = "RPI"
