@@ -14,8 +14,6 @@ import functools
 from typing import Sequence
 import textwrap
 
-import numpy as np
-
 from spinalcordtoolbox.image import Image, generate_output_file, add_suffix
 from spinalcordtoolbox.cropping import ImageCropper
 from spinalcordtoolbox.math import dilate
