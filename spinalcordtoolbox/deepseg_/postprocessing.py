@@ -179,6 +179,31 @@ def keep_largest_object(z_slice_bin, x_cOm, y_cOm):
     return z_slice_bin
 
 
+def keep_largest_object_3d(vol_bin):
+    """
+    Keep the largest connected object in a 3D binary volume.
+    Fills small holes and removes smaller connected objects.
+
+    :param vol_bin: np.ndarray (3D): Input binary segmentation volume.
+    :return: np.ndarray (3D): Processed binary segmentation volume.
+    """
+    # Ensure input is a 3D array
+    if vol_bin.ndim != 3:
+        raise ValueError("Input volume must be a 3D array.")
+
+    # Label connected components in the 3D volume
+    labeled_obj, num_obj = label(vol_bin)
+
+    if num_obj > 1:
+        # If no center of mass is provided, keep the largest connected component
+        largest_obj_idx = np.bincount(labeled_obj.flat)[1:].argmax() + 1
+
+        # Remove all other connected components
+        vol_bin[labeled_obj != largest_obj_idx] = 0
+
+    return vol_bin
+
+
 def fill_holes(predictions, structure=None):
     """Fill holes in the predictions using a given structuring element.
     Note: This function only works for binary segmentation.

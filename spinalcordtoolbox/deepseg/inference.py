@@ -21,7 +21,7 @@ from monai.inferers import sliding_window_inference
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname
 from spinalcordtoolbox.image import Image, get_orientation, add_suffix
 from spinalcordtoolbox.math import binarize, remove_small_objects
-from spinalcordtoolbox.deepseg_.postprocessing import keep_largest_object, fill_holes
+from spinalcordtoolbox.deepseg_.postprocessing import keep_largest_object, fill_holes, keep_largest_object_3d
 
 import spinalcordtoolbox.deepseg.monai as ds_monai
 import spinalcordtoolbox.deepseg.nnunet as ds_nnunet
@@ -291,6 +291,10 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device):
         logger.info(f'Reorientation to original orientation {orig_orientation} done.')
 
     labels = {k: v for k, v in predictor.dataset_json['labels'].items() if k != 'background'}
+    # for the canal model, keep only the largest object
+    if 'canal_seg' in labels.keys():
+        img_out.data = keep_largest_object_3d(img_out.data)
+        logger.info('Keeping the largest component done.')
     # for rootlets model (which has labels 'lvl1', 'lvl2', etc.), save the image directly without splitting
     is_rootlet_model = all((label == f"lvl{i}") for i, label in enumerate(labels.keys(), start=1))
     if is_rootlet_model:
