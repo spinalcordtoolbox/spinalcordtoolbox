@@ -149,7 +149,7 @@ def _dilate_point_labels(data, footprint):
         data_start = data_coords - pre_distances
         fp_start = fp_center - pre_distances
 
-        post_distances = np.min(data_shape - data_coords, fp_shape - fp_center)
+        post_distances = np.minimum(data_shape - data_coords, fp_shape - fp_center)
         data_stop = data_coords + post_distances
         fp_stop = fp_center + post_distances
 
