@@ -132,8 +132,8 @@ def _dilate_point_labels(data, footprint):
     fp_shape = np.array(footprint.shape)
 
     # For odd-length dimensions, the center of the footprint is unique.
-    # For even-length dimensions, we round down.
-    fp_center = (fp_shape - 1) // 2
+    # For even-length dimensions, we round up.
+    fp_center = (fp_shape - 1 + 1) // 2
 
     data_out = np.zeros_like(data)
     for data_coords in np.argwhere(data):
