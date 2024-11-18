@@ -1162,8 +1162,12 @@ def change_orientation(im_src, orientation, im_dst=None, inverse=False):
         im_src_data.shape)
     im_dst_aff = np.matmul(im_src_aff, aff)
 
+    # NB: When setting the xforms, the qform will be made orthogonal (to meet NIfTI1 requirements),
+    #     while the sform won't. Since im_dst_aff doesn't always equal orthogonal(im_dst_aff), this
+    #     could introduce a discrepancy. So, we first set the qform, then we set the sform to the
+    #     qform (i.e. orthogonal(im_dst_aff)), which ensures that the two matrices are identical.
     im_dst.header.set_qform(im_dst_aff)
-    im_dst.header.set_sform(im_dst_aff)
+    im_dst.header.set_sform(im_dst.header.get_qform())
     im_dst.header.set_data_shape(data.shape)
     im_dst.data = data
 
