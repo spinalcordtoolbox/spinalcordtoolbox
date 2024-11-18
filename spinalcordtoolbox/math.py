@@ -145,7 +145,7 @@ def _dilate_point_labels(data, footprint):
         # truncated version of the footprint. These formulas compute the
         # adjusted slice start and stop coordinates in the data array, and in
         # the footprint array.
-        pre_distances = np.min(data_coords, fp_center)
+        pre_distances = np.minimum(data_coords, fp_center)
         data_start = data_coords - pre_distances
         fp_start = fp_center - pre_distances
 
