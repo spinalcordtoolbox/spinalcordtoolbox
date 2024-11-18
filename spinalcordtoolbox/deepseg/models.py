@@ -189,7 +189,7 @@ MODELS = {
 # List of task. The convention for task names is: action_(animal)_region_(contrast)
 # Regions could be: sc, gm, lesion, tumor
 CROP_MESSAGE = (
-    'To crop the data you can first segment the spinal cord using the contrast agnostic model, This could be '
+    'To crop the data you can first segment the spinal cord using the contrast agnostic model. This could be '
     'done using: "sct_deepseg -i IMAGE -task seg_sc_contrast_agnostic -o IMAGE_sc", then crop the '
     'image with 30 mm of dilation on axial orientation around the spinal cord. This could be done using: '
     '"sct_crop_image -i IMAGE -m IMAGE_sc -dilate 30x30x5". Note that 30 is only for 1mm isotropic '
