@@ -183,6 +183,15 @@ MODELS = {
          "thr": None,  # Images are already binarized
          "default": False,
      },
+    "model_seg_ms_sc_lesion_bavaria_quebec_nnunet": {
+        "url": [
+            "https://github.com/ivadomed/model-seg-ms-axial-t2w/releases/download/r20241111/model_bavaria_quebec_axial_t2w_ms.zip"
+        ],
+        "description": "Intramedullary MS lesion and spinal cord segmentation in Axial T2w MRI",
+        "contrasts": ["t2"],
+        "thr": None,  # Images are already binarized when splitting into sc-seg + lesion-seg
+        "default": False,
+    },
 }
 
 
@@ -356,6 +365,18 @@ TASKS = {
                              'resolution, for images with another resolution divide 30/your_axial_resolution.',
          'url': 'https://github.com/ivadomed/model_seg_ms_mp2rage',
          'models': ['model_seg_ms_lesion_mp2rage']},
+    'seg_sc_ms_lesion_t2w':
+        {'description': 'Intramedullary MS lesion and spinal cord segmentation in Axial T2w MRI',
+         'long_description': 'This MS lesion segmentation uses a 2D U-Net '
+                             'architecture, and was trained with the nnUNetV2 framework. The model outputs '
+                             'lesion mask along with the spinal cord segmentation mask. Training and evaluation'
+                             'data consisting of highly-anisotropic axial T2w chunks was gathered from 4 sites: Klinikum Rechts der Isar, '
+                             'Technical University of Munich, Germany, NYU Langone Medical Center, NY, USA, '
+                             'Zuckerberg SF General Hospital, UCSF, CA, USA, and Brigham and Womens Hospital, '
+                             'Harvard Medical School, Boston, USA . Unlike typical MS lesion segmentation models, this models works equally well on '
+                             'cervical, thoracic and lumbar spinal cord regions.',
+         'url': 'https://github.com/ivadomed/model-seg-ms-axial-t2w',
+         'models': ['model_seg_ms_sc_lesion_bavaria_quebec_nnunet']},
 }
 
 
