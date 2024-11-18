@@ -118,49 +118,54 @@ def dilate(data, size, shape, dim=None, islabel=False):
     else:
         footprint = _get_footprint(shape, size, dim)
         if islabel:
-            return _dilate_point_labels(data, shape=shape, size=size, footprint=footprint)
+            return _dilate_point_labels(data, footprint=footprint)
         else:
             if data.dtype in ['uint8', 'uint16']:
                 return rank.maximum(data, footprint=footprint)
             else:
-                return dilation(data, footprint=footprint, out=None)
+                return dilation(data, footprint=footprint)
 
 
-def _dilate_point_labels(data, shape, size, footprint):
+def _dilate_point_labels(data, footprint):
     """
-    A more efficient dilation algorithm when we know the image is mostly nonzero (i.e. point label image)
+    A more efficient dilation algorithm when we know the image is mostly zero (i.e. point label image)
     """
-    # NB1: "size" means different things for different shapes, hence we compute the radius on a per-shape basis
-    # NB2: For even-length square/cubes, the radius will be n+0.5, but this gets handled by later calls to `int()`
-    radius = {'square': (size - 1) / 2, 'cube': (size - 1) / 2, 'disk': size, 'ball': size}[shape]
-    data_out = data.copy()
-    for (x, y, z) in np.argwhere(data != 0):
-        # Compute the (relative) extents of the bounding box, i.e. the left-right offsets: | <-> [x,y,z] <-> |
-        # NB: If the footprint would go outside the image boundaries, then we make bbox offsets < radius using `min()`
-        bbox = (
-            (min(radius, x), min(radius, data.shape[0] - 1 - x)),  # x offsets: | <-> x <-> |
-            (min(radius, y), min(radius, data.shape[1] - 1 - y)),  # y offsets: | <-> y <-> |
-            (min(radius, z), min(radius, data.shape[2] - 1 - z)),  # z offsets: | <-> z <-> |
-        )
+    if len(data.shape) != len(footprint.shape):
+        raise ValueError(f"incompatible shapes: {data.shape=} {footprint.shape=}")
+    if footprint.size == 0:
+        raise ValueError(f"cannot handle empty footprint: {footprint.shape=}")
 
-        # Extract a patch out of the image with [x,y,z] at the center
-        x_min, x_max = int(x - bbox[0][0]), int(x + bbox[0][1] + 1)
-        y_min, y_max = int(y - bbox[1][0]), int(y + bbox[1][1] + 1)
-        z_min, z_max = int(z - bbox[2][0]), int(z + bbox[2][1] + 1)
-        data_patch = data_out[x_min:x_max, y_min:y_max, z_min:z_max]
+    data_shape = np.array(data.shape)
+    fp_shape = np.array(footprint.shape)
 
-        # Extract an identically-sized patch out of the dilation footprint, with [c1,c2,c3] at the center
-        c = [(s-1)/2 for s in footprint.shape]
-        fp_x_min, fp_x_max = int(c[0] - bbox[0][0]), int(c[0] + bbox[0][1] + 1)
-        fp_y_min, fp_y_max = int(c[1] - bbox[1][0]), int(c[1] + bbox[1][1] + 1)
-        fp_z_min, fp_z_max = int(c[2] - bbox[2][0]), int(c[2] + bbox[2][1] + 1)
-        footprint_patch = footprint[fp_x_min:fp_x_max, fp_y_min:fp_y_max, fp_z_min:fp_z_max]
+    # For odd-length dimensions, the center of the footprint is unique.
+    # For even-length dimensions, we round down.
+    fp_center = (fp_shape - 1) // 2
 
-        # Multiply the footprint by the [x,y,z] voxel value to simulate dilation of the voxel
-        dilated_voxel = footprint_patch * data_out[x, y, z]
+    data_out = np.zeros_like(data)
+    for data_coords in np.argwhere(data):
+        # data_coords is a numpy array, which behaves differently from tuples
+        # when indexing another numpy array. We want the tuple behaviour.
+        data_value = data[tuple(data_coords)]
 
-        # Take the maximum of both patches. This will dilate the center voxel while also preserving close-by voxels.
-        data_out[x_min:x_max, y_min:y_max, z_min:z_max] = np.maximum(data_patch, dilated_voxel)
+        # If a data coordinate is too close to the edge, we have to use a
+        # truncated version of the footprint. These formulas compute the
+        # adjusted slice start and stop coordinates in the data array, and in
+        # the footprint array.
+        pre_distances = np.min(data_coords, fp_center)
+        data_start = data_coords - pre_distances
+        fp_start = fp_center - pre_distances
+
+        post_distances = np.min(data_shape - data_coords, fp_shape - fp_center)
+        data_stop = data_coords + post_distances
+        fp_stop = fp_center + post_distances
+
+        data_loc = tuple(slice(start, stop) for start, stop in zip(data_start, data_stop))
+        fp_loc = tuple(slice(start, stop) for start, stop in zip(fp_start, fp_stop))
+
+        # Now we can apply the (possibly truncated) footprint to the right part
+        # of the data array, blending in the data value with the "max" function
+        np.maximum.at(data_out, data_loc, data_value*footprint[fp_loc])
 
     return data_out
 
