@@ -1,2 +1,2 @@
 Timestamp,SCT Version,Filename,Slice (I->S),VertLevel,DistancePMJ,Label,Size [vox],MAP(),STD()
-"2024-07-23 17:17:56","git-jn/4534-deduplicate-functions-2197d84256e056153f83f1014ef809f49e1a4f85","/home/joshua/repos/spinalcordtoolbox/data/sct_example_data/mt/mtr.nii.gz","4:17","2:5","","white matter",979.7743992326849,54.43643151888196,4.776259541952398
+"2024-11-15 10:21:36","git-jn/4689-set-sform-to-orthogonal-qform-b23130427b7a22a348fa847a823e992f003cbbe4","/home/joshua/repos/spinalcordtoolbox/data/sct_example_data/mt/mtr.nii.gz","4:17","2:5","","white matter",984.6180234922672,54.432585833704955,4.84961971548851
