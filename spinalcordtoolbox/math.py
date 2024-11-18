@@ -54,17 +54,10 @@ def _get_footprint(shape, size, dim):
 
     # If 2d kernel, replicate it along the specified dimension
     if len(footprint.shape) == 2:
-        footprint3d = np.zeros([footprint.shape[0]] * 3)
-        imid = np.floor(footprint.shape[0] / 2).astype(int)
-        if dim == 0:
-            footprint3d[imid, :, :] = footprint
-        elif dim == 1:
-            footprint3d[:, imid, :] = footprint
-        elif dim == 2:
-            footprint3d[:, :, imid] = footprint
-        else:
+        if dim not in [0, 1, 2]:
             raise ValueError("dim can only take values: {0, 1, 2}")
-        footprint = footprint3d
+        footprint = np.expand_dims(footprint, dim)
+
     return footprint
 
 
