@@ -113,9 +113,9 @@ You can replace "``seg_sc_lesion_t2w_sci``" with any of the task names in the ta
    :widths: 25 25 25
 
    * - |seg_sc_lesion_t2w_sci| ``seg_sc_lesion_t2w_sci``
-     - |seg_sc_ms_lesion_stir_psir| ``seg_sc_ms_lesion_stir_psir``
+     - |seg_ms_lesion| ``seg_ms_lesion``
      - |seg_ms_lesion_mp2rage| ``seg_ms_lesion_mp2rage``
-   * - |seg_ms_lesion| ``seg_ms_lesion``
+   * - |seg_sc_ms_lesion_stir_psir| ``seg_sc_ms_lesion_stir_psir``
      - |seg_tumor_edema_cavity_t1_t2| ``seg_tumor_edema_cavity_t1_t2``
      - |tumor_t2| ``tumor_t2``
 
