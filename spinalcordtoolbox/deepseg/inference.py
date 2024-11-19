@@ -239,13 +239,17 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device):
     orig_orientation = get_orientation(Image(path_img_tmp))
 
     # Get the orientation used by the model
-    # TODO: Make reorientation a model configuration parameter
-    if "SCI" in predictor.plans_manager.dataset_name:
-        model_orientation = "RPI"
-    elif "RegionBasedLesionSeg" in predictor.plans_manager.dataset_name:
-        model_orientation = "AIL"
+    # Check if predictor.dataset_json['image_orientation'] key exists, if so, read the orientation from there
+    # NOTE: the 'image_orientation' key-value pair needs to be manually added to the dataset.json file
+    # TODO: document this on our intranet (https://intranet.neuro.polymtl.ca/data/deeplearning-models.html#packaging-models)
+    if 'image_orientation' in predictor.dataset_json:
+        model_orientation = predictor.dataset_json['image_orientation']
+        print(f"Orientation (based on dataset.json): {model_orientation}")
     else:
-        model_orientation = "LPI"
+        if "RegionBasedLesionSeg" in predictor.plans_manager.dataset_name:
+            model_orientation = "AIL"
+        else:
+            model_orientation = "LPI"
 
     # Reorient the image to model orientation if not already
     img_in = Image(path_img_tmp)
