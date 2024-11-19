@@ -334,6 +334,42 @@ def symmetrize(data, dim):
     return data_out
 
 
+def slicewise_mean(data, dim, exclude_zeros=False):
+    """
+    Symmetrize data along specified dimension. Does not count zeros in the mean.
+    :param data: numpy.array 3D data.
+    :param dim: dimension of array to symmetrize along.
+
+    :return data_out: slicewise averaged data
+    """
+    if exclude_zeros:
+        data[data == 0] = np.nan
+    data_out = np.zeros_like(data)
+    for slices in range(data.shape[dim]):
+        # TODO: how to not repeat for all dims?
+        if dim == 0:
+            if np.isnan(data[slices, :, :]).all():
+                mean_data = [[0]]
+            else:
+                mean_data = np.nanmean(data[slices, :, :], keepdims=True)
+            data_out[slices, :, :] = np.broadcast_to(mean_data, data[slices, :, :].shape)
+
+        elif dim == 1:
+            if np.isnan(data[:, slices, :]).all():
+                mean_data = [[0]]
+            else:
+                mean_data = np.nanmean(data[:, slices, :], keepdims=True)
+            data_out[:, slices, :] = np.broadcast_to(mean_data, data[:, slices, :].shape)
+        elif dim == 2:
+            if np.isnan(data[:, :, slices]).all():
+                mean_data = [[0]]
+            else:
+                mean_data = np.nanmean(data[:, :, slices], keepdims=True)
+            data_out[:, :, slices] = np.broadcast_to(mean_data, data[:, :, slices].shape)
+
+    return data_out
+
+
 def denoise_patch2self(data_in, bvals_in, patch_radius=0, model='ols'):
     """
     :param data_in: 4d array to denoise

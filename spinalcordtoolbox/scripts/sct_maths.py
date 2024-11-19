@@ -195,6 +195,13 @@ def get_parser():
         action=AppendTodo,
         help='Binarize image using specified threshold. Example: `0.5`',
         required=False)
+    basic.add_argument(
+        '-slicewise-mean',
+        type=int,
+        choices=(0, 1, 2),
+        action=AppendTodo,
+        help='Compute slicewise mean the specified dimension. Zeros are not inlcuded in the mean.',
+        required=False)
 
     thresholding = parser.add_argument_group("THRESHOLDING METHODS")
     thresholding.add_argument(
@@ -527,6 +534,11 @@ def main(argv: Sequence[str]):
             elif arg_name == "bin":
                 bin_thr = arg_value
                 data = sct_math.binarize(data, bin_thr)
+
+            elif arg_name == "slicewise_mean":
+                axis = arg_value
+                # TODO: add option to include zeros in mean.
+                data = sct_math.slicewise_mean(data, axis)
 
             elif arg_name == "otsu":
                 nbins = arg_value
