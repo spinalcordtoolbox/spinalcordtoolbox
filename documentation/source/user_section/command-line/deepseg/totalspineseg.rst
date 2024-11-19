@@ -1,7 +1,7 @@
 
                 
 totalspineseg
-============
+=============
                 
 .. argparse::
    :ref: spinalcordtoolbox.scripts.sct_deepseg.get_parser

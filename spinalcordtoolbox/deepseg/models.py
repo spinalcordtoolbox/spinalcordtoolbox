@@ -185,7 +185,7 @@ MODELS = {
          "thr": None,  # Images are already binarized
          "default": False,
      },
-      "model_seg_ms_lesion": {
+    "model_seg_ms_lesion": {
          "url": [
              "https://github.com/ivadomed/ms-lesion-agnostic/releases/download/r20241101/model_seg_ms_lesion_unet3d.zip"
          ],
