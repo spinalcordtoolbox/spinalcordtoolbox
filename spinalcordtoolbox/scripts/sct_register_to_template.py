@@ -28,7 +28,7 @@ from spinalcordtoolbox.image import Image, add_suffix, generate_output_file
 from spinalcordtoolbox.centerline.core import ParamCenterline
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.resampling import resample_file
-from spinalcordtoolbox.math import binarize, dilate
+from spinalcordtoolbox.math import binarize, dilate, slicewise_mean
 from spinalcordtoolbox.utils.fs import (copy, extract_fname, check_file_exist, rmtree,
                                         cache_save, cache_signature, cache_valid, tmp_create)
 from spinalcordtoolbox.utils.shell import (SCTArgumentParser, ActionCreateFolder, Metavar, list_type,
@@ -36,7 +36,7 @@ from spinalcordtoolbox.utils.shell import (SCTArgumentParser, ActionCreateFolder
 from spinalcordtoolbox.utils.sys import set_loglevel, init_sct, run_proc, __data_dir__, __version__
 import spinalcordtoolbox.image as msct_image
 import spinalcordtoolbox.labels as sct_labels
-from spinalcordtoolbox.scripts import sct_apply_transfo, sct_resample
+from spinalcordtoolbox.scripts import sct_apply_transfo, sct_resample, sct_image
 
 
 class Param:
@@ -400,7 +400,6 @@ def main(argv: Sequence[str]):
     level_alignment = False
     if len(labels) > 2 and label_type in ['disc', 'spinal', 'rootlet']:
         level_alignment = True
-
     path_tmp = tmp_create(basename="register-to-template")
 
     # set temporary file names
@@ -728,10 +727,12 @@ def main(argv: Sequence[str]):
             cmd_split = ['sct_image', '-i', 'step10Warp.nii.gz', '-mcs']
             status, output = run_proc(cmd_split, verbose, is_sct_binary=True)
             printv(output, verbose)
-            # TODO: include this script inside sct_image maybe?
-            cmd_avg = "python ~/code/rootlets-informed-reg2template/average_z_warping_field.py -i step10Warp_Z.nii.gz -o step10Warp_Z_mean.nii.gz"
-            status, output = run_proc(cmd_avg, verbose)
-            printv(output, verbose)
+            # Compute slicewise mean in Z to ensure symmetry
+            img = Image('step10Warp_Z.nii.gz')
+            out = img.copy()
+            out.data = slicewise_mean(out.data, 2)
+            out.save('step10Warp_Z_mean.nii.gz')
+            # Merge warp back together
             cmd_split = ['sct_image', '-i',
                          'step10Warp_X.nii.gz', 'step10Warp_Y.nii.gz', 'step10Warp_Z_mean.nii.gz',
                          '-omc', '-o', 'step10Warp_zmean.nii.gz']
@@ -787,10 +788,12 @@ def main(argv: Sequence[str]):
             cmd_split = ['sct_image', '-i', 'step10InverseWarp.nii.gz', '-mcs']
             status, output = run_proc(cmd_split, verbose, is_sct_binary=True)
             printv(output, verbose)
-            # TODO: include this script inside sct_image maybe?
-            cmd_avg = "python ~/code/rootlets-informed-reg2template/average_z_warping_field.py -i step10InverseWarp_Z.nii.gz -o step10InverseWarp_Z_mean.nii.gz"
-            status, output = run_proc(cmd_avg, verbose)
-            printv(output, verbose)
+            # Compute slicewise mean in Z to ensure symmetry
+            img = Image('step10InverseWarp_Z.nii.gz')
+            out = img.copy()
+            out.data = slicewise_mean(out.data, 2)
+            out.save('step10InverseWarp_Z_mean.nii.gz')
+            # Merge warp back together
             cmd_split = ['sct_image', '-i',
                          'step10InverseWarp_X.nii.gz', 'step10InverseWarp_Y.nii.gz', 'step10InverseWarp_Z_mean.nii.gz',
                          '-omc', '-o', 'step10InverseWarp_zmean.nii.gz']
