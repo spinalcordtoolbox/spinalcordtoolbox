@@ -184,9 +184,8 @@ def _dilate_point_labels(data, footprint):
         # Now we can apply the (possibly truncated) footprint to the right part
         # of the data array, blending in the data value with the "max" function
         np.maximum.at(
-            a=data_out,
-            indices=data_indices,
-            b=data_value*footprint[fp_indices],
+            data_out, data_indices,
+            data_value*footprint[fp_indices],
         )
 
     return data_out
