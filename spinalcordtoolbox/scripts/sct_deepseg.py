@@ -44,7 +44,9 @@ def get_parser():
     input_output.add_argument(
         "-i",
         nargs="+",
-        help="Image to segment. Can be multiple images (separated with space).",
+        help=f"Image to segment. Can be multiple images (separated with space)."
+             f"\n\nNote: If choosing `-task seg_ms_lesion_mp2rage`, then the input "
+             f"data must be cropped around the spinal cord. ({models.CROP_MESSAGE})",
         metavar=Metavar.file)
     input_output.add_argument(
         "-c",

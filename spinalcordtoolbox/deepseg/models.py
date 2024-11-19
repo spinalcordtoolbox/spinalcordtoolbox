@@ -183,11 +183,27 @@ MODELS = {
          "thr": None,  # Images are already binarized
          "default": False,
      },
+    "model_seg_ms_lesion": {
+         "url": [
+             "https://github.com/ivadomed/ms-lesion-agnostic/releases/download/r20241101/model_seg_ms_lesion_unet3d.zip"
+         ],
+         "description": "Segmentation of spinal cord MS lesions",
+         "contrasts": ["any"],
+         "thr": None,  # Images are already binarized
+         "default": False,
+     },
 }
 
 
 # List of task. The convention for task names is: action_(animal)_region_(contrast)
 # Regions could be: sc, gm, lesion, tumor
+CROP_MESSAGE = (
+    'To crop the data you can first segment the spinal cord using the contrast agnostic model. This could be '
+    'done using: "sct_deepseg -i IMAGE -task seg_sc_contrast_agnostic -o IMAGE_sc", then crop the '
+    'image with 30 mm of dilation on axial orientation around the spinal cord. This could be done using: '
+    '"sct_crop_image -i IMAGE -m IMAGE_sc -dilate 30x30x5". Note that 30 is only for 1mm isotropic '
+    'resolution, for images with another resolution divide 30/your_axial_resolution.'
+)
 TASKS = {
     'seg_sc_t2star':
         {'description': 'Cord segmentation on T2*-weighted contrast',
@@ -343,19 +359,25 @@ TASKS = {
          'models': ['model_seg_sc_epi_nnunet']},
     'seg_ms_lesion_mp2rage':
         {'description': 'MS lesion segmentation on cropped MP2RAGE data',
-         'long_description': 'This segmentation model for multiple sclerosis lesion segmentation on cropped MP2RAGE-UNIT1 spinal cord data. '
-                             'Uses a 3D U-Net, trained with the nnUNetV2 framework. It is a single-class model outputting binary MS lesions '
-                             'segmentations. Training consisted of MP2RAGE data on UNIT1 contrast at 1.0 mm3 isotropic (322 subjects from '
-                             '3 sites: National Institutes of Health, Bethesda, USA, University Hospital Basel and University of Basel, Basel, '
-                             'Switzerland and Center for Magnetic Resonance in Biology and Medicine, CRMBM-CEMEREM, UMR 7339, CNRS,  '
-                             'Aix-Marseille University, Marseille, France). '
-                             'To crop the data you can first segment the spinal cord using the contrast agnostic model, This could be '
-                             'done using: "sct_deepseg -i IMAGE_UNIT1 -task seg_sc_contrast_agnostic -o IMAGE_UNIT1_sc", then crop the '
-                             'IMAGE_UNIT1 image with 30 mm of dilation on axial orientation around the spinal cord. This could be done using: '
-                             '"sct_crop_image -i IMAGE_UNIT1 -m IMAGE_seg -dilate 30x30x5" . Note that 30 is only for 1mm isotropic '
-                             'resolution, for images with another resolution divide 30/your_axial_resolution.',
+         'long_description': f'This segmentation model for multiple sclerosis lesion segmentation on cropped MP2RAGE-UNIT1 spinal cord data. '
+                             f'Uses a 3D U-Net, trained with the nnUNetV2 framework. It is a single-class model outputting binary MS lesions '
+                             f'segmentations. Training consisted of MP2RAGE data on UNIT1 contrast at 1.0 mm3 isotropic (322 subjects from '
+                             f'3 sites: National Institutes of Health, Bethesda, USA, University Hospital Basel and University of Basel, Basel, '
+                             f'Switzerland and Center for Magnetic Resonance in Biology and Medicine, CRMBM-CEMEREM, UMR 7339, CNRS,  '
+                             f'Aix-Marseille University, Marseille, France). {CROP_MESSAGE}',
          'url': 'https://github.com/ivadomed/model_seg_ms_mp2rage',
          'models': ['model_seg_ms_lesion_mp2rage']},
+    'seg_ms_lesion':
+        {'description': 'MS lesion segmentation on spinal cord MRI images',
+         'long_description': 'This segmentation model for spinal cord MS lesion segmentation uses a 3D U-Net architecture. It outputs a binary '
+                             'segmentation of MS lesions. The model was trained and tested on datasets including 25 sites, 1611 patients and 2988 '
+                             'volumes. The datasets, mostly coming from “real world” clinical scans at 1.5T and 3T (on GE, Siemens and Philips), '
+                             'included: T1w (n=52), PDw (n=33), T2w (n=1806), T2*w (n=474), PSIR (n=286), STIR (n=72), MP2RAGE-UNI (n=265). '
+                             'The field-of-view coverage varied across sites (some included the brain and the upper cord, while others only '
+                             'included the spinal cord), and acquisitions were either 2D (axial: 1708, sagittal: 976) or 3D (n=304), with voxel '
+                             'dimensions ranging from 0.2mm to 9.5mm (including inter-slice gap).',
+         'url': 'https://github.com/ivadomed/ms-lesion-agnostic',
+         'models': ['model_seg_ms_lesion']},
 }
 
 
