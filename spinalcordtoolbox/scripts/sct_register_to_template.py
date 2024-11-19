@@ -36,7 +36,7 @@ from spinalcordtoolbox.utils.shell import (SCTArgumentParser, ActionCreateFolder
 from spinalcordtoolbox.utils.sys import set_loglevel, init_sct, run_proc, __data_dir__, __version__
 import spinalcordtoolbox.image as msct_image
 import spinalcordtoolbox.labels as sct_labels
-from spinalcordtoolbox.scripts import sct_apply_transfo, sct_resample, sct_image
+from spinalcordtoolbox.scripts import sct_apply_transfo, sct_resample
 
 
 class Param:
