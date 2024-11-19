@@ -372,9 +372,7 @@ def main(argv: Sequence[str]):
     fname_template_labeling = os.path.join(path_template, 'template', file_template_labeling)
     fname_template_seg = os.path.join(path_template, 'template', file_template_seg)
 
-
     # check file existence
-    # TODO: no need to do that!
     printv('\nCheck template files...')
     check_file_exist(fname_template, verbose)
     check_file_exist(fname_template_labeling, verbose)
@@ -386,7 +384,7 @@ def main(argv: Sequence[str]):
     # printv(arguments)
     printv('\nCheck parameters:', verbose)
     printv('  Data:                 ' + fname_data, verbose)
-    printv('  Landmarks:            ' + fname_landmarks, verbose)  # TODO add rootlets
+    printv('  Landmarks:            ' + fname_landmarks, verbose)
     printv('  Segmentation:         ' + fname_seg, verbose)
     printv('  Path template:        ' + path_template, verbose)
     printv('  Remove temp files:    ' + str(param.remove_temp_files), verbose)
@@ -398,7 +396,7 @@ def main(argv: Sequence[str]):
         # TODO: remove rootlets_mid
 
     # check input labels
-    labels = check_labels(fname_landmarks, label_type=label_type)  # TODO add check if rootlets
+    labels = check_labels(fname_landmarks, label_type=label_type)
     level_alignment = False
     if len(labels) > 2 and label_type in ['disc', 'spinal', 'rootlet']:
         level_alignment = True
@@ -425,7 +423,7 @@ def main(argv: Sequence[str]):
         Image(fname_template, check_sform=True).save(os.path.join(path_tmp, ftmp_template))
         Image(fname_template_seg, check_sform=True).save(os.path.join(path_tmp, ftmp_template_seg))
         Image(fname_template_labeling, check_sform=True).save(os.path.join(path_tmp, ftmp_template_label))
-        if label_type == 'rootlet':  # TODO find someting better that so many if cases
+        if label_type == 'rootlet':
             Image(fname_rootlets, check_sform=True).save(os.path.join(path_tmp, ftmp_rootlets))
             Image(fname_template_labeling_rootlets, check_sform=True).save(os.path.join(path_tmp, ftmp_template_rootlets))
 
