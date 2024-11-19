@@ -175,7 +175,7 @@ def get_parser():
         '-lrootlet',
         metavar=Metavar.file,
         help=textwrap.dedent("""
-            Dorsal nerve rootlets from C2 to C8  Example: `anat_rootlets.nii.gz`
+            Dorsal nerve rootlets segmentation from C2 to C8  Example: `anat_rootlets.nii.gz`
 
             Each value corresponds to the spinal level (e.g.: 2 for spinal level 2). If you are using more than 2 labels, all spinal levels covering the region of interest should be provided (e.g., if you are interested in levels C2 to C7, then you should provide spinal level labels 2,3,4,5,6,7)."
         """)  # noqa: E501 (line too long)
