@@ -123,17 +123,35 @@ def _dilate_point_labels(data, footprint):
     """
     A more efficient dilation algorithm when we know the image is mostly zero (i.e. point label image)
     """
-    if len(data.shape) != len(footprint.shape):
+    dim = len(data.shape)  # 2D or 3D
+    if dim != len(footprint.shape):
         raise ValueError(f"incompatible shapes: {data.shape=} {footprint.shape=}")
     if footprint.size == 0:
         raise ValueError(f"cannot handle empty footprint: {footprint.shape=}")
 
-    data_shape = np.array(data.shape)
-    fp_shape = np.array(footprint.shape)
+    # To dilate each voxel, we multiply the footprint by the voxel's value.
+    #
+    # But, to preserve overlapping dilated voxels, we'd like to use `np.maximum`
+    # to take the maximum (so that the '0' voxels in the footprint don't overwrite
+    # any existing nonzero voxels in the image).
+    #
+    # To perform `np.maximum` in place, we use the `np.ufunc.at` syntax, which
+    # requires an `indices` argument to specify *where* to perform the maximum at.
+    # So, we just need to compute the bounding box surrounding the voxel,
+    # specified as a tuple of `slice` objects, which acts like
+    # data_out[x1:x2, y1:y2, z1:z2] (in 3D) or data_out[x1:x2, y1:y2] (in 2D).
+    #
+    # As an added complication, we may also need to crop the footprint, if the
+    # pixel to be dilated is close to an edge of the array. So, we also need to
+    # compute a bounding box surrounding the center of the footprint, also as
+    # a tuple of `slice` objects.
+
+    data_corners = np.array([[0]*dim, data.shape], dtype=int)
+    fp_corners = np.array([[0]*dim, footprint.shape], dtype=int)
 
     # For odd-length dimensions, the center of the footprint is unique.
     # For even-length dimensions, we round up.
-    fp_center = (fp_shape - 1 + 1) // 2
+    fp_center = (fp_corners[0] + (fp_corners[1] - 1) + 1) // 2
 
     data_out = np.zeros_like(data)
     for data_coords in np.argwhere(data):
@@ -141,24 +159,35 @@ def _dilate_point_labels(data, footprint):
         # when indexing another numpy array. We want the tuple behaviour.
         data_value = data[tuple(data_coords)]
 
-        # If a data coordinate is too close to the edge, we have to use a
-        # truncated version of the footprint. These formulas compute the
-        # adjusted slice start and stop coordinates in the data array, and in
-        # the footprint array.
-        pre_distances = np.minimum(data_coords, fp_center)
-        data_start = data_coords - pre_distances
-        fp_start = fp_center - pre_distances
+        # Make sure that the footprint doesn't exceed the image boundaries
+        # If the footprint fits inside the image, then:
+        #    - (width of footprint) <= (distance from voxel to image boundary)
+        # However, if the footprint would go outside the boundaries, then:
+        #    - (distance from voxel to image boundary) < (width of footprint)
+        # So we take the minimum to always use the shorter of the two distances.
+        distances = [
+            # Distance from 0 --> voxel
+            np.minimum(data_coords - data_corners[0],
+                       fp_center - fp_corners[0]),
+            # Distance from voxel --> data boundaries
+            np.minimum(data_corners[1] - data_coords,
+                       fp_corners[1] - fp_center),
+        ]
+        data_start = data_coords - distances[0]
+        data_stop = data_coords + distances[1]
+        fp_start = fp_center - distances[0]
+        fp_stop = fp_center + distances[1]
 
-        post_distances = np.minimum(data_shape - data_coords, fp_shape - fp_center)
-        data_stop = data_coords + post_distances
-        fp_stop = fp_center + post_distances
-
-        data_loc = tuple(slice(start, stop) for start, stop in zip(data_start, data_stop))
-        fp_loc = tuple(slice(start, stop) for start, stop in zip(fp_start, fp_stop))
+        data_indices = tuple(slice(start, stop) for start, stop in zip(data_start, data_stop))
+        fp_indices = tuple(slice(start, stop) for start, stop in zip(fp_start, fp_stop))
 
         # Now we can apply the (possibly truncated) footprint to the right part
         # of the data array, blending in the data value with the "max" function
-        np.maximum.at(data_out, data_loc, data_value*footprint[fp_loc])
+        np.maximum.at(
+            a=data_out,
+            indices=data_indices,
+            b=data_value*footprint[fp_indices],
+        )
 
     return data_out
 
