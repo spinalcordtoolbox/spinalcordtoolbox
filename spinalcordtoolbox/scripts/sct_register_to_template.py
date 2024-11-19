@@ -304,12 +304,9 @@ def main(argv: Sequence[str]):
         fname_landmarks = arguments.l
         label_type = 'body'
     elif arguments.lrootlet is not None:
+        fname_landmarks = arguments.lrootlet
         fname_rootlets = arguments.lrootlet
         label_type = 'rootlet'
-        if arguments.ldisc is not None:
-            fname_landmarks = arguments.ldisc
-        else:
-            raise ValueError('Single disc label should be provided with rootlets labels.')
     elif arguments.ldisc is not None:
         fname_landmarks = arguments.ldisc
         label_type = 'disc'
@@ -355,12 +352,10 @@ def main(argv: Sequence[str]):
         # point-wise intervertebral disc labels
         file_template_labeling = get_file_label(os.path.join(path_template, 'template'), id_label=10)
     elif label_type == 'rootlet':
-        # point-wise intervertebral disc labels
-        file_template_labeling = get_file_label(os.path.join(path_template, 'template'), id_label=10)
+        # spinal rootlets midpoints
+        file_template_labeling = get_file_label(os.path.join(path_template, 'template'), id_label=17)
         file_template_labeling_rootlets = get_file_label(os.path.join(path_template, 'template'), id_label=16)
-        fname_template_labeling_rootlets = os.path.join(path_template, 'template', file_template_labeling_rootlets)  # MAYBE MOVE DOWN
-        file_template_labeling_rootlets_midpoints = get_file_label(os.path.join(path_template, 'template'), id_label=17)
-        fname_template_labeling_rootlets_midpoints = os.path.join(path_template, 'template', file_template_labeling_rootlets_midpoints)  # MAYBE MOVE DOWN
+        fname_template_labeling_rootlets = os.path.join(path_template, 'template', file_template_labeling_rootlets)
     else:
         # spinal cord mask with discrete vertebral levels
         file_template_labeling = get_file_label(os.path.join(path_template, 'template'), id_label=7)
@@ -376,6 +371,7 @@ def main(argv: Sequence[str]):
     fname_template = os.path.join(path_template, 'template', file_template)
     fname_template_labeling = os.path.join(path_template, 'template', file_template_labeling)
     fname_template_seg = os.path.join(path_template, 'template', file_template_seg)
+
 
     # check file existence
     # TODO: no need to do that!
@@ -395,12 +391,18 @@ def main(argv: Sequence[str]):
     printv('  Path template:        ' + path_template, verbose)
     printv('  Remove temp files:    ' + str(param.remove_temp_files), verbose)
 
+    # Compute center-of-mass of the rootlets segmentation:
+    if label_type == 'rootlet':
+        fname_rootlets_points = 'rootlets_mid.nii.gz'
+        fname_landmarks = sct_labels.cubic_to_point(Image(fname_rootlets)).save(fname_rootlets_points)
+        # TODO: remove rootlets_mid
+
     # check input labels
     labels = check_labels(fname_landmarks, label_type=label_type)  # TODO add check if rootlets
     level_alignment = False
     if len(labels) > 2 and label_type in ['disc', 'spinal', 'rootlet']:
         level_alignment = True
-    # TODO: add check that label len(label) is one for rootlets
+
     path_tmp = tmp_create(basename="register-to-template")
 
     # set temporary file names
@@ -413,7 +415,6 @@ def main(argv: Sequence[str]):
     if label_type == 'rootlet':
         ftmp_rootlets = 'rootlets.nii.gz'
         ftmp_template_rootlets = 'template_rootlets.nii.gz'
-        ftmp_template_rootlets_midpoints = 'template_rootlets_midpoints.nii.gz'
 
     # copy files to temporary folder
     printv('\nCopying input data to tmp folder and convert to nii...', verbose)
@@ -427,7 +428,6 @@ def main(argv: Sequence[str]):
         if label_type == 'rootlet':  # TODO find someting better that so many if cases
             Image(fname_rootlets, check_sform=True).save(os.path.join(path_tmp, ftmp_rootlets))
             Image(fname_template_labeling_rootlets, check_sform=True).save(os.path.join(path_tmp, ftmp_template_rootlets))
-            Image(fname_template_labeling_rootlets_midpoints, check_sform=True).save(os.path.join(path_tmp, ftmp_template_rootlets_midpoints))
 
     except ValueError as e:
         printv("\nImages could not be saved to temporary folder. Aborting registration.\n"
@@ -587,9 +587,6 @@ def main(argv: Sequence[str]):
                 sc_straight.use_straight_reference = True
                 sc_straight.discs_input_filename = ftmp_label
                 sc_straight.discs_ref_filename = ftmp_template_label
-                if label_type == 'rootlet':
-                    sc_straight.discs_input_filename = ftmp_label  # are rootlets mid points # TODO : change for other argument!!!
-                    sc_straight.discs_ref_filename = ftmp_template_rootlets_midpoints
             sc_straight.straighten()
             cache_save("straightening.cache", cache_sig)
 
