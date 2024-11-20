@@ -393,11 +393,14 @@ def main(argv: Sequence[str]):
                 subject=arguments.qc_subject,
             )
 
+    images = [arguments.i[0]]
+    im_types = ['anat']
+    opacities = ['']
     for output_filename in output_filenames:
-        img_kind = check_image_kind(Image(output_filename))
-        display_viewer_syntax([arguments.i[0], output_filename],
-                              im_types=['anat', img_kind],
-                              opacities=['', '0.7'], verbose=verbose)
+        images.append(output_filename)
+        im_types.append(check_image_kind(Image(output_filename)))
+        opacities.append('0.7')
+    display_viewer_syntax(images, im_types=im_types, opacities=opacities, verbose=verbose)
 
 
 if __name__ == "__main__":
