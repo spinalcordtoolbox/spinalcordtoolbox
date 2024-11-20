@@ -940,14 +940,14 @@ class AnalyzeLesion:
     def _interpolate_values(self, data1, data2):
         """
         Interpolate inputs using linear interpolation.
-        Inputs can be either 2D numpy arrays (for interpolating slices) or single int64 (for interpolating tissue bridges).
+        Inputs can be either 2D numpy arrays (for interpolating slices) or single int64 (for interpolating tissue
+        bridges).
         :param data1: 2D numpy array (slice 1) or single int64 (tissue bridge for slice 1)
         :param data2: 2D numpy array (slice 2) or single int64 (tissue bridge for slice 2)
         :return: 2D numpy array (interpolated slice) or single float64 (interpolated tissue bridge)
         """
 
         return (1 - self.interpolation_factor) * data1 + self.interpolation_factor * data2
-
 
     def _interpolate_lesion(self, im_lesion_data):
         """
@@ -1099,8 +1099,8 @@ class AnalyzeLesion:
                     # If one of the CombinedLabels matches the total set of all atlas labels, discard it
                     # In practice, this will cause the 'spinal cord' label to be discarded (spanning tracts 0:35).
                     if set(tract_ids) == set(sublabels):
-                        printv(f"WARNING: CombinedLabel '{label_name}' is identical to the 'total' column that sums "
-                               f"all atlas labels ([{sublabels[0]}:{sublabels[-1]}]). "
+                        printv(f"WARNING: CombinedLabel '{label_name}' is identical to the 'total' column that "
+                               f"sums  all atlas labels ([{sublabels[0]}:{sublabels[-1]}]). "
                                f"The '{label_name}' column will not be added to the output spreadsheet.",
                                self.verbose, type="warning")
                     else:
