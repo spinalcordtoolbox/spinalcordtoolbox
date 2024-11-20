@@ -194,10 +194,10 @@ MODELS = {
          "default": False,
      },
     "totalspineseg": {
-         "url": {
-             "step1": ["https://github.com/neuropoly/totalspineseg/releases/download/r20241005/Dataset101_TotalSpineSeg_step1_r20241005.zip"],
-             "step2": ["https://github.com/neuropoly/totalspineseg/releases/download/r20241005/Dataset102_TotalSpineSeg_step2_r20241005.zip"],
-         },
+         # NB: Rather than hardcoding the URLs ourselves, use the URLs from the totalspineseg package.
+         # This means that when the totalspineseg package is updated, the URLs will be too, thus triggering
+         # a re-installation of the model URLs
+         "url": tss_init.ZIP_URLS,
          "description": "Instance segmentation of vertebrae, intervertebral discs (IVDs), spinal cord, and spinal canal on multi-contrasts MRI scans.",
          "contrasts": ["any"],
          "thr": None,  # Images are already binarized
@@ -441,11 +441,10 @@ def install_model(name_model, custom_url=None):
     else:
         if not isinstance(url_field, dict):
             raise ValueError("Invalid url field in MODELS")
-        # totalspineseg handles data downloading itself, so just pass the urls along as if they were used
-        # TODO: update `init_inference` to return the urls used instead
+        # totalspineseg handles data downloading itself, so just pass the urls along
         if name_model == 'totalspineseg':
-            tss_init.init_inference(data_path=Path(folder(name_model)), quiet=False)
-            urls_used = {step: urls[0] for step, urls in url_field.items()}
+            tss_init.init_inference(data_path=Path(folder(name_model)), quiet=False, dict_urls=url_field)
+            urls_used = url_field
         else:
             urls_used = {}
             for seed_name, model_urls in url_field.items():
