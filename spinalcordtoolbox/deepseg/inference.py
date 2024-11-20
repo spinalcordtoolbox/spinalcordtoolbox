@@ -11,6 +11,7 @@ import shutil
 import time
 from pathlib import Path
 import psutil
+import glob
 
 from ivadomed import inference as imed_inference
 from totalspineseg.inference import inference as tss_inference
@@ -331,6 +332,13 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device):
 def segment_totalspineseg(path_img, tmpdir, predictor, device):
     # for totalspineseg, the 'predictor' is just the model path
     path_model = predictor
+    # fetch the release subdirectory from the model path
+    installed_releases = sorted(
+        os.path.basename(release_path) for release_path in
+        glob.glob(os.path.join(path_model, 'nnUNet', 'results', 'r*'), recursive=True)
+    )
+    # There should always be a release subdirectory, hence the 'assert'
+    assert installed_releases, f"No 'nnUNet/results/rYYYYMMDD' subdirectory found in {path_model}"
 
     # Copy the file to the temporary directory using shutil.copyfile
     path_img_tmp = os.path.join(tmpdir, os.path.basename(path_img))
@@ -346,6 +354,8 @@ def segment_totalspineseg(path_img, tmpdir, predictor, device):
         input_path=Path(path_img_tmp),
         output_path=Path(tmpdir_nnunet),
         data_path=Path(path_model),
+        # totalspineseg requires explicitly specifying the release subdirectory
+        default_release=installed_releases[-1],  # use the most recent release
         # totalspineseg expects the device type, not torch.device
         device=device.type,
         # The remaining args mimic the default arguments of totalspineseg's argparse
