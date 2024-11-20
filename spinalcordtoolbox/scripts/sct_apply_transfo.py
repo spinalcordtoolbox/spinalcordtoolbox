@@ -232,11 +232,11 @@ class Transform:
                 dim = '3'
             # if labels, dilate before resampling
             if islabel:
-                printv("\nDilate labels before warping...")
+                printv("\nDilate labels before warping...", verbose)
                 path_tmp = tmp_create(basename="apply-transfo-3d-label")
                 fname_dilated_labels = os.path.join(path_tmp, "dilated_data.nii")
                 # dilate points
-                dilate(Image(fname_src), 3, 'ball').save(fname_dilated_labels)
+                dilate(Image(fname_src), 3, 'ball', islabel=True).save(fname_dilated_labels)
                 fname_src = fname_dilated_labels
 
             printv("\nApply transformation and resample to destination space...", verbose)
@@ -323,7 +323,7 @@ class Transform:
         im_src_reg.save(verbose=0)  # set verbose=0 to avoid warning message about rewriting file
 
         if islabel:
-            printv("\nTake the center of mass of each registered dilated labels...")
+            printv("\nTake the center of mass of each registered dilated labels...", verbose)
             labeled_img = cubic_to_point(im_src_reg)
             labeled_img.save(path=fname_out)
             if remove_temp_files:
