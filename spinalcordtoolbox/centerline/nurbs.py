@@ -127,6 +127,7 @@ class NURBS:
                 while self.nbControle < len(P_x) and self.nbControle <= self.maxControlPoints:
                     if abs(error_curve - last_error_curve) <= self.tolerance and abs(
                             error_curve - second_last_error_curve) <= self.tolerance and error_curve <= last_error_curve and error_curve <= second_last_error_curve:
+                        logger.info(f"   - Optimization finished! (Change delta <= {tolerance} with improvements over 3 straight iterations.)")
                         break
 
                     second_last_error_curve = last_error_curve
@@ -168,7 +169,7 @@ class NURBS:
                         error_curve /= float(len(P_x))
 
                         if verbose >= 1:
-                            logger.info('Error on approximation = ' + str(np.round(error_curve, 2)) + ' mm')
+                            logger.info(f'   - Difference between fitted NURBS curve and input data = {error_curve:.2f} mm')
 
                         # Create a list of parameters that have worked in order to call back the last one that has worked
                         list_param_that_worked.append([self.nbControle, self.pointsControle, error_curve])
@@ -206,7 +207,7 @@ class NURBS:
 
                 if self.nbControle != nbControle_that_last_worked:
                     logger.debug("The fitting of the curve was done using {} control points: the number that gave "
-                                 "the best results. \nError on approximation = {} mm".
+                                 "the best results. \nDifference between fitted NURBS curve and input data = {} mm".
                                  format(nbControle_that_last_worked, np.round(self.error_curve_that_last_worked, 2)))
                 else:
                     logger.debug('Number of control points of the optimal NURBS = {}'.format(self.nbControle))

@@ -47,7 +47,7 @@ This parameter controls the type of data used for registration.
 
 :``type=im``: Use the input anatomical image.
 :``type=seg``: Use a separate segmentation image. Choose this if your image data contains distortions or artifacts, but you are confident in your segmentation. (For example, if you have manually corrected the segmentation.)
-:``type=imseg``: Use both the input image and a segmentation. Only for use with ``algo=centermassrot``.
+:``type=imseg``: Use both the input image and a segmentation. Only for use with ``algo=centermassrot`` with ``rot_method=hog`` or ``rot_method=pcahog``.
 
 ``-param`` "metric"
 -------------------
