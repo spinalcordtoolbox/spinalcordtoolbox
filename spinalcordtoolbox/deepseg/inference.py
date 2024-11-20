@@ -235,7 +235,6 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device):
     # Get the orientation used by the model
     # Check if predictor.dataset_json['image_orientation'] key exists, if so, read the orientation from there
     # NOTE: the 'image_orientation' key-value pair needs to be manually added to the dataset.json file
-    # TODO: document this on our intranet (https://intranet.neuro.polymtl.ca/data/deeplearning-models.html#packaging-models)
     if 'image_orientation' in predictor.dataset_json:
         model_orientation = predictor.dataset_json['image_orientation']
         print(f"Orientation (based on dataset.json): {model_orientation}")
@@ -291,6 +290,10 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device):
         logger.info(f'Reorientation to original orientation {orig_orientation} done.')
 
     labels = {k: v for k, v in predictor.dataset_json['labels'].items() if k != 'background'}
+    # for the canal model, keep only the largest object
+    if 'canal_seg' in labels.keys():
+        logger.info('Keeping only the largest component.')
+        img_out.data = keep_largest_object(img_out.data, x_cOm=None, y_cOm=None)
     # for rootlets model (which has labels 'lvl1', 'lvl2', etc.), save the image directly without splitting
     is_rootlet_model = all((label == f"lvl{i}") for i, label in enumerate(labels.keys(), start=1))
     if is_rootlet_model:
