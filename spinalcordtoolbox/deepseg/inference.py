@@ -10,7 +10,6 @@ import os
 import shutil
 import time
 from pathlib import Path
-import psutil
 import glob
 
 from ivadomed import inference as imed_inference
@@ -358,19 +357,6 @@ def segment_totalspineseg(path_img, tmpdir, predictor, device):
         default_release=installed_releases[-1],  # use the most recent release
         # totalspineseg expects the device type, not torch.device
         device=device.type,
-        # The remaining args mimic the default arguments of totalspineseg's argparse
-        output_iso=False,
-        loc_path=None,
-        suffix="",
-        loc_suffix="",
-        step1_only=False,
-        max_workers=os.cpu_count(),
-        max_workers_nnunet=int(max(
-            min(os.cpu_count(),
-                psutil.virtual_memory().total / 2**30 // 8),
-            1
-        )),
-        quiet=False,
     )
     fnames_out, targets = [], []
     for output_dirname in ["step1_canal", "step1_cord", "step1_levels", "step1_output", "step2_output"]:
