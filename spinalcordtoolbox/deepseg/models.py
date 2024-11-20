@@ -16,10 +16,9 @@ import glob
 from pathlib import Path
 
 from spinalcordtoolbox import download
-from spinalcordtoolbox.utils.sys import stylize, __deepseg_dir__
+from spinalcordtoolbox.utils.sys import stylize, __deepseg_dir__, LazyLoader
 
-from totalspineseg.init_inference import init_inference
-
+tss_init = LazyLoader("tss_init", globals(), 'totalspineseg.init_inference')
 
 logger = logging.getLogger(__name__)
 
@@ -445,7 +444,7 @@ def install_model(name_model, custom_url=None):
         # totalspineseg handles data downloading itself, so just pass the urls along as if they were used
         # TODO: update `init_inference` to return the urls used instead
         if name_model == 'totalspineseg':
-            init_inference(data_path=Path(folder(name_model)), quiet=False)
+            tss_init.init_inference(data_path=Path(folder(name_model)), quiet=False)
             urls_used = {step: urls[0] for step, urls in url_field.items()}
         else:
             urls_used = {}
