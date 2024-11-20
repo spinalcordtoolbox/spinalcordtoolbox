@@ -349,10 +349,9 @@ def segment_totalspineseg(path_img, tmpdir, predictor, device):
     os.mkdir(tmpdir_nnunet)
 
     tss_inference(
-        # totalspineseg expects pathlib.Path objects
-        input_path=Path(path_img_tmp),
-        output_path=Path(tmpdir_nnunet),
-        data_path=Path(path_model),
+        input_path=path_img_tmp,
+        output_path=tmpdir_nnunet,
+        data_path=path_model,
         # totalspineseg requires explicitly specifying the release subdirectory
         default_release=installed_releases[-1],  # use the most recent release
         # totalspineseg expects the device type, not torch.device
