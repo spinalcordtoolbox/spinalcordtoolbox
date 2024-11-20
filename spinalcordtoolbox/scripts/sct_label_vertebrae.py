@@ -396,7 +396,7 @@ def main(argv: Sequence[str]):
             im_label_c2c3.save(fname_labelz)
 
         # dilate label so it is not lost when applying warping
-        dilate(Image(fname_labelz), 3, 'ball').save(fname_labelz)
+        dilate(Image(fname_labelz), 3, 'ball', islabel=True).save(fname_labelz)
 
         # Apply straightening to z-label
         printv('\nAnd apply straightening to label...', verbose)

@@ -148,26 +148,28 @@ def post_processing_volume_wise(im_seg):
     return im_seg
 
 
-def keep_largest_object(z_slice_bin, x_cOm, y_cOm):
+def keep_largest_object(prediction, x_cOm, y_cOm):
     """
-    Keep the largest connected object per z_slice and fill little holes.
+    Keep the largest connected object from the input array (2D or 3D).
+    See the following commit message for more details:
+    https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4546/commits/213062a80222730171592453713c5e78931dae1e
     Note: This function only works for binary segmentation.
 
     When x_c0m/y_c0m are None, this function is identical to:
     https://github.com/ivadomed/ivadomed/blob/1fccf77239985fc3be99161f9eb18c9470d65206/ivadomed/postprocessing.py#L99-L116
 
-    :param z_slice: int 2d-array: Input 2d segmentation
+    :param prediction: ndarray: Input binary segmentation. It could be 2D or 3D.
     :param x_cOm: int: X center of mass of the segmentation for the previous 2d slice
     :param y_cOm: int: Y center of mass of the segmentation for the previous 2d slice
-    :return: z_slice: int 2d-array: Processed 2d segmentation
+    :return: prediction: ndarray: Output binary segmentation. 2D or 3D depending on the input.
     """
     # Find number of closed objects using skimage "label"
-    labeled_obj, num_obj = label(z_slice_bin)
+    labeled_obj, num_obj = label(prediction)
     # If more than one object is found, keep the largest one
     if num_obj > 1:
         # If the center of mass is not provided (e.g. is first slice, or segmentation is empty), keep the largest object
         if x_cOm is None or np.isnan(x_cOm):
-            z_slice_bin[np.where(labeled_obj != (np.bincount(labeled_obj.flat)[1:].argmax() + 1))] = 0
+            prediction[np.where(labeled_obj != (np.bincount(labeled_obj.flat)[1:].argmax() + 1))] = 0
         # If the center of mass is provided,
         else:
             idx_z_minus_1 = np.bincount(labeled_obj.flat)[1:].argmax() + 1
@@ -175,8 +177,8 @@ def keep_largest_object(z_slice_bin, x_cOm, y_cOm):
                 z_idx = labeled_obj == idx
                 if z_idx[int(x_cOm), int(y_cOm)]:
                     idx_z_minus_1 = idx
-            z_slice_bin[np.where(labeled_obj != idx_z_minus_1)] = 0
-    return z_slice_bin
+            prediction[np.where(labeled_obj != idx_z_minus_1)] = 0
+    return prediction
 
 
 def fill_holes(predictions, structure=None):

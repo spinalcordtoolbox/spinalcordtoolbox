@@ -281,7 +281,7 @@ def create_label_z(fname_seg, z, value, fname_labelz='labelz.nii.gz'):
     nii.data[:, :, :] = 0
     nii.data[x, y, z] = value
     # dilate label to prevent it from disappearing due to nearestneighbor interpolation
-    nii.data = dilate(nii.data, 3, 'ball')
+    nii.data = dilate(nii.data, 3, 'ball', islabel=True)
     nii.change_orientation(orientation_origin)  # put back in original orientation
     nii.save(fname_labelz)
     return fname_labelz
