@@ -689,8 +689,9 @@ def add_segmentation_labels(ax: mpl_axes.Axes, seg_mosaic: np.ndarray, colors: l
     # Fetch mosaic shape properties
     bbox = [2*radius[0], 2*radius[1]]
     grid_shape = [s // bb for s, bb in zip(seg_mosaic.shape, bbox)]
-    # Fetch set of labels in the mosaic
-    labels = [v for v in np.unique(seg_mosaic) if v]
+    # Fetch set of labels in the mosaic (including labels in between min/max)
+    labels = [float(val) for val in range(int(np.unique(seg_mosaic).min()),
+                                          int(np.unique(seg_mosaic).max())+1)]
     # Iterate over each sub-array in the mosaic
     for row in range(grid_shape[0]):
         for col in range(grid_shape[1]):
