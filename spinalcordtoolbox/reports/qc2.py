@@ -382,6 +382,7 @@ def sct_deepseg_spinal_rootlets_t2w(
     fname_seg_lesion: Optional[str],
     species: str,
     radius: Sequence[int],
+    outline: bool = True
 ):
     """
     Generate a QC report for `sct_deepseg -task seg_spinal_rootlets_t2w`.
@@ -454,8 +455,9 @@ def sct_deepseg_spinal_rootlets_t2w(
                   alpha=1.0,
                   interpolation='none',
                   aspect=1.0)
-        # linewidth 0.5 is too thick, 0.25 is too thin
-        plot_outlines(img, ax=ax, facecolor='none', edgecolor='black', linewidth=0.3)
+        if outline:
+            # linewidth 0.5 is too thick, 0.25 is too thin
+            plot_outlines(img, ax=ax, facecolor='none', edgecolor='black', linewidth=0.3)
         add_segmentation_labels(ax, img, colors=colormaps[i].colors, radius=tuple(r*scale for r in radius))
 
     ax.get_xaxis().set_visible(False)
