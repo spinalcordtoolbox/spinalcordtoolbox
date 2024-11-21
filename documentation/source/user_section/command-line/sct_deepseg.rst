@@ -84,9 +84,6 @@ Pathologies
 .. |seg_sc_lesion_t2w_sci| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/sci_lesion_sc_t2.png
    :target: deepseg/seg_sc_lesion_t2w_sci.html
 
-.. |seg_sc_ms_lesion_stir_psir| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/ms_lesion_sc_stir_psir.png
-   :target: deepseg/seg_sc_ms_lesion_stir_psir.html
-
 .. |seg_ms_lesion_mp2rage| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/ms_lesion_mp2rage.png
    :target: deepseg/seg_ms_lesion_mp2rage.html
 
@@ -115,10 +112,9 @@ You can replace "``seg_sc_lesion_t2w_sci``" with any of the task names in the ta
    * - |seg_sc_lesion_t2w_sci| ``seg_sc_lesion_t2w_sci``
      - |seg_ms_lesion| ``seg_ms_lesion``
      - |seg_ms_lesion_mp2rage| ``seg_ms_lesion_mp2rage``
-   * - |seg_sc_ms_lesion_stir_psir| ``seg_sc_ms_lesion_stir_psir``
-     - |seg_tumor_edema_cavity_t1_t2| ``seg_tumor_edema_cavity_t1_t2``
+   * - |seg_tumor_edema_cavity_t1_t2| ``seg_tumor_edema_cavity_t1_t2``
      - |tumor_t2| ``tumor_t2``
-
+     -
 
 Other structures
 ----------------
@@ -178,6 +174,10 @@ If you absolutely require these models, you can downgrade to version of SCT list
      - Removed in
      - Last available
      - Superseded by
+   * - |seg_sc_ms_lesion_stir_psir| ``seg_sc_ms_lesion_stir_psir``
+     - SCT Version ``6.5``
+     - SCT Version ``6.4``
+     - ``seg_ms_lesion`` (contrast-agnostic MS lesion segmentation)
 
 .. toctree::
    :hidden:
