@@ -809,7 +809,8 @@ def assign_label_colors_by_groups(labels):
     should each be assigned their own distinct colormap, as to group them semantically.
     """
     # Arrange colormaps for max contrast between colormaps, and max contrast between colors in colormaps
-    distinct_colormaps = ['Blues', 'Reds', 'Greens', 'Oranges', 'Purples']
+    # Put reds first because SC labels tend to be ~1, so they will usually be first in a list of labels
+    distinct_colormaps = ['Reds', 'Blues', 'Greens', 'Oranges', 'Purples']
     colormap_sampling = [0.25, 0.5, 0.75, 0.5]  # light -> medium -> dark -> medium -> (repeat)
 
     # Split labels into subgroups --> we split the groups wherever the difference between labels is > 1
