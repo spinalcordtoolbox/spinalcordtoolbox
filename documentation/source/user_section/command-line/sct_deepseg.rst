@@ -167,18 +167,15 @@ If you absolutely require these models, you can downgrade to version of SCT list
 
 .. list-table::
    :align: center
-   :widths: 33 22 22 22
+   :widths: 33 33 33
 
    * - Model
-     - Removed in
      - Last available
      - Superseded by
    * - |seg_sc_ms_lesion_stir_psir| ``seg_sc_ms_lesion_stir_psir``
-     - SCT Version ``6.5``
      - SCT Version ``6.4``
      - ``seg_ms_lesion`` (contrast-agnostic MS lesion segmentation)
    * - |ms_sc_mp2rage| ``ms_sc_mp2rage``
-     - SCT Version ``6.5``
      - SCT Version ``6.4``
      - ``seg_sc_contrast_agnostic`` (contrast-agnostic SC segmentation)
 
