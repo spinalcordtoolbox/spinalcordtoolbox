@@ -276,6 +276,10 @@ def sct_deepseg(
                 imgs_to_generate, fname_input, fname_seg, fname_seg2, species,
                 # Rootlets need a larger "base" radius as they exist outside the SC
                 radius=(23, 23))
+        elif "totalspineseg" in argv:
+            sct_deepseg_spinal_rootlets_t2w(
+                imgs_to_generate, fname_input, fname_seg, fname_seg2, species,
+                radius=(40, 40), outline=False)
         else:
             sct_deepseg_default(
                 imgs_to_generate, fname_input, fname_seg, fname_seg2, species)

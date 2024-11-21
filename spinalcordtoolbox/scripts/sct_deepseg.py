@@ -372,9 +372,14 @@ def main(argv: Sequence[str]):
 
     if arguments.qc is not None:
         # Models can have multiple input images -- create 1 QC report per input image.
-        # Models can also either have 1 OR 2 outputs per input, so we may need to split output_filenames into 2 lists
         if len(output_filenames) == len(input_filenames):
             iterator = zip(input_filenames, output_filenames, [None] * len(input_filenames))
+        # Special case: totalspineseg which outputs 5 files per 1 input file
+        # Just use the 5th image ([4]) which represents the step2 output
+        elif arguments.task[0] == 'totalspineseg':
+            assert len(output_filenames) == 5 * len(input_filenames)
+            iterator = zip(input_filenames, output_filenames[4::5], [None] * len(input_filenames))
+        # Other models typically have 2 outputs per input (e.g. SC + lesion), so use both segs
         else:
             assert len(output_filenames) == 2 * len(input_filenames)
             iterator = zip(input_filenames, output_filenames[0::2], output_filenames[1::2])
