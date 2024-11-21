@@ -14,6 +14,7 @@ import textwrap
 import shutil
 import glob
 from pathlib import Path
+from importlib.metadata import metadata
 
 from spinalcordtoolbox import download
 from spinalcordtoolbox.utils.sys import stylize, __deepseg_dir__, LazyLoader
@@ -206,7 +207,8 @@ MODELS = {
          # NB: Rather than hardcoding the URLs ourselves, use the URLs from the totalspineseg package.
          # This means that when the totalspineseg package is updated, the URLs will be too, thus triggering
          # a re-installation of the model URLs
-         "url": tss_init.ZIP_URLS,
+         "url": dict([meta.split(', ') for meta in metadata('totalspineseg').get_all('Project-URL')
+                      if meta.startswith('Dataset')]),
          "description": "Instance segmentation of vertebrae, intervertebral discs (IVDs), spinal cord, and spinal canal on multi-contrasts MRI scans.",
          "contrasts": ["any"],
          "thr": None,  # Images are already binarized
