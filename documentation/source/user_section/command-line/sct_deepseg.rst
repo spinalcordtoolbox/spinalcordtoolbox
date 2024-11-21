@@ -160,6 +160,25 @@ Spinal Canal segmentation can be performed by running the following sample comma
      -
 
 
+Retired models
+--------------
+
+.. |seg_sc_ms_lesion_stir_psir| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/ms_lesion_sc_stir_psir.png
+   :target: deepseg/seg_sc_ms_lesion_stir_psir.html
+
+These models have been replaced by newer, more advanced models. We recommend switching to the model listed in the table below.
+
+If you absolutely require these models, you can downgrade to version of SCT listed in the table below. If you do this, please let us know on the SCT Forum so we can better understand your use-case, and potentially reinstate the model if necessary.
+
+.. list-table::
+   :align: center
+   :widths: 33 22 22 22
+
+   * - Model
+     - Removed in
+     - Last available
+     - Superseded by
+
 .. toctree::
    :hidden:
    :maxdepth: 2
