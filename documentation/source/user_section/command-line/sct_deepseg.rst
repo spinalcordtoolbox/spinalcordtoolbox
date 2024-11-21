@@ -17,9 +17,6 @@ Spinal cord
 .. |seg_sc_epi| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/epi_bold.png
    :target: deepseg/seg_sc_epi.html
 
-.. |ms_sc_mp2rage| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/ms_sc_mp2rage.png
-   :target: deepseg/seg_ms_sc_mp2rage.html
-
 .. |mice_sc| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/mouse_t1.png
    :target: deepseg/mice_sc.html
 
@@ -38,10 +35,9 @@ You can replace "``seg_sc_contrast_agnostic``" with any of the task names in the
    * - |seg_sc_contrast_agnostic| ``seg_sc_contrast_agnostic``
      - |seg_lumbar_sc_t2w| ``seg_lumbar_sc_t2w``
      - |seg_sc_epi| ``seg_sc_epi``
-   * - |ms_sc_mp2rage| ``ms_sc_mp2rage``
-     - |mice_sc| ``mice_sc``
+   * - |mice_sc| ``mice_sc``
      -
-
+     -
 
 Gray matter
 -----------
@@ -162,6 +158,9 @@ Retired models
 .. |seg_sc_ms_lesion_stir_psir| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/ms_lesion_sc_stir_psir.png
    :target: deepseg/seg_sc_ms_lesion_stir_psir.html
 
+.. |ms_sc_mp2rage| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/ms_sc_mp2rage.png
+   :target: deepseg/seg_ms_sc_mp2rage.html
+
 These models have been replaced by newer, more advanced models. We recommend switching to the model listed in the table below.
 
 If you absolutely require these models, you can downgrade to version of SCT listed in the table below. If you do this, please let us know on the SCT Forum so we can better understand your use-case, and potentially reinstate the model if necessary.
@@ -178,6 +177,10 @@ If you absolutely require these models, you can downgrade to version of SCT list
      - SCT Version ``6.5``
      - SCT Version ``6.4``
      - ``seg_ms_lesion`` (contrast-agnostic MS lesion segmentation)
+   * - |ms_sc_mp2rage| ``ms_sc_mp2rage``
+     - SCT Version ``6.5``
+     - SCT Version ``6.4``
+     - ``seg_sc_contrast_agnostic`` (contrast-agnostic SC segmentation)
 
 .. toctree::
    :hidden:

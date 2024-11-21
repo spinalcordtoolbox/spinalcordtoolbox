@@ -87,14 +87,6 @@ MODELS = {
         "contrasts": ["t2"],
         "default": False,
     },
-    "model_seg_ms_sc_mp2rage": {
-        "url": [
-            "https://github.com/ivadomed/model_seg_ms_mp2rage/releases/download/r20211223/model_seg_ms_sc_mp2rage.zip"
-        ],
-        "description": "Segmentation of spinal cord on MP2RAGE data from MS participants.",
-        "contrasts": ["mp2rage"],
-        "default": False,
-    },
     "model_7t_multiclass_gm_sc_unet2d": {
         "url": [
             "https://github.com/ivadomed/model_seg_gm-wm_t2star_7t_unet3d-multiclass/archive/refs/tags/r20211012.zip"
@@ -246,14 +238,6 @@ TASKS = {
                              '(https://github.com/ivadomed/findcord_tumor).',
          'url': 'https://github.com/sct-pipeline/tumor-segmentation',
          'models': ['findcord_tumor', 't2_tumor']},
-    'seg_ms_sc_mp2rage':
-        {'description': 'Cord segmentation on MP2RAGE in MS patients',
-         'long_description': 'This segmentation model for MP2RAGE spinal cord segmentation uses a Modified3DUNet '
-                             'architecture, and was created with the `ivadomed` package. Training data consisted of '
-                             'scans from 30 multiple sclerosis (MS) patients, and the dataset included manual '
-                             'segmentations of MS lesions. This dataset was provided by the University of Basel.',
-         'url': 'https://github.com/ivadomed/model_seg_ms_mp2rage',
-         'models': ['model_seg_ms_sc_mp2rage']},
     'seg_tumor-edema-cavity_t1-t2':
         {'description': 'Multiclass cord tumor/edema/cavity segmentation',
          'long_description': 'This segmentation model for T1w and T2w spinal tumor, edema, and cavity segmentation '
