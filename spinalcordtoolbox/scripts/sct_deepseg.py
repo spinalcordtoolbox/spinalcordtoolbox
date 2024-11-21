@@ -165,6 +165,12 @@ def get_parser():
         "--help",
         action="help",
         help="Show this help message and exit")
+    misc.add_argument(
+        "-qc-plane",
+        metavar=Metavar.str,
+        choices=('Axial', 'Sagittal'),
+        default='Axial',
+        help="Plane of the output QC. If Sagittal, you must also provide the -s option. Default: Axial.")
 
     return parser
 
@@ -391,6 +397,7 @@ def main(argv: Sequence[str]):
                 path_qc=os.path.abspath(arguments.qc),
                 dataset=arguments.qc_dataset,
                 subject=arguments.qc_subject,
+                plane=arguments.qc_plane,
             )
 
     for output_filename in output_filenames:
