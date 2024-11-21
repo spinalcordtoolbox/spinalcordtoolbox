@@ -273,7 +273,9 @@ def sct_deepseg(
     ) as imgs_to_generate:
         if "seg_spinal_rootlets_t2w" in argv:
             sct_deepseg_spinal_rootlets_t2w(
-                imgs_to_generate, fname_input, fname_seg, fname_seg2, species)
+                imgs_to_generate, fname_input, fname_seg, fname_seg2, species,
+                # Rootlets need a larger "base" radius as they exist outside the SC
+                radius=(23, 23))
         else:
             sct_deepseg_default(
                 imgs_to_generate, fname_input, fname_seg, fname_seg2, species)
@@ -379,6 +381,7 @@ def sct_deepseg_spinal_rootlets_t2w(
     fname_seg_sc: str,
     fname_seg_lesion: Optional[str],
     species: str,
+    radius: Sequence[int],
 ):
     """
     Generate a QC report for `sct_deepseg -task seg_spinal_rootlets_t2w`.
@@ -394,8 +397,6 @@ def sct_deepseg_spinal_rootlets_t2w(
     img_seg_sc = Image(fname_seg_sc).change_orientation('SAL')
     img_seg_lesion = Image(fname_seg_lesion).change_orientation('SAL') if fname_seg_lesion else None
 
-    # Rootlets need a larger "base" radius as they exist outside the SC
-    radius = (23, 23)
     # The radius size is suited to the species-specific resolutions. But, since we plan to skip
     # resampling, we need to instead adjust the crop radius to suit the *actual* resolution.
     p_original = img_seg_sc.dim[5]  # dim[0:3] => shape, dim[4:7] => pixdim, so dim[5] == pixdim[1]
