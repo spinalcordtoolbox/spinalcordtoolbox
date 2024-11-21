@@ -701,8 +701,9 @@ def add_segmentation_labels(ax: mpl_axes.Axes, seg_mosaic: np.ndarray, colors: l
             # Check for nonzero labels, then draw text for each label found
             labels_in_arr = [v for v in np.unique(arr) if v]
             for idx_pos, l_arr in enumerate(labels_in_arr, start=1):
+                lr_shift = -4 * (len(str(int(l_arr))) - 1)
                 y, x = (extents[0].stop - 6*idx_pos + 3,  # Shift each subsequent label up in case there are >1
-                        extents[1].stop - 6)
+                        extents[1].stop - 6 + lr_shift)   # Shift labels left if double/triple digit
                 color = colors[0] if len(colors) == 1 else colors[labels.index(l_arr)]
                 ax.text(x, y, str(int(l_arr)), color=color, size=4).set_path_effects([
                     mpl_patheffects.Stroke(linewidth=1, foreground='black'),
