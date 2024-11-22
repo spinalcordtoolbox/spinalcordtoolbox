@@ -8,7 +8,6 @@ License: see the file LICENSE
 import logging
 import os
 import shutil
-import sys
 import time
 from pathlib import Path
 import glob
@@ -22,7 +21,6 @@ from monai.transforms import SaveImage
 from monai.inferers import sliding_window_inference
 
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname
-from spinalcordtoolbox.utils.sys import __sct_dir__
 from spinalcordtoolbox.image import Image, get_orientation, add_suffix
 from spinalcordtoolbox.math import binarize, remove_small_objects
 from spinalcordtoolbox.deepseg_.postprocessing import keep_largest_object, fill_holes
@@ -353,16 +351,6 @@ def segment_totalspineseg(path_img, tmpdir, predictor, device):
     tmpdir_nnunet = os.path.join(tmpdir, 'nnUNet_prediction')
     os.mkdir(tmpdir_nnunet)
 
-    # Temporarily modify the PATH to avoid FileNotFound errors
-    # (totalspineseg uses subprocess calls to the nnunet CLI scripts, which is not ideal as it
-    #  requires that the nnunet CLI scripts be on the path. This will be true if venv_sct is
-    #  activated, but most SCT users won't be activating their venvs.)
-    # This is a bad hack, so when totalspineseg switches to in-process calls, we should remove it
-    bin_dir = "Scripts" if sys.platform.startswith("win32") else "bin"
-    bin_path = os.path.join(__sct_dir__, "python", "envs", "venv_sct", bin_dir)
-    path_backup = os.environ.copy()["PATH"]
-    os.environ["PATH"] = f"{bin_path}:{os.environ['PATH']}"
-
     tss_inference(
         input_path=path_img_tmp,
         output_path=tmpdir_nnunet,
@@ -375,10 +363,6 @@ def segment_totalspineseg(path_img, tmpdir, predictor, device):
         max_workers=1,
         max_workers_nnunet=1,
     )
-
-    # Restore the old PATH
-    os.environ["PATH"] = path_backup
-
     fnames_out, targets = [], []
     for output_dirname in ["step1_canal", "step1_cord", "step1_levels", "step1_output", "step2_output"]:
         fnames_out.append(os.path.join(tmpdir_nnunet, output_dirname, os.path.basename(path_img)))
