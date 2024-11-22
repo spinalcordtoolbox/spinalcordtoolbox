@@ -491,11 +491,17 @@ def sct_deepseg_sagittal(
     img_seg_sc = Image(fname_seg_sc).change_orientation('RSP')
     img_seg_lesion = Image(fname_seg_lesion).change_orientation('RSP') if fname_seg_lesion else None
 
+    # if the image has more then 30 slices then we resample it to 30 slices on the R-L direction
+    if img_input.dim[0] > 30:
+        R_L_resolution = img_input.dim[4] * img_input.dim[0] / 30
+    else:
+        R_L_resolution = img_input.dim[4]
+
     # Resample images slice by slice
-    logger.info('Resample images to %fx%f vox', p_resample, p_resample)
+    logger.info('Resample images to %fx%fx%f vox', R_L_resolution, p_resample, p_resample)
     img_input = resample_nib(
         image=img_input,
-        new_size=[img_input.dim[4], p_resample, p_resample],
+        new_size=[R_L_resolution, p_resample, p_resample],
         new_size_type='mm',
         interpolation='spline',
     )
