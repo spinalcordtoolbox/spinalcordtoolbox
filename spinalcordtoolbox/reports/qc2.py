@@ -530,7 +530,7 @@ def sct_deepseg_sagittal(
     mpl_backend_agg.FigureCanvasAgg(fig)
     ax = fig.add_axes((0, 0, 1, 1))
     ax.imshow(img, cmap='gray', interpolation='none', aspect=1.0)
-    add_orientation_labels(ax, radius=radius, letters = ['S', 'I', 'P', 'A'])
+    add_orientation_labels(ax, radius=radius, letters=['S', 'I', 'P', 'A'])
     ax.get_xaxis().set_visible(False)
     ax.get_yaxis().set_visible(False)
     img_path = str(imgs_to_generate['path_background_img'])
@@ -762,7 +762,7 @@ def mosaic(img: Image, centers: np.ndarray, radius: tuple[int, int] = (15, 15), 
     return np.block([cropped[i:i+num_col] for i in range(0, len(cropped), num_col)])
 
 
-def add_orientation_labels(ax: mpl_axes.Axes, radius: tuple[int, int] = (15, 15), letters: tuple[str, str, str ,str] = ['A', 'P', 'L', 'R']):
+def add_orientation_labels(ax: mpl_axes.Axes, radius: tuple[int, int] = (15, 15), letters: tuple[str, str, str ,str] = ('A', 'P', 'L', 'R')):
     """
     Add orientation labels (A, P, L, R) to a figure, yellow with a black outline.
     """
