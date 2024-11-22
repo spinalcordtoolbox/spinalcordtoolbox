@@ -770,7 +770,6 @@ def add_orientation_labels(ax: mpl_axes.Axes, radius: tuple[int, int] = (15, 15)
     #    A                    [12,  6]
     # L     R   -->  [0, 17]            [24, 17]
     #    P                    [12, 28]
-    
     letters = ['A', 'P', 'L', 'R']
     if orientation == 'RSP':
         letters = ['S', 'I', 'P', 'A']
