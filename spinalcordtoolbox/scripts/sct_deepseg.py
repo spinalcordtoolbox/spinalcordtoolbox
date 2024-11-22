@@ -23,7 +23,6 @@ from spinalcordtoolbox.reports import qc2
 from spinalcordtoolbox.image import splitext, Image, check_image_kind
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax, ActionCreateFolder
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel, __version__, _git_info
-from spinalcordtoolbox.utils.fs import tmp_create
 from spinalcordtoolbox.utils.sys import LazyLoader
 
 cuda = LazyLoader("cuda", globals(), 'torch.cuda')
@@ -55,11 +54,10 @@ def get_parser():
             Contrast of the input. The `-c` option is only relevant for the following tasks:
 
               - `seg_tumor-edema-cavity_t1-t2`: Specifies the contrast order of input images (e.g. `-c t1 t2`)
-              - `seg_sc_ms_lesion_stir_psir`: Specifies whether input should be inverted based on contrast (`-c stir`: no inversion, `-c psir`: inverted)
 
             Because all other models have only a single input contrast, the `-c` option is ignored for them.
         """),
-        choices=('t1', 't2', 't2star', 'stir', 'psir'),
+        choices=('t1', 't2', 't2star'),
         metavar=Metavar.str)
     input_output.add_argument(
         "-o",
@@ -165,6 +163,12 @@ def get_parser():
         "--help",
         action="help",
         help="Show this help message and exit")
+    misc.add_argument(
+        "-qc-plane",
+        metavar=Metavar.str,
+        choices=('Axial', 'Sagittal'),
+        default='Axial',
+        help="Plane of the output QC. If Sagittal, you must also provide the -s option. Default: Axial.")
 
     return parser
 
@@ -262,26 +266,6 @@ def main(argv: Sequence[str]):
                         input_filenames.append(input_filename)
         else:
             input_filenames = arguments.i.copy()
-
-        # Inversion workaround for regular PSIR input to canproco STIR/PSIR model
-        if 'seg_sc_ms_lesion_stir_psir' in arguments.task[0]:
-            contrast = arguments.c[0] if arguments.c else None  # default is empty list
-            if not contrast:
-                parser.error(
-                    "Task 'seg_sc_ms_lesion_stir_psir' requires the flag `-c` to identify whether the input is "
-                    "STIR or PSIR. If `-c psir` is passed, the input will be inverted.")
-            elif contrast == "psir":
-                logger.warning("Inverting input PSIR image (multiplying data array by -1)...")
-                tmpdir = tmp_create("sct_deepseg-inverted-psir")
-                for i, fname_in in enumerate(input_filenames.copy()):
-                    im_in = Image(fname_in)
-                    im_in.data *= -1
-                    path_img_tmp = os.path.join(tmpdir, os.path.basename(fname_in))
-                    im_in.save(path_img_tmp)
-                    input_filenames[i] = path_img_tmp
-            else:
-                if contrast != "stir":
-                    parser.error("Task 'seg_sc_ms_lesion_stir_psir' requires the flag `-c` to be either psir or stir.")
 
         if 'seg_sc_epi' in arguments.task[0]:
             for image in arguments.i:
@@ -396,6 +380,7 @@ def main(argv: Sequence[str]):
                 path_qc=os.path.abspath(arguments.qc),
                 dataset=arguments.qc_dataset,
                 subject=arguments.qc_subject,
+                plane=arguments.qc_plane,
             )
 
     images = [arguments.i[0]]
