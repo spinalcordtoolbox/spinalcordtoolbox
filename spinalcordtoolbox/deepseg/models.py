@@ -8,6 +8,7 @@ License: see the file LICENSE
 
 
 import os
+import sys
 import json
 import logging
 import textwrap
@@ -17,7 +18,7 @@ from pathlib import Path
 from importlib.metadata import metadata
 
 from spinalcordtoolbox import download
-from spinalcordtoolbox.utils.sys import stylize, __deepseg_dir__, LazyLoader
+from spinalcordtoolbox.utils.sys import stylize, __deepseg_dir__, LazyLoader, __sct_dir__
 
 tss_init = LazyLoader("tss_init", globals(), 'totalspineseg.init_inference')
 
@@ -465,9 +466,21 @@ def install_model(name_model, custom_url=None):
             raise ValueError("Invalid url field in MODELS")
         # totalspineseg handles data downloading itself, so just pass the urls along
         if name_model == 'totalspineseg':
+            # Temporarily modify the PATH to avoid FileNotFound errors
+            # (totalspineseg uses subprocess calls to the nnunet CLI scripts, which is not ideal as it
+            #  requires that the nnunet CLI scripts be on the path. This will be true if venv_sct is
+            #  activated, but most SCT users won't be activating their venvs.)
+            # This is a bad hack, so when totalspineseg switches to in-process calls, we should remove it
+            bin_dir = "Scripts" if sys.platform.startswith("win32") else "bin"
+            bin_path = os.path.join(__sct_dir__, "python", "envs", "venv_sct", bin_dir)
+            path_backup = os.environ.copy()["PATH"]
+            os.environ["PATH"] = f"{bin_path}:{os.environ['PATH']}"
+            # Run inference
             tss_init.init_inference(data_path=Path(folder(name_model)), quiet=False, dict_urls=url_field,
                                     store_export=False)  # Avoid having duplicate .zip files stored on disk
             urls_used = url_field
+            # Restore the old PATH
+            os.environ["PATH"] = path_backup
         else:
             urls_used = {}
             for seed_name, model_urls in url_field.items():
