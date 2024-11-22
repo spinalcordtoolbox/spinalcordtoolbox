@@ -356,7 +356,7 @@ def segment_totalspineseg(path_img, tmpdir, predictor, device):
     # set multiprocessing method to 'spawn' to avoid deadlock issues
     # - 'spawn' is already default on Windows/macOS, but 'fork' is default on Linux
     # - 'spawn' is reliable though slower, but 'fork' causes intermittent stalling
-    mp.set_start_method("spawn")
+    mp.set_start_method("spawn", force=True)
 
     tss_inference(
         input_path=path_img_tmp,
