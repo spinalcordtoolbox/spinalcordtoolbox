@@ -9,6 +9,8 @@
  - **sct_deepseg**: Update contrast agnostic model to r20241024 (improved for SCI and whole-spine T1/T2 images). [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4661)
  - **sct_deepseg**: Add contrast-agnostic MS lesion segmentation model. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4686)
  - **sct_deepseg**: Add canal segmentation model. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4687)
+ - **sct_deepseg**: Add TotalSpineSeg. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4690)
+ - **sct_deepseg, sct_qc**: Add `-qc-plane` flag to allow switching the QC view to `'Sagittal'`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4708)
  - **sct_fmri_compute_tsnr, sct_qc**: Add `-m` and `-qc` options to fMRI TSNR script. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4602)
  - **sct_get_centerline**: Expose `space` API parameter in centerline CLI to allow user to specify `-space phys`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4620)
 
