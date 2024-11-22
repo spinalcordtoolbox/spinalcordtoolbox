@@ -762,7 +762,7 @@ def mosaic(img: Image, centers: np.ndarray, radius: tuple[int, int] = (15, 15), 
     return np.block([cropped[i:i+num_col] for i in range(0, len(cropped), num_col)])
 
 
-def add_orientation_labels(ax: mpl_axes.Axes, radius: tuple[int, int] = (15, 15), orientation = 'SAL'):
+def add_orientation_labels(ax: mpl_axes.Axes, radius: tuple[int, int] = (15, 15), orientation: str = 'SAL'):
     """
     Add orientation labels (A, P, L, R) to a figure, yellow with a black outline.
     """
