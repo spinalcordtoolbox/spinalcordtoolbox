@@ -11,6 +11,7 @@ import shutil
 import time
 from pathlib import Path
 import glob
+import multiprocessing as mp
 
 from ivadomed import inference as imed_inference
 from totalspineseg.inference import inference as tss_inference
@@ -350,6 +351,12 @@ def segment_totalspineseg(path_img, tmpdir, predictor, device):
     # Create directory for nnUNet prediction
     tmpdir_nnunet = os.path.join(tmpdir, 'nnUNet_prediction')
     os.mkdir(tmpdir_nnunet)
+
+    # totalspineseg uses multiprocessing internally, so here we try to
+    # set multiprocessing method to 'spawn' to avoid deadlock issues
+    # - 'spawn' is already default on Windows/macOS, but 'fork' is default on Linux
+    # - 'spawn' is reliable though slower, but 'fork' causes intermittent stalling
+    mp.set_start_method("spawn")
 
     tss_inference(
         input_path=path_img_tmp,
