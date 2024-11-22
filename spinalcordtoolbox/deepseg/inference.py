@@ -359,6 +359,9 @@ def segment_totalspineseg(path_img, tmpdir, predictor, device):
         default_release=installed_releases[-1],  # use the most recent release
         # totalspineseg expects the device type, not torch.device
         device=device.type,
+        # Try to address stalling due to the use of concurrent.futures in totalspineseg
+        max_workers=1,
+        max_workers_nnunet=1,
     )
     fnames_out, targets = [], []
     for output_dirname in ["step1_canal", "step1_cord", "step1_levels", "step1_output", "step2_output"]:
