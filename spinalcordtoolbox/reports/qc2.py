@@ -254,6 +254,7 @@ def sct_deepseg(
     path_qc: str,
     dataset: Optional[str],
     subject: Optional[str],
+    plane: Optional[str],
 ):
     """
     Generate a QC report for sct_deepseg, based on which task was used.
@@ -267,19 +268,31 @@ def sct_deepseg(
         path_qc=Path(path_qc),
         command=command,
         cmdline=list2cmdline(cmdline),
-        plane='Axial',
+        plane=plane,
         dataset=dataset,
         subject=subject,
     ) as imgs_to_generate:
+        # Custom QC to handle multiclass segmentation outside the spinal cord
         if "seg_spinal_rootlets_t2w" in argv:
             sct_deepseg_spinal_rootlets_t2w(
+                imgs_to_generate, fname_input, fname_seg, fname_seg2, species,
+                radius=(23, 23))
+        elif "totalspineseg" in argv:
+            sct_deepseg_spinal_rootlets_t2w(
+                imgs_to_generate, fname_input, fname_seg, fname_seg2, species,
+                radius=(40, 40), outline=False)
+        # Non-rootlets, axial/sagittal DeepSeg QC report
+        elif plane == 'Axial':
+            sct_deepseg_axial(
                 imgs_to_generate, fname_input, fname_seg, fname_seg2, species)
         else:
-            sct_deepseg_default(
+            assert plane == 'Sagittal', (f"`plane` must be either 'Axial' "
+                                         f"or 'Sagittal', but got {plane}")
+            sct_deepseg_sagittal(
                 imgs_to_generate, fname_input, fname_seg, fname_seg2, species)
 
 
-def sct_deepseg_default(
+def sct_deepseg_axial(
     imgs_to_generate: dict[str, Path],
     fname_input: str,
     fname_seg_sc: str,
@@ -379,6 +392,8 @@ def sct_deepseg_spinal_rootlets_t2w(
     fname_seg_sc: str,
     fname_seg_lesion: Optional[str],
     species: str,
+    radius: Sequence[int],
+    outline: bool = True
 ):
     """
     Generate a QC report for `sct_deepseg -task seg_spinal_rootlets_t2w`.
@@ -394,8 +409,6 @@ def sct_deepseg_spinal_rootlets_t2w(
     img_seg_sc = Image(fname_seg_sc).change_orientation('SAL')
     img_seg_lesion = Image(fname_seg_lesion).change_orientation('SAL') if fname_seg_lesion else None
 
-    # Rootlets need a larger "base" radius as they exist outside the SC
-    radius = (23, 23)
     # The radius size is suited to the species-specific resolutions. But, since we plan to skip
     # resampling, we need to instead adjust the crop radius to suit the *actual* resolution.
     p_original = img_seg_sc.dim[5]  # dim[0:3] => shape, dim[4:7] => pixdim, so dim[5] == pixdim[1]
@@ -453,9 +466,113 @@ def sct_deepseg_spinal_rootlets_t2w(
                   alpha=1.0,
                   interpolation='none',
                   aspect=1.0)
-        # linewidth 0.5 is too thick, 0.25 is too thin
-        plot_outlines(img, ax=ax, facecolor='none', edgecolor='black', linewidth=0.3)
+        if outline:
+            # linewidth 0.5 is too thick, 0.25 is too thin
+            plot_outlines(img, ax=ax, facecolor='none', edgecolor='black', linewidth=0.3)
         add_segmentation_labels(ax, img, colors=colormaps[i].colors, radius=tuple(r*scale for r in radius))
+
+    ax.get_xaxis().set_visible(False)
+    ax.get_yaxis().set_visible(False)
+    img_path = str(imgs_to_generate['path_overlay_img'])
+    logger.debug('Save image %s', img_path)
+    fig.savefig(img_path, format='png', transparent=True, dpi=300)
+
+
+def sct_deepseg_sagittal(
+    imgs_to_generate: dict[str, Path],
+    fname_input: str,
+    fname_seg_sc: str,
+    fname_seg_lesion: Optional[str],
+    species: str,
+):
+    """
+    Generate a QC report for sct_deepseg, with varied colormaps depending on the type of segmentation.
+
+    This refactor is based off of the `listed_seg` method in qc.py, adapted to support multiple images.
+    """
+    # Axial orientation, switch between one anat image and 1-2 seg images
+    # FIXME: This code is more or less duplicated with the 'sct_register_multimodal' report, because both reports
+    #        use the old qc.py method "_make_QC_image_for_3d_volumes" for generating the background img.
+    # Resample images slice by slice
+    p_resample = {'human': 0.6, 'mouse': 0.1}[species]
+    img_input = Image(fname_input).change_orientation('RSP')
+    img_seg_sc = Image(fname_seg_sc).change_orientation('RSP')
+    img_seg_lesion = Image(fname_seg_lesion).change_orientation('RSP') if fname_seg_lesion else None
+
+    # if the image has more then 30 slices then we resample it to 30 slices on the R-L direction
+    if img_input.dim[0] > 30:
+        R_L_resolution = img_input.dim[4] * img_input.dim[0] / 30
+    else:
+        R_L_resolution = img_input.dim[4]
+
+    # Resample images slice by slice
+    logger.info('Resample images to %fx%fx%f vox', R_L_resolution, p_resample, p_resample)
+    img_input = resample_nib(
+        image=img_input,
+        new_size=[R_L_resolution, p_resample, p_resample],
+        new_size_type='mm',
+        interpolation='spline',
+    )
+    img_seg_sc = resample_nib(
+        image=img_seg_sc,
+        image_dest=img_input,
+        interpolation='linear',
+    )
+    img_seg_lesion = resample_nib(
+        image=img_seg_lesion,
+        image_dest=img_input,
+        interpolation='linear',
+    ) if fname_seg_lesion else None
+
+    # The radius is set to display the entire slice
+    radius = (img_input.dim[1]//2, img_input.dim[2]//2)
+
+    # Each slice is centered on the segmentation
+    logger.info('Find the center of each slice')
+    centers = np.array([radius] * img_input.data.shape[0])
+    inf_nan_fill(centers[:, 0])
+    inf_nan_fill(centers[:, 1])
+
+    # Generate the first QC report image
+    img = equalize_histogram(mosaic(img_input, centers, radius=radius))
+
+    # For QC reports, axial mosaics will often have smaller height than width
+    # (e.g. WxH = 20x3 slice images). So, we want to reduce the fig height to match this.
+    # `size_fig` is in inches. So, dpi=300 --> 1500px, dpi=100 --> 500px, etc.
+    size_fig = [5, 5 * img.shape[0] / img.shape[1]]
+
+    fig = mpl_figure.Figure()
+    fig.set_size_inches(*size_fig, forward=True)
+    mpl_backend_agg.FigureCanvasAgg(fig)
+    ax = fig.add_axes((0, 0, 1, 1))
+    ax.imshow(img, cmap='gray', interpolation='none', aspect=1.0)
+    add_orientation_labels(ax, radius=radius, letters=['S', 'I', 'P', 'A'])
+    ax.get_xaxis().set_visible(False)
+    ax.get_yaxis().set_visible(False)
+    img_path = str(imgs_to_generate['path_background_img'])
+    logger.debug('Save image %s', img_path)
+    fig.savefig(img_path, format='png', transparent=True, dpi=300)
+
+    # Generate the second QC report image
+    fig = mpl_figure.Figure()
+    fig.set_size_inches(*size_fig, forward=True)
+    mpl_backend_agg.FigureCanvasAgg(fig)
+    ax = fig.add_axes((0, 0, 1, 1))
+    colormaps = [mpl_colors.ListedColormap(["#ff0000"]),  # Red for first image
+                 mpl_colors.ListedColormap(["#00ffff"])]  # Cyan for second
+    for i, image in enumerate([img_seg_sc, img_seg_lesion]):
+        if not image:
+            continue
+        img = mosaic(image, centers, radius=radius)
+        img = np.ma.masked_less_equal(img, 0)
+        img.set_fill_value(0)
+        ax.imshow(img,
+                  cmap=colormaps[i],
+                  norm=mpl_colors.Normalize(vmin=0.5, vmax=1),
+                  # img==1 -> opaque, but soft regions -> more transparent as value decreases
+                  alpha=(img / img.max()),  # scale to [0, 1]
+                  interpolation='none',
+                  aspect=1.0)
 
     ax.get_xaxis().set_visible(False)
     ax.get_yaxis().set_visible(False)
@@ -661,7 +778,7 @@ def mosaic(img: Image, centers: np.ndarray, radius: tuple[int, int] = (15, 15), 
     return np.block([cropped[i:i+num_col] for i in range(0, len(cropped), num_col)])
 
 
-def add_orientation_labels(ax: mpl_axes.Axes, radius: tuple[int, int] = (15, 15)):
+def add_orientation_labels(ax: mpl_axes.Axes, radius: tuple[int, int] = (15, 15), letters: tuple[str, str, str, str] = ('A', 'P', 'L', 'R')):
     """
     Add orientation labels (A, P, L, R) to a figure, yellow with a black outline.
     """
@@ -670,10 +787,10 @@ def add_orientation_labels(ax: mpl_axes.Axes, radius: tuple[int, int] = (15, 15)
     # L     R   -->  [0, 17]            [24, 17]
     #    P                    [12, 28]
     for letter, x, y, in [
-        ('A', radius[0] - 3,   6),
-        ('P', radius[0] - 3,   radius[1]*2 - 2),
-        ('L', 0,               radius[1] + 2),
-        ('R', radius[0]*2 - 6, radius[1] + 2)
+        (letters[0], radius[0] - 3,   6),
+        (letters[1], radius[0] - 3,   radius[1]*2 - 2),
+        (letters[2], 0,               radius[1] + 2),
+        (letters[3], radius[0]*2 - 6, radius[1] + 2)
     ]:
         ax.text(x, y, letter, color='yellow', size=4).set_path_effects([
             mpl_patheffects.Stroke(linewidth=1, foreground='black'),
@@ -689,8 +806,9 @@ def add_segmentation_labels(ax: mpl_axes.Axes, seg_mosaic: np.ndarray, colors: l
     # Fetch mosaic shape properties
     bbox = [2*radius[0], 2*radius[1]]
     grid_shape = [s // bb for s, bb in zip(seg_mosaic.shape, bbox)]
-    # Fetch set of labels in the mosaic
-    labels = [v for v in np.unique(seg_mosaic) if v]
+    # Fetch set of labels in the mosaic (including labels in between min/max)
+    labels = [float(val) for val in range(int(np.unique(seg_mosaic).min()),
+                                          int(np.unique(seg_mosaic).max())+1)]
     # Iterate over each sub-array in the mosaic
     for row in range(grid_shape[0]):
         for col in range(grid_shape[1]):
@@ -701,8 +819,9 @@ def add_segmentation_labels(ax: mpl_axes.Axes, seg_mosaic: np.ndarray, colors: l
             # Check for nonzero labels, then draw text for each label found
             labels_in_arr = [v for v in np.unique(arr) if v]
             for idx_pos, l_arr in enumerate(labels_in_arr, start=1):
+                lr_shift = -4 * (len(str(int(l_arr))) - 1)
                 y, x = (extents[0].stop - 6*idx_pos + 3,  # Shift each subsequent label up in case there are >1
-                        extents[1].stop - 6)
+                        extents[1].stop - 6 + lr_shift)   # Shift labels left if double/triple digit
                 color = colors[0] if len(colors) == 1 else colors[labels.index(l_arr)]
                 ax.text(x, y, str(int(l_arr)), color=color, size=4).set_path_effects([
                     mpl_patheffects.Stroke(linewidth=1, foreground='black'),
@@ -807,7 +926,8 @@ def assign_label_colors_by_groups(labels):
     should each be assigned their own distinct colormap, as to group them semantically.
     """
     # Arrange colormaps for max contrast between colormaps, and max contrast between colors in colormaps
-    distinct_colormaps = ['Blues', 'Reds', 'Greens', 'Oranges', 'Purples']
+    # Put reds first because SC labels tend to be ~1, so they will usually be first in a list of labels
+    distinct_colormaps = ['Reds', 'Blues', 'Greens', 'Oranges', 'Purples']
     colormap_sampling = [0.25, 0.5, 0.75, 0.5]  # light -> medium -> dark -> medium -> (repeat)
 
     # Split labels into subgroups --> we split the groups wherever the difference between labels is > 1

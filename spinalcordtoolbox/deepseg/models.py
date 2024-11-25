@@ -14,10 +14,12 @@ import textwrap
 import shutil
 import glob
 from pathlib import Path
+from importlib.metadata import metadata
 
 from spinalcordtoolbox import download
-from spinalcordtoolbox.utils.sys import stylize, __deepseg_dir__
+from spinalcordtoolbox.utils.sys import stylize, __deepseg_dir__, LazyLoader
 
+tss_init = LazyLoader("tss_init", globals(), 'totalspineseg.init_inference')
 
 logger = logging.getLogger(__name__)
 
@@ -184,6 +186,17 @@ MODELS = {
         "thr": None,  # Images are already binarized
         "default": False,
     },
+    "totalspineseg": {
+         # NB: Rather than hardcoding the URLs ourselves, use the URLs from the totalspineseg package.
+         # This means that when the totalspineseg package is updated, the URLs will be too, thus triggering
+         # a re-installation of the model URLs
+         "url": dict([meta.split(', ') for meta in metadata('totalspineseg').get_all('Project-URL')
+                      if meta.startswith('Dataset')]),
+         "description": "Instance segmentation of vertebrae, intervertebral discs (IVDs), spinal cord, and spinal canal on multi-contrasts MRI scans.",
+         "contrasts": ["any"],
+         "thr": None,  # Images are already binarized
+         "default": False,
+     },
 }
 
 
@@ -363,6 +376,13 @@ TASKS = {
                              'false positives segmentations of other anatomical structures.',
          'url': 'https://github.com/ivadomed/model-canal-seg',
          'models': ['model_seg_canal_t2w']},
+    'totalspineseg':
+        {'description': 'Intervertebral discs labeling and vertebrae segmentation',
+         'long_description': 'TotalSpineSeg is a tool for automatic instance segmentation of all vertebrae, intervertebral discs (IVDs), '
+                             'spinal cord, and spinal canal in MRI images. It is robust to various MRI contrasts, acquisition orientations, '
+                             'and resolutions. The model used in TotalSpineSeg is based on nnU-Net as the backbone for training and inference.',
+         'url': 'https://github.com/neuropoly/totalspineseg',
+         'models': ['totalspineseg']},
 }
 
 
@@ -408,11 +428,17 @@ def install_model(name_model, custom_url=None):
     else:
         if not isinstance(url_field, dict):
             raise ValueError("Invalid url field in MODELS")
-        urls_used = {}
-        for seed_name, model_urls in url_field.items():
-            logger.info(f"\nInstalling '{seed_name}'...")
-            urls_used[seed_name] = download.install_data(model_urls,
-                                                         folder(os.path.join(name_model, seed_name)), keep=True)
+        # totalspineseg handles data downloading itself, so just pass the urls along
+        if name_model == 'totalspineseg':
+            tss_init.init_inference(data_path=Path(folder(name_model)), quiet=False, dict_urls=url_field,
+                                    store_export=False)  # Avoid having duplicate .zip files stored on disk
+            urls_used = url_field
+        else:
+            urls_used = {}
+            for seed_name, model_urls in url_field.items():
+                logger.info(f"\nInstalling '{seed_name}'...")
+                urls_used[seed_name] = download.install_data(model_urls,
+                                                             folder(os.path.join(name_model, seed_name)), keep=True)
     # Write `source.json` (for model provenance / updating)
     source_dict = {
         'model_name': name_model,
