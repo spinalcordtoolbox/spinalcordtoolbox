@@ -29,7 +29,6 @@
  - **sct_deepseg**: Test EPI model to ensure that it has the correct `nnUNetTrainer` model structure. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4615)
  - **sct_deepseg**: Remove faulty `zip()` that breaks `-install` option. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4639)
  - **sct_deepseg**: Fix the suffix of the rootlets model (`_seg` -> `_rootlets`) to prevent overwriting. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4672)
- - **sct_deepseg**: Skip `acvl_utils==0.2.1` due to buggy interaction with `nnunetv2`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4688)
  - **sct_extract_metric**: Add more intuitive feedback when no metrics can be extracted from input data. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4606)
  - **sct_maths**: Fix incorrectly lazy-loaded `dipy` imports. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4638)
  - **sct_maths**: Fix dtype mismatch error when mixing integers and floating point numbers. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4660)
@@ -37,6 +36,7 @@
  - Fix bug due to discrepancy introduced by `set_qform` and `set_sform` methods. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4697)
 
 **INSTALLATION**
+ - Skip `acvl_utils==0.2.1` due to buggy interaction with `nnunetv2`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4688)
  - Install `monai[cucim]` extra when specifying GPU SCT `-g` flag. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4634)
  - Allow `nnunetv2>=2.5.1` due to bugfix for previous issue with `2.4.2`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4699)
 
