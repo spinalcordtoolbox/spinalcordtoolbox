@@ -403,19 +403,25 @@ def sct_deepseg_spinal_rootlets_t2w(
     # Axial orientation, switch between one anat image and 1-2 seg images
     # FIXME: This code is more or less duplicated with the 'sct_register_multimodal' report, because both reports
     #        use the old qc.py method "_make_QC_image_for_3d_volumes" for generating the background img.
-    # Resample images slice by slice
-    p_resample = {'human': 0.6, 'mouse': 0.1}[species]
+
+    # Load the input images
     img_input = Image(fname_input).change_orientation('SAL')
     img_seg_sc = Image(fname_seg_sc).change_orientation('SAL')
     img_seg_lesion = Image(fname_seg_lesion).change_orientation('SAL') if fname_seg_lesion else None
 
-    # The radius size is suited to the species-specific resolutions. But, since we plan to skip
-    # resampling, we need to instead adjust the crop radius to suit the *actual* resolution.
+    # - Normally, we would apply isotropic resampling to the image to a specific mm resolution (based on the species).
+    p_resample = {'human': 0.6, 'mouse': 0.1}[species]
+    #   Choosing a fixed resolution allows us to crop the image around the spinal cord at a fixed radius that matches the chosen resolution,
+    #   while also handling anisotropic images (so that they display correctly on an isotropic grid).
+    # - However, we cannot apply resampling here because rootlets labels are often small (~1vox wide), and so resampling might
+    #   corrupt the labels and cause them to be displayed unfaithfully.
+    # - So, instead of resampling the image to fit the default crop radius, we scale the crop radius to suit the original resolution.
     p_original = img_seg_sc.dim[5]  # dim[0:3] => shape, dim[4:7] => pixdim, so dim[5] == pixdim[1]
-    radius = tuple(int(v * (p_resample / p_original)) for v in radius)
-    # If the resolution is greater than the resampling resolution, then the crop size will be smaller.
-    # To compensate for this (and ensure the QC is visually readable), we scale up the image
-    scale = int(math.ceil(p_original / p_resample))  # e.g. 0.8mm human -> 0.8/0.6 -> 1.33x => 2x scale
+    p_ratio = p_resample / p_original
+    radius = tuple(int(v * p_ratio) for v in radius)
+    # - One problem with this, however, is that if the crop radius ends up being smaller than the default, the QC will in turn be smaller as well.
+    #   So, to ensure that the QC is still readable, we scale up by an integer factor whenever the p_ratio is < 1
+    scale = int(math.ceil(1 / p_ratio))  # e.g. 0.8mm human => p_ratio == 0.6/0.8 == 0.75; scale == 1/p_ratio == 1/0.75 == 1.33 => 2x scale
 
     # Each slice is centered on the segmentation
     logger.info('Find the center of each slice')
