@@ -416,12 +416,12 @@ def sct_deepseg_spinal_rootlets_t2w(
     # - However, we cannot apply resampling here because rootlets labels are often small (~1vox wide), and so resampling might
     #   corrupt the labels and cause them to be displayed unfaithfully.
     # - So, instead of resampling the image to fit the default crop radius, we scale the crop radius to suit the original resolution.
-    p_original = img_seg_sc.dim[5]  # dim[0:3] => shape, dim[4:7] => pixdim, so dim[5] == pixdim[1]
-    p_ratio = p_resample / p_original
-    radius = tuple(int(v * p_ratio) for v in radius)
+    p_original = (img_seg_sc.dim[5], img_seg_sc.dim[6])  # Image may be anisotropic, so use both resolutions (H,W)
+    p_ratio = tuple(p_resample / p for p in p_original)
+    radius = tuple(int(r * p) for r, p in zip(radius, p_ratio))
     # - One problem with this, however, is that if the crop radius ends up being smaller than the default, the QC will in turn be smaller as well.
     #   So, to ensure that the QC is still readable, we scale up by an integer factor whenever the p_ratio is < 1
-    scale = int(math.ceil(1 / p_ratio))  # e.g. 0.8mm human => p_ratio == 0.6/0.8 == 0.75; scale == 1/p_ratio == 1/0.75 == 1.33 => 2x scale
+    scale = int(math.ceil(1 / max(p_ratio)))  # e.g. 0.8mm human => p_ratio == 0.6/0.8 == 0.75; scale == 1/p_ratio == 1/0.75 == 1.33 => 2x scale
 
     # Each slice is centered on the segmentation
     logger.info('Find the center of each slice')
