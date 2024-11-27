@@ -179,7 +179,7 @@ MODELS = {
      },
     "model_seg_canal_t2w": {
         "url": [
-            "https://github.com/ivadomed/model-canal-seg/releases/download/r20241031/model-canal-seg_r20241030.zip"
+            "https://github.com/ivadomed/model-canal-seg/releases/download/r20241126/model-canal-seg_r20241126.zip"
         ],
         "description": "Segmentation of spinal canal on T2w contrast",
         "contrasts": ["t2"],
@@ -370,7 +370,7 @@ TASKS = {
          'long_description': 'This model segments the spinal canal, or in an anatomic definition the dural sac, on T2w contrast. '
                              'Uses a 3D U-Net, trained with the nnUNetV2 framework. It is a single-class model outputting the binary canal segmentation. '
                              'Training consisted of an active learning procedure, correcting segmentations with ITK Snap. Last training '
-                             'procedure can be found here : https://github.com/ivadomed/model-canal-seg/issues/14 '
+                             'procedure can be found here : https://github.com/ivadomed/model-canal-seg/issues/20 '
                              'Images used present different resolutions, FOV, and pathologies. A script is added as post-processing to '
                              'keep the largest connected component of the segmentation, since spinal canal is connected, to avoid '
                              'false positives segmentations of other anatomical structures.',
