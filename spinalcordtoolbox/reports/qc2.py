@@ -422,6 +422,9 @@ def sct_deepseg_spinal_rootlets_t2w(
     # - One problem with this, however, is that if the crop radius ends up being smaller than the default, the QC will in turn be smaller as well.
     #   So, to ensure that the QC is still readable, we scale up by an integer factor whenever the p_ratio is < 1
     scale = int(math.ceil(1 / max(p_ratio)))  # e.g. 0.8mm human => p_ratio == 0.6/0.8 == 0.75; scale == 1/p_ratio == 1/0.75 == 1.33 => 2x scale
+    # - One other problem is that for anisotropic images, the aspect ratio won't be 1:1 between width/height.
+    #   So, we use `aspect` to adjust the image via imshow, and `radius` to know where to place the text in x/y coords
+    aspect = p_ratio[1] / p_ratio[0]
 
     # Each slice is centered on the segmentation
     logger.info('Find the center of each slice')
@@ -437,13 +440,13 @@ def sct_deepseg_spinal_rootlets_t2w(
     # For QC reports, axial mosaics will often have smaller height than width
     # (e.g. WxH = 20x3 slice images). So, we want to reduce the fig height to match this.
     # `size_fig` is in inches. So, dpi=300 --> 1500px, dpi=100 --> 500px, etc.
-    size_fig = [5, 5 * img.shape[0] / img.shape[1]]
+    size_fig = [5, 5 * (img.shape[0] / img.shape[1]) * aspect]
 
     fig = mpl_figure.Figure()
     fig.set_size_inches(*size_fig, forward=True)
     mpl_backend_agg.FigureCanvasAgg(fig)
     ax = fig.add_axes((0, 0, 1, 1))
-    ax.imshow(img, cmap='gray', interpolation='none', aspect=1.0)
+    ax.imshow(img, cmap='gray', interpolation='none', aspect=aspect)
     add_orientation_labels(ax, radius=tuple(r*scale for r in radius))
     ax.get_xaxis().set_visible(False)
     ax.get_yaxis().set_visible(False)
@@ -471,7 +474,7 @@ def sct_deepseg_spinal_rootlets_t2w(
                   norm=None,
                   alpha=1.0,
                   interpolation='none',
-                  aspect=1.0)
+                  aspect=aspect)
         if outline:
             # linewidth 0.5 is too thick, 0.25 is too thin
             plot_outlines(img, ax=ax, facecolor='none', edgecolor='black', linewidth=0.3)
