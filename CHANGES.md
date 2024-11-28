@@ -8,7 +8,7 @@
  - **sct_deepseg**: Add `-custom-url` arg to allow users to install specific `.zip`s for existing deepseg models. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4618)
  - **sct_deepseg**: Update contrast agnostic model to r20241024 (improved for SCI and whole-spine T1/T2 images). [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4661)
  - **sct_deepseg**: Add contrast-agnostic MS lesion segmentation model. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4686)
- - **sct_deepseg**: Add canal segmentation model. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4687)
+ - **sct_deepseg**: Add canal segmentation model. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4687) and [follow-up pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4719)
  - **sct_deepseg**: Add TotalSpineSeg model (vertebrae, intervertebral discs, spinal cord, and spinal canal). [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4690)
  - **sct_deepseg, sct_qc**: Add `-qc-plane` flag to allow switching the QC view to `'Sagittal'`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4708)
  - **sct_fmri_compute_tsnr, sct_qc**: Add `-m` (mask) and `-qc` options to fMRI TSNR script. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4602)
@@ -29,11 +29,13 @@
  - **sct_deepseg**: Test EPI model to ensure that it has the correct `nnUNetTrainer` model structure. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4615)
  - **sct_deepseg**: Remove faulty `zip()` that breaks `-install` option. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4639)
  - **sct_deepseg**: Fix the suffix of the rootlets model (`_seg` -> `_rootlets`) to prevent overwriting. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4672)
+ - **sct_deepseg**: Fix rootlets QC for anisotropic images. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4722)
  - **sct_extract_metric**: Add more intuitive feedback when no metrics can be extracted from input data. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4606)
  - **sct_maths**: Fix incorrectly lazy-loaded `dipy` imports. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4638)
  - **sct_maths**: Fix dtype mismatch error when mixing integers and floating point numbers. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4660)
  - Add clearer instructions to fix issue when $SCT_DIR isn't writeable during installation. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4646)
  - Fix bug due to discrepancy introduced by `set_qform` and `set_sform` methods. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4697)
+ - Update warnings filter to properly filter `Private repos` warning from `requirements.parse`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4720)
 
 **INSTALLATION**
  - Skip `acvl_utils==0.2.1` due to buggy interaction with `nnunetv2`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4688)
@@ -52,6 +54,7 @@
  - Handle newly-broken links (retries, FSLWiki changes). [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4657)
  - Apply minor documentation feedback from 2023 SCT course. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4678)
  - Add model gallery for current version of DeepSeg (`-task` syntax). [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4684)
+ - Fix hyperlink syntax in documentation (Markdown -> RST). [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/commit/653c3607b23bc33887bc2ae2c033ba7aa66c370e)
 
 **CI**
  - Skip `-h` duration test on macOS CI runners due to sporadic runtimes. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4605)
