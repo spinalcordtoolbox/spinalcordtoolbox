@@ -774,7 +774,7 @@ def mosaic(img: Image, centers: np.ndarray, radius: tuple[int, int] = (15, 15), 
     for center, slice in zip(centers.astype(int), img.data):
         # Add a margin before cropping, in case the center is too close to the edge
         # Also, use Kronecker product to scale each block in multiples
-        cropped.append(np.kron(np.pad(slice, ((radius[0], radius[0]), (radius[1], radius[1])))[
+        cropped.append(np.kron(np.pad(slice, [[r] for r in radius])[
             center[0]:center[0] + 2*radius[0],
             center[1]:center[1] + 2*radius[1],
         ], np.ones((scale, scale))))
