@@ -467,8 +467,14 @@ def main(argv: Sequence[str]):
                     list_data = get_data_arrays(data.shape, arg_value)
                 except ValueError as e:
                     printv(f"ERROR: -{arg_name}: {e}", 1, 'error')
-                # the subtraction can't use -= because the dtypes could be different
-                data = data - np.sum(list_data, axis=0)
+                data_to_sub = np.sum(list_data, axis=0)
+                # be extra careful about integer overflow by using a dtype that preserves the values
+                # e.g. uint8 - uin64 => np.result_type(int8, int64) => int64 (https://stackoverflow.com/a/34931602)
+                safe_dtype = np.result_type(
+                    np.promote_types(data.dtype, np.byte),
+                    np.promote_types(data_to_sub.dtype, np.byte),
+                )
+                data = np.subtract(data, data_to_sub, dtype=safe_dtype)
 
             elif arg_name == "mul":
                 if data.ndim == 4 and not arg_value:
