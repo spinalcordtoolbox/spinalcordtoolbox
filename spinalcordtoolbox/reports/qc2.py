@@ -280,7 +280,7 @@ def sct_deepseg(
         elif "totalspineseg" in argv:
             sct_deepseg_spinal_rootlets_t2w(
                 imgs_to_generate, fname_input, fname_seg, fname_seg2, species,
-                radius=(40, 40), outline=False)
+                radius=(40, 40))
         # Non-rootlets, axial/sagittal DeepSeg QC report
         elif plane == 'Axial':
             sct_deepseg_axial(
