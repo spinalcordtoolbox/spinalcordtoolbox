@@ -795,7 +795,7 @@ def add_orientation_labels(ax: mpl_axes.Axes, radius: tuple[int, int] = (15, 15)
     #    A                    [12,  6]
     # L     R   -->  [0, 17]            [24, 17]
     #    P                    [12, 28]
-    for letter, y, x, in [
+    for letter, x, y, in [
         (letters[0], radius[0] - 3,   6),
         (letters[1], radius[0] - 3,   radius[1]*2 - 2),
         (letters[2], 0,               radius[1] + 2),
