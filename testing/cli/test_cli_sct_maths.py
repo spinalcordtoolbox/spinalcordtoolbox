@@ -136,13 +136,13 @@ def test_sub_between_uints(tmp_path):
 
 def test_div_between_uints(tmp_path):
     """Make sure dividing uints results in a float, rather than a truncated uint."""
-    # make two dummy unsigned integer images, one zeros and one ones
+    # make two dummy unsigned integer images, one ones and one twos
     path_im_uint_twos = str(tmp_path / "im_uint_zeros.nii.gz")
     Image(np.ones((2, 3, 4), dtype=np.uint8) * 2).save(path_im_uint_twos)
     path_im_uint_ones = str(tmp_path / "im_uint_ones.nii.gz")
     Image(np.ones((2, 3, 4), dtype=np.uint8)).save(path_im_uint_ones)
 
-    # test subtraction
+    # test division
     path_im_out = str(tmp_path / "im_out.nii.gz")
     sct_maths.main([
         "-i", path_im_uint_ones,
