@@ -375,7 +375,7 @@ def sct_deepseg_axial(
                   cmap=colormaps[i],
                   norm=mpl_colors.Normalize(vmin=0.5, vmax=1),
                   # img==1 -> opaque, but soft regions -> more transparent as value decreases
-                  alpha=(img / img.max()),  # scale to [0, 1]
+                  alpha=1.0,
                   interpolation='none',
                   aspect=1.0)
 
@@ -579,7 +579,7 @@ def sct_deepseg_sagittal(
                   cmap=colormaps[i],
                   norm=mpl_colors.Normalize(vmin=0.5, vmax=1),
                   # img==1 -> opaque, but soft regions -> more transparent as value decreases
-                  alpha=(img / img.max()),  # scale to [0, 1]
+                  alpha=1.0,
                   interpolation='none',
                   aspect=1.0)
 
