@@ -490,8 +490,8 @@ def main(argv: Sequence[str]):
                     list_data = get_data_arrays(data.shape, arg_value)
                 except ValueError as e:
                     printv(f"ERROR: -{arg_name}: {e}", 1, 'error')
-                # for division, make sure the dtype is at least floating point by including float16
-                safe_dtype = np.result_type(data, *list_data, np.float16)
+                # for division, make sure the dtype is at least floating point by including float32
+                safe_dtype = np.result_type(data, *list_data, np.float32)
                 data = np.divide(data, np.prod(list_data, axis=0, dtype=safe_dtype), dtype=safe_dtype)
 
             elif arg_name == "mean":
