@@ -326,11 +326,14 @@ def sct_deepseg_axial(
         image_dest=img_input,
         interpolation='linear',
     )
+    img_seg_sc.data = (img_seg_sc.data > 0.5) * 1
     img_seg_lesion = resample_nib(
         image=img_seg_lesion,
         image_dest=img_input,
         interpolation='linear',
     ) if fname_seg_lesion else None
+    if fname_seg_lesion:
+        img_seg_lesion.data = (img_seg_lesion.data > 0.5) * 1
 
     # Each slice is centered on the segmentation
     logger.info('Find the center of each slice')
@@ -527,11 +530,14 @@ def sct_deepseg_sagittal(
         image_dest=img_input,
         interpolation='linear',
     )
+    img_seg_sc.data = (img_seg_sc.data > 0.5) * 1
     img_seg_lesion = resample_nib(
         image=img_seg_lesion,
         image_dest=img_input,
         interpolation='linear',
     ) if fname_seg_lesion else None
+    if fname_seg_lesion:
+        img_seg_lesion.data = (img_seg_lesion.data > 0.5) * 1
 
     # The radius is set to display the entire slice
     radius = (img_input.dim[1]//2, img_input.dim[2]//2)
