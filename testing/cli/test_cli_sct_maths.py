@@ -111,6 +111,52 @@ def test_arithmetic_mixed_dtype(tmp_path):
         ])
 
 
+def test_sub_between_uints(tmp_path):
+    """Make sure subtracting uints results in a signed integer, rather than a wrapped-around uint."""
+    # make two dummy unsigned integer images, one zeros and one ones
+    path_im_uint_zeros = str(tmp_path / "im_uint_zeros.nii.gz")
+    Image(np.zeros((2, 3, 4), dtype=np.uint8)).save(path_im_uint_zeros)
+    path_im_uint_ones = str(tmp_path / "im_uint_ones.nii.gz")
+    Image(np.ones((2, 3, 4), dtype=np.uint8)).save(path_im_uint_ones)
+
+    # test subtraction
+    path_im_out = str(tmp_path / "im_out.nii.gz")
+    sct_maths.main([
+        "-i", path_im_uint_zeros,
+        "-sub", path_im_uint_ones,
+        "-o", path_im_out,
+    ])
+
+    # ensure that output matches expected value
+    expected = np.ones((2, 3, 4), dtype=np.int16) * -1
+    actual = Image(path_im_out).data
+    assert np.array_equal(expected, actual)
+    assert expected.dtype == actual.dtype
+
+
+def test_div_between_uints(tmp_path):
+    """Make sure dividing uints results in a float, rather than a truncated uint."""
+    # make two dummy unsigned integer images, one zeros and one ones
+    path_im_uint_twos = str(tmp_path / "im_uint_zeros.nii.gz")
+    Image(np.ones((2, 3, 4), dtype=np.uint8) * 2).save(path_im_uint_twos)
+    path_im_uint_ones = str(tmp_path / "im_uint_ones.nii.gz")
+    Image(np.ones((2, 3, 4), dtype=np.uint8)).save(path_im_uint_ones)
+
+    # test subtraction
+    path_im_out = str(tmp_path / "im_out.nii.gz")
+    sct_maths.main([
+        "-i", path_im_uint_ones,
+        "-div", path_im_uint_twos,
+        "-o", path_im_out,
+    ])
+
+    # ensure that output matches expected value
+    expected = np.ones((2, 3, 4), dtype=np.float32) * 0.5
+    actual = Image(path_im_out).data
+    assert np.array_equal(expected, actual)
+    assert expected.dtype == actual.dtype
+
+
 def run_arithmetic_operation(tmp_path, dims, ops):
     """Generate some dummy data, then run -add/-sub/-mul/-div on the data."""
     assert len(dims) > 1  # dim[0] -> -i, dim[1:] -> ops
