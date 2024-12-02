@@ -126,8 +126,7 @@ def _construct_fslview_syntax(viewer, files, im_types, minmax, opacities, mode):
                 # use different colormaps for each subsequent seg
                 if key in ("seg", "softseg"):
                     n += 1
-                    key = (f"{key}-{n}" if f"{key}-{n}" in IMTYPES_COLORMAP.keys() else
-                           f"{key}-1")  # fallback if too many segs
+                    key = f"{key}-{n % 4}"  # There are 4 colormaps for segs, so take modulo
                 cmd += ' -l ' + IMTYPES_COLORMAP[key]['fslview']
         if minmax:
             if minmax[i]:
@@ -151,8 +150,7 @@ def _construct_fsleyes_syntax(viewer, files, im_types, minmax, opacities):
                 # use different colormaps for each subsequent seg
                 if key in ("seg", "softseg"):
                     n += 1
-                    key = (f"{key}-{n}" if f"{key}-{n}" in IMTYPES_COLORMAP.keys() else
-                           f"{key}-1")  # fallback if too many segs
+                    key = f"{key}-{n % 4}"  # There are 4 colormaps for segs, so take modulo
                 cmd += ' -cm ' + IMTYPES_COLORMAP[key]['fsleyes']
         if minmax:
             if minmax[i]:
