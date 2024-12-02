@@ -140,6 +140,7 @@ def isct_antsApplyTransforms(dimensionality,
     dtype_in = Image(fname_input).data.dtype
     if 'NearestNeighbor' in interpolation_args:
         im_out.data = im_out.data.astype(dtype_in)
+        im_out.hdr.set_data_dtype(dtype_in)
         im_out.save(verbose=0)
     # FIXME: Consider returning an `Image` type if the extra save/loads
     #        add significant overhead to `sct_apply_transfo`.
