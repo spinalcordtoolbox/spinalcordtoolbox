@@ -375,7 +375,7 @@ def sct_deepseg_axial(
                   cmap=colormaps[i],
                   norm=mpl_colors.Normalize(vmin=0.5, vmax=1),
                   # img==1 -> opaque, but soft regions -> more transparent as value decreases
-                  alpha=(img / img.max()),  # scale to [0, 1]
+                  alpha=1.0,
                   interpolation='none',
                   aspect=1.0)
 
@@ -579,7 +579,7 @@ def sct_deepseg_sagittal(
                   cmap=colormaps[i],
                   norm=mpl_colors.Normalize(vmin=0.5, vmax=1),
                   # img==1 -> opaque, but soft regions -> more transparent as value decreases
-                  alpha=(img / img.max()),  # scale to [0, 1]
+                  alpha=1.0,
                   interpolation='none',
                   aspect=1.0)
 
@@ -795,11 +795,11 @@ def add_orientation_labels(ax: mpl_axes.Axes, radius: tuple[int, int] = (15, 15)
     #    A                    [12,  6]
     # L     R   -->  [0, 17]            [24, 17]
     #    P                    [12, 28]
-    for letter, y, x, in [
-        (letters[0], radius[0] - 3,   6),
-        (letters[1], radius[0] - 3,   radius[1]*2 - 2),
-        (letters[2], 0,               radius[1] + 2),
-        (letters[3], radius[0]*2 - 6, radius[1] + 2)
+    for letter, x, y, in [
+        (letters[0], radius[1] - 3,   6),
+        (letters[1], radius[1] - 3,   radius[0]*2 - 2),
+        (letters[2], 0,               radius[0] + 2),
+        (letters[3], radius[1]*2 - 6, radius[0] + 2)
     ]:
         ax.text(x, y, letter, color='yellow', size=4).set_path_effects([
             mpl_patheffects.Stroke(linewidth=1, foreground='black'),
