@@ -365,7 +365,7 @@ def segment_totalspineseg(path_img, tmpdir, predictor, device):
         # totalspineseg requires explicitly specifying the release subdirectory
         default_release=installed_releases[-1],  # use the most recent release
         # totalspineseg expects the device type, not torch.device
-        device=device.type,
+        device=device,
         # Try to address stalling due to the use of concurrent.futures in totalspineseg
         max_workers=1,
         max_workers_nnunet=1,
