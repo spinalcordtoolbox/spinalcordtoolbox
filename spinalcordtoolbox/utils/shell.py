@@ -11,6 +11,7 @@ import re
 import shutil
 import logging
 import argparse
+import itertools
 
 from enum import Enum
 
@@ -114,7 +115,7 @@ def display_viewer_syntax(files, verbose, im_types=[], minmax=[], opacities=[], 
 
 def _construct_fslview_syntax(viewer, files, im_types, minmax, opacities, mode):
     cmd = viewer
-    n = 0
+    n = itertools.cycle([1, 2, 3, 4])  # There are 4 colormaps for segs
     # add mode (only supported by fslview for the moment)
     if mode:
         cmd += ' -m ' + mode
@@ -125,8 +126,7 @@ def _construct_fslview_syntax(viewer, files, im_types, minmax, opacities, mode):
                 key = im_types[i]
                 # use different colormaps for each subsequent seg
                 if key in ("seg", "softseg"):
-                    n += 1
-                    key = f"{key}-{((n - 1) % 4) + 1}"  # There are 4 colormaps for segs, so take modulo
+                    key = f"{key}-{next(n)}"  # There are 4 colormaps for segs, so take modulo
                 cmd += ' -l ' + IMTYPES_COLORMAP[key]['fslview']
         if minmax:
             if minmax[i]:
@@ -141,7 +141,7 @@ def _construct_fslview_syntax(viewer, files, im_types, minmax, opacities, mode):
 
 def _construct_fsleyes_syntax(viewer, files, im_types, minmax, opacities):
     cmd = viewer
-    n = 0
+    n = itertools.cycle([1, 2, 3, 4])  # There are 4 colormaps for segs
     for i in range(len(files)):
         cmd += ' ' + files[i]
         if im_types:
@@ -149,8 +149,7 @@ def _construct_fsleyes_syntax(viewer, files, im_types, minmax, opacities):
                 key = im_types[i]
                 # use different colormaps for each subsequent seg
                 if key in ("seg", "softseg"):
-                    n += 1
-                    key = f"{key}-{((n - 1) % 4) + 1}"  # There are 4 colormaps for segs, so take modulo
+                    key = f"{key}-{next(n)}"
                 cmd += ' -cm ' + IMTYPES_COLORMAP[key]['fsleyes']
         if minmax:
             if minmax[i]:
