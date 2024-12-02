@@ -171,7 +171,11 @@ def _construct_itksnap_syntax(viewer, files, im_types):
         if not im_types:
             gray_images.append(files[i])
         else:
-            colormap = IMTYPES_COLORMAP[im_types[i]]['itksnap']
+            # itksnap only has 1 colormap per seg, so always use cm "1" for segs
+            key = im_types[i]
+            if key in ("seg", "softseg"):
+                key = f"{key}-1"
+            colormap = IMTYPES_COLORMAP[key]['itksnap']
             if colormap == 'gray':
                 gray_images.append(files[i])
             elif colormap == 'seg':
