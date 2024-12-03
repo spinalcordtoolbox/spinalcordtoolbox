@@ -340,7 +340,16 @@ class Image(object):
                              f"results. Please use 'sct_image -i {self._path} -header' to check that both affine "
                              f"matrices are valid. Then, consider running either 'sct_image -set-sform-to-qform' or "
                              f"'sct_image -set-qform-to-sform' to fix any discrepancies you may find.")
-            raise ValueError("Image sform does not match qform")
+            # Temporarily skip raising an error, because we now know that "orthogonal qform matrices" from reorientation can cause sform/qform
+            # discrepancies that trigger this error.
+            #
+            # raise ValueError("Image sform does not match qform")
+            #
+            # Ideally, we would solve the sform/qform discrepancies at the source. But doing so produced an even greater breaking change.
+            # So, the safest approach in the short term is to keep the existing results, but skip the above failure and just emit a message.
+            # This way, if the above error would trigger, the user at least knows that there may be an issue.
+            # Original issue: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4689
+            # Secondary issue caused by the "fix" for the first issue: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4744
 
     @property
     def dim(self):
