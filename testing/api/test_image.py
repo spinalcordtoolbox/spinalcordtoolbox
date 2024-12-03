@@ -719,4 +719,4 @@ def test_tolerance_of_affine_mismatch_check(caplog):
     # See: https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4745
     with caplog.at_level(logging.ERROR):
         msct_image.Image(param=[1, 1, 1], hdr=header_e2, check_sform=True)
-    assert "qform and sform" in caplog.text
+    assert "has different qform and sform matrices" in caplog.text

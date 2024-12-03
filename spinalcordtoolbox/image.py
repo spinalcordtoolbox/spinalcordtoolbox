@@ -331,15 +331,13 @@ class Image(object):
         # Make sure sform and qform are the same.
         # Context: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/2429
         if check_sform and not check_affines_match(self):
-            if self.absolutepath is None:
-                logger.error("Internal code has produced an image with inconsistent qform and sform "
-                             "please report this on github at https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues "
-                             " or on the SCT forum https://forum.spinalcordmri.org/.")
-            else:
-                logger.error(f"Image {self._path} has different qform and sform matrices. This can produce incorrect "
-                             f"results. Please use 'sct_image -i {self._path} -header' to check that both affine "
-                             f"matrices are valid. Then, consider running either 'sct_image -set-sform-to-qform' or "
-                             f"'sct_image -set-qform-to-sform' to fix any discrepancies you may find.")
+            logger.error(f"Image {self._path} has different qform and sform matrices. This can produce incorrect "
+                         f"results. Please use 'sct_image -i {self._path} -header' to check that both affine "
+                         f"matrices are valid. Then, consider running either 'sct_image -set-sform-to-qform' or "
+                         f"'sct_image -set-qform-to-sform' to fix any discrepancies you may find.")
+            logger.error("If internal SCT code has produced an intermediate/temporary file with this issue, please report this on GitHub at "
+                         "https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues or on the SCT forum https://forum.spinalcordmri.org/.")
+
             # Temporarily skip raising an error, because we now know that "orthogonal qform matrices" from reorientation can cause sform/qform
             # discrepancies that trigger this error.
             #

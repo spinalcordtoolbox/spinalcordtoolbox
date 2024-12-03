@@ -144,7 +144,7 @@ def test_sct_register_to_template_mismatched_xforms(tmp_path, caplog):
         sct_register_to_template.main(argv=['-i', fname_mismatch,
                                             '-s', sct_test_path('t2', 't2_seg-manual.nii.gz'),
                                             '-l', sct_test_path('t2', 'labels.nii.gz')])
-    assert "qform and sform" in caplog.text
+    assert "has different qform and sform matrices" in caplog.text
 
 
 def test_sct_register_to_template_more_than_2_labels(tmp_path, labels_discs):
