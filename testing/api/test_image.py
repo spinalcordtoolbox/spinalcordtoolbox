@@ -7,6 +7,7 @@ import pytest
 import numpy as np
 import nibabel
 import nibabel.orientations
+import logging
 
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.utils.fs import tmp_create
@@ -680,7 +681,7 @@ def test_splitext():
     assert msct_image.splitext('image.tar.gz') == ('image', '.tar.gz')
 
 
-def test_tolerance_of_affine_mismatch_check():
+def test_tolerance_of_affine_mismatch_check(caplog):
     """Verify that affine mismatch error is thrown only for mismatches above a certain tolerance."""
     # ERROR NOT EXPECTED (Affine matrices have slight differences, but are close enough to be equivalent)
     # NB: Specific values taken from anonymized data from https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3251
@@ -711,6 +712,11 @@ def test_tolerance_of_affine_mismatch_check():
     header_e2 = nibabel.Nifti1Header()
     header_e2.set_sform(affine=sform_affine)
     header_e2.set_qform(affine=qform_affine_e2)
-    with pytest.raises(ValueError) as e:
+
+    # Temporarily avoid the ValueError, but still check for the message in log output
+    # with pytest.raises(ValueError) as e:
+    # assert "Image sform does not match qform" in str(e.value)
+    # See: https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4745
+    with caplog.at_level(logging.ERROR):
         msct_image.Image(param=[1, 1, 1], hdr=header_e2, check_sform=True)
-    assert "Image sform does not match qform" in str(e.value)
+    assert "qform and sform" in caplog.text
