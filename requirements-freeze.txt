@@ -118,6 +118,7 @@ tensorboard-data-server==0.7.2
 threadpoolctl==3.5.0
 tifffile==2024.8.30
 tomli==2.2.1
+torch<2.6  # hotfix for torch 2.6 incompatibility with nnunetv2
 totalspineseg==20241128
 tqdm==4.67.1
 traceback2==1.4.0
