@@ -466,16 +466,18 @@ def main(argv: Sequence[str]):
                         list_data = get_data_arrays(data.shape, arg_value)
                     except ValueError as e:
                         printv(f"ERROR: -{arg_name}: {e}", 1, 'error')
-                    # the addition can't use += because the dtypes could be different
-                    data = data + np.sum(list_data, axis=0)
+                    # for addition, this dtype is usually ok
+                    safe_dtype = np.result_type(data, *list_data)
+                    data = np.add(data, np.sum(list_data, axis=0, dtype=safe_dtype), dtype=safe_dtype)
 
             elif arg_name == "sub":
                 try:
                     list_data = get_data_arrays(data.shape, arg_value)
                 except ValueError as e:
                     printv(f"ERROR: -{arg_name}: {e}", 1, 'error')
-                # the subtraction can't use -= because the dtypes could be different
-                data = data - np.sum(list_data, axis=0)
+                # for subtraction, make sure the dtype is at least signed by including int8
+                safe_dtype = np.result_type(data, *list_data, np.int8)
+                data = np.subtract(data, np.sum(list_data, axis=0, dtype=safe_dtype), dtype=safe_dtype)
 
             elif arg_name == "mul":
                 if data.ndim == 4 and not arg_value:
@@ -486,16 +488,18 @@ def main(argv: Sequence[str]):
                         list_data = get_data_arrays(data.shape, arg_value)
                     except ValueError as e:
                         printv(f"ERROR: -{arg_name}: {e}", 1, 'error')
-                    # the multiplication can't use *= because the dtypes could be different
-                    data = data * np.prod(list_data, axis=0)
+                    # for multiplication, this dtype is usually ok
+                    safe_dtype = np.result_type(data, *list_data)
+                    data = np.multiply(data, np.prod(list_data, axis=0, dtype=safe_dtype), dtype=safe_dtype)
 
             elif arg_name == "div":
                 try:
                     list_data = get_data_arrays(data.shape, arg_value)
                 except ValueError as e:
                     printv(f"ERROR: -{arg_name}: {e}", 1, 'error')
-                # the division can't use /= because the dtypes could be different
-                data = data / np.prod(list_data, axis=0)
+                # for division, make sure the dtype is at least floating point by including float32
+                safe_dtype = np.result_type(data, *list_data, np.float32)
+                data = np.divide(data, np.prod(list_data, axis=0, dtype=safe_dtype), dtype=safe_dtype)
 
             elif arg_name == "mean":
                 axis = ('x', 'y', 'z', 't').index(arg_value)

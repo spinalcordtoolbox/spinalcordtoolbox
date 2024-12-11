@@ -331,16 +331,23 @@ class Image(object):
         # Make sure sform and qform are the same.
         # Context: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/2429
         if check_sform and not check_affines_match(self):
-            if self.absolutepath is None:
-                logger.error("Internal code has produced an image with inconsistent qform and sform "
-                             "please report this on github at https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues "
-                             " or on the SCT forum https://forum.spinalcordmri.org/.")
-            else:
-                logger.error(f"Image {self._path} has different qform and sform matrices. This can produce incorrect "
-                             f"results. Please use 'sct_image -i {self._path} -header' to check that both affine "
-                             f"matrices are valid. Then, consider running either 'sct_image -set-sform-to-qform' or "
-                             f"'sct_image -set-qform-to-sform' to fix any discrepancies you may find.")
-            raise ValueError("Image sform does not match qform")
+            logger.error(f"Image {self._path} has different qform and sform matrices. This can produce incorrect "
+                         f"results. Please use 'sct_image -i {self._path} -header' to check that both affine "
+                         f"matrices are valid. Then, consider running either 'sct_image -set-sform-to-qform' or "
+                         f"'sct_image -set-qform-to-sform' to fix any discrepancies you may find.")
+            logger.error("If internal SCT code has produced an intermediate/temporary file with this issue, please report this on GitHub at "
+                         "https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues or on the SCT forum https://forum.spinalcordmri.org/.")
+
+            # Temporarily skip raising an error, because we now know that "orthogonal qform matrices" from reorientation can cause sform/qform
+            # discrepancies that trigger this error.
+            #
+            # raise ValueError("Image sform does not match qform")
+            #
+            # Ideally, we would solve the sform/qform discrepancies at the source. But doing so produced an even greater breaking change.
+            # So, the safest approach in the short term is to keep the existing results, but skip the above failure and just emit a message.
+            # This way, if the above error would trigger, the user at least knows that there may be an issue.
+            # Original issue: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4689
+            # Secondary issue caused by the "fix" for the first issue: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4744
 
     @property
     def dim(self):
@@ -1162,12 +1169,8 @@ def change_orientation(im_src, orientation, im_dst=None, inverse=False):
         im_src_data.shape)
     im_dst_aff = np.matmul(im_src_aff, aff)
 
-    # NB: When setting the xforms, the qform will be made orthogonal (to meet NIfTI1 requirements),
-    #     while the sform won't. Since im_dst_aff doesn't always equal orthogonal(im_dst_aff), this
-    #     could introduce a discrepancy. So, we first set the qform, then we set the sform to the
-    #     qform (i.e. orthogonal(im_dst_aff)), which ensures that the two matrices are identical.
     im_dst.header.set_qform(im_dst_aff)
-    im_dst.header.set_sform(im_dst.header.get_qform())
+    im_dst.header.set_sform(im_dst_aff)
     im_dst.header.set_data_shape(data.shape)
     im_dst.data = data
 
