@@ -359,11 +359,8 @@ class AnalyzeLesion:
 
     def _measure_interpolated_tissue_bridges(self, tissue_bridges_df, p_lst, idx):
         """
-        Compute the interpolated tissue bridges.
-        As the `_measure_tissue_bridges` function already computes tissue bridges for all sagittal slices containing the
-        lesion, we can reuse these values to interpolate the tissue bridges.
-        Note that for the interpolation, we consider only the sagittal slices used for the interpolation
-        (`self.interpolation_slices`), i.e., not for all sagittal slices containing the lesion.
+        Compute the interpolated tissue bridges. These bridges are computed from two sagittal slices, which are
+        interpolated to the midsagittal slice.
         """
         # Interpolated tissue bridges
         interpolated_dorsal_bridge_width_mm = {}
