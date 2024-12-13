@@ -854,7 +854,7 @@ class AnalyzeLesion:
                 del img_cur
 
         # Get two sagittal slices for interpolation (based on the center of mass of the largest lesion)
-        self.midsagittal_slice_interpolation(im_lesion_data, label_lst, p_lst)
+        self.get_midsagittal_slice(im_lesion_data, label_lst, p_lst)
         # NOTE: the interpolated midsagittal slice is the same for all lesions
         printv(f'Interpolated midsagittal slice (same across lesions) = '
                f'{round(self.interpolated_midsagittal_slice, 2)}', self.verbose, 'info')
@@ -959,11 +959,12 @@ class AnalyzeLesion:
 
         return im_lesion_interpolated, nonzero_axial_slices
 
-    def midsagittal_slice_interpolation(self, im_lesion_data, label_lst, p_lst):
+    def get_midsagittal_slice(self, im_lesion_data, label_lst, p_lst):
         """
-        Mid-sagittal slice interpolation.
+        Get variables needed for the mid-sagittal slice interpolation.
         This function computes and stores:
-            - `self.interpolation_slices`: list of two sagittal slices used for interpolation
+            - `self.interpolated_midsagittal_slice`: float, slice number corresponding to the interpolated midsagittal slice
+            - `self.interpolation_slices`: list, two sagittal slices used for interpolation
             - `self.interpolation_factor`: float, interpolation factor
         Steps:
             1. Find lesion center of mass in superior-inferior axis (z direction). For example, 211.
