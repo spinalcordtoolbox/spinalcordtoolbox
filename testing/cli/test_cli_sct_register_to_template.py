@@ -128,18 +128,23 @@ def test_sct_register_to_template_dice_coefficient_against_groundtruth(fname_gt,
     assert dice_anat2template > dice_threshold
 
 
-def test_sct_register_to_template_mismatched_xforms(tmp_path, capsys):
+def test_sct_register_to_template_mismatched_xforms(tmp_path, caplog):
     fname_mismatch = str(tmp_path / "t2_mismatched.nii.gz")
     im_in = Image(sct_test_path('t2', 't2.nii.gz'))
     qform = im_in.header.get_qform()
     qform[1, 3] += 10
     im_in.header.set_qform(qform)
     im_in.save(fname_mismatch)
-    with pytest.raises(SystemExit):
+
+    # Temporarily avoid the ValueError, but still check for the message in log output
+    # with pytest.raises(SystemExit):
+    #     assert "Image sform does not match qform" in capsys.readouterr().out
+    # See: https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4745
+    with caplog.at_level(logging.ERROR):
         sct_register_to_template.main(argv=['-i', fname_mismatch,
                                             '-s', sct_test_path('t2', 't2_seg-manual.nii.gz'),
                                             '-l', sct_test_path('t2', 'labels.nii.gz')])
-    assert "Image sform does not match qform" in capsys.readouterr().out
+    assert "has different qform and sform matrices" in caplog.text
 
 
 def test_sct_register_to_template_more_than_2_labels(tmp_path, labels_discs):

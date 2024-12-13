@@ -16,7 +16,7 @@ The graphs below summarize the pathologies, tools, species, and count per year o
 
        <iframe width="600" height="371" seamless frameborder="0" scrolling="no" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSwyEvoiTOMflrJveD277xWYSb_1QSwkpxWsZoMSucgHBS7BHcgfvzGG21--1bLRFO_DIV4EhL9lBl2/pubchart?oid=819409616&amp;format=interactive"></iframe>
 
-       <iframe width="600" height="371" seamless frameborder="0" scrolling="no" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSwyEvoiTOMflrJveD277xWYSb_1QSwkpxWsZoMSucgHBS7BHcgfvzGG21--1bLRFO_DIV4EhL9lBl2/pubchart?oid=1302662251&amp;format=interactive"></iframe>
+       <iframe width="600" height="371" seamless frameborder="0" scrolling="no" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSwyEvoiTOMflrJveD277xWYSb_1QSwkpxWsZoMSucgHBS7BHcgfvzGG21--1bLRFO_DIV4EhL9lBl2/pubchart?oid=776089160&amp;format=interactive"></iframe>
 
 Citation list
 =============
@@ -26,6 +26,8 @@ The following studies have used SCT:
 2024
 ----
 
+-  Gaubert *et al.* `Microstructural Damage and Repair in the Spinal Cord of Patients With Early Multiple Sclerosis and Association With Disability at 5 Years <https://doi.org/10.1212/NXI.0000000000200333>`_, **Neurol. Neuroimmunol. Neuroinflamm.** 2024
+-  Bozhko *et al.* `Diffusion tensor imaging of spinal cord in healthy children <https://www.rosped.ru/jour/article/view/1060?locale=en_US>`_, **Russ. Pediatr. J.** 2024
 -  Stuart *et al.* `Systemic inflammation associates with and precedes cord atrophy in progressive multiple sclerosis <https://doi.org/10.1093/braincomms/fcae143>`_, **Brain Commun.** 2024
 -  Enamundram *et al.* `SCIseg: Automatic Segmentation of Intramedullary Lesions in Spinal Cord Injury on T2-weighted MRI Scans <https://doi.org/10.1148/ryai.240005>`_, **Radiol. Artif. Intell.** 2024
 -  Negreiros *et al.* `Patterns of cognitive decline across different multiple sclerosis clinical courses <https://doi.org/10.1016/j.msard.2024.106172>`_, **Mult. Scler. Relat. Disord.** 2024

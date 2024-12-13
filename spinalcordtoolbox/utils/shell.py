@@ -11,6 +11,7 @@ import re
 import shutil
 import logging
 import argparse
+import itertools
 
 from enum import Enum
 
@@ -49,11 +50,16 @@ SUPPORTED_VIEWERS = ['fsleyes', 'fslview_deprecated', 'fslview', 'itk-snap', 'it
 #   How imtypes are mapped to CLI options is a bit convoluted, but tl;dr: only 2 image types (gray, seg) are supported.
 #   Surprisingly, softseg images can only be properly displayed as grayscale images, hence the use of 'gray' for them.
 IMTYPES_COLORMAP = {
-    'anat':        {'fsleyes': 'greyscale',      'fslview': 'Greyscale',       'itksnap': 'gray'},
-    'seg':         {'fsleyes': 'red',            'fslview': 'Red',             'itksnap': 'seg'},
-    'seg-labeled': {'fsleyes': 'subcortical',    'fslview': 'MGH-Subcortical', 'itksnap': 'seg'},
-    'softseg':     {'fsleyes': 'YlOrRd',         'fslview': 'YlOrRd',      'itksnap': 'gray'},
-    'softseg-alt': {'fsleyes': 'blue-lightblue', 'fslview': 'Blue-Lightblue',  'itksnap': 'gray'},
+    'anat':        {'fsleyes': 'greyscale',             'fslview': 'Greyscale',             'itksnap': 'gray'},
+    'seg-1':       {'fsleyes': 'red',                   'fslview': 'Red',                   'itksnap': 'seg'},
+    'seg-2':       {'fsleyes': 'blue-lightblue',        'fslview': 'Blue-Lightblue',        'itksnap': 'seg'},
+    'seg-3':       {'fsleyes': 'green',                 'fslview': 'Green',                 'itksnap': 'seg'},
+    'seg-4':       {'fsleyes': 'yellow',                'fslview': 'Yellow',                'itksnap': 'seg'},
+    'seg-labeled': {'fsleyes': 'subcortical',           'fslview': 'MGH-Subcortical',       'itksnap': 'seg'},
+    'softseg-1':   {'fsleyes': 'YlOrRd',                'fslview': 'YlOrRd',                'itksnap': 'gray'},
+    'softseg-2':   {'fsleyes': 'blue-lightblue',        'fslview': 'Blue-Lightblue',        'itksnap': 'gray'},
+    'softseg-3':   {'fsleyes': 'brain_colours_2winter', 'fslview': 'Brain_Colours_2winter', 'itksnap': 'gray'},
+    'softseg-4':   {'fsleyes': 'brain_colours_3warm',   'fslview': 'Brain_Colours_3warm',   'itksnap': 'gray'},
 }
 
 
@@ -109,6 +115,7 @@ def display_viewer_syntax(files, verbose, im_types=[], minmax=[], opacities=[], 
 
 def _construct_fslview_syntax(viewer, files, im_types, minmax, opacities, mode):
     cmd = viewer
+    n = itertools.cycle([1, 2, 3, 4])  # There are 4 colormaps for segs
     # add mode (only supported by fslview for the moment)
     if mode:
         cmd += ' -m ' + mode
@@ -116,7 +123,11 @@ def _construct_fslview_syntax(viewer, files, im_types, minmax, opacities, mode):
         cmd += ' ' + files[i]
         if im_types:
             if im_types[i]:
-                cmd += ' -l ' + IMTYPES_COLORMAP[im_types[i]]['fslview']
+                key = im_types[i]
+                # use different colormaps for each subsequent seg
+                if key in ("seg", "softseg"):
+                    key = f"{key}-{next(n)}"  # There are 4 colormaps for segs, so take modulo
+                cmd += ' -l ' + IMTYPES_COLORMAP[key]['fslview']
         if minmax:
             if minmax[i]:
                 cmd += ' -b ' + minmax[i]  # a,b
@@ -130,11 +141,16 @@ def _construct_fslview_syntax(viewer, files, im_types, minmax, opacities, mode):
 
 def _construct_fsleyes_syntax(viewer, files, im_types, minmax, opacities):
     cmd = viewer
+    n = itertools.cycle([1, 2, 3, 4])  # There are 4 colormaps for segs
     for i in range(len(files)):
         cmd += ' ' + files[i]
         if im_types:
             if im_types[i]:
-                cmd += ' -cm ' + IMTYPES_COLORMAP[im_types[i]]['fsleyes']
+                key = im_types[i]
+                # use different colormaps for each subsequent seg
+                if key in ("seg", "softseg"):
+                    key = f"{key}-{next(n)}"
+                cmd += ' -cm ' + IMTYPES_COLORMAP[key]['fsleyes']
         if minmax:
             if minmax[i]:
                 cmd += ' -dr ' + ' '.join(minmax[i].split(','))  # a b
@@ -154,7 +170,11 @@ def _construct_itksnap_syntax(viewer, files, im_types):
         if not im_types:
             gray_images.append(files[i])
         else:
-            colormap = IMTYPES_COLORMAP[im_types[i]]['itksnap']
+            # itksnap only has 1 colormap per seg, so always use cm "1" for segs
+            key = im_types[i]
+            if key in ("seg", "softseg"):
+                key = f"{key}-1"
+            colormap = IMTYPES_COLORMAP[key]['itksnap']
             if colormap == 'gray':
                 gray_images.append(files[i])
             elif colormap == 'seg':
