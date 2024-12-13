@@ -373,6 +373,14 @@ class AnalyzeLesion:
         # interpolation, i.e., not for all sagittal slices containing the lesion.
         axial_slices = np.unique(tissue_bridges_df[tissue_bridges_df['sagittal_slice'].isin(self.interpolation_slices)]
                                  ['axial_slice'])
+
+        # If there are no axial slices, it means that the current lesion is not captured on the sagittal slices used
+        # for the interpolation. In this case, we will not compute the interpolated tissue bridges.
+        if len(axial_slices) == 0:
+            self.measure_pd.loc[idx, 'interpolated_dorsal_bridge_width [mm]'] = np.nan
+            self.measure_pd.loc[idx, 'interpolated_ventral_bridge_width [mm]'] = np.nan
+            return
+
         for axial_slice in axial_slices:
             # Get bridges for the 3 sagittal slices used for the interpolation
             # Filter for current axial slice once
