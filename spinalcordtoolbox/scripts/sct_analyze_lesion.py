@@ -146,6 +146,9 @@ def get_parser():
 class AnalyzeLesion:
     def __init__(self, fname_mask, fname_sc, fname_ref, path_template, path_ofolder, perslice, verbose):
         self.fname_mask = fname_mask
+        self.interpolated_midsagittal_slice = None  # target float sagittal slice number used for the interpolation. This number is based on the spinal cord center of mass.
+        self.interpolation_slices = None                # sagittal slices used for the interpolation
+        self.interpolation_factor = None                # factor used for the interpolation of sagittal slices
         self.fname_sc = fname_sc
         self.fname_ref = fname_ref
         self.path_template = path_template
@@ -155,9 +158,6 @@ class AnalyzeLesion:
         # NOTE: the tissue bridges are NOT included in self.measure_keys because we do not want to average them
         self.measure_keys = ['volume [mm3]', 'length [mm]', 'width [mm]',
                              'max_equivalent_diameter [mm]', 'max_axial_damage_ratio []']
-        self.interpolated_midsagittal_slice = None      # target float sagittal slice number used for the interpolation. This number is based on the spinal cord center of mass.
-        self.interpolation_slices = None                # sagittal slices used for the interpolation
-        self.interpolation_factor = None                # factor used for the interpolation of sagittal slices
 
         if not set(np.unique(Image(fname_mask).data)) == set([0.0, 1.0]):
             if set(np.unique(Image(fname_mask).data)) == set([0.0]):
