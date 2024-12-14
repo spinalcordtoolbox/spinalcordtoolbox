@@ -116,9 +116,9 @@ def compute_expected_measurements(dim, starting_coord=None, path_seg=None, mid_s
     ([(29, 45, 25), (3, 10, 2)], 0.001),
     ([(29, 27, 25), (1, 4, 1)], 0.001),  # NB: Example from #3633
     # Curved region of `t2.nii.gz` -> lots of curvature -> larger tolerance
-    ([(29, 0, 25), (4, 15, 3)], 0.01),
+    ([(31, 0, 25), (4, 15, 3)], 0.01),
     # Multiple lesions
-    ([[(29, 0, 25), (4, 15, 3)],
+    ([[(31, 0, 25), (4, 15, 3)],
       [(29, 45, 25), (3, 10, 2)]], 0.01)
 ], indirect=["dummy_lesion"])
 def test_sct_analyze_lesion_matches_expected_dummy_lesion_measurements(dummy_lesion, rtol, tmp_path):
@@ -182,9 +182,9 @@ def test_sct_analyze_lesion_matches_expected_dummy_lesion_measurements(dummy_les
     ([(29, 45, 25), (3, 10, 2)], 0.001),
     ([(29, 27, 25), (1, 4, 1)], 0.001),  # NB: Example from #3633
     # Curved region of `t2.nii.gz` -> lots of curvature -> larger tolerance
-    ([(29, 0, 25), (4, 15, 3)], 0.01),
+    ([(31, 0, 25), (4, 15, 3)], 0.01),
     # Multiple lesions
-    ([[(29, 0, 25), (4, 15, 3)],
+    ([[(31, 0, 25), (4, 15, 3)],
       [(29, 45, 25), (3, 10, 2)]], 0.01)
 ], indirect=["dummy_lesion"])
 def test_sct_analyze_lesion_matches_expected_dummy_lesion_measurements_without_segmentation(dummy_lesion, rtol,
