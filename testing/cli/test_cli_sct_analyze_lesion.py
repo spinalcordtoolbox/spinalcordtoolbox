@@ -93,7 +93,7 @@ def compute_expected_measurements(dim, starting_coord=None, path_seg=None):
         # NB: 'sct_analyze_lesion' treats lesions as cylinders. So:
         #   - Vertical axis: Length of the cylinder
         'length [mm]': dim[1],
-        'midsagittal_spinal_cord_slice': mid_sagittal_slice,
+        'interpolated_midsagittal_slice': mid_sagittal_slice,
         # NB: we can compute length_midsagittal_slice and width_midsagittal_slice here from dim for the purposes of
         #  testing, but in the actual script, we need the spinal cord segmentation to compute these values based on
         #  the midsagittal slice
@@ -156,7 +156,7 @@ def test_sct_analyze_lesion_matches_expected_dummy_lesion_measurements(dummy_les
         # Validate analysis results
         for key, expected_value in expected_measurements.items():
             # These measures are the same regardless of angle adjustment/spine curvature
-            if key in ['volume [mm3]', 'max_axial_damage_ratio []', 'midsagittal_spinal_cord_slice']:
+            if key in ['volume [mm3]', 'max_axial_damage_ratio []', 'interpolated_midsagittal_slice']:
                 np.testing.assert_equal(measurements.at[idx, key], expected_value)
             else:
                 # However, these measures won't match exactly due to angle adjustment
