@@ -855,9 +855,6 @@ class AnalyzeLesion:
 
         # Get two sagittal slices for interpolation (based on the center of mass of the largest lesion)
         self.get_midsagittal_slice(im_lesion_data, label_lst, p_lst)
-        # NOTE: the interpolated midsagittal slice is the same for all lesions
-        printv(f'Interpolated midsagittal slice (same across lesions) = '
-               f'{round(self.interpolated_midsagittal_slice, 2)}', self.verbose, 'info')
 
         # iteration across each lesion to measure statistics
         for lesion_label in label_lst:
@@ -963,6 +960,8 @@ class AnalyzeLesion:
         """
         Get variables needed for the mid-sagittal slice interpolation.
         This function computes and stores:
+            - volume for each lesion to determine the largest lesion.
+        If the spinal cord mask is provided, the following variables are computed and stored:
             - `self.interpolated_midsagittal_slice`: float, slice number corresponding to the interpolated midsagittal slice
             - `self.interpolation_slices`: list, two sagittal slices used for interpolation
             - `self.interpolation_factor`: float, interpolation factor
@@ -998,7 +997,8 @@ class AnalyzeLesion:
         :param p_lst: list, pixel size of the lesion
         """
 
-        # Get the largest lesion. Its center of mass will be used for the midsagittal slice interpolation.
+        # Compute volume for each lesion to determine the largest lesion. Its center of mass will be used for the
+        # midsagittal slice interpolation.
         for lesion_label in label_lst:
             im_lesion_data_cur = np.copy(im_lesion_data == lesion_label)
             label_idx = self.measure_pd[self.measure_pd.label == lesion_label].index
@@ -1008,6 +1008,9 @@ class AnalyzeLesion:
         printv(f'Largest lesion index: {largest_lesion_idx}', self.verbose, 'info')
         im_lesion_data_largest_lesion = np.copy(im_lesion_data == largest_lesion_idx)
 
+        # Skip the rest of the function if the spinal cord mask is not provided
+        if self.fname_sc is None:
+            return
 
         # Get the RPI-oriented (x=R-L, y=P-A, z=I-S) spinal cord mask
         im_sc_data = Image(self.fname_sc).data
@@ -1028,6 +1031,8 @@ class AnalyzeLesion:
         # center of mass (in the x-axis (R-L direction))
         x_target = np.mean(stored_x_coordinates)    # e.g., for [8.6, 8.6, 8.9, 8.8, 9.6] --> 8.7
         self.interpolated_midsagittal_slice = x_target     # store it to output in the output XLS file
+        printv(f'Interpolated midsagittal slice (same across lesions) = '
+               f'{round(self.interpolated_midsagittal_slice, 2)}', self.verbose, 'info')
         # 5. Interpolate the lesion
         slice1 = int(np.floor(x_target))     # e.g., 8
         slice2 = int(np.ceil(x_target))      # e.g., 9
