@@ -148,7 +148,6 @@ class AnalyzeLesion:
         self.fname_mask = fname_mask
         self.interpolated_midsagittal_slice = None  # target float sagittal slice number used for the interpolation. This number is based on the spinal cord center of mass.
         self.interpolation_slices = None                # sagittal slices used for the interpolation
-        self.interpolation_factor = None                # factor used for the interpolation of sagittal slices
         self.fname_sc = fname_sc
         self.fname_ref = fname_ref
         self.path_template = path_template
@@ -938,8 +937,8 @@ class AnalyzeLesion:
         :param data2: 2D numpy array (slice 2) or single int64 (tissue bridge for slice 2)
         :return: 2D numpy array (interpolated slice) or single float64 (interpolated tissue bridge)
         """
-
-        return (1 - self.interpolation_factor) * data1 + self.interpolation_factor * data2
+        interpolation_factor = self.interpolated_midsagittal_slice - int(self.interpolated_midsagittal_slice)   # e.g., 8.7 - 8 = 0.7
+        return (1 - interpolation_factor) * data1 + interpolation_factor * data2
 
     def _interpolate_lesion(self, im_lesion_data):
         """
@@ -964,7 +963,6 @@ class AnalyzeLesion:
         If the spinal cord mask is provided, the following variables are computed and stored:
             - `self.interpolated_midsagittal_slice`: float, slice number corresponding to the interpolated midsagittal slice
             - `self.interpolation_slices`: list, two sagittal slices used for interpolation
-            - `self.interpolation_factor`: float, interpolation factor
         Steps:
             1. Find lesion center of mass in superior-inferior axis (z direction). For example, 211.
             2. Define analysis range (2 axial slices above and below the lesion center of mass) around lesion center
@@ -1029,16 +1027,13 @@ class AnalyzeLesion:
                 stored_x_coordinates.append(center_of_mass(spinal_cord_slice)[0])   # [0] --> R-L
         # 4. Calculate target position in right-left axis (x direction) for the interpolation (mean of spinal cord
         # center of mass (in the x-axis (R-L direction))
-        x_target = np.mean(stored_x_coordinates)    # e.g., for [8.6, 8.6, 8.9, 8.8, 9.6] --> 8.7
-        self.interpolated_midsagittal_slice = x_target     # store it to output in the output XLS file
+        self.interpolated_midsagittal_slice = np.mean(stored_x_coordinates)    # e.g., for [8.6, 8.6, 8.9, 8.8, 9.6] --> 8.7
         printv(f'Interpolated midsagittal slice (same across lesions) = '
                f'{round(self.interpolated_midsagittal_slice, 2)}', self.verbose, 'info')
         # 5. Interpolate the lesion
-        slice1 = int(np.floor(x_target))     # e.g., 8
-        slice2 = int(np.ceil(x_target))      # e.g., 9
-        interpolation_factor = x_target - int(x_target)    # e.g., 8.7 - 8 = 0.7
+        slice1 = int(np.floor(self.interpolated_midsagittal_slice))     # e.g., 8
+        slice2 = int(np.ceil(self.interpolated_midsagittal_slice))      # e.g., 9
         self.interpolation_slices = [slice1, slice2]     # store it to be used for tissue bridges
-        self.interpolation_factor = interpolation_factor    # store it to be used by the `_interpolate_values` function
 
     def label_lesion(self):
         printv('\nLabel connected regions of the masked image...', self.verbose, 'normal')
