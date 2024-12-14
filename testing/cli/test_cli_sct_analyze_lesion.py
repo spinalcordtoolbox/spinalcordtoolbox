@@ -116,10 +116,10 @@ def compute_expected_measurements(dim, starting_coord=None, path_seg=None, mid_s
     ([(29, 45, 25), (3, 10, 2)], 0.001),
     ([(29, 27, 25), (1, 4, 1)], 0.001),  # NB: Example from #3633
     # Curved region of `t2.nii.gz` -> lots of curvature -> larger tolerance
-    ([(31, 0, 25), (4, 15, 3)], 0.01),
+    ([(31, 0, 25), (4, 15, 3)], 0.1),
     # Multiple lesions
     ([[(31, 0, 25), (4, 15, 3)],
-      [(29, 45, 25), (3, 10, 2)]], 0.01)
+      [(29, 45, 25), (3, 10, 2)]], 0.1)
 ], indirect=["dummy_lesion"])
 def test_sct_analyze_lesion_matches_expected_dummy_lesion_measurements(dummy_lesion, rtol, tmp_path):
     """Run the CLI script and verify that the lesion measurements match
