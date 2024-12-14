@@ -111,6 +111,7 @@ def compute_expected_measurements(dim, starting_coord=None, path_seg=None, mid_s
 
 
 @pytest.mark.sct_testing
+# Each tuple represents the starting coordinates (x, y, z) and dimensions (width, height, depth) of a dummy lesion
 @pytest.mark.parametrize("dummy_lesion, rtol", [
     # Straight region of `t2.nii.gz` -> little curvature -> smaller tolerance
     ([(29, 45, 25), (3, 10, 2)], 0.001),
@@ -177,6 +178,7 @@ def test_sct_analyze_lesion_matches_expected_dummy_lesion_measurements(dummy_les
 
 
 @pytest.mark.sct_testing
+# Each tuple represents the starting coordinates (x, y, z) and dimensions (width, height, depth) of a dummy lesion
 @pytest.mark.parametrize("dummy_lesion, rtol", [
     # Straight region of `t2.nii.gz` -> little curvature -> smaller tolerance
     ([(29, 45, 25), (3, 10, 2)], 0.001),
