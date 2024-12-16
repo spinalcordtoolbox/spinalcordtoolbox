@@ -60,7 +60,7 @@ step0 = Paramreg(step='0', type='label', dof='Tx_Ty_Tz_Rx_Ry_Rz_Sz')  # affine, 
 step1 = Paramreg(step='1', type='imseg', algo='centermassrot', rot_method='pcahog')
 step2 = Paramreg(step='2', type='seg', algo='bsplinesyn', metric='MeanSquares', iter='3', smooth='1', slicewise='0')
 paramregmulti = ParamregMultiStep([step0, step1, step2])
-step_rootlets = Paramreg(step='1', metric='CC', iter='6x6x3', shrink='8x4x2', smooth='0x0x0', slicewise='0', deformation='0x0x1', gradStep='0.1')
+step_rootlet = Paramreg(step='1', metric='CC', iter='6x6x3', shrink='8x4x2', smooth='0x0x0', slicewise='0', deformation='0x0x1', gradStep='0.1')
 
 
 # PARSER
@@ -410,7 +410,7 @@ def main(argv: Sequence[str]):
     ftmp_template_seg = 'template_seg.nii.gz'
     ftmp_template_label = 'template_label.nii.gz'
     if label_type == 'rootlet':
-        ftmp_rootlets = 'rootlets.nii.gz'
+        ftmp_rootlet = 'rootlets.nii.gz'
         ftmp_template_rootlets = 'template_rootlets.nii.gz'
 
     # copy files to temporary folder
@@ -423,7 +423,7 @@ def main(argv: Sequence[str]):
         Image(fname_template_seg, check_sform=True).save(os.path.join(path_tmp, ftmp_template_seg))
         Image(fname_template_labeling, check_sform=True).save(os.path.join(path_tmp, ftmp_template_label))
         if label_type == 'rootlet':
-            Image(fname_rootlets, check_sform=True).save(os.path.join(path_tmp, ftmp_rootlets))
+            Image(fname_rootlets, check_sform=True).save(os.path.join(path_tmp, ftmp_rootlet))
             Image(fname_template_labeling_rootlets, check_sform=True).save(os.path.join(path_tmp, ftmp_template_rootlets))
 
     except ValueError as e:
@@ -485,9 +485,9 @@ def main(argv: Sequence[str]):
     img_tmp_label.save(ftmp_label, mutable=True)
 
     if label_type == 'rootlet':
-        img_tmp_rootlets = Image(ftmp_rootlets).change_orientation("RPI")
-        ftmp_rootlets = add_suffix(img_tmp_rootlets.absolutepath, "_rpi")
-        img_tmp_rootlets.save(ftmp_rootlets, mutable=True)
+        img_tmp_rootlets = Image(ftmp_rootlet).change_orientation("RPI")
+        ftmp_rootlet = add_suffix(img_tmp_rootlets.absolutepath, "_rpi")
+        img_tmp_rootlets.save(ftmp_rootlet, mutable=True)
 
     # Switch between modes: subject->template or template->subject
     if ref == 'template':
@@ -684,44 +684,44 @@ def main(argv: Sequence[str]):
 
             # Apply transformation to rootlets and image
             sct_apply_transfo.main(argv=[
-                '-i', ftmp_rootlets,
-                '-o', add_suffix(ftmp_rootlets, '_straightAffine'),
+                '-i', ftmp_rootlet,
+                '-o', add_suffix(ftmp_rootlet, '_straightAffine'),
                 '-d', ftmp_template,
                 '-w', 'warp_curve2straightAffine.nii.gz',
                 '-x', 'nn',
                 '-v', '0',
             ])
-            ftmp_rootlets = add_suffix(ftmp_rootlets, '_straightAffine')
+            ftmp_rootlet = add_suffix(ftmp_rootlet, '_straightAffine')
 
             # Dilate rootlets masks:
-            src_mask = Image(dilate(Image(ftmp_rootlets), size=3, shape='ball'), hdr=Image(ftmp_rootlets).hdr).save(add_suffix(ftmp_rootlets, '_dil'))
-            src_mask = add_suffix(ftmp_rootlets, '_dil')
+            src_mask = Image(dilate(Image(ftmp_rootlet), size=3, shape='ball'), hdr=Image(ftmp_rootlet).hdr).save(add_suffix(ftmp_rootlet, '_dil'))
+            src_mask = add_suffix(ftmp_rootlet, '_dil')
             dest_mask = Image(dilate(Image(ftmp_template_rootlets), size=3, shape='ball'), hdr=Image(ftmp_template_rootlets).hdr).save(add_suffix(ftmp_template_rootlets, '_dil'))
             dest_mask = add_suffix(ftmp_template_rootlets, '_dil')
             src_im = ftmp_data
             dest_im = ftmp_template
             metricSize = '4'
 
-            cmd_rootlets = ['isct_antsRegistration',
-                            '--dimensionality', '3',
-                            '--transform', 'bsplinesyn' + '[' + step_rootlets.gradStep
-                            + ',26,0,3' + ']',
-                            '--metric', step_rootlets.metric + '[' + dest_im + ',' + src_im + ',1,' + metricSize + ']',
-                            '--convergence', step_rootlets.iter,
-                            '--shrink-factors', step_rootlets.shrink,
-                            '--smoothing-sigmas', step_rootlets.smooth + 'mm',
-                            '--restrict-deformation', step_rootlets.deformation,
-                            '--output', '[step' + str(step_rootlets.step) + ',' + add_suffix(ftmp_data, '_Rootlets_alldir') + ']',
-                            '--interpolation', 'linear',
-                            '--masks', '[' + dest_mask + ',' + src_mask + ']',
-                            '--verbose', ('1' if verbose >= 1 else '0'),
-                            ]
+            cmd_rootlet = ['isct_antsRegistration',
+                           '--dimensionality', '3',
+                           '--transform', 'bsplinesyn' + '[' + step_rootlet.gradStep
+                           + ',26,0,3' + ']',
+                           '--metric', step_rootlet.metric + '[' + dest_im + ',' + src_im + ',1,' + metricSize + ']',
+                           '--convergence', step_rootlet.iter,
+                           '--shrink-factors', step_rootlet.shrink,
+                           '--smoothing-sigmas', step_rootlet.smooth + 'mm',
+                           '--restrict-deformation', step_rootlet.deformation,
+                           '--output', '[step' + str(step_rootlet.step) + ',' + add_suffix(ftmp_data, '_Rootlets_alldir') + ']',
+                           '--interpolation', 'linear',
+                           '--masks', '[' + dest_mask + ',' + src_mask + ']',
+                           '--verbose', ('1' if verbose >= 1 else '0'),
+                           ]
             printv('\nRegistering with rootlets masks in z...', verbose)
-            printv(cmd_rootlets, verbose)
-            status, output = run_proc(cmd_rootlets, verbose, is_sct_binary=True)
+            printv(cmd_rootlet, verbose)
+            status, output = run_proc(cmd_rootlet, verbose, is_sct_binary=True)
             printv(output, verbose)
             if status != 0:
-                raise RuntimeError(f"Subprocess call {cmd_rootlets} returned non-zero: {output}")
+                raise RuntimeError(f"Subprocess call {cmd_rootlet} returned non-zero: {output}")
             printv('\nApply transformation after rootlets adjustment...', verbose)
             # Average perslice warping field
             cmd_split = ['sct_image', '-i', 'step10Warp.nii.gz', '-mcs']
@@ -760,14 +760,14 @@ def main(argv: Sequence[str]):
             ftmp_seg = add_suffix(ftmp_seg, '_Rootlets')
 
             sct_apply_transfo.main(argv=[
-                '-i', ftmp_rootlets,
-                '-o', add_suffix(ftmp_rootlets, '_Rootlets'),
+                '-i', ftmp_rootlet,
+                '-o', add_suffix(ftmp_rootlet, '_Rootlets'),
                 '-d', ftmp_template,
                 '-w', 'step10Warp_zmean.nii.gz',
                 '-x', 'nn',
                 '-v', '0',
             ])
-            ftmp_rootlets = add_suffix(ftmp_rootlets, '_Rootlets')
+            ftmp_rootlet = add_suffix(ftmp_rootlet, '_Rootlets')
 
             printv('\nConcatenate transformations: curve --> straight --> affine --> rootlets', verbose)
             dimensionality = len(Image("template.nii").hdr.get_data_shape())
