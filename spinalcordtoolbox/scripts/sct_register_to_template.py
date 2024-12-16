@@ -665,7 +665,7 @@ def main(argv: Sequence[str]):
             '-o', add_suffix(ftmp_data, '_straightAffine'),
             '-d', ftmp_template,
             '-w', 'warp_curve2straightAffine.nii.gz',
-            '-x', 'linear',
+            '-x', 'spline',
             '-v', '0',
         ])
         ftmp_data = add_suffix(ftmp_data, '_straightAffine')
