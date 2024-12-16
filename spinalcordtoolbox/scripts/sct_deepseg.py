@@ -169,6 +169,10 @@ def get_parser():
         choices=('Axial', 'Sagittal'),
         default='Axial',
         help="Plane of the output QC. If Sagittal, you must also provide the -s option. Default: Axial.")
+    misc.add_argument(
+        "-qc-seg",
+        metavar=Metavar.str,
+        help="Segmentation file to use for cropping the QC. If not provided, the input image will not ne cropped.")
 
     return parser
 
@@ -355,22 +359,26 @@ def main(argv: Sequence[str]):
             json.dump(sidecar_json, fp, indent=4)
 
     if arguments.qc is not None:
+        # Initialize the QC seg to be an empty file with the same size as the input image
+        qc_seg = None
+        if arguments.qc_seg is not None:
+            qc_seg = arguments.qc_seg
         # Models can have multiple input images -- create 1 QC report per input image.
         if len(output_filenames) == len(input_filenames):
-            iterator = zip(input_filenames, output_filenames, [None] * len(input_filenames))
+            iterator = zip(input_filenames, output_filenames, [None] * len(input_filenames), qc_seg)
         # Special case: totalspineseg which outputs 5 files per 1 input file
         # Just use the 5th image ([4]) which represents the step2 output
         elif arguments.task[0] == 'totalspineseg':
             assert len(output_filenames) == 5 * len(input_filenames)
-            iterator = zip(input_filenames, output_filenames[4::5], [None] * len(input_filenames))
+            iterator = zip(input_filenames, output_filenames[4::5], [None] * len(input_filenames), qc_seg)
         # Other models typically have 2 outputs per input (e.g. SC + lesion), so use both segs
         else:
             assert len(output_filenames) == 2 * len(input_filenames)
-            iterator = zip(input_filenames, output_filenames[0::2], output_filenames[1::2])
+            iterator = zip(input_filenames, output_filenames[0::2], output_filenames[1::2], qc_seg)
 
         # Create one QC report per input image, with one or two segs per image
         species = 'mouse' if any(s in arguments.task[0] for s in ['mouse', 'mice']) else 'human'  # used for resampling
-        for fname_in, fname_seg1, fname_seg2 in iterator:
+        for fname_in, fname_seg1, fname_seg2, fname_qc_seg in iterator:
             qc2.sct_deepseg(
                 fname_input=fname_in,
                 fname_seg=fname_seg1,
@@ -381,6 +389,7 @@ def main(argv: Sequence[str]):
                 dataset=arguments.qc_dataset,
                 subject=arguments.qc_subject,
                 plane=arguments.qc_plane,
+                fname_qc_seg=qc_seg
             )
 
     images = [arguments.i[0]]
