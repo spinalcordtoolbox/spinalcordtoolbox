@@ -168,7 +168,7 @@ def get_parser():
         metavar=Metavar.str,
         choices=('Axial', 'Sagittal'),
         default='Axial',
-        help="Plane of the output QC. If Sagittal, you must also provide the -s option. Default: Axial.")
+        help="Plane of the output QC. If Sagittal, you must also provide the -s option.")
     misc.add_argument(
         "-qc-seg",
         metavar=Metavar.str,
@@ -360,7 +360,7 @@ def main(argv: Sequence[str]):
 
     if arguments.qc is not None:
         # Initialize the QC seg to be an empty file with the same size as the input image
-        qc_seg = None
+        qc_seg = [None] * len(input_filenames)
         if arguments.qc_seg is not None:
             qc_seg = arguments.qc_seg
         # Models can have multiple input images -- create 1 QC report per input image.
