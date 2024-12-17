@@ -255,6 +255,7 @@ def sct_deepseg(
     dataset: Optional[str],
     subject: Optional[str],
     plane: Optional[str],
+    fname_qc_seg: Optional[str],
 ):
     """
     Generate a QC report for sct_deepseg, based on which task was used.
@@ -284,12 +285,12 @@ def sct_deepseg(
         # Non-rootlets, axial/sagittal DeepSeg QC report
         elif plane == 'Axial':
             sct_deepseg_axial(
-                imgs_to_generate, fname_input, fname_seg, fname_seg2, species)
+                imgs_to_generate, fname_input, fname_seg, fname_seg2, species, fname_qc_seg)
         else:
             assert plane == 'Sagittal', (f"`plane` must be either 'Axial' "
                                          f"or 'Sagittal', but got {plane}")
             sct_deepseg_sagittal(
-                imgs_to_generate, fname_input, fname_seg, fname_seg2, species)
+                imgs_to_generate, fname_input, fname_seg, fname_seg2, species, fname_qc_seg)
 
 
 def sct_deepseg_axial(
@@ -298,6 +299,7 @@ def sct_deepseg_axial(
     fname_seg_sc: str,
     fname_seg_lesion: Optional[str],
     species: str,
+    fname_qc_seg: Optional[str],
 ):
     """
     Generate a QC report for sct_deepseg, with varied colormaps depending on the type of segmentation.
@@ -312,6 +314,7 @@ def sct_deepseg_axial(
     img_input = Image(fname_input).change_orientation('SAL')
     img_seg_sc = Image(fname_seg_sc).change_orientation('SAL')
     img_seg_lesion = Image(fname_seg_lesion).change_orientation('SAL') if fname_seg_lesion else None
+    img_qc_seg = Image(fname_qc_seg).change_orientation('SAL') if fname_qc_seg else None
 
     # Resample images slice by slice
     logger.info('Resample images to %fx%f vox', p_resample, p_resample)
@@ -334,15 +337,45 @@ def sct_deepseg_axial(
     ) if fname_seg_lesion else None
     if fname_seg_lesion:
         img_seg_lesion.data = (img_seg_lesion.data > 0.5) * 1
+    img_qc_seg = resample_nib(
+        image=img_qc_seg,
+        image_dest=img_input,
+        interpolation='linear',
+    ) if fname_qc_seg else None
+
+    # Using -qc-seg mask if available, we remove slices which are empty (except for the first 3 and last 3 slices just around the segmented slices)
+    if fname_qc_seg:
+        # We dilate the mask to keep the first and last 3 slices
+        first_slice = min(np.where(img_qc_seg.data)[0]) - 3
+        last_slice = max(np.where(img_qc_seg.data)[0]) + 3
+        # Now we remove the slices from the input image, the spinal cord mask and the lesion mask
+        img_input.data = img_input.data[first_slice:last_slice]
+        img_seg_sc.data = img_seg_sc.data[first_slice:last_slice]
+        if img_seg_lesion:
+            img_seg_lesion.data = img_seg_lesion.data[first_slice:last_slice]
+        img_qc_seg.data = img_qc_seg.data[first_slice:last_slice]
 
     # Each slice is centered on the segmentation
     logger.info('Find the center of each slice')
-    centers = np.array([center_of_mass(slice) for slice in img_seg_sc.data])
+    # Use the -qc-seg mask if available, otherwise use the spinal cord mask
+    img_centers = img_qc_seg if fname_qc_seg else img_seg_sc
+    centers = np.array([center_of_mass(slice) for slice in img_centers.data])
     inf_nan_fill(centers[:, 0])
     inf_nan_fill(centers[:, 1])
 
+    # If -qc-seg is available, use it to generate the radius, otherwise, it is set to the standard value of (15,15)
+    # The radius is chosen as the maximum between (15,15) and the maximum of width and height of the qc-seg mask
+    if fname_qc_seg:
+        widths = [np.max(np.where(slice)[0]) - np.min(np.where(slice)[0]) if np.sum(slice) > 0 else 0 for slice in img_qc_seg.data]
+        heights = [np.max(np.where(slice)[1]) - np.min(np.where(slice)[1]) if np.sum(slice) > 0 else 0 for slice in img_qc_seg.data]
+        widths = [w//2 + 0.1*w//1 for w in widths]
+        heights = [h//2 + 0.1*h//1 for h in heights]
+        radius = (max(15, max(widths)), max(15, max(heights)))
+    else:
+        radius = (15, 15)
+
     # Generate the first QC report image
-    img = equalize_histogram(mosaic(img_input, centers))
+    img = equalize_histogram(mosaic(img_input, centers, radius))
 
     # For QC reports, axial mosaics will often have smaller height than width
     # (e.g. WxH = 20x3 slice images). So, we want to reduce the fig height to match this.
@@ -371,7 +404,7 @@ def sct_deepseg_axial(
     for i, image in enumerate([img_seg_sc, img_seg_lesion]):
         if not image:
             continue
-        img = mosaic(image, centers)
+        img = mosaic(image, centers, radius)
         img = np.ma.masked_less_equal(img, 0)
         img.set_fill_value(0)
         ax.imshow(img,
@@ -496,6 +529,7 @@ def sct_deepseg_sagittal(
     fname_seg_sc: str,
     fname_seg_lesion: Optional[str],
     species: str,
+    fname_qc_seg: Optional[str],
 ):
     """
     Generate a QC report for sct_deepseg, with varied colormaps depending on the type of segmentation.
@@ -510,9 +544,10 @@ def sct_deepseg_sagittal(
     img_input = Image(fname_input).change_orientation('RSP')
     img_seg_sc = Image(fname_seg_sc).change_orientation('RSP')
     img_seg_lesion = Image(fname_seg_lesion).change_orientation('RSP') if fname_seg_lesion else None
+    img_qc_seg = Image(fname_qc_seg).change_orientation('RSP') if fname_qc_seg else None
 
     # if the image has more then 30 slices then we resample it to 30 slices on the R-L direction
-    if img_input.dim[0] > 30:
+    if img_input.dim[0] > 30 and not fname_qc_seg:
         R_L_resolution = img_input.dim[4] * img_input.dim[0] / 30
     else:
         R_L_resolution = img_input.dim[4]
@@ -538,15 +573,44 @@ def sct_deepseg_sagittal(
     ) if fname_seg_lesion else None
     if fname_seg_lesion:
         img_seg_lesion.data = (img_seg_lesion.data > 0.5) * 1
+    img_qc_seg = resample_nib(
+        image=img_qc_seg,
+        image_dest=img_input,
+        interpolation='linear',
+    ) if fname_qc_seg else None
 
-    # The radius is set to display the entire slice
-    radius = (img_input.dim[1]//2, img_input.dim[2]//2)
+    # Using -qc-seg mask if available, we remove slices which are empty (except for the first 3 and last 3 slices just around the segmented slices)
+    if fname_qc_seg:
+        # We dilate the mask to keep the first and last 2 slices
+        first_slice = min(np.where(img_qc_seg.data)[0]) - 2
+        last_slice = max(np.where(img_qc_seg.data)[0]) + 2
+        # Now we remove the slices from the input image, the spinal cord mask and the lesion mask
+        img_input.data = img_input.data[first_slice:last_slice]
+        img_seg_sc.data = img_seg_sc.data[first_slice:last_slice]
+        if img_seg_lesion:
+            img_seg_lesion.data = img_seg_lesion.data[first_slice:last_slice]
+        img_qc_seg.data = img_qc_seg.data[first_slice:last_slice]
 
     # Each slice is centered on the segmentation
     logger.info('Find the center of each slice')
-    centers = np.array([radius] * img_input.data.shape[0])
+    # Use the -qc-seg mask if available, otherwise use the spinal cord mask
+    if fname_qc_seg:
+        centers = np.array([center_of_mass(slice) for slice in img_qc_seg.data])
+    else:
+        centers = np.array([center_of_mass(slice) for slice in img_seg_sc.data])
     inf_nan_fill(centers[:, 0])
     inf_nan_fill(centers[:, 1])
+
+    # If -qc-seg is available, use it to generate the radius, otherwise, it is set to the standard value of (15,15)
+    # The height is always the entirety of the image height.
+    # The width is set to the maximum width of the spinal cord mask dilated by 20% or 1/2 of the image width, whichever is larger.
+    if fname_qc_seg:
+        widths = [np.max(np.where(slice)[1]) - np.min(np.where(slice)[1]) if np.sum(slice) > 0 else 0 for slice in img_qc_seg.data]
+        widths = [(w*1.2)//2 for w in widths]
+        height = np.floor(img_input.data.shape[2]/2).astype(int)
+        radius = (height, max(np.floor(img_input.data.shape[1]/4).astype(int), int(max(widths))))
+    else:
+        radius = (img_input.dim[1]//2, img_input.dim[2]//2)
 
     # Generate the first QC report image
     img = equalize_histogram(mosaic(img_input, centers, radius=radius))
