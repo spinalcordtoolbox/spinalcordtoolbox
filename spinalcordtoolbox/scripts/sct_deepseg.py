@@ -171,7 +171,7 @@ def get_parser():
         help="Plane of the output QC. If Sagittal, you must also provide the -s option.")
     misc.add_argument(
         "-qc-seg",
-        metavar=Metavar.str,
+        metavar=Metavar.file,
         help="Segmentation file to use for cropping the QC. If not provided, the input image will not ne cropped.")
 
     return parser
