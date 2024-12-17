@@ -358,10 +358,8 @@ def sct_deepseg_axial(
     # Each slice is centered on the segmentation
     logger.info('Find the center of each slice')
     # Use the -qc-seg mask if available, otherwise use the spinal cord mask
-    if fname_qc_seg:
-        centers = np.array([center_of_mass(slice) for slice in img_qc_seg.data])
-    else:
-        centers = np.array([center_of_mass(slice) for slice in img_seg_sc.data])
+    img_centers = img_qc_seg if fname_qc_seg else img_seg_sc
+    centers = np.array([center_of_mass(slice) for slice in img_centers.data])
     inf_nan_fill(centers[:, 0])
     inf_nan_fill(centers[:, 1])
 
