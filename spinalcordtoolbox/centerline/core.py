@@ -122,7 +122,6 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
         _, y_centerline_deriv = curve_fitting.polyfit_1d(z_centerline, y_centerline_fit, z_centerline, deg=param.degree)
         # reorient centerline to native orientation
         im_centerline.change_orientation(native_orientation)
-        im_seg.change_orientation(native_orientation)
         # rename 'z' variable to match the name used the 'non-optic' methods
         z_ref = z_centerline
         # Fit metrics aren't computed for 'optic`, so return 'None'
@@ -213,7 +212,6 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
 
         # reorient centerline to native orientation
         im_centerline.change_orientation(native_orientation)
-        im_seg.change_orientation(native_orientation)
 
         # Compute fitting metrics
         fit_results = FitResults()
@@ -274,9 +272,12 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
     arr_ctl = np.array([x_centerline_fit, y_centerline_fit, z_ref])
     arr_ctl_der = np.array([x_centerline_deriv, y_centerline_deriv, np.ones_like(z_ref)])
     # If 'phys' is specified, adjust centerline coordinates (`Centerline.points`) and
-    # derivatives (`Centerline.derivatives`) to physical ("phys") space and native (`im_seg`) orientation.
+    # derivatives (`Centerline.derivatives`) to physical ("phys") space, i.e. world coordinates.
+    # Note: According to the NIFTI spec, physical coordinates should always be in RAS+/LPI- orientation, no matter
+    #       what orientation the voxel coordinates are originally in. (This is because changing the image orientation
+    #       will also change the affine in tandem, causing RAS+/LPI- physical coordinates to result every time.)
     if space == 'phys':
-        # Transform centerline to physical coordinate system
+        # Note: im_seg is still in RPI, and the coordinates are in RPI, resulting in RAS+/LPI- physical coordinates
         arr_ctl = im_seg.transfo_pix2phys(arr_ctl.T, mode='absolute').T
         arr_ctl_der = im_seg.transfo_pix2phys(arr_ctl_der.T, mode='relative').T
 
