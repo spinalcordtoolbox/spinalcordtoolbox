@@ -280,7 +280,7 @@ def sct_deepseg(
         elif "totalspineseg" in argv:
             sct_deepseg_spinal_rootlets_t2w(
                 imgs_to_generate, fname_input, fname_seg, fname_seg2, species,
-                radius=(40, 40), outline=False)
+                radius=(40, 40))
         # Non-rootlets, axial/sagittal DeepSeg QC report
         elif plane == 'Axial':
             sct_deepseg_axial(
@@ -871,9 +871,9 @@ def equalize_histogram(img: np.ndarray):
     return np.array(c * (max_ - min_) + min_, dtype=img.dtype)
 
 
-def plot_outlines(bool_img: np.ndarray, ax: mpl_axes.Axes, **kwargs):
+def plot_outlines(img: np.ndarray, ax: mpl_axes.Axes, **kwargs):
     """
-    Draw the outlines of a 2D binary Numpy array with Matplotlib.
+    Draw the outlines of every equal-value area of a 2D Numpy array with Matplotlib.
 
     kwargs are forwarded to `matplotlib.collections.PolyCollection` for styling.
     """
@@ -882,52 +882,106 @@ def plot_outlines(bool_img: np.ndarray, ax: mpl_axes.Axes, **kwargs):
     # https://matplotlib.org/stable/users/explain/artists/imshow_extent.html#default-extent
 
     # Add a frame of zeros around the image to account for cells on the border
-    padded = np.pad(bool_img, 1)
+    padded = np.pad(img, 1)
 
-    # horizontal_edge[r, c] is True when there should be a visible horizontal
-    # outline between bool_img[r, c+1] and bool_img[r+1, c+1]
-    horizontal_edge = (padded[:-1, :] != padded[1:, :])
+    # First we compute the endpoints of every horizontal segment of the outline
 
-    # corner[r, c] is True when a run of horizontal edges starts or stops at
-    # the upper left corner of bool_img[r, c]
-    corner = (horizontal_edge[:, :-1] != horizontal_edge[:, 1:])
-
-    # List the corners in order: first by row (from top to bottom), then by
-    # column within each row (from left to right). These will be all the
-    # polygon vertices we need, and the two endpoints of each run of horizontal
-    # edges appearing side by side in the list
-    vertices = sorted(map(tuple, np.argwhere(corner)))
-
+    # edge[r, c] is True when there should be a visible horizontal outline
+    # between img[r, c+1] and img[r+1, c+1]
+    edge = (padded[:-1, :] != padded[1:, :])
+    # run[r, c] is True when a run of horizontal edges starts or stops at the
+    # upper left corner of img[r, c]
+    run = (edge[:, :-1] != edge[:, 1:])
+    # Get the coordinates from the big boolean array. They are sorted so that
+    # the horizontal segments start at even vertices and stop at the next (odd)
+    # vertex: v0--v1, v2--v3, v4--v5, ...
+    vertices = sorted(map(tuple, np.argwhere(run)))
     # Given a vertex, we want to quickly travel to its horizontal neighbour
-    # i^1 == i+1 when i is even (0->1, 2->3, ...)
-    # i^1 == i-1 when i is odd (1->0, 3->2, ...)
-    horizontal_move = {v: vertices[i ^ 1] for i, v in enumerate(vertices)}
+    # i^1 == i+1 when i is even (v0->v1, v2->v3, ...)
+    # i^1 == i-1 when i is odd (v1->v0, v3->v2, ...)
+    horizontal_segment = {v: vertices[i ^ 1] for i, v in enumerate(vertices)}
 
-    # We also want to quickly travel to vertical neighbours. We can do the same
-    # thing as above, with a different sorting order: by column, then by row
-    vertices.sort(key=lambda v: v[::-1])
-    vertical_move = {v: vertices[i ^ 1] for i, v in enumerate(vertices)}
+    # Second, we compute endpoints for the vertical segments
 
-    # Now build each polygon by listing its vertices in order. We remove the
-    # vertices from horizontal_move as we visit them
-    polys = []
-    while horizontal_move:
+    # edge[r, c] is True when there should be a visible vertical outline
+    # between img[r+1, c] and img[r+1, c+1]
+    edge = (padded[:, :-1] != padded[:, 1:])
+    # run[r, c] is True when a run of vertical edges starts or stops at the
+    # upper left corner of img[r, c]
+    run = (edge[:-1, :] != edge[1:, :])
+    # Get the coordinates from the big boolean array. They are sorted so that
+    # the vertical segments start at even vertices and stop at the next (odd)
+    # vertex: v0--v1, v2--v3, v4--v5, ...
+    vertices = sorted(map(tuple, np.argwhere(run)), key=lambda v: v[::-1])
+    # Given a vertex, we want to quickly travel to its vertical neighbour
+    # i^1 == i+1 when i is even (v0->v1, v2->v3, ...)
+    # i^1 == i-1 when i is odd (v1->v0, v3->v2, ...)
+    vertical_segment = {v: vertices[i ^ 1] for i, v in enumerate(vertices)}
+
+    # Now we need to collect the horizontal and vertical segments into a list
+    # of polygons. We may need some open-ended polygons, which start and end
+    # at vertices which are in the middle of a perpendicular segment. And we
+    # may need some closed polygons, which loop back to their starting vertex.
+
+    # The open-ended polygons:
+    open_polygons = []
+    open_vertices = set(horizontal_segment).symmetric_difference(vertical_segment)
+    while open_vertices:
         polygon = []
-        # Start at an arbitrary unvisited vertex
-        v1 = next(iter(horizontal_move))
-        while v1 in horizontal_move:
-            # Keep alternating horizontal and vertical moves, until we revisit
-            # the polygon's first vertex
-            polygon.append(v1)
-            v2 = horizontal_move.pop(v1)  # remove one endpoint
-            polygon.append(v2)
-            del horizontal_move[v2]  # remove the other endpoint
-            v1 = vertical_move[v2]
-        # Convert (row, column) coordinates to (x, y)
-        polys.append(np.array(polygon)[:, ::-1] - 0.5)
+        vertex = open_vertices.pop()
+        # Build the polygon by listing its vertices in order. We remove
+        # vertices from horizontal_segment and vertical_segment as we trace
+        # over them with the polygon.
+        while True:
+            polygon.append(vertex)
+            if vertex in horizontal_segment:
+                # Move to the other endpoint of the segment, and make sure to
+                # remove both endpoints from the dictionary.
+                vertex = horizontal_segment.pop(vertex)
+                del horizontal_segment[vertex]
+            elif vertex in vertical_segment:
+                # Move to the other endpoint of the segment, and make sure to
+                # remove both endpoints from the dictionary.
+                vertex = vertical_segment.pop(vertex)
+                del vertical_segment[vertex]
+            else:
+                # We have reached the end of the current open-ended polygon.
+                open_vertices.remove(vertex)
+                # Convert (row, column) coordinates to (x, y)
+                open_polygons.append(np.array(polygon)[:, ::-1] - 0.5)
+                break
 
-    # Draw it
-    ax.add_collection(mpl_collections.PolyCollection(polys, **kwargs))
+    # The closed polygons:
+    closed_polygons = []
+    while horizontal_segment:
+        polygon = []
+        # Remove both endpoints of an arbitrary segment.
+        vertex, other = horizontal_segment.popitem()
+        del horizontal_segment[other]
+        while True:
+            polygon.append(vertex)
+            if vertex in horizontal_segment:
+                # Move to the other endpoint of the segment, and make sure to
+                # remove both endpoints from the dictionary.
+                vertex = horizontal_segment.pop(vertex)
+                del horizontal_segment[vertex]
+            elif vertex in vertical_segment:
+                # Move to the other endpoint of the segment, and make sure to
+                # remove both endpoints from the dictionary.
+                vertex = vertical_segment.pop(vertex)
+                del vertical_segment[vertex]
+            else:
+                # We have reached the end of the current closed polygon.
+                # Convert (row, column) coordinates to (x, y)
+                closed_polygons.append(np.array(polygon)[:, ::-1] - 0.5)
+                break
+    assert not vertical_segment
+
+    # Draw the outline
+    ax.add_collection(mpl_collections.PolyCollection(
+        open_polygons, closed=False, **kwargs))
+    ax.add_collection(mpl_collections.PolyCollection(
+        closed_polygons, closed=True, **kwargs))
 
 
 def assign_label_colors_by_groups(labels):
