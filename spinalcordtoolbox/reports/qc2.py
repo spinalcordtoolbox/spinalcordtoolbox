@@ -351,24 +351,25 @@ def sct_deepseg_axial(
         # Now we remove the slices from the input image, the spinal cord mask and the lesion mask
         img_input.data = img_input.data[first_slice:last_slice]
         img_seg_sc.data = img_seg_sc.data[first_slice:last_slice]
-        if img_seg_lesion: img_seg_lesion.data = img_seg_lesion.data[first_slice:last_slice]
-        img_qc_seg.data = img_qc_seg.data[first_slice:last_slice]        
+        if img_seg_lesion:
+            img_seg_lesion.data = img_seg_lesion.data[first_slice:last_slice]
+        img_qc_seg.data = img_qc_seg.data[first_slice:last_slice]
 
     # Each slice is centered on the segmentation
     logger.info('Find the center of each slice')
     # Use the -qc-seg mask if available, otherwise use the spinal cord mask
     if fname_qc_seg:
         centers = np.array([center_of_mass(slice) for slice in img_qc_seg.data])
-    else: 
-        centers = np.array([center_of_mass(slice) for slice in img_seg_sc.data]) 
+    else:
+        centers = np.array([center_of_mass(slice) for slice in img_seg_sc.data])
     inf_nan_fill(centers[:, 0])
     inf_nan_fill(centers[:, 1])
 
     # If -qc-seg is available, use it to generate the radius, otherwise, it is set to the standard value of (15,15)
     # The radius is chosen as the maximum between (15,15) and the maximum of width and height of the qc-seg mask
     if fname_qc_seg:
-        widths = [np.max(np.where(slice)[0]) - np.min(np.where(slice)[0]) if np.sum(slice) > 0 else 0 for slice in img_qc_seg.data ]
-        heights = [np.max(np.where(slice)[1]) - np.min(np.where(slice)[1]) if np.sum(slice) > 0 else 0 for slice in img_qc_seg.data ]
+        widths = [np.max(np.where(slice)[0]) - np.min(np.where(slice)[0]) if np.sum(slice) > 0 else 0 for slice in img_qc_seg.data]
+        heights = [np.max(np.where(slice)[1]) - np.min(np.where(slice)[1]) if np.sum(slice) > 0 else 0 for slice in img_qc_seg.data]
         widths = [w//2 + 0.1*w//1 for w in widths]
         heights = [h//2 + 0.1*h//1 for h in heights]
         radius = (max(15, max(widths)), max(15, max(heights)))
@@ -588,7 +589,7 @@ def sct_deepseg_sagittal(
         # Now we remove the slices from the input image, the spinal cord mask and the lesion mask
         img_input.data = img_input.data[first_slice:last_slice]
         img_seg_sc.data = img_seg_sc.data[first_slice:last_slice]
-        if img_seg_lesion: 
+        if img_seg_lesion:
             img_seg_lesion.data = img_seg_lesion.data[first_slice:last_slice]
         img_qc_seg.data = img_qc_seg.data[first_slice:last_slice]
 
@@ -597,16 +598,16 @@ def sct_deepseg_sagittal(
     # Use the -qc-seg mask if available, otherwise use the spinal cord mask
     if fname_qc_seg:
         centers = np.array([center_of_mass(slice) for slice in img_qc_seg.data])
-    else: 
+    else:
         centers = np.array([center_of_mass(slice) for slice in img_seg_sc.data])
     inf_nan_fill(centers[:, 0])
     inf_nan_fill(centers[:, 1])
 
     # If -qc-seg is available, use it to generate the radius, otherwise, it is set to the standard value of (15,15)
-    # The height is always the entirety of the image height. 
+    # The height is always the entirety of the image height.
     # The width is set to the maximum width of the spinal cord mask dilated by 20% or 1/2 of the image width, whichever is larger.
     if fname_qc_seg:
-        widths = [np.max(np.where(slice)[1]) - np.min(np.where(slice)[1]) if np.sum(slice) > 0 else 0 for slice in img_qc_seg.data ]
+        widths = [np.max(np.where(slice)[1]) - np.min(np.where(slice)[1]) if np.sum(slice) > 0 else 0 for slice in img_qc_seg.data]
         widths = [(w*1.2)//2 for w in widths]
         height = np.floor(img_input.data.shape[2]/2).astype(int)
         radius = (height, max(np.floor(img_input.data.shape[1]/4).astype(int), int(max(widths))))
