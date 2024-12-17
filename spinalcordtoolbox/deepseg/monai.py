@@ -1,5 +1,7 @@
 import os
 import glob
+import math
+import multiprocessing as mp
 
 import torch
 import torch.nn.functional as F
@@ -164,7 +166,7 @@ def prepare_data(path_image, crop_size=(64, 160, 320), padding='edge'):
         ThresholdIntensityd(keys=["pred"], threshold=1.0, above=False, cval=1.0)
     ])
     test_ds = Dataset(data=[{"image": path_image}], transform=transforms_test)
-    test_loader = DataLoader(test_ds, batch_size=1, shuffle=False, num_workers=8, pin_memory=True)
+    test_loader = DataLoader(test_ds, batch_size=1, shuffle=False, num_workers=math.ceil(mp.cpu_count() / 2), pin_memory=True)
 
     return test_loader, test_post_pred
 
