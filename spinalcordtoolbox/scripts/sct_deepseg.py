@@ -362,7 +362,7 @@ def main(argv: Sequence[str]):
         # Initialize the QC seg to be an empty file with the same size as the input image
         qc_seg = [None] * len(input_filenames)
         if arguments.qc_seg is not None:
-            qc_seg = arguments.qc_seg
+            qc_seg = [arguments.qc_seg]
         # Models can have multiple input images -- create 1 QC report per input image.
         if len(output_filenames) == len(input_filenames):
             iterator = zip(input_filenames, output_filenames, [None] * len(input_filenames), qc_seg)
@@ -389,7 +389,7 @@ def main(argv: Sequence[str]):
                 dataset=arguments.qc_dataset,
                 subject=arguments.qc_subject,
                 plane=arguments.qc_plane,
-                fname_qc_seg=qc_seg
+                fname_qc_seg=fname_qc_seg
             )
 
     images = [arguments.i[0]]
