@@ -414,26 +414,13 @@ def slicewise_mean(data, dim, exclude_zeros=False):
         data[data == 0] = np.nan
     data_out = np.zeros_like(data)
     for slices in range(data.shape[dim]):
-        # TODO: how to not repeat for all dims?
-        if dim == 0:
-            if np.isnan(data[slices, :, :]).all():
-                mean_data = [[0]]
-            else:
-                mean_data = np.nanmean(data[slices, :, :], keepdims=True)
-            data_out[slices, :, :] = np.broadcast_to(mean_data, data[slices, :, :].shape)
-
-        elif dim == 1:
-            if np.isnan(data[:, slices, :]).all():
-                mean_data = [[0]]
-            else:
-                mean_data = np.nanmean(data[:, slices, :], keepdims=True)
-            data_out[:, slices, :] = np.broadcast_to(mean_data, data[:, slices, :].shape)
-        elif dim == 2:
-            if np.isnan(data[:, :, slices]).all():
-                mean_data = [[0]]
-            else:
-                mean_data = np.nanmean(data[:, :, slices], keepdims=True)
-            data_out[:, :, slices] = np.broadcast_to(mean_data, data[:, :, slices].shape)
+        idx_to_slice = [slice(None)] * data.ndim
+        idx_to_slice[dim] = slices
+        if np.isnan(data[idx_to_slice]).all():
+            mean_data = [[0]]
+        else:
+            mean_data = np.nanmean(data[idx_to_slice], keepdims=True)
+        data_out[idx_to_slice] = np.broadcast_to(mean_data, data[idx_to_slice].shape)
 
     return data_out
 
