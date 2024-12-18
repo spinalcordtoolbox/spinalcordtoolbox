@@ -416,6 +416,7 @@ def slicewise_mean(data, dim, exclude_zeros=False):
     for slices in range(data.shape[dim]):
         idx_to_slice = [slice(None)] * data.ndim
         idx_to_slice[dim] = slices
+        idx_to_slice = tuple(idx_to_slice)  # requirement of numpy indexing
         if np.isnan(data[idx_to_slice]).all():
             mean_data = [[0]]
         else:
