@@ -21,14 +21,14 @@ from spinalcordtoolbox.registration.core import register_wrapper
 from spinalcordtoolbox.registration.algorithms import Paramreg, ParamregMultiStep
 from spinalcordtoolbox.registration.labeling import (add_dummy_orthogonal_labels, check_labels,
                                                      project_labels_on_spinalcord, resample_labels)
-from spinalcordtoolbox.registration.landmarks import register_landmarks
+from spinalcordtoolbox.registration.landmarks import register_landmarks, register_rootlet
 
 from spinalcordtoolbox.metadata import get_file_label
 from spinalcordtoolbox.image import Image, add_suffix, generate_output_file
 from spinalcordtoolbox.centerline.core import ParamCenterline
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.resampling import resample_file
-from spinalcordtoolbox.math import binarize, dilate, slicewise_mean
+from spinalcordtoolbox.math import binarize
 from spinalcordtoolbox.utils.fs import (copy, extract_fname, check_file_exist, rmtree,
                                         cache_save, cache_signature, cache_valid, tmp_create)
 from spinalcordtoolbox.utils.shell import (SCTArgumentParser, ActionCreateFolder, Metavar, list_type,
@@ -681,7 +681,6 @@ def main(argv: Sequence[str]):
 
         # Register spinal rootlets to template:
         if label_type == 'rootlet':
-
             # Apply transformation to rootlets and image
             sct_apply_transfo.main(argv=[
                 '-i', ftmp_rootlet,
@@ -692,84 +691,14 @@ def main(argv: Sequence[str]):
                 '-v', '0',
             ])
             ftmp_rootlet = add_suffix(ftmp_rootlet, '_straightAffine')
-
-            # Dilate rootlets masks:
-            src_mask = Image(dilate(Image(ftmp_rootlet), size=3, shape='ball'), hdr=Image(ftmp_rootlet).hdr).save(add_suffix(ftmp_rootlet, '_dil'))
-            src_mask = add_suffix(ftmp_rootlet, '_dil')
-            dest_mask = Image(dilate(Image(ftmp_template_rootlets), size=3, shape='ball'), hdr=Image(ftmp_template_rootlets).hdr).save(add_suffix(ftmp_template_rootlets, '_dil'))
-            dest_mask = add_suffix(ftmp_template_rootlets, '_dil')
-            src_im = ftmp_data
-            dest_im = ftmp_template
-            metricSize = '4'
-
-            cmd_rootlet = ['isct_antsRegistration',
-                           '--dimensionality', '3',
-                           '--transform', 'bsplinesyn' + '[' + step_rootlet.gradStep
-                           + ',26,0,3' + ']',
-                           '--metric', step_rootlet.metric + '[' + dest_im + ',' + src_im + ',1,' + metricSize + ']',
-                           '--convergence', step_rootlet.iter,
-                           '--shrink-factors', step_rootlet.shrink,
-                           '--smoothing-sigmas', step_rootlet.smooth + 'mm',
-                           '--restrict-deformation', step_rootlet.deformation,
-                           '--output', '[step' + str(step_rootlet.step) + ',' + add_suffix(ftmp_data, '_Rootlets_alldir') + ']',
-                           '--interpolation', 'linear',
-                           '--masks', '[' + dest_mask + ',' + src_mask + ']',
-                           '--verbose', ('1' if verbose >= 1 else '0'),
-                           ]
-            printv('\nRegistering with rootlets masks in z...', verbose)
-            printv(cmd_rootlet, verbose)
-            status, output = run_proc(cmd_rootlet, verbose, is_sct_binary=True)
-            printv(output, verbose)
-            if status != 0:
-                raise RuntimeError(f"Subprocess call {cmd_rootlet} returned non-zero: {output}")
-            printv('\nApply transformation after rootlets adjustment...', verbose)
-            # Average perslice warping field
-            cmd_split = ['sct_image', '-i', 'step10Warp.nii.gz', '-mcs']
-            status, output = run_proc(cmd_split, verbose, is_sct_binary=True)
-            printv(output, verbose)
-            # Compute slicewise mean in Z to ensure symmetry
-            printv('\nComputing slicewise mean in Z to ensure symmetry....', verbose)
-            img = Image('step10Warp_Z.nii.gz')
-            out = img.copy()
-            out.data = slicewise_mean(out.data, 2)
-            out.save('step10Warp_Z_mean.nii.gz')
-            # Merge warp back together
-            cmd_split = ['sct_image', '-i',
-                         'step10Warp_X.nii.gz', 'step10Warp_Y.nii.gz', 'step10Warp_Z_mean.nii.gz',
-                         '-omc', '-o', 'step10Warp_zmean.nii.gz']
-            status, output = run_proc(cmd_split, verbose, is_sct_binary=True)
-            printv(output, verbose)
-
-            # Apply transformation
-            sct_apply_transfo.main(argv=[
-                '-i', ftmp_data,
-                '-o', add_suffix(ftmp_data, '_Rootlets'),
-                '-d', ftmp_template,
-                '-w', 'step10Warp_zmean.nii.gz',
-                '-x', 'linear',
-                '-v', '0',
-            ])
-            ftmp_data = add_suffix(ftmp_data, '_Rootlets')
-            sct_apply_transfo.main(argv=[
-                '-i', ftmp_seg,
-                '-o', add_suffix(ftmp_seg, '_Rootlets'),
-                '-d', ftmp_template,
-                '-w', 'step10Warp_zmean.nii.gz',
-                '-x', 'linear',
-                '-v', '0',
-            ])
-            ftmp_seg = add_suffix(ftmp_seg, '_Rootlets')
-
-            sct_apply_transfo.main(argv=[
-                '-i', ftmp_rootlet,
-                '-o', add_suffix(ftmp_rootlet, '_Rootlets'),
-                '-d', ftmp_template,
-                '-w', 'step10Warp_zmean.nii.gz',
-                '-x', 'nn',
-                '-v', '0',
-            ])
-            ftmp_rootlet = add_suffix(ftmp_rootlet, '_Rootlets')
-
+            warp_affine2rootlet, warp_rootlet2affine = register_rootlet(ftmp_data,
+                                                                        ftmp_template,
+                                                                        ftmp_seg,
+                                                                        ftmp_rootlet,
+                                                                        ftmp_template_rootlets,
+                                                                        step_rootlet,
+                                                                        verbose=verbose
+                                                                        )
             printv('\nConcatenate transformations: curve --> straight --> affine --> rootlets', verbose)
             dimensionality = len(Image("template.nii").hdr.get_data_shape())
             cmd = [
@@ -777,30 +706,12 @@ def main(argv: Sequence[str]):
                 str(dimensionality),
                 'warp_curve2straightAffine.nii.gz',
                 '-R', 'template.nii',
-                'step10Warp_zmean.nii.gz',
+                warp_affine2rootlet,
                 'warp_curve2straightAffine.nii.gz',
             ]
             status, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
             if status != 0:
                 raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
-
-            # INVERSE WARPING FIELD
-            # Average perslice warping field
-            cmd_split = ['sct_image', '-i', 'step10InverseWarp.nii.gz', '-mcs']
-            status, output = run_proc(cmd_split, verbose, is_sct_binary=True)
-            printv(output, verbose)
-            # Compute slicewise mean in Z to ensure symmetry
-            printv('\nComputing slicewise mean in Z to ensure symmetry....', verbose)
-            img = Image('step10InverseWarp_Z.nii.gz')
-            out = img.copy()
-            out.data = slicewise_mean(out.data, 2)
-            out.save('step10InverseWarp_Z_mean.nii.gz')
-            # Merge warp back together
-            cmd_split = ['sct_image', '-i',
-                         'step10InverseWarp_X.nii.gz', 'step10InverseWarp_Y.nii.gz', 'step10InverseWarp_Z_mean.nii.gz',
-                         '-omc', '-o', 'step10InverseWarp_zmean.nii.gz']
-            status, output = run_proc(cmd_split, verbose, is_sct_binary=True)
-            printv(output, verbose)
 
             # Concatenate:
             printv('\nConcatenate transformations: rootlets --> affine --> straight --> curve', verbose)
@@ -811,11 +722,40 @@ def main(argv: Sequence[str]):
                 'warp_straight2curve.nii.gz',
                 '-R', 'data.nii',
                 'warp_straight2curve.nii.gz',
-                'step10Warp_zmean.nii.gz'
+                warp_rootlet2affine  # 'step10Warp_zmean.nii.gz'TODO: check why I did not use the inverse warping field here
             ]
             status, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
             if status != 0:
                 raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
+            # Apply transformation
+            sct_apply_transfo.main(argv=[
+                '-i', ftmp_data,
+                '-o', add_suffix(ftmp_data, '_Rootlets'),
+                '-d', ftmp_template,
+                '-w', warp_affine2rootlet,
+                '-x', 'spline',
+                '-v', '0',
+            ])
+            ftmp_data = add_suffix(ftmp_data, '_Rootlets')
+            sct_apply_transfo.main(argv=[
+                '-i', ftmp_seg,
+                '-o', add_suffix(ftmp_seg, '_Rootlets'),
+                '-d', ftmp_template,
+                '-w', warp_affine2rootlet,
+                '-x', 'linear',
+                '-v', '0',
+            ])
+            ftmp_seg = add_suffix(ftmp_seg, '_Rootlets')
+
+            sct_apply_transfo.main(argv=[
+                '-i', ftmp_rootlet,
+                '-o', add_suffix(ftmp_rootlet, '_Rootlets'),
+                '-d', ftmp_template,
+                '-w', warp_affine2rootlet,
+                '-x', 'nn',
+                '-v', '0',
+            ])
+            ftmp_rootlet = add_suffix(ftmp_rootlet, '_Rootlets')  # Consider removing
 
         """
         # Benjamin: Issue from Allan Martin, about the z=0 slice that is screwed up, caused by the affine transform.
