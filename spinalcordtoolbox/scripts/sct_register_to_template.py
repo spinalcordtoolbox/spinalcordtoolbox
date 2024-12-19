@@ -21,7 +21,7 @@ from spinalcordtoolbox.registration.core import register_wrapper
 from spinalcordtoolbox.registration.algorithms import Paramreg, ParamregMultiStep
 from spinalcordtoolbox.registration.labeling import (add_dummy_orthogonal_labels, check_labels,
                                                      project_labels_on_spinalcord, resample_labels)
-from spinalcordtoolbox.registration.landmarks import register_landmarks
+from spinalcordtoolbox.registration.landmarks import register_landmarks, register_rootlet
 
 from spinalcordtoolbox.metadata import get_file_label
 from spinalcordtoolbox.image import Image, add_suffix, generate_output_file
@@ -60,6 +60,7 @@ step0 = Paramreg(step='0', type='label', dof='Tx_Ty_Tz_Rx_Ry_Rz_Sz')  # affine, 
 step1 = Paramreg(step='1', type='imseg', algo='centermassrot', rot_method='pcahog')
 step2 = Paramreg(step='2', type='seg', algo='bsplinesyn', metric='MeanSquares', iter='3', smooth='1', slicewise='0')
 paramregmulti = ParamregMultiStep([step0, step1, step2])
+step_rootlet = Paramreg(step='1', metric='CC', iter='6x6x3', shrink='8x4x2', smooth='0x0x0', slicewise='0', deformation='0x0x1', gradStep='0.1')
 
 
 # PARSER
@@ -168,6 +169,15 @@ def get_parser():
             Labels located in the center of the spinal cord, at the superior-inferior level corresponding to the mid-point of the spinal level. Example: `anat_labels.nii.gz`
 
             Each label is a single voxel, which value corresponds to the spinal level (e.g.: 2 for spinal level 2). If you are using more than 2 labels, all spinal levels covering the region of interest should be provided (e.g., if you are interested in levels C2 to C7, then you should provide spinal level labels 2,3,4,5,6,7)."
+        """)  # noqa: E501 (line too long)
+    )
+    optional.add_argument(
+        '-lrootlet',
+        metavar=Metavar.file,
+        help=textwrap.dedent("""
+            Dorsal nerve rootlets segmentation. Example: `anat_rootlets.nii.gz`
+            Only labels within the range C2-C8 are supported. If labels outside this range are provided, they will be ignored.
+            Each value corresponds to the spinal level (e.g.: 2 for spinal level 2). If you are using more than 2 labels, all spinal levels covering the region of interest should be provided (e.g., if you are interested in levels C2 to C7, then you should provide spinal level labels 2,3,4,5,6,7)."
         """)  # noqa: E501 (line too long)
     )
     optional.add_argument(
@@ -293,6 +303,10 @@ def main(argv: Sequence[str]):
     if arguments.l is not None:
         fname_landmarks = arguments.l
         label_type = 'body'
+    elif arguments.lrootlet is not None:
+        fname_landmarks = arguments.lrootlet
+        fname_rootlets = arguments.lrootlet
+        label_type = 'rootlet'
     elif arguments.ldisc is not None:
         fname_landmarks = arguments.ldisc
         label_type = 'disc'
@@ -337,6 +351,11 @@ def main(argv: Sequence[str]):
     elif label_type == 'disc':
         # point-wise intervertebral disc labels
         file_template_labeling = get_file_label(os.path.join(path_template, 'template'), id_label=10)
+    elif label_type == 'rootlet':
+        # spinal rootlets midpoints
+        file_template_labeling = get_file_label(os.path.join(path_template, 'template'), id_label=17)
+        file_template_labeling_rootlets = get_file_label(os.path.join(path_template, 'template'), id_label=16)
+        fname_template_labeling_rootlets = os.path.join(path_template, 'template', file_template_labeling_rootlets)
     else:
         # spinal cord mask with discrete vertebral levels
         file_template_labeling = get_file_label(os.path.join(path_template, 'template'), id_label=7)
@@ -354,11 +373,12 @@ def main(argv: Sequence[str]):
     fname_template_seg = os.path.join(path_template, 'template', file_template_seg)
 
     # check file existence
-    # TODO: no need to do that!
     printv('\nCheck template files...')
     check_file_exist(fname_template, verbose)
     check_file_exist(fname_template_labeling, verbose)
     check_file_exist(fname_template_seg, verbose)
+    if label_type == 'rootlet':
+        check_file_exist(fname_template_labeling_rootlets, verbose)
     path_data, file_data, ext_data = extract_fname(fname_data)
 
     # printv(arguments)
@@ -369,13 +389,17 @@ def main(argv: Sequence[str]):
     printv('  Path template:        ' + path_template, verbose)
     printv('  Remove temp files:    ' + str(param.remove_temp_files), verbose)
 
+    # Compute center-of-mass of the rootlets segmentation:
+    if label_type == 'rootlet':
+        fname_rootlets_points = 'rootlets_mid.nii.gz'
+        fname_landmarks = sct_labels.cubic_to_point(Image(fname_rootlets)).save(fname_rootlets_points)
+        # TODO: remove rootlets_mid
+
     # check input labels
     labels = check_labels(fname_landmarks, label_type=label_type)
-
     level_alignment = False
-    if len(labels) > 2 and label_type in ['disc', 'spinal']:
+    if len(labels) > 2 and label_type in ['disc', 'spinal', 'rootlet']:
         level_alignment = True
-
     path_tmp = tmp_create(basename="register-to-template")
 
     # set temporary file names
@@ -385,6 +409,9 @@ def main(argv: Sequence[str]):
     ftmp_template = 'template.nii'
     ftmp_template_seg = 'template_seg.nii.gz'
     ftmp_template_label = 'template_label.nii.gz'
+    if label_type == 'rootlet':
+        ftmp_rootlet = 'rootlets.nii.gz'
+        ftmp_template_rootlets = 'template_rootlets.nii.gz'
 
     # copy files to temporary folder
     printv('\nCopying input data to tmp folder and convert to nii...', verbose)
@@ -395,6 +422,10 @@ def main(argv: Sequence[str]):
         Image(fname_template, check_sform=True).save(os.path.join(path_tmp, ftmp_template))
         Image(fname_template_seg, check_sform=True).save(os.path.join(path_tmp, ftmp_template_seg))
         Image(fname_template_labeling, check_sform=True).save(os.path.join(path_tmp, ftmp_template_label))
+        if label_type == 'rootlet':
+            Image(fname_rootlets, check_sform=True).save(os.path.join(path_tmp, ftmp_rootlet))
+            Image(fname_template_labeling_rootlets, check_sform=True).save(os.path.join(path_tmp, ftmp_template_rootlets))
+
     except ValueError as e:
         printv("\nImages could not be saved to temporary folder. Aborting registration.\n"
                f"    {e.__class__.__name__}: '{e}'", 1, 'error')
@@ -452,6 +483,11 @@ def main(argv: Sequence[str]):
     img_tmp_label = Image(ftmp_label).change_orientation("RPI")
     ftmp_label = add_suffix(img_tmp_label.absolutepath, "_rpi")
     img_tmp_label.save(ftmp_label, mutable=True)
+
+    if label_type == 'rootlet':
+        img_tmp_rootlets = Image(ftmp_rootlet).change_orientation("RPI")
+        ftmp_rootlet = add_suffix(img_tmp_rootlets.absolutepath, "_rpi")
+        img_tmp_rootlets.save(ftmp_rootlet, mutable=True)
 
     # Switch between modes: subject->template or template->subject
     if ref == 'template':
@@ -548,7 +584,6 @@ def main(argv: Sequence[str]):
                 sc_straight.use_straight_reference = True
                 sc_straight.discs_input_filename = ftmp_label
                 sc_straight.discs_ref_filename = ftmp_template_label
-
             sc_straight.straighten()
             cache_save("straightening.cache", cache_sig)
 
@@ -630,6 +665,7 @@ def main(argv: Sequence[str]):
             '-o', add_suffix(ftmp_data, '_straightAffine'),
             '-d', ftmp_template,
             '-w', 'warp_curve2straightAffine.nii.gz',
+            '-x', 'spline',
             '-v', '0',
         ])
         ftmp_data = add_suffix(ftmp_data, '_straightAffine')
@@ -642,6 +678,84 @@ def main(argv: Sequence[str]):
             '-v', '0',
         ])
         ftmp_seg = add_suffix(ftmp_seg, '_straightAffine')
+
+        # Register spinal rootlets to template:
+        if label_type == 'rootlet':
+            # Apply transformation to rootlets and image
+            sct_apply_transfo.main(argv=[
+                '-i', ftmp_rootlet,
+                '-o', add_suffix(ftmp_rootlet, '_straightAffine'),
+                '-d', ftmp_template,
+                '-w', 'warp_curve2straightAffine.nii.gz',
+                '-x', 'nn',
+                '-v', '0',
+            ])
+            ftmp_rootlet = add_suffix(ftmp_rootlet, '_straightAffine')
+            warp_affine2rootlet, warp_rootlet2affine = register_rootlet(ftmp_data,
+                                                                        ftmp_template,
+                                                                        ftmp_seg,
+                                                                        ftmp_rootlet,
+                                                                        ftmp_template_rootlets,
+                                                                        step_rootlet,
+                                                                        verbose=verbose
+                                                                        )
+            printv('\nConcatenate transformations: curve --> straight --> affine --> rootlets', verbose)
+            dimensionality = len(Image("template.nii").hdr.get_data_shape())
+            cmd = [
+                'isct_ComposeMultiTransform',
+                str(dimensionality),
+                'warp_curve2straightAffine.nii.gz',
+                '-R', 'template.nii',
+                warp_affine2rootlet,
+                'warp_curve2straightAffine.nii.gz',
+            ]
+            status, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
+            if status != 0:
+                raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
+
+            # Concatenate:
+            printv('\nConcatenate transformations: rootlets --> affine --> straight --> curve', verbose)
+            dimensionality = len(Image("data.nii").hdr.get_data_shape())
+            cmd = [
+                'isct_ComposeMultiTransform',
+                str(dimensionality),
+                'warp_straight2curve.nii.gz',
+                '-R', 'data.nii',
+                'warp_straight2curve.nii.gz',
+                warp_rootlet2affine  # 'step10Warp_zmean.nii.gz'TODO: check why I did not use the inverse warping field here
+            ]
+            status, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
+            if status != 0:
+                raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
+            # Apply transformation
+            sct_apply_transfo.main(argv=[
+                '-i', ftmp_data,
+                '-o', add_suffix(ftmp_data, '_Rootlets'),
+                '-d', ftmp_template,
+                '-w', warp_affine2rootlet,
+                '-x', 'spline',
+                '-v', '0',
+            ])
+            ftmp_data = add_suffix(ftmp_data, '_Rootlets')
+            sct_apply_transfo.main(argv=[
+                '-i', ftmp_seg,
+                '-o', add_suffix(ftmp_seg, '_Rootlets'),
+                '-d', ftmp_template,
+                '-w', warp_affine2rootlet,
+                '-x', 'linear',
+                '-v', '0',
+            ])
+            ftmp_seg = add_suffix(ftmp_seg, '_Rootlets')
+
+            sct_apply_transfo.main(argv=[
+                '-i', ftmp_rootlet,
+                '-o', add_suffix(ftmp_rootlet, '_Rootlets'),
+                '-d', ftmp_template,
+                '-w', warp_affine2rootlet,
+                '-x', 'nn',
+                '-v', '0',
+            ])
+            ftmp_rootlet = add_suffix(ftmp_rootlet, '_Rootlets')  # Consider removing
 
         """
         # Benjamin: Issue from Allan Martin, about the z=0 slice that is screwed up, caused by the affine transform.
@@ -717,10 +831,6 @@ def main(argv: Sequence[str]):
         if level_alignment:
             dimensionality = len(Image("data.nii").hdr.get_data_shape())
             cmd = ['isct_ComposeMultiTransform', f"{dimensionality}", 'warp_template2anat.nii.gz', '-R', 'data.nii', 'warp_straight2curve.nii.gz', warp_inverse]
-            status, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
-            if status != 0:
-                raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
-
         else:
             dimensionality = len(Image("data.nii").hdr.get_data_shape())
             cmd = [
@@ -732,9 +842,10 @@ def main(argv: Sequence[str]):
                 '-i', 'straight2templateAffine.txt',
                 warp_inverse,
             ]
-            status, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
-            if status != 0:
-                raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
+        status, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
+        print(output)
+        if status != 0:
+            raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
 
     # register template->subject
     else:
