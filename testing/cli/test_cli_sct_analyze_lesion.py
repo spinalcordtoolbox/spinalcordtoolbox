@@ -145,8 +145,9 @@ def test_sct_analyze_lesion_matches_expected_dummy_lesion_measurements(dummy_les
 
     # Get center of mass in S-I axis of the largest lesion
     # (we can simply use the lesion coordinates as the SC curvature is not too big)
+    # AIL --> [1]
     largest_lesion = lesion_params[0]   # largest lesion is always the first one in the list
-    z_center = int(round(np.mean(list(range(largest_lesion[0][1], largest_lesion[0][1] + largest_lesion[1][1]))))) # AIL --> [1]
+    z_center = int(round(np.mean(list(range(largest_lesion[0][1], largest_lesion[0][1] + largest_lesion[1][1])))))
     z_range = np.arange(z_center - 2, z_center + 3)     # two slices above and below the lesion center of mass
     # For each of these slices, compute the spinal cord center of mass in the R-L direction
     # Note: as path_seg has the AIL orientation, we need to reverse the last axis from "L-R" to "R-L" using [::-1]
