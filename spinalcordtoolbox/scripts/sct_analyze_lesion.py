@@ -147,7 +147,7 @@ class AnalyzeLesion:
     def __init__(self, fname_mask, fname_sc, fname_ref, path_template, path_ofolder, perslice, verbose):
         self.fname_mask = fname_mask
         self.interpolated_midsagittal_slice = None  # target float sagittal slice number used for the interpolation. This number is based on the spinal cord center of mass.
-        self.interpolation_slices = None                # sagittal slices used for the interpolation
+        self.interpolation_slices = None            # sagittal slices used for the interpolation
         self.fname_sc = fname_sc
         self.fname_ref = fname_ref
         self.path_template = path_template
