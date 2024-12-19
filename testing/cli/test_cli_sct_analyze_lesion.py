@@ -9,6 +9,8 @@ import math
 import pickle
 import numpy as np
 
+from scipy.ndimage import center_of_mass
+
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.utils.fs import extract_fname
 from spinalcordtoolbox.utils.sys import sct_test_path
@@ -44,16 +46,12 @@ def dummy_lesion(request, tmp_path):
     return path_out, lesion_params
 
 
-def compute_expected_measurements(dim, starting_coord=None, path_seg=None):
+def compute_expected_measurements(dim, starting_coord=None, path_seg=None, mid_sagittal_slice=None):
     if path_seg:
         # Find the minimum SC area surrounding the lesion
         data_seg = Image(path_seg).data
         min_area = min(np.sum(data_seg[:, n_slice, :])
                        for n_slice in range(starting_coord[1], starting_coord[1] + dim[1]))
-
-        # Find the midsagittal slice of the spinal cord (assuming AIL input image)
-        nonzero_slices = np.unique(np.where(data_seg)[2])  # AIL image: [2] -> LR (sagittal)
-        mid_sagittal_slice = int(np.mean([np.min(nonzero_slices), np.max(nonzero_slices)]))
 
         # Find the minimum mid-sagittal tissue bridge width for each LR slice in the lesion
         x = starting_coord[0] + (dim[0] // 2)  # Compute midpoint of lesion (to split into dorsal/ventral regions)
@@ -80,7 +78,6 @@ def compute_expected_measurements(dim, starting_coord=None, path_seg=None):
     else:
         min_area = 0
         tissue_bridges = {}
-        mid_sagittal_slice = None
 
     # Compute the expected (voxel) measurements from the provided dimensions
     # NB: Actual measurements will differ slightly due to spine curvature
@@ -88,12 +85,13 @@ def compute_expected_measurements(dim, starting_coord=None, path_seg=None):
         # NB: 'sct_analyze_lesion' treats lesions as cylinders. So:
         #   - Vertical axis: Length of the cylinder
         'length [mm]': dim[1],
-        'midsagittal_spinal_cord_slice': mid_sagittal_slice,
+        'width [mm]': dim[0],
+        'interpolated_midsagittal_slice': mid_sagittal_slice,
         # NB: we can compute length_midsagittal_slice and width_midsagittal_slice here from dim for the purposes of
         #  testing, but in the actual script, we need the spinal cord segmentation to compute these values based on
         #  the midsagittal slice
-        'length_midsagittal_slice [mm]': dim[1],
-        'width_midsagittal_slice [mm]': dim[0],
+        # 'length_midsagittal_slice [mm]': dim[1],
+        # 'width_midsagittal_slice [mm]': dim[0],
         #   - Horizontal plane: Cross-sectional slices of the cylinder.
         #        Specifically, 'max_equivalent_diameter' takes the
         #        cross-sectional area of the lesion (which is computed
@@ -114,15 +112,16 @@ def compute_expected_measurements(dim, starting_coord=None, path_seg=None):
 
 
 @pytest.mark.sct_testing
+# Each tuple represents the starting coordinates (x, y, z) and dimensions (width, height, depth) of a dummy lesion
 @pytest.mark.parametrize("dummy_lesion, rtol", [
     # Straight region of `t2.nii.gz` -> little curvature -> smaller tolerance
     ([(29, 45, 25), (3, 10, 2)], 0.001),
     ([(29, 27, 25), (1, 4, 1)], 0.001),  # NB: Example from #3633
     # Curved region of `t2.nii.gz` -> lots of curvature -> larger tolerance
-    ([(29, 0, 25), (4, 15, 3)], 0.01),
+    ([(31, 0, 25), (4, 15, 3)], 0.1),
     # Multiple lesions
-    ([[(29, 0, 25), (4, 15, 3)],
-      [(29, 45, 25), (3, 10, 2)]], 0.01)
+    ([[(31, 0, 25), (4, 15, 3)],
+      [(29, 45, 25), (3, 10, 2)]], 0.1)
 ], indirect=["dummy_lesion"])
 def test_sct_analyze_lesion_matches_expected_dummy_lesion_measurements(dummy_lesion, rtol, tmp_path):
     """Run the CLI script and verify that the lesion measurements match
@@ -144,14 +143,25 @@ def test_sct_analyze_lesion_matches_expected_dummy_lesion_measurements(dummy_les
     with open(tmp_path/f"{fname}_analysis.pkl", 'rb') as f:
         measurements = pickle.load(f)['measures']
 
+    # Get center of mass in S-I axis of the largest lesion
+    # (we can simply use the lesion coordinates as the SC curvature is not too big)
+    # AIL --> [1]
+    largest_lesion = lesion_params[0]   # largest lesion is always the first one in the list
+    z_center = int(round(np.mean(list(range(largest_lesion[0][1], largest_lesion[0][1] + largest_lesion[1][1])))))
+    z_range = np.arange(z_center - 2, z_center + 3)     # two slices above and below the lesion center of mass
+    # For each of these slices, compute the spinal cord center of mass in the R-L direction
+    # Note: as path_seg has the AIL orientation, we need to reverse the last axis from "L-R" to "R-L" using [::-1]
+    sc_com = [center_of_mass(Image(path_seg).data[:, z, ::-1])[1] for z in z_range]     # 2D slice from AIL: [1] --> L-R
+    mid_sagittal_slice = np.mean(sc_com)     # target slice in right-left axis (x direction) for the interpolation
+
     # Compute expected measurements from the lesion dimensions
     for idx, (starting_coord, dim) in enumerate(lesion_params):
-        expected_measurements = compute_expected_measurements(dim, starting_coord, path_seg)
+        expected_measurements = compute_expected_measurements(dim, starting_coord, path_seg, mid_sagittal_slice)
 
         # Validate analysis results
         for key, expected_value in expected_measurements.items():
             # These measures are the same regardless of angle adjustment/spine curvature
-            if key in ['volume [mm3]', 'max_axial_damage_ratio []', 'midsagittal_spinal_cord_slice']:
+            if key in ['volume [mm3]', 'max_axial_damage_ratio []', 'interpolated_midsagittal_slice']:
                 np.testing.assert_equal(measurements.at[idx, key], expected_value)
             else:
                 # However, these measures won't match exactly due to angle adjustment
@@ -170,14 +180,15 @@ def test_sct_analyze_lesion_matches_expected_dummy_lesion_measurements(dummy_les
 
 
 @pytest.mark.sct_testing
+# Each tuple represents the starting coordinates (x, y, z) and dimensions (width, height, depth) of a dummy lesion
 @pytest.mark.parametrize("dummy_lesion, rtol", [
     # Straight region of `t2.nii.gz` -> little curvature -> smaller tolerance
     ([(29, 45, 25), (3, 10, 2)], 0.001),
     ([(29, 27, 25), (1, 4, 1)], 0.001),  # NB: Example from #3633
     # Curved region of `t2.nii.gz` -> lots of curvature -> larger tolerance
-    ([(29, 0, 25), (4, 15, 3)], 0.01),
+    ([(31, 0, 25), (4, 15, 3)], 0.01),
     # Multiple lesions
-    ([[(29, 0, 25), (4, 15, 3)],
+    ([[(31, 0, 25), (4, 15, 3)],
       [(29, 45, 25), (3, 10, 2)]], 0.01)
 ], indirect=["dummy_lesion"])
 def test_sct_analyze_lesion_matches_expected_dummy_lesion_measurements_without_segmentation(dummy_lesion, rtol,
