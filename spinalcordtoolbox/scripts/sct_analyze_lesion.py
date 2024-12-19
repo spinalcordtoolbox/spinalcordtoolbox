@@ -928,33 +928,6 @@ class AnalyzeLesion:
             # compute the angle between the normal vector of the plane and the vector z
             self.angles_sagittal[iz] = np.arccos(np.vdot(tangent_vect, np.array([0, 0, 1])))
 
-    def _interpolate_values(self, data1, data2):
-        """
-        Interpolate inputs using linear interpolation.
-        Inputs can be either 2D numpy arrays (for interpolating slices) or single int64 (for interpolating tissue
-        bridges).
-        :param data1: 2D numpy array (slice 1) or single int64 (tissue bridge for slice 1)
-        :param data2: 2D numpy array (slice 2) or single int64 (tissue bridge for slice 2)
-        :return: 2D numpy array (interpolated slice) or single float64 (interpolated tissue bridge)
-        """
-        interpolation_factor = self.interpolated_midsagittal_slice - int(self.interpolated_midsagittal_slice)   # e.g., 8.7 - 8 = 0.7
-        return (1 - interpolation_factor) * data1 + interpolation_factor * data2
-
-    def _interpolate_lesion(self, im_lesion_data):
-        """
-        Interpolate the currently processed lesion
-        :param im_lesion_data: 3D numpy array, binary mask of the currently processed lesion
-        :return: 2D numpy array, interpolated lesion
-        :return: list, axial slices that are nonzero in the interpolated midsagittal slice
-        """
-        # Interpolate the two sagittal slices; 3D --> 2D, dim=[AP, SI]
-        im_lesion_interpolated = self._interpolate_values(im_lesion_data[self.interpolation_slices[0], :, :],
-                                                          im_lesion_data[self.interpolation_slices[1], :, :])
-        # Fetch a list of axial slice numbers that are nonzero in the interpolated midsagittal slice
-        nonzero_axial_slices = np.unique(np.where(im_lesion_interpolated)[1])  # [1] -> SI
-
-        return im_lesion_interpolated, nonzero_axial_slices
-
     def get_midsagittal_slice(self, im_lesion_data, label_lst, p_lst):
         """
         Get variables needed for the mid-sagittal slice interpolation.
@@ -1034,6 +1007,33 @@ class AnalyzeLesion:
         slice1 = int(np.floor(self.interpolated_midsagittal_slice))     # e.g., 8
         slice2 = int(np.ceil(self.interpolated_midsagittal_slice))      # e.g., 9
         self.interpolation_slices = [slice1, slice2]     # store it to be used for tissue bridges
+
+    def _interpolate_values(self, data1, data2):
+        """
+        Interpolate inputs using linear interpolation.
+        Inputs can be either 2D numpy arrays (for interpolating slices) or single int64 (for interpolating tissue
+        bridges).
+        :param data1: 2D numpy array (slice 1) or single int64 (tissue bridge for slice 1)
+        :param data2: 2D numpy array (slice 2) or single int64 (tissue bridge for slice 2)
+        :return: 2D numpy array (interpolated slice) or single float64 (interpolated tissue bridge)
+        """
+        interpolation_factor = self.interpolated_midsagittal_slice - int(self.interpolated_midsagittal_slice)   # e.g., 8.7 - 8 = 0.7
+        return (1 - interpolation_factor) * data1 + interpolation_factor * data2
+
+    def _interpolate_lesion(self, im_lesion_data):
+        """
+        Interpolate the currently processed lesion
+        :param im_lesion_data: 3D numpy array, binary mask of the currently processed lesion
+        :return: 2D numpy array, interpolated lesion
+        :return: list, axial slices that are nonzero in the interpolated midsagittal slice
+        """
+        # Interpolate the two sagittal slices; 3D --> 2D, dim=[AP, SI]
+        im_lesion_interpolated = self._interpolate_values(im_lesion_data[self.interpolation_slices[0], :, :],
+                                                          im_lesion_data[self.interpolation_slices[1], :, :])
+        # Fetch a list of axial slice numbers that are nonzero in the interpolated midsagittal slice
+        nonzero_axial_slices = np.unique(np.where(im_lesion_interpolated)[1])  # [1] -> SI
+
+        return im_lesion_interpolated, nonzero_axial_slices
 
     def label_lesion(self):
         printv('\nLabel connected regions of the masked image...', self.verbose, 'normal')
