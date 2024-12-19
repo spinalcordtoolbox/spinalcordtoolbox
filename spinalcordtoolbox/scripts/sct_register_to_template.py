@@ -728,6 +728,7 @@ def main(argv: Sequence[str]):
             status, output = run_proc(cmd_split, verbose, is_sct_binary=True)
             printv(output, verbose)
             # Compute slicewise mean in Z to ensure symmetry
+            printv('\nComputing slicewise mean in Z to ensure symmetry....', verbose)
             img = Image('step10Warp_Z.nii.gz')
             out = img.copy()
             out.data = slicewise_mean(out.data, 2)
