@@ -1043,6 +1043,3 @@ def get_max_radius(img, orientation='Axial'):
         widths = [w//2 + 0.1*w//2 for w in widths]
         height = np.floor(img.data.shape[2]/2).astype(int)
         return (height, max(np.floor(img.data.shape[1]/4).astype(int), int(max(widths))))
-
-    
-    
