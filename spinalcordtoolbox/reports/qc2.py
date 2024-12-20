@@ -343,17 +343,10 @@ def sct_deepseg_axial(
         interpolation='linear',
     ) if fname_qc_seg else None
 
-    # Using -qc-seg mask if available, we remove slices which are empty (except for the first 3 and last 3 slices just around the segmented slices)
-    if fname_qc_seg:
-        # We dilate the mask to keep the first and last 3 slices
-        first_slice = min(np.where(img_qc_seg.data)[0]) - 3
-        last_slice = max(np.where(img_qc_seg.data)[0]) + 3
-        # Now we remove the slices from the input image, the spinal cord mask and the lesion mask
-        img_input.data = img_input.data[first_slice:last_slice]
-        img_seg_sc.data = img_seg_sc.data[first_slice:last_slice]
-        if img_seg_lesion:
-            img_seg_lesion.data = img_seg_lesion.data[first_slice:last_slice]
-        img_qc_seg.data = img_qc_seg.data[first_slice:last_slice]
+    # Using -qc-seg mask if available, we remove slices which are empty
+    for img_to_crop in [img_input, img_seg_sc, img_seg_lesion, img_qc_seg]:
+        if fname_qc_seg and img_to_crop:
+            img_to_crop.data = crop_with_mask(img_to_crop.data, img_qc_seg)
 
     # Each slice is centered on the segmentation
     logger.info('Find the center of each slice')
