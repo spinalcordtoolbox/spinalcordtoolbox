@@ -356,16 +356,8 @@ def sct_deepseg_axial(
     inf_nan_fill(centers[:, 0])
     inf_nan_fill(centers[:, 1])
 
-    # If -qc-seg is available, use it to generate the radius, otherwise, it is set to the standard value of (15,15)
-    # The radius is chosen as the maximum between (15,15) and the maximum of width and height of the qc-seg mask
-    if fname_qc_seg:
-        widths = [np.max(np.where(slice)[0]) - np.min(np.where(slice)[0]) if np.sum(slice) > 0 else 0 for slice in img_qc_seg.data]
-        heights = [np.max(np.where(slice)[1]) - np.min(np.where(slice)[1]) if np.sum(slice) > 0 else 0 for slice in img_qc_seg.data]
-        widths = [w//2 + 0.1*w//1 for w in widths]
-        heights = [h//2 + 0.1*h//1 for h in heights]
-        radius = (max(15, max(widths)), max(15, max(heights)))
-    else:
-        radius = (15, 15)
+    # If -qc-seg is available, use it to generate the radius
+    radius = get_max_radius(img_qc_seg) if fname_qc_seg else (15, 15)
 
     # Generate the first QC report image
     img = equalize_histogram(mosaic(img_input, centers, radius))
