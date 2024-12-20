@@ -579,16 +579,8 @@ def sct_deepseg_sagittal(
     inf_nan_fill(centers[:, 0])
     inf_nan_fill(centers[:, 1])
 
-    # If -qc-seg is available, use it to generate the radius, otherwise, it is set to the standard value of (15,15)
-    # The height is always the entirety of the image height.
-    # The width is set to the maximum width of the spinal cord mask dilated by 20% or 1/2 of the image width, whichever is larger.
-    if fname_qc_seg:
-        widths = [np.max(np.where(slice)[1]) - np.min(np.where(slice)[1]) if np.sum(slice) > 0 else 0 for slice in img_qc_seg.data]
-        widths = [(w*1.2)//2 for w in widths]
-        height = np.floor(img_input.data.shape[2]/2).astype(int)
-        radius = (height, max(np.floor(img_input.data.shape[1]/4).astype(int), int(max(widths))))
-    else:
-        radius = (img_input.dim[1]//2, img_input.dim[2]//2)
+    # If -qc-seg is available, use it to generate the radius (or display the whole image if not available)
+    radius = get_max_radius(img_qc_seg, orientation="Sagittal") if fname_qc_seg else (img_input.dim[1]//2, img_input.dim[2]//2)
 
     # Generate the first QC report image
     img = equalize_histogram(mosaic(img_input, centers, radius=radius))
@@ -1032,3 +1024,25 @@ def crop_with_mask(array, img_crop, pad=3):
     first_slice = min(np.where(img_crop.data)[0]) - pad
     last_slice = max(np.where(img_crop.data)[0]) + pad
     return array[first_slice:last_slice]
+
+
+def get_max_radius(img, orientation='Axial'):
+    """Determine the maximum slicewise width/height of the nonzero voxels in img."""
+    if orientation == 'Axial':
+        # In Axial orientation, the radius is the maximum width/height of the spinal cord mask dilated by 20% or 15, whichever is larger.
+        default = 15
+        widths = [np.max(np.where(slice)[0]) - np.min(np.where(slice)[0]) if np.sum(slice) > 0 else 0 for slice in img.data]
+        heights = [np.max(np.where(slice)[1]) - np.min(np.where(slice)[1]) if np.sum(slice) > 0 else 0 for slice in img.data]
+        widths = [w//2 + 0.1*w//1 for w in widths]
+        heights = [h//2 + 0.1*h//1 for h in heights]
+        return (max(default, max(widths)), max(default, max(heights)))
+    else:
+        # In Sagittal orientation, the radius is the maximum width of the spinal cord mask dilated by 20% or 1/2 of the image width, whichever is larger.
+        # The height is always the entirety of the image height (for example, to view possible lesions in the brain stem)
+        widths = [np.max(np.where(slice)[1]) - np.min(np.where(slice)[1]) if np.sum(slice) > 0 else 0 for slice in img.data]
+        widths = [w//2 + 0.1*w//2 for w in widths]
+        height = np.floor(img.data.shape[2]/2).astype(int)
+        return (height, max(np.floor(img.data.shape[1]/4).astype(int), int(max(widths))))
+
+    
+    
