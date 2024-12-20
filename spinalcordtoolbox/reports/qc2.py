@@ -1043,7 +1043,7 @@ def assign_label_colors_by_groups(labels):
     return color_list
 
 
-def crop_with_mask(array, img_crop, pad=3)
+def crop_with_mask(array, img_crop, pad=3):
     first_slice = min(np.where(img_crop.data)[0]) - pad
     last_slice = max(np.where(img_crop.data)[0]) + pad
     return array[first_slice:last_slice]
