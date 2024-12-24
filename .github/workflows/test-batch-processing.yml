@@ -76,12 +76,6 @@ jobs:
           name: Batch Processing QC (${{ matrix.os }})
           path: "qc_example_data"
 
-      - name: Upload folder summaries
-        uses: actions/upload-artifact@v4
-        with:
-          name: Data Folder Summary (${{ matrix.os }})
-          path: "testing/*.csv"
-
       - name: Validate new results
         run: |
           # Auto-pass macOS as it would fail due to https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3194
@@ -90,3 +84,10 @@ jobs:
           else
                sct_testing testing/batch_processing/test_batch_processing.py
           fi
+
+      - name: Upload folder summaries
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Data Folder Summary (${{ matrix.os }})
+          path: "testing/sct_example_data.csv"
