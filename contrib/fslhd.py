@@ -235,7 +235,7 @@ def generate_nifti_fields(header):
         'toffset': f"{nib_fields['toffset']:.6f}",
         'intent': INTENT_STRINGS[nib_fields['intent_code']],
         'intent_code': nib_fields['intent_code'],
-        'intent_name': nib_fields['intent_name'].decode('utf-8'),
+        'intent_name': nib_fields['intent_name'].decode("utf-8", errors="ignore"),
         'intent_p1': f"{nib_fields['intent_p1']:.6f}",
         'intent_p2': f"{nib_fields['intent_p2']:.6f}",
         'intent_p3': f"{nib_fields['intent_p3']:.6f}",
@@ -257,8 +257,8 @@ def generate_nifti_fields(header):
         'sform_xorient': ORIENTATION_STRINGS[nib.aff2axcodes(sform)[0]],
         'sform_yorient': ORIENTATION_STRINGS[nib.aff2axcodes(sform)[1]],
         'sform_zorient': ORIENTATION_STRINGS[nib.aff2axcodes(sform)[2]],
-        'file_type': f"NIFTI-{int(nib_fields['magic'].decode('utf-8')[2])}+",
+        'file_type': f"NIFTI-{int(nib_fields['magic'].decode('utf-8', errors='ignore')[2])}+",
         'file_code': int(nib_fields['magic'].decode("utf-8")[2]),
-        'descrip': nib_fields['descrip'].decode('utf-8'),
-        'aux_file': nib_fields['aux_file'].decode('utf-8')
+        'descrip': nib_fields['descrip'].decode("utf-8", errors="ignore"),
+        'aux_file': nib_fields['aux_file'].decode("utf-8", errors="ignore")
     }

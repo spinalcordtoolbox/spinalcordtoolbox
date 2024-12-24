@@ -84,3 +84,10 @@ jobs:
           else
                sct_testing testing/batch_processing/test_batch_processing.py
           fi
+
+      - name: Upload folder summaries
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Data Folder Summary (${{ matrix.os }})
+          path: "testing/sct_example_data.csv"
