@@ -33,6 +33,7 @@ SUPPORTED_DISCS = [4, 5, 6, 7]
 # Cut-off to determine the presence of the compression
 CUT_OFF = 0.451
 
+
 def get_parser():
     parser = SCTArgumentParser(
         description=("""\
@@ -119,6 +120,7 @@ def predict_compression_probability(cr, csa, solidity, torsion, disc):
     )
     return math.exp(model) / (1 + math.exp(model))
 
+
 def compute_shape_metrics(fname_seg, fname_disc, angle_correction, verbose):
     """
     Compute shape metrics per slice.
@@ -157,6 +159,7 @@ def compute_shape_metrics(fname_seg, fname_disc, angle_correction, verbose):
 
     return metrics_agg_merged
 
+
 def compute_compression_ratio(metrics_agg_merged):
     """
     Compute compression ratio (CR) as 'diameter_AP' / 'diameter_RL'
@@ -169,6 +172,7 @@ def compute_compression_ratio(metrics_agg_merged):
         metrics['MEAN(compression_ratio)'] = None if ap is None or rl is None else ap / rl
 
     return metrics_agg_merged
+
 
 def compute_torsion(metrics_agg_merged, verbose):
     """
@@ -212,6 +216,7 @@ def compute_torsion(metrics_agg_merged, verbose):
 
     return metrics_agg_merged
 
+
 def process_compression(metrics_agg_merged, disc_slices):
     """
     Process shape metrics for axial slices at the level of each disc to predict the compression probability.
@@ -243,6 +248,7 @@ def process_compression(metrics_agg_merged, disc_slices):
                                        ignore_index=True)
 
     return compression_df
+
 
 def get_disc_slices(fname_disc):
     """
