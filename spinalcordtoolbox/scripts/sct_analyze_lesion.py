@@ -32,8 +32,8 @@ def get_parser():
             Compute statistics on segmented lesions. The function assigns an ID value to each lesion (1, 2, 3, etc.) and then outputs morphometric measures for each lesion:
 
               - volume `[mm^3]`: volume of the lesion
-              - length `[mm]`: maximal length along the Superior-Inferior (SI) axis across all slices
-              - width `[mm]`: maximal width along the Anterior-Posterior (AP) axis across all slices
+              - length `[mm]`: maximal length along the Superior-Inferior (SI) axis across all sagittal slices of the lesion
+              - width `[mm]`: maximal width along the Anterior-Posterior (AP) axis across all sagittal slices of the lesion
               - max_equivalent_diameter `[mm]`: maximum diameter of the lesion, when approximating the lesion as a circle in the axial plane
               - max_axial_damage_ratio `[]`: maximum ratio of the lesion area divided by the spinal cord area
               - interpolated_midsagittal_slice: number (float) corresponding to the interpolated midsagittal slice
