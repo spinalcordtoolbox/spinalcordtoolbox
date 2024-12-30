@@ -612,7 +612,7 @@ class AnalyzeLesion:
         # NOTE: although we interpolate each lesion separately, the interpolation is always done for the same two
         # sagittal slices (self.interpolation_slices) for all lesions. This ensures that we measure all lesions from
         # the same midsagittal slice (in this case, interpolated slice, of course).
-        im_lesion_interpolated, nonzero_axial_slices = self._interpolate_lesion(im_lesion_data)
+        im_lesion_interpolated, nonzero_axial_slices = self._get_lesion_midsagittal_slice(im_lesion_data)
 
         lengths = []
         # Loop across SI dimension
@@ -646,7 +646,7 @@ class AnalyzeLesion:
         # NOTE: although we interpolate each lesion separately, the interpolation is always done for the same two
         # sagittal slices (self.interpolation_slices) for all lesions. This ensures that we measure all lesions from
         # the same midsagittal slice (in this case, interpolated slice, of course).
-        im_lesion_interpolated, nonzero_axial_slices = self._interpolate_lesion(im_lesion_data)
+        im_lesion_interpolated, nonzero_axial_slices = self._get_lesion_midsagittal_slice(im_lesion_data)
 
         # Iterate across axial slices to compute lesion width
         lesion_width_dict = {}
@@ -1020,9 +1020,9 @@ class AnalyzeLesion:
         interpolation_factor = self.interpolated_midsagittal_slice - int(self.interpolated_midsagittal_slice)   # e.g., 8.7 - 8 = 0.7
         return (1 - interpolation_factor) * data1 + interpolation_factor * data2
 
-    def _interpolate_lesion(self, im_lesion_data):
+    def _get_lesion_midsagittal_slice(self, im_lesion_data):
         """
-        Interpolate the currently processed lesion
+        Get the lesion data for the midsagittal slice by interpolating the two sagittal slices
         :param im_lesion_data: 3D numpy array, binary mask of the currently processed lesion
         :return: 2D numpy array, interpolated lesion
         :return: list, axial slices that are nonzero in the interpolated midsagittal slice
