@@ -580,8 +580,8 @@ class AnalyzeLesion:
         For lesion width for the midsagittal slice only, see _measure_width_midsagittal_slice().
         """
         lesion_width_dict = {
-            axial_slice: np.max(np.where(im_data[:, :, axial_slice])[1]) -      # [1] --> AP; np.max returns the most ventral (anterior) element
-                         np.min(np.where(im_data[:, :, axial_slice])[1]) + 1    # # np.min returns the most dorsal (posterior) element
+            axial_slice: np.max(np.where(im_data[:, :, axial_slice])[1]) -      # [1] -> AP; np.max returns the most ventral (anterior) element
+                         np.min(np.where(im_data[:, :, axial_slice])[1]) + 1    # np.min returns the most dorsal (posterior) element
             for axial_slice in np.unique(np.where(im_data)[2])      # [2] -> SI
         }
 
