@@ -568,7 +568,7 @@ class AnalyzeLesion:
         measurement is 3D.
         For lesion length for the midsagittal slice only, see _measure_length_midsagittal_slice().
         """
-        length_cur = np.sum([p_lst[2] / np.cos(self.angles_3d[zz]) for zz in np.unique(np.where(im_data)[2])])
+        length_cur = np.sum([p_lst[2] / np.cos(self.angles_3d[zz]) for zz in np.unique(np.where(im_data)[2])])  # [2] -> SI
         self.measure_pd.loc[idx, 'length [mm]'] = length_cur
         printv('  (S-I) length: ' + str(np.round(length_cur, 2)) + ' mm', self.verbose, type='info')
 
