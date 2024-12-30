@@ -115,7 +115,7 @@ def predict_compression_probability(cr, csa, solidity, torsion, disc):
         + coefficients["cr"] * cr
         + coefficients["csa"] * csa
         + coefficients["solidity"] * solidity
-        + coefficients["torsion"] * torsion
+        + (coefficients["torsion"] * torsion if torsion is not None else 0)     # edge-case when torsion is None
         + (coefficients["level_c6c7"] if disc == 7 else 0)
     )
     return math.exp(model) / (1 + math.exp(model))
