@@ -16,11 +16,12 @@ import csv
 
 import pytest
 from nibabel import Nifti1Header
+from numpy import zeros
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.utils.sys import sct_test_path, __sct_dir__
 from spinalcordtoolbox.download import install_named_dataset
-from contrib.fslhd import generate_nifti_fields
+from contrib.fslhd import generate_nifti_fields, generate_numpy_fields
 
 logger = logging.getLogger(__name__)
 
@@ -70,11 +71,13 @@ def summarize_files_in_folder(folder):
                 "md5": checksum(fpath),
             }
             if any(fname.endswith(ext) for ext in [".nii", ".nii.gz"]):
-                img_fields = generate_nifti_fields(Image(fpath).header)
+                img = Image(fpath)
+                img_fields = generate_nifti_fields(img.header)
+                arr_fields = generate_numpy_fields(img.data)
             else:
-                img_fields = generate_nifti_fields(Nifti1Header())
-                img_fields = {k: '' for k in img_fields.keys()}
-            summary.append(file_dict | img_fields)
+                img_fields = {k: '' for k in generate_nifti_fields(Nifti1Header()).keys()}
+                arr_fields = {k: '' for k in generate_numpy_fields(zeros([1, 1, 1])).keys()}
+            summary.append(file_dict | img_fields | arr_fields)
     return summary
 
 
