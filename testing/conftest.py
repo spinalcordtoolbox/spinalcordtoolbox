@@ -13,6 +13,7 @@ from hashlib import md5
 import tempfile
 from glob import glob
 import csv
+import time
 
 import pytest
 from nibabel import Nifti1Header
@@ -54,6 +55,8 @@ def pytest_sessionfinish():
         if os.path.isdir(folder):
             summary = summarize_files_in_folder(folder)
             summary = sorted(summary, key=lambda d: d['ctime'])
+            for file_dict in summary:
+                del file_dict['ctime']  # avoid erroneous diffs due to variable creation times
             dicts_to_csv(summary, fname_out)
 
 
