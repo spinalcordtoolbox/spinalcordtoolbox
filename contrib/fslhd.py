@@ -74,6 +74,9 @@
 """
 
 import nibabel as nib
+import numpy as np
+from scipy.stats import mode
+
 
 INTENT_STRINGS = {
     0: "Unknown",
@@ -235,7 +238,7 @@ def generate_nifti_fields(header):
         'toffset': f"{nib_fields['toffset']:.6f}",
         'intent': INTENT_STRINGS[nib_fields['intent_code']],
         'intent_code': nib_fields['intent_code'],
-        'intent_name': nib_fields['intent_name'].decode('utf-8'),
+        'intent_name': nib_fields['intent_name'].decode("utf-8", errors="ignore"),
         'intent_p1': f"{nib_fields['intent_p1']:.6f}",
         'intent_p2': f"{nib_fields['intent_p2']:.6f}",
         'intent_p3': f"{nib_fields['intent_p3']:.6f}",
@@ -257,8 +260,38 @@ def generate_nifti_fields(header):
         'sform_xorient': ORIENTATION_STRINGS[nib.aff2axcodes(sform)[0]],
         'sform_yorient': ORIENTATION_STRINGS[nib.aff2axcodes(sform)[1]],
         'sform_zorient': ORIENTATION_STRINGS[nib.aff2axcodes(sform)[2]],
-        'file_type': f"NIFTI-{int(nib_fields['magic'].decode('utf-8')[2])}+",
+        'file_type': f"NIFTI-{int(nib_fields['magic'].decode('utf-8', errors='ignore')[2])}+",
         'file_code': int(nib_fields['magic'].decode("utf-8")[2]),
-        'descrip': nib_fields['descrip'].decode('utf-8'),
-        'aux_file': nib_fields['aux_file'].decode('utf-8')
+        'descrip': nib_fields['descrip'].decode("utf-8", errors="ignore"),
+        'aux_file': nib_fields['aux_file'].decode("utf-8", errors="ignore")
+    }
+
+def generate_numpy_fields(arr):
+    """
+    Generate useful summary statistics for any arbitrary numpy array.
+    """
+    arr = arr.astype(np.float64)
+    return {
+        'arr_nbytes': arr.nbytes,
+        'arr_size': arr.size,
+        'arr_num_zeros': arr[arr == 0.0].size,
+        'arr_num_nonzeros': arr[arr != 0.0].size,
+        'arr_num_positives': arr[arr > 0.0].size,
+        'arr_num_negatives': arr[arr < 0.0].size,
+        'arr_num_nans': arr[arr == np.nan].size,
+        'arr_num_infs': arr[arr == np.inf].size,
+        'arr_num_unique': np.unique(arr).size,
+        'arr_min': arr.min(),
+        'arr_max': arr.max(),
+        'arr_median': np.median(arr),
+        'arr_mode': mode(arr, axis=None, keepdims=False).mode,
+        'arr_mean': arr.mean(),
+        'arr_std': arr.std(),
+        'arr_sum': arr.sum(),
+        'arr_p1': np.percentile(arr, 1),
+        'arr_p10': np.percentile(arr, 10),
+        'arr_p90': np.percentile(arr, 90),
+        'arr_p99': np.percentile(arr, 99),
+        'arr_iqr': np.percentile(arr, 75) - np.percentile(arr, 25),
+        'arr_mad': np.median(np.abs(arr - np.median(arr))),
     }

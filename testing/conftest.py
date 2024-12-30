@@ -10,12 +10,19 @@ import os
 import logging
 from typing import Mapping
 from hashlib import md5
+import tempfile
+from glob import glob
+import csv
+import time
 
 import pytest
+from nibabel import Nifti1Header
+from numpy import zeros
 
-from spinalcordtoolbox.utils.sys import sct_test_path
+from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.utils.sys import sct_test_path, __sct_dir__
 from spinalcordtoolbox.download import install_named_dataset
-
+from contrib.fslhd import generate_nifti_fields, generate_numpy_fields
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +38,59 @@ def pytest_sessionstart():
     if not os.path.exists(sct_test_path()):
         logger.info("Downloading sct test data")
         install_named_dataset('sct_testing_data', dest_folder=sct_test_path())
+
+
+def pytest_sessionfinish():
+    """Perform actions that must be done after the test session."""
+    # get the newest temporary path created by pytest
+    tmp_paths = glob(os.path.join(tempfile.gettempdir(), "pytest-of-*", "pytest-current"))
+    ctimes = [os.path.getctime(p) for p in tmp_paths]
+    tmp_path = tmp_paths[ctimes.index(max(ctimes))]
+
+    # generate directory summaries for both sct_testing_data and the temporary directory
+    for (folder, fname_out) in [(tmp_path, "pytest-tmp.csv"),
+                                (sct_test_path(), "sct_testing_data.csv"),
+                                (sct_test_path().replace("testing", "example"), "sct_example_data.csv")]:
+        fname_out = os.path.join(__sct_dir__, "testing", fname_out)
+        if os.path.isdir(folder):
+            summary = summarize_files_in_folder(folder)
+            summary = sorted(summary, key=lambda d: d['ctime'])
+            for file_dict in summary:
+                del file_dict['ctime']  # avoid erroneous diffs due to variable creation times
+            dicts_to_csv(summary, fname_out)
+
+
+def summarize_files_in_folder(folder):
+    # Construct a list of dictionaries summarizing all the files in a folder
+    summary = []
+    for root, dirs, files in os.walk(folder, followlinks=True):
+        for fname in files:
+            fpath = os.path.join(root, fname)
+            root_short = root.replace(folder, os.path.basename(folder))
+            file_dict = {
+                "ctime": os.path.getctime(fpath),
+                "path": os.path.join(root_short, fname),
+                "size": os.path.getsize(fpath),
+                "md5": checksum(fpath),
+            }
+            if any(fname.endswith(ext) for ext in [".nii", ".nii.gz"]):
+                img = Image(fpath)
+                img_fields = generate_nifti_fields(img.header)
+                arr_fields = generate_numpy_fields(img.data)
+            else:
+                img_fields = {k: '' for k in generate_nifti_fields(Nifti1Header()).keys()}
+                arr_fields = {k: '' for k in generate_numpy_fields(zeros([1, 1, 1])).keys()}
+            summary.append(file_dict | img_fields | arr_fields)
+    return summary
+
+
+def dicts_to_csv(list_of_dicts, fname_out):
+    with open(fname_out, 'w', newline='') as csvfile:
+        fieldnames = list_of_dicts[0].keys()
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writeheader()
+        for row in list_of_dicts:
+            writer.writerow(row)
 
 
 @pytest.fixture(autouse=True)
