@@ -584,10 +584,7 @@ class AnalyzeLesion:
                                         np.min(np.where(im_data[:, :, axial_slice])[1]) + 1) *  # np.min returns the most dorsal (posterior) element
                                        p_lst[1] * np.cos(self.angles_sagittal[axial_slice])  # p_lst[1] -> pixel size of AP axis
                           for axial_slice in np.unique(np.where(im_data)[2])}  # [2] -> SI
-        # Get the maximum width across all axial slices
         width_cur = max(width_cur_dict.values())
-
-        # Save the width of the lesion along the anterior-posterior axis in the midsagittal slice
         self.measure_pd.loc[idx, 'width [mm]'] = width_cur
         printv(f'  (A-P) width : {str(np.round(width_cur, 2))} mm',
                self.verbose, type='info')
