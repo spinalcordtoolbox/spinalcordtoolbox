@@ -579,13 +579,11 @@ class AnalyzeLesion:
         slices (i.e., midsagittal and parasagittal) meaning that the measurement is 3D.
         For lesion width for the midsagittal slice only, see _measure_width_midsagittal_slice().
         """
-        # Get a list of axial slice numbers that are nonzero across all sagittal slices (RPI)
-        lesion_width_dict = {}
-        for axial_slice in np.unique(np.where(im_data)[2]):  # [2] -> SI
-            slice_lesion_data = im_data[:, :, axial_slice]   # 3D -> 2D, dim=[RL, AP]
-            slice_min = np.min(np.where(slice_lesion_data)[1])      # np.min returns the most dorsal (posterior) element
-            slice_max = np.max(np.where(slice_lesion_data)[1])      # np.max returns the most ventral (anterior) element
-            lesion_width_dict[axial_slice] = slice_max - slice_min + 1
+        lesion_width_dict = {
+            axial_slice: np.max(np.where(im_data[:, :, axial_slice])[1]) -      # [1] --> AP; np.max returns the most ventral (anterior) element
+                         np.min(np.where(im_data[:, :, axial_slice])[1]) + 1    # # np.min returns the most dorsal (posterior) element
+            for axial_slice in np.unique(np.where(im_data)[2])      # [2] -> SI
+        }
 
         # Get the width in mm and apply the angle correction
         width_cur_dict = {axial_slice: p_lst[1] * np.cos(self.angles_sagittal[axial_slice]) * lesion_width  # p_lst[1] -> pixel size of AP axis
