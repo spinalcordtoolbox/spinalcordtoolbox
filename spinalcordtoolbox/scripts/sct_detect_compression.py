@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # Predict compression probability in a spinal cord MRI image using spinal cord shape metrics.
-# IMPORTANT NOTE: The script process *only* axial slices at the level of intervertebral discs C3/C4 (value: 4) to C6/7
+# IMPORTANT NOTE: The script process *only* axial slices at the level of intervertebral discs C3/C4 (value: 4) to C6/C7
 # (value: 7). In other words, the script does *not* process all axial slices of the spinal cord segmentation.
 #
 # The script requires spinal cord segmentation (used to compute the shape metrics) and disc labels.
@@ -28,7 +28,7 @@ from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar
 from spinalcordtoolbox.utils.sys import init_sct, set_loglevel, printv
 
 
-# Currently, the model works only for discs C3/C4 (4) to C6/7 (7)
+# Currently, the model works only for discs C3/C4 (4) to C6/C7 (7)
 SUPPORTED_DISCS = [4, 5, 6, 7]
 # Compression cut-offs
 #   >0.451 high probability of compression
@@ -42,7 +42,7 @@ def get_parser():
     parser = SCTArgumentParser(
         description=("""\
 Predict compression probability in a spinal cord MRI image using spinal cord shape metrics.
-IMPORTANT NOTE: The script process *only* axial slices at the level of intervertebral discs C3/C4 (value: 4) to C6/7 (value: 7).
+IMPORTANT NOTE: The script process *only* axial slices at the level of intervertebral discs C3/C4 (value: 4) to C6/C7 (value: 7).
 More details in: https://pubmed.ncbi.nlm.nih.gov/35371944/
         """)
     )
