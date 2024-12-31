@@ -30,8 +30,12 @@ from spinalcordtoolbox.utils.sys import init_sct, set_loglevel, printv
 
 # Currently, the model works only for discs C3/C4 (4) to C6/7 (7)
 SUPPORTED_DISCS = [4, 5, 6, 7]
-# Cut-off to determine the presence of the compression
-CUT_OFF = 0.451
+# Compression cut-offs
+#   >0.451 high probability of compression
+#   0.345-0.451 moderate probability of compression
+#   <0.345 low probability of compression
+CUT_OFF_HIGH = 0.451
+CUT_OFF_MILD = 0.345
 
 
 def get_parser():
@@ -240,9 +244,12 @@ def process_compression(metrics_agg_merged, disc_slices):
             torsion = metrics_agg_merged[slice,]['Torsion']
             # Compute compression probability
             probability = predict_compression_probability(cr, csa, solidity, torsion, disc)
+            compression_category = 'high' if probability > CUT_OFF_HIGH else \
+                'moderate' if probability > CUT_OFF_MILD else 'low'
             compression_df = pd.concat([compression_df,
                                         pd.DataFrame([{'Disc': disc, 'Axial slice #': slice,
                                                        'Compression probability': probability,
+                                                       'Compression probability category': compression_category,
                                                        'Compression ratio (%)': cr, 'CSA (mm2)': csa,
                                                        'Solidity (%)': solidity, 'Torsion (degrees)': torsion}])],
                                        ignore_index=True)
@@ -290,11 +297,11 @@ def main(argv: Sequence[str]):
     compression_df.to_csv(fname_out, index=False)
     printv(f"Results saved to: {fname_out}", verbose)
 
-    # Loop across compressions and print the results if the probability is above the cut-off
+    # Loop across discs and print results to terminal
     for index, row in compression_df.iterrows():
-        if row['Compression probability'] > CUT_OFF:
-            printv(f"Disc {int(row['Disc'])} at axial slice {int(row['Axial slice #'])} has a high probability "
-                   f"of compression: {row['Compression probability'] * 100:.2f}%. ", verbose)
+        printv(f"Disc {int(row['Disc'])} at axial slice {int(row['Axial slice #'])} has a "
+               f"{row['Compression probability category']} probability of compression: "
+               f"{row['Compression probability'] * 100:.2f}%. ", verbose)
 
 
 if __name__ == "__main__":
