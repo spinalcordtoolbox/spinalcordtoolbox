@@ -35,7 +35,7 @@ SUPPORTED_DISCS = [4, 5, 6, 7]
 #   0.345-0.451 moderate probability of compression
 #   <0.345 low probability of compression
 CUT_OFF_HIGH = 0.451
-CUT_OFF_MILD = 0.345
+CUT_OFF_MODERATE = 0.345
 
 
 def get_parser():
@@ -245,7 +245,7 @@ def process_compression(metrics_agg_merged, disc_slices):
             # Compute compression probability
             probability = predict_compression_probability(cr, csa, solidity, torsion, disc)
             compression_category = 'high' if probability > CUT_OFF_HIGH else \
-                'moderate' if probability > CUT_OFF_MILD else 'low'
+                'moderate' if probability > CUT_OFF_MODERATE else 'low'
             compression_df = pd.concat([compression_df,
                                         pd.DataFrame([{'Disc': disc, 'Axial slice #': slice,
                                                        'Compression probability': probability,
