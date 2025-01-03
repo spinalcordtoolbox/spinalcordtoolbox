@@ -46,69 +46,95 @@ def dummy_lesion(request, tmp_path):
     return path_out, lesion_params
 
 
-def compute_expected_measurements(dim, starting_coord=None, path_seg=None, mid_sagittal_slice=None):
+def compute_expected_measurements(lesion_params, path_seg=None):
+    """
+    Compute the expected measurements from the provided lesion dimensions.
+    :param lesion_params: list of tuples, each containing the starting coordinates (x, y, z) and dimensions (width,
+    height, depth) of a dummy lesion
+    :param path_seg: str, path to the spinal cord segmentation
+    :return: dict, expected measurements for each lesion
+    """
     if path_seg:
-        # Find the minimum SC area surrounding the lesion
-        data_seg = Image(path_seg).data
-        min_area = min(np.sum(data_seg[:, n_slice, :])
-                       for n_slice in range(starting_coord[1], starting_coord[1] + dim[1]))
+        # Get center of mass of the largest lesion in S-I axis; AIL --> [1]
+        # Note: as the spinal cord curvature is not too big, we can simply use the lesion coordinates; i.e., no need
+        # to use center-of-mass of the lesion
+        largest_lesion = lesion_params[0]  # largest lesion is always the first one in the list
+        z_center = int(round(np.mean(list(range(largest_lesion[0][1], largest_lesion[0][1] + largest_lesion[1][1])))))
+        z_range = np.arange(z_center - 2, z_center + 3)  # two slices above and below the lesion center of mass
+        # For each of these slices, compute the spinal cord center of mass in the R-L direction
+        # Note: as path_seg has the AIL orientation, we need to reverse the last axis from "L-R" to "R-L" using [::-1]
+        sc_com = [center_of_mass(Image(path_seg).data[:, z, ::-1])[1] for z in
+                  z_range]  # 2D slice from AIL: [1] --> L-R
+        mid_sagittal_slice = np.mean(sc_com)  # target slice in right-left axis (x direction) for the interpolation
 
-        # Find the minimum mid-sagittal tissue bridge width for each LR slice in the lesion
-        x = starting_coord[0] + (dim[0] // 2)  # Compute midpoint of lesion (to split into dorsal/ventral regions)
-        tissue_bridges = {}
-        for z in range(starting_coord[2], starting_coord[2] + dim[2]):
+    # Loop over lesions
+    expected_measurements_dict = dict()
+    for idx, (starting_coord, dim) in enumerate(lesion_params):
+        if path_seg:
+            # Find the minimum SC area surrounding the lesion
+            data_seg = Image(path_seg).data
+            min_area = min(np.sum(data_seg[:, n_slice, :])
+                           for n_slice in range(starting_coord[1], starting_coord[1] + dim[1]))
 
-            # for each SI slice in the lesion, compute the bridge widths
-            dorsal_bridge_widths, ventral_bridge_widths = [], []
-            for y in range(starting_coord[1], starting_coord[1] + dim[1]):
-                # compute ventral widths
-                ventral_sc_width = np.sum(data_seg[:x, y, z])
-                ventral_lesion_width = (x - starting_coord[0])
-                ventral_bridge_widths.append(max(0.0, ventral_sc_width - ventral_lesion_width))
-                # compute dorsal widths
-                dorsal_sc_width = np.sum(data_seg[x:, y, z])
-                dorsal_lesion_width = (starting_coord[0] + dim[0] - x)
-                dorsal_bridge_widths.append(max(0.0, dorsal_sc_width - dorsal_lesion_width))
+            # Find the minimum mid-sagittal tissue bridge width for each LR slice in the lesion
+            x = starting_coord[0] + (dim[0] // 2)  # Compute midpoint of lesion (to split into dorsal/ventral regions)
+            tissue_bridges = {}
+            for z in range(starting_coord[2], starting_coord[2] + dim[2]):
 
-            # find minimum widths
-            tissue_bridges[f"slice_{z}_dorsal_bridge_width [mm]"] = min(dorsal_bridge_widths)
-            tissue_bridges[f"slice_{z}_ventral_bridge_width [mm]"] = min(ventral_bridge_widths)
-            tissue_bridges[f"slice_{z}_total_bridge_width [mm]"] = (min(dorsal_bridge_widths) +
-                                                                    min(ventral_bridge_widths))
-    else:
-        min_area = 0
-        tissue_bridges = {}
+                # for each SI slice in the lesion, compute the bridge widths
+                dorsal_bridge_widths, ventral_bridge_widths = [], []
+                for y in range(starting_coord[1], starting_coord[1] + dim[1]):
+                    # compute ventral widths
+                    ventral_sc_width = np.sum(data_seg[:x, y, z])
+                    ventral_lesion_width = (x - starting_coord[0])
+                    ventral_bridge_widths.append(max(0.0, ventral_sc_width - ventral_lesion_width))
+                    # compute dorsal widths
+                    dorsal_sc_width = np.sum(data_seg[x:, y, z])
+                    dorsal_lesion_width = (starting_coord[0] + dim[0] - x)
+                    dorsal_bridge_widths.append(max(0.0, dorsal_sc_width - dorsal_lesion_width))
 
-    # Compute the expected (voxel) measurements from the provided dimensions
-    # NB: Actual measurements will differ slightly due to spine curvature
-    measurements = {
-        # NB: 'sct_analyze_lesion' treats lesions as cylinders. So:
-        #   - Vertical axis: Length of the cylinder
-        'length [mm]': dim[1],
-        'width [mm]': dim[0],
-        'interpolated_midsagittal_slice': mid_sagittal_slice,
-        # NB: we can compute length_midsagittal_slice and width_midsagittal_slice here from dim for the purposes of
-        #  testing, but in the actual script, we need the spinal cord segmentation to compute these values based on
-        #  the midsagittal slice
-        # 'length_midsagittal_slice [mm]': dim[1],
-        # 'width_midsagittal_slice [mm]': dim[0],
-        #   - Horizontal plane: Cross-sectional slices of the cylinder.
-        #        Specifically, 'max_equivalent_diameter' takes the
-        #        cross-sectional area of the lesion (which is computed
-        #        using square voxels), then finds the diameter of an
-        #        equivalent *circle* with that same area:
-        #           a = pi*r^2
-        #        -> a = pi*(d/2)^2
-        #        -> d = 2*sqrt(a/pi)
-        'max_equivalent_diameter [mm]': 2 * np.sqrt(dim[0] * dim[2] / np.pi),
-        'volume [mm3]': dim[0] * dim[1] * dim[2],
-        # Take the dummy lesion CSA and divide it by the minimum surrounding SC seg area
-        # NB: We should account for voxel resolution, but in this case it's just 1.0mm/voxel
-        'max_axial_damage_ratio []': dim[0] * dim[2] / min_area if min_area != 0 else None,
-        **tissue_bridges
-    }
+                # find minimum widths
+                tissue_bridges[f"slice_{z}_dorsal_bridge_width [mm]"] = min(dorsal_bridge_widths)
+                tissue_bridges[f"slice_{z}_ventral_bridge_width [mm]"] = min(ventral_bridge_widths)
+                tissue_bridges[f"slice_{z}_total_bridge_width [mm]"] = (min(dorsal_bridge_widths) +
+                                                                        min(ventral_bridge_widths))
+        else:
+            mid_sagittal_slice = None
+            min_area = 0
+            tissue_bridges = {}
 
-    return measurements
+        # Compute the expected (voxel) measurements from the provided dimensions
+        # NB: Actual measurements will differ slightly due to spine curvature
+        measurements = {
+            # NB: 'sct_analyze_lesion' treats lesions as cylinders. So:
+            #   - Vertical axis: Length of the cylinder
+            'length [mm]': dim[1],
+            'width [mm]': dim[0],
+            'interpolated_midsagittal_slice': mid_sagittal_slice,
+            # NB: we can compute length_midsagittal_slice and width_midsagittal_slice here from dim for the purposes of
+            #  testing, but in the actual script, we need the spinal cord segmentation to compute these values based on
+            #  the midsagittal slice
+            # 'length_midsagittal_slice [mm]': dim[1],
+            # 'width_midsagittal_slice [mm]': dim[0],
+            #   - Horizontal plane: Cross-sectional slices of the cylinder.
+            #        Specifically, 'max_equivalent_diameter' takes the
+            #        cross-sectional area of the lesion (which is computed
+            #        using square voxels), then finds the diameter of an
+            #        equivalent *circle* with that same area:
+            #           a = pi*r^2
+            #        -> a = pi*(d/2)^2
+            #        -> d = 2*sqrt(a/pi)
+            'max_equivalent_diameter [mm]': 2 * np.sqrt(dim[0] * dim[2] / np.pi),
+            'volume [mm3]': dim[0] * dim[1] * dim[2],
+            # Take the dummy lesion CSA and divide it by the minimum surrounding SC seg area
+            # NB: We should account for voxel resolution, but in this case it's just 1.0mm/voxel
+            'max_axial_damage_ratio []': dim[0] * dim[2] / min_area if min_area != 0 else None,
+            **tissue_bridges
+        }
+
+    expected_measurements_dict[idx] = measurements
+
+    return expected_measurements_dict
 
 
 @pytest.mark.sct_testing
@@ -143,21 +169,10 @@ def test_sct_analyze_lesion_matches_expected_dummy_lesion_measurements(dummy_les
     with open(tmp_path/f"{fname}_analysis.pkl", 'rb') as f:
         measurements = pickle.load(f)['measures']
 
-    # Get center of mass in S-I axis of the largest lesion
-    # (we can simply use the lesion coordinates as the SC curvature is not too big)
-    # AIL --> [1]
-    largest_lesion = lesion_params[0]   # largest lesion is always the first one in the list
-    z_center = int(round(np.mean(list(range(largest_lesion[0][1], largest_lesion[0][1] + largest_lesion[1][1])))))
-    z_range = np.arange(z_center - 2, z_center + 3)     # two slices above and below the lesion center of mass
-    # For each of these slices, compute the spinal cord center of mass in the R-L direction
-    # Note: as path_seg has the AIL orientation, we need to reverse the last axis from "L-R" to "R-L" using [::-1]
-    sc_com = [center_of_mass(Image(path_seg).data[:, z, ::-1])[1] for z in z_range]     # 2D slice from AIL: [1] --> L-R
-    mid_sagittal_slice = np.mean(sc_com)     # target slice in right-left axis (x direction) for the interpolation
+    # generate 1 measurement dict per lesion
+    expected_measurements_dict = compute_expected_measurements(lesion_params, path_seg)
 
-    # Compute expected measurements from the lesion dimensions
-    for idx, (starting_coord, dim) in enumerate(lesion_params):
-        expected_measurements = compute_expected_measurements(dim, starting_coord, path_seg, mid_sagittal_slice)
-
+    for idx, expected_measurements in expected_measurements_dict.items():
         # Validate analysis results
         for key, expected_value in expected_measurements.items():
             # These measures are the same regardless of angle adjustment/spine curvature
@@ -210,10 +225,11 @@ def test_sct_analyze_lesion_matches_expected_dummy_lesion_measurements_without_s
     with open(tmp_path/f"{fname}_analysis.pkl", 'rb') as f:
         measurements = pickle.load(f)['measures']
 
-    # Compute expected measurements from the lesion dimensions
-    for idx, (_, dim) in enumerate(lesion_params):
-        expected_measurements = compute_expected_measurements(dim)
+    # generate 1 measurement dict per lesion
+    expected_measurements_dict = compute_expected_measurements(lesion_params)
 
+    # Compute expected measurements from the lesion dimensions
+    for idx, expected_measurements in expected_measurements_dict.items():
         # Validate analysis results
         for key, expected_value in expected_measurements.items():
             if key == 'volume [mm3]':
