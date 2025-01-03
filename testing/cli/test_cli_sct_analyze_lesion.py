@@ -186,11 +186,9 @@ def test_sct_analyze_lesion_matches_expected_dummy_lesion_measurements(dummy_les
                 # The values will be adjusted according to the cos of the angle
                 # between the spinal cord centerline and the S-I axis, as per:
                 # https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3681#discussion_r804822552
-                # 'width' matches tissue bridge widths and 'width_midsagittal_slice [mm]'
-                if key == 'max_equivalent_diameter [mm]' or 'width' in key:
+                if key == 'max_equivalent_diameter [mm]' or 'bridge' in key:
                     assert measurements.at[idx, key] <= expected_value
-                # 'length' matches 'length [mm]' and 'length_midsagittal_slice [mm]'
-                elif 'length' in key:
+                elif key == 'length [mm]':
                     assert measurements.at[idx, key] >= expected_value
 
 
