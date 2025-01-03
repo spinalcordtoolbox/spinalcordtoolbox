@@ -114,8 +114,8 @@ def compute_expected_measurements(lesion_params, path_seg=None):
             # NB: we can compute length_midsagittal_slice and width_midsagittal_slice here from dim for the purposes of
             #  testing, but in the actual script, we need the spinal cord segmentation to compute these values based on
             #  the midsagittal slice
-            # 'length_midsagittal_slice [mm]': dim[1],
-            # 'width_midsagittal_slice [mm]': dim[0],
+            'length_interpolated_midsagittal_slice [mm]': dim[1],
+            'width_interpolated_midsagittal_slice [mm]': dim[0],
             #   - Horizontal plane: Cross-sectional slices of the cylinder.
             #        Specifically, 'max_equivalent_diameter' takes the
             #        cross-sectional area of the lesion (which is computed
