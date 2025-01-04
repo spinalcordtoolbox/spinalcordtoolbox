@@ -29,7 +29,7 @@ from spinalcordtoolbox.utils.sys import init_sct, set_loglevel, printv
 
 
 # Currently, the model works only for discs C3/C4 (4) to C6/C7 (7)
-SUPPORTED_DISCS = [4, 5, 6, 7]
+SUPPORTED_DISCS = {4: 'C3/C4', 5: 'C4/C5', 6: 'C5/C6', 7: 'C6/C7'}
 # Compression cut-offs --> compression probability
 #   >0.451 high probability of compression --> yes
 #   0.345-0.451 moderate probability of compression --> possible
@@ -235,7 +235,7 @@ def process_compression(metrics_agg_merged, disc_slices):
         # disc label shift in the superior-inferior (S-I) axis
         slices = [slices + 1, slices, slices - 1]
         for slice in slices:
-            if disc in SUPPORTED_DISCS:
+            if disc in SUPPORTED_DISCS.keys():
                 # Note: [slice,] is used to convert int to tuple
                 cr = metrics_agg_merged[slice,]['MEAN(compression_ratio)'] * 100    # to convert to %
                 csa = metrics_agg_merged[slice,]['MEAN(area)']
@@ -246,7 +246,7 @@ def process_compression(metrics_agg_merged, disc_slices):
                 compression_category = 'yes' if probability > CUT_OFF_HIGH else \
                     'possible' if probability > CUT_OFF_MODERATE else 'no'
                 compression_df = pd.concat([compression_df,
-                                            pd.DataFrame([{'Disc': disc, 'Axial slice #': slice,
+                                            pd.DataFrame([{'Disc': SUPPORTED_DISCS[disc], 'Axial slice #': slice,
                                                            'Compression probability': probability,
                                                            'Compression probability category': compression_category,
                                                            'Compression ratio (%)': cr, 'CSA (mm2)': csa,
@@ -300,13 +300,13 @@ def main(argv: Sequence[str]):
     for disc in compression_df['Disc'].unique():
         # If any axial slice around the disc is compressed, the disc is considered compressed
         if 'yes' in compression_df.loc[compression_df['Disc'] == disc, 'Compression probability category'].values:
-            printv(f"Disc {int(disc)} is compressed.", verbose)
+            printv(f"Disc {disc}: compressed", verbose)
         elif 'possible' in compression_df.loc[compression_df['Disc'] == disc, 'Compression probability category'].values:
-            printv(f"Disc {int(disc)} is possibly compressed.", verbose)
+            printv(f"Disc {disc}: possibly compressed", verbose)
 
     if verbose == 2:
         for index, row in compression_df.iterrows():
-            printv(f"Disc {int(row['Disc'])} at axial slice {int(row['Axial slice #'])}: "
+            printv(f"Disc {(row['Disc'])}, axial slice {int(row['Axial slice #'])}: "
                    f"probability of compression: {row['Compression probability'] * 100:.2f}% "
                    f"(compression probability category: {row['Compression probability category']})", verbose)
 
