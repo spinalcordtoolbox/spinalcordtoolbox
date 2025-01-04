@@ -30,10 +30,10 @@ from spinalcordtoolbox.utils.sys import init_sct, set_loglevel, printv
 
 # Currently, the model works only for discs C3/C4 (4) to C6/C7 (7)
 SUPPORTED_DISCS = [4, 5, 6, 7]
-# Compression cut-offs
-#   >0.451 high probability of compression
-#   0.345-0.451 moderate probability of compression
-#   <0.345 low probability of compression
+# Compression cut-offs --> compression probability
+#   >0.451 high probability of compression --> yes
+#   0.345-0.451 moderate probability of compression --> possible
+#   <0.345 low probability of compression --> no
 CUT_OFF_HIGH = 0.451
 CUT_OFF_MODERATE = 0.345
 
@@ -297,10 +297,12 @@ def main(argv: Sequence[str]):
     printv(f"Results saved to: {fname_out}", verbose)
 
     # Loop across discs and print results to terminal
-    for index, row in compression_df.iterrows():
-        printv(f"Disc {int(row['Disc'])} at axial slice {int(row['Axial slice #'])} has a "
-               f"{row['Compression probability category']} probability of compression: "
-               f"{row['Compression probability'] * 100:.2f}%. ", verbose)
+    for disc in compression_df['Disc'].unique():
+        # If any axial slice around the disc is compressed, the disc is considered compressed
+        if 'possible' in compression_df.loc[compression_df['Disc'] == disc, 'Compression probability category'].values:
+            printv(f"Disc {int(disc)} is possibly compressed.", verbose)
+        elif 'yes' in compression_df.loc[compression_df['Disc'] == disc, 'Compression probability category'].values:
+            printv(f"Disc {int(disc)} is compressed.", verbose)
 
 
 if __name__ == "__main__":
