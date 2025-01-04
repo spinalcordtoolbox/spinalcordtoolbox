@@ -304,6 +304,12 @@ def main(argv: Sequence[str]):
         elif 'yes' in compression_df.loc[compression_df['Disc'] == disc, 'Compression probability category'].values:
             printv(f"Disc {int(disc)} is compressed.", verbose)
 
+    if verbose == 2:
+        for index, row in compression_df.iterrows():
+            printv(f"Disc {int(row['Disc'])} at axial slice {int(row['Axial slice #'])}: "
+                   f"probability of compression: {row['Compression probability'] * 100:.2f}% "
+                   f"(compression probability category: {row['Compression probability category']})", verbose)
+
 
 if __name__ == "__main__":
     init_sct()
