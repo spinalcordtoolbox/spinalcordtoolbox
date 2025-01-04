@@ -299,10 +299,10 @@ def main(argv: Sequence[str]):
     # Loop across discs and print results to terminal
     for disc in compression_df['Disc'].unique():
         # If any axial slice around the disc is compressed, the disc is considered compressed
-        if 'possible' in compression_df.loc[compression_df['Disc'] == disc, 'Compression probability category'].values:
-            printv(f"Disc {int(disc)} is possibly compressed.", verbose)
-        elif 'yes' in compression_df.loc[compression_df['Disc'] == disc, 'Compression probability category'].values:
+        if 'yes' in compression_df.loc[compression_df['Disc'] == disc, 'Compression probability category'].values:
             printv(f"Disc {int(disc)} is compressed.", verbose)
+        elif 'possible' in compression_df.loc[compression_df['Disc'] == disc, 'Compression probability category'].values:
+            printv(f"Disc {int(disc)} is possibly compressed.", verbose)
 
     if verbose == 2:
         for index, row in compression_df.iterrows():
