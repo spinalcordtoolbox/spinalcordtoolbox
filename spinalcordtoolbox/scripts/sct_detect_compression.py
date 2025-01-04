@@ -230,29 +230,28 @@ def process_compression(metrics_agg_merged, disc_slices):
     """
     compression_df = pd.DataFrame()
     # Loop across discs
-    for disc, slice in disc_slices.items():
-    # for disc, slices in disc_slices.items():
-    #     # Add one slice above and below to process multiple slices around the disc to compensate for potential
-    #     # disc label shift in the superior-inferior direction
-    #     slices = [slices - 1, slices, slices + 1]
-    #     for slice in slices:
-        if disc in SUPPORTED_DISCS:
-            # Note: [slice,] is used to convert int to tuple
-            cr = metrics_agg_merged[slice,]['MEAN(compression_ratio)'] * 100    # to convert to %
-            csa = metrics_agg_merged[slice,]['MEAN(area)']
-            solidity = metrics_agg_merged[slice,]['MEAN(solidity)'] * 100     # to convert to %
-            torsion = metrics_agg_merged[slice,]['Torsion']
-            # Compute compression probability
-            probability = predict_compression_probability(cr, csa, solidity, torsion, disc)
-            compression_category = 'high' if probability > CUT_OFF_HIGH else \
-                'moderate' if probability > CUT_OFF_MODERATE else 'low'
-            compression_df = pd.concat([compression_df,
-                                        pd.DataFrame([{'Disc': disc, 'Axial slice #': slice,
-                                                       'Compression probability': probability,
-                                                       'Compression probability category': compression_category,
-                                                       'Compression ratio (%)': cr, 'CSA (mm2)': csa,
-                                                       'Solidity (%)': solidity, 'Torsion (degrees)': torsion}])],
-                                       ignore_index=True)
+    for disc, slices in disc_slices.items():
+        # Add one slice above and below to process multiple slices around the disc to compensate for potential
+        # disc label shift in the superior-inferior (S-I) axis
+        slices = [slices - 1, slices, slices + 1]
+        for slice in slices:
+            if disc in SUPPORTED_DISCS:
+                # Note: [slice,] is used to convert int to tuple
+                cr = metrics_agg_merged[slice,]['MEAN(compression_ratio)'] * 100    # to convert to %
+                csa = metrics_agg_merged[slice,]['MEAN(area)']
+                solidity = metrics_agg_merged[slice,]['MEAN(solidity)'] * 100     # to convert to %
+                torsion = metrics_agg_merged[slice,]['Torsion']
+                # Compute compression probability
+                probability = predict_compression_probability(cr, csa, solidity, torsion, disc)
+                compression_category = 'yes' if probability > CUT_OFF_HIGH else \
+                    'possible' if probability > CUT_OFF_MODERATE else 'no'
+                compression_df = pd.concat([compression_df,
+                                            pd.DataFrame([{'Disc': disc, 'Axial slice #': slice,
+                                                           'Compression probability': probability,
+                                                           'Compression probability category': compression_category,
+                                                           'Compression ratio (%)': cr, 'CSA (mm2)': csa,
+                                                           'Solidity (%)': solidity, 'Torsion (degrees)': torsion}])],
+                                           ignore_index=True)
 
     return compression_df
 
