@@ -233,7 +233,7 @@ def process_compression(metrics_agg_merged, disc_slices):
     for disc, slices in disc_slices.items():
         # Add one slice above and below to process multiple slices around the disc to compensate for potential
         # disc label shift in the superior-inferior (S-I) axis
-        slices = [slices - 1, slices, slices + 1]
+        slices = [slices + 1, slices, slices - 1]
         for slice in slices:
             if disc in SUPPORTED_DISCS:
                 # Note: [slice,] is used to convert int to tuple
