@@ -934,7 +934,7 @@ class AnalyzeLesion:
                 mass in superior-inferior axis (z direction). For example, 209, 210, 211, 212, 213.
             3. For each of these slices (i.e., 209, 210, 211, 212, 213):
                 a. Get axial slice of spinal cord at position z
-                b. Compute center of mass in right-left axis (x direction), for example:
+                b. Compute spinal cord center of mass in right-left axis (x direction), for example:
                         y_centermass(at z=209) = 8.6
                         y_centermass(at z=210) = 8.6
                         y_centermass(at z=211) = 8.9
