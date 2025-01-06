@@ -175,8 +175,18 @@ def test_sct_analyze_lesion_matches_expected_dummy_lesion_measurements(dummy_les
     for idx, expected_measurements in expected_measurements_dict.items():
         # Validate analysis results
         for key, expected_value in expected_measurements.items():
+            # For interpolated measures, because the midsagittal slice is computed using the **spinal cord** center of
+            # mass, there is no guarantee that this interpolated slice will fully contain the lesion. Meaning, the
+            # averaged value may be computed using empty slices, and thus it should be either close to or less than the
+            # expected value.
+            if key in ['length_interpolated_midsagittal_slice [mm]', 'width_interpolated_midsagittal_slice [mm]']:
+                try:
+                    np.testing.assert_allclose(measurements.at[idx, key], expected_value, rtol=rtol)
+                except AssertionError as e:
+                    if not (measurements.at[idx, key] <= expected_value):
+                        raise e  # Only raise exception if the value is greater than expected
             # These measures are the same regardless of angle adjustment/spine curvature
-            if key in ['volume [mm3]', 'max_axial_damage_ratio []', 'interpolated_midsagittal_slice']:
+            elif key in ['volume [mm3]', 'max_axial_damage_ratio []', 'interpolated_midsagittal_slice']:
                 np.testing.assert_equal(measurements.at[idx, key], expected_value)
             else:
                 # However, these measures won't match exactly due to angle adjustment
