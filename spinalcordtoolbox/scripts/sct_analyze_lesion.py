@@ -582,9 +582,9 @@ class AnalyzeLesion:
         # Get the width in mm and apply the angle correction
         # np.max returns the most ventral (anterior) element; np.min returns the most dorsal (posterior) element
         # [1] -> AP; [2] -> SI; p_lst[1] -> pixel size of AP axis
-        width_cur_dict = {axial_slice: (np.max(np.where(im_data[:, :, axial_slice])[1]) -
-                                        np.min(np.where(im_data[:, :, axial_slice])[1]) + 1) *
-                                       p_lst[1] * np.cos(self.angles_sagittal[axial_slice])
+        width_cur_dict = {axial_slice: ((np.max(np.where(im_data[:, :, axial_slice])[1]) -
+                                        np.min(np.where(im_data[:, :, axial_slice])[1]) + 1)
+                                        * p_lst[1] * np.cos(self.angles_sagittal[axial_slice]))
                           for axial_slice in np.unique(np.where(im_data)[2])}
         width_cur = max(width_cur_dict.values())
         self.measure_pd.loc[idx, 'width [mm]'] = width_cur
