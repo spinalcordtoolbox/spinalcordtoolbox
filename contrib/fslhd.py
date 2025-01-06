@@ -266,6 +266,7 @@ def generate_nifti_fields(header):
         'aux_file': nib_fields['aux_file'].decode("utf-8", errors="ignore")
     }
 
+
 def generate_numpy_fields(arr):
     """
     Generate useful summary statistics for any arbitrary numpy array.

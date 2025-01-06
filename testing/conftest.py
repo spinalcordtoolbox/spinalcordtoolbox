@@ -13,7 +13,6 @@ from hashlib import md5
 import tempfile
 from glob import glob
 import csv
-import time
 
 import pytest
 from nibabel import Nifti1Header
