@@ -92,7 +92,7 @@ DATASET_DICT = {
     },
     "binaries_linux": {
         "mirrors": [
-            "https://github.com/spinalcordtoolbox/spinalcordtoolbox-binaries/releases/download/r20221109/spinalcordtoolbox-binaries_linux.tar.gz",
+            "https://github.com/spinalcordtoolbox/spinalcordtoolbox-binaries/releases/download/r20250107/spinalcordtoolbox-binaries_linux.tar.gz",
         ],
         "default_location": __bin_dir__,
         "download_type": "Binaries",
@@ -100,7 +100,7 @@ DATASET_DICT = {
     },
     "binaries_osx": {
         "mirrors": [
-            "https://github.com/spinalcordtoolbox/spinalcordtoolbox-binaries/releases/download/r20221018/spinalcordtoolbox-binaries_osx.tar.gz",
+            "https://github.com/spinalcordtoolbox/spinalcordtoolbox-binaries/releases/download/r20250107/spinalcordtoolbox-binaries_osx.tar.gz",
         ],
         "default_location": __bin_dir__,
         "download_type": "Binaries",
@@ -108,7 +108,7 @@ DATASET_DICT = {
     },
     "binaries_win": {
         "mirrors": [
-            "https://github.com/spinalcordtoolbox/spinalcordtoolbox-binaries/releases/download/r20221018/spinalcordtoolbox-binaries_windows.tar.gz",
+            "https://github.com/spinalcordtoolbox/spinalcordtoolbox-binaries/releases/download/r20250107/spinalcordtoolbox-binaries_windows.tar.gz",
         ],
         "default_location": __bin_dir__,
         "download_type": "Binaries",
