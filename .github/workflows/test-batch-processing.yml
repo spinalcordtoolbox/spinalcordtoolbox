@@ -22,6 +22,7 @@ jobs:
   batch_processing:
     name: Test batch_processing.sh
     strategy:
+      fail-fast: false
       matrix:
         os: [ ubuntu-20.04, macos-13, windows-2022 ]
     runs-on: ${{ matrix.os }}
