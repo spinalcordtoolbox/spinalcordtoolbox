@@ -1035,6 +1035,7 @@ def get_max_radius(img, orientation='Axial'):
         heights = [h//2 + 0.1*h//1 for h in heights]
         return (max(default, max(widths)), max(default, max(heights)))
     else:
+        assert orientation == 'Sagittal', (f"`plane` must be either 'Axial' "f"or 'Sagittal', but got {orientation}") 
         # In Sagittal orientation, the radius is the maximum width of the spinal cord mask dilated by 20% or 1/2 of the image width, whichever is larger.
         # The height is always the entirety of the image height (for example, to view possible lesions in the brain stem)
         widths = [np.max(np.where(slice)[1]) - np.min(np.where(slice)[1]) if np.sum(slice) > 0 else 0 for slice in img.data]
