@@ -172,7 +172,14 @@ def get_parser():
     misc.add_argument(
         "-qc-seg",
         metavar=Metavar.file,
-        help="Segmentation file to use for cropping the QC. If not provided, the input image will not be cropped.")
+        help=textwrap.dedent("""
+            Segmentation file to use for cropping the QC. This option is useful when you want to QC a region that is different from the output segmentation. For example, for lesion segmentation, it might be useful to provide a cord segmentation to expand the QC field of view to include the full cord, while also still excluding irrelevant tissue.
+            
+            If not provided, the default behavior will depend on the `-qc-plane`:
+               - 'Axial': A sensibly chosen crop radius between 15-40 vox, depending on the resolution and segmentation type.
+               - 'Sagittal': The full image. (For very large images, this may cause a crash, so using `-qc-seg` is highly recommended.)
+        """)  # noqa: E501 (line too long)
+    )
 
     return parser
 
