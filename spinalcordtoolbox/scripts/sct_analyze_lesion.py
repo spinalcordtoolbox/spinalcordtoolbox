@@ -378,7 +378,7 @@ class AnalyzeLesion:
             return
 
         for axial_slice in axial_slices:
-            # Get bridges for the 3 sagittal slices used for the interpolation
+            # Get bridges for the 2 sagittal slices used for the interpolation
             # Filter for current axial slice once
             slice_data = tissue_bridges_df[tissue_bridges_df['axial_slice'] == axial_slice]
             # Create a lookup series for the current axial slice
