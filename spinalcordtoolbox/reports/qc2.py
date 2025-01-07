@@ -1028,11 +1028,12 @@ def get_max_radius(img, orientation='Axial'):
     """Determine the maximum slicewise width/height of the nonzero voxels in img."""
     if orientation == 'Axial':
         # In Axial orientation, the radius is the maximum width/height of the spinal cord mask dilated by 20% or 15, whichever is larger.
+        dilation = 1.2
         default = 15
         widths = [np.max(np.where(slice)[0]) - np.min(np.where(slice)[0]) if np.sum(slice) > 0 else 0 for slice in img.data]
         heights = [np.max(np.where(slice)[1]) - np.min(np.where(slice)[1]) if np.sum(slice) > 0 else 0 for slice in img.data]
-        widths = [w//2 + 0.1*w//1 for w in widths]
-        heights = [h//2 + 0.1*h//1 for h in heights]
+        widths = [(w * dilation)//2 for w in widths]
+        heights = [(h * dilation)//2 for h in heights]
         return (max(default, max(widths)), max(default, max(heights)))
     else:
         assert orientation == 'Sagittal', (f"`plane` must be either 'Axial' "f"or 'Sagittal', but got {orientation}")
