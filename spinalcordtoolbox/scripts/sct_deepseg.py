@@ -168,7 +168,9 @@ def get_parser():
         metavar=Metavar.str,
         choices=('Axial', 'Sagittal'),
         default='Axial',
-        help="Plane of the output QC. If Sagittal, you must also provide the -s option.")
+        help="Plane of the output QC. If Sagittal, it is highly recommended to provide the `-qc-seg` option, " 
+             "as it will ensure the output QC is cropped to a reasonable field of view. "
+             "(Note: Sagittal view is not currently supported for rootlets/totalspineseg QC.)")
     misc.add_argument(
         "-qc-seg",
         metavar=Metavar.file,
