@@ -172,7 +172,7 @@ def get_parser():
     misc.add_argument(
         "-qc-seg",
         metavar=Metavar.file,
-        help="Segmentation file to use for cropping the QC. If not provided, the input image will not ne cropped.")
+        help="Segmentation file to use for cropping the QC. If not provided, the input image will not be cropped.")
 
     return parser
 
