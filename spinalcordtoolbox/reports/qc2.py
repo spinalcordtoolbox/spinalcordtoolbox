@@ -1024,10 +1024,10 @@ def crop_with_mask(array, img_crop, pad=3):
     return array[first_slice:last_slice]
 
 
-def get_max_radius(img, orientation='Axial'):
+def get_max_radius(img, plane='Axial'):
     """Determine the maximum slicewise width/height of the nonzero voxels in img."""
-    if orientation == 'Axial':
-        # In Axial orientation, the radius is the maximum width/height of the spinal cord mask dilated by 20% or 15, whichever is larger.
+    if plane == 'Axial':
+        # In Axial plane, the radius is the maximum width/height of the spinal cord mask dilated by 20% or 15, whichever is larger.
         dilation = 1.2
         default = 15
         widths = [np.max(np.where(slice)[0]) - np.min(np.where(slice)[0]) if np.sum(slice) > 0 else 0 for slice in img.data]
@@ -1036,8 +1036,8 @@ def get_max_radius(img, orientation='Axial'):
         heights = [(h * dilation)//2 for h in heights]
         return (max(default, max(widths)), max(default, max(heights)))
     else:
-        assert orientation == 'Sagittal', (f"`plane` must be either 'Axial' "f"or 'Sagittal', but got {orientation}")
-        # In Sagittal orientation, the radius is the maximum width of the spinal cord mask dilated by 20% or 1/2 of the image width, whichever is larger.
+        assert plane == 'Sagittal', (f"`plane` must be either 'Axial' "f"or 'Sagittal', but got {plane}")
+        # In Sagittal plane, the radius is the maximum width of the spinal cord mask dilated by 20% or 1/2 of the image width, whichever is larger.
         # The height is always the entirety of the image height (for example, to view possible lesions in the brain stem)
         widths = [np.max(np.where(slice)[1]) - np.min(np.where(slice)[1]) if np.sum(slice) > 0 else 0 for slice in img.data]
         widths = [w//2 + 0.1*w//2 for w in widths]
