@@ -1021,9 +1021,8 @@ def assign_label_colors_by_groups(labels):
 def crop_with_mask(array, img_crop, pad=3, axis=0):
     """
     Crop array along a specific axis based on nonzero slices in the reference image.
-    
     Note: We use axis=0 by default because QC images are reoriented to SAL, therefore we
-          crop the SI axis by default.
+        crop the SI axis by default.
     """
     # get extents of segmentation used for cropping
     first_slice = min(np.where(img_crop.data)[axis])
