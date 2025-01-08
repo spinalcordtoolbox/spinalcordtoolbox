@@ -1018,10 +1018,23 @@ def assign_label_colors_by_groups(labels):
     return color_list
 
 
-def crop_with_mask(array, img_crop, pad=3):
-    first_slice = min(np.where(img_crop.data)[0]) - pad
-    last_slice = max(np.where(img_crop.data)[0]) + pad
-    return array[first_slice:last_slice]
+def crop_with_mask(array, img_crop, pad=3, axis=0):
+    """
+    Crop array along a specific axis based on nonzero slices in the reference image.
+    
+    Note: We use axis=0 by default because QC images are reoriented to SAL, therefore we
+          crop the SI axis by default.
+    """
+    # get extents of segmentation used for cropping
+    first_slice = min(np.where(img_crop.data)[axis])
+    last_slice = max(np.where(img_crop.data)[axis])
+    # pad (but make sure the indices are within the image bounds)
+    start = max(first_slice - pad, 0)
+    stop = min(last_slice + pad, img_crop.data.shape[axis])
+    # crop the image at the specified axis
+    idx = [slice(None)] * array.ndim   # Start with full image
+    idx[axis] = slice(start, stop + 1) # Limit axis to slice range
+    return array[idx]
 
 
 def get_max_radius(img, plane='Axial'):
