@@ -14,6 +14,7 @@
 import sys
 import math
 from typing import Sequence
+import textwrap
 
 import numpy as np
 import pandas as pd
@@ -40,11 +41,11 @@ CUT_OFF_MODERATE = 0.345
 
 def get_parser():
     parser = SCTArgumentParser(
-        description=("""\
-Predict compression probability in a spinal cord MRI image using spinal cord shape metrics.
-IMPORTANT NOTE: The script process *only* axial slices at the level of intervertebral discs C3/C4 (value: 4) to C6/C7 (value: 7).
-More details in: https://pubmed.ncbi.nlm.nih.gov/35371944/
-        """)
+        description=textwrap.dedent("""
+            Predict compression probability in a spinal cord MRI image using spinal cord shape metrics.
+            IMPORTANT NOTE: The script process *only* axial slices at the level of intervertebral discs C3/C4 (value: 4) to C6/C7 (value: 7).
+            More details in: https://pubmed.ncbi.nlm.nih.gov/35371944/
+        """),  # noqa: E501 (line too long)
     )
 
     mandatoryArguments = parser.add_argument_group("MANDATORY ARGUMENTS")
@@ -52,17 +53,18 @@ More details in: https://pubmed.ncbi.nlm.nih.gov/35371944/
         '-s',
         metavar=Metavar.file,
         required=True,
-        help="Segmentation of the spinal cord. Example: t2s_seg.nii.gz"
+        help="Segmentation of the spinal cord. Example: t2s_seg.nii.gz."
     )
     mandatoryArguments.add_argument(
         '-discfile',
         metavar=Metavar.file,
         required=True,
-        help="File with disc labels. Example: t2s_discs.nii.gz "
-             "The convention for disc labels is the following: value=3 -> disc C2/C3, value=4 -> disc C3/C4, etc."
-             "Such a label file can be manually created using: sct_label_utils -i IMAGE_REF -create-viewer 4:7 "
-             "or obtained automatically using the sct_label_vertebrae function "
-             "(the file with the \'labeled_discs.nii.gz\' suffix)."
+        help=textwrap.dedent("""
+            File with disc labels. Example: t2s_discs.nii.gz.
+            The convention for disc labels is the following: value=3 -> disc C2/C3, value=4 -> disc C3/C4, etc.
+            Such a label file can be manually created using: sct_label_utils -i IMAGE_REF -create-viewer 4:7 or 
+            obtained automatically using the sct_label_vertebrae function (the file with the \'labeled_discs.nii.gz\' suffix).
+        """),  # noqa: E501 (line too long)
     )
 
     optional = parser.add_argument_group('OPTIONAL ARGUMENTS')
@@ -72,11 +74,11 @@ More details in: https://pubmed.ncbi.nlm.nih.gov/35371944/
         type=int,
         choices=[0, 1],
         default=1,
-        help="Angle correction for computing morphometric measures used within "
-             "\'spinalcordtoolbox.process_seg.compute_shape\'. When angle correction is used, the cord within "
-             "the slice is stretched/expanded by a factor corresponding to the cosine of the angle between the "
-             "centerline and the axial plane. If the cord is already quasi-orthogonal to the slab, you can set "
-             "-angle-corr to 0."
+        help=textwrap.dedent("""
+            Angle correction for computing morphometric measures. When angle correction is used, the cord within the 
+            slice is stretched/expanded by a factor corresponding to the cosine of the angle between the centerline 
+            and the axial plane. If the cord is already quasi-orthogonal to the slab, you can set  -angle-corr to 0.
+        """)
     )
     optional.add_argument(
         "-h",
