@@ -62,7 +62,7 @@ def get_parser():
         help=textwrap.dedent("""
             File with disc labels. Example: t2s_discs.nii.gz.
             The convention for disc labels is the following: value=3 -> disc C2/C3, value=4 -> disc C3/C4, etc.
-            Such a label file can be manually created using: sct_label_utils -i IMAGE_REF -create-viewer 4:7 or 
+            Such a label file can be manually created using: sct_label_utils -i IMAGE_REF -create-viewer 4:7 or
             obtained automatically using the sct_label_vertebrae function (the file with the \'labeled_discs.nii.gz\' suffix).
         """),  # noqa: E501 (line too long)
     )
@@ -75,8 +75,8 @@ def get_parser():
         choices=[0, 1],
         default=1,
         help=textwrap.dedent("""
-            Angle correction for computing morphometric measures. When angle correction is used, the cord within the 
-            slice is stretched/expanded by a factor corresponding to the cosine of the angle between the centerline 
+            Angle correction for computing morphometric measures. When angle correction is used, the cord within the
+            slice is stretched/expanded by a factor corresponding to the cosine of the angle between the centerline
             and the axial plane. If the cord is already quasi-orthogonal to the slab, you can set  -angle-corr to 0.
         """)
     )
