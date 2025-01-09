@@ -69,6 +69,17 @@ def get_parser():
 
     optional = parser.add_argument_group('OPTIONAL ARGUMENTS')
     optional.add_argument(
+        '-num-of-slices',
+        metavar=Metavar.int,
+        type=int,
+        default=0,
+        help=textwrap.dedent("""
+            Number of slices above and below the intervertebral disc to process.
+            If 0 is provided, only the axial slice corresponding to the disc is processed.
+            If 1 is provided, the axial slice corresponding to the disc and one slice above and below are processed (i.e., 3 slices in total).
+        """),  # noqa: E501 (line too long)
+    )
+    optional.add_argument(
         '-angle-corr',
         metavar=Metavar.int,
         type=int,
@@ -223,11 +234,12 @@ def compute_torsion(metrics_agg_merged, verbose):
     return metrics_agg_merged
 
 
-def process_compression(metrics_agg_merged, disc_slices):
+def process_compression(metrics_agg_merged, disc_slices, num_of_slices):
     """
     Process shape metrics for axial slices at the level of each disc to predict the compression probability.
     :param metrics_agg_merged: dictionary with aggregated metrics
     :param disc_slices: dictionary with disc labels as keys and corresponding axial slice numbers as values
+    :param num_of_slices: number of slices around (above and below) the intervertebral disc to process
     :return: dataframe with compression probability
     """
     compression_df = pd.DataFrame()
@@ -235,7 +247,8 @@ def process_compression(metrics_agg_merged, disc_slices):
     for disc, disc_slice in disc_slices.items():
         # Add one slice above and below to process multiple slices around the disc to compensate for potential
         # disc label shift in the superior-inferior (S-I) axis
-        slices = [disc_slice + 1, disc_slice, disc_slice - 1]
+        slices = [disc_slice] if num_of_slices == 0 else \
+            [disc_slice + num_of_slices, disc_slice, disc_slice - num_of_slices]
         for slc in slices:
             if disc in SUPPORTED_DISCS.keys():
                 # Note: [slice,] is used to convert int to tuple
@@ -291,7 +304,7 @@ def main(argv: Sequence[str]):
     disc_slices = get_disc_slices(fname_disc)
 
     # Process axial slices for each disc to compute compression probability
-    compression_df = process_compression(metrics_agg_merged, disc_slices)
+    compression_df = process_compression(metrics_agg_merged, disc_slices, arguments.num_of_slices)
 
     # Save the results to a CSV file
     fname_out = splitext(add_suffix(fname_seg, '_compression_results'))[0] + '.csv'
