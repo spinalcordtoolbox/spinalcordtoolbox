@@ -91,4 +91,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Data Folder Summary (${{ matrix.os }})
-          path: "testing/sct_example_data.csv"
+          path: "testing/sct_example_data.json"

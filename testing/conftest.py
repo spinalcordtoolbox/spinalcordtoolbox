@@ -12,7 +12,7 @@ from typing import Mapping
 from hashlib import md5
 import tempfile
 from glob import glob
-import csv
+import json
 
 import pytest
 from nibabel import Nifti1Header
@@ -47,14 +47,17 @@ def pytest_sessionfinish():
     tmp_path = tmp_paths[ctimes.index(max(ctimes))]
 
     # generate directory summaries for both sct_testing_data and the temporary directory
-    for (folder, fname_out) in [(tmp_path, "pytest-tmp.csv"),
-                                (sct_test_path(), "sct_testing_data.csv"),
-                                (sct_test_path().replace("testing", "example"), "sct_example_data.csv")]:
+    for (folder, fname_out) in [(tmp_path, "pytest-tmp.json"),
+                                (sct_test_path(), "sct_testing_data.json"),
+                                (sct_test_path().replace("testing", "example"), "sct_example_data.json")]:
         fname_out = os.path.join(__sct_dir__, "testing", fname_out)
         if os.path.isdir(folder):
             summary = summarize_files_in_folder(folder)
-            summary = sorted(summary, key=lambda d: d['path'])
-            dicts_to_csv(summary, fname_out)
+            summary = sorted(summary, key=lambda d: d['path'])   # sort list-of-dicts by paths
+            keys = [d.pop('path') for d in summary]              # remove paths from dicts
+            summary = {key: d for key, d in zip(keys, summary)}  # convert to dict-of-dicts
+            with open(fname_out, 'w') as jsonfile:
+                json.dump(summary, jsonfile, indent=2)
 
 
 def summarize_files_in_folder(folder):
@@ -78,15 +81,6 @@ def summarize_files_in_folder(folder):
                 arr_fields = {k: '' for k in generate_numpy_fields(zeros([1, 1, 1])).keys()}
             summary.append(file_dict | img_fields | arr_fields)
     return summary
-
-
-def dicts_to_csv(list_of_dicts, fname_out):
-    with open(fname_out, 'w', newline='') as csvfile:
-        fieldnames = list_of_dicts[0].keys()
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        writer.writeheader()
-        for row in list_of_dicts:
-            writer.writerow(row)
 
 
 @pytest.fixture(autouse=True)
