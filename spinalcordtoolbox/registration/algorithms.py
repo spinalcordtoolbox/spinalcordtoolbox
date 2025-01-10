@@ -17,7 +17,7 @@ from scipy.ndimage import gaussian_filter, gaussian_filter1d, convolve
 from scipy.io import loadmat
 
 import spinalcordtoolbox.image as image
-from spinalcordtoolbox.math import laplacian, binarize
+from spinalcordtoolbox.math import laplacian, binarize, dilate, slicewise_mean
 from spinalcordtoolbox.registration.landmarks import register_landmarks
 from spinalcordtoolbox.registration import core
 from spinalcordtoolbox.scripts import sct_resample
@@ -346,10 +346,10 @@ def register_rootlet(src, dest, step, verbose=1):
     src_rootlet = src[1]
     dest_rootlet = dest[1]
     # Dilate rootlets masks:
-    src_mask = Image(dilate(Image(src_rootlet), size=3, shape='ball'), hdr=Image(ftmp_rootlet).hdr).save(add_suffix(ftmp_rootlet, '_dil'))
-    src_mask = add_suffix(src_rootlet, '_dil')
-    dest_mask = Image(dilate(Image(dest_rootlet), size=3, shape='ball'), hdr=Image(ftmp_template_rootlets).hdr).save(add_suffix(ftmp_template_rootlets, '_dil'))
-    dest_mask = add_suffix(dest_rootlet, '_dil')
+    src_mask = image.Image(dilate(image.Image(src_rootlet), size=3, shape='ball'), hdr=Image(ftmp_rootlet).hdr).save(add_suffix(ftmp_rootlet, '_dil'))
+    src_mask = image.add_suffix(src_rootlet, '_dil')
+    dest_mask = image.Image(dilate(image.Image(dest_rootlet), size=3, shape='ball'), hdr=Image(ftmp_template_rootlets).hdr).save(add_suffix(ftmp_template_rootlets, '_dil'))
+    dest_mask = image.add_suffix(dest_rootlet, '_dil')
     metricSize = '4'
 
     cmd_rootlet = ['isct_antsRegistration',
@@ -361,7 +361,7 @@ def register_rootlet(src, dest, step, verbose=1):
                    '--shrink-factors', step.shrink,
                    '--smoothing-sigmas', step.smooth + 'mm',
                    '--restrict-deformation', step.deformation,
-                   '--output', '[step' + str(step.step) + ',' + add_suffix(ftmp_data, '_Rootlets_alldir') + ']',
+                   '--output', '[step' + str(step.step) + ',' + image.add_suffix(src_im, '_Rootlets_alldir') + ']',
                    '--interpolation', 'linear',  # consider changing for spline
                    '--masks', '[' + dest_mask + ',' + src_mask + ']',
                    '--verbose', ('1' if verbose >= 1 else '0'),

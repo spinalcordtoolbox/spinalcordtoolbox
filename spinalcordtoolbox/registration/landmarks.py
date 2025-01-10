@@ -25,11 +25,6 @@ from nibabel import load
 import numpy as np
 from scipy.optimize import minimize
 
-from spinalcordtoolbox.image import Image, add_suffix
-from spinalcordtoolbox.math import dilate, slicewise_mean
-from spinalcordtoolbox.utils.sys import run_proc
-from spinalcordtoolbox.utils.shell import printv
-
 logger = logging.getLogger(__name__)
 
 sse_results = []
