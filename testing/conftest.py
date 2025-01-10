@@ -53,9 +53,7 @@ def pytest_sessionfinish():
         fname_out = os.path.join(__sct_dir__, "testing", fname_out)
         if os.path.isdir(folder):
             summary = summarize_files_in_folder(folder)
-            summary = sorted(summary, key=lambda d: (round(d['ctime'], 1), d['path']))
-            for file_dict in summary:
-                del file_dict['ctime']  # avoid erroneous diffs due to variable creation times
+            summary = sorted(summary, key=lambda d: d['path'])
             dicts_to_csv(summary, fname_out)
 
 
@@ -67,7 +65,6 @@ def summarize_files_in_folder(folder):
             fpath = os.path.join(root, fname)
             root_short = root.replace(folder, os.path.basename(folder))
             file_dict = {
-                "ctime": os.path.getctime(fpath),
                 "path": os.path.join(root_short, fname),
                 "size": os.path.getsize(fpath),
                 "md5": checksum(fpath),
