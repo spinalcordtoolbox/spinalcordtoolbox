@@ -86,9 +86,39 @@ jobs:
                sct_testing testing/batch_processing/test_batch_processing.py
           fi
 
-      - name: Upload folder summaries
+      - name: Rename and move folder summaries for easier download
+        # When uploading a single artifact, the only way to exclude the parent directory
+        # is to move the file to its own folder, then point `path` to that folder.
+        # See: # https://github.com/actions/upload-artifact/issues/30#issuecomment-582156316
+        if: always()
+        run: |
+          mkdir jsons
+          mv testing/sct_example_data.json jsons/sct_example_data_${{ matrix.os }}.json
+
+      - name: Upload folder summary
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: Data Folder Summary (${{ matrix.os }})
-          path: "testing/sct_example_data.json"
+          name: sct_example_data_${{ matrix.os }}.json
+          path: jsons
+
+  compare-results:
+    name: Compare cross-platform results
+    runs-on: macos-13  # brew is the easiest way to install `jd`
+    needs: batch_processing
+    steps:
+      - name: Install `jd`  # https://github.com/josephburnett/jd
+        run: brew install jd
+
+      - name: Download summaries
+        uses: actions/download-artifact@v4
+        # See: https://github.com/actions/download-artifact?tab=readme-ov-file#download-all-artifacts
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Diff summaries (Ubuntu vs macOS)
+        run: jd -color artifacts/sct_example_data_ubuntu-20.04.json artifacts/sct_example_data_macos-13.json
+
+      - name: Diff summaries (Ubuntu vs. Windows)
+        run: jd -color artifacts/sct_example_data_ubuntu-20.04.json artifacts/sct_example_data_windows-2022.json
