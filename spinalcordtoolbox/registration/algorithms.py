@@ -100,7 +100,7 @@ class Paramreg(object):
         self.rot_dest = None  # same as above for the destination image (e.g., if template, should be set to 0)
 
         # list of possible values for self.type
-        self.type_list = ['im', 'seg', 'imseg', 'label']
+        self.type_list = ['im', 'seg', 'imseg', 'label', 'rootlet']
 
     # update constructor with user's parameters
     def update(self, paramreg_user):
