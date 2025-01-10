@@ -189,7 +189,7 @@ def generate_nifti_fields(header):
     """
     Generate nifti header fields using methods found in fslhd.
     """
-    nib_fields = {k: v[()] for k, v in dict(header).items()}
+    nib_fields = {k: v.tolist() for k, v in dict(header).items()}
     qform = header.get_qform()
     sform = header.get_sform()
     slope, inter = header.get_slope_inter()
