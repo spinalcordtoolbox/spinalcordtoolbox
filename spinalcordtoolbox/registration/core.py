@@ -161,6 +161,10 @@ def register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg=
             src = ['src_label.nii']
             dest = ['dest_label_RPI.nii']
             interp_step = ['nn']
+        elif step.type == 'rootlet':
+            src = ['src.nii', 'src_label.nii']
+            dest = ['dest_RPI.nii', 'dest_label_RPI.nii']
+            interp_step = ['spline']
         else:
             printv('ERROR: Wrong image type: {}'.format(step.type), 1, 'error')
 
@@ -410,7 +414,15 @@ def register(src, dest, step, param):
             step=step,
             verbose=param.verbose,
         )
-
+    elif step.type in ['rootlet']:
+        if step.algo:
+            printv(f"Parameter 'algo={step.algo}' has no effect for 'type=label' registration.", type='warning')
+        warp_forward_out, warp_inverse_out = algorithms.register_rootlet(
+            src=src,
+            dest=dest,
+            step=step,
+            verbose=param.verbose,
+        )
     else:
         printv('\nERROR: algo ' + step.algo + ' does not exist. Exit program\n', 1, 'error')
 

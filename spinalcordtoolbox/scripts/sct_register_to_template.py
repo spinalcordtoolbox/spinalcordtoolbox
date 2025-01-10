@@ -59,8 +59,8 @@ class Param:
 step0 = Paramreg(step='0', type='label', dof='Tx_Ty_Tz_Rx_Ry_Rz_Sz')  # affine, requires 3 orthogonal labels
 step1 = Paramreg(step='1', type='imseg', algo='centermassrot', rot_method='pcahog')
 step2 = Paramreg(step='2', type='seg', algo='bsplinesyn', metric='MeanSquares', iter='3', smooth='1', slicewise='0')
+step_rootlet = Paramreg(step='1', type='rootlet', algo='bsplinesyn', metric='CC', iter='6x6x3', shrink='8x4x2', smooth='0x0x0', slicewise='0', deformation='0x0x1', gradStep='0.1')
 paramregmulti = ParamregMultiStep([step0, step1, step2])
-step_rootlet = Paramreg(step='1', metric='CC', iter='6x6x3', shrink='8x4x2', smooth='0x0x0', slicewise='0', deformation='0x0x1', gradStep='0.1')
 
 
 # PARSER
@@ -338,6 +338,10 @@ def main(argv: Sequence[str]):
         # add user parameters
         for paramStep in arguments.param:
             paramregmulti.addStep(paramStep)
+    elif label_type == 'rootlet':
+        # Add rootlet steps before step 1 and 2
+        paramregmulti = ParamregMultiStep([step0, step_rootlet, step1, step2])
+       # param.zsubsample = 1 # Remove subsample??
     else:
         paramregmulti = ParamregMultiStep([step0, step1, step2])
 
@@ -691,71 +695,67 @@ def main(argv: Sequence[str]):
                 '-v', '0',
             ])
             ftmp_rootlet = add_suffix(ftmp_rootlet, '_straightAffine')
-            warp_affine2rootlet, warp_rootlet2affine = register_rootlet(ftmp_data,
-                                                                        ftmp_template,
-                                                                        ftmp_seg,
-                                                                        ftmp_rootlet,
-                                                                        ftmp_template_rootlets,
-                                                                        step_rootlet,
-                                                                        verbose=verbose
-                                                                        )
-            printv('\nConcatenate transformations: curve --> straight --> affine --> rootlets', verbose)
-            dimensionality = len(Image("template.nii").hdr.get_data_shape())
-            cmd = [
-                'isct_ComposeMultiTransform',
-                str(dimensionality),
-                'warp_curve2straightAffine.nii.gz',
-                '-R', 'template.nii',
-                warp_affine2rootlet,
-                'warp_curve2straightAffine.nii.gz',
-            ]
-            status, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
-            if status != 0:
-                raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
+            # fname_src2dest, fname_dest2src, warp_affine2rootlet, warp_rootlet2affine = register_wrapper(
+            #     ftmp_data, ftmp_template, param, paramregmulti, fname_src_label=ftmp_rootlet, fname_dest_label=ftmp_template_rootlets,
+            #     same_space=True)
 
-            # Concatenate:
-            printv('\nConcatenate transformations: rootlets --> affine --> straight --> curve', verbose)
-            dimensionality = len(Image("data.nii").hdr.get_data_shape())
-            cmd = [
-                'isct_ComposeMultiTransform',
-                str(dimensionality),
-                'warp_straight2curve.nii.gz',
-                '-R', 'data.nii',
-                'warp_straight2curve.nii.gz',
-                warp_rootlet2affine  # 'step10Warp_zmean.nii.gz'TODO: check why I did not use the inverse warping field here
-            ]
-            status, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
-            if status != 0:
-                raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
-            # Apply transformation
-            sct_apply_transfo.main(argv=[
-                '-i', ftmp_data,
-                '-o', add_suffix(ftmp_data, '_Rootlets'),
-                '-d', ftmp_template,
-                '-w', warp_affine2rootlet,
-                '-x', 'spline',
-                '-v', '0',
-            ])
-            ftmp_data = add_suffix(ftmp_data, '_Rootlets')
-            sct_apply_transfo.main(argv=[
-                '-i', ftmp_seg,
-                '-o', add_suffix(ftmp_seg, '_Rootlets'),
-                '-d', ftmp_template,
-                '-w', warp_affine2rootlet,
-                '-x', 'linear',
-                '-v', '0',
-            ])
-            ftmp_seg = add_suffix(ftmp_seg, '_Rootlets')
+            # printv('\nConcatenate transformations: curve --> straight --> affine --> rootlets', verbose)
+            # dimensionality = len(Image("template.nii").hdr.get_data_shape())
+            # cmd = [
+            #     'isct_ComposeMultiTransform',
+            #     str(dimensionality),
+            #     'warp_curve2straightAffine.nii.gz',
+            #     '-R', 'template.nii',
+            #     warp_affine2rootlet,
+            #     'warp_curve2straightAffine.nii.gz',
+            # ]
+            # status, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
+            # if status != 0:
+            #     raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
 
-            sct_apply_transfo.main(argv=[
-                '-i', ftmp_rootlet,
-                '-o', add_suffix(ftmp_rootlet, '_Rootlets'),
-                '-d', ftmp_template,
-                '-w', warp_affine2rootlet,
-                '-x', 'nn',
-                '-v', '0',
-            ])
-            ftmp_rootlet = add_suffix(ftmp_rootlet, '_Rootlets')  # Consider removing
+            # # Concatenate:
+            # printv('\nConcatenate transformations: rootlets --> affine --> straight --> curve', verbose)
+            # dimensionality = len(Image("data.nii").hdr.get_data_shape())
+            # cmd = [
+            #     'isct_ComposeMultiTransform',
+            #     str(dimensionality),
+            #     'warp_straight2curve.nii.gz',
+            #     '-R', 'data.nii',
+            #     'warp_straight2curve.nii.gz',
+            #     warp_rootlet2affine  # 'step10Warp_zmean.nii.gz'TODO: check why I did not use the inverse warping field here
+            # ]
+            # status, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
+            # if status != 0:
+            #     raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
+            # # Apply transformation
+            # sct_apply_transfo.main(argv=[
+            #     '-i', ftmp_data,
+            #     '-o', add_suffix(ftmp_data, '_Rootlets'),
+            #     '-d', ftmp_template,
+            #     '-w', warp_affine2rootlet,
+            #     '-x', 'spline',
+            #     '-v', '0',
+            # ])
+            # ftmp_data = add_suffix(ftmp_data, '_Rootlets')
+            # sct_apply_transfo.main(argv=[
+            #     '-i', ftmp_seg,
+            #     '-o', add_suffix(ftmp_seg, '_Rootlets'),
+            #     '-d', ftmp_template,
+            #     '-w', warp_affine2rootlet,
+            #     '-x', 'linear',
+            #     '-v', '0',
+            # ])
+            # ftmp_seg = add_suffix(ftmp_seg, '_Rootlets')
+
+            # sct_apply_transfo.main(argv=[
+            #     '-i', ftmp_rootlet,
+            #     '-o', add_suffix(ftmp_rootlet, '_Rootlets'),
+            #     '-d', ftmp_template,
+            #     '-w', warp_affine2rootlet,
+            #     '-x', 'nn',
+            #     '-v', '0',
+            # ])
+            # ftmp_rootlet = add_suffix(ftmp_rootlet, '_Rootlets')  # Consider removing
 
         """
         # Benjamin: Issue from Allan Martin, about the z=0 slice that is screwed up, caused by the affine transform.
@@ -813,7 +813,7 @@ def main(argv: Sequence[str]):
             paramregmulti.steps[key].rot_dest = 0
         fname_src2dest, fname_dest2src, warp_forward, warp_inverse = register_wrapper(
             ftmp_data, ftmp_template, param, paramregmulti, fname_src_seg=ftmp_seg, fname_dest_seg=ftmp_template_seg,
-            same_space=True)
+            fname_src_label=ftmp_rootlet, fname_dest_label=ftmp_template_rootlets, same_space=True)
 
         # Concatenate transformations: anat --> template
         printv('\nConcatenate transformations: anat --> template...', verbose)
