@@ -340,6 +340,7 @@ def register_step_label(src, dest, step, verbose=1):
 
     return warp_forward_out, warp_inverse_out
 
+
 def register_rootlet(src, dest, step, verbose=1):
     src_im = src[0]
     dest_im = dest[0]
@@ -366,20 +367,20 @@ def register_rootlet(src, dest, step, verbose=1):
                    '--masks', '[' + dest_mask + ',' + src_mask + ']',
                    '--verbose', ('1' if verbose >= 1 else '0'),
                    ]
-    printv('\nRegistering with rootlets masks in z...', verbose)
-    printv(cmd_rootlet, verbose)
+    logger.info('\nRegistering with rootlets masks in z...')
+    logger.info(cmd_rootlet, verbose)
     status, output = run_proc(cmd_rootlet, verbose, is_sct_binary=True)
-    printv(output, verbose)
+    logger.info(output, verbose)
     if status != 0:
         raise RuntimeError(f"Subprocess call {cmd_rootlet} returned non-zero: {output}")
-    printv('\nApply transformation after rootlets adjustment...', verbose)
+    logger.info('\nApply transformation after rootlets adjustment...', verbose)
     # Average perslice warping field
     cmd_split = ['sct_image', '-i', 'step10Warp.nii.gz', '-mcs']
     status, output = run_proc(cmd_split, verbose, is_sct_binary=True)
-    printv(output, verbose)
+    logger.info(output, verbose)
     # Compute slicewise mean in Z to ensure symmetry
-    printv('\nComputing slicewise mean in Z to ensure symmetry....', verbose)
-    img = Image('step10Warp_Z.nii.gz')
+    logger.info('\nComputing slicewise mean in Z to ensure symmetry....', verbose)
+    img = image.Image('step10Warp_Z.nii.gz')
     out = img.copy()
     out.data = slicewise_mean(out.data, 2)
     out.save('step10Warp_Z_mean.nii.gz')
@@ -388,16 +389,16 @@ def register_rootlet(src, dest, step, verbose=1):
                  'step10Warp_X.nii.gz', 'step10Warp_Y.nii.gz', 'step10Warp_Z_mean.nii.gz',
                  '-omc', '-o', 'step10Warp_zmean.nii.gz']
     status, output = run_proc(cmd_split, verbose, is_sct_binary=True)
-    printv(output, verbose)
+    logger.info(output, verbose)
 
     # INVERSE WARPING FIELD
     # Average perslice warping field
     cmd_split = ['sct_image', '-i', 'step10InverseWarp.nii.gz', '-mcs']
     status, output = run_proc(cmd_split, verbose, is_sct_binary=True)
-    printv(output, verbose)
+    logger.info(output, verbose)
     # Compute slicewise mean in Z to ensure symmetry
-    printv('\nComputing slicewise mean in Z to ensure symmetry....', verbose)
-    img = Image('step10InverseWarp_Z.nii.gz')
+    logger.info('\nComputing slicewise mean in Z to ensure symmetry....', verbose)
+    img = image.Image('step10InverseWarp_Z.nii.gz')
     out = img.copy()
     out.data = slicewise_mean(out.data, 2)
     out.save('step10InverseWarp_Z_mean.nii.gz')
@@ -406,7 +407,7 @@ def register_rootlet(src, dest, step, verbose=1):
                  'step10InverseWarp_X.nii.gz', 'step10InverseWarp_Y.nii.gz', 'step10InverseWarp_Z_mean.nii.gz',
                  '-omc', '-o', 'step10InverseWarp_zmean.nii.gz']
     status, output = run_proc(cmd_split, verbose, is_sct_binary=True)
-    printv(output, verbose)
+    logger.info(output, verbose)
 
     warp_affine2rootlet = 'step10Warp_zmean.nii.gz'
     warp_rootelt2affine = 'step10InverseWarp_zmean.nii.gz'
