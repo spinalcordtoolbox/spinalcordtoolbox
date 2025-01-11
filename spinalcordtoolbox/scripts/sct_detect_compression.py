@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 #
 # Predict compression probability in a spinal cord MRI image using spinal cord shape metrics.
-# IMPORTANT NOTE: The script process *only* axial slices at the level of intervertebral discs C3/C4 (value: 4) to C6/C7
-# (value: 7). In other words, the script does *not* process all axial slices of the spinal cord segmentation.
+# The script process axial slices at the level of intervertebral discs C3/C4 (value: 4) to C6/C7 (value: 7).
+# In other words, the script does *not* process all axial slices of the spinal cord segmentation.
 #
 # The script requires spinal cord segmentation (used to compute the shape metrics) and disc labels.
 #
@@ -43,7 +43,7 @@ def get_parser():
     parser = SCTArgumentParser(
         description=textwrap.dedent("""
             Predict compression probability in a spinal cord MRI image using spinal cord shape metrics.
-            IMPORTANT NOTE: The script process *only* axial slices at the level of intervertebral discs C3/C4 (value: 4) to C6/C7 (value: 7).
+            The script process axial slices at the level of intervertebral discs C3/C4 (value: 4) to C6/C7 (value: 7).
             
             Reference:
                 - Horáková M, Horák T, Valošek J, Rohan T, Koriťáková E, Dostál M, Kočica J, Skutil T, Keřkovský M, Kadaňka Z Jr, Bednařík P, Svátková A, Hluštík P, Bednařík J. Semi-automated detection of cervical spinal cord compression with the Spinal Cord Toolbox. Quant Imaging Med Surg 2022; 12:2261–2279. 
@@ -56,17 +56,19 @@ def get_parser():
         '-s',
         metavar=Metavar.file,
         required=True,
-        help="Segmentation of the spinal cord. Example: t2s_seg.nii.gz."
+        help="Segmentation of the spinal cord, which will be used to compute the shape metrics. "
+             "Example: t2s_seg.nii.gz."
     )
     mandatoryArguments.add_argument(
         '-discfile',
         metavar=Metavar.file,
         required=True,
         help=textwrap.dedent("""
-            File with disc labels. Example: t2s_discs.nii.gz.
-            The convention for disc labels is the following: value=3 -> disc C2/C3, value=4 -> disc C3/C4, etc.
-            Such a label file can be manually created using: sct_label_utils -i IMAGE_REF -create-viewer 4:7 or
+            File with disc labels, which will be used to identify the axial slices for processing.
+            Labels can be located either at the posterior edge of the intervertebral discs, or at the orthogonal projection of each disc onto the spinal cord.
+            Such label file can be manually created using: sct_label_utils -i IMAGE_REF -create-viewer 4:7 or
             obtained automatically using the sct_label_vertebrae function (the file with the \'labeled_discs.nii.gz\' suffix).
+            Example: t2s_discs.nii.gz.
         """),  # noqa: E501 (line too long)
     )
 
