@@ -316,21 +316,10 @@ def main(argv: Sequence[str]):
     compression_df.to_csv(fname_out, index=False)
     printv(f"Results saved to: {fname_out}", verbose)
 
-    # Loop across discs and print results to terminal
-    for disc in compression_df['Disc'].unique():
-        # If any axial slice around the disc is compressed, the disc is considered compressed
-        if 'yes' in compression_df.loc[compression_df['Disc'] == disc, 'Compression probability category'].values:
-            printv(f"Disc {disc}, compression probability: yes", verbose)
-        elif 'possible' in compression_df.loc[compression_df['Disc'] == disc, 'Compression probability category'].values:
-            printv(f"Disc {disc}, compression probability: possible", verbose)
-        elif 'no' in compression_df.loc[compression_df['Disc'] == disc, 'Compression probability category'].values:
-            printv(f"Disc {disc}, compression probability: no", verbose)
-
-    if verbose == 2:
-        for index, row in compression_df.iterrows():
-            printv(f"Disc {(row['Disc'])}, axial slice {int(row['Axial slice #'])}: "
-                   f"probability of compression: {row['Compression probability'] * 100:.2f}% "
-                   f"(compression probability category: {row['Compression probability category']})", verbose)
+    for index, row in compression_df.iterrows():
+        printv(f"Disc {(row['Disc'])}, axial slice {int(row['Axial slice #'])} --> "
+               f"compression probability: {row['Compression probability category']} "
+               f"({row['Compression probability'] * 100:.2f}%)")
 
 
 if __name__ == "__main__":
