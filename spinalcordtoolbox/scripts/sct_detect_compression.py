@@ -44,7 +44,10 @@ def get_parser():
         description=textwrap.dedent("""
             Predict compression probability in a spinal cord MRI image using spinal cord shape metrics.
             IMPORTANT NOTE: The script process *only* axial slices at the level of intervertebral discs C3/C4 (value: 4) to C6/C7 (value: 7).
-            More details in: https://pubmed.ncbi.nlm.nih.gov/35371944/
+            
+            Reference:
+                - Horáková M, Horák T, Valošek J, Rohan T, Koriťáková E, Dostál M, Kočica J, Skutil T, Keřkovský M, Kadaňka Z Jr, Bednařík P, Svátková A, Hluštík P, Bednařík J. Semi-automated detection of cervical spinal cord compression with the Spinal Cord Toolbox. Quant Imaging Med Surg 2022; 12:2261–2279. 
+                  https://doi.org/10.21037/qims-21-782
         """),  # noqa: E501 (line too long)
     )
 
