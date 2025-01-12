@@ -319,11 +319,11 @@ def main(argv: Sequence[str]):
     fname_disc = get_absolute_path(arguments.discfile)
     angle_correction = bool(arguments.angle_corr)
 
-    # Compute shape metrics per slice
-    metrics_agg_merged = compute_shape_metrics(fname_seg, fname_disc, angle_correction, verbose)
-
     # Get discs corresponding to the compression
     disc_slices = get_disc_slices(fname_disc)
+
+    # Compute shape metrics per slice
+    metrics_agg_merged = compute_shape_metrics(fname_seg, fname_disc, angle_correction, verbose)
 
     # Process axial slices for each disc to compute compression probability
     compression_df = process_compression(metrics_agg_merged, disc_slices, arguments.num_of_slices)
