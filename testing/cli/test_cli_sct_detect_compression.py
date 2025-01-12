@@ -18,12 +18,14 @@ def test_sct_detect_compression_check_missing_input_segmentation(tmp_path):
         sct_detect_compression.main(argv=['-discfile', path_labels])
         assert e.value.code == 2
 
+
 def test_sct_detect_compression_check_missing_input_discfile(tmp_path):
     """ Run sct_detect_compression when missing -discfile"""
     path_seg = sct_test_path('t2', 't2_seg-manual.nii.gz')
     with pytest.raises(SystemExit) as e:
         sct_detect_compression.main(argv=['-s', path_seg])
         assert e.value.code == 2
+
 
 def test_sct_detect_compression_check_empty_input_segmentation(tmp_path):
     """ Run sct_detect_compression when -s is empty"""
@@ -37,6 +39,7 @@ def test_sct_detect_compression_check_empty_input_segmentation(tmp_path):
                                           '-discfile', path_labels])
         assert e.value == "Spinal cord segmentation file is empty."
 
+
 def test_sct_detect_compression_check_empty_input_discfile(tmp_path):
     """ Run sct_detect_compression when -discfile is empty"""
     nii = nibabel.nifti1.Nifti1Image(np.zeros((10, 10, 10)), np.eye(4))
@@ -48,6 +51,7 @@ def test_sct_detect_compression_check_empty_input_discfile(tmp_path):
         sct_detect_compression.main(argv=['-s', path_seg,
                                           '-discfile', path_labels])
         assert e.value == "Disc file is empty."
+
 
 def test_sct_detect_compression(tmp_path):
     """ Run sct_detect_compression and check output CSV file"""
