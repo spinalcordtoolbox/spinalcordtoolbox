@@ -160,6 +160,9 @@ def compute_shape_metrics(fname_seg, fname_disc, angle_correction, verbose):
     :param verbose: verbosity
     :return: dictionary with aggregated metrics
     """
+    if not np.any(Image(fname_seg).data):
+        raise ValueError("Spinal cord segmentation file is empty.")
+
     metrics, fit_results = compute_shape(fname_seg,
                                          angle_correction=angle_correction,
                                          param_centerline=ParamCenterline(),
