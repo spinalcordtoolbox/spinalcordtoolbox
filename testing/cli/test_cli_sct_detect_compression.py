@@ -76,3 +76,24 @@ def test_sct_detect_compression(tmp_path):
     assert float(row['CSA (mm2)']) == pytest.approx(78.5321685211387)
     assert float(row['Solidity (%)']) == pytest.approx(96.82139253279520)
     assert float(row['Torsion (degrees)']) == pytest.approx(1.1599432885836200)
+
+
+def test_sct_detect_compression_num_of_slices(tmp_path):
+    """ Run sct_detect_compression with -num-of-slices flag and check output CSV file"""
+    path_seg = sct_test_path('t2', 't2_seg-manual.nii.gz')
+    path_labels = sct_test_path('t2', 'labels.nii.gz')  # contains only labels 3 and 5 --> okay for testing
+
+    filename = str(tmp_path / 'compression_results.csv')
+    sct_detect_compression.main(argv=['-s', path_seg,
+                                      '-discfile', path_labels,
+                                      '-num-of-slices', '1',  # 1 slice above and below the disc --> 3 slices in total
+                                      '-o', filename])
+
+    # Test presence of output CSV file
+    assert os.path.isfile(filename)
+
+    df = pd.read_csv(filename)
+    assert len(df) == 3     # '-num-of-slices 1' --> 3 slices in total --> 3 rows in the CSV file
+    assert float(df[df['Slice (I->S)'] == 8]['Compression probability'].values) == pytest.approx(0.011063310989869700)
+    assert float(df[df['Slice (I->S)'] == 9]['Compression probability'].values) == pytest.approx(0.009026609893705780)
+    assert float(df[df['Slice (I->S)'] == 10]['Compression probability'].values) == pytest.approx(0.00944641208649796)
