@@ -294,6 +294,13 @@ def get_disc_slices(fname_disc):
     """
     im_disc = Image(fname_disc).change_orientation('RPI')
     discs = [int(disc) for disc in np.trim_zeros(np.unique(im_disc.data))]  # get unique disc labels (e.g., 3, 4, 5 etc)
+
+    if not discs:
+        raise ValueError("Disc file is empty.")
+    # Check if discs contains any supported discs, if not, raise an error
+    if not any(disc in SUPPORTED_DISCS.keys() for disc in discs):
+        raise ValueError(f"No supported disc labels found in the disc file. Supported discs: {SUPPORTED_DISCS.keys()}")
+
     # Find axial slices corresponding to the discs
     # Note: [0] is used because get_slices_from_vertebral_levels returns list
     disc_slices = {disc: get_slices_from_vertebral_levels(im_disc, disc)[0] for disc in discs}
