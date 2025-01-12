@@ -11,6 +11,7 @@
 # Copyright (c) 2024 Polytechnique Montreal <www.neuro.polymtl.ca>
 # License: see the file LICENSE
 
+import os
 import sys
 import math
 from typing import Sequence
@@ -23,8 +24,8 @@ from spinalcordtoolbox.process_seg import compute_shape
 from spinalcordtoolbox.aggregate_slicewise import aggregate_per_slice_or_level, func_wa, func_std, merge_dict
 from spinalcordtoolbox.centerline.core import ParamCenterline
 from spinalcordtoolbox.template import get_slices_from_vertebral_levels
-from spinalcordtoolbox.image import Image, add_suffix, splitext
-from spinalcordtoolbox.utils.fs import get_absolute_path
+from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.utils.fs import get_absolute_path, extract_fname
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar
 from spinalcordtoolbox.utils.sys import init_sct, set_loglevel, printv
 
@@ -95,6 +96,12 @@ def get_parser():
             slice is stretched/expanded by a factor corresponding to the cosine of the angle between the centerline
             and the axial plane. If the cord is already quasi-orthogonal to the slab, you can set  -angle-corr to 0.
         """)
+    )
+    optional.add_argument(
+        '-o',
+        metavar=Metavar.file,
+        help='Output CSV file name. If not provided, the suffix `compression_results` is added to the file name '
+             'provided by the flag `-s`.'
     )
     optional.add_argument(
         "-h",
@@ -312,7 +319,11 @@ def main(argv: Sequence[str]):
     compression_df = process_compression(metrics_agg_merged, disc_slices, arguments.num_of_slices)
 
     # Save the results to a CSV file
-    fname_out = splitext(add_suffix(fname_seg, '_compression_results'))[0] + '.csv'
+    if arguments.o is not None:
+        fname_out = arguments.o
+    else:
+        path, file_name, ext = extract_fname(get_absolute_path(fname_seg))
+        fname_out = os.path.join(path, file_name + '_compression_results' + '.csv')
     compression_df.to_csv(fname_out, index=False)
     printv(f"Results saved to: {fname_out}", verbose)
 
