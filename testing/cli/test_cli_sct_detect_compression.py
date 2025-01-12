@@ -1,11 +1,11 @@
 # pytest unit tests for sct_detect_compression
 
 import os
-import csv
 import pytest
 import tempfile
 import nibabel
 import numpy as np
+import pandas as pd
 
 from spinalcordtoolbox.utils.sys import sct_test_path
 from spinalcordtoolbox.scripts import sct_detect_compression
@@ -66,13 +66,13 @@ def test_sct_detect_compression(tmp_path):
     # Test presence of output CSV file
     assert os.path.isfile(filename)
 
-    with open(filename, "r") as csvfile:
-        reader = csv.DictReader(csvfile, delimiter=',')
-        row = next(reader)
-        assert float(row['Axial slice #']) == 9
-        assert float(row['Compression probability']) == pytest.approx(0.009026609893705780)
-        assert row['Compression probability category'] == 'no'
-        assert float(row['Compression ratio (%)']) == pytest.approx(63.00680776424760)
-        assert float(row['CSA (mm2)']) == pytest.approx(78.5321685211387)
-        assert float(row['Solidity (%)']) == pytest.approx(96.82139253279520)
-        assert float(row['Torsion (degrees)']) == pytest.approx(1.1599432885836200)
+    df = pd.read_csv(filename)
+    assert len(df) == 1  # '-num-of-slices 0' (default) --> 1 slice in total --> 1 row in the CSV file
+    row = df.iloc[0]
+    assert float(row['Slice (I->S)']) == 9
+    assert float(row['Compression probability']) == pytest.approx(0.009026609893705780)
+    assert row['Compression probability category'] == 'no'
+    assert float(row['Compression ratio (%)']) == pytest.approx(63.00680776424760)
+    assert float(row['CSA (mm2)']) == pytest.approx(78.5321685211387)
+    assert float(row['Solidity (%)']) == pytest.approx(96.82139253279520)
+    assert float(row['Torsion (degrees)']) == pytest.approx(1.1599432885836200)
