@@ -69,7 +69,7 @@ def test_sct_detect_compression(tmp_path):
     df = pd.read_csv(filename)
     assert len(df) == 1  # '-num-of-slices 0' (default) --> 1 slice in total --> 1 row in the CSV file
     row = df.iloc[0]
-    assert float(row['Slice (I->S)']) == 9
+    assert float(row['Axial slice #']) == 9
     assert float(row['Compression probability']) == pytest.approx(0.009026609893705780)
     assert row['Compression probability category'] == 'no'
     assert float(row['Compression ratio (%)']) == pytest.approx(63.00680776424760)
@@ -94,6 +94,6 @@ def test_sct_detect_compression_num_of_slices(tmp_path):
 
     df = pd.read_csv(filename)
     assert len(df) == 3     # '-num-of-slices 1' --> 3 slices in total --> 3 rows in the CSV file
-    assert float(df[df['Slice (I->S)'] == 8]['Compression probability'].values) == pytest.approx(0.011063310989869700)
-    assert float(df[df['Slice (I->S)'] == 9]['Compression probability'].values) == pytest.approx(0.009026609893705780)
-    assert float(df[df['Slice (I->S)'] == 10]['Compression probability'].values) == pytest.approx(0.00944641208649796)
+    assert float(df[df['Axial slice #'] == 8]['Compression probability'].values) == pytest.approx(0.011063310989869700)
+    assert float(df[df['Axial slice #'] == 9]['Compression probability'].values) == pytest.approx(0.009026609893705780)
+    assert float(df[df['Axial slice #'] == 10]['Compression probability'].values) == pytest.approx(0.00944641208649796)
