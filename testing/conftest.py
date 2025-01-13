@@ -68,7 +68,8 @@ def summarize_files_in_folder(folder):
             fpath = os.path.join(root, fname)
             root_short = root.replace(folder, os.path.basename(folder))
             file_dict = {
-                "path": os.path.join(root_short, fname),
+                # Use consistent characters to make cross-platform diffing work
+                "path": "/".join(os.path.split(os.path.join(root_short, fname))),
                 "size": os.path.getsize(fpath),
                 "md5": checksum(fpath),
             }
