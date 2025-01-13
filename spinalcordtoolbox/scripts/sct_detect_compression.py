@@ -6,7 +6,7 @@
 #
 # The script requires spinal cord segmentation (used to compute the shape metrics) and disc labels.
 #
-# More details in: https://pubmed.ncbi.nlm.nih.gov/35371944/
+# More details in: https://doi.org/10.21037/qims-21-782
 #
 # Copyright (c) 2024 Polytechnique Montreal <www.neuro.polymtl.ca>
 # License: see the file LICENSE
@@ -122,7 +122,7 @@ def get_parser():
 def predict_compression_probability(cr, csa, solidity, torsion, disc):
     """
     Predict compression probability using the spinal cord shape metrics for currently processed axial slice.
-    See Equation 4 and Table 3 for details: https://pubmed.ncbi.nlm.nih.gov/35371944/
+    See Equation 4 and Table 3 for details: https://doi.org/10.21037/qims-21-782
     :param cr: compression ratio (CR) in %
     :param csa: cross-sectional area (CSA) in mm2
     :param solidity: solidity in %
@@ -208,7 +208,7 @@ def compute_compression_ratio(metrics_agg_merged):
 def compute_torsion(metrics_agg_merged, verbose):
     """
     Compute torsion as the average of absolute differences in orientation between the given slice and 3 slices
-    above and below. For details see Equation 3 and Supplementary Material in https://pubmed.ncbi.nlm.nih.gov/35371944/.
+    above and below. For details see Equation 3 and Supplementary Material in https://doi.org/10.21037/qims-21-782.
     NOTE: As the torsion is computed from 3 slices above and below, it cannot be computed for the 3 first and last
     3 slices --> `torsion = None` is used for the 3 first and 3 last slices.
     :param metrics_agg_merged: dictionary with aggregated metrics
