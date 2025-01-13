@@ -21,7 +21,7 @@ from spinalcordtoolbox.registration.core import register_wrapper
 from spinalcordtoolbox.registration.algorithms import Paramreg, ParamregMultiStep
 from spinalcordtoolbox.registration.labeling import (add_dummy_orthogonal_labels, check_labels,
                                                      project_labels_on_spinalcord, resample_labels)
-from spinalcordtoolbox.registration.landmarks import register_landmarks, register_rootlet
+from spinalcordtoolbox.registration.landmarks import register_landmarks
 
 from spinalcordtoolbox.metadata import get_file_label
 from spinalcordtoolbox.image import Image, add_suffix, generate_output_file
@@ -340,8 +340,9 @@ def main(argv: Sequence[str]):
             paramregmulti.addStep(paramStep)
     elif label_type == 'rootlet':
         # Add rootlet steps before step 1 and 2
+        step1.step = '2'
+        step2.step = '3'
         paramregmulti = ParamregMultiStep([step0, step_rootlet, step1, step2])
-       # param.zsubsample = 1 # Remove subsample??
     else:
         paramregmulti = ParamregMultiStep([step0, step1, step2])
 
@@ -416,7 +417,9 @@ def main(argv: Sequence[str]):
     if label_type == 'rootlet':
         ftmp_rootlet = 'rootlets.nii.gz'
         ftmp_template_rootlets = 'template_rootlets.nii.gz'
-
+    else:
+        ftmp_rootlet = None
+        ftmp_template_rootlets = None
     # copy files to temporary folder
     printv('\nCopying input data to tmp folder and convert to nii...', verbose)
     try:
@@ -683,9 +686,9 @@ def main(argv: Sequence[str]):
         ])
         ftmp_seg = add_suffix(ftmp_seg, '_straightAffine')
 
-        # Register spinal rootlets to template:
+        # Apply straightening to rootlets
         if label_type == 'rootlet':
-            # Apply transformation to rootlets and image
+            # Apply transformation to rootlets
             sct_apply_transfo.main(argv=[
                 '-i', ftmp_rootlet,
                 '-o', add_suffix(ftmp_rootlet, '_straightAffine'),
@@ -695,67 +698,6 @@ def main(argv: Sequence[str]):
                 '-v', '0',
             ])
             ftmp_rootlet = add_suffix(ftmp_rootlet, '_straightAffine')
-            # fname_src2dest, fname_dest2src, warp_affine2rootlet, warp_rootlet2affine = register_wrapper(
-            #     ftmp_data, ftmp_template, param, paramregmulti, fname_src_label=ftmp_rootlet, fname_dest_label=ftmp_template_rootlets,
-            #     same_space=True)
-
-            # printv('\nConcatenate transformations: curve --> straight --> affine --> rootlets', verbose)
-            # dimensionality = len(Image("template.nii").hdr.get_data_shape())
-            # cmd = [
-            #     'isct_ComposeMultiTransform',
-            #     str(dimensionality),
-            #     'warp_curve2straightAffine.nii.gz',
-            #     '-R', 'template.nii',
-            #     warp_affine2rootlet,
-            #     'warp_curve2straightAffine.nii.gz',
-            # ]
-            # status, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
-            # if status != 0:
-            #     raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
-
-            # # Concatenate:
-            # printv('\nConcatenate transformations: rootlets --> affine --> straight --> curve', verbose)
-            # dimensionality = len(Image("data.nii").hdr.get_data_shape())
-            # cmd = [
-            #     'isct_ComposeMultiTransform',
-            #     str(dimensionality),
-            #     'warp_straight2curve.nii.gz',
-            #     '-R', 'data.nii',
-            #     'warp_straight2curve.nii.gz',
-            #     warp_rootlet2affine  # 'step10Warp_zmean.nii.gz'TODO: check why I did not use the inverse warping field here
-            # ]
-            # status, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
-            # if status != 0:
-            #     raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
-            # # Apply transformation
-            # sct_apply_transfo.main(argv=[
-            #     '-i', ftmp_data,
-            #     '-o', add_suffix(ftmp_data, '_Rootlets'),
-            #     '-d', ftmp_template,
-            #     '-w', warp_affine2rootlet,
-            #     '-x', 'spline',
-            #     '-v', '0',
-            # ])
-            # ftmp_data = add_suffix(ftmp_data, '_Rootlets')
-            # sct_apply_transfo.main(argv=[
-            #     '-i', ftmp_seg,
-            #     '-o', add_suffix(ftmp_seg, '_Rootlets'),
-            #     '-d', ftmp_template,
-            #     '-w', warp_affine2rootlet,
-            #     '-x', 'linear',
-            #     '-v', '0',
-            # ])
-            # ftmp_seg = add_suffix(ftmp_seg, '_Rootlets')
-
-            # sct_apply_transfo.main(argv=[
-            #     '-i', ftmp_rootlet,
-            #     '-o', add_suffix(ftmp_rootlet, '_Rootlets'),
-            #     '-d', ftmp_template,
-            #     '-w', warp_affine2rootlet,
-            #     '-x', 'nn',
-            #     '-v', '0',
-            # ])
-            # ftmp_rootlet = add_suffix(ftmp_rootlet, '_Rootlets')  # Consider removing
 
         """
         # Benjamin: Issue from Allan Martin, about the z=0 slice that is screwed up, caused by the affine transform.

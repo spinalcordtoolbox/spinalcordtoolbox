@@ -241,7 +241,6 @@ def register_step_ants_registration(src, dest, step, masking, ants_registration_
     # Estimate transformation
     logger.info("\nEstimate transformation")
     scr_regStep = image.add_suffix(src, '_regStep' + str(step.step))
-
     cmd = ['isct_antsRegistration',
            '--dimensionality', '3',
            '--transform', step.algo + '[' + step.gradStep
@@ -263,7 +262,6 @@ def register_step_ants_registration(src, dest, step, masking, ants_registration_
 
     # run command
     status, output = run_proc(cmd, verbose, is_sct_binary=True)
-
     # get appropriate file name for transformation
     if step.algo in ['rigid', 'affine', 'translation']:
         warp_forward_out = 'step' + str(step.step) + '0GenericAffine.mat'
@@ -341,77 +339,66 @@ def register_step_label(src, dest, step, verbose=1):
     return warp_forward_out, warp_inverse_out
 
 
-def register_rootlet(src, dest, step, verbose=1):
+def register_rootlet(src, dest, step, ants_registration_params, metricSize, padding, verbose=1):
+    """
+    """
     src_im = src[0]
     dest_im = dest[0]
     src_rootlet = src[1]
     dest_rootlet = dest[1]
     # Dilate rootlets masks:
-    src_mask = image.Image(dilate(image.Image(src_rootlet), size=3, shape='ball'), hdr=Image(ftmp_rootlet).hdr).save(add_suffix(ftmp_rootlet, '_dil'))
+    src_mask = image.Image(dilate(image.Image(src_rootlet), size=3, shape='ball'), hdr=image.Image(src_rootlet).hdr).save(image.add_suffix(src_rootlet, '_dil'))
     src_mask = image.add_suffix(src_rootlet, '_dil')
-    dest_mask = image.Image(dilate(image.Image(dest_rootlet), size=3, shape='ball'), hdr=Image(ftmp_template_rootlets).hdr).save(add_suffix(ftmp_template_rootlets, '_dil'))
+    dest_mask = image.Image(dilate(image.Image(dest_rootlet), size=3, shape='ball'), hdr=image.Image(dest_rootlet).hdr).save(image.add_suffix(dest_rootlet, '_dil'))
     dest_mask = image.add_suffix(dest_rootlet, '_dil')
-    metricSize = '4'
 
-    cmd_rootlet = ['isct_antsRegistration',
-                   '--dimensionality', '3',
-                   '--transform', 'step.algo' + '[' + step.gradStep
-                   + ',26,0,3' + ']',
-                   '--metric', step.metric + '[' + dest_im + ',' + src_im + ',1,' + metricSize + ']',
-                   '--convergence', step.iter,
-                   '--shrink-factors', step.shrink,
-                   '--smoothing-sigmas', step.smooth + 'mm',
-                   '--restrict-deformation', step.deformation,
-                   '--output', '[step' + str(step.step) + ',' + image.add_suffix(src_im, '_Rootlets_alldir') + ']',
-                   '--interpolation', 'linear',  # consider changing for spline
-                   '--masks', '[' + dest_mask + ',' + src_mask + ']',
-                   '--verbose', ('1' if verbose >= 1 else '0'),
-                   ]
-    logger.info('\nRegistering with rootlets masks in z...')
-    logger.info(cmd_rootlet, verbose)
-    status, output = run_proc(cmd_rootlet, verbose, is_sct_binary=True)
-    logger.info(output, verbose)
-    if status != 0:
-        raise RuntimeError(f"Subprocess call {cmd_rootlet} returned non-zero: {output}")
-    logger.info('\nApply transformation after rootlets adjustment...', verbose)
+    ants_registration_params[step.algo] = ',26,0,3'
+    warp_forward_out, warp_inverse_out = register_step_ants_registration(src=src_im,
+                                                                         dest=dest_im,
+                                                                         step=step,
+                                                                         masking=['-x', '[' + dest_mask + ',' + src_mask + ']'],
+                                                                         ants_registration_params=ants_registration_params,
+                                                                         padding=padding,
+                                                                         metricSize=metricSize,
+                                                                         verbose=1)
+    # FORWARD WARPING FIELD
+    logger.info('\nApply transformation after rootlets adjustment...')
     # Average perslice warping field
-    cmd_split = ['sct_image', '-i', 'step10Warp.nii.gz', '-mcs']
+    cmd_split = ['sct_image', '-i', warp_forward_out, '-mcs']  # Split warping field in x, y, z
     status, output = run_proc(cmd_split, verbose, is_sct_binary=True)
-    logger.info(output, verbose)
+
     # Compute slicewise mean in Z to ensure symmetry
-    logger.info('\nComputing slicewise mean in Z to ensure symmetry....', verbose)
-    img = image.Image('step10Warp_Z.nii.gz')
+    logger.info('\nComputing slicewise mean in Z to ensure symmetry....')
+    img = image.Image(image.add_suffix(warp_forward_out, '_Z'))
     out = img.copy()
     out.data = slicewise_mean(out.data, 2)
-    out.save('step10Warp_Z_mean.nii.gz')
+    out.save(image.add_suffix(warp_forward_out, '_Z_mean'))
     # Merge warp back together
     cmd_split = ['sct_image', '-i',
-                 'step10Warp_X.nii.gz', 'step10Warp_Y.nii.gz', 'step10Warp_Z_mean.nii.gz',
-                 '-omc', '-o', 'step10Warp_zmean.nii.gz']
+                 image.add_suffix(warp_forward_out, '_X'), image.add_suffix(warp_forward_out, '_Y'), image.add_suffix(warp_forward_out, '_Z_mean'),
+                 '-omc', '-o', image.add_suffix(warp_forward_out, '_zmean')]
     status, output = run_proc(cmd_split, verbose, is_sct_binary=True)
-    logger.info(output, verbose)
+    warp_forward_out = image.add_suffix(warp_forward_out, '_zmean')
 
     # INVERSE WARPING FIELD
     # Average perslice warping field
-    cmd_split = ['sct_image', '-i', 'step10InverseWarp.nii.gz', '-mcs']
+    cmd_split = ['sct_image', '-i', warp_inverse_out, '-mcs']  # Split warping field in x, y, z
     status, output = run_proc(cmd_split, verbose, is_sct_binary=True)
-    logger.info(output, verbose)
+
     # Compute slicewise mean in Z to ensure symmetry
-    logger.info('\nComputing slicewise mean in Z to ensure symmetry....', verbose)
-    img = image.Image('step10InverseWarp_Z.nii.gz')
+    logger.info('\nComputing slicewise mean in Z to ensure symmetry....')
+    img = image.Image(image.add_suffix(warp_inverse_out, '_Z'))
     out = img.copy()
     out.data = slicewise_mean(out.data, 2)
-    out.save('step10InverseWarp_Z_mean.nii.gz')
+    out.save(image.add_suffix(warp_inverse_out, '_Z_mean'))
     # Merge warp back together
     cmd_split = ['sct_image', '-i',
-                 'step10InverseWarp_X.nii.gz', 'step10InverseWarp_Y.nii.gz', 'step10InverseWarp_Z_mean.nii.gz',
-                 '-omc', '-o', 'step10InverseWarp_zmean.nii.gz']
+                 image.add_suffix(warp_inverse_out, '_X'), image.add_suffix(warp_inverse_out, '_Y'), image.add_suffix(warp_inverse_out, '_Z_mean'),
+                 '-omc', '-o', image.add_suffix(warp_inverse_out, '_zmean')]
     status, output = run_proc(cmd_split, verbose, is_sct_binary=True)
-    logger.info(output, verbose)
+    warp_inverse_out = image.add_suffix(warp_inverse_out, '_zmean')
 
-    warp_affine2rootlet = 'step10Warp_zmean.nii.gz'
-    warp_rootelt2affine = 'step10InverseWarp_zmean.nii.gz'
-    return warp_affine2rootlet, warp_rootelt2affine
+    return warp_forward_out, warp_inverse_out
 
 
 def register_step_dl_multimodal_cascaded_reg(src, dest, step, verbose=1):

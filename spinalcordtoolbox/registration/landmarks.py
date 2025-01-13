@@ -24,6 +24,7 @@ import logging
 from nibabel import load
 import numpy as np
 from scipy.optimize import minimize
+from spinalcordtoolbox.image import Image
 
 logger = logging.getLogger(__name__)
 

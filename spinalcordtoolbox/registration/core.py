@@ -164,10 +164,9 @@ def register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg=
         elif step.type == 'rootlet':
             src = ['src.nii', 'src_label.nii']
             dest = ['dest_RPI.nii', 'dest_label_RPI.nii']
-            interp_step = ['spline']
+            interp_step = ['spline']  # Maybe do or linear?
         else:
             printv('ERROR: Wrong image type: {}'.format(step.type), 1, 'error')
-
         # if step>0, apply warp_forward_concat to the src image to be used
         if (not same_space and i_step > 0) or (same_space and i_step > 1):
             printv('\nApply transformation from previous step', param.verbose)
@@ -302,10 +301,9 @@ def register(src, dest, step, param):
     output = ''  # default output if problem
 
     # If the input type is either im or seg, we can convert the input list into a string for improved code clarity
-    if not step.type == 'imseg':
+    if not step.type == 'imseg' and not step.type == 'rootlet':
         src = src[0]
         dest = dest[0]
-
     # display arguments
     printv('Registration parameters:', param.verbose)
     printv('  type ........... ' + step.type, param.verbose)
@@ -362,6 +360,19 @@ def register(src, dest, step, param):
             verbose=param.verbose,
         )
 
+    elif step.type in ['rootlet']:
+        if step.algo:
+            printv(f"Parameter 'algo={step.algo}' has no effect for 'type=label' registration.", type='warning')
+        warp_forward_out, warp_inverse_out = algorithms.register_rootlet(
+            src=src,
+            dest=dest,
+            step=step,
+            ants_registration_params=ants_registration_params,
+            metricSize=metricSize,
+            padding=param.padding,
+            verbose=param.verbose,
+        )
+
     # ANTS 3d
     elif step.algo.lower() in ants_registration_params and step.slicewise == '0':  # FIXME [AJ]
         warp_forward_out, warp_inverse_out = algorithms.register_step_ants_registration(
@@ -409,15 +420,6 @@ def register(src, dest, step, param):
             printv('\nWARNING: algo ' + step.algo + ' will ignore the provided mask.\n', 1, 'warning')
 
         warp_forward_out, warp_inverse_out = algorithms.register_step_dl_multimodal_cascaded_reg(
-            src=src,
-            dest=dest,
-            step=step,
-            verbose=param.verbose,
-        )
-    elif step.type in ['rootlet']:
-        if step.algo:
-            printv(f"Parameter 'algo={step.algo}' has no effect for 'type=label' registration.", type='warning')
-        warp_forward_out, warp_inverse_out = algorithms.register_rootlet(
             src=src,
             dest=dest,
             step=step,
