@@ -65,9 +65,9 @@ def get_parser():
         metavar=Metavar.file,
         required=True,
         help=textwrap.dedent("""
-            File with disc labels, which will be used to identify the axial slices for processing.
+            File with disc labels. Each label must be a single voxel. Only label values 4, 5, 6, and 7 (C3/C4 to C6/C7) are supported for now; all other labels will be ignored.
             Labels can be located either at the posterior edge of the intervertebral discs, or at the orthogonal projection of each disc onto the spinal cord.
-            Such label file can be manually created using: sct_label_utils -i IMAGE_REF -create-viewer 4:7 or
+            Such a label file can be manually created using: sct_label_utils -i IMAGE_REF -create-viewer 4:7 or
             obtained automatically using the sct_label_vertebrae function (the file with the \'labeled_discs.nii.gz\' suffix).
             Example: t2s_discs.nii.gz.
         """),  # noqa: E501 (line too long)
