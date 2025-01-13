@@ -404,7 +404,7 @@ def symmetrize(data, dim):
 
 def slicewise_mean(data, dim, exclude_zeros=False):
     """
-    Symmetrize data along specified dimension. Does not count zeros in the mean.
+    Compute slicewise mean the specified dimension. Zeros are not inlcuded in the mean.
     :param data: numpy.array 3D data.
     :param dim: dimension of array to symmetrize along.
 
