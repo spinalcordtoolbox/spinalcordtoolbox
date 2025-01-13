@@ -97,3 +97,20 @@ def test_sct_detect_compression_num_of_slices(tmp_path):
     assert float(df[df['Axial slice #'] == 8]['Compression probability'].values) == pytest.approx(0.011063310989869700)
     assert float(df[df['Axial slice #'] == 9]['Compression probability'].values) == pytest.approx(0.009026609893705780)
     assert float(df[df['Axial slice #'] == 10]['Compression probability'].values) == pytest.approx(0.00944641208649796)
+
+    sct_detect_compression.main(argv=['-s', path_seg,
+                                      '-discfile', path_labels,
+                                      '-num-of-slices', '2',  # 2 slices above and below the disc --> 5 slices in total
+                                      '-o', filename])
+
+    # Test presence of output CSV file
+    assert os.path.isfile(filename)
+
+    df = pd.read_csv(filename)
+    assert len(df) == 5     # '-num-of-slices 2' --> 5 slices in total --> 5 rows in the CSV file
+    assert float(df[df['Axial slice #'] == 7]['Compression probability'].values) == pytest.approx(0.04174064023173820)
+    assert float(df[df['Axial slice #'] == 8]['Compression probability'].values) == pytest.approx(0.011063310989869700)
+    assert float(df[df['Axial slice #'] == 9]['Compression probability'].values) == pytest.approx(0.009026609893705780)
+    assert float(df[df['Axial slice #'] == 10]['Compression probability'].values) == pytest.approx(0.00944641208649796)
+    assert float(df[df['Axial slice #'] == 11]['Compression probability'].values) == pytest.approx(0.03042584296488690)
+
