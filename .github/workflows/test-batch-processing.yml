@@ -106,9 +106,11 @@ jobs:
     name: Compare cross-platform results
     runs-on: macos-13  # brew is the easiest way to install `jd`
     needs: batch_processing
+    env:
+      YDIFF_OPTIONS: "--side-by-side --pager=cat --color=always --width=120 --nowrap"
     steps:
-      - name: Install `jd`  # https://github.com/josephburnett/jd
-        run: brew install jd
+      - name: Install `ydiff`  # https://github.com/ymattw/ydiff
+        run: brew install ydiff
 
       - name: Download summaries
         uses: actions/download-artifact@v4
@@ -119,8 +121,8 @@ jobs:
 
       - name: Diff summaries (Ubuntu vs macOS)
         continue-on-error: true
-        run: jd -color artifacts/sct_example_data_ubuntu-20.04.json artifacts/sct_example_data_macos-13.json
+        run: diff -u artifacts/sct_example_data_ubuntu-20.04.json artifacts/sct_example_data_macos-13.json | ydiff
 
       - name: Diff summaries (Ubuntu vs. Windows)
         continue-on-error: true
-        run: jd -color artifacts/sct_example_data_ubuntu-20.04.json artifacts/sct_example_data_windows-2022.json
+        run: diff -u artifacts/sct_example_data_ubuntu-20.04.json artifacts/sct_example_data_windows-2022.json | ydiff
