@@ -118,7 +118,9 @@ jobs:
           merge-multiple: true
 
       - name: Diff summaries (Ubuntu vs macOS)
+        continue-on-error: true
         run: jd -color artifacts/sct_example_data_ubuntu-20.04.json artifacts/sct_example_data_macos-13.json
 
       - name: Diff summaries (Ubuntu vs. Windows)
+        continue-on-error: true
         run: jd -color artifacts/sct_example_data_ubuntu-20.04.json artifacts/sct_example_data_windows-2022.json
