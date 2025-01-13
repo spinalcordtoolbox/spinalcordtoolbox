@@ -218,22 +218,15 @@ def compute_torsion(metrics_agg_merged, verbose):
     slices = list(metrics_agg_merged.keys())[3:-3]
 
     for key in metrics_agg_merged.keys():  # Loop across slices
+        metrics_agg_merged[key]['Torsion'] = None
         if key in slices:
             try:
-                # Note: the key is a tuple (e.g. `1,`), not an int (e.g., 1), thus key[0] is used to convert tuple to int
-                # and `,` is used to convert int back to tuple
-                metrics_agg_merged[key]['Torsion'] = 1/6 * (abs(metrics_agg_merged[key]['MEAN(orientation)'] -
-                                                                metrics_agg_merged[key[0] - 1,]['MEAN(orientation)']) +
-                                                            abs(metrics_agg_merged[key]['MEAN(orientation)'] -
-                                                                metrics_agg_merged[key[0] + 1,]['MEAN(orientation)']) +
-                                                            abs(metrics_agg_merged[key[0] - 1,]['MEAN(orientation)'] -
-                                                                metrics_agg_merged[key[0] - 2,]['MEAN(orientation)']) +
-                                                            abs(metrics_agg_merged[key[0] + 1,]['MEAN(orientation)'] -
-                                                                metrics_agg_merged[key[0] + 2,]['MEAN(orientation)']) +
-                                                            abs(metrics_agg_merged[key[0] - 2,]['MEAN(orientation)'] -
-                                                                metrics_agg_merged[key[0] - 3,]['MEAN(orientation)']) +
-                                                            abs(metrics_agg_merged[key[0] + 2,]['MEAN(orientation)'] -
-                                                                metrics_agg_merged[key[0] + 3,]['MEAN(orientation)']))
+                # Note: the key is a tuple (e.g. `(1,)`), thus key[0] converts to int, and `(s,)` converts back
+                # Here we use pairs of adjacent slices, with each slice pair offset from the initial slice
+                slice_pairs = [(key[0] + offset, key[0] + offset + 1) for offset in range(-3, 3)]
+                metrics_agg_merged[key]['Torsion'] = 1 / 6 * sum([abs(metrics_agg_merged[(s1,)]['MEAN(orientation)'] -
+                                                                      metrics_agg_merged[(s2,)]['MEAN(orientation)'])
+                                                                  for s1, s2 in slice_pairs])
             except Exception as e:
                 # TODO: the warning below is raise mainly in cases of no SC segmentation, for example above the C1 level
                 #  --> consider processing only slices with SC segmentation
@@ -241,9 +234,6 @@ def compute_torsion(metrics_agg_merged, verbose):
                        verbose, type='warning')
                 if verbose == 2:
                     printv(f"\t{e}", verbose)
-                metrics_agg_merged[key]['Torsion'] = None
-        else:
-            metrics_agg_merged[key]['Torsion'] = None
 
     return metrics_agg_merged
 
