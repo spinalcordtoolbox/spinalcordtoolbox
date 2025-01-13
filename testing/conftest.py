@@ -56,7 +56,7 @@ def pytest_sessionfinish():
             summary = sorted(summary, key=lambda d: d['path'])   # sort list-of-dicts by paths
             keys = [d.pop('path') for d in summary]              # remove paths from dicts
             summary = {key: d for key, d in zip(keys, summary)}  # convert to dict-of-dicts
-            with open(fname_out, 'w') as jsonfile:
+            with open(fname_out, 'w', newline='\n') as jsonfile:
                 json.dump(summary, jsonfile, indent=2)
 
 
