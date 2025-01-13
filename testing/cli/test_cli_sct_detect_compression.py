@@ -113,4 +113,3 @@ def test_sct_detect_compression_num_of_slices(tmp_path):
     assert float(df[df['Axial slice #'] == 9]['Compression probability'].values) == pytest.approx(0.009026609893705780)
     assert float(df[df['Axial slice #'] == 10]['Compression probability'].values) == pytest.approx(0.00944641208649796)
     assert float(df[df['Axial slice #'] == 11]['Compression probability'].values) == pytest.approx(0.03042584296488690)
-
