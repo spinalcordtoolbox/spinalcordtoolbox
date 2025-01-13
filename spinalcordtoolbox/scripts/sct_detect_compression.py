@@ -80,9 +80,8 @@ def get_parser():
         type=int,
         default=0,
         help=textwrap.dedent("""
-            Number of slices above and below the intervertebral disc to process.
-            If 0 is provided, only the axial slice corresponding to the disc is processed.
-            If 1 is provided, the axial slice corresponding to the disc and one slice above and below are processed (i.e., 3 slices in total).
+            Number of additional axial slices above and below the intervertebral disc to process.
+            Specifying `-num-of-slices 1` will process 3 slices total per disc (+/- 1), `2` will process 5 slices total (+/- 2), and so on.
         """),  # noqa: E501 (line too long)
     )
     optional.add_argument(
