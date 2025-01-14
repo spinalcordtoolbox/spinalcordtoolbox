@@ -42,9 +42,18 @@ CUT_OFF_MODERATE = 0.345
 
 def get_parser():
     parser = SCTArgumentParser(
-        description=textwrap.dedent("""
+        description=textwrap.dedent(f"""
             Predict compression probability in a spinal cord MRI image using spinal cord shape metrics.
             The script process axial slices at the level of intervertebral discs C3/C4 (value: 4) to C6/C7 (value: 7).
+
+            Compression categories are determined based on the following cut-offs:
+
+                - 'yes'     : p > {CUT_OFF_HIGH}
+                - 'possible': {CUT_OFF_MODERATE} <= p <= {CUT_OFF_HIGH}
+                - 'no'      : p < {CUT_OFF_MODERATE}
+
+            These cut-off values and compression categories were determined by ROC analysis and the Youden’s index
+            (the sum of sensitivity and specificity). More info in the reference below.
 
             Reference:
                 - Horáková M, Horák T, Valošek J, Rohan T, Koriťáková E, Dostál M, Kočica J, Skutil T, Keřkovský M, Kadaňka Z Jr, Bednařík P, Svátková A, Hluštík P, Bednařík J. Semi-automated detection of cervical spinal cord compression with the Spinal Cord Toolbox. Quant Imaging Med Surg 2022; 12:2261–2279.
@@ -263,7 +272,7 @@ def process_compression(metrics_agg_merged, disc_slices, num_of_slices):
                 # Compute compression probability
                 probability = predict_compression_probability(cr, csa, solidity, torsion, disc)
                 compression_category = 'yes' if probability > CUT_OFF_HIGH else \
-                    'possible' if probability > CUT_OFF_MODERATE else 'no'
+                    'possible' if probability >= CUT_OFF_MODERATE else 'no'
                 compression_df = pd.concat([compression_df,
                                             pd.DataFrame([{'Disc': SUPPORTED_DISCS[disc], 'Axial slice #': slc,
                                                            'Compression probability': probability,
