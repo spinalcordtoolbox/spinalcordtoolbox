@@ -57,7 +57,15 @@ jobs:
 
       - name: Install SCT (Unix)
         if: runner.os != 'Windows'
-        run: ./install_sct -y
+        run: |
+          # Add fix for clash between pip 24.1 and dipy 1.5.0
+          perl -i -pe 's/pip!=21.2.\*/pip!=21.2.\*,<24.1/g;' install_sct
+          ./install_sct -y
+
+      - name: Windows hotfix (separate bc bash)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: perl -i -pe 's/pip\^!=21.2.\*/pip^!=21.2.\*,<24.1/g;' install_sct.bat
 
       - name: Force Python 3.7 (Windows, SCT v5.7)
         if: runner.os == 'Windows' && matrix.sct_version == '5.7'
@@ -76,7 +84,9 @@ jobs:
       - name: Install SCT (Windows)
         if: runner.os == 'Windows'
         shell: cmd
-        run: install_sct.bat
+        run: | 
+          # Add fix for clash between pip 24.1 and dipy 1.5.0
+          install_sct.bat
 
       - name: Update environment variables
         run: |
