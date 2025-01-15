@@ -241,6 +241,7 @@ def register_step_ants_registration(src, dest, step, masking, ants_registration_
     # Estimate transformation
     logger.info("\nEstimate transformation")
     scr_regStep = image.add_suffix(src, '_regStep' + str(step.step))
+
     cmd = ['isct_antsRegistration',
            '--dimensionality', '3',
            '--transform', step.algo + '[' + step.gradStep
@@ -262,6 +263,7 @@ def register_step_ants_registration(src, dest, step, masking, ants_registration_
 
     # run command
     status, output = run_proc(cmd, verbose, is_sct_binary=True)
+
     # get appropriate file name for transformation
     if step.algo in ['rigid', 'affine', 'translation']:
         warp_forward_out = 'step' + str(step.step) + '0GenericAffine.mat'

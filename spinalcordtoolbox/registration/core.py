@@ -167,6 +167,7 @@ def register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg=
             interp_step = ['spline']  # Maybe do or linear?
         else:
             printv('ERROR: Wrong image type: {}'.format(step.type), 1, 'error')
+
         # if step>0, apply warp_forward_concat to the src image to be used
         if (not same_space and i_step > 0) or (same_space and i_step > 1):
             printv('\nApply transformation from previous step', param.verbose)
@@ -304,6 +305,7 @@ def register(src, dest, step, param):
     if not step.type == 'imseg' and not step.type == 'rootlet':
         src = src[0]
         dest = dest[0]
+
     # display arguments
     printv('Registration parameters:', param.verbose)
     printv('  type ........... ' + step.type, param.verbose)
@@ -425,6 +427,7 @@ def register(src, dest, step, param):
             step=step,
             verbose=param.verbose,
         )
+
     else:
         printv('\nERROR: algo ' + step.algo + ' does not exist. Exit program\n', 1, 'error')
 
