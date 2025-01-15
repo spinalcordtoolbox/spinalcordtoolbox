@@ -355,52 +355,37 @@ def register_rootlet(src, dest, step, ants_registration_params, metricSize, padd
     dest_mask = image.add_suffix(dest_rootlet, '_dil')
 
     ants_registration_params[step.algo] = ',26,0,3'
-    warp_forward_out, warp_inverse_out = register_step_ants_registration(src=src_im,
-                                                                         dest=dest_im,
-                                                                         step=step,
-                                                                         masking=['-x', '[' + dest_mask + ',' + src_mask + ']'],
-                                                                         ants_registration_params=ants_registration_params,
-                                                                         padding=padding,
-                                                                         metricSize=metricSize,
-                                                                         verbose=1)
-    # FORWARD WARPING FIELD
+    output_warping_fields = register_step_ants_registration(src=src_im,
+                                                            dest=dest_im,
+                                                            step=step,
+                                                            masking=['-x', '[' + dest_mask + ',' + src_mask + ']'],
+                                                            ants_registration_params=ants_registration_params,
+                                                            padding=padding,
+                                                            metricSize=metricSize,
+                                                            verbose=1)
+
+    # Symmetrize the warping fields post-registration
     logger.info('\nApply transformation after rootlets adjustment...')
-    # Average perslice warping field
-    cmd_split = ['sct_image', '-i', warp_forward_out, '-mcs']  # Split warping field in x, y, z
-    status, output = run_proc(cmd_split, verbose, is_sct_binary=True)
+    for i in range(len(output_warping_fields)):
+        fname_warp = output_warping_fields[i]
+        # Average perslice warping field
+        cmd_split = ['sct_image', '-i', fname_warp, '-mcs']  # Split warping field in x, y, z
+        status, output = run_proc(cmd_split, verbose, is_sct_binary=True)
+    
+        # Compute slicewise mean in Z to ensure symmetry
+        logger.info('\nComputing slicewise mean in Z to ensure symmetry....')
+        img = image.Image(image.add_suffix(fname_warp, '_Z'))
+        out = img.copy()
+        out.data = slicewise_mean(out.data, 2)
+        out.save(image.add_suffix(fname_warp, '_Z_mean'))
+        # Merge warp back together
+        cmd_split = ['sct_image', '-i',
+                     image.add_suffix(fname_warp, '_X'), image.add_suffix(fname_warp, '_Y'), image.add_suffix(fname_warp, '_Z_mean'),
+                     '-omc', '-o', image.add_suffix(warp_forward_out, '_zmean')]
+        status, output = run_proc(cmd_split, verbose, is_sct_binary=True)
+        output_warping_fields[i] = image.add_suffix(fname_warp, '_zmean')
 
-    # Compute slicewise mean in Z to ensure symmetry
-    logger.info('\nComputing slicewise mean in Z to ensure symmetry....')
-    img = image.Image(image.add_suffix(warp_forward_out, '_Z'))
-    out = img.copy()
-    out.data = slicewise_mean(out.data, 2)
-    out.save(image.add_suffix(warp_forward_out, '_Z_mean'))
-    # Merge warp back together
-    cmd_split = ['sct_image', '-i',
-                 image.add_suffix(warp_forward_out, '_X'), image.add_suffix(warp_forward_out, '_Y'), image.add_suffix(warp_forward_out, '_Z_mean'),
-                 '-omc', '-o', image.add_suffix(warp_forward_out, '_zmean')]
-    status, output = run_proc(cmd_split, verbose, is_sct_binary=True)
-    warp_forward_out = image.add_suffix(warp_forward_out, '_zmean')
-
-    # INVERSE WARPING FIELD
-    # Average perslice warping field
-    cmd_split = ['sct_image', '-i', warp_inverse_out, '-mcs']  # Split warping field in x, y, z
-    status, output = run_proc(cmd_split, verbose, is_sct_binary=True)
-
-    # Compute slicewise mean in Z to ensure symmetry
-    logger.info('\nComputing slicewise mean in Z to ensure symmetry....')
-    img = image.Image(image.add_suffix(warp_inverse_out, '_Z'))
-    out = img.copy()
-    out.data = slicewise_mean(out.data, 2)
-    out.save(image.add_suffix(warp_inverse_out, '_Z_mean'))
-    # Merge warp back together
-    cmd_split = ['sct_image', '-i',
-                 image.add_suffix(warp_inverse_out, '_X'), image.add_suffix(warp_inverse_out, '_Y'), image.add_suffix(warp_inverse_out, '_Z_mean'),
-                 '-omc', '-o', image.add_suffix(warp_inverse_out, '_zmean')]
-    status, output = run_proc(cmd_split, verbose, is_sct_binary=True)
-    warp_inverse_out = image.add_suffix(warp_inverse_out, '_zmean')
-
-    return warp_forward_out, warp_inverse_out
+    return output_warping_fields
 
 
 def register_step_dl_multimodal_cascaded_reg(src, dest, step, verbose=1):
