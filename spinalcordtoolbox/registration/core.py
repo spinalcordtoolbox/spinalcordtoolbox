@@ -363,8 +363,6 @@ def register(src, dest, step, param):
         )
 
     elif step.type in ['rootlet']:
-        if step.algo:
-            printv(f"Parameter 'algo={step.algo}' has no effect for 'type=label' registration.", type='warning')
         warp_forward_out, warp_inverse_out = algorithms.register_rootlet(
             src=src,
             dest=dest,
