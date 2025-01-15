@@ -378,7 +378,6 @@ def main(argv: Sequence[str]):
     fname_template_seg = os.path.join(path_template, 'template', file_template_seg)
 
     # check file existence
-    # TODO: no need to do that!
     printv('\nCheck template files...')
     check_file_exist(fname_template, verbose)
     check_file_exist(fname_template_labeling, verbose)
@@ -403,11 +402,9 @@ def main(argv: Sequence[str]):
 
     # check input labels
     labels = check_labels(fname_landmarks, label_type=label_type)
-
     level_alignment = False
     if len(labels) > 2 and label_type in ['disc', 'spinal', 'rootlet']:
         level_alignment = True
-
     path_tmp = tmp_create(basename="register-to-template")
 
     # set temporary file names
@@ -423,7 +420,6 @@ def main(argv: Sequence[str]):
     else:
         ftmp_rootlet = None
         ftmp_template_rootlets = None
-
     # copy files to temporary folder
     printv('\nCopying input data to tmp folder and convert to nii...', verbose)
     try:
@@ -595,7 +591,6 @@ def main(argv: Sequence[str]):
                 sc_straight.use_straight_reference = True
                 sc_straight.discs_input_filename = ftmp_label
                 sc_straight.discs_ref_filename = ftmp_template_label
-
             sc_straight.straighten()
             cache_save("straightening.cache", cache_sig)
 
