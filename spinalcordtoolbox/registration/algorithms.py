@@ -371,7 +371,7 @@ def register_rootlet(src, dest, step, ants_registration_params, metricSize, padd
         # Average perslice warping field
         cmd_split = ['sct_image', '-i', fname_warp, '-mcs']  # Split warping field in x, y, z
         status, output = run_proc(cmd_split, verbose, is_sct_binary=True)
-    
+
         # Compute slicewise mean in Z to ensure symmetry
         logger.info('\nComputing slicewise mean in Z to ensure symmetry....')
         img = image.Image(image.add_suffix(fname_warp, '_Z'))
@@ -381,7 +381,7 @@ def register_rootlet(src, dest, step, ants_registration_params, metricSize, padd
         # Merge warp back together
         cmd_split = ['sct_image', '-i',
                      image.add_suffix(fname_warp, '_X'), image.add_suffix(fname_warp, '_Y'), image.add_suffix(fname_warp, '_Z_mean'),
-                     '-omc', '-o', image.add_suffix(warp_forward_out, '_zmean')]
+                     '-omc', '-o', image.add_suffix(fname_warp, '_zmean')]
         status, output = run_proc(cmd_split, verbose, is_sct_binary=True)
         output_warping_fields[i] = image.add_suffix(fname_warp, '_zmean')
 
