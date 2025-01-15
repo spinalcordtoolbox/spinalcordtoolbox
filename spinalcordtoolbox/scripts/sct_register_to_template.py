@@ -755,8 +755,8 @@ def main(argv: Sequence[str]):
             paramregmulti.steps[key].rot_dest = 0
         fname_src2dest, fname_dest2src, warp_forward, warp_inverse = register_wrapper(
             ftmp_data, ftmp_template, param, paramregmulti, fname_src_seg=ftmp_seg, fname_dest_seg=ftmp_template_seg,
-            fname_src_label=(ftmp_rootlet if label_type == 'rootlet' else None), 
-            fname_dest_label=(ftmp_template_rootlets if label_type == 'rootlet' else None), 
+            fname_src_label=(ftmp_rootlet if label_type == 'rootlet' else None),
+            fname_dest_label=(ftmp_template_rootlets if label_type == 'rootlet' else None),
             same_space=True)
 
         # Concatenate transformations: anat --> template
