@@ -177,7 +177,15 @@ def get_parser():
         help=textwrap.dedent("""
             Dorsal nerve rootlets segmentation. Example: `anat_rootlets.nii.gz`
             Only labels within the range C2-C8 are supported. If labels outside this range are provided, they will be ignored.
-            Each value corresponds to the spinal level (e.g.: 2 for spinal level 2). If you are using more than 2 labels, all spinal levels covering the region of interest should be provided (e.g., if you are interested in levels C2 to C7, then you should provide spinal level labels 2,3,4,5,6,7)."
+            Each value corresponds to the spinal level (e.g.: 2 for spinal level 2). If you are using more than 2 labels, all spinal levels covering the region of interest should be provided (e.g., if you are interested in levels C2 to C7, then you should provide spinal level labels 2,3,4,5,6,7).
+            By default, the rootlets labels will be used in 2 places:
+            
+              - step=0: The center of mass of each label will be used as landmarks for SI-axis slice alignment with the rootlets of the template. 
+              - step=1: ANTs BSplineSyn adjustment using the axial shape of the rootlets combined with the SC segmentation.
+            
+            If you are customizing the `-param` argument, you can choose to omit `step=1`, or choose to manually specify `step=1` yourself. We recommend starting with the following `step=1` parameters and adjusting as needed:
+            
+                step=1,type=rootlet,algo=bsplinesyn,metric=CC,iter=6x6x3,shrink=8x4x2,smooth=0x0x0,slicewise=0,deformation=0x0x1,gradStep=0.1
         """)  # noqa: E501 (line too long)
     )
     optional.add_argument(
