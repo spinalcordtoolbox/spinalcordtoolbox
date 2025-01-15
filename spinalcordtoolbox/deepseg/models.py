@@ -365,7 +365,7 @@ TASKS = {
                              'resolution, for images with another resolution divide 30/your_axial_resolution.',
          'url': 'https://github.com/ivadomed/model_seg_ms_mp2rage',
          'models': ['model_seg_ms_lesion_mp2rage']},
-    'seg_sc_ms_lesion_t2w':
+    'seg_sc_ms_lesion_axial_t2w':
         {'description': 'Intramedullary MS lesion and spinal cord segmentation in Axial T2w MRI',
          'long_description': 'This MS lesion segmentation uses a 2D U-Net '
                              'architecture, and was trained with the nnUNetV2 framework. The model outputs '
