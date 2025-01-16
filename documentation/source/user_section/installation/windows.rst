@@ -143,7 +143,7 @@ Basic installation (No GUI)
 
 #. Choose the WSL version (1/2).
 
-   By default, Microsoft's instructions will create an Ubuntu environment using Version 2 of WSL. While version 2 has been tested to work with SCT, our development team tests more thoroughly using Version 1 of WSL (due to `better support from GitHub Actions <https://github.com/actions/virtual-environments/issues/50>`_).
+   By default, Microsoft's instructions will create an Ubuntu environment using Version 2 of WSL. While version 2 has been tested to work with SCT, our development team tests more thoroughly using Version 1 of WSL (due to `better support from GitHub Actions <https://github.com/actions/runner-images/issues/50>`_).
 
    Because of this, we recommend that you convert the WSL2 Ubuntu environment to use WSL1 before continuing. To do this, first close Ubuntu, then re-open Powershell and run the following command:
 
