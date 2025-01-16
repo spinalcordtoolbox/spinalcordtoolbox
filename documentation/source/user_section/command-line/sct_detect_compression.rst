@@ -1,6 +1,6 @@
 .. _sct_detect_compression:
 
-_sct_detect_compression
+sct_detect_compression
 =======================
 
 .. argparse::
