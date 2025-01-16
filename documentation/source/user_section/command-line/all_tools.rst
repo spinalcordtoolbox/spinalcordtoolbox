@@ -108,7 +108,7 @@ sct_denoising_onlm
 
 
 sct_detect_compression
-==================
+======================
 
 .. program-output:: sct_detect_compression -h
 
