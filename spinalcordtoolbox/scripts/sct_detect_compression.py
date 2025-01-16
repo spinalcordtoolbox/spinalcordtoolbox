@@ -215,8 +215,9 @@ def compute_compression_ratio(metrics_agg_merged):
 
 def compute_torsion(metrics_agg_merged, verbose):
     """
-    Compute torsion as the average of absolute differences in orientation between the given slice and 3 slices
-    above and below. For details see Equation 3 and Supplementary Material in https://doi.org/10.21037/qims-21-782.
+    Compute torsion as the average of absolute differences in orientation taking into account 3 slices above and
+    3 slices below. For details, see Equation 3 in https://doi.org/10.21037/qims-21-782.
+    For a comparison between torsion computed using 1, 2, and 3 slices, see https://cdn.amegroups.cn/static/public/QIMS-21-782-supplementary.pdf
     NOTE: As the torsion is computed from 3 slices above and below, it cannot be computed for the 3 first and last
     3 slices --> `torsion = None` is used for the 3 first and 3 last slices.
     :param metrics_agg_merged: dictionary with aggregated metrics
