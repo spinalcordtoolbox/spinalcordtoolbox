@@ -100,10 +100,8 @@ def get_parser():
         choices=[0, 1],
         default=1,
         help=textwrap.dedent("""
-            Angle correction for computing morphometric measures. When angle correction is used, the cord within the
-            slice is stretched/expanded by a factor corresponding to the cosine of the angle between the centerline
-            and the axial plane. If the cord is already quasi-orthogonal to the slab, you can set  -angle-corr to 0.
-        """)
+            Angle correction for computing morphometric measures. When angle correction is used, the cord within the slice is stretched/expanded by a factor corresponding to the cosine of the angle between the centerline and the axial plane. If the cord is already quasi-orthogonal to the slab, you can set  -angle-corr to 0.
+        """)  # noqa: E501 (line too long)
     )
     optional.add_argument(
         '-o',
