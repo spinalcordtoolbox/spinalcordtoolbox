@@ -258,9 +258,7 @@ def process_compression(metrics_agg_merged, disc_slices, num_of_slices):
     for disc, disc_slice in disc_slices.items():
         # Add one slice above and below to process multiple slices around the disc to compensate for potential
         # disc label shift in the superior-inferior (S-I) axis
-        slices = [disc_slice] if num_of_slices == 0 \
-            else range(disc_slice - num_of_slices, disc_slice + num_of_slices + 1)
-        for slc in slices:
+        for slc in range(disc_slice - num_of_slices, disc_slice + num_of_slices + 1):
             if disc in SUPPORTED_DISCS.keys():
                 # Note: [slice,] is used to convert int to tuple
                 cr = metrics_agg_merged[slc,]['MEAN(compression_ratio)'] * 100    # to convert to %
