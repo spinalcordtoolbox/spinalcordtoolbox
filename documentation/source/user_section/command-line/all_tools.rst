@@ -107,6 +107,12 @@ sct_denoising_onlm
 .. program-output:: sct_denoising_onlm -h
 
 
+sct_detect_compression
+==================
+
+.. program-output:: sct_detect_compression -h
+
+
 sct_detect_pmj
 ==============
 

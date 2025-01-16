@@ -26,6 +26,7 @@ Segmentation Analysis
 - :ref:`sct_analyze_lesion` - Compute statistics on segmented lesions.
 - :ref:`sct_compute_hausdorff_distance` - Compute the Hausdorff's distance between two binary images.
 - :ref:`sct_compute_compression` - Compute spinal cord compression morphometrics.
+- :ref:`sct_detect_compression` - Predict compression probability using spinal cord morphometrics.
 - :ref:`sct_dice_coefficient` - Compute the Dice Coefficient to estimate overlap between two binary images.
 - :ref:`sct_process_segmentation` - Perform various types of processing from the spinal cord segmentation.
 
