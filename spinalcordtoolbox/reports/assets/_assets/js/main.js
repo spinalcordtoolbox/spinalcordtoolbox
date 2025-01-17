@@ -147,35 +147,51 @@ $(document).ready(function(){
       evt.preventDefault(); 
       newScroll(obj)
     }
-    // f key (mark "failing" subjects using check, X, !)
-    if (evt.which == 70 && obj.length > 0) {
-      var cols = getActiveColumns();
-      var vals = obj[0].innerText.split("\t");
-      let rel_index = obj[obj.length - 1].getAttribute("data-index");
-      let index = sct_data.findIndex(y => check_element(y,cols,vals))
-      sct_data[index].qc = (
-          sct_data[index].qc === heavy_check_mark
-          ? heavy_ballot_x
-          : sct_data[index].qc === heavy_ballot_x
-          ? heavy_excl_mark
-          : sct_data[index].qc === heavy_excl_mark
-          ? empty_state
-          : heavy_check_mark
-      );
-      // Save QC state to local storage
-      var uniqueId = sct_data[index].moddate + '_' + sct_data[index].fname_in + '_' + sct_data[index].command;
-      localStorage.setItem(uniqueId, sct_data[index].qc);
-      // Update table display with updated sct_data
-      set_download_yml_btn_state(heavy_excl_mark);
-      set_download_yml_btn_state(heavy_ballot_x);
-      $("#table").bootstrapTable({data: sct_data});
-      $("#table").bootstrapTable("load", sct_data);
-      hideColumns();
-      // Set focus on the row that was just updated
-      document.getElementById("table").rows[0].classList.remove("active");
-      document.getElementById("table").rows[parseInt(rel_index)+1].className="active";
-      selected_row = document.getElementById("table").rows[parseInt(rel_index)+1].innerText;
-      document.getElementById("table").rows[parseInt(rel_index)+1].scrollIntoViewIfNeeded(false);
+    // Keys that update table state (f key, number keys)
+    if ((evt.which == 70) || (evt.which >= 48 && evt.which <= 57) || (evt.which >= 96 && evt.which <= 105)) {
+      // Only attempt to update the cell value if the object is a row (i.e. if it has length)
+      if (obj.length > 0) {
+        // Fetch the index into `sct_data` corresponding to the selected row
+        var cols = getActiveColumns();
+        var vals = obj[0].innerText.split("\t");
+        let rel_index = obj[obj.length - 1].getAttribute("data-index");
+        let index = sct_data.findIndex(y => check_element(y,cols,vals))
+
+        // Update the cell value in `sct_data` based on the key pressed
+        if (evt.which == 70) {
+          // f key => cycle through qc states
+          sct_data[index].qc = (
+            sct_data[index].qc === heavy_check_mark
+            ? heavy_ballot_x
+            : sct_data[index].qc === heavy_ballot_x
+            ? heavy_excl_mark
+            : sct_data[index].qc === heavy_excl_mark
+            ? empty_state
+            : heavy_check_mark
+          );
+          // Save QC state to local storage
+          var uniqueId = sct_data[index].moddate + '_' + sct_data[index].fname_in + '_' + sct_data[index].command;
+          localStorage.setItem(uniqueId, sct_data[index].qc);
+          // Update table display with updated sct_data
+          set_download_yml_btn_state(heavy_excl_mark);
+          set_download_yml_btn_state(heavy_ballot_x);
+
+        }
+        if ((evt.which >= 48 && evt.which <= 57) || (evt.which >= 96 && evt.which <= 105)) {
+          // 0-9 keys (number row, keypad) => store the value directly
+          sct_data[index].grade = String.fromCharCode(evt.which);
+        }
+
+        // Refresh the table with the updated data
+        $("#table").bootstrapTable({data: sct_data});
+        $("#table").bootstrapTable("load", sct_data);
+        hideColumns();
+        // Set focus on the row that was just updated
+        document.getElementById("table").rows[0].classList.remove("active");
+        document.getElementById("table").rows[parseInt(rel_index)+1].className="active";
+        selected_row = document.getElementById("table").rows[parseInt(rel_index)+1].innerText;
+        document.getElementById("table").rows[parseInt(rel_index)+1].scrollIntoViewIfNeeded(false);
+      }
     }
   });
 
