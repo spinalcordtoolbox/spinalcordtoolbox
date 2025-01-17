@@ -118,6 +118,7 @@ def create_qc_entry(
                 'background_img': str(imgs_to_generate['path_background_img'].relative_to(path_qc)),
                 'overlay_img': str(imgs_to_generate['path_overlay_img'].relative_to(path_qc)),
                 'moddate': mod_date.strftime("%Y-%m-%d %H:%M:%S"),
+                'grade': '',
                 'qc': '',
             }, file_result, indent=1)
 

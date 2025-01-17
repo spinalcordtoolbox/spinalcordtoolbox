@@ -125,7 +125,7 @@ $(document).ready(function(){
     var obj = $('#table tr.active');
     // Arrow down: next subject (or j)
     if (evt.which == 40 || evt.which == 74) {
-      if (obj.length == 0 || obj.text() === "DateDatasetSubjectPathFileContrastFunctionFunction+ArgsQC") {
+      if (obj.length == 0 || obj.text() === "DateDatasetSubjectPathFileContrastFunctionFunction+ArgsGradeQC") {
         obj = $('#table tr:first-child');
         obj.click();
       }
