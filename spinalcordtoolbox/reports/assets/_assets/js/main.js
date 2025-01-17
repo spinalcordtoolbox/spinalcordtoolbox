@@ -156,6 +156,7 @@ $(document).ready(function(){
         var vals = obj[0].innerText.split("\t");
         let rel_index = obj[obj.length - 1].getAttribute("data-index");
         let index = sct_data.findIndex(y => check_element(y,cols,vals))
+        var uniqueId = sct_data[index].moddate + '_' + sct_data[index].fname_in + '_' + sct_data[index].command;
 
         // Update the cell value in `sct_data` based on the key pressed
         if (evt.which == 70) {
@@ -170,8 +171,7 @@ $(document).ready(function(){
             : heavy_check_mark
           );
           // Save QC state to local storage
-          var uniqueId = sct_data[index].moddate + '_' + sct_data[index].fname_in + '_' + sct_data[index].command;
-          localStorage.setItem(uniqueId, sct_data[index].qc);
+          localStorage.setItem(uniqueId+"_qc", sct_data[index].qc);
           // Update table display with updated sct_data
           set_download_yml_btn_state(heavy_excl_mark);
           set_download_yml_btn_state(heavy_ballot_x);
@@ -180,6 +180,8 @@ $(document).ready(function(){
         if ((evt.which >= 48 && evt.which <= 57) || (evt.which >= 96 && evt.which <= 105)) {
           // 0-9 keys (number row, keypad) => store the value directly
           sct_data[index].grade = String.fromCharCode(evt.which);
+          // Save Grade state to local storage
+          localStorage.setItem(uniqueId+"_grade", sct_data[index].grade);
         }
 
         // Refresh the table with the updated data
@@ -265,7 +267,8 @@ function downloadQcStates() {
   // Fetch all QC flags from the QC column of the table
   sct_data.forEach(function(item, index) {
       var uniqueId = item.moddate + '_' + item.fname_in + '_' + item.command;
-      qcFlags[uniqueId] = item.qc;
+      qcFlags[uniqueId+"_qc"] = item.qc;
+      qcFlags[uniqueId+"_grade"] = item.grade;
   });
   // Create a blob and trigger a download
   var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(qcFlags));
@@ -297,9 +300,13 @@ function updateQcStates() {
     // TODO: create a function for this code block
     sct_data.forEach((item, index) => {
       var uniqueId = sct_data[index].moddate + '_' + sct_data[index].fname_in + '_' + sct_data[index].command;
-      const savedQcState = localStorage.getItem(uniqueId);
+      const savedQcState = localStorage.getItem(uniqueId+"_qc");
       if (savedQcState) {
-      item.qc = savedQcState;
+        item.qc = savedQcState;
+      }
+      const savedGradeState = localStorage.getItem(uniqueId+"_grade");
+      if (savedGradeState) {
+        item.grade = savedGradeState;
       }
   });
   // Update table display with updated sct_data
