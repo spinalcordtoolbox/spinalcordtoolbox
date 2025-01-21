@@ -182,8 +182,14 @@ $(document).ready(function(){
           if (evt.which >= 96 && evt.which <= 105) {
             evt.which -= 48;
           }
-          // 0-9 keys (number row, keypad) => store the value directly
-          sct_data[index].grade = String.fromCharCode(evt.which);
+          // 0 key, store "None"
+          if (evt.which == 48) {
+            sct_data[index].grade = "None"
+          }
+          // 1-9 keys (number row, keypad) => store the value directly
+          else {
+            sct_data[index].grade = String.fromCharCode(evt.which);
+          }
           // Save Grade state to local storage
           localStorage.setItem(uniqueId+"_grade", sct_data[index].grade);
         }
