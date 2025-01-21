@@ -62,10 +62,23 @@ jobs:
           perl -i -pe 's/pip!=21.2.\*/pip!=21.2.\*,<24.1/g;' install_sct
           ./install_sct -y
 
-      - name: Windows hotfix (separate bc bash)
-        if: runner.os == 'Windows'
+      - name: Windows hotfix for >=5.9 (separate bc bash)
+        if: runner.os == 'Windows' && matrix.sct_version != '5.7' && matrix.sct_version != '5.8'
         shell: bash
+        # Versions >=5.9 use the new syntax ("-U pip!=21.2) and also need the '^`' escape for the '!' character.
         run: perl -i -pe 's/pip\^!=21.2.\*/pip^!=21.2.\*,<24.1/g;' install_sct.bat
+
+      - name: Windows hotfix for v5.8 (separate bc bash)
+        if: runner.os == 'Windows' && matrix.sct_version == '5.8'
+        shell: bash
+        # Version ==5.8 uses the old syntax ("--upgrade pip") and also needs the '^' escape for the '!' character.
+        run: perl -i -pe 's/--upgrade pip /--upgrade "pip^!=21.2.\*,<24.1"/g;' install_sct.bat
+
+      - name: Windows hotfix for v5.7 (separate bc bash)
+        if: runner.os == 'Windows' && matrix.sct_version == '5.7'
+        shell: bash
+        # Version ==5.7 uses the old syntax ("--upgrade pip") but doesn't need the carat escape.
+        run: perl -i -pe 's/--upgrade pip /--upgrade "pip!=21.2.\*,<24.1"/g;' install_sct.bat
 
       - name: Force Python 3.7 (Windows, SCT v5.7)
         if: runner.os == 'Windows' && matrix.sct_version == '5.7'
