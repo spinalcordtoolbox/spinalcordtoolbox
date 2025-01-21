@@ -178,6 +178,10 @@ $(document).ready(function(){
 
         }
         if ((evt.which >= 48 && evt.which <= 57) || (evt.which >= 96 && evt.which <= 105)) {
+          // Normalize numpad event codes (to avoid writing non-numeric characters to the table)
+          if (evt.which >= 96 && evt.which <= 105) {
+            evt.which -= 48;
+          }
           // 0-9 keys (number row, keypad) => store the value directly
           sct_data[index].grade = String.fromCharCode(evt.which);
           // Save Grade state to local storage
