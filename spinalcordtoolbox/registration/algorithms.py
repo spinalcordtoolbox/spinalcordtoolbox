@@ -366,6 +366,7 @@ def register_rootlet(src, dest, step, ants_registration_params, metricSize, padd
 
     # Symmetrize the warping fields post-registration
     logger.info('\nApply transformation after rootlets adjustment...')
+    output_warping_fields = list(output_warping_fields)
     for i in range(len(output_warping_fields)):
         fname_warp = output_warping_fields[i]
         # Average perslice warping field
