@@ -81,11 +81,17 @@ jobs:
       - name: Update environment variables
         run: |
           if [ "$RUNNER_OS" == "Windows" ]; then
+            # SCT_DIR was different in the first iteration of Windows support
+            if [ "${{ matrix.sct_version }}" == "5.7" ] || [ "${{ matrix.sct_version }}" == "5.8" ]; then
+              export SCT_DIR="D:\a\spinalcordtoolbox\spinalcordtoolbox"
+            else
+              export SCT_DIR="$USERPROFILE\sct_${{ matrix.sct_version }}"
+            fi
 
             # NB: I'm not sure what GHA's syntax is for cmd.exe, so we use bash to set the environment variables.
             # In a user install, the user would perform this step using the Windows environment variable changing GUI.
-            echo "SCT_DIR=$GITHUB_WORKSPACE" >> $GITHUB_ENV
-            echo "$GITHUB_WORKSPACE/bin" >> $GITHUB_PATH
+            echo "SCT_DIR=$SCT_DIR" >> $GITHUB_ENV
+            echo "$SCT_DIR\bin" >> $GITHUB_PATH
 
           else
 
