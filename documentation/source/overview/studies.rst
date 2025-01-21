@@ -23,6 +23,14 @@ Citation list
 
 The following studies have used SCT:
 
+2025 
+----
+
+-  Farah *et al.* `T1 mapping using MP2RAGE in degenerative cervical myelopathy: a longitudinal study <https://doi.org/10.1007/s00586-025-08652-z>`_, **Eur. Spine J.** 2025
+-  Boudreau *et al.* `Longitudinal reproducibility of brain and spinal cord quantitative MRI measures <https://doi.org/10.1162/imag_a_00409>`_, **Imaging Neurosci.** 2025
+-  Mongay-Ocho *et al.* `Association of the Cervical Canal Area With Disability and Progression in People With Multiple Sclerosis <https://doi.org/10.1212/WNL.0000000000210136>`_, **Neurology** 2025
+-  Belwal *et al.* `Deep Learning techniques to detect and analysis of multiple sclerosis through MRI: A systematic literature review <https://doi.org/10.1016/j.compbiomed.2024.109530>`_, **Comput. Biol. Med.** 2025
+
 2024
 ----
 

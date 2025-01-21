@@ -557,7 +557,7 @@ def register_dl_multimodal_cascaded_reg(fname_src, fname_dest, fname_warp_forwar
     # Set the intent code to vector
     # The intent code 1007 was chosen based on information found on:
     #     -  https://brainder.org/2012/09/23/the-nifti-file-format/
-    #     -  http://users.bmap.ucla.edu/~mchamber/npl/nifti_8h_source.html#l00470
+    #     -  https://afni.nimh.nih.gov/afni/doc/source/nifti1_8h-source.html#l00823
     warp.header['intent_code'] = 1007
     # Save the composed warping field [forward]
     warp.save(fname_warp_forward)
