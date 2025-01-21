@@ -10,12 +10,18 @@ import os
 import logging
 from typing import Mapping
 from hashlib import md5
+import tempfile
+from glob import glob
+import json
 
 import pytest
+from nibabel import Nifti1Header
+from numpy import zeros
 
-from spinalcordtoolbox.utils.sys import sct_test_path
+from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.utils.sys import sct_test_path, __sct_dir__, __data_dir__
 from spinalcordtoolbox.download import install_named_dataset
-
+from contrib.fslhd import generate_nifti_fields, generate_numpy_fields
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +37,52 @@ def pytest_sessionstart():
     if not os.path.exists(sct_test_path()):
         logger.info("Downloading sct test data")
         install_named_dataset('sct_testing_data', dest_folder=sct_test_path())
+
+
+def pytest_sessionfinish():
+    """Perform actions that must be done after the test session."""
+    # get the newest temporary path created by pytest
+    tmp_path = max(
+        glob(os.path.join(tempfile.gettempdir(), "pytest-of-*", "pytest-current")),
+        key=lambda p: os.path.getctime(p),
+    )
+
+    # generate directory summaries for both sct_testing_data and the temporary directory
+    for (folder, fname_out) in [(tmp_path, "pytest-tmp.json"),
+                                (sct_test_path(), "sct_testing_data.json"),
+                                (os.path.join(__data_dir__, "sct_example_data"), "sct_example_data.json")]:
+        fname_out = os.path.join(__sct_dir__, "testing", fname_out)
+        if os.path.isdir(folder):
+            summary = summarize_files_in_folder(folder)
+            summary = sorted(summary, key=lambda d: d['path'])   # sort list-of-dicts by paths
+            keys = [d.pop('path') for d in summary]              # remove paths from dicts
+            summary = {key: d for key, d in zip(keys, summary)}  # convert to dict-of-dicts
+            with open(fname_out, 'w', newline='\n') as jsonfile:
+                json.dump(summary, jsonfile, indent=2)
+
+
+def summarize_files_in_folder(folder):
+    # Construct a list of dictionaries summarizing all the files in a folder
+    summary = []
+    for root, dirs, files in os.walk(folder, followlinks=True):
+        for fname in files:
+            fpath = os.path.join(root, fname)
+            root_short = root.replace(folder, os.path.basename(folder))
+            file_dict = {
+                # Use consistent characters to make cross-platform diffing work
+                "path": "/".join(os.path.split(os.path.join(root_short, fname))),
+                "size": os.path.getsize(fpath),
+                "md5": checksum(fpath),
+            }
+            if any(fname.endswith(ext) for ext in [".nii", ".nii.gz"]):
+                img = Image(fpath)
+                img_fields = generate_nifti_fields(img.header)
+                arr_fields = generate_numpy_fields(img.data)
+            else:
+                img_fields = {k: '' for k in generate_nifti_fields(Nifti1Header()).keys()}
+                arr_fields = {k: '' for k in generate_numpy_fields(zeros([1, 1, 1])).keys()}
+            summary.append(file_dict | img_fields | arr_fields)
+    return summary
 
 
 @pytest.fixture(autouse=True)
