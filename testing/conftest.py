@@ -19,7 +19,7 @@ from nibabel import Nifti1Header
 from numpy import zeros
 
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.utils.sys import sct_test_path, __sct_dir__
+from spinalcordtoolbox.utils.sys import sct_test_path, __sct_dir__, __data_dir__
 from spinalcordtoolbox.download import install_named_dataset
 from contrib.fslhd import generate_nifti_fields, generate_numpy_fields
 
@@ -50,7 +50,7 @@ def pytest_sessionfinish():
     # generate directory summaries for both sct_testing_data and the temporary directory
     for (folder, fname_out) in [(tmp_path, "pytest-tmp.json"),
                                 (sct_test_path(), "sct_testing_data.json"),
-                                (sct_test_path().replace("testing", "example"), "sct_example_data.json")]:
+                                (os.path.join(__data_dir__, "sct_example_data"), "sct_example_data.json")]:
         fname_out = os.path.join(__sct_dir__, "testing", fname_out)
         if os.path.isdir(folder):
             summary = summarize_files_in_folder(folder)
