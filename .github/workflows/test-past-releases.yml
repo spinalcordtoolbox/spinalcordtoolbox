@@ -87,5 +87,12 @@ jobs:
       - name: Check dependencies
         run: sct_check_dependencies
 
-      - name: Run tests
+      # In SCT v5.4, the `sct_testing` testing framework was taken away, replaced with pytest.
+      # But, in SCT v5.5, the `sct_testing` name was re-used as an alias for pytest.
+      # This means that, for only v5.4, we need to run the tests differently by calling pytest directly.
+      - name: Run tests (v5.4)
+        if: matrix.sct_version == '5.4'
+        run: ./python/envs/venv_sct/bin/pytest ./testing
+      - name: Run tests (non-v5.4)
+        if: matrix.sct_version != '5.4'
         run: sct_testing
