@@ -179,16 +179,17 @@ $(document).ready(function(){
         }
         if ((evt.which >= 48 && evt.which <= 57) || (evt.which >= 96 && evt.which <= 105)) {
           // Normalize numpad event codes (to avoid writing non-numeric characters to the table)
+          let code = evt.which;
           if (evt.which >= 96 && evt.which <= 105) {
-            evt.which -= 48;
+            code -= 48;
           }
           // 0 key, store "None"
-          if (evt.which == 48) {
+          if (code == 48) {
             sct_data[index].grade = "None"
           }
           // 1-9 keys (number row, keypad) => store the value directly
           else {
-            sct_data[index].grade = String.fromCharCode(evt.which);
+            sct_data[index].grade = String.fromCharCode(code);
           }
           // Save Grade state to local storage
           localStorage.setItem(uniqueId+"_grade", sct_data[index].grade);
