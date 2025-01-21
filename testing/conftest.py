@@ -42,9 +42,10 @@ def pytest_sessionstart():
 def pytest_sessionfinish():
     """Perform actions that must be done after the test session."""
     # get the newest temporary path created by pytest
-    tmp_paths = glob(os.path.join(tempfile.gettempdir(), "pytest-of-*", "pytest-current"))
-    ctimes = [os.path.getctime(p) for p in tmp_paths]
-    tmp_path = tmp_paths[ctimes.index(max(ctimes))]
+    tmp_path = max(
+        glob(os.path.join(tempfile.gettempdir(), "pytest-of-*", "pytest-current")),
+        key=lambda p: os.path.getctime(p),
+    )
 
     # generate directory summaries for both sct_testing_data and the temporary directory
     for (folder, fname_out) in [(tmp_path, "pytest-tmp.json"),
