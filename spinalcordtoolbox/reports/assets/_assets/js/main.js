@@ -125,7 +125,7 @@ $(document).ready(function(){
     var obj = $('#table tr.active');
     // Arrow down: next subject (or j)
     if (evt.which == 40 || evt.which == 74) {
-      if (obj.length == 0 || obj.text() === "DateDatasetSubjectPathFileContrastFunctionFunction+ArgsGradeQC") {
+      if (obj.length == 0 || obj.text() === "DateDatasetSubjectPathFileContrastFunctionFunction+ArgsRankQC") {
         obj = $('#table tr:first-child');
         obj.click();
       }
@@ -185,14 +185,14 @@ $(document).ready(function(){
           }
           // 0 key, store "None"
           if (code == 48) {
-            sct_data[index].grade = "None"
+            sct_data[index].rank = "None"
           }
           // 1-9 keys (number row, keypad) => store the value directly
           else {
-            sct_data[index].grade = String.fromCharCode(code);
+            sct_data[index].rank = String.fromCharCode(code);
           }
-          // Save Grade state to local storage
-          localStorage.setItem(uniqueId+"_grade", sct_data[index].grade);
+          // Save Rank state to local storage
+          localStorage.setItem(uniqueId+"_rank", sct_data[index].rank);
         }
 
         // Refresh the table with the updated data
@@ -279,7 +279,7 @@ function downloadQcStates() {
   sct_data.forEach(function(item, index) {
       var uniqueId = item.moddate + '_' + item.fname_in + '_' + item.command;
       qcFlags[uniqueId+"_qc"] = item.qc;
-      qcFlags[uniqueId+"_grade"] = item.grade;
+      qcFlags[uniqueId+"_rank"] = item.rank;
   });
   // Create a blob and trigger a download
   var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(qcFlags));
@@ -315,9 +315,9 @@ function updateQcStates() {
       if (savedQcState) {
         item.qc = savedQcState;
       }
-      const savedGradeState = localStorage.getItem(uniqueId+"_grade");
-      if (savedGradeState) {
-        item.grade = savedGradeState;
+      const savedRankState = localStorage.getItem(uniqueId+"_rank");
+      if (savedRankState) {
+        item.rank = savedRankState;
       }
   });
   // Update table display with updated sct_data
