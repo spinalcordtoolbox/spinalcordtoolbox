@@ -475,7 +475,8 @@ def main(argv: Sequence[str]):
     # template's labels (centered in the cord) and the subject's labels (assumed to be centered in the cord).
     # If labels are not centered, mis-registration errors are observed (see issue #1826)
     ftmp_label = project_labels_on_spinalcord(ftmp_label, ftmp_seg, param_centerline, param.remove_temp_files)
-
+    if verbose == 2:
+        Image(ftmp_label, check_sform=True).save(os.path.join(curdir, path_output, 'labels_projected.nii.gz'))
     # binarize segmentation (in case it has values below 0 caused by manual editing)
     printv('\nBinarize segmentation', verbose)
     ftmp_seg_, ftmp_seg = ftmp_seg, add_suffix(ftmp_seg, "_bin")
