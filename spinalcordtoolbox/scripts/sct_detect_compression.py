@@ -48,16 +48,16 @@ def get_parser():
 
             Compression categories are determined based on the following cut-offs:
 
-                - 'yes'     : p > {CUT_OFF_HIGH}
-                - 'possible': {CUT_OFF_MODERATE} <= p <= {CUT_OFF_HIGH}
-                - 'no'      : p < {CUT_OFF_MODERATE}
+              - 'yes'     : p > {CUT_OFF_HIGH}
+              - 'possible': {CUT_OFF_MODERATE} <= p <= {CUT_OFF_HIGH}
+              - 'no'      : p < {CUT_OFF_MODERATE}
 
             These cut-off values and compression categories were determined by ROC analysis and the Youden’s index
             (the sum of sensitivity and specificity). More info in the reference below.
 
             Reference:
 
-                - Horáková M, Horák T, Valošek J, Rohan T, Koriťáková E, Dostál M, Kočica J, Skutil T, Keřkovský M, Kadaňka Z Jr, Bednařík P, Svátková A, Hluštík P, Bednařík J. Semi-automated detection of cervical spinal cord compression with the Spinal Cord Toolbox. Quant Imaging Med Surg 2022; 12:2261–2279.
+              - Horáková M, Horák T, Valošek J, Rohan T, Koriťáková E, Dostál M, Kočica J, Skutil T, Keřkovský M, Kadaňka Z Jr, Bednařík P, Svátková A, Hluštík P, Bednařík J. Semi-automated detection of cervical spinal cord compression with the Spinal Cord Toolbox. Quant Imaging Med Surg 2022; 12:2261–2279.
                   https://doi.org/10.21037/qims-21-782
         """),  # noqa: E501 (line too long)
     )
