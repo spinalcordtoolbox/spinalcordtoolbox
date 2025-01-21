@@ -184,8 +184,9 @@ def test_sct_register_to_template_rootlets(tmp_path):
                                         '-s', sct_test_path('t2', 't2_seg-manual.nii.gz'),
                                         '-lrootlet', sct_test_path('t2', 't2_seg-deepseg_rootlets-manual.nii.gz'),
                                         '-t', sct_test_path('template'),
-                                        '-param', 'step=1,type=seg,algo=centermassrot,metric=MeanSquares:'
-                                                  'step=2,type=seg,algo=bsplinesyn,iter=0,metric=MeanSquares',
+                                        '-param', 'step=1,type=rootlet,algo=bsplinesyn,metric=CC:'
+                                                  'step=2,type=seg,algo=centermassrot,metric=MeanSquares:'
+                                                  'step=3,type=seg,algo=bsplinesyn,iter=0,metric=MeanSquares',
                                         '-ofolder', str(tmp_path)])
     # Apply transformation to source labels
     sct_apply_transfo.main(argv=['-i', sct_test_path('t2', 't2_seg-deepseg_rootlets-manual_midpoints.nii.gz'),
