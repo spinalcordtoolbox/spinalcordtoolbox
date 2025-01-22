@@ -185,7 +185,7 @@ $(document).ready(function(){
           }
           // 0 key, store "None"
           if (code == 48) {
-            sct_data[index].rank = "None"
+            sct_data[index].rank = ""
           }
           // 1-9 keys (number row, keypad) => store the value directly
           else {
