@@ -402,6 +402,30 @@ def symmetrize(data, dim):
     return data_out
 
 
+def slicewise_mean(data, dim, exclude_zeros=False):
+    """
+    Compute slicewise mean the specified dimension. Zeros are not inlcuded in the mean.
+    :param data: numpy.array 3D data.
+    :param dim: dimension of array to symmetrize along.
+
+    :return data_out: slicewise averaged data
+    """
+    if exclude_zeros:
+        data[data == 0] = np.nan
+    data_out = np.zeros_like(data)
+    for slices in range(data.shape[dim]):
+        idx_to_slice = [slice(None)] * data.ndim
+        idx_to_slice[dim] = slices
+        idx_to_slice = tuple(idx_to_slice)  # requirement of numpy indexing
+        if np.isnan(data[idx_to_slice]).all():
+            mean_data = [[0]]
+        else:
+            mean_data = np.nanmean(data[idx_to_slice], keepdims=True)
+        data_out[idx_to_slice] = np.broadcast_to(mean_data, data[idx_to_slice].shape)
+
+    return data_out
+
+
 def denoise_patch2self(data_in, bvals_in, patch_radius=0, model='ols'):
     """
     :param data_in: 4d array to denoise
