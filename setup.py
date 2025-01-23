@@ -77,6 +77,7 @@ setup(
                 'sct_deepseg_lesion',
                 'sct_deepseg_sc',
                 'sct_denoising_onlm',
+                'sct_detect_compression',
                 'sct_detect_pmj',
                 'sct_dice_coefficient',
                 'sct_dmri_compute_bvalue',
