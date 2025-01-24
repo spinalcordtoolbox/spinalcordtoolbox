@@ -59,6 +59,20 @@ jobs:
         if: runner.os != 'Windows'
         run: ./install_sct -y
 
+      - name: Force Python 3.7 (Windows, SCT v5.7)
+        if: runner.os == 'Windows' && matrix.sct_version == '5.7'
+        # Version 5.7-5.8's Windows installer tapped into the system python, meaning we need to set it up ourselves here
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.7'
+
+      - name: Force Python 3.8 (Windows, SCT v5.8)
+        if: runner.os == 'Windows' && matrix.sct_version == '5.8'
+        # Version 5.7-5.8's Windows installer tapped into the system python, meaning we need to set it up ourselves here
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.8'
+
       - name: Install SCT (Windows)
         if: runner.os == 'Windows'
         shell: cmd
