@@ -64,6 +64,11 @@ def test_model_dict():
      't2_seg_deepseg.nii.gz',
      'seg_ms_lesion_mp2rage',
      None),
+    (sct_test_path('t2', 't2.nii.gz'),
+     None,  # no ground truth, just test if it runs
+     't2_seg_deepseg.nii.gz',
+     'seg_ms_lesion',
+     None),
 ])
 def test_segment_nifti_binary_seg(fname_image, fname_seg_manual, fname_out, task, thr, tmp_path):
     """
@@ -153,6 +158,12 @@ def test_segment_nifti_softseg_error_with_fill_holes(tmp_path):
      ["_GM_seg", "_WM_seg"],
      'seg_mouse_gm_wm_t1w',
      0.5),
+    (sct_test_path('t2', 't2.nii.gz'),
+     [None, None, None, None, None],
+     't2_deepseg.nii.gz',
+     ["_step1_canal", "_step1_cord", "_step1_levels", "_step1_output", "_step2_output"],
+     'totalspineseg',
+     0),
 ])
 def test_segment_nifti_multiclass(fname_image, fnames_seg_manual, fname_out, suffixes, task, thr,
                                   tmp_path):

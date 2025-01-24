@@ -27,10 +27,12 @@ monai[nibabel]
 msvc-runtime==14.29.30133; sys.platform == 'win32' # append_to_freeze
 nibabel
 nilearn
-# 2.4.2 causes empty predictions (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4556)
-# 2.4.0/2.4.1 fail during inference due to https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4444
+# Only allow nnunetv2==2.3.1 or 2.5.1 (NB: there is no 2.5.0)
 # 2.3.0 and below are incompatible due to breaking API change (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4380)
-nnunetv2==2.3.1
+# 2.4.0/2.4.1 fail during inference due to https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4444
+# 2.4.2 causes empty predictions (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4556)
+# 2.5.2 and above will be tested manually when they are released.
+nnunetv2>2.3.0,!=2.4.*,<=2.5.1
 # SCT is compatible, however the upgrade to numpy==2.0.0 broke *many* upstream packages. Let's try again later. See https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4535
 numpy<2
 # 1.7.0>onnxruntime>=1.5.1 required `brew install libomp` on macOS.
@@ -57,6 +59,7 @@ requirements-parser
 scipy
 scikit-image
 scikit-learn
+totalspineseg
 xlwt
 tqdm
 transforms3d

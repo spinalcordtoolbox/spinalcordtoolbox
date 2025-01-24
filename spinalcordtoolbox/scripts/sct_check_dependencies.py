@@ -159,7 +159,7 @@ def get_dependencies(requirements_txt=None):
     requirements_txt = open(requirements_txt, "r", encoding="utf-8")
 
     # workaround for https://github.com/davidfischer/requirements-parser/issues/39
-    warnings.filterwarnings(action='ignore', module='requirements')
+    warnings.filterwarnings(message='Private repos not supported', action='ignore', category=UserWarning)
 
     for req in requirements.parse(requirements_txt):
         if ';' in req.line:  # handle environment markers; TODO: move this upstream into requirements-parser

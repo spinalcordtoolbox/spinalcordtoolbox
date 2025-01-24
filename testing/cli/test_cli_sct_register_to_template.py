@@ -128,18 +128,23 @@ def test_sct_register_to_template_dice_coefficient_against_groundtruth(fname_gt,
     assert dice_anat2template > dice_threshold
 
 
-def test_sct_register_to_template_mismatched_xforms(tmp_path, capsys):
+def test_sct_register_to_template_mismatched_xforms(tmp_path, caplog):
     fname_mismatch = str(tmp_path / "t2_mismatched.nii.gz")
     im_in = Image(sct_test_path('t2', 't2.nii.gz'))
     qform = im_in.header.get_qform()
     qform[1, 3] += 10
     im_in.header.set_qform(qform)
     im_in.save(fname_mismatch)
-    with pytest.raises(SystemExit):
+
+    # Temporarily avoid the ValueError, but still check for the message in log output
+    # with pytest.raises(SystemExit):
+    #     assert "Image sform does not match qform" in capsys.readouterr().out
+    # See: https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4745
+    with caplog.at_level(logging.ERROR):
         sct_register_to_template.main(argv=['-i', fname_mismatch,
                                             '-s', sct_test_path('t2', 't2_seg-manual.nii.gz'),
                                             '-l', sct_test_path('t2', 'labels.nii.gz')])
-    assert "Image sform does not match qform" in capsys.readouterr().out
+    assert "has different qform and sform matrices" in caplog.text
 
 
 def test_sct_register_to_template_more_than_2_labels(tmp_path, labels_discs):
@@ -168,4 +173,31 @@ def test_sct_register_to_template_more_than_2_labels(tmp_path, labels_discs):
     # should be touching, hence the mean square should be 0.
     im_label_dest = Image(sct_test_path('template', 'template', 'PAM50_small_label_disc.nii.gz'))
     im_label_src_reg = Image(str(tmp_path/'labels_discs_reg.nii.gz'))
+    assert compute_mean_squared_error(im_label_dest, im_label_src_reg) == 0
+
+
+def test_sct_register_to_template_rootlets(tmp_path):
+    """
+    Test registration with rootlets segmentation.
+    """
+    sct_register_to_template.main(argv=['-i', sct_test_path('t2', 't2.nii.gz'),
+                                        '-s', sct_test_path('t2', 't2_seg-manual.nii.gz'),
+                                        '-lrootlet', sct_test_path('t2', 't2_seg-deepseg_rootlets-manual.nii.gz'),
+                                        '-t', sct_test_path('template'),
+                                        '-param', 'step=1,type=rootlet,algo=bsplinesyn,metric=CC:'
+                                                  'step=2,type=seg,algo=centermassrot,metric=MeanSquares:'
+                                                  'step=3,type=seg,algo=bsplinesyn,iter=0,metric=MeanSquares',
+                                        '-ofolder', str(tmp_path)])
+    # Apply transformation to source labels
+    sct_apply_transfo.main(argv=['-i', sct_test_path('t2', 't2_seg-deepseg_rootlets-manual_midpoints.nii.gz'),
+                                 '-d', str(tmp_path/'anat2template.nii.gz'),
+                                 '-w', str(tmp_path/'warp_anat2template.nii.gz'),
+                                 '-o', str(tmp_path/'t2_seg-deepseg_rootlets-manual_midpoints_reg.nii.gz'),
+                                 '-x', 'label'])
+    # Compute pairwise distance between the template label and the registered label, ie: compute distance between dest
+    # and src_reg for label of value '2', then '3', etc. and compute the mean square of all distances. The labels
+    # should be touching, hence the mean square should be 0.
+    im_label_dest = Image(sct_test_path('template', 'template', 'PAM50_small_rootlets_midpoints.nii.gz'))
+    logger.info(tmp_path)
+    im_label_src_reg = Image(str(tmp_path/'t2_seg-deepseg_rootlets-manual_midpoints_reg.nii.gz'))
     assert compute_mean_squared_error(im_label_dest, im_label_src_reg) == 0

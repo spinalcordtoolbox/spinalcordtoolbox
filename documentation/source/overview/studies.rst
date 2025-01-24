@@ -16,16 +16,29 @@ The graphs below summarize the pathologies, tools, species, and count per year o
 
        <iframe width="600" height="371" seamless frameborder="0" scrolling="no" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSwyEvoiTOMflrJveD277xWYSb_1QSwkpxWsZoMSucgHBS7BHcgfvzGG21--1bLRFO_DIV4EhL9lBl2/pubchart?oid=819409616&amp;format=interactive"></iframe>
 
-       <iframe width="600" height="371" seamless frameborder="0" scrolling="no" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSwyEvoiTOMflrJveD277xWYSb_1QSwkpxWsZoMSucgHBS7BHcgfvzGG21--1bLRFO_DIV4EhL9lBl2/pubchart?oid=1302662251&amp;format=interactive"></iframe>
+       <iframe width="600" height="371" seamless frameborder="0" scrolling="no" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSwyEvoiTOMflrJveD277xWYSb_1QSwkpxWsZoMSucgHBS7BHcgfvzGG21--1bLRFO_DIV4EhL9lBl2/pubchart?oid=776089160&amp;format=interactive"></iframe>
 
 Citation list
 =============
 
 The following studies have used SCT:
 
+2025 
+----
+
+-  Farah *et al.* `T1 mapping using MP2RAGE in degenerative cervical myelopathy: a longitudinal study <https://doi.org/10.1007/s00586-025-08652-z>`_, **Eur. Spine J.** 2025
+-  Boudreau *et al.* `Longitudinal reproducibility of brain and spinal cord quantitative MRI measures <https://doi.org/10.1162/imag_a_00409>`_, **Imaging Neurosci.** 2025
+-  Mongay-Ocho *et al.* `Association of the Cervical Canal Area With Disability and Progression in People With Multiple Sclerosis <https://doi.org/10.1212/WNL.0000000000210136>`_, **Neurology** 2025
+-  Belwal *et al.* `Deep Learning techniques to detect and analysis of multiple sclerosis through MRI: A systematic literature review <https://doi.org/10.1016/j.compbiomed.2024.109530>`_, **Comput. Biol. Med.** 2025
+
 2024
 ----
 
+-  Gaubert *et al.* `Microstructural Damage and Repair in the Spinal Cord of Patients With Early Multiple Sclerosis and Association With Disability at 5 Years <https://doi.org/10.1212/NXI.0000000000200333>`_, **Neurol. Neuroimmunol. Neuroinflamm.** 2024
+-  Bozhko *et al.* `Diffusion tensor imaging of spinal cord in healthy children <https://www.rosped.ru/jour/article/view/1060?locale=en_US>`_, **Russ. Pediatr. J.** 2024
+-  Stuart *et al.* `Systemic inflammation associates with and precedes cord atrophy in progressive multiple sclerosis <https://doi.org/10.1093/braincomms/fcae143>`_, **Brain Commun.** 2024
+-  Enamundram *et al.* `SCIseg: Automatic Segmentation of Intramedullary Lesions in Spinal Cord Injury on T2-weighted MRI Scans <https://doi.org/10.1148/ryai.240005>`_, **Radiol. Artif. Intell.** 2024
+-  Negreiros *et al.* `Patterns of cognitive decline across different multiple sclerosis clinical courses <https://doi.org/10.1016/j.msard.2024.106172>`_, **Mult. Scler. Relat. Disord.** 2024
 -  Combes *et al.* `Spiral volumetric optoacoustic tomography of reduced oxygen saturation in the spinal cord of M83 mouse model of Parkinson’s disease <https://doi.org/10.1007/s00259-024-06938-w>`_, **Eur. J. Nucl. Med. Mol. Imaging** 2024 
 -  Papinutto *et al.* `A simplified approach to define cervical vertebral levels in spinal cord MRI studies <https://doi.org/10.1111/jon.13240>`_, **J. Neuroimaging** 2024
 -  Dewey *et al.* `Super-Resolution in Clinically Available Spinal Cord MRIs Enables Automated Atrophy Analysis <https://doi.org/10.3174/ajnr.A8526>`_, **AJNR Am. J. Neuroradiol.** 2024

@@ -10,8 +10,11 @@ import os
 import shutil
 import time
 from pathlib import Path
+import glob
+import multiprocessing as mp
 
 from ivadomed import inference as imed_inference
+from totalspineseg.inference import inference as tss_inference
 import nibabel as nib
 import numpy as np
 import torch
@@ -107,7 +110,11 @@ def segment_and_average_volumes(model_paths, input_filenames, options, use_gpu=F
 def segment_non_ivadomed(path_model, model_type, input_filenames, threshold, keep_largest, fill_holes_in_pred,
                          remove_small, use_gpu=False, remove_temp_files=True):
     # MONAI and NNUnet have similar structure, and so we use nnunet+inference functions with the same signature
-    if model_type == "monai":
+    # NB: For TotalSpineSeg, we don't need to create the network ourselves
+    if "totalspineseg" in path_model:
+        def create_net(pm, _): return pm  # just echo `path_model` back as 'net'
+        inference = segment_totalspineseg
+    elif model_type == "monai":
         create_net = ds_monai.create_nnunet_from_plans
         inference = segment_monai
     else:
@@ -233,15 +240,16 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device):
     orig_orientation = get_orientation(Image(path_img_tmp))
 
     # Get the orientation used by the model
-    # TODO: Make reorientation a model configuration parameter
-    if "SCI" in predictor.plans_manager.dataset_name:
-        model_orientation = "RPI"
-    elif "RegionBasedLesionSeg" in predictor.plans_manager.dataset_name:
-        model_orientation = "AIL"
-    elif "tumMSChunks" in predictor.plans_manager.dataset_name:
-        model_orientation = "RPI"
+    # Check if predictor.dataset_json['image_orientation'] key exists, if so, read the orientation from there
+    # NOTE: the 'image_orientation' key-value pair needs to be manually added to the dataset.json file
+    if 'image_orientation' in predictor.dataset_json:
+        model_orientation = predictor.dataset_json['image_orientation']
+        print(f"Orientation (based on dataset.json): {model_orientation}")
     else:
-        model_orientation = "LPI"
+        if "RegionBasedLesionSeg" in predictor.plans_manager.dataset_name:
+            model_orientation = "AIL"
+        else:
+            model_orientation = "LPI"
 
     # Reorient the image to model orientation if not already
     img_in = Image(path_img_tmp)
@@ -289,6 +297,10 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device):
         logger.info(f'Reorientation to original orientation {orig_orientation} done.')
 
     labels = {k: v for k, v in predictor.dataset_json['labels'].items() if k != 'background'}
+    # for the canal model, keep only the largest object
+    if 'canal_seg' in labels.keys():
+        logger.info('Keeping only the largest component.')
+        img_out.data = keep_largest_object(img_out.data, x_cOm=None, y_cOm=None)
     # for rootlets model (which has labels 'lvl1', 'lvl2', etc.), save the image directly without splitting
     is_rootlet_model = all((label == f"lvl{i}") for i, label in enumerate(labels.keys(), start=1))
     if is_rootlet_model:
@@ -316,5 +328,51 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device):
         logger.info(f"Saving results to: {fname_out}")
         img_out.save(fname_out)
         fnames_out.append(fname_out)
+
+    return fnames_out, targets
+
+
+def segment_totalspineseg(path_img, tmpdir, predictor, device):
+    # for totalspineseg, the 'predictor' is just the model path
+    path_model = predictor
+    # fetch the release subdirectory from the model path
+    installed_releases = sorted(
+        os.path.basename(release_path) for release_path in
+        glob.glob(os.path.join(path_model, 'nnUNet', 'results', 'r*'), recursive=True)
+    )
+    # There should always be a release subdirectory, hence the 'assert'
+    assert installed_releases, f"No 'nnUNet/results/rYYYYMMDD' subdirectory found in {path_model}"
+
+    # Copy the file to the temporary directory using shutil.copyfile
+    path_img_tmp = os.path.join(tmpdir, os.path.basename(path_img))
+    shutil.copyfile(path_img, path_img_tmp)
+    logger.info(f'Copied {path_img} to {path_img_tmp}')
+
+    # Create directory for nnUNet prediction
+    tmpdir_nnunet = os.path.join(tmpdir, 'nnUNet_prediction')
+    os.mkdir(tmpdir_nnunet)
+
+    # totalspineseg uses multiprocessing internally, so here we try to
+    # set multiprocessing method to 'spawn' to avoid deadlock issues
+    # - 'spawn' is already default on Windows/macOS, but 'fork' is default on Linux
+    # - 'spawn' is reliable though slower, but 'fork' causes intermittent stalling
+    mp.set_start_method("spawn", force=True)
+
+    tss_inference(
+        input_path=path_img_tmp,
+        output_path=tmpdir_nnunet,
+        data_path=path_model,
+        # totalspineseg requires explicitly specifying the release subdirectory
+        default_release=installed_releases[-1],  # use the most recent release
+        # totalspineseg expects the device type, not torch.device
+        device=device,
+        # Try to address stalling due to the use of concurrent.futures in totalspineseg
+        max_workers=1,
+        max_workers_nnunet=1,
+    )
+    fnames_out, targets = [], []
+    for output_dirname in ["step1_canal", "step1_cord", "step1_levels", "step1_output", "step2_output"]:
+        fnames_out.append(os.path.join(tmpdir_nnunet, output_dirname, os.path.basename(path_img)))
+        targets.append(f"_{output_dirname}")
 
     return fnames_out, targets

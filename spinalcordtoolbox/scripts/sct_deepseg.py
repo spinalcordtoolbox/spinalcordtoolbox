@@ -23,7 +23,6 @@ from spinalcordtoolbox.reports import qc2
 from spinalcordtoolbox.image import splitext, Image, check_image_kind
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax, ActionCreateFolder
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel, __version__, _git_info
-from spinalcordtoolbox.utils.fs import tmp_create
 from spinalcordtoolbox.utils.sys import LazyLoader
 
 cuda = LazyLoader("cuda", globals(), 'torch.cuda')
@@ -44,7 +43,9 @@ def get_parser():
     input_output.add_argument(
         "-i",
         nargs="+",
-        help="Image to segment. Can be multiple images (separated with space).",
+        help=f"Image to segment. Can be multiple images (separated with space)."
+             f"\n\nNote: If choosing `-task seg_ms_lesion_mp2rage`, then the input "
+             f"data must be cropped around the spinal cord. ({models.CROP_MESSAGE})",
         metavar=Metavar.file)
     input_output.add_argument(
         "-c",
@@ -53,11 +54,10 @@ def get_parser():
             Contrast of the input. The `-c` option is only relevant for the following tasks:
 
               - `seg_tumor-edema-cavity_t1-t2`: Specifies the contrast order of input images (e.g. `-c t1 t2`)
-              - `seg_sc_ms_lesion_stir_psir`: Specifies whether input should be inverted based on contrast (`-c stir`: no inversion, `-c psir`: inverted)
 
             Because all other models have only a single input contrast, the `-c` option is ignored for them.
         """),
-        choices=('t1', 't2', 't2star', 'stir', 'psir'),
+        choices=('t1', 't2', 't2star'),
         metavar=Metavar.str)
     input_output.add_argument(
         "-o",
@@ -71,7 +71,8 @@ def get_parser():
         nargs="+",
         help="Task to perform. It could either be a pre-installed task, task that could be installed, or a custom task."
              " To list available tasks, run: `sct_deepseg -list-tasks`. To use a custom task, indicate the path to the "
-             " ivadomed packaged model (see https://ivadomed.org/en/latest/pretrained_models.html#packaged-model-format for more details). "
+             " packaged model. Models created with different frameworks ([ivadomed](https://ivadomed.org/), "
+             "[nnUNet](https://github.com/MIC-DKFZ/nnUNet), and [monai](https://monai.io)) are supported."
              " More than one path can be indicated (separated with space) for cascaded application of the models.",
         metavar=Metavar.str)
     seg.add_argument(
@@ -163,6 +164,12 @@ def get_parser():
         "--help",
         action="help",
         help="Show this help message and exit")
+    misc.add_argument(
+        "-qc-plane",
+        metavar=Metavar.str,
+        choices=('Axial', 'Sagittal'),
+        default='Axial',
+        help="Plane of the output QC. If Sagittal, you must also provide the -s option. Default: Axial.")
 
     return parser
 
@@ -261,26 +268,6 @@ def main(argv: Sequence[str]):
         else:
             input_filenames = arguments.i.copy()
 
-        # Inversion workaround for regular PSIR input to canproco STIR/PSIR model
-        if 'seg_sc_ms_lesion_stir_psir' in arguments.task[0]:
-            contrast = arguments.c[0] if arguments.c else None  # default is empty list
-            if not contrast:
-                parser.error(
-                    "Task 'seg_sc_ms_lesion_stir_psir' requires the flag `-c` to identify whether the input is "
-                    "STIR or PSIR. If `-c psir` is passed, the input will be inverted.")
-            elif contrast == "psir":
-                logger.warning("Inverting input PSIR image (multiplying data array by -1)...")
-                tmpdir = tmp_create("sct_deepseg-inverted-psir")
-                for i, fname_in in enumerate(input_filenames.copy()):
-                    im_in = Image(fname_in)
-                    im_in.data *= -1
-                    path_img_tmp = os.path.join(tmpdir, os.path.basename(fname_in))
-                    im_in.save(path_img_tmp)
-                    input_filenames[i] = path_img_tmp
-            else:
-                if contrast != "stir":
-                    parser.error("Task 'seg_sc_ms_lesion_stir_psir' requires the flag `-c` to be either psir or stir.")
-
         if 'seg_sc_epi' in arguments.task[0]:
             for image in arguments.i:
                 image_shape = Image(image).data.shape
@@ -370,9 +357,14 @@ def main(argv: Sequence[str]):
 
     if arguments.qc is not None:
         # Models can have multiple input images -- create 1 QC report per input image.
-        # Models can also either have 1 OR 2 outputs per input, so we may need to split output_filenames into 2 lists
         if len(output_filenames) == len(input_filenames):
             iterator = zip(input_filenames, output_filenames, [None] * len(input_filenames))
+        # Special case: totalspineseg which outputs 5 files per 1 input file
+        # Just use the 5th image ([4]) which represents the step2 output
+        elif arguments.task[0] == 'totalspineseg':
+            assert len(output_filenames) == 5 * len(input_filenames)
+            iterator = zip(input_filenames, output_filenames[4::5], [None] * len(input_filenames))
+        # Other models typically have 2 outputs per input (e.g. SC + lesion), so use both segs
         else:
             assert len(output_filenames) == 2 * len(input_filenames)
             iterator = zip(input_filenames, output_filenames[0::2], output_filenames[1::2])
@@ -389,13 +381,17 @@ def main(argv: Sequence[str]):
                 path_qc=os.path.abspath(arguments.qc),
                 dataset=arguments.qc_dataset,
                 subject=arguments.qc_subject,
+                plane=arguments.qc_plane,
             )
 
+    images = [arguments.i[0]]
+    im_types = ['anat']
+    opacities = ['']
     for output_filename in output_filenames:
-        img_kind = check_image_kind(Image(output_filename))
-        display_viewer_syntax([arguments.i[0], output_filename],
-                              im_types=['anat', img_kind],
-                              opacities=['', '0.7'], verbose=verbose)
+        images.append(output_filename)
+        im_types.append(check_image_kind(Image(output_filename)))
+        opacities.append('0.7')
+    display_viewer_syntax(images, im_types=im_types, opacities=opacities, verbose=verbose)
 
 
 if __name__ == "__main__":
