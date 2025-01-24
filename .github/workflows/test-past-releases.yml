@@ -55,30 +55,55 @@ jobs:
         with:
           ref: ${{ matrix.sct_version }}
 
+      - name: Un-freeze `setuptools` and `packaging`
+        # A user on the forum encountered the following error when installing SCT:
+        #
+        #           TypeError: canonicalize_version() got an unexpected keyword argument 'strip_trailing_zero'
+        #
+        # This occurs because the `packaging` library changed its API out of lockstep with `setuptools`, causing
+        # `setuptools` to sometimes incorrectly call the `packaging` function depending on the versions of each
+        # library. If we upgrade one but not the other, the two libraries can get out of sync.
+        #
+        # The issue is complicated further by the fact that `setuptools` currently gets installed *as a conda package*,
+        # while `packaging` gets installed *as a pip package* (i.e. packaging gets frozen in requirements-freeze.txt).
+        # This means that the conda `setuptools` + pip `packaging` might work fine when the release is drafted, but
+        # since setuptools wasn't frozen, its version advances while packaging's doesn't.
+        #
+        # Ideally, we would go back in time and freeze setuptools alongside packaging. But, since we can't do that,
+        # the easiest way to fix the issue in the short-term is:
+        #
+        #   1) Unfreeze `packaging` and any `setuptools-related` packages (such as `setuptools-types` that got frozen)
+        #   2) Install `setuptools[core]`, which will install both `setuptools` and `packaging` as compatible conda packages.
+        #
+        # Once we confirm that everything works, we can then freeze the new versions of `setuptools` and `packaging`.
+        run: |
+          cat requirements-freeze.txt | grep -v "setuptools" > requirements-freeze-2.txt
+          cat requirements-freeze-2.txt | grep -v "packaging" > requirements-freeze.txt
+
       - name: Install SCT (Unix)
         if: runner.os != 'Windows'
         run: |
           # Add fix for clash between pip 24.1 and dipy 1.5.0
-          perl -i -pe 's/pip!=21.2.\*/pip!=21.2.\*,<24.1/g;' install_sct
+          perl -i -pe 's/pip!=21.2.\*/pip!=21.2.\*,<24.1" "setuptools[core]/g;' install_sct
           ./install_sct -y
 
       - name: Windows hotfix for >=5.9 (separate bc bash)
         if: runner.os == 'Windows' && matrix.sct_version != '5.7' && matrix.sct_version != '5.8'
         shell: bash
         # Versions >=5.9 use the new syntax ("-U pip!=21.2) and also need the '^`' escape for the '!' character.
-        run: perl -i -pe 's/pip\^!=21.2.\*/pip^!=21.2.\*,<24.1/g;' install_sct.bat
+        run: perl -i -pe 's/pip\^!=21.2.\*/pip^!=21.2.\*,<24.1" "setuptools[core]/g;' install_sct.bat
 
       - name: Windows hotfix for v5.8 (separate bc bash)
         if: runner.os == 'Windows' && matrix.sct_version == '5.8'
         shell: bash
         # Version ==5.8 uses the old syntax ("--upgrade pip") and also needs the '^' escape for the '!' character.
-        run: perl -i -pe 's/--upgrade pip /--upgrade "pip^!=21.2.\*,<24.1"/g;' install_sct.bat
+        run: perl -i -pe 's/--upgrade pip /--upgrade "pip^!=21.2.\*,<24.1" "setuptools[core]"/g;' install_sct.bat
 
       - name: Windows hotfix for v5.7 (separate bc bash)
         if: runner.os == 'Windows' && matrix.sct_version == '5.7'
         shell: bash
         # Version ==5.7 uses the old syntax ("--upgrade pip") but doesn't need the carat escape.
-        run: perl -i -pe 's/--upgrade pip /--upgrade "pip!=21.2.\*,<24.1"/g;' install_sct.bat
+        run: perl -i -pe 's/--upgrade pip /--upgrade "pip!=21.2.\*,<24.1" "setuptools[core]"/g;' install_sct.bat
 
       - name: Force Python 3.7 (Windows, SCT v5.7)
         if: runner.os == 'Windows' && matrix.sct_version == '5.7'
