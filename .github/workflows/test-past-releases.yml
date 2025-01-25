@@ -30,21 +30,21 @@ jobs:
       fail-fast: false
       matrix:
         sct_version: [ "6.5", "6.4", "6.3", "6.2", "6.1", "6.0", "5.8", "5.7", "5.6", "5.5", "5.4", "5.3.0", "5.2.0", "5.1.0" ]
-        os: [ ubuntu-latest, macos-latest, windows-latest ]
+        os: [ ubuntu-latest, macos-latest, windows-2019 ]
         exclude:
           # Windows support was only properly introduced in 5.7
           - sct_version: "5.6"
-            os: windows-latest
+            os: windows-2019
           - sct_version: "5.5"
-            os: windows-latest
+            os: windows-2019
           - sct_version: "5.4"
-            os: windows-latest
+            os: windows-2019
           - sct_version: "5.3.0"
-            os: windows-latest
+            os: windows-2019
           - sct_version: "5.2.0"
-            os: windows-latest
+            os: windows-2019
           - sct_version: "5.1.0"
-            os: windows-latest
+            os: windows-2019
     runs-on: ${{ matrix.os }}
     defaults:
       run:
