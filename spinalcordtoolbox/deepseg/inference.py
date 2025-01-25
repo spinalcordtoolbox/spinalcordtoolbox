@@ -108,7 +108,7 @@ def segment_and_average_volumes(model_paths, input_filenames, options, use_gpu=F
 
 
 def segment_non_ivadomed(path_model, model_type, input_filenames, threshold, keep_largest, fill_holes_in_pred,
-                         remove_small, use_gpu=False, remove_temp_files=True):
+                         remove_small, use_gpu=False, remove_temp_files=True, fold=None):
     # MONAI and NNUnet have similar structure, and so we use nnunet+inference functions with the same signature
     # NB: For TotalSpineSeg, we don't need to create the network ourselves
     if "totalspineseg" in path_model:
@@ -125,7 +125,7 @@ def segment_non_ivadomed(path_model, model_type, input_filenames, threshold, kee
     device = torch.device("cuda" if use_gpu else "cpu")
 
     # load model from checkpoint
-    net = create_net(path_model, device)
+    net = create_net(path_model, device, fold)
 
     im_lst, target_lst = [], []
     for fname_in in input_filenames:

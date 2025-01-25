@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     import torch
 
 
-def create_nnunet_from_plans(path_model, device: 'torch.device'):
+def create_nnunet_from_plans(path_model, device: 'torch.device', fold):
     tile_step_size = 0.5
     # get the nnunet trainer directory
     trainer_dirs = glob.glob(os.path.join(path_model, "nnUNetTrainer*"))
@@ -28,7 +28,13 @@ def create_nnunet_from_plans(path_model, device: 'torch.device'):
     fold_dirs = [os.path.basename(path) for path in glob.glob(os.path.join(path_model, "fold_*"))]
     if not fold_dirs:
         raise FileNotFoundError(f"No 'fold_*' directories found in model path: {path_model}")
-    folds_avail = 'all' if fold_dirs == ['fold_all'] else [int(f.split('_')[-1]) for f in fold_dirs]
+    if fold:
+        # Check if the specified fold is available
+        if f"fold_{fold}" not in fold_dirs:
+            raise FileNotFoundError(f"Fold {fold} not found in model path: {path_model}")
+        folds_avail = [fold]
+    else:
+        folds_avail = 'all' if fold_dirs == ['fold_all'] else [int(f.split('_')[-1]) for f in fold_dirs]
 
     # We prioritize 'checkpoint_final.pth', but fallback to 'checkpoint_best.pth' if not available
     checkpoints = {os.path.basename(path) for path in glob.glob(os.path.join(path_model, "**", "checkpoint_*.pth"))}

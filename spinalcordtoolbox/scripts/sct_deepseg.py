@@ -133,6 +133,12 @@ def get_parser():
              "prediction class. Single value example: 1mm3, 5vox. Multiple values example: 10 20 10vox (remove objects "
              "smaller than 10 voxels for class 1 and 3, and smaller than 20 voxels for class 2).",
         default=None)
+    misc.add_argument(
+        "-fold",
+        type=int,
+        choices=[0, 1, 2, 3, 4],
+        help="Fold number to use for the inference. Only valid for the nnUNet models. Example: `-fold 0`",
+        default=None)
 
     misc = parser.add_argument_group('MISC')
     misc.add_argument(
@@ -300,7 +306,8 @@ def main(argv: Sequence[str]):
                                                                 keep_largest=arguments.keep_largest,
                                                                 fill_holes_in_pred=arguments.fill_holes,
                                                                 remove_small=arguments.remove_small,
-                                                                use_gpu=use_gpu, remove_temp_files=arguments.r)
+                                                                use_gpu=use_gpu, remove_temp_files=arguments.r,
+                                                                fold=arguments.fold)
 
         # Delete intermediate outputs
         if fname_prior and os.path.isfile(fname_prior) and arguments.r:
@@ -352,6 +359,9 @@ def main(argv: Sequence[str]):
                 }
             ]
         }
+        if arguments.fold is not None:
+            sidecar_json['GeneratedBy'][0]['Fold'] = arguments.fold
+
         with open(splitext(fname_seg)[0] + ".json", "w") as fp:
             json.dump(sidecar_json, fp, indent=4)
 
