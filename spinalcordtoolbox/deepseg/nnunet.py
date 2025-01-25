@@ -28,7 +28,7 @@ def create_nnunet_from_plans(path_model, device: 'torch.device', fold):
     fold_dirs = [os.path.basename(path) for path in glob.glob(os.path.join(path_model, "fold_*"))]
     if not fold_dirs:
         raise FileNotFoundError(f"No 'fold_*' directories found in model path: {path_model}")
-    if fold:
+    if fold is not None:
         # Check if the specified fold is available
         if f"fold_{fold}" not in fold_dirs:
             raise FileNotFoundError(f"Fold {fold} not found in model path: {path_model}")
@@ -57,6 +57,7 @@ def create_nnunet_from_plans(path_model, device: 'torch.device', fold):
     )
     print(f'Running inference on device: {predictor.device}')
 
+    print(f'Fold to be used: {folds_avail}')
     # initializes the network architecture, loads the checkpoint
     predictor.initialize_from_trained_model_folder(
         join(path_model),
