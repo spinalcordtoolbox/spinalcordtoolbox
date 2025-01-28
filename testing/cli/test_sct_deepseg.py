@@ -12,7 +12,7 @@ from spinalcordtoolbox.math import binarize
 from spinalcordtoolbox.utils.sys import sct_test_path
 import spinalcordtoolbox.deepseg.models
 
-from spinalcordtoolbox.scripts import sct_deepseg
+from spinalcordtoolbox.scripts import sct_deepseg, sct_resample
 
 
 def test_install_model():
@@ -144,6 +144,22 @@ def test_segment_nifti_softseg_error_with_fill_holes(tmp_path):
                                '-thr', '0', '-fill-holes', '1'])
 
 
+def t2_ax():
+    """Generate an approximation of an axially-acquired T2w anat image using resampling."""
+    fname_out = os.path.abspath('t2_ax.nii.gz')
+    sct_resample.main(argv=["-i", sct_test_path('t2', 't2.nii.gz'), "-o", fname_out,
+                            "-mm", "0.8x3x0.8", "-x", "spline"])
+    return fname_out
+
+
+def t2_ax_sc_seg():
+    """Generate an approximation of an axially-acquired T2w segmentation using resampling."""
+    fname_out = os.path.abspath('t2_ax_sc_seg.nii.gz')
+    sct_resample.main(argv=["-i", sct_test_path('t2', 't2_seg-manual.nii.gz'), "-o", fname_out,
+                            "-mm", "0.8x3x0.8", "-x", "spline"])
+    return fname_out
+
+
 @pytest.mark.parametrize('fname_image, fnames_seg_manual, fname_out, suffixes, task, thr', [
     (sct_test_path('t2', 't2_fake_lesion.nii.gz'),
      [sct_test_path('t2', 't2_fake_lesion_sc_seg.nii.gz'),
@@ -152,9 +168,9 @@ def test_segment_nifti_softseg_error_with_fill_holes(tmp_path):
      ["_sc_seg", "_lesion_seg"],
      'seg_sc_lesion_t2w_sci',
      0.5),
-    (sct_test_path('t2', 't2_ax.nii.gz'),
-     [sct_test_path('t2', 't2_ax_sc_seg.nii.gz'),
-      sct_test_path('t2', None)],
+    (t2_ax(),          # Generate axial images on the fly
+     [t2_ax_sc_seg(),  # Just test against SC ground truth, because the model generates SC segs well
+      None],           # The model performs poorly on our fake t2_ax() image, so skip evaluating on lesion seg
      't2_deepseg.nii.gz',
      ["_sc_seg", "_lesion_seg"],
      'seg_sc_ms_lesion_axial_t2w',
