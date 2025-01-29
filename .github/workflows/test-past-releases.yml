@@ -5,7 +5,7 @@ on:
     # https://docs.github.com/en/free-pro-team@latest/actions/reference/workflow-syntax-for-github-actions#onschedule
     # > Scheduled workflows run on the latest commit on the default or base branch
     # i.e. this can only run on master
-    - cron:  '0 11 * * *'
+    - cron:  '0 11 * * 0'
   pull_request:
     # JUST TEMPORARY UNTIL THIS PR IS MERGED
     branches:
