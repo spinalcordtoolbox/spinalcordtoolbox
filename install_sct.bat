@@ -97,6 +97,7 @@ rem Allow user to set a custom installation directory
   set /p new_install="### Warning^! Give full path ^(e.g. C:\Users\username\sct_v3.0^): "
 
   rem Check user-selected path for spaces
+  rem TODO: This may no longer be true as of a patch made to Mamba in Dec. 2024!
   if not "%new_install%"=="%new_install: =%" (
        echo ### WARNING: Install directory %new_install% contains spaces.
        echo ### SCT uses conda, which does not permit spaces in installation paths.
@@ -156,15 +157,15 @@ if exist %SCT_DIR%\spinalcordtoolbox.egg-info\ (
 rem Move into the SCT installation directory
 pushd %SCT_DIR% || goto error
 
-rem Install portable miniconda instance. (Command source: https://github.com/conda/conda/issues/1977)
+rem Install portable miniforge instance. (Command source: https://github.com/conda/conda/issues/1977)
 echo:
-echo ### Downloading Miniconda installer...
-curl -o %TMP_DIR%\miniconda.exe https://repo.anaconda.com/miniconda/Miniconda3-latest-Windows-x86_64.exe
+echo ### Downloading Miniforge installer...
+curl -o %TMP_DIR%\miniconda.exe -L https://github.com/conda-forge/miniforge/releases/download/24.11.2-1/Miniforge3-Windows-x86_64.exe
 echo:
-echo ### Installing portable copy of Miniconda...
+echo ### Installing portable copy of Miniforge...
 start /wait "" %TMP_DIR%\miniconda.exe /InstallationType=JustMe /AddToPath=0 /RegisterPython=0 /NoRegistry=1 /S /D=%cd%\python
 
-rem Create and activate miniconda environment to install SCT into
+rem Create and activate miniforge environment to install SCT into
 echo:
 echo ### Using Conda to create virtual environment...
 python\Scripts\conda create -y -p python\envs\venv_sct python=3.9 || goto error

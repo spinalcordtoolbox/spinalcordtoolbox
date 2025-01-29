@@ -161,6 +161,10 @@ def register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg=
             src = ['src_label.nii']
             dest = ['dest_label_RPI.nii']
             interp_step = ['nn']
+        elif step.type == 'rootlet':
+            src = ['src.nii', 'src_label.nii']
+            dest = ['dest_RPI.nii', 'dest_label_RPI.nii']
+            interp_step = ['spline']  # Maybe do or linear?
         else:
             printv('ERROR: Wrong image type: {}'.format(step.type), 1, 'error')
 
@@ -298,7 +302,7 @@ def register(src, dest, step, param):
     output = ''  # default output if problem
 
     # If the input type is either im or seg, we can convert the input list into a string for improved code clarity
-    if not step.type == 'imseg':
+    if not step.type == 'imseg' and not step.type == 'rootlet':
         src = src[0]
         dest = dest[0]
 
@@ -355,6 +359,17 @@ def register(src, dest, step, param):
             step=step,
             metricSize=metricSize,
             fname_mask=fname_mask,
+            verbose=param.verbose,
+        )
+
+    elif step.type in ['rootlet']:
+        warp_forward_out, warp_inverse_out = algorithms.register_rootlet(
+            src=src,
+            dest=dest,
+            step=step,
+            ants_registration_params=ants_registration_params,
+            metricSize=metricSize,
+            padding=param.padding,
             verbose=param.verbose,
         )
 
