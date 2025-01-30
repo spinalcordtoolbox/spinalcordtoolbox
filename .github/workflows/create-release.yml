@@ -11,6 +11,12 @@ on:
     # > Scheduled workflows run on the latest commit on the default or base branch
     # i.e. this can only run on master
     - cron: '0 11 * * *'
+  pull_request:
+    # temporarily enable for testing, note that this refers to the base branch (i.e. master)
+    # so specifying 'jn/4775-ensure-torch-gets-frozen' wouldn't work here.
+    # See: https://docs.github.com/en/actions/writing-workflows/choosing-when-your-workflow-runs/events-that-trigger-workflows#pull_request
+    branches:
+      - '*'
 
 env:
   MAIN_BRANCH: "master"
