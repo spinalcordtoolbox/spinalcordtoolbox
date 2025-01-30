@@ -48,7 +48,6 @@ jobs:
         pip freeze | grep -v "-e git+" | grep -v "torch" | grep -v "certifi @ file" > requirements-freeze.txt
         conda deactivate
         grep "# append_to_freeze" requirements.txt >> requirements-freeze.txt
-        grep "torch" requirements.txt >> requirements-freeze.txt
 
     - name: Upload requirements-freeze.txt
       uses: actions/upload-artifact@v4
