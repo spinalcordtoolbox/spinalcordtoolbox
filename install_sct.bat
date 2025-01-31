@@ -58,7 +58,7 @@ if exist requirements-freeze.txt (
 echo:
 echo ### Installing SCT and its dependencies from %requirements_file%...
 rem Pip needs to be upgraded because default p3.7 pip won't resolve dependency conflicts correctly
-python -m pip install --upgrade pip || goto error
+python -m pip install --upgrade pip==22.3.1 setuptools==65.6.3 wheel==0.38.4 packaging==23.0 || goto error
 pip install -r %requirements_file% || goto error
 pip install -e . || goto error
 
