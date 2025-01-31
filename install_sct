@@ -593,7 +593,7 @@ find "$SCT_DIR/$PYTHON_DIR" -type f -exec touch {} +
 
 # create conda environment
 print info "Creating conda environment..."
-python/bin/conda create -y -n venv_sct python=3.7
+python/bin/conda create -y -n venv_sct python=3.7 pip==22.3.1 setuptools==65.6.3 wheel==0.38.4 packaging==24.0
 
 # Reapply the touch fix to avoid `pip` connection issues on WSL
 find "$SCT_DIR/$PYTHON_DIR" -type f -exec touch {} +
