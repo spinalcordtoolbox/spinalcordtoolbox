@@ -83,6 +83,9 @@ Pathologies
 .. |seg_ms_lesion_mp2rage| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/ms_lesion_mp2rage.png
    :target: deepseg/seg_ms_lesion_mp2rage.html
 
+.. |seg_sc_ms_lesion_axial_t2w| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/ms_lesion_sc_axial_t2.png
+   :target: deepseg/seg_sc_ms_lesion_axial_t2w.html
+
 .. |seg_ms_lesion| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/ms_lesion.png
    :target: deepseg/seg_ms_lesion.html
 
@@ -107,10 +110,11 @@ You can replace "``seg_sc_lesion_t2w_sci``" with any of the task names in the ta
 
    * - |seg_sc_lesion_t2w_sci| ``seg_sc_lesion_t2w_sci``
      - |seg_ms_lesion| ``seg_ms_lesion``
-     - |seg_ms_lesion_mp2rage| ``seg_ms_lesion_mp2rage``
-   * - |seg_tumor_edema_cavity_t1_t2| ``seg_tumor_edema_cavity_t1_t2``
+     - |seg_sc_ms_lesion_axial_t2w| ``seg_sc_ms_lesion_axial_t2w``
+   * - |seg_ms_lesion_mp2rage| ``seg_ms_lesion_mp2rage``
+     - |seg_tumor_edema_cavity_t1_t2| ``seg_tumor_edema_cavity_t1_t2``
      - |tumor_t2| ``tumor_t2``
-     -
+
 
 Other structures
 ----------------
@@ -199,6 +203,7 @@ If you absolutely require these models, you can downgrade to version of SCT list
    deepseg/seg_mouse_gm_wm_t1w
    deepseg/seg_sc_lesion_t2w_sci
    deepseg/seg_sc_ms_lesion_stir_psir
+   deepseg/seg_sc_ms_lesion_axial_t2w
    deepseg/seg_ms_lesion_mp2rage
    deepseg/seg_ms_lesion
    deepseg/seg_tumor_edema_cavity_t1_t2
