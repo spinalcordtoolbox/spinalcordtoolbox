@@ -14,7 +14,7 @@ dipy!=1.6.*,!=1.7.*,<1.9.0
 # We can set `weights_only=False` to retain the old behavior, however there are additional calls to `torch.load()` within our 
 # dependencies as well, meaning that we need to wait until they update themselves (or become compatible with `weights_only=True`).
 # Until then, we can pin torch to a version prior to this breaking change.
-torch<2.6
+torch<2.6 # append_to_freeze
 ivadomed
 matplotlib
 # `matplotlib-inline` is an optional package that comes with `jupyter` for use with the '%matplotlib inline' directive.
