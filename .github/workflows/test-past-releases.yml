@@ -29,21 +29,21 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        sct_version: [ "6.5", "6.4", "6.3", "6.2", "6.1", "6.0", "5.8", "5.7", "5.6", "5.5", "5.4", "5.3.0", "5.2.0", "5.1.0" ]
+        sct_version: [ "6.5-bp", "6.4-bp", "6.3-bp", "6.2-bp", "6.1-bp", "6.0-bp", "5.8-bp", "5.7-bp", "5.6-bp", "5.5-bp", "5.4-bp", "5.3.0-bp", "5.2.0-bp", "5.1.0-bp" ]
         os: [ ubuntu-latest, macos-latest, windows-2019 ]
         exclude:
           # Windows support was only properly introduced in 5.7
-          - sct_version: "5.6"
+          - sct_version: "5.6-bp"
             os: windows-2019
-          - sct_version: "5.5"
+          - sct_version: "5.5-bp"
             os: windows-2019
-          - sct_version: "5.4"
+          - sct_version: "5.4-bp"
             os: windows-2019
-          - sct_version: "5.3.0"
+          - sct_version: "5.3.0-bp"
             os: windows-2019
-          - sct_version: "5.2.0"
+          - sct_version: "5.2.0-bp"
             os: windows-2019
-          - sct_version: "5.1.0"
+          - sct_version: "5.1.0-bp"
             os: windows-2019
     runs-on: ${{ matrix.os }}
     defaults:
@@ -88,32 +88,32 @@ jobs:
           ./install_sct -y
 
       - name: Windows hotfix for >=5.9 (separate bc bash)
-        if: runner.os == 'Windows' && matrix.sct_version != '5.7' && matrix.sct_version != '5.8'
+        if: runner.os == 'Windows' && matrix.sct_version != '5.7-bp' && matrix.sct_version != '5.8-bp'
         shell: bash
         # Versions >=5.9 use the new syntax ("-U pip!=21.2) and also need the '^`' escape for the '!' character.
         run: perl -i -pe 's/pip\^!=21.2.\*/pip^!=21.2.\*,<24.1" "setuptools[core]/g;' install_sct.bat
 
       - name: Windows hotfix for v5.8 (separate bc bash)
-        if: runner.os == 'Windows' && matrix.sct_version == '5.8'
+        if: runner.os == 'Windows' && matrix.sct_version == '5.8-bp'
         shell: bash
         # Version ==5.8 uses the old syntax ("--upgrade pip") and also needs the '^' escape for the '!' character.
         run: perl -i -pe 's/--upgrade pip /--upgrade "pip^!=21.2.\*,<24.1" "setuptools[core]"/g;' install_sct.bat
 
       - name: Windows hotfix for v5.7 (separate bc bash)
-        if: runner.os == 'Windows' && matrix.sct_version == '5.7'
+        if: runner.os == 'Windows' && matrix.sct_version == '5.7-bp'
         shell: bash
         # Version ==5.7 uses the old syntax ("--upgrade pip") but doesn't need the carat escape.
         run: perl -i -pe 's/--upgrade pip /--upgrade "pip!=21.2.\*,<24.1" "setuptools[core]"/g;' install_sct.bat
 
       - name: Force Python 3.7 (Windows, SCT v5.7)
-        if: runner.os == 'Windows' && matrix.sct_version == '5.7'
+        if: runner.os == 'Windows' && matrix.sct_version == '5.7-bp'
         # Version 5.7-5.8's Windows installer tapped into the system python, meaning we need to set it up ourselves here
         uses: actions/setup-python@v5
         with:
           python-version: '3.7'
 
       - name: Force Python 3.8 (Windows, SCT v5.8)
-        if: runner.os == 'Windows' && matrix.sct_version == '5.8'
+        if: runner.os == 'Windows' && matrix.sct_version == '5.8-bp'
         # Version 5.7-5.8's Windows installer tapped into the system python, meaning we need to set it up ourselves here
         uses: actions/setup-python@v5
         with:
@@ -130,7 +130,7 @@ jobs:
         run: |
           if [ "$RUNNER_OS" == "Windows" ]; then
             # SCT_DIR was different in the first iteration of Windows support
-            if [ "${{ matrix.sct_version }}" == "5.7" ] || [ "${{ matrix.sct_version }}" == "5.8" ]; then
+            if [ "${{ matrix.sct_version }}" == "5.7-bp" ] || [ "${{ matrix.sct_version }}" == "5.8-bp" ]; then
               export SCT_DIR="D:\a\spinalcordtoolbox\spinalcordtoolbox"
             else
               export SCT_DIR="$USERPROFILE\sct_${{ matrix.sct_version }}"
@@ -161,8 +161,8 @@ jobs:
       # But, in SCT v5.5, the `sct_testing` name was re-used as an alias for pytest.
       # This means that, for only v5.4, we need to run the tests differently by calling pytest directly.
       - name: Run tests (v5.4)
-        if: matrix.sct_version == '5.4'
+        if: matrix.sct_version == '5.4-bp'
         run: ./python/envs/venv_sct/bin/pytest ./testing
       - name: Run tests (non-v5.4)
-        if: matrix.sct_version != '5.4'
+        if: matrix.sct_version != '5.4-bp'
         run: sct_testing
