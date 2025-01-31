@@ -594,7 +594,7 @@ find "$SCT_DIR/$PYTHON_DIR" -type f -exec touch {} +
 
 # create conda environment
 print info "Creating conda environment..."
-python/bin/conda create -y -n venv_sct python=3.7
+python/bin/conda create -y -n venv_sct python=3.7 pip==22.3.1 setuptools==65.6.3 wheel==0.38.4 packaging==23.0
 
 # Reapply the touch fix to avoid `pip` connection issues on WSL
 find "$SCT_DIR/$PYTHON_DIR" -type f -exec touch {} +
@@ -620,9 +620,6 @@ if [ "$ACTUAL_PYTHON" != "$EXPECTED_PYTHON"  ]; then
   echo "Error: Activating venv_sct failed to switch Python interpreter to Miniconda. (Incorrect interpreter loaded: $ACTUAL_PYTHON)" >&2
   exit 1
 fi
-
-# Skip pip==21.2 to avoid dependency resolver issue (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3593)
-python -m pip install -U "pip!=21.2.*"
 
 ## Install the spinalcordtoolbox into the Conda venv
 print info "Installing Python dependencies..."
