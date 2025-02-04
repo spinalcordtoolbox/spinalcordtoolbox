@@ -56,7 +56,6 @@ num2words==0.5.12
 numpy==1.23.5
 oauthlib==3.2.2
 onnxruntime==1.15.1
-packaging==23.1
 pandas==1.4.4
 pathtools==0.1.2
 Pillow==10.0.0
@@ -104,7 +103,6 @@ tomli==2.0.1
 tqdm==4.65.0
 transforms3d==0.4.1
 typer==0.9.0
-types-setuptools==68.0.0.1
 typing_extensions==4.7.1
 urllib3==1.26.16
 voxelmorph==0.2
