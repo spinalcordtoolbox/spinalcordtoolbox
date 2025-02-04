@@ -208,7 +208,7 @@ MODELS = {
      },
     "model_seg_gm_contrast_region_agnostic": {
         "url": [
-            "https://github.com/ivadomed/model-gm-contrast-region-agnostic/releases/download/r20250204/Dataset802_contrast-region-agnostic-gm.zip"
+            "https://github.com/ivadomed/model-gm-contrast-region-agnostic/releases/download/r20250328/Dataset809_gm-seg.zip"
         ],
         "description": "Segmentation of spinal cord gray matter on any region and contrast MRI",
         "contrasts": ["any"],
@@ -546,9 +546,10 @@ TASKS = {
          },
     'graymatter':
         {'description': 'Segmentation of gray matter agnostic to MRI contrasts and regions',
-         'long_description': 'This model for spinal cord gray matter (GM) segmentation uses a 2D U-Net architecture. It outputs a binary '
-                             'segmentation. The model was trained and tested on datasets including >20 sites, 7 contrasts, 1091 subjects'
-                             'included: 3T T2star (n=520), 3T MTR (n=34), 3T PSIR (n=110), 3T T1w (n=65), 7T T2star (n=72), 7T MP2RAGE UNIT1 and T1map n=145)',
+         'long_description': 'This model for spinal cord gray matter (GM) segmentation uses a 2D nnU-Net architecture. It outputs a binary '
+                             'segmentation. The model was trained and tested on datasets including >20 sites, 8 contrasts, 1311 subjects '
+                             'included: 3T T2star (n=540), 3T MTR (n=42), 3T RAMIRA (n=58), 3T PSIR (n=176), 3T T1w (n=65), 7T T2star (n=72), '
+                             '7T MP2RAGE UNIT1 and T1map (n=145) acquired in the cervical, thoracic and lumbar regions.',
          'url': 'https://github.com/ivadomed/model-gm-contrast-region-agnostic',
          'models': ['model_seg_gm_contrast_region_agnostic'],
          'citation': None,
