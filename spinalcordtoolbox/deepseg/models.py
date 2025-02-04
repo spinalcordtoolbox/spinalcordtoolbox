@@ -206,6 +206,15 @@ MODELS = {
          "thr": None,  # Images are already binarized
          "default": False,
      },
+     "model_seg_gm_contrast_region_agnostic": {
+        "url": [
+            "https://github.com/ivadomed/model-gm-contrast-region-agnostic/releases/download/r20250204/Dataset802_contrast-region-agnostic-gm.zip"
+        ],
+        "description": "Segmentation of spinal cord gray matter on any region and contrast MRI",
+        "contrasts": ["any"],
+        "thr": None,  
+        "default": False,
+     },
 }
 
 
@@ -404,6 +413,13 @@ TASKS = {
                              'cervical, thoracic and lumbar spinal cord regions.',
          'url': 'https://github.com/ivadomed/model-seg-ms-axial-t2w',
          'models': ['model_seg_ms_sc_lesion_bavaria_quebec_nnunet']},
+    'seg_gm_contrast_agnostic':
+        {'description': 'Segmentation of gray matter agnostic to MRI contrasts and regions',
+         'long_description': 'This model for spinal cord gray matter (GM) segmentation uses a 2D U-Net architecture. It outputs a binary '
+                             'segmentation. The model was trained and tested on datasets including >20 sites, 7 contrasts, 1091 subjects'
+                             'included: 3T T2star (n=520), 3T MTR (n=34), 3T PSIR (n=110), 3T T1w (n=65), 7T T2star (n=72), 7T MP2RAGE UNIT1 and T1map n=145)',
+         'url': 'https://github.com/ivadomed/model-gm-contrast-region-agnostic',
+         'models': ['model_seg_gm_contrast_region_agnostic']},
 }
 
 
