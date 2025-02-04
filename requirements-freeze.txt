@@ -66,7 +66,6 @@ num2words==0.5.13
 numpy==1.23.5
 onnx==1.15.0
 onnxruntime==1.17.0
-packaging==23.2
 pandas==1.4.4
 pillow==10.2.0
 pluggy==1.4.0
@@ -112,7 +111,6 @@ tqdm==4.66.2
 traceback2==1.4.0
 transforms3d==0.4.1
 typer==0.9.0
-types-setuptools==69.1.0.20240215
 typing_extensions==4.9.0
 unittest2==1.1.0
 urllib3==2.2.0
