@@ -156,15 +156,15 @@ if exist %SCT_DIR%\spinalcordtoolbox.egg-info\ (
 rem Move into the SCT installation directory
 pushd %SCT_DIR% || goto error
 
-rem Install portable miniconda instance. (Command source: https://github.com/conda/conda/issues/1977)
+rem Install portable miniforge instance. (Command source: https://github.com/conda/conda/issues/1977)
 echo:
-echo ### Downloading Miniconda installer...
-curl -o %TMP_DIR%\miniconda.exe https://repo.anaconda.com/miniconda/Miniconda3-latest-Windows-x86_64.exe
+echo ### Downloading miniforge installer...
+curl -o %TMP_DIR%\miniforge.exe https://github.com/conda-forge/miniforge/releases/download/24.11.2-1/Miniforge3-24.11.2-1-Windows-x86_64.exe
 echo:
-echo ### Installing portable copy of Miniconda...
-start /wait "" %TMP_DIR%\miniconda.exe /InstallationType=JustMe /AddToPath=0 /RegisterPython=0 /NoRegistry=1 /S /D=%cd%\python
+echo ### Installing portable copy of miniforge...
+start /wait "" %TMP_DIR%\miniforge.exe /InstallationType=JustMe /AddToPath=0 /RegisterPython=0 /NoRegistry=1 /S /D=%cd%\python
 
-rem Create and activate miniconda environment to install SCT into
+rem Create and activate miniforge environment to install SCT into
 echo:
 echo ### Using Conda to create virtual environment...
 python\Scripts\conda create -y -p python\envs\venv_sct python=3.9 pip==24.0 setuptools==75.8.0 wheel==0.45.1 packaging==24.2 || goto error
