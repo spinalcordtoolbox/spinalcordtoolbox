@@ -73,7 +73,6 @@ numpy==1.26.4
 onnx==1.17.0
 onnxruntime==1.19.2
 orderly-set==5.2.2
-packaging==24.2
 pandas==1.5.3
 pillow==11.0.0
 platformdirs==4.3.6
@@ -106,7 +105,6 @@ scipy==1.13.1
 seaborn==0.13.2
 sentry-sdk==2.19.0
 setproctitle==1.3.4
-setuptools-scm==8.1.0
 shellingham==1.5.4
 SimpleITK==2.4.0
 six==1.16.0
@@ -126,7 +124,6 @@ traitlets==5.14.3
 transforms3d==0.4.2
 trx-python==0.3
 typer==0.15.0
-types-setuptools==75.6.0.20241126
 typing_extensions==4.12.2
 unittest2==1.1.0
 urllib3==2.2.3
