@@ -593,7 +593,7 @@ find "$SCT_DIR/$PYTHON_DIR" -type f -exec touch {} +
 
 # create conda environment
 print info "Creating conda environment..."
-python/bin/conda create -y -n venv_sct python=3.8
+python/bin/conda create -y -n venv_sct python=3.8 pip==24.0 setuptools==75.3.0 wheel==0.44.0 packaging==24.2
 
 # Reapply the touch fix to avoid `pip` connection issues on WSL
 find "$SCT_DIR/$PYTHON_DIR" -type f -exec touch {} +
@@ -624,9 +624,6 @@ fi
 if [[ $OS == linux ]]; then
   conda install -y -c conda-forge libstdcxx-ng
 fi
-
-# Skip pip==21.2 to avoid dependency resolver issue (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3593)
-python -m pip install -U "pip!=21.2.*"
 
 ## Install the spinalcordtoolbox into the Conda venv
 print info "Installing Python dependencies..."
