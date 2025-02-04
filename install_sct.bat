@@ -167,7 +167,7 @@ start /wait "" %TMP_DIR%\miniconda.exe /InstallationType=JustMe /AddToPath=0 /Re
 rem Create and activate miniconda environment to install SCT into
 echo:
 echo ### Using Conda to create virtual environment...
-python\Scripts\conda create -y -p python\envs\venv_sct python=3.9 || goto error
+python\Scripts\conda create -y -p python\envs\venv_sct python=3.9 pip==24.0 setuptools==75.8.0 wheel==0.45.1 packaging==24.2 || goto error
 CALL python\Scripts\activate.bat python\envs\venv_sct || goto error
 echo Virtual environment created and activated successfully!
 
@@ -179,8 +179,6 @@ if exist requirements-freeze.txt (
 )
 echo:
 echo ### Installing SCT and its dependencies from %requirements_file%...
-rem Skip pip==21.2 to avoid dependency resolver issue (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3593)
-python\envs\venv_sct\python -m pip install -U "pip^!=21.2.*" || goto error
 python\envs\venv_sct\Scripts\pip install -r %requirements_file% || goto error
 python\envs\venv_sct\Scripts\pip install -e . || goto error
 
