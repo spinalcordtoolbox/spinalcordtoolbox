@@ -159,7 +159,7 @@ pushd %SCT_DIR% || goto error
 rem Install portable miniforge instance. (Command source: https://github.com/conda/conda/issues/1977)
 echo:
 echo ### Downloading miniforge installer...
-curl -o %TMP_DIR%\miniforge.exe https://github.com/conda-forge/miniforge/releases/download/24.11.2-1/Miniforge3-24.11.2-1-Windows-x86_64.exe
+curl -o %TMP_DIR%\miniforge.exe -L https://github.com/conda-forge/miniforge/releases/download/24.11.2-1/Miniforge3-24.11.2-1-Windows-x86_64.exe
 echo:
 echo ### Installing portable copy of miniforge...
 start /wait "" %TMP_DIR%\miniforge.exe /InstallationType=JustMe /AddToPath=0 /RegisterPython=0 /NoRegistry=1 /S /D=%cd%\python
