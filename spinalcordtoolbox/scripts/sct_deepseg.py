@@ -297,11 +297,11 @@ def main(argv: Sequence[str]):
             thr = (arguments.binarize_prediction if arguments.binarize_prediction is not None
                    else models.MODELS[name_model]['thr'])  # Default `thr` value stored in model dict
             im_lst, target_lst = inference.segment_non_ivadomed(
-                path_model, model_type, input_filenames, thr, 
-                # NOTE: contrast-agnostic nnunet model sometimes predicts pixels outside the cord, we want to 
+                path_model, model_type, input_filenames, thr,
+                # NOTE: contrast-agnostic nnunet model sometimes predicts pixels outside the cord, we want to
                 # set keep_largest object as the default behaviour when using this model
-                keep_largest=1 if arguments.task[0] == 'seg_sc_contrast_agnostic' else arguments.keep_largest, 
-                fill_holes_in_pred=arguments.fill_holes, 
+                keep_largest=1 if arguments.task[0] == 'seg_sc_contrast_agnostic' else arguments.keep_largest,
+                fill_holes_in_pred=arguments.fill_holes,
                 remove_small=arguments.remove_small,
                 use_gpu=use_gpu, remove_temp_files=arguments.r)
 
