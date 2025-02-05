@@ -81,11 +81,12 @@ jobs:
       - name: Update environment variables
         run: |
           if [ "$RUNNER_OS" == "Windows" ]; then
+            export VERSION_TXT=$(< spinalcordtoolbox/version.txt)
             # SCT_DIR was different in the first iteration of Windows support
-            if [ "${{ matrix.sct_version }}" == "5.7-bp" ] || [ "${{ matrix.sct_version }}" == "5.8-bp" ]; then
+            if [ "${VERSION_TXT}" == "5.7" ] || [ ${VERSION_TXT} == "5.8" ]; then
               export SCT_DIR="D:\a\spinalcordtoolbox\spinalcordtoolbox"
             else
-              export SCT_DIR="$USERPROFILE\sct_${{ matrix.sct_version }}"
+              export SCT_DIR="$USERPROFILE\sct_${VERSION_TXT}"
             fi
 
             # NB: I'm not sure what GHA's syntax is for cmd.exe, so we use bash to set the environment variables.
