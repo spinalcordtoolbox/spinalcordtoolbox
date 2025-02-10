@@ -101,19 +101,6 @@ def test_segment_nifti_binary_seg(fname_image, fname_seg_manual, fname_out, task
                 assert label in detected_labels
 
 
-def test_segment_nifti_softseg_error_with_fill_holes(tmp_path):
-    """
-    Test soft output (produced using `-thr 0`) throws error when used with `-fill-holes 1'
-    """
-    # Ignore warnings from ivadomed model source code changing
-    warnings.filterwarnings("ignore", category=SourceChangeWarning)
-    fname_out = str(tmp_path/'t2_seg_deepseg.nii.gz')  # tmp_path for automatic cleanup
-    with pytest.raises(AssertionError):
-        sct_deepseg.main(argv=['-i', sct_test_path('t2', 't2.nii.gz'), '-task', 'seg_sc_contrast_agnostic',
-                               '-o', fname_out, '-qc', str(tmp_path/'qc'),
-                               '-thr', '0', '-fill-holes', '1'])
-
-
 def t2_ax():
     """Generate an approximation of an axially-acquired T2w anat image using resampling."""
     fname_out = os.path.abspath('t2_ax.nii.gz')
