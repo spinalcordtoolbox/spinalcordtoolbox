@@ -301,7 +301,7 @@ def run_proc(cmd, verbose=1, raise_exception=True, cwd=None, env=None, is_sct_bi
         cwd = os.getcwd()
 
     if env is None:
-        env = os.environ
+        env = os.environ.copy()
 
     if is_sct_binary:
         # create an absolute path to the binary inside of SCT's bin directory
