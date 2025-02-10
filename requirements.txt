@@ -10,11 +10,6 @@ dipy!=1.6.*,!=1.7.*,<1.9.0
 # PyTorch's Linux distribution is very large due to its GPU support,
 # but we only need that for training models. Our users only need CPU.
 --extra-index-url https://download.pytorch.org/whl/cpu # append_to_freeze
-# In January 2025, PyTorch changed the default of `torch.load()` to `weights_only=True`, breaking the loading of some of our models.
-# We can set `weights_only=False` to retain the old behavior, however there are additional calls to `torch.load()` within our 
-# dependencies as well, meaning that we need to wait until they update themselves (or become compatible with `weights_only=True`).
-# Until then, we can pin torch to a version prior to this breaking change.
-torch<2.6 # append_to_freeze
 ivadomed
 matplotlib
 # `matplotlib-inline` is an optional package that comes with `jupyter` for use with the '%matplotlib inline' directive.
@@ -66,6 +61,18 @@ scikit-image
 scikit-learn
 totalspineseg
 xlwt
+# - torch<2.6: In January 2025, PyTorch changed the default of `torch.load()` to `weights_only=True`, breaking the
+#              loading of some of our models. We can set `weights_only=False` to retain the old behavior, however
+#              there are additional calls to `torch.load()` within our dependencies as well, meaning that we need to
+#              wait until they update themselves (or become compatible with `weights_only=True`). Until then, we can
+#              pin torch to a version prior to this breaking change.
+# - torch<2.3: PyTorch 2.3.0 removed support for Intel Macs. If we leave this unpinned, then version 2.2.2 will be
+#              installed on Intel Macs, while a newer version (e.g. 2.5.1) will be installed on all other platforms.
+#              To keep the versions in sync between platforms, we pin torch to `<2.3`. See:
+#              -> https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4781
+# - NOTE: nnunetv2 currently requries `torch>=2.1.2`, meaning that the above restriction results in a range of
+#         `2.1.2 <= torch < 2.3`, i.e. most likely version `2.2.2` will be installed.
+torch<2.3 # append_to_freeze
 tqdm
 transforms3d
 urllib3
