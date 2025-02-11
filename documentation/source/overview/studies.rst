@@ -26,6 +26,9 @@ The following studies have used SCT:
 2025 
 ----
 
+-  Hernandez-Charpak *et al.* `Towards personalized mapping through lumbosacral spinal cord task fMRI <https://doi.org/10.1162/imag_a_00455>`_, **Imaging Neuroscience** 2025
+-  Al-shawwa *et al.* `Spinal cord demyelination predicts neurological deterioration in patients with mild degenerative cervical myelopathy <https://doi.org/10.1136/bmjno-2024-000940>`_, **BMJ Neurol. Open** 2025
+-  Joo *et al.* `Establishing Normative Values for Entire Spinal Cord Morphometrics in East Asian Young Adults <https://doi.org/10.3348/kjr.2024.0907>`_, **Korean J. Radiol.** 2025	
 -  Farah *et al.* `T1 mapping using MP2RAGE in degenerative cervical myelopathy: a longitudinal study <https://doi.org/10.1007/s00586-025-08652-z>`_, **Eur. Spine J.** 2025
 -  Boudreau *et al.* `Longitudinal reproducibility of brain and spinal cord quantitative MRI measures <https://doi.org/10.1162/imag_a_00409>`_, **Imaging Neurosci.** 2025
 -  Mongay-Ocho *et al.* `Association of the Cervical Canal Area With Disability and Progression in People With Multiple Sclerosis <https://doi.org/10.1212/WNL.0000000000210136>`_, **Neurology** 2025
