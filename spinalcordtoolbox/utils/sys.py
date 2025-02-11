@@ -316,7 +316,7 @@ def run_proc(cmd, verbose=1, raise_exception=True, cwd=None, env=None, is_sct_bi
         # also, for windows, add the bin directory to the path (to allow ANTs to access 'msvc-runtime' DLLs)
         # see also: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4655#issuecomment-2430178901
         if sys.platform.startswith("win32"):
-            env['PATH'] = env['PATH'] + os.pathsep + __bin_dir__
+            env['PATH'] = __bin_dir__ + os.pathsep + env['PATH']
 
     if isinstance(cmd, str):
         cmdline = cmd
