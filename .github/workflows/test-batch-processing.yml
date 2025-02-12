@@ -24,7 +24,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-20.04, macos-13, windows-2022 ]
+        os: [ ubuntu-22.04, macos-13, windows-2022 ]
     runs-on: ${{ matrix.os }}
     # NB: Setting `bash` as the default shell is a bit of a hack workaround for Windows to allow it to run .sh scripts.
     #     Normally, we would ask the user to install a Windows-compatible bash via either Cygwin or Git for Windows.
@@ -121,8 +121,8 @@ jobs:
 
       - name: Diff summaries (Ubuntu vs macOS)
         continue-on-error: true
-        run: diff -u artifacts/sct_example_data_ubuntu-20.04.json artifacts/sct_example_data_macos-13.json | ydiff
+        run: diff -u artifacts/sct_example_data_ubuntu-22.04.json artifacts/sct_example_data_macos-13.json | ydiff
 
       - name: Diff summaries (Ubuntu vs. Windows)
         continue-on-error: true
-        run: diff -u artifacts/sct_example_data_ubuntu-20.04.json artifacts/sct_example_data_windows-2022.json | ydiff
+        run: diff -u artifacts/sct_example_data_ubuntu-22.04.json artifacts/sct_example_data_windows-2022.json | ydiff

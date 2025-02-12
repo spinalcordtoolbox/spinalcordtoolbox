@@ -50,7 +50,7 @@ jobs:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
     if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     container: archlinux
     steps:
       - name: Dependencies
@@ -73,7 +73,7 @@ jobs:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
     if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     container: debian:sid
     steps:
       - name: Dependencies
@@ -96,7 +96,7 @@ jobs:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
     if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     container: debian:testing
     steps:
       - name: Dependencies
@@ -119,7 +119,7 @@ jobs:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
     if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     container: debian:10
     steps:
       - name: Dependencies
@@ -142,7 +142,7 @@ jobs:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
     if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     container: debian:11
     steps:
       - name: Dependencies
@@ -167,7 +167,7 @@ jobs:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
     if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     # Stream8 has a 2024 EOL, while CentOS 8 has a 2021 EOL
     # See: https://blog.centos.org/2020/12/future-is-centos-stream/
     # See: https://blog.centos.org/2023/04/end-dates-are-coming-for-centos-stream-8-and-centos-linux-7/
@@ -193,7 +193,7 @@ jobs:
 
   centos-9:
     name: CentOS Stream 9
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     container: quay.io/centos/centos:stream9
     steps:
       - name: Dependencies
@@ -211,8 +211,8 @@ jobs:
           ./.ci.sh -t
 
   ubuntu-20_04:
-    name: Ubuntu 20.04 (Focal Fossa)
-    runs-on: ubuntu-20.04
+    name: Ubuntu 22.04 (Jammy Jellyfish)
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
       - name: Install SCT
@@ -338,9 +338,9 @@ jobs:
         cd ~/spinalcordtoolbox
         ./.ci.sh -t
 
-  windows-wsl-ubuntu-20_04:
+  windows-wsl-ubuntu-22_04:
     # with the help of https://github.com/marketplace/actions/setup-wsl
-    name: WSL [Ubuntu 20.04]
+    name: WSL [Ubuntu 22.04]
     # TODO: when actions supports using ${{env}} in job.*.if and not just job.*.steps.*.if, use this:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
@@ -353,7 +353,7 @@ jobs:
     - uses: Vampire/setup-wsl@v3
       with:
         # other WSL container choices at: https://github.com/marketplace/actions/setup-wsl#distribution
-        distribution: Ubuntu-20.04
+        distribution: Ubuntu-22.04
     - name: Use unix line endings
       shell: bash
       run: |
