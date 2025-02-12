@@ -1033,7 +1033,7 @@ def crop_with_mask(array, img_crop, pad=3, axis=0):
     # crop the image at the specified axis
     idx = [slice(None)] * array.ndim   # Start with full image
     idx[axis] = slice(start, stop + 1)  # Limit axis to slice range
-    return array[idx]
+    return array[tuple(idx)]
 
 
 def get_max_radius(img, plane='Axial'):
