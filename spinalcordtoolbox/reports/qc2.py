@@ -576,7 +576,7 @@ def sct_deepseg_sagittal(
     logger.info('Find the center of each slice')
     # Use the -qc-seg mask if available to get crop radius (as well as the center of mass) for each slice
     if fname_qc_seg:
-        radius = get_max_radius(img_qc_seg, orientation="Sagittal")
+        radius = get_max_radius(img_qc_seg, plane="Sagittal")
         centers = np.array([center_of_mass(slice) for slice in img_qc_seg.data])
         inf_nan_fill(centers[:, 0])
         inf_nan_fill(centers[:, 1])
