@@ -226,12 +226,12 @@ jobs:
           ./.ci.sh -t
 
   ubuntu-22_04:
-    name: Ubuntu 22.04 (Jammy Jellyfish)
+    name: Ubuntu 24.04 (Noble Numbat)
     # TODO: when actions supports using ${{env}} in job.*.if and not just job.*.steps.*.if, use this:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
     if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Dependencies
         run: |
@@ -284,9 +284,9 @@ jobs:
         run: |
           ./.ci.sh -t
 
-  windows-wsl-ubuntu-22_04:
+  windows-wsl-ubuntu-24_04:
     # with the help of https://github.com/marketplace/actions/setup-wsl
-    name: WSL [Ubuntu 22.04]
+    name: WSL [Ubuntu 24.04]
     # TODO: when actions supports using ${{env}} in job.*.if and not just job.*.steps.*.if, use this:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
@@ -299,7 +299,7 @@ jobs:
     - uses: Vampire/setup-wsl@v3
       with:
         # other WSL container choices at: https://github.com/marketplace/actions/setup-wsl#distribution
-        distribution: Ubuntu-22.04
+        distribution: Ubuntu-24.04
     - name: Use unix line endings
       shell: bash
       run: |
