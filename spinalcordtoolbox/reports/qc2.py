@@ -573,16 +573,17 @@ def sct_deepseg_sagittal(
                                "Please consider using `sct_deepseg -qc-seg` option to customize the crop. You can use `sct_create_mask` to create a suitable mask to pass to "
                                "`-qc-seg`. If this message still occurs after cropping, please consider resampling your image to a lower resolution using `sct_resample`.")
 
-    # Each slice is centered on the segmentation
     logger.info('Find the center of each slice')
-    # Use the -qc-seg mask if available, otherwise use the spinal cord mask
-    img_centers = img_qc_seg if fname_qc_seg else img_seg_sc
-    centers = np.array([center_of_mass(slice) for slice in img_centers.data])
-    inf_nan_fill(centers[:, 0])
-    inf_nan_fill(centers[:, 1])
-
-    # If -qc-seg is available, use it to generate the radius (or display the whole image if not available)
-    radius = get_max_radius(img_qc_seg, orientation="Sagittal") if fname_qc_seg else (img_input.dim[1]//2, img_input.dim[2]//2)
+    # Use the -qc-seg mask if available to get crop radius (as well as the center of mass) for each slice
+    if fname_qc_seg:
+        radius = get_max_radius(img_qc_seg, orientation="Sagittal")
+        centers = np.array([center_of_mass(slice) for slice in img_qc_seg.data])
+        inf_nan_fill(centers[:, 0])
+        inf_nan_fill(centers[:, 1])
+    # otherwise, if -qc-seg isn't provided, display the full sagittal slice and use the center of the uncropped image
+    else:
+        radius = (img_input.dim[1] // 2, img_input.dim[2] // 2)
+        centers = np.array([radius] * img_input.data.shape[0])
 
     # Generate the first QC report image
     img = equalize_histogram(mosaic(img_input, centers, radius=radius))
