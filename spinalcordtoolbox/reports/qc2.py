@@ -1018,18 +1018,30 @@ def assign_label_colors_by_groups(labels):
     return color_list
 
 
-def crop_with_mask(array, img_crop, pad=3, axis=0):
+def crop_with_mask(array, img_crop, pad=3, axis=0, total_slices=None):
     """
     Crop array along a specific axis based on nonzero slices in the reference image.
+
+    Use `pad` if you want to pad around the mask (no matter how big the mask is). Use
+    `total_slices` to pad only until the total number of slices is reached (overrides `pad`).
+
     Note: We use axis=0 by default because QC images are reoriented to SAL, therefore we
         crop the SI axis by default.
     """
     # get extents of segmentation used for cropping
     first_slice = min(np.where(img_crop.data)[axis])
     last_slice = max(np.where(img_crop.data)[axis])
+    # if `total_slices` is specified, then override `pad`
+    if total_slices is not None:
+        pad_total = max(0, total_slices - (last_slice - first_slice + 1))
+        l_pad = math.floor(pad_total // 2)
+        r_pad = math.ceil(pad_total // 2)
+    # otherwise, use the provided value as-is
+    else:
+        l_pad = r_pad = pad
     # pad (but make sure the indices are within the image bounds)
-    start = max(first_slice - pad, 0)
-    stop = min(last_slice + pad, img_crop.data.shape[axis])
+    start = max(first_slice - l_pad, 0)
+    stop = min(last_slice + r_pad, img_crop.data.shape[axis])
     # crop the image at the specified axis
     idx = [slice(None)] * array.ndim   # Start with full image
     idx[axis] = slice(start, stop + 1)  # Limit axis to slice range
