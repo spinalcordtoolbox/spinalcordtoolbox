@@ -26,6 +26,7 @@ The following studies have used SCT:
 2025 
 ----
 
+-  Lebret *et al.* `Test-retest repeatability of intravoxel incoherent motion (IVIM) measurements in the cervical cord <https://doi.org/10.1162/imag_a_00468>`_, **Imaging Neuroscience** 2025
 -  Karthik *et al.* `SCIsegV2: A Universal Tool for Segmentation of Intramedullary Lesions in Spinal Cord Injury <https://doi.org/10.1007/978-3-031-82007-6_19>`_, **Appl. Med. Artif. Intell.** 2025
 -  Hernandez-Charpak *et al.* `Towards personalized mapping through lumbosacral spinal cord task fMRI <https://doi.org/10.1162/imag_a_00455>`_, **Imaging Neuroscience** 2025
 -  Al-shawwa *et al.* `Spinal cord demyelination predicts neurological deterioration in patients with mild degenerative cervical myelopathy <https://doi.org/10.1136/bmjno-2024-000940>`_, **BMJ Neurol. Open** 2025
