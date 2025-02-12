@@ -531,13 +531,8 @@ def sct_deepseg_sagittal(
     img_seg_lesion = Image(fname_seg_lesion).change_orientation('RSP') if fname_seg_lesion else None
     img_qc_seg = Image(fname_qc_seg).change_orientation('RSP') if fname_qc_seg else None
 
-    # if the image has more then 30 slices then we resample it to 30 slices on the R-L direction
-    if img_input.dim[0] > 30 and not fname_qc_seg:
-        R_L_resolution = img_input.dim[4] * img_input.dim[0] / 30
-    else:
-        R_L_resolution = img_input.dim[4]
-
     # Resample images slice by slice
+    R_L_resolution = img_input.dim[4]
     logger.info('Resample images to %fx%fx%f vox', R_L_resolution, p_resample, p_resample)
     img_input = resample_nib(
         image=img_input,
@@ -565,9 +560,18 @@ def sct_deepseg_sagittal(
     ) if fname_qc_seg else None
 
     # Using -qc-seg mask if available, we remove slices which are empty (except for the first 2 and last 2 slices just around the segmented slices)
+    # If -qc-seg mask isn't available, but image would create a mosaic that's too large, keep only the center 30 sagittal slices (using segmnetation as a reference)
     for img_to_crop in [img_input, img_seg_sc, img_seg_lesion, img_qc_seg]:
-        if fname_qc_seg and img_to_crop:
+        if img_to_crop is None:
+            continue  # don't crop missing images
+        if fname_qc_seg:
             img_to_crop.data = crop_with_mask(img_to_crop.data, img_qc_seg, pad=2)
+        elif img_input.dim[0] > 30:
+            img_to_crop.data = crop_with_mask(img_to_crop.data, img_seg_sc, total_slices=30)
+            if img_to_crop == img_input:  # display a message only once
+                logger.warning("Source image is too large to display in a sagittal mosaic. Applying automatic cropping around segmentation.\n"
+                               "Please consider using `sct_deepseg -qc-seg` option to customize the crop. You can use `sct_create_mask` to create a suitable mask to pass to "
+                               "`-qc-seg`. If this message still occurs after cropping, please consider resampling your image to a lower resolution using `sct_resample`.")
 
     # Each slice is centered on the segmentation
     logger.info('Find the center of each slice')
