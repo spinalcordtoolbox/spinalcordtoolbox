@@ -116,11 +116,11 @@ MODELS = {
     #       - Binarization is applied within SCT code
     "model_seg_sc_contrast_agnostic_softseg_monai": {
         "url": [
-            "https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/releases/download/v2.5/model_contrast-agnostic_20240930-1002.zip"
+            "https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/releases/download/v3.1/model_contrast_agnostic_20250123.zip"
         ],
-        "description": "Spinal cord segmentation agnostic to MRI contrasts using MONAI-based nnUNet model",
+        "description": "Spinal cord segmentation agnostic to MRI contrasts",
         "contrasts": ["any"],
-        "thr": 0.5,  # Softseg model -> threshold at 0.5
+        "thr": None,  # not using Softseg model anymore since switching to the more robust nnunet model
         "default": False,
     },
     "model_seg_sci_multiclass_sc_lesion_nnunet": {
@@ -306,11 +306,12 @@ TASKS = {
          'models': ['model_seg_epfl_t2w_lumbar_sc']},
     'seg_sc_contrast_agnostic':
         {'description': 'Spinal cord segmentation agnostic to MRI contrasts',
-         'long_description': 'This model for contrast agnostic spinal cord segmentation uses an nnUNet '
-                             'architecture, and was created with the MONAI package. Training data consists of healthy '
-                             'controls from the open-source Spine Generic Multi Subject database and pathologies from '
-                             'private datasets including DCM and MS patients. Segmentation has been tested with the '
-                             'following contrasts: [T1w, T2w, T2star, MTon_MTS, GRE_T1w, DWI, mp2rage_UNIT1], but '
+         'long_description': 'The contrast agnostic spinal cord segmentation uses a 3D CNN model based on the nnUNet '
+                             'framework. Training data consists of healthy controls from the open-source Spine Generic '
+                             'Multi Subject database and pathologies from private datasets including DCM, MS, '
+                             'SCI (Acute, Intermediate and Chronic; Pre/Post-operative) patients. Segmentations have been '
+                             'tested with the following contrasts: '
+                             '[T1w, T2w, T2star, MTon_MTS, GRE_T1w, DWI, mp2rage_UNIT1, PSIR, STIR, EPI], but '
                              'other contrasts that are close visual matches may also work well with this model.',
          'url': 'https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/',
          'models': ['model_seg_sc_contrast_agnostic_softseg_monai']},
