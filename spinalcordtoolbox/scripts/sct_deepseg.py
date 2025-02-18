@@ -224,8 +224,8 @@ def gm_sc_7t_t2star():           # noqa E302 (2 blank lines)
     return get_parser('gm_sc_7t_t2star')
 def lumbar_sc_t2w():             # noqa E302 (2 blank lines)
     return get_parser('lumbar_sc_t2w')
-def sc_contrast_agnostic():      # noqa E302 (2 blank lines)
-    return get_parser('sc_contrast_agnostic')
+def spinalcord():      # noqa E302 (2 blank lines)
+    return get_parser('spinalcord')
 def sc_lesion_t2w_sci():         # noqa E302 (2 blank lines)
     return get_parser('sc_lesion_t2w_sci')
 def spinal_rootlets_t2w():       # noqa E302 (2 blank lines)
@@ -364,7 +364,7 @@ def main(argv: Sequence[str]):
                 path_model, model_type, input_filenames, thr,
                 # NOTE: contrast-agnostic nnunet model sometimes predicts pixels outside the cord, we want to
                 # set keep_largest object as the default behaviour when using this model
-                keep_largest=1 if arguments.task == 'sc_contrast_agnostic' else arguments.keep_largest,
+                keep_largest=1 if arguments.task == 'spinalcord' else arguments.keep_largest,
                 fill_holes_in_pred=arguments.fill_holes,
                 remove_small=arguments.remove_small,
                 use_gpu=use_gpu, remove_temp_files=arguments.r)

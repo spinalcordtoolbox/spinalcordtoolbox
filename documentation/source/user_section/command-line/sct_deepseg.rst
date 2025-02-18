@@ -8,8 +8,8 @@ Here we provide a gallery of each model available in the ``sct_deepseg`` CLI too
 Spinal cord
 -----------
 
-.. |sc_contrast_agnostic| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/contrast_agnostic.png
-   :target: deepseg/sc_contrast_agnostic.html
+.. |spinalcord| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/contrast_agnostic.png
+   :target: deepseg/spinalcord.html
 
 .. |lumbar_sc_t2w| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/lumbar_t2.png
    :target: deepseg/lumbar_sc_t2w.html
@@ -27,15 +27,15 @@ Spinal cord segmentation can be performed by running the following sample comman
 
 .. code::
 
-   sct_deepseg sc_contrast_agnostic -i input.nii.gz
+   sct_deepseg spinalcord -i input.nii.gz
 
-You can replace "``sc_contrast_agnostic``" with any of the task names in the table below to perform different tasks. Click on a task below for more information.
+You can replace "``spinalcord``" with any of the task names in the table below to perform different tasks. Click on a task below for more information.
 
 .. list-table::
    :align: center
    :widths: 25 25 25
 
-   * - |sc_contrast_agnostic| ``sc_contrast_agnostic``
+   * - |spinalcord| ``spinalcord``
      - |lumbar_sc_t2w| ``lumbar_sc_t2w``
      - |sc_epi| ``sc_epi``
    * - |sc_t2star| ``sc_t2star``
@@ -189,13 +189,13 @@ If you absolutely require these models, you can downgrade to version of SCT list
      - ``ms_lesion`` (contrast-agnostic MS lesion segmentation)
    * - |ms_sc_mp2rage| ``ms_sc_mp2rage``
      - SCT Version ``6.4``
-     - ``sc_contrast_agnostic`` (contrast-agnostic SC segmentation)
+     - ``spinalcord`` (contrast-agnostic SC segmentation)
 
 .. toctree::
    :hidden:
    :maxdepth: 2
 
-   deepseg/sc_contrast_agnostic
+   deepseg/spinalcord
    deepseg/seg_ms_sc_mp2rage
    deepseg/sc_epi
    deepseg/sc_t2star

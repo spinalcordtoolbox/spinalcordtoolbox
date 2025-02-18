@@ -68,7 +68,7 @@ As the model was trained on cropped images, we recommend cropping the input imag
 
 .. code:: sh
 
-   sct_deepseg sc_contrast_agnostic -i IMAGE_UNIT1 -o IMAGE_seg
+   sct_deepseg spinalcord -i IMAGE_UNIT1 -o IMAGE_seg
    sct_crop_image -i IMAGE_UNIT1 -m IMAGE_seg -dilate 30x30x5
    sct_deepseg ms_lesion_mp2rage -i IMAGE_UNIT1 -qc ./qc
 

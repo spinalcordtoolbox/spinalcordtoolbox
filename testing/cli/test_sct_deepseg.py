@@ -46,7 +46,7 @@ def test_model_dict():
     (sct_test_path('t2', 't2.nii.gz'),
      sct_test_path('t2', 't2_seg-manual.nii.gz'),
      't2_seg_deepseg.nii.gz',
-     'sc_contrast_agnostic',
+     'spinalcord',
      None),
     (sct_test_path('t2', 't2.nii.gz'),
      sct_test_path('t2', 't2_seg-deepseg_rootlets.nii.gz'),

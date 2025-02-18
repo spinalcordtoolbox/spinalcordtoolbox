@@ -213,7 +213,7 @@ MODELS = {
 # Regions could be: sc, gm, lesion, tumor
 CROP_MESSAGE = (
     'To crop the data you can first segment the spinal cord using the contrast agnostic model. This could be '
-    'done using: "sct_deepseg sc_contrast_agnostic -i IMAGE -o IMAGE_sc", then crop the '
+    'done using: "sct_deepseg spinalcord -i IMAGE -o IMAGE_sc", then crop the '
     'image with 30 mm of dilation on axial orientation around the spinal cord. This could be done using: '
     '"sct_crop_image -i IMAGE -m IMAGE_sc -dilate 30x30x5". Note that 30 is only for 1mm isotropic '
     'resolution, for images with another resolution divide 30/your_axial_resolution.'
@@ -304,7 +304,7 @@ TASKS = {
                              'manual spinal cord segmentations) of 11 healthy (non-pathological) patients.',
          'url': 'https://github.com/ivadomed/lumbar_seg_EPFL',
          'models': ['model_seg_epfl_t2w_lumbar_sc']},
-    'sc_contrast_agnostic':
+    'spinalcord':
         {'description': 'Spinal cord segmentation agnostic to MRI contrasts',
          'long_description': 'The contrast agnostic spinal cord segmentation uses a 3D CNN model based on the nnUNet '
                              'framework. Training data consists of healthy controls from the open-source Spine Generic '
