@@ -57,23 +57,23 @@ You can try ``seg_sc_ms_lesion_stir_psir`` on your *own* STIR or PSIR image usin
 
 MP2RAGE-UNIT1
 *************
-The algorithm ``ms_lesion_mp2rage`` was trained on cropped MP2RAGE-UNIT1 images. Details: `Cohen-Adad, J., et al. Zenodo release (2023) <https://zenodo.org/doi/10.5281/zenodo.8376753>`_.
+The algorithm ``lesion_ms_mp2rage`` was trained on cropped MP2RAGE-UNIT1 images. Details: `Cohen-Adad, J., et al. Zenodo release (2023) <https://zenodo.org/doi/10.5281/zenodo.8376753>`_.
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/lesion-analysis/model_seg_ms_mp2rage.png
    :align: center
    :figwidth: 60%
 
-You can try ``ms_lesion_mp2rage`` on your *own* MP2RAGE UNIT1 image using the following commands.
+You can try ``lesion_ms_mp2rage`` on your *own* MP2RAGE UNIT1 image using the following commands.
 As the model was trained on cropped images, we recommend cropping the input image before running the segmentation.
 
 .. code:: sh
 
    sct_deepseg spinalcord -i IMAGE_UNIT1 -o IMAGE_seg
    sct_crop_image -i IMAGE_UNIT1 -m IMAGE_seg -dilate 30x30x5
-   sct_deepseg ms_lesion_mp2rage -i IMAGE_UNIT1 -qc ./qc
+   sct_deepseg lesion_ms_mp2rage -i IMAGE_UNIT1 -qc ./qc
 
 :Input arguments:
     - ``-i`` : Input MP2RAGE UNIT1 image
-    - ``-task`` : Task to perform. In this case, we use the ``ms_lesion_mp2rage`` model
+    - ``-task`` : Task to perform. In this case, we use the ``lesion_ms_mp2rage`` model
     - ``-qc`` : Directory for Quality Control reporting. QC reports allow us to evaluate the segmentation slice-by-slice
 

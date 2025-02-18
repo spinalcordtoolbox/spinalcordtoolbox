@@ -51,7 +51,7 @@ def test_model_dict():
     (sct_test_path('t2', 't2.nii.gz'),
      sct_test_path('t2', 't2_seg-deepseg_rootlets.nii.gz'),
      't2_seg_deepseg.nii.gz',
-     'spinal_rootlets_t2w',
+     'rootlets_t2',
      None),
     (sct_test_path('t2', 't2.nii.gz'),  # dummy image since no EPI test data
      None,  # no ground truth, just test if it runs
@@ -61,12 +61,12 @@ def test_model_dict():
     (sct_test_path('t2', 't2.nii.gz'),  # dummy image since no MP2RAGE test data
      None,  # no ground truth, just test if it runs
      't2_seg_deepseg.nii.gz',
-     'ms_lesion_mp2rage',
+     'lesion_ms_mp2rage',
      None),
     (sct_test_path('t2', 't2.nii.gz'),
      None,  # no ground truth, just test if it runs
      't2_seg_deepseg.nii.gz',
-     'ms_lesion',
+     'lesion_ms',
      None),
 ])
 def test_segment_nifti_binary_seg(fname_image, fname_seg_manual, fname_out, task, thr, tmp_path):
@@ -123,20 +123,20 @@ def t2_ax_sc_seg():
       sct_test_path('t2', 't2_fake_lesion_lesion_seg.nii.gz')],
      't2_deepseg.nii.gz',
      ["_sc_seg", "_lesion_seg"],
-     'sc_lesion_t2w_sci',
+     'lesion_sci_t2',
      0.5),
     (t2_ax(),          # Generate axial images on the fly
      [t2_ax_sc_seg(),  # Just test against SC ground truth, because the model generates SC segs well
       None],           # The model performs poorly on our fake t2_ax() image, so skip evaluating on lesion seg
      't2_deepseg.nii.gz',
      ["_sc_seg", "_lesion_seg"],
-     'sc_ms_lesion_axial_t2w',
+     'lesion_ms_axial_t2',
      0.5),
     (sct_test_path('t1', 't1_mouse.nii.gz'),
      [None, None],
      't1_deepseg.nii.gz',
      ["_GM_seg", "_WM_seg"],
-     'mouse_gm_wm_t1w',
+     'gm_wm_mouse_t1',
      0.5),
     (sct_test_path('t2', 't2.nii.gz'),
      [None, None, None, None, None],

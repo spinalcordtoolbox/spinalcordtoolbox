@@ -11,8 +11,8 @@ Spinal cord
 .. |spinalcord| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/contrast_agnostic.png
    :target: deepseg/spinalcord.html
 
-.. |lumbar_sc_t2w| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/lumbar_t2.png
-   :target: deepseg/lumbar_sc_t2w.html
+.. |sc_lumbar_t2| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/lumbar_t2.png
+   :target: deepseg/sc_lumbar_t2.html
 
 .. |sc_epi| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/epi_bold.png
    :target: deepseg/sc_epi.html
@@ -20,8 +20,8 @@ Spinal cord
 .. |sc_t2star| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/sc_t2star.png
     :target: deepseg/sc_t2star.html
 
-.. |mice_sc| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/mouse_t1.png
-   :target: deepseg/mice_sc.html
+.. |sc_mouse_t1| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/mouse_t1.png
+   :target: deepseg/sc_mouse_t1.html
 
 Spinal cord segmentation can be performed by running the following sample command:
 
@@ -36,10 +36,10 @@ You can replace "``spinalcord``" with any of the task names in the table below t
    :widths: 25 25 25
 
    * - |spinalcord| ``spinalcord``
-     - |lumbar_sc_t2w| ``lumbar_sc_t2w``
+     - |sc_lumbar_t2| ``sc_lumbar_t2``
      - |sc_epi| ``sc_epi``
    * - |sc_t2star| ``sc_t2star``
-     - |mice_sc| ``mice_sc``
+     - |sc_mouse_t1| ``sc_mouse_t1``
      -
 
 Gray matter
@@ -48,14 +48,14 @@ Gray matter
 .. |gm_sc_7t_t2star| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/gm_sc_7t_t2star.png
    :target: deepseg/gm_sc_7t_t2star.html
 
-.. |exvivo_gm_wm_t2| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/exvivo_gm_t2.png
-   :target: deepseg/exvivo_gm_wm_t2.html
+.. |gm_wm_exvivo_t2| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/exvivo_gm_t2.png
+   :target: deepseg/gm_wm_exvivo_t2.html
 
-.. |mouse_gm_wm_t1w| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/gm_wm_mouse_t1.png
-   :target: deepseg/mouse_gm_wm_t1w.html
+.. |gm_wm_mouse_t1| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/gm_wm_mouse_t1.png
+   :target: deepseg/gm_wm_mouse_t1.html
 
-.. |mice_gm| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/gm_mouse_t1.png
-   :target: deepseg/mice_gm.html
+.. |gm_mouse_t1| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/gm_mouse_t1.png
+   :target: deepseg/gm_mouse_t1.html
 
 Gray matter segmentation can be performed by running the following sample command:
 
@@ -70,9 +70,9 @@ You can replace "``gm_sc_7t_t2star``" with any of the task names in the table be
    :widths: 25 25 25
 
    * - |gm_sc_7t_t2star| ``gm_sc_7t_t2star``
-     - |exvivo_gm_wm_t2| ``exvivo_gm_wm_t2``
-     - |mouse_gm_wm_t1w| ``mouse_gm_wm_t1w``
-   * - |mice_gm| ``mice_gm``
+     - |gm_wm_exvivo_t2| ``gm_wm_exvivo_t2``
+     - |gm_wm_mouse_t1| ``gm_wm_mouse_t1``
+   * - |gm_mouse_t1| ``gm_mouse_t1``
      -
      -
 
@@ -80,17 +80,17 @@ You can replace "``gm_sc_7t_t2star``" with any of the task names in the table be
 Pathologies
 -----------
 
-.. |sc_lesion_t2w_sci| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/sci_lesion_sc_t2.png
-   :target: deepseg/sc_lesion_t2w_sci.html
+.. |lesion_sci_t2| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/sci_lesion_sc_t2.png
+   :target: deepseg/lesion_sci_t2.html
 
-.. |ms_lesion_mp2rage| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/ms_lesion_mp2rage.png
-   :target: deepseg/ms_lesion_mp2rage.html
+.. |lesion_ms_mp2rage| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/ms_lesion_mp2rage.png
+   :target: deepseg/lesion_ms_mp2rage.html
 
-.. |sc_ms_lesion_axial_t2w| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/ms_lesion_sc_axial_t2.png
-   :target: deepseg/sc_ms_lesion_axial_t2w.html
+.. |lesion_ms_axial_t2| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/ms_lesion_sc_axial_t2.png
+   :target: deepseg/lesion_ms_axial_t2.html
 
-.. |ms_lesion| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/ms_lesion.png
-   :target: deepseg/ms_lesion.html
+.. |lesion_ms| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/ms_lesion.png
+   :target: deepseg/lesion_ms.html
 
 .. |tumor_edema_cavity_t1_t2| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/tumor_edema_cavity_t1_t2.png
    :target: deepseg/tumor_edema_cavity_t1_t2.html
@@ -102,19 +102,19 @@ Pathology segmentation can be performed by running the following sample command:
 
 .. code::
 
-   sct_deepseg sc_lesion_t2w_sci -i input.nii.gz
+   sct_deepseg lesion_sci_t2 -i input.nii.gz
 
-You can replace "``sc_lesion_t2w_sci``" with any of the task names in the table below to perform different tasks. Click on a task below for more information.
+You can replace "``lesion_sci_t2``" with any of the task names in the table below to perform different tasks. Click on a task below for more information.
 
 
 .. list-table::
    :align: center
    :widths: 25 25 25
 
-   * - |sc_lesion_t2w_sci| ``sc_lesion_t2w_sci``
-     - |ms_lesion| ``ms_lesion``
-     - |sc_ms_lesion_axial_t2w| ``sc_ms_lesion_axial_t2w``
-   * - |ms_lesion_mp2rage| ``ms_lesion_mp2rage``
+   * - |lesion_sci_t2| ``lesion_sci_t2``
+     - |lesion_ms| ``lesion_ms``
+     - |lesion_ms_axial_t2| ``lesion_ms_axial_t2``
+   * - |lesion_ms_mp2rage| ``lesion_ms_mp2rage``
      - |tumor_edema_cavity_t1_t2| ``tumor_edema_cavity_t1_t2``
      - |tumor_t2| ``tumor_t2``
 
@@ -122,8 +122,8 @@ You can replace "``sc_lesion_t2w_sci``" with any of the task names in the table 
 Other structures
 ----------------
 
-.. |spinal_rootlets_t2w| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/spinal_rootlets_t2.png
-   :target: deepseg/spinal_rootlets_t2w.html
+.. |rootlets_t2| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/spinal_rootlets_t2.png
+   :target: deepseg/rootlets_t2.html
 
 .. |totalspineseg| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/totalspineseg.png
    :target: deepseg/totalspineseg.html
@@ -132,34 +132,34 @@ Multiple structures may be segmented by running the following sample command:
 
 .. code::
 
-   sct_deepseg spinal_rootlets_t2w -i input.nii.gz
+   sct_deepseg rootlets_t2 -i input.nii.gz
 
-You can replace "``spinal_rootlets_t2w``" with any of the task names in the table below to perform different tasks. Click on a task below for more information.
+You can replace "``rootlets_t2``" with any of the task names in the table below to perform different tasks. Click on a task below for more information.
 
 
 .. list-table::
    :align: center
    :widths: 25 25 25
 
-   * - |spinal_rootlets_t2w| ``spinal_rootlets_t2w``
+   * - |rootlets_t2| ``rootlets_t2``
      - |totalspineseg| ``totalspineseg``
      -
 
-.. |canal_t2w| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/spinal_canal_t2.png
-   :target: deepseg/canal_t2w.html
+.. |sc_canal_t2| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/spinal_canal_t2.png
+   :target: deepseg/sc_canal_t2.html
 
 Spinal Canal segmentation can be performed by running the following sample command:
 
 .. code::
 
-   sct_deepseg canal_t2w -i input.nii.gz
+   sct_deepseg sc_canal_t2 -i input.nii.gz
 
 
 .. list-table::
    :align: center
    :widths: 25 25 25
 
-   * - |canal_t2w| ``canal_t2w``
+   * - |sc_canal_t2| ``sc_canal_t2``
      - 
      -
 
@@ -186,7 +186,7 @@ If you absolutely require these models, you can downgrade to version of SCT list
      - Superseded by
    * - |seg_sc_ms_lesion_stir_psir| ``seg_sc_ms_lesion_stir_psir``
      - SCT Version ``6.4``
-     - ``ms_lesion`` (contrast-agnostic MS lesion segmentation)
+     - ``lesion_ms`` (contrast-agnostic MS lesion segmentation)
    * - |ms_sc_mp2rage| ``ms_sc_mp2rage``
      - SCT Version ``6.4``
      - ``spinalcord`` (contrast-agnostic SC segmentation)
@@ -199,19 +199,19 @@ If you absolutely require these models, you can downgrade to version of SCT list
    deepseg/seg_ms_sc_mp2rage
    deepseg/sc_epi
    deepseg/sc_t2star
-   deepseg/mice_sc
-   deepseg/lumbar_sc_t2w
-   deepseg/exvivo_gm_wm_t2
+   deepseg/sc_mouse_t1
+   deepseg/sc_lumbar_t2
+   deepseg/gm_wm_exvivo_t2
    deepseg/gm_sc_7t_t2star
-   deepseg/mice_gm
-   deepseg/mouse_gm_wm_t1w
-   deepseg/sc_lesion_t2w_sci
+   deepseg/gm_mouse_t1
+   deepseg/gm_wm_mouse_t1
+   deepseg/lesion_sci_t2
    deepseg/seg_sc_ms_lesion_stir_psir
-   deepseg/sc_ms_lesion_axial_t2w
-   deepseg/ms_lesion_mp2rage
-   deepseg/ms_lesion
+   deepseg/lesion_ms_axial_t2
+   deepseg/lesion_ms_mp2rage
+   deepseg/lesion_ms
    deepseg/tumor_edema_cavity_t1_t2
    deepseg/tumor_t2
-   deepseg/spinal_rootlets_t2w
-   deepseg/canal_t2w
+   deepseg/rootlets_t2
+   deepseg/sc_canal_t2
    deepseg/totalspineseg

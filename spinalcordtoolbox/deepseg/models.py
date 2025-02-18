@@ -230,7 +230,7 @@ TASKS = {
                              'lesion) adult patients.',
          'url': 'https://github.com/ivadomed/t2star_sc',
          'models': ['t2star_sc']},
-    'mice_sc':
+    'sc_mouse_t1':
         {'description': 'Cord segmentation on mouse MRI',
          'long_description': 'This segmentation model for T1w mouse spinal cord segmentation uses the UNet '
                              'architecture, and was created with the `ivadomed` package. Training data was provided by '
@@ -240,7 +240,7 @@ TASKS = {
                              'mice.',
          'url': 'https://github.com/ivadomed/mice_uqueensland_sc/',
          'models': ['mice_uqueensland_sc']},
-    'mice_gm':
+    'gm_mouse_t1':
         {'description': 'Gray matter segmentation on mouse MRI',
          'long_description': 'This segmentation model for T1w mouse spinal gray matter segmentation uses the UNet '
                              'architecture, and was created with the `ivadomed` package. Training data was provided by '
@@ -260,7 +260,7 @@ TASKS = {
                              '(https://github.com/ivadomed/findcord_tumor).',
          'url': 'https://github.com/sct-pipeline/tumor-segmentation',
          'models': ['findcord_tumor', 't2_tumor']},
-    'tumor-edema-cavity_t1-t2':
+    'tumor_edema_cavity_t1_t2':
         {'description': 'Multiclass cord tumor/edema/cavity segmentation',
          'long_description': 'This segmentation model for T1w and T2w spinal tumor, edema, and cavity segmentation '
                              'uses a 3D UNet architecture, and was created with the `ivadomed` package. Training data '
@@ -272,7 +272,7 @@ TASKS = {
                              '(https://github.com/ivadomed/findcord_tumor).',
          'url': 'https://github.com/ivadomed/model_seg_sctumor-edema-cavity_t2-t1_unet3d-multichannel',
          'models': ['findcord_tumor', 'model_seg_sctumor-edema-cavity_t2-t1_unet3d-multichannel']},
-    'exvivo_gm-wm_t2':
+    'gm_wm_exvivo_t2':
         {'description': 'Grey/white matter seg on exvivo human T2w',
          'long_description': 'This segmentation model for T2w human spinal gray and white matter uses a 2D Unet '
                              'architecture, and was created with the `ivadomed` package. Training data consisted '
@@ -296,7 +296,7 @@ TASKS = {
                              'external multicentric database. For more information, see the following URL.',
          'url': 'https://github.com/ivadomed/model_seg_gm-wm_t2star_7t_unet3d-multiclass',
          'models': ['model_7t_multiclass_gm_sc_unet2d']},
-    'lumbar_sc_t2w':
+    'sc_lumbar_t2':
         {'description': 'Lumbar cord segmentation with 3D UNet',
          'long_description': 'This segmentation model for T2w spinal cord segmentation uses a 3D UNet architecture, '
                              'and was created with the ivadomed package. Training data was provided by Nawal Kinany '
@@ -315,7 +315,7 @@ TASKS = {
                              'other contrasts that are close visual matches may also work well with this model.',
          'url': 'https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/',
          'models': ['model_seg_sc_contrast_agnostic_softseg_monai']},
-    'sc_lesion_t2w_sci':
+    'lesion_sci_t2':
         {'description': 'Intramedullary SCI lesion and cord segmentation in T2w MRI',
          'long_description': 'This segmentation model for spinal cord injury segmentation uses a 3D U-Net '
                              'architecture, and was trained with the nnUNetV2 framework. It is a multiclass model, '
@@ -325,7 +325,7 @@ TASKS = {
                              'orientations, as well as multiple scanner manufacturers and field strengths.',
          'url': 'https://github.com/ivadomed/model_seg_sci',
          'models': ['model_seg_sci_multiclass_sc_lesion_nnunet']},
-    'spinal_rootlets_t2w':
+    'rootlets_t2':
         {'description': 'Segmentation of spinal nerve rootlets for T2w contrast',
          'long_description': 'This segmentation model for spinal nerve rootlets segmentation uses a 3D U-Net '
                              'architecture, and was trained with the nnUNetV2 framework. It is a multiclass model, '
@@ -334,7 +334,7 @@ TASKS = {
                              'from healthy subjects from two different open-access datasets.',
          'url': 'https://github.com/ivadomed/model-spinal-rootlets',
          'models': ['model_seg_spinal_rootlets_nnunet']},
-    'mouse_gm_wm_t1w':
+    'gm_wm_mouse_t1':
         {'description': 'Exvivo mouse GM/WM segmentation for T1w contrast',
          'long_description': 'This segmentation model for gray and white matter segmentation of exvivo mice spinal '
                              'cords uses an NNunet architecture, and was created with the nnUNetV2 package. It is a '
@@ -354,7 +354,7 @@ TASKS = {
                              'dataset has healthy control subjects. The model has been trained in a human-in-the-loop active learning fashion.',
          'url': 'https://github.com/sct-pipeline/fmri-segmentation',
          'models': ['model_seg_sc_epi_nnunet']},
-    'ms_lesion_mp2rage':
+    'lesion_ms_mp2rage':
         {'description': 'MS lesion segmentation on cropped MP2RAGE data',
          'long_description': f'This segmentation model for multiple sclerosis lesion segmentation on cropped MP2RAGE-UNIT1 spinal cord data. '
                              f'Uses a 3D U-Net, trained with the nnUNetV2 framework. It is a single-class model outputting binary MS lesions '
@@ -364,7 +364,7 @@ TASKS = {
                              f'Aix-Marseille University, Marseille, France). {CROP_MESSAGE}',
          'url': 'https://github.com/ivadomed/model_seg_ms_mp2rage',
          'models': ['model_seg_ms_lesion_mp2rage']},
-    'ms_lesion':
+    'lesion_ms':
         {'description': 'MS lesion segmentation on spinal cord MRI images',
          'long_description': 'This segmentation model for spinal cord MS lesion segmentation uses a 3D U-Net architecture. It outputs a binary '
                              'segmentation of MS lesions. The model was trained and tested on datasets including 25 sites, 1611 patients and 2988 '
@@ -375,7 +375,7 @@ TASKS = {
                              'dimensions ranging from 0.2mm to 9.5mm (including inter-slice gap).',
          'url': 'https://github.com/ivadomed/ms-lesion-agnostic',
          'models': ['model_seg_ms_lesion']},
-    'canal_t2w':
+    'sc_canal_t2':
         {'description': 'Segmentation of spinal canal on T2w contrast',
          'long_description': 'This model segments the spinal canal, or in an anatomic definition the dural sac, on T2w contrast. '
                              'Uses a 3D U-Net, trained with the nnUNetV2 framework. It is a single-class model outputting the binary canal segmentation. '
@@ -393,7 +393,7 @@ TASKS = {
                              'and resolutions. The model used in TotalSpineSeg is based on nnU-Net as the backbone for training and inference.',
          'url': 'https://github.com/neuropoly/totalspineseg',
          'models': ['totalspineseg']},
-    'sc_ms_lesion_axial_t2w':
+    'lesion_ms_axial_t2':
         {'description': 'Intramedullary MS lesion and spinal cord segmentation in Axial T2w MRI',
          'long_description': 'This MS lesion segmentation uses a 2D U-Net '
                              'architecture, and was trained with the nnUNetV2 framework. The model outputs '
