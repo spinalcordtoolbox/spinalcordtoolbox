@@ -3,7 +3,7 @@
 SCT Courses
 ###########
 
-We organize a **free** in-person SCT course each year after the ISMRM conference. The course provides a guided walkthrough of SCT, with developers and researchers on-hand to provide support and to answer any questions you may have. If you’d like to be added to the mailing list for course announcements, please visit `this link <https://docs.google.com/forms/d/e/1FAIpQLSdvsXwLRj07bx85O2wPM9ut1sC-20dFKdTVe-OckyvkfncV3Q/viewform>`_.
+We organize a **free** annual SCT course. The course provides a guided walkthrough of SCT, with developers and researchers on-hand to provide support and to answer any questions you may have. If you’d like to be added to the mailing list for course announcements, please visit `this link <https://docs.google.com/forms/d/e/1FAIpQLSdvsXwLRj07bx85O2wPM9ut1sC-20dFKdTVe-OckyvkfncV3Q/viewform>`_.
 
 The past courses handouts are listed below:
 
