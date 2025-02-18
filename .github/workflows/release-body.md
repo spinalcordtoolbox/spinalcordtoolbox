@@ -14,7 +14,7 @@ Notable changes include:
 > 6. Once the results from all OSs have been pasted, remove this block of text.
 
 <details>
-<summary>Results of <code>batch_processing.sh</code> on Ubuntu 20.04</summary>
+<summary>Results of <code>batch_processing.sh</code> on Ubuntu 22.04</summary>
 
 ```
 ~~~
@@ -34,7 +34,7 @@ dmri/fa_in_cst.csv:
 </details>
 
 <details>
-<summary>Results of <code>batch_processing.sh</code> on macOS 11 (Big Sur)</summary>
+<summary>Results of <code>batch_processing.sh</code> on macOS 13 (Ventura)</summary>
 
 ```
 ~~~
@@ -54,7 +54,7 @@ dmri/fa_in_cst.csv:
 </details>
 
 <details>
-<summary>Results of <code>batch_processing.sh</code> on Windows 2019</summary>
+<summary>Results of <code>batch_processing.sh</code> on Windows 2022</summary>
 
 ```
 ~~~
