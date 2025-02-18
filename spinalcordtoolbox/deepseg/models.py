@@ -459,7 +459,7 @@ TASKS = {
                       journal{bioRxiv}
              }
              ```
-         """),
+         """),  # noqa E501 (line too long)
          },
     'lesion_ms_mp2rage':
         {'description': 'MS lesion segmentation on cropped MP2RAGE data',
