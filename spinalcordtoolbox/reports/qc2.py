@@ -816,7 +816,12 @@ def mosaic(img: Image, centers: np.ndarray, radius: tuple[int, int] = (15, 15), 
     # Center and crop each axial slice
     cropped = []
     for center, slice in zip(centers.astype(int), img.data):
-        # Add a margin before cropping, in case the center is too close to the edge
+        # If the `center` coordinate is close to the edge, then move it away from the edge to capture more of the image
+        # In other words, make sure the `center` coordinate is at least `radius` pixels away from the edge
+        for i in [0, 1]:
+            center[i] = min(slice.shape[i] - radius[i], center[i])  # Check far edge first
+            center[i] = max(radius[i],                  center[i])  # Then check 0 edge last
+        # Add a margin before cropping, in case the center is still too close to one of the edges
         # Also, use Kronecker product to scale each block in multiples
         cropped.append(np.kron(np.pad(slice, [[r] for r in radius])[
             center[0]:center[0] + 2*radius[0],
