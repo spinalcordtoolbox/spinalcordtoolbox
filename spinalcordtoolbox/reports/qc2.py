@@ -1106,8 +1106,8 @@ def crop_with_mask(img_to_crop, img_ref, pad=3, max_slices=None):
     # crop the image at the specified axis
     cropper = ImageCropper(img_in=img_to_crop)
     cropper.bbox = BoundingBox(xmin=start_slice, xmax=stop_slice,
-                               ymin=0, ymax=img_to_crop.data.shape[1],
-                               zmin=0, zmax=img_to_crop.data.shape[2])
+                               ymin=0, ymax=img_to_crop.data.shape[1]-1,
+                               zmin=0, zmax=img_to_crop.data.shape[2]-1)
     img_cropped = cropper.crop()
     # since `ImageCropper` returns a copy of the image, we need to update the original image
     # we could instead just return the new copy, but that would require refactoring the qc
