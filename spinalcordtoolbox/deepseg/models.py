@@ -116,11 +116,11 @@ MODELS = {
     #       - Binarization is applied within SCT code
     "model_seg_sc_contrast_agnostic_softseg_monai": {
         "url": [
-            "https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/releases/download/v2.5/model_contrast-agnostic_20240930-1002.zip"
+            "https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/releases/download/v3.1/model_contrast_agnostic_20250123.zip"
         ],
-        "description": "Spinal cord segmentation agnostic to MRI contrasts using MONAI-based nnUNet model",
+        "description": "Spinal cord segmentation agnostic to MRI contrasts",
         "contrasts": ["any"],
-        "thr": 0.5,  # Softseg model -> threshold at 0.5
+        "thr": None,  # not using Softseg model anymore since switching to the more robust nnunet model
         "default": False,
     },
     "model_seg_sci_multiclass_sc_lesion_nnunet": {
@@ -168,6 +168,15 @@ MODELS = {
          "thr": None,  # Images are already binarized
          "default": False,
      },
+    "model_seg_ms_sc_lesion_bavaria_quebec_nnunet": {
+        "url": [
+            "https://github.com/ivadomed/model-seg-ms-axial-t2w/releases/download/r20241111/model_bavaria_quebec_axial_t2w_ms.zip"
+        ],
+        "description": "Intramedullary MS lesion and spinal cord segmentation in Axial T2w MRI",
+        "contrasts": ["t2"],
+        "thr": None,  # Images are already binarized when splitting into sc-seg + lesion-seg
+        "default": False,
+    },
     "model_seg_ms_lesion": {
          "url": [
              "https://github.com/ivadomed/ms-lesion-agnostic/releases/download/r20241101/model_seg_ms_lesion_unet3d.zip"
@@ -297,11 +306,12 @@ TASKS = {
          'models': ['model_seg_epfl_t2w_lumbar_sc']},
     'seg_sc_contrast_agnostic':
         {'description': 'Spinal cord segmentation agnostic to MRI contrasts',
-         'long_description': 'This model for contrast agnostic spinal cord segmentation uses an nnUNet '
-                             'architecture, and was created with the MONAI package. Training data consists of healthy '
-                             'controls from the open-source Spine Generic Multi Subject database and pathologies from '
-                             'private datasets including DCM and MS patients. Segmentation has been tested with the '
-                             'following contrasts: [T1w, T2w, T2star, MTon_MTS, GRE_T1w, DWI, mp2rage_UNIT1], but '
+         'long_description': 'The contrast agnostic spinal cord segmentation uses a 3D CNN model based on the nnUNet '
+                             'framework. Training data consists of healthy controls from the open-source Spine Generic '
+                             'Multi Subject database and pathologies from private datasets including DCM, MS, '
+                             'SCI (Acute, Intermediate and Chronic; Pre/Post-operative) patients. Segmentations have been '
+                             'tested with the following contrasts: '
+                             '[T1w, T2w, T2star, MTon_MTS, GRE_T1w, DWI, mp2rage_UNIT1, PSIR, STIR, EPI], but '
                              'other contrasts that are close visual matches may also work well with this model.',
          'url': 'https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/',
          'models': ['model_seg_sc_contrast_agnostic_softseg_monai']},
@@ -383,6 +393,18 @@ TASKS = {
                              'and resolutions. The model used in TotalSpineSeg is based on nnU-Net as the backbone for training and inference.',
          'url': 'https://github.com/neuropoly/totalspineseg',
          'models': ['totalspineseg']},
+    'seg_sc_ms_lesion_axial_t2w':
+        {'description': 'Intramedullary MS lesion and spinal cord segmentation in Axial T2w MRI',
+         'long_description': 'This MS lesion segmentation uses a 2D U-Net '
+                             'architecture, and was trained with the nnUNetV2 framework. The model outputs '
+                             'lesion mask along with the spinal cord segmentation mask. Training and evaluation'
+                             'data consisting of highly-anisotropic axial T2w chunks was gathered from 4 sites: Klinikum Rechts der Isar, '
+                             'Technical University of Munich, Germany, NYU Langone Medical Center, NY, USA, '
+                             'Zuckerberg SF General Hospital, UCSF, CA, USA, and Brigham and Womens Hospital, '
+                             'Harvard Medical School, Boston, USA . Unlike typical MS lesion segmentation models, this models works equally well on '
+                             'cervical, thoracic and lumbar spinal cord regions.',
+         'url': 'https://github.com/ivadomed/model-seg-ms-axial-t2w',
+         'models': ['model_seg_ms_sc_lesion_bavaria_quebec_nnunet']},
 }
 
 

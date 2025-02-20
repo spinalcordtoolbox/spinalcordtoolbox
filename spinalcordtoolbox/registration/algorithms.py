@@ -17,7 +17,7 @@ from scipy.ndimage import gaussian_filter, gaussian_filter1d, convolve
 from scipy.io import loadmat
 
 import spinalcordtoolbox.image as image
-from spinalcordtoolbox.math import laplacian, binarize
+from spinalcordtoolbox.math import laplacian, binarize, dilate, slicewise_mean
 from spinalcordtoolbox.registration.landmarks import register_landmarks
 from spinalcordtoolbox.registration import core
 from spinalcordtoolbox.scripts import sct_resample
@@ -100,7 +100,7 @@ class Paramreg(object):
         self.rot_dest = None  # same as above for the destination image (e.g., if template, should be set to 0)
 
         # list of possible values for self.type
-        self.type_list = ['im', 'seg', 'imseg', 'label']
+        self.type_list = ['im', 'seg', 'imseg', 'label', 'rootlet']
 
     # update constructor with user's parameters
     def update(self, paramreg_user):
@@ -341,6 +341,54 @@ def register_step_label(src, dest, step, verbose=1):
     return warp_forward_out, warp_inverse_out
 
 
+def register_rootlet(src, dest, step, ants_registration_params, metricSize, padding, verbose=1):
+    """
+    """
+    src_im = src[0]
+    dest_im = dest[0]
+    src_rootlet = src[1]
+    dest_rootlet = dest[1]
+    # Dilate rootlets masks:
+    src_mask = image.Image(dilate(image.Image(src_rootlet), size=3, shape='ball'), hdr=image.Image(src_rootlet).hdr).save(image.add_suffix(src_rootlet, '_dil'))
+    src_mask = image.add_suffix(src_rootlet, '_dil')
+    dest_mask = image.Image(dilate(image.Image(dest_rootlet), size=3, shape='ball'), hdr=image.Image(dest_rootlet).hdr).save(image.add_suffix(dest_rootlet, '_dil'))
+    dest_mask = image.add_suffix(dest_rootlet, '_dil')
+
+    ants_registration_params[step.algo] = ',26,0,3'
+    output_warping_fields = register_step_ants_registration(src=src_im,
+                                                            dest=dest_im,
+                                                            step=step,
+                                                            masking=['-x', '[' + dest_mask + ',' + src_mask + ']'],
+                                                            ants_registration_params=ants_registration_params,
+                                                            padding=padding,
+                                                            metricSize=metricSize,
+                                                            verbose=1)
+
+    # Symmetrize the warping fields post-registration
+    logger.info('\nApply transformation after rootlets adjustment...')
+    output_warping_fields = list(output_warping_fields)
+    for i in range(len(output_warping_fields)):
+        fname_warp = output_warping_fields[i]
+        # Average perslice warping field
+        cmd_split = ['sct_image', '-i', fname_warp, '-mcs']  # Split warping field in x, y, z
+        status, output = run_proc(cmd_split, verbose, is_sct_binary=True)
+
+        # Compute slicewise mean in Z to ensure symmetry
+        logger.info('\nComputing slicewise mean in Z to ensure symmetry....')
+        img = image.Image(image.add_suffix(fname_warp, '_Z'))
+        out = img.copy()
+        out.data = slicewise_mean(out.data, 2)
+        out.save(image.add_suffix(fname_warp, '_Z_mean'))
+        # Merge warp back together
+        cmd_split = ['sct_image', '-i',
+                     image.add_suffix(fname_warp, '_X'), image.add_suffix(fname_warp, '_Y'), image.add_suffix(fname_warp, '_Z_mean'),
+                     '-omc', '-o', image.add_suffix(fname_warp, '_zmean')]
+        status, output = run_proc(cmd_split, verbose, is_sct_binary=True)
+        output_warping_fields[i] = image.add_suffix(fname_warp, '_zmean')
+
+    return output_warping_fields
+
+
 def register_step_dl_multimodal_cascaded_reg(src, dest, step, verbose=1):
     """
     """
@@ -509,7 +557,7 @@ def register_dl_multimodal_cascaded_reg(fname_src, fname_dest, fname_warp_forwar
     # Set the intent code to vector
     # The intent code 1007 was chosen based on information found on:
     #     -  https://brainder.org/2012/09/23/the-nifti-file-format/
-    #     -  http://users.bmap.ucla.edu/~mchamber/npl/nifti_8h_source.html#l00470
+    #     -  https://afni.nimh.nih.gov/afni/doc/source/nifti1_8h-source.html#l00823
     warp.header['intent_code'] = 1007
     # Save the composed warping field [forward]
     warp.save(fname_warp_forward)

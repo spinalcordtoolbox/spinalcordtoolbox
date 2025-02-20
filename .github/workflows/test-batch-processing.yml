@@ -22,8 +22,9 @@ jobs:
   batch_processing:
     name: Test batch_processing.sh
     strategy:
+      fail-fast: false
       matrix:
-        os: [ ubuntu-20.04, macos-13, windows-2022 ]
+        os: [ ubuntu-22.04, ubuntu-24.04, macos-13, windows-2022 ]
     runs-on: ${{ matrix.os }}
     # NB: Setting `bash` as the default shell is a bit of a hack workaround for Windows to allow it to run .sh scripts.
     #     Normally, we would ask the user to install a Windows-compatible bash via either Cygwin or Git for Windows.
@@ -84,3 +85,48 @@ jobs:
           else
                sct_testing testing/batch_processing/test_batch_processing.py
           fi
+
+      - name: Rename and move folder summaries for easier download
+        # When uploading a single artifact, the only way to exclude the parent directory
+        # is to move the file to its own folder, then point `path` to that folder.
+        # See: # https://github.com/actions/upload-artifact/issues/30#issuecomment-582156316
+        if: always()
+        run: |
+          mkdir jsons
+          mv testing/sct_example_data.json jsons/sct_example_data_${{ matrix.os }}.json
+
+      - name: Upload folder summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sct_example_data_${{ matrix.os }}.json
+          path: jsons
+
+  compare-results:
+    name: Compare cross-platform results
+    runs-on: macos-13  # brew is the easiest way to install `jd`
+    needs: batch_processing
+    env:
+      YDIFF_OPTIONS: "--side-by-side --pager=cat --color=always --width=120 --nowrap"
+    steps:
+      - name: Install `ydiff`  # https://github.com/ymattw/ydiff
+        run: brew install ydiff
+
+      - name: Download summaries
+        uses: actions/download-artifact@v4
+        # See: https://github.com/actions/download-artifact?tab=readme-ov-file#download-all-artifacts
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Diff summaries (Ubuntu vs macOS)
+        continue-on-error: true
+        run: diff -u artifacts/sct_example_data_ubuntu-22.04.json artifacts/sct_example_data_macos-13.json | ydiff
+
+      - name: Diff summaries (Ubuntu vs. Windows)
+        continue-on-error: true
+        run: diff -u artifacts/sct_example_data_ubuntu-22.04.json artifacts/sct_example_data_windows-2022.json | ydiff
+
+      - name: Diff summaries (Ubuntu 22 vs. Ubuntu 24)
+        continue-on-error: true
+        run: diff -u artifacts/sct_example_data_ubuntu-22.04.json artifacts/sct_example_data_ubuntu-24.04.json | ydiff
