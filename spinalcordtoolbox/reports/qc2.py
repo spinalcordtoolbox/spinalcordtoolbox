@@ -22,6 +22,7 @@ from scipy.ndimage import center_of_mass
 import skimage.exposure
 
 from spinalcordtoolbox.centerline.core import get_centerline, ParamCenterline
+from spinalcordtoolbox.cropping import ImageCropper, BoundingBox
 from spinalcordtoolbox.image import Image, rpi_slice_to_orig_orientation
 import spinalcordtoolbox.reports
 from spinalcordtoolbox.reports.assets._assets.py import refresh_qc_entries
@@ -346,7 +347,7 @@ def sct_deepseg_axial(
     # Using -qc-seg mask if available, we remove slices which are empty (except for the first 3 and last 3 slices just around the segmented slices)
     for img_to_crop in [img_input, img_seg_sc, img_seg_lesion, img_qc_seg]:
         if fname_qc_seg and img_to_crop:
-            img_to_crop.data = crop_with_mask(img_to_crop.data, img_qc_seg, pad=3)
+            crop_with_mask(img_to_crop, img_qc_seg, pad=3)
 
     # Each slice is centered on the segmentation
     logger.info('Find the center of each slice')
@@ -565,9 +566,9 @@ def sct_deepseg_sagittal(
         if img_to_crop is None:
             continue  # don't crop missing images
         if fname_qc_seg:
-            img_to_crop.data = crop_with_mask(img_to_crop.data, img_qc_seg, pad=2)
+            crop_with_mask(img_to_crop, img_qc_seg, pad=2)
         elif img_input.dim[0] > 30:
-            img_to_crop.data = crop_with_mask(img_to_crop.data, img_seg_sc, max_slices=30)
+            crop_with_mask(img_to_crop, img_seg_sc, max_slices=30)
             if img_to_crop == img_input:  # display a message only once
                 logger.warning("Source image is too large to display in a sagittal mosaic. Applying automatic cropping around segmentation.\n"
                                "Please consider using `sct_deepseg -qc-seg` option to customize the crop. You can use `sct_create_mask` to create a suitable mask to pass to "
@@ -1023,7 +1024,7 @@ def assign_label_colors_by_groups(labels):
     return color_list
 
 
-def crop_with_mask(array, img_crop, pad=3, max_slices=None):
+def crop_with_mask(img_to_crop, img_ref, pad=3, max_slices=None):
     """
     Crop array along a specific axis based on nonzero slices in the reference image.
 
@@ -1036,8 +1037,8 @@ def crop_with_mask(array, img_crop, pad=3, max_slices=None):
     # QC images are reoriented to SAL (axial) or RSP (sagittal) such that axis=0 is always the slice index
     axis = 0
     # get extents of segmentation used for cropping
-    first_slice = min(np.where(img_crop.data)[axis])
-    last_slice = max(np.where(img_crop.data)[axis])
+    first_slice = min(np.where(img_ref.data)[axis])
+    last_slice = max(np.where(img_ref.data)[axis])
     # if `max_slices` is specified, then override `pad`
     if max_slices is not None:
         # use `max(0, ...)` to avoid cropping the segmentation if it would exceed `max_slices`
@@ -1049,11 +1050,18 @@ def crop_with_mask(array, img_crop, pad=3, max_slices=None):
         l_pad = r_pad = pad
     # pad (but make sure the index slices are within the image bounds)
     start_slice = max(first_slice - l_pad, 0)
-    stop_slice = min(last_slice + r_pad, img_crop.data.shape[axis] - 1)
+    stop_slice = min(last_slice + r_pad, img_ref.data.shape[axis] - 1)
     # crop the image at the specified axis
-    idx = [slice(None)] * array.ndim                # Start with full image
-    idx[axis] = slice(start_slice, stop_slice + 1)  # Limit axis to slice range
-    return array[tuple(idx)]
+    cropper = ImageCropper(img_in=img_to_crop)
+    cropper.bbox = BoundingBox(xmin=start_slice, xmax=stop_slice,
+                               ymin=0, ymax=img_to_crop.data.shape[1],
+                               zmin=0, zmax=img_to_crop.data.shape[2])
+    img_cropped = cropper.crop()
+    # since `ImageCropper` returns a copy of the image, we need to update the original image
+    # we could instead just return the new copy, but that would require refactoring the qc
+    # function to no longer iterate over the images in-place, which would be a larger change
+    img_to_crop.data = img_cropped.data
+    img_to_crop.hdr = img_cropped.hdr
 
 
 def get_max_axial_radius(img):
