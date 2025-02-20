@@ -357,7 +357,7 @@ def sct_deepseg_axial(
     inf_nan_fill(centers[:, 1])
 
     # If -qc-seg is available, use it to generate the radius
-    radius = get_max_radius(img_qc_seg) if fname_qc_seg else (15, 15)
+    radius = get_max_axial_radius(img_qc_seg) if fname_qc_seg else (15, 15)
 
     # Generate the first QC report image
     img = equalize_histogram(mosaic(img_input, centers, radius))
@@ -576,7 +576,7 @@ def sct_deepseg_sagittal(
     logger.info('Find the center of each slice')
     # Use the -qc-seg mask if available to get crop radius (as well as the center of mass) for each slice
     if fname_qc_seg:
-        radius = get_max_radius(img_qc_seg, plane="Sagittal")
+        radius = get_max_sagittal_radius(img_qc_seg)
         centers = np.array([center_of_mass(slice) for slice in img_qc_seg.data])
         inf_nan_fill(centers[:, 0])
         inf_nan_fill(centers[:, 1])
@@ -1056,22 +1056,31 @@ def crop_with_mask(array, img_crop, pad=3, max_slices=None):
     return array[tuple(idx)]
 
 
-def get_max_radius(img, plane='Axial'):
-    """Determine the maximum slicewise width/height of the nonzero voxels in img."""
-    if plane == 'Axial':
-        # In Axial plane, the radius is the maximum width/height of the spinal cord mask dilated by 20% or 15, whichever is larger.
-        dilation = 1.2
-        default = 15
-        widths = [np.max(np.where(slice)[0]) - np.min(np.where(slice)[0]) if np.sum(slice) > 0 else 0 for slice in img.data]
-        heights = [np.max(np.where(slice)[1]) - np.min(np.where(slice)[1]) if np.sum(slice) > 0 else 0 for slice in img.data]
-        widths = [(w * dilation)//2 for w in widths]
-        heights = [(h * dilation)//2 for h in heights]
-        return (max(default, max(widths)), max(default, max(heights)))
-    else:
-        assert plane == 'Sagittal', (f"`plane` must be either 'Axial' "f"or 'Sagittal', but got {plane}")
-        # In Sagittal plane, the radius is the maximum width of the spinal cord mask dilated by 20% or 1/2 of the image width, whichever is larger.
-        # The height is always the entirety of the image height (for example, to view possible lesions in the brain stem)
-        widths = [np.max(np.where(slice)[1]) - np.min(np.where(slice)[1]) if np.sum(slice) > 0 else 0 for slice in img.data]
-        widths = [w//2 + 0.1*w//2 for w in widths]
-        height = np.floor(img.data.shape[2]/2).astype(int)
-        return (height, max(np.floor(img.data.shape[1]/4).astype(int), int(max(widths))))
+def get_max_axial_radius(img):
+    """
+    Determine the maximum slicewise width/height of the nonzero voxels in img.
+
+    Input images should be SAL, such that each SI axial slice is composed of [1] -> AP and [2] -> LR.
+    """
+    # In Axial plane, the radius is the maximum width/height of the spinal cord mask dilated by 20% or 15, whichever is larger.
+    dilation = 1.2
+    default = 15
+    widths = [np.max(np.where(slice)[0]) - np.min(np.where(slice)[0]) if np.sum(slice) > 0 else 0 for slice in img.data]
+    heights = [np.max(np.where(slice)[1]) - np.min(np.where(slice)[1]) if np.sum(slice) > 0 else 0 for slice in img.data]
+    widths = [(w * dilation)//2 for w in widths]
+    heights = [(h * dilation)//2 for h in heights]
+    return max(default, max(widths)), max(default, max(heights))
+
+
+def get_max_sagittal_radius(img):
+    """
+    Determine the maximum slicewise width/height of the nonzero voxels for sagittal images.
+
+    Input images should be RSP, such that each LR sagittal slice is composed of [1] -> SI and [2] -> PA.
+    """
+    # In Sagittal plane, the radius is the maximum width of the spinal cord mask dilated by 20% or 1/2 of the image width, whichever is larger.
+    # The height is always the entirety of the image height (for example, to view possible lesions in the brain stem)
+    widths = [np.max(np.where(slice)[1]) - np.min(np.where(slice)[1]) if np.sum(slice) > 0 else 0 for slice in img.data]
+    widths = [w//2 + 0.1*w//2 for w in widths]
+    height = np.floor(img.data.shape[2]/2).astype(int)
+    return height, max(np.floor(img.data.shape[1]/4).astype(int), int(max(widths)))
