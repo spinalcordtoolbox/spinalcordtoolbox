@@ -1033,7 +1033,7 @@ def crop_with_mask(array, img_crop, pad=3, max_slices=None):
     the segmentation spans more slices than `max_slices`, then no padding will occur. Instead,
     all slices containing the segmentation will be used (to preserve the segmentation).
     """
-    # QC images are reoriented to SAL. Therefore, axis=0 -> SI axis
+    # QC images are reoriented to SAL (axial) or RSP (sagittal) such that axis=0 is always the slice index
     axis = 0
     # get extents of segmentation used for cropping
     first_slice = min(np.where(img_crop.data)[axis])
@@ -1065,11 +1065,11 @@ def get_max_axial_radius(img):
     # In Axial plane, the radius is the maximum width/height of the spinal cord mask dilated by 20% or 15, whichever is larger.
     dilation = 1.2
     default = 15
-    widths = [np.max(np.where(slice)[0]) - np.min(np.where(slice)[0]) if np.sum(slice) > 0 else 0 for slice in img.data]
-    heights = [np.max(np.where(slice)[1]) - np.min(np.where(slice)[1]) if np.sum(slice) > 0 else 0 for slice in img.data]
-    widths = [(w * dilation)//2 for w in widths]
+    heights = [np.max(np.where(slice)[0]) - np.min(np.where(slice)[0]) if np.sum(slice) > 0 else 0 for slice in img.data]
+    widths = [np.max(np.where(slice)[1]) - np.min(np.where(slice)[1]) if np.sum(slice) > 0 else 0 for slice in img.data]
     heights = [(h * dilation)//2 for h in heights]
-    return max(default, max(widths)), max(default, max(heights))
+    widths = [(w * dilation)//2 for w in widths]
+    return max(default, max(heights)), max(default, max(widths))
 
 
 def get_max_sagittal_radius(img):
