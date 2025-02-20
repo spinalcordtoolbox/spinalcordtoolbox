@@ -1023,7 +1023,7 @@ def assign_label_colors_by_groups(labels):
     return color_list
 
 
-def crop_with_mask(array, img_crop, pad=3, axis=0, max_slices=None):
+def crop_with_mask(array, img_crop, pad=3, max_slices=None):
     """
     Crop array along a specific axis based on nonzero slices in the reference image.
 
@@ -1032,10 +1032,9 @@ def crop_with_mask(array, img_crop, pad=3, axis=0, max_slices=None):
     Use `max_slices` to pad only until that amount of slices is reached (overrides `pad`). If
     the segmentation spans more slices than `max_slices`, then no padding will occur. Instead,
     all slices containing the segmentation will be used (to preserve the segmentation).
-
-    Note: We use axis=0 by default because QC images are reoriented to SAL, therefore we
-        crop the SI axis by default.
     """
+    # QC images are reoriented to SAL. Therefore, axis=0 -> SI axis
+    axis = 0
     # get extents of segmentation used for cropping
     first_slice = min(np.where(img_crop.data)[axis])
     last_slice = max(np.where(img_crop.data)[axis])
