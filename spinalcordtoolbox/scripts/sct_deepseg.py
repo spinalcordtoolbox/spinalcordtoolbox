@@ -367,10 +367,9 @@ def main(argv: Sequence[str]):
             json.dump(sidecar_json, fp, indent=4)
 
     if arguments.qc is not None:
-        # Initialize the QC seg to be an empty file with the same size as the input image
-        qc_seg = [None] * len(input_filenames)
-        if arguments.qc_seg is not None:
-            qc_seg = [arguments.qc_seg] * len(input_filenames)
+        # If `arguments.qc_seg is None`, each entry will be treated as an
+        # empty file with the same size as the corresponding input image
+        qc_seg = [arguments.qc_seg] * len(input_filenames)
         # Models can have multiple input images -- create 1 QC report per input image.
         if len(output_filenames) == len(input_filenames):
             iterator = zip(input_filenames, output_filenames, [None] * len(input_filenames), qc_seg)
