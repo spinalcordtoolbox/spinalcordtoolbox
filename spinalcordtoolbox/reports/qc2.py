@@ -1047,12 +1047,12 @@ def crop_with_mask(array, img_crop, pad=3, max_slices=None):
     # otherwise, use the provided value as-is
     else:
         l_pad = r_pad = pad
-    # pad (but make sure the indices are within the image bounds)
-    start = max(first_slice - l_pad, 0)
-    stop = min(last_slice + r_pad, img_crop.data.shape[axis])
+    # pad (but make sure the index slices are within the image bounds)
+    start_slice = max(first_slice - l_pad, 0)
+    stop_slice = min(last_slice + r_pad, img_crop.data.shape[axis] - 1)
     # crop the image at the specified axis
-    idx = [slice(None)] * array.ndim   # Start with full image
-    idx[axis] = slice(start, stop + 1)  # Limit axis to slice range
+    idx = [slice(None)] * array.ndim                # Start with full image
+    idx[axis] = slice(start_slice, stop_slice + 1)  # Limit axis to slice range
     return array[tuple(idx)]
 
 
