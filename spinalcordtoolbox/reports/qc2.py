@@ -567,7 +567,7 @@ def sct_deepseg_sagittal(
         if fname_qc_seg:
             img_to_crop.data = crop_with_mask(img_to_crop.data, img_qc_seg, pad=2)
         elif img_input.dim[0] > 30:
-            img_to_crop.data = crop_with_mask(img_to_crop.data, img_seg_sc, total_slices=30)
+            img_to_crop.data = crop_with_mask(img_to_crop.data, img_seg_sc, max_slices=30)
             if img_to_crop == img_input:  # display a message only once
                 logger.warning("Source image is too large to display in a sagittal mosaic. Applying automatic cropping around segmentation.\n"
                                "Please consider using `sct_deepseg -qc-seg` option to customize the crop. You can use `sct_create_mask` to create a suitable mask to pass to "
@@ -1023,12 +1023,15 @@ def assign_label_colors_by_groups(labels):
     return color_list
 
 
-def crop_with_mask(array, img_crop, pad=3, axis=0, total_slices=None):
+def crop_with_mask(array, img_crop, pad=3, axis=0, max_slices=None):
     """
     Crop array along a specific axis based on nonzero slices in the reference image.
 
-    Use `pad` if you want to pad around the mask (no matter how big the mask is). Use
-    `total_slices` to pad only until the total number of slices is reached (overrides `pad`).
+    Use `pad` if you want to pad around the mask (no matter how big the mask is).
+
+    Use `max_slices` to pad only until that amount of slices is reached (overrides `pad`). If
+    the segmentation spans more slices than `max_slices`, then no padding will occur. Instead,
+    all slices containing the segmentation will be used (to preserve the segmentation).
 
     Note: We use axis=0 by default because QC images are reoriented to SAL, therefore we
         crop the SI axis by default.
@@ -1036,9 +1039,10 @@ def crop_with_mask(array, img_crop, pad=3, axis=0, total_slices=None):
     # get extents of segmentation used for cropping
     first_slice = min(np.where(img_crop.data)[axis])
     last_slice = max(np.where(img_crop.data)[axis])
-    # if `total_slices` is specified, then override `pad`
-    if total_slices is not None:
-        pad_total = max(0, total_slices - (last_slice - first_slice + 1))
+    # if `max_slices` is specified, then override `pad`
+    if max_slices is not None:
+        # use `max(0, ...)` to avoid cropping the segmentation if it would exceed `max_slices`
+        pad_total = max(0, max_slices - (last_slice - first_slice + 1))
         l_pad = math.floor(pad_total / 2)
         r_pad = math.ceil(pad_total / 2)
     # otherwise, use the provided value as-is
