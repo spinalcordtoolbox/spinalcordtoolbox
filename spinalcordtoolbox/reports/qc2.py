@@ -1039,8 +1039,8 @@ def crop_with_mask(array, img_crop, pad=3, axis=0, total_slices=None):
     # if `total_slices` is specified, then override `pad`
     if total_slices is not None:
         pad_total = max(0, total_slices - (last_slice - first_slice + 1))
-        l_pad = math.floor(pad_total // 2)
-        r_pad = math.ceil(pad_total // 2)
+        l_pad = math.floor(pad_total / 2)
+        r_pad = math.ceil(pad_total / 2)
     # otherwise, use the provided value as-is
     else:
         l_pad = r_pad = pad
