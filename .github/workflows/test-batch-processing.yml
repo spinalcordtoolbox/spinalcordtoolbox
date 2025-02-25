@@ -119,14 +119,28 @@ jobs:
           path: artifacts
           merge-multiple: true
 
-      - name: Diff summaries (Ubuntu vs macOS)
-        continue-on-error: true
-        run: diff -u artifacts/sct_example_data_ubuntu-22.04.json artifacts/sct_example_data_macos-13.json | ydiff
+      - name: Download summaries (master branch)
+        id: download-artifact
+        uses: dawidd6/action-download-artifact@v8
+        with:
+          workflow: test-batch-processing.yml
+          branch: master
+          event: schedule
+          path: artifacts_master
+          name_is_regexp: true
+          name: sct_example_data_.*\.json
+          # Note: Because `dawidd6/action-download-artifact@v8` doesn't have a corresponding
+          #       `merge-multiple` option, the downloaded json files get put into parent
+          #       folders with the same name as the file itself.
 
-      - name: Diff summaries (Ubuntu vs. Windows)
+      - name: Diff summaries (macOS, PR vs. master)
         continue-on-error: true
-        run: diff -u artifacts/sct_example_data_ubuntu-22.04.json artifacts/sct_example_data_windows-2022.json | ydiff
+        run: diff -u artifacts_master/sct_example_data_macos-13.json artifacts/sct_example_data_macos-13.json | ydiff
 
-      - name: Diff summaries (Ubuntu 22 vs. Ubuntu 24)
+      - name: Diff summaries (Windows, PR vs. master)
         continue-on-error: true
-        run: diff -u artifacts/sct_example_data_ubuntu-22.04.json artifacts/sct_example_data_ubuntu-24.04.json | ydiff
+        run: diff -u artifacts_master/sct_example_data_windows-2022.json artifacts/sct_example_data_windows-2022.json | ydiff
+
+      - name: Diff summaries (Ubuntu 24.04, PR vs. master)
+        continue-on-error: true
+        run: diff -u artifacts_master/sct_example_data_ubuntu-24.04.json artifacts/sct_example_data_ubuntu-24.04.json | ydiff
