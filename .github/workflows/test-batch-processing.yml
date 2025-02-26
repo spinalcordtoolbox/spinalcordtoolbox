@@ -146,9 +146,9 @@ jobs:
             if [ -e "$DIFF_FILE" ] && [ ! -s "$DIFF_FILE" ]; then
                 echo "$DIFF_FILE exists and is empty. No difference between outputs."
             elif [ ! -e "$DIFF_FILE" ]; then
-                echo "::warning file=.github/workflows/test-batch-processing.yml,line=142,col=13,endColumn=31,title=batch_processing.sh results diff with master ($os)::$DIFF_FILE is missing. Did `diff` fail?"
+                echo "::warning file=.github/workflows/test-batch-processing.yml,line=142,col=13,endColumn=31,title=batch_processing.sh results diff with master - $os::$DIFF_FILE is missing. Did diff fail?"
             else
                 ADDED_LINES=$(grep -c '^+[^+]\+' output.txt)
-                echo "::warning file=.github/workflows/test-batch-processing.yml,line=142,col=13,endColumn=31,title=batch_processing.sh results diff with master ($os)::$DIFF_FILE exists and is not empty. $ADDED_LINES file properties differ between PR and master."
+                echo "::warning file=.github/workflows/test-batch-processing.yml,line=142,col=13,endColumn=31,title=batch_processing.sh results diff with Master - $os::$DIFF_FILE exists and is not empty. $ADDED_LINES file properties differ between PR and master."
             fi
           done
