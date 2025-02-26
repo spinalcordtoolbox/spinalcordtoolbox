@@ -133,14 +133,12 @@ jobs:
           #       `merge-multiple` option, the downloaded json files get put into parent
           #       folders with the same name as the file itself.
 
-      - name: Diff summaries (macOS, PR vs. master)
+      - name: Diff summaries (PR vs. master)
         continue-on-error: true
-        run: diff -u artifacts_master/sct_example_data_macos-13.json artifacts/sct_example_data_macos-13.json | ydiff
-
-      - name: Diff summaries (Windows, PR vs. master)
-        continue-on-error: true
-        run: diff -u artifacts_master/sct_example_data_windows-2022.json artifacts/sct_example_data_windows-2022.json | ydiff
-
-      - name: Diff summaries (Ubuntu 24.04, PR vs. master)
-        continue-on-error: true
-        run: diff -u artifacts_master/sct_example_data_ubuntu-24.04.json artifacts/sct_example_data_ubuntu-24.04.json | ydiff
+        run: |
+          for os in "macos-13" "windows-2022" "ubuntu-22.04" "ubuntu-24.04";
+          do
+            echo "::group::Diff for $os"
+            diff -u "artifacts_master/sct_example_data_$os.json/sct_example_data_$os.json" "artifacts/sct_example_data_$os.json" | ydiff
+            echo "::endgroup::"
+          done
