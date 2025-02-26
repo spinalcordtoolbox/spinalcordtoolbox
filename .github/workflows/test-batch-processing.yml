@@ -136,9 +136,27 @@ jobs:
       - name: Diff summaries (PR vs. master)
         continue-on-error: true
         run: |
+          DIFF_FILE=diff.txt
+          WORKFLOW_FILE=".github/workflows/test-batch-processing.yml"
           for os in "macos-13" "windows-2022" "ubuntu-22.04" "ubuntu-24.04";
           do
+            # Full log output
             echo "::group::Diff for $os"
-            diff -u "artifacts_master/sct_example_data_$os.json/sct_example_data_$os.json" "artifacts/sct_example_data_$os.json" | ydiff
+            diff -u "artifacts_master/sct_example_data_$os.json/sct_example_data_$os.json" "artifacts/sct_example_data_$os.json" > $DIFF_FILE
+            ydiff < $DIFF_FILE
             echo "::endgroup::"
+          
+            # Emit warning if diff is nonempty
+            if [ -e "$DIFF_FILE" ] && [ ! -s "$DIFF_FILE" ]; then
+                echo "Hurrah! $DIFF_FILE is empty, so there's no difference between this PR and master."
+            else
+                WARNING_TITLE="batch_processing.sh results diff with master - $os"
+                if [ ! -e "$DIFF_FILE" ]; then
+                    WARNING_MSG="$DIFF_FILE is missing. Did diff fail?"
+                else
+                    ADDED_LINES=$(grep -c '^+[^+]\+' $DIFF_FILE)
+                    WARNING_MSG="$DIFF_FILE exists and is not empty. $ADDED_LINES file properties differ between PR and master."
+                fi
+                echo "::warning file=$WORKFLOW_FILE,line=142,col=13,endColumn=31,title=$WARNING_TITLE::$WARNING_MSG"
+            fi
           done
