@@ -138,8 +138,8 @@ jobs:
           do
             # Full log output
             echo "::group::Diff for $os"
-            diff -u "artifacts_master/sct_example_data_$os.json" artifacts/sct_example_data_"$os.json > $DIFF_FILE
-            ydiff < $DIFF_FILE
+            diff -u "artifacts_master/sct_example_data_$os.json" "artifacts/sct_example_data_$os.json" > "$DIFF_FILE"
+            ydiff < "$DIFF_FILE"
             echo "::endgroup::"
           
             # Emit warning if diff is nonempty
