@@ -26,6 +26,7 @@ The following studies have used SCT:
 2025 
 ----
 
+-  Qiu *et al.* `Exploratory study on the ascending pain pathway in patients with chronic neck and shoulder pain based on combined brain and spinal cord diffusion tensor imaging <https://doi.org/10.3389/fnins.2025.1460881>`_, **Front. Neurosci.** 2025
 -  Kashani *et al.* `Magnetization Transfer Ratio in the Typically Developing Pediatric Spinal Cord: Normative Data and Age Correlation <https://doi.org/10.1111/jon.70019>`_, **J. Neuroimaging** 2025
 -  Lebret *et al.* `Test-retest repeatability of intravoxel incoherent motion (IVIM) measurements in the cervical cord <https://doi.org/10.1162/imag_a_00468>`_, **Imaging Neuroscience** 2025
 -  Karthik *et al.* `SCIsegV2: A Universal Tool for Segmentation of Intramedullary Lesions in Spinal Cord Injury <https://doi.org/10.1007/978-3-031-82007-6_19>`_, **Appl. Med. Artif. Intell.** 2025
