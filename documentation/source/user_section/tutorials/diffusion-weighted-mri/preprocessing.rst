@@ -54,12 +54,11 @@ Once the segmentation is obtained, we can use it to create a mask around the cor
 
 .. code::
 
-   sct_create_mask -i dmri_dwi_mean.nii.gz -p centerline,dmri_dwi_mean_seg.nii.gz -f cylinder -size 35mm
+   sct_create_mask -i dmri_dwi_mean.nii.gz -p centerline,dmri_dwi_mean_seg.nii.gz -size 35mm
 
 :Input arguments:
    - ``-i`` : The input image to create the mask from.
    - ``-p`` : The process used to position the mask. The ``centerline`` process will compute the center of mass for each slice of ``dmri_dwi_mean_seg.nii.gz``, then use those locations for the center of the mask at each slice.
-   - ``-f``: The shape of the mask. Here, we create cylinder around the centerline.
    - ``-size``: The diameter of the mask.
 
 :Output files/folders:
