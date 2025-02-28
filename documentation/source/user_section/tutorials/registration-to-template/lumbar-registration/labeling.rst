@@ -65,12 +65,14 @@ The command below will add labels for the T9-T10 disc (numerical ID 17) and the 
 
 .. code::
 
-   sct_label_utils -i t2_lumbar.nii.gz -create 22,77,187,17:27,79,80,60 -o t2_lumbar_labels.nii.gz
+   sct_label_utils -i t2_lumbar.nii.gz -create 22,77,187,17:27,79,80,60 -o t2_lumbar_labels.nii.gz -qc ~/qc_singleSubj
 
 :Input arguments:
    * ``-i`` : The input anatomical image.
    * ``-create`` : This argument will create a label with value 17 (T9-T10 disc) at coordinate ``[22,77,187]``, and a label with value 60 (conus medullaris) at the coordinate ``[27,79,80]``.
    * ``-o`` : The name of the output file.
+   * ``-qc`` : Directory for Quality Control reporting. QC reports allow us to evaluate the results slice-by-slice.
+
 
 :Output files/folders:
    * ``t2_lumbar_labels.nii.gz`` : An image containing two single-voxel labels.
