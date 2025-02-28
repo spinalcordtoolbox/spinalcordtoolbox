@@ -49,6 +49,13 @@ For this image, the coordinate ``[27,79,80]`` seems to be appropriate location:
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/lumbar-registration/label-selection-conus-medullaris.png
    :align: center
 
+..
+   comment:: The script and course slides mention the coordinate ``[27,76,187]``,
+             but the figure below explicitly uses the coordinate ``[22,77,187]``.
+             Given that updating the tutorial to match the script/slides would
+             require updating the figure, I decided to leave it for now and
+             double-check why the slides were changed in the first place.
+
 Repeat the same process for the posterior tip of the T9-T10 disc. Here, we will use the coordinate ``[22,77,187]``:
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/lumbar-registration/label-selection-T9-T10-disc.png
