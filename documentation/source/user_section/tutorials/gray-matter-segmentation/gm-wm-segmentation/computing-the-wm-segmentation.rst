@@ -30,11 +30,12 @@ Now that we have the spinal cord segmentation, we can subtract the gray matter a
 
 .. code:: sh
 
-   sct_maths -i t2s_seg.nii.gz -sub t2s_gmseg.nii.gz -o t2s_wmseg.nii.gz
+   sct_maths -i t2s_seg.nii.gz -sub t2s_gmseg.nii.gz -thr 0 -o t2s_wmseg.nii.gz
 
 :Input arguments:
    - ``-i`` : Input image. (The full segmentation of the spinal cord.)
    - ``-sub`` : Flag to invoke the "subtract" functionality of :ref:`sct_maths`, subtracting ``t2s_gmseg.nii.gz`` from the input image.
+   - ``-thr 0``: Threshold the output image to remove any negative values. (This would occur if there are voxels in the gray matter segmentation that are not in the spinal cord segmentation.)
    - ``-o`` : The filename of the output image.
 
 :Output files/folders:
