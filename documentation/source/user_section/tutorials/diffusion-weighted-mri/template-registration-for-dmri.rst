@@ -6,15 +6,15 @@ Before the PAM50 template can be used to extract values from specific regions wi
 Segmenting the spinal cord
 --------------------------
 
-As a prerequisite step, we run :ref:`sct_deepseg_sc` once more, this time to segment the motion corrected 3D mean image. Note that providing an input segmentation to the registration command is optional, but doing so will help to improve the accuracy of the registration.
+As a prerequisite step, we run :ref:`sct_deepseg` once more, this time to segment the motion corrected 3D mean image. Note that providing an input segmentation to the registration command is optional, but doing so will help to improve the accuracy of the registration.
 
 .. code::
 
-   sct_deepseg_sc -i dmri_moco_dwi_mean.nii.gz -c dwi -qc ~/qc_singleSubj
+   sct_deepseg -task seg_sc_contrast_agnostic -i dmri_moco_dwi_mean.nii.gz -qc ~/qc_singleSubj
 
 :Input arguments:
+   - ``-task``: Task to perform. Here, we are using ``seg_sc_contrast_agnostic`` to segment the spinal cord. This task is contrast-agnostic, meaning it can be used on any type of image (T1, T2, T2*, etc.)
    - ``-i`` : The input image.
-   - ``-c`` : The contrast of the input image.
    - ``-qc`` : Directory for Quality Control reporting. QC reports allow us to evaluate the results slice-by-slice.
 
 :Output files/folders:
