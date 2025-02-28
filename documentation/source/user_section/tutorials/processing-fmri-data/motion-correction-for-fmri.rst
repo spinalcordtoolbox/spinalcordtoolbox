@@ -39,3 +39,23 @@ To apply the algorithm, we use the :ref:`sct_fmri_moco` command:
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/processing-fmri-data/io-sct_fmri_moco.png
    :align: center
+
+
+Checking QC for Temporal Signal-to-Noise Ratio (tSNR)
+-----------------------------------------------------
+
+Here, we can generate a `tSNR` map for the original and motion-corrected fMRI data. This map is a measure of the signal-to-noise ratio in the temporal domain. The higher the tSNR, the better the quality of the data.
+
+Then, we can use the :ref:`sct_qc` command to compare the tSNR maps before and after motion correction to see how motion correction can improve the quality of the data.
+
+.. code::
+
+   # Cord segmentation on motion-corrected averaged time series
+   sct_deepseg -i fmri_moco_mean.nii.gz -task seg_sc_contrast_agnostic -qc ~/qc_singleSubj/
+   # TSNR before/after motion correction with QC report
+   sct_fmri_compute_tsnr -i fmri.nii.gz
+   sct_fmri_compute_tsnr -i fmri_moco.nii.gz
+   sct_qc -i fmri_tsnr.nii.gz -d fmri_moco_tsnr.nii.gz -s fmri_moco_mean_seg.nii.gz -p sct_fmri_compute_tsnr -qc ~/qc_singleSubj/
+
+.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/processing-fmri-data/tsnr_qc.png
+   :align: center
