@@ -1,5 +1,13 @@
 .. _extracting-specific-labels:
 
+..
+    comment:: In the 2024 SCT Course, this section was moved to the start of
+              the registration section to improve the flow of the course.
+              However, it is kept in the "labeling" section in the web
+              tutorials because each tutorial section is intended to be
+              self-contained. Having a discrepancy here might not be the best,
+              so we should reflect on whether we want to keep things this way.
+
 Extracting specific labels for registration
 ###########################################
 
