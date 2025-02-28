@@ -30,6 +30,14 @@ To get around this limitation, we recommend that you first perform :ref:`vertebr
 
 Since we are starting the dMRI registration with the vertebral-matching transformation already applied, all that remains is fine-tuning for the dMRI data. So, here we use a different command: :ref:`sct_register_multimodal`. This command is designed to register any two images together, so it can be seen as the generalized counterpart to :ref:`sct_register_to_template`.
 
+..
+   comment:: TODO: Change the ``-initwarp`` arguments to use the T2 warps.
+             This change was easy to make in the SCT course (since all steps
+             are done sequentially, and all previous files are available for
+             future commands). However, in the tutorials, this will require
+             us to remake the data ``.zips`` (so that we package the correct
+             warps alongside the dMRI files).
+
 .. code:: sh
 
    sct_register_multimodal -i "${SCT_DIR}/data/PAM50/template/PAM50_t1.nii.gz" \
