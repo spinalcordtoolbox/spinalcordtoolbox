@@ -149,3 +149,11 @@ Second, we compute CSA from a distance from the PMJ.
 .. csv-table:: CSA values computed at 64 mm from the PMJ.
    :file: csa_pmj.csv
    :header-rows: 1
+
+.. note::
+
+   The above commands will output the metrics in the subject space (with the original image's slice numbers) However, you can get the corresponding slice number in the PAM50 space by using the flag ``-normalize-PAM50 1``.
+
+   .. code:: sh
+
+      sct_process_segmentation -i t2_seg.nii.gz -vertfile t2_seg_labeled.nii.gz -perslice 1 -normalize-PAM50 1 -o csa_PAM50.csv
