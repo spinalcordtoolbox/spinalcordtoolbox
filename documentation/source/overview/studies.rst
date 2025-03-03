@@ -26,6 +26,9 @@ The following studies have used SCT:
 2025 
 ----
 
+-  Solanky *et al.* `Evaluation of magnetic resonance spectroscopy total sodium concentration measures, and associations with microstructure and physical impairment in cervical myelopathy <https://doi.org/10.1038/s41598-025-91658-w>`_, **Sci. Rep.** 2025
+-  Azzimonti *et al.* `Cervical spinal cord gray matter damage predicts disability worsening in multiple sclerosis: a longitudinal study <https://doi.org/10.1007/s00415-025-12979-4>`_, **J. Neurol.** 2025
+-  Stroman *et al.* `Evidence of a persistent altered neural state in people with fibromyalgia syndrome during functional MRI studies and its relationship with pain and anxiety <https://doi.org/10.1371/journal.pone.0316672>`_, **PLoS One** 2025
 -  Qiu *et al.* `Exploratory study on the ascending pain pathway in patients with chronic neck and shoulder pain based on combined brain and spinal cord diffusion tensor imaging <https://doi.org/10.3389/fnins.2025.1460881>`_, **Front. Neurosci.** 2025
 -  Kashani *et al.* `Magnetization Transfer Ratio in the Typically Developing Pediatric Spinal Cord: Normative Data and Age Correlation <https://doi.org/10.1111/jon.70019>`_, **J. Neuroimaging** 2025
 -  Lebret *et al.* `Test-retest repeatability of intravoxel incoherent motion (IVIM) measurements in the cervical cord <https://doi.org/10.1162/imag_a_00468>`_, **Imaging Neuroscience** 2025
