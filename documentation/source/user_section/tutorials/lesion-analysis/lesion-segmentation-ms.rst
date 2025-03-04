@@ -29,7 +29,7 @@ You can try the ``seg_ms_lesion`` on the sample T2w image using the following co
 MP2RAGE-UNIT1
 *************
 
-The algorithm ``seg_ms_lesion_mp2rage`` was trained on cropped MP2RAGE-UNIT1 images. Details: `Cohen-Adad, J., et al. Zenodo release (2023) <https://zenodo.org/doi/10.5281/zenodo.8376753>`_.
+The algorithm ``seg_ms_lesion_mp2rage`` was trained on cropped MP2RAGE-UNIT1 images. Details: `Cohen-Adad, J., et al. Zenodo release (2023) <https://zenodo.org/doi/10.5281/zenodo.8376753>`__.
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/lesion-analysis/model_seg_ms_mp2rage.png
    :align: center
@@ -54,7 +54,7 @@ As the model was trained on cropped images, we recommend cropping the input imag
 T2w and T2star
 **************
 
-The legacy CLI tool ``sct_deepseg_lesion`` was trained on T2w and T2star images. Details: `Gros, C., et al. NeuroImage (2019) <https://doi.org/10.1016/j.neuroimage.2018.09.081>`_.
+The legacy CLI tool ``sct_deepseg_lesion`` was trained on T2w and T2star images. Details: `Gros, C., et al. NeuroImage (2019) <https://doi.org/10.1016/j.neuroimage.2018.09.081>`__.
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/spinalcord-segmentation/sct_deepseg_sc_steps.png
    :align: center

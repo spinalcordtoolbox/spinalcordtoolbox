@@ -25,7 +25,7 @@ First, a convolutional neural network is used to generate a probablistic heatmap
 2. Centerline detection
 ***********************
 
-The heatmap is then fed into the `OptiC <https://archivesic.ccsd.cnrs.fr/PRIMES/hal-01713965v1>`_ algorithm to detect the spinal cord centerline.
+The heatmap is then fed into the `OptiC <https://archivesic.ccsd.cnrs.fr/PRIMES/hal-01713965v1>`__ algorithm to detect the spinal cord centerline.
 
 3. Patch extraction
 *******************
@@ -54,4 +54,4 @@ You have several options if the segmentation fails:
 - Try the legacy segmentation method based on mesh propagation: (:ref:`sct_propseg`)
 - Check the specialized models in :ref:`sct_deepseg` to see if one fits your use case.
 - Manually correct the segmentation.
-- Ask for help on the `SCT forum <https://forum.spinalcordmri.org/c/sct/8>`_.
+- Ask for help on the `SCT forum <https://forum.spinalcordmri.org/c/sct/8>`__.

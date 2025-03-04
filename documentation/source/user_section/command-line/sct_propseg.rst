@@ -22,7 +22,7 @@ The ``sct_propseg`` algorithm is a three step process defined as follows:
 1. Centerline detection
 ***********************
 
-``sct_propseg`` starts by using a machine learning-based method (`OptiC <https://archivesic.ccsd.cnrs.fr/PRIMES/hal-01713965v1>`_) to automatically detect the approximate center of the spinal cord.
+``sct_propseg`` starts by using a machine learning-based method (`OptiC <https://archivesic.ccsd.cnrs.fr/PRIMES/hal-01713965v1>`__) to automatically detect the approximate center of the spinal cord.
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/spinalcord-segmentation/optic_steps.png
   :align: center
@@ -57,4 +57,4 @@ As a rule of thumb:
 
 That said, given the variation in imaging data (imaging centers, sizes, ages, coil strengths, contrasts, scanner vendors, etc.), SCT recommends to try both algorithms with your pilot scans to evaluate the merit of each on your specific dataset, then stick with a single method throughout your study.
 
-Note: Development of these approaches is an iterative process, and the data used to develop these approaches evolves over time. If you have input regarding what has worked (or hasn't worked) for you, we would be happy to hear your thoughts in the `SCT forum <https://forum.spinalcordmri.org/c/sct>`_, as it could help to improve the toolbox for future users.
+Note: Development of these approaches is an iterative process, and the data used to develop these approaches evolves over time. If you have input regarding what has worked (or hasn't worked) for you, we would be happy to hear your thoughts in the `SCT forum <https://forum.spinalcordmri.org/c/sct>`__, as it could help to improve the toolbox for future users.
