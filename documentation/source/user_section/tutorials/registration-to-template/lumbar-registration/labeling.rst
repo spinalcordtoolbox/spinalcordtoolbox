@@ -46,30 +46,23 @@ Because of the necessary precision, we recommend that you use Option 2 by follow
 
 For this image, the coordinate ``[27,79,80]`` seems to be appropriate location:
 
-.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/lumbar-registration/label-selection-conus-medullaris.png
+.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/lumbar-registration/label-selection-conus-medullaris_27-79-80.png
    :align: center
 
-..
-   comment:: The script and course slides mention the coordinate ``[27,76,187]``,
-             but the figure below explicitly uses the coordinate ``[22,77,187]``.
-             Given that updating the tutorial to match the script/slides would
-             require updating the figure, I decided to leave it for now and
-             double-check why the slides were changed in the first place.
+Repeat the same process for the posterior tip of the T9-T10 disc. Here, we will use the coordinate ``[27,76,187]``:
 
-Repeat the same process for the posterior tip of the T9-T10 disc. Here, we will use the coordinate ``[22,77,187]``:
-
-.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/lumbar-registration/label-selection-T9-T10-disc.png
+.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/lumbar-registration/label-selection-T9-T10-disc_27-76-187.png
    :align: center
 
 The command below will add labels for the T9-T10 disc (numerical ID 17) and the conus medullaris (numerical ID 60).
 
 .. code::
 
-   sct_label_utils -i t2_lumbar.nii.gz -create 22,77,187,17:27,79,80,60 -o t2_lumbar_labels.nii.gz -qc ~/qc_singleSubj
+   sct_label_utils -i t2_lumbar.nii.gz -create 27,76,187,17:27,79,80,60 -o t2_lumbar_labels.nii.gz -qc ~/qc_singleSubj
 
 :Input arguments:
    * ``-i`` : The input anatomical image.
-   * ``-create`` : This argument will create a label with value 17 (T9-T10 disc) at coordinate ``[22,77,187]``, and a label with value 60 (conus medullaris) at the coordinate ``[27,79,80]``.
+   * ``-create`` : This argument will create a label with value 17 (T9-T10 disc) at coordinate ``[27,76,187]``, and a label with value 60 (conus medullaris) at the coordinate ``[27,79,80]``.
    * ``-o`` : The name of the output file.
    * ``-qc`` : Directory for Quality Control reporting. QC reports allow us to evaluate the results slice-by-slice.
 
