@@ -76,12 +76,11 @@ Now that we have a spinal cord segmentation in the space of the fMRI data, we ca
 
 .. code::
 
-   sct_create_mask -i fmri.nii.gz -p centerline,t2_seg_reg.nii.gz -size 35mm -f cylinder
+   sct_create_mask -i fmri.nii.gz -p centerline,t2_seg_reg.nii.gz -size 35mm
 
 :Input arguments:
    - ``-i`` : The input image to create the mask from.
    - ``-p`` : The process used to position the mask. The ``centerline`` process will compute the center of mass for each slice of ``t2_seg_reg.nii.gz``, then use those locations to center of the mask at each slice.
-   - ``-f``: The shape of the mask. Here, we create cylinder around the centerline.
    - ``-size``: The diameter of the mask.
 
 :Output files/folders:

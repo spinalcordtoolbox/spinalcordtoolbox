@@ -29,7 +29,7 @@ Once the segmentation is obtained, we can use it to create a mask around the cor
 
 .. code::
 
-   sct_create_mask -i t2.nii.gz -p centerline,t2_seg.nii.gz -size 35mm -f cylinder -o mask_t2.nii.gz
+   sct_create_mask -i t2.nii.gz -p centerline,t2_seg.nii.gz -size 35mm -o mask_t2.nii.gz
 
 :Input arguments:
    - ``-i`` : The input image to create the mask from.
