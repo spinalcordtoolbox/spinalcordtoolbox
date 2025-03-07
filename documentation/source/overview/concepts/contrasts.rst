@@ -16,7 +16,7 @@ Additionally, for image data that uses a contrast not listed above, it has been 
 
   Image contrasts and their corresponding ``-c`` arguments
 
-However, there is a caveat: contrast-specific tools (as described above) can provide less consistent morphometrics measures across MRI contrasts. For example, if we compute the spinal cord cross-sectional area averaged at C2-C3 vertebral levels and compare it across contrasts, we find a significant amount of variability.
+However, there is a caveat: contrast-specific tools (as described above) can provide less consistent morphometrics measures across MRI contrasts. For example, if we compute the spinal cord cross-sectional area (CSA) averaged at C2-C3 vertebral levels and compare it across contrasts, we find a significant amount of variability.
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/spinalcord-segmentation/csa_contrast-specific.png
   :align: center
