@@ -6,7 +6,7 @@ Contrast-specific vs. contrast-agnostic
 Contrast-specific segmentation tools
 ------------------------------------
 
-Historically, SCT's automatic spinal cord segmentation tools (:ref:`sct_propseg`, :ref:`sct_deepseg_sc`) have been limited to specific contrasts (`T1-weighted <https://radiopaedia.org/articles/t1-weighted-image>`__, `T2 weighted <https://radiopaedia.org/articles/t2-weighted-image>`__, `T2*-weighted <https://radiopaedia.org/articles/t2-weighted-image>`__, and `diffusion weighted images (DWI) <https://radiopaedia.org/articles/diffusion-weighted-imaging-2?lang=us>`__.). Each contrast required its own dedicated method, and users have had to specify the contrast when running each tool.
+Historically, SCT's automatic spinal cord segmentation tools (:ref:`sct_propseg`, :ref:`sct_deepseg_sc`) have been limited to specific contrasts (`T1-weighted <https://radiopaedia.org/articles/t1-weighted-image>`__, `T2 weighted <https://radiopaedia.org/articles/t2-weighted-image>`__, `T2*-weighted <https://radiopaedia.org/articles/t2-weighted-image>`__, and `diffusion weighted images (DWI) <https://radiopaedia.org/articles/diffusion-weighted-imaging-2?lang=us>`__.). Each contrast required its own dedicated method, and users have had to specify the contrast when running each tool using the `-c` argument.
 
 Additionally, for image data that uses a contrast not listed above, it has been necessary to select the closest visual match among the available options. For example, fMRI images have bright cerebrospinal fluid (CSF) regions and dark spinal cord regions, so the T2 contrast option would be an appropriate choice.
 
