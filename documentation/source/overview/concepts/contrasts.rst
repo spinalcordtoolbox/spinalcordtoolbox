@@ -37,7 +37,7 @@ To combat these issues, SCT has increasingly moved towards developing contrast-a
 
 In our research, we have found that contrast-agnostic tools achieve their goal of providing more consistent morphometrics measures across MRI contrasts. For further details, please refer to `Bédard et al. (2025) <https://doi.org/10.1016/j.media.2025.103473>`__.
 
-.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/spinalcord-segmentation/csa-contrast-agnostic.png
+.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/spinalcord-segmentation/csa_contrast-agnostic.png
   :align: center
   :figwidth: 75%
 
