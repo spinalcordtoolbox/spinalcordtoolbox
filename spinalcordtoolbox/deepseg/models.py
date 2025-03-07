@@ -114,7 +114,7 @@ MODELS = {
     #       - Models do not have a `.json` sidecar file, since they were not developed with ivadomed
     #       - So, threshold value is stored here, within the model dict
     #       - Binarization is applied within SCT code
-    "model_seg_sc_contrast_agnostic_softseg_monai": {
+    "model_seg_sc_contrast_agnostic_softseg_nnunet": {
         "url": [
             "https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/releases/download/v3.1/model_contrast_agnostic_20250123.zip"
         ],
@@ -314,7 +314,7 @@ TASKS = {
                              '[T1w, T2w, T2star, MTon_MTS, GRE_T1w, DWI, mp2rage_UNIT1, PSIR, STIR, EPI], but '
                              'other contrasts that are close visual matches may also work well with this model.',
          'url': 'https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/',
-         'models': ['model_seg_sc_contrast_agnostic_softseg_monai']},
+         'models': ['model_seg_sc_contrast_agnostic_softseg_nnunet']},
     'seg_sc_lesion_t2w_sci':
         {'description': 'Intramedullary SCI lesion and cord segmentation in T2w MRI',
          'long_description': 'This segmentation model for spinal cord injury segmentation uses a 3D U-Net '
