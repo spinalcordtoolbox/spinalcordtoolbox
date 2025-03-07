@@ -14,7 +14,7 @@ Additionally, for image data that uses a contrast not listed above, it has been 
   :align: center
   :figwidth: 75%
 
-  Image contrasts and their corresponding ``-c`` settings
+  Image contrasts and their corresponding ``-c`` arguments
 
 However, there is a caveat: contrast-specific tools (as described above) can provide less consistent morphometrics measures across MRI contrasts. For example, if we compute the spinal cord cross-sectional area averaged at C2-C3 vertebral levels and compare it across contrasts, we find a significant amount of variability.
 
