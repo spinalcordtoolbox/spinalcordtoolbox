@@ -6,15 +6,15 @@ Before the PAM50 template can be used to extract values from specific regions wi
 Segmenting the spinal cord
 --------------------------
 
-As a prerequisite step, we run :ref:`sct_deepseg_sc` once more, this time to segment the motion corrected 3D mean image. Note that providing an input segmentation to the registration command is optional, but doing so will help to improve the accuracy of the registration.
+As a prerequisite step, we run :ref:`sct_deepseg` once more, this time to segment the motion corrected 3D mean image. Note that providing an input segmentation to the registration command is optional, but doing so will help to improve the accuracy of the registration.
 
 .. code::
 
-   sct_deepseg_sc -i dmri_moco_dwi_mean.nii.gz -c dwi -qc ~/qc_singleSubj
+   sct_deepseg -task seg_sc_contrast_agnostic -i dmri_moco_dwi_mean.nii.gz -qc ~/qc_singleSubj
 
 :Input arguments:
+   - ``-task``: Task to perform. Here, we are using ``seg_sc_contrast_agnostic`` to segment the spinal cord. This task is contrast-agnostic, meaning it can be used on any type of image (T1, T2, T2*, etc.)
    - ``-i`` : The input image.
-   - ``-c`` : The contrast of the input image.
    - ``-qc`` : Directory for Quality Control reporting. QC reports allow us to evaluate the results slice-by-slice.
 
 :Output files/folders:
@@ -29,6 +29,14 @@ Usually, template registration would be performed using the :ref:`sct_register_t
 To get around this limitation, we recommend that you first perform :ref:`vertebral labeling <vertebral-labeling>` and :ref:`template registration <template-registration>` using a different contrast for the same subject (e.g. T2 or T2* anatomical data, where vertebral levels are much more apparent). This will provide you with warping fields between the template and that contrast's data, which you can then re-use to initialize the dMRI registration via the ``-initwarp`` and ``-initwarpinv`` flags. Doing so provides all of the benefits of vertebral matching, without having to label the dMRI data directly.
 
 Since we are starting the dMRI registration with the vertebral-matching transformation already applied, all that remains is fine-tuning for the dMRI data. So, here we use a different command: :ref:`sct_register_multimodal`. This command is designed to register any two images together, so it can be seen as the generalized counterpart to :ref:`sct_register_to_template`.
+
+..
+   comment:: TODO: Change the ``-initwarp`` arguments to use the T2 warps.
+             This change was easy to make in the SCT course (since all steps
+             are done sequentially, and all previous files are available for
+             future commands). However, in the tutorials, this will require
+             us to remake the data ``.zips`` (so that we package the correct
+             warps alongside the dMRI files).
 
 .. code:: sh
 

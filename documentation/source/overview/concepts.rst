@@ -10,6 +10,7 @@ This section documents some SCT concepts and other useful things to know.
   :maxdepth: 1
 
   concepts/pam50
+  concepts/contrasts
   concepts/labeling-conventions
   concepts/inspecting-results-qc-fsleyes
   concepts/spaces-and-coordinates
