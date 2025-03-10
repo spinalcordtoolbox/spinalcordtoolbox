@@ -1,7 +1,9 @@
 Before starting this tutorial
 #############################
 
+For this tutorial, because the fMRI data is axially acquired with thick slices, it helps to re-use the registration results from another contrast to initialize template registration for the dMRI data.
 
+That is why, alongside the fMRI data, we provide T2-based warping fields below:
 
 #. Make sure that you have the following files in your working directory:
 
