@@ -168,8 +168,6 @@ function fetch_os_type() {
       export LANG=en_US.UTF-8
     fi
     OS="osx"
-    # make sure bashrc is loaded when starting a new Terminal
-    force_bashrc_loading
   # Linux
   elif echo "$uname_output" | grep -i linux >/dev/null 2>&1; then
     OS="linux"
@@ -256,31 +254,6 @@ function get_shell_rc_path() {
   else
     find ~/.* -maxdepth 0 -type f
     die "ERROR: Shell was not recognized: $SHELL"
-  fi
-}
-
-# Force bashrc loading
-function force_bashrc_loading() {
-  sourceblock="
-if [[ -n \"\$BASH_VERSION\" ]]; then
-    # include .bashrc if it exists
-    if [[ -f \"\$HOME/.bashrc\" ]]; then
-    . \"\$HOME/.bashrc\"
-    fi
-fi"
-  bidon=""
-  for profile in ~/.bash_profile ~/.bash_login ~/.profile; do
-    if [[ -a "$profile" ]]; then
-      if ! grep -E "(\.|source) .*bashrc" "$profile" >/dev/null 2>&1; then
-        echo "$sourceblock" >>"$profile"
-      fi
-      bidon="done"
-      break
-    fi
-  done
-
-  if [[ -z "$bidon" ]]; then
-    echo "$sourceblock" >>~/.bash_profile
   fi
 }
 
