@@ -257,6 +257,56 @@ function get_shell_rc_path() {
   fi
 }
 
+# Deal with permission issues on files used by SCT installer
+# It is strangely common for a user to not have read/write access to files
+# present in their own home directory (e.g. not owning .bashrc, somehow).
+# So, we provide advice here so that they can hopefully fix the issue
+# themselves, rather than having to contact us.
+function check_permissions() {
+  FILE_TO_CHECK="$1"
+  echo -n "Checking permissions on required file $FILE_TO_CHECK:"
+
+  if [ -e "$FILE_TO_CHECK" ]; then EXIST="True"; else EXIST="False"; fi
+  if [ -O "$FILE_TO_CHECK" ]; then OWNED="True"; else OWNED="False"; fi
+  if [ -r "$FILE_TO_CHECK" ]; then READS="True"; else READS="False"; fi
+  if [ -w "$FILE_TO_CHECK" ]; then WRITE="True"; else WRITE="False"; fi
+
+  MSG_EXIST="  - File exists: $EXIST"
+  MSG_OWNED="  - File ownership: $OWNED"
+  MSG_READS="  - Read permissions: $READS"
+  MSG_WRITE="  - Write permissions: $WRITE"
+
+  WARNING="False"
+  if [ $EXIST == "False" ]; then
+    MSG_EXIST+="\n    NOTE: The SCT installer will create this file."
+  fi
+  if [ $OWNED == "False" ]; then
+    MSG_OWNED+="\n    WARNING: If you encounter permission issues, you can try running the following command:"
+    MSG_OWNED+="\n             sudo chown \"$(whoami)\" \"$FILE_TO_CHECK\""
+    WARNING="True"
+  fi
+  if [ $READS == "False" ]; then
+    MSG_READS+="\n    WARNING: If you encounter permission issues, you can try running the following command:"
+    MSG_READS+="\n             sudo chmod u+r \"$FILE_TO_CHECK\""
+    WARNING="True"
+  fi
+  if [ $WRITE == "False" ]; then
+    MSG_WRITE+="\n    WARNING: If you encounter permission issues, you can try running the following command:"
+    MSG_WRITE+="\n             sudo chmod u+w \"$FILE_TO_CHECK\""
+    WARNING="True"
+  fi
+
+  # Note: Ideally we would properly color each individual message, however `print` adds a *lot* of
+  #       unnecessary spacing, so chaining multiple `print` messages looks very bad. We could remove
+  #       the spacing from `print`, but this would drastically change the output of our installer.
+  MSG_TO_WRITE="$MSG_EXIST\n$MSG_OWNED\n$MSG_READS\n$MSG_WRITE"
+  if [ $WARNING == "True" ]; then
+    print warning "$MSG_TO_WRITE"
+  else
+    print info "$MSG_TO_WRITE"
+  fi
+}
+
 # Installation text to insert in shell config file
 function edit_shellrc() {
   # Write text common to all shells
@@ -422,6 +472,10 @@ echo -e "\nSCT version ......... $SCT_VERSION"
 echo -e "Installation type ... $SCT_INSTALL_TYPE"
 echo -e "Operating system .... $OS ($OSver)"
 echo -e "Shell config ........ $RC_FILE_PATH"
+
+# check permissions on shell config file (and fail if necessary)
+echo ""
+check_permissions "$RC_FILE_PATH"
 
 # if installing from git folder, then becomes default installation folder
 if [[ "$SCT_INSTALL_TYPE" == "in-place" ]]; then
