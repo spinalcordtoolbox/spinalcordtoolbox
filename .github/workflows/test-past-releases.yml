@@ -30,56 +30,132 @@ jobs:
       matrix:
         sct_version: [ "6.5", "6.4", "6.3", "6.2", "6.1", "6.0", "5.8", "5.7", "5.6", "5.5", "5.4", "5.3.0", "5.2.0", "5.1.0" ]
         os: [ ubuntu-latest, macos-latest, windows-2019 ]
+        wsl: [ true, false ]
         exclude:
+          # WSL is only available on Windows, so exclude it from non-Windows platforms
+          - os: ubuntu-latest
+            wsl: true
+          - os: macos-latest
+            wsl: true
           # Windows support was only properly introduced in 5.7
+          # However, we should still test <5.7 for WSL, so only exclude wsl: false
           - sct_version: "5.6"
             os: windows-2019
+            wsl: false
           - sct_version: "5.5"
             os: windows-2019
+            wsl: false
           - sct_version: "5.4"
             os: windows-2019
+            wsl: false
           - sct_version: "5.3.0"
             os: windows-2019
+            wsl: false
           - sct_version: "5.2.0"
             os: windows-2019
+            wsl: false
           - sct_version: "5.1.0"
             os: windows-2019
+            wsl: false
     runs-on: ${{ matrix.os }}
     defaults:
       run:
-        shell: bash
+        # For WSL, default to 'wsl-bash'
+        #  - Note that even on WSL, we override this for steps that interact with GitHub
+        # For all other platforms (i.e. wsl == false), default to `bash`
+        shell: ${{ matrix.wsl == true && 'wsl-bash {0}' || 'bash' }}
 
     steps:
+      - uses: Vampire/setup-wsl@v5
+        if: runner.os == 'Windows' && matrix.wsl == true
+        with:
+          distribution: Ubuntu-24.04
+
+      - name: Setup dependencies for WSL
+        if: runner.os == 'Windows' && matrix.wsl == true
+        run: |
+          # NB: this one needs sudo, so the global DEBIAN_FRONTEND doesn't get through.
+          # NB: mesa-utils is needed for PyQT testing (https://github.com/Microsoft/WSL/issues/1246#issuecomment-356425862)
+          sudo apt update && sudo DEBIAN_FRONTEND=noninteractive apt install -y gcc git curl mesa-utils
+
+      - name: Setup git for WSL
+        if: runner.os == 'Windows' && matrix.wsl == true
+        shell: bash
+        run: |
+          # Github's actions/checkout@v4 when run on Windows mangles the line-endings to DOS-style
+          # but we're running Linux *on top* of Windows, so we need to not mangle them!
+          # https://github.com/actions/checkout/issues/135#issuecomment-602171132
+          # https://github.com/actions/runner-images/issues/50#issuecomment-663920265
+          git config --global core.autocrlf false
+          git config --global core.eol lf
+
       - uses: actions/checkout@v4
         with:
           ref: ${{ matrix.sct_version }}
 
-      - name: Install SCT (Unix)
-        if: runner.os != 'Windows'
+      - name: Install SCT (Unix + WSL)
+        if: runner.os != 'Windows' || matrix.wsl == true
         run: ./install_sct -y
 
       - name: Force Python 3.7 (Windows, SCT v5.7)
-        if: runner.os == 'Windows' && matrix.sct_version == '5.7'
+        if: runner.os == 'Windows' && matrix.sct_version == '5.7' && matrix.wsl == false
         # Version 5.7-5.8's Windows installer tapped into the system python, meaning we need to set it up ourselves here
         uses: actions/setup-python@v5
         with:
           python-version: '3.7'
 
       - name: Force Python 3.8 (Windows, SCT v5.8)
-        if: runner.os == 'Windows' && matrix.sct_version == '5.8'
+        if: runner.os == 'Windows' && matrix.sct_version == '5.8' && matrix.wsl == false
         # Version 5.7-5.8's Windows installer tapped into the system python, meaning we need to set it up ourselves here
         uses: actions/setup-python@v5
         with:
           python-version: '3.8'
 
       - name: Install SCT (Windows)
-        if: runner.os == 'Windows'
+        if: runner.os == 'Windows' && matrix.wsl == false
         shell: cmd
         run: install_sct.bat
 
-      - name: Update environment variables
+      - name: Update environment variables (Unix)
+        if: runner.os != 'Windows'
         run: |
-          if [ "$RUNNER_OS" == "Windows" ]; then
+            # NB: install_sct edits ~/.bashrc, but those environment changes don't get passed to subsequent steps in GH Actions.
+            # So, we filter through the .bashrc and pass the values to $GITHUB_ENV and $GITHUB_PATH.
+            # Relevant documentation: https://docs.github.com/en/actions/reference/workflow-commands-for-github-actions#environment-files
+            # This workaround should be replaced by https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3198#discussion_r568225392
+            cat "$HOME/.bashrc" | grep "export SCT_DIR" | cut -d " " -f 2 >> $GITHUB_ENV
+            cat "$HOME/.bashrc" | grep "export PATH" | grep -o "/.*" | cut -d ':' -f 1 >> $GITHUB_PATH
+
+      - name: Update environment variables (WSL)
+        if: runner.os == 'Windows' && matrix.wsl == true
+        shell: bash
+        run: |
+            # - Ideally, since WSL == Unix, we would use `shell: bash` and grep `~/.bashrc` for the SCT_DIR and PATH 
+            #   values, as we do in the "Unix" steps above..
+            # - But, WSL uses `shell: wsl-bash`, which in turn uses `$HOME=/root`, and `shell: bash` can't see `/root`!
+            # - Naturally we would then think to use `shell: wsl-bash` when grepping `.bashrc`. But `shell: wsl-bash`
+            #   cannot see $GITHUB_ENV or $GITHUB_PATH ("unbound variable" errors), so we're forced to use `bash` to 
+            #   set $GITHUB_ENV and $GITHUB_PATH.
+            # - Even more tragically, however, any paths set in `bash` are translated into *relative paths* for the
+            #   WSL filesystem. In other words, `/root` in bash gets translated to `/mnt/c/msys64/root`. So, in 
+            #   a separate step, we symlink `/mnt/c/msys64/root` to `/root` to make the PATH work.
+            export VERSION_TXT=$(< spinalcordtoolbox/version.txt)
+            export SCT_DIR="/root/sct_${VERSION_TXT}"
+            echo "SCT_DIR=$SCT_DIR" >> $GITHUB_ENV
+            echo "$SCT_DIR\bin" >> $GITHUB_PATH
+
+      - name: Symlink `/mnt/c/msys64/root` to `/root` (WSL)
+        if: runner.os == 'Windows' && matrix.wsl == true
+        run: |
+            # `/root` is where SCT gets installed (since $HOME=/root for wsl-bash by default)
+            # `/mnt/c/msys64/root`, however, is what gets added to $PATH (since anything set to $GITHUB_PATH in 
+            # `bash` gets translated to paths relative to the Windows filesystem, i.e. /mnt/c.)
+            # So, this symlink makes sure that the SCT binaries can be found in their actual location.
+            ln -s /root /mnt/c/msys64/root
+
+      - name: Update environment variables (Windows)
+        if: runner.os == 'Windows' && matrix.wsl == false
+        run: |
             export VERSION_TXT=$(< spinalcordtoolbox/version.txt)
             # SCT_DIR was different in the first iteration of Windows support
             if [ "${VERSION_TXT}" == "5.7" ] || [ ${VERSION_TXT} == "5.8" ]; then
@@ -92,17 +168,6 @@ jobs:
             # In a user install, the user would perform this step using the Windows environment variable changing GUI.
             echo "SCT_DIR=$SCT_DIR" >> $GITHUB_ENV
             echo "$SCT_DIR\bin" >> $GITHUB_PATH
-
-          else
-
-            # NB: install_sct edits ~/.bashrc, but those environment changes don't get passed to subsequent steps in GH Actions.
-            # So, we filter through the .bashrc and pass the values to $GITHUB_ENV and $GITHUB_PATH.
-            # Relevant documentation: https://docs.github.com/en/actions/reference/workflow-commands-for-github-actions#environment-files
-            # This workaround should be replaced by https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3198#discussion_r568225392
-            cat ~/.bashrc | grep "export SCT_DIR" | cut -d " " -f 2 >> $GITHUB_ENV
-            cat ~/.bashrc | grep "export PATH" | grep -o "/.*" | cut -d ':' -f 1 >> $GITHUB_PATH
-
-          fi
 
       - name: Check dependencies
         # windows + SCT v5.7 fails with a DLL error here, but I'm not sure if that impacts the tests too, so continue
