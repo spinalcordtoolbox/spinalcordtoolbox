@@ -142,7 +142,8 @@ jobs:
           do
             # Full log output
             echo "::group::Diff for $os"
-            diff -u "artifacts_master/sct_example_data_$os.json/sct_example_data_$os.json" "artifacts/sct_example_data_$os.json" > $DIFF_FILE
+            # diff will throw exit code 1 if diff is non-empty, so use '|| true' to prevent the job from failing
+            diff -u "artifacts_master/sct_example_data_$os.json/sct_example_data_$os.json" "artifacts/sct_example_data_$os.json" > $DIFF_FILE || true
             ydiff < $DIFF_FILE
             echo "::endgroup::"
           
