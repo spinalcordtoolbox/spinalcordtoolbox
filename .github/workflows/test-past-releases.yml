@@ -118,3 +118,7 @@ jobs:
       - name: Run tests (non-v5.4)
         if: matrix.sct_version != '5.4'
         run: sct_testing
+
+      - name: Setup tmate session
+        if: ${{ failure() }}
+        uses: mxschmitt/action-tmate@v3
