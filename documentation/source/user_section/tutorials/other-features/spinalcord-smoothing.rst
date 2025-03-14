@@ -48,3 +48,17 @@ After smoothing, the apparent noise is reduced, while the cord edges are preserv
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/spinalcord-smoothing/io-sct_smooth_spinalcord.png
    :align: center
+
+You can compare the quality of the segmentation produced on the smoothed image by running the following commands:
+
+.. code:: sh
+
+   # Second-pass segmentation using the smoothed anatomical image
+   sct_deepseg_sc -i t1_smooth.nii.gz -c t1 -qc ~/qc_singleSubj
+
+..
+   comment:: Is this really necessary anymore? We have the contrast-agnostic
+             segmentation, which should provide a more accurate segmentation
+             with CSA that is consistent between contrasts. I am wondering
+             how trustworthy the results of ``sct_deepseg_sc`` are on a smoothed
+             spinal cord now that we have a new gold-standard for segmentation.
