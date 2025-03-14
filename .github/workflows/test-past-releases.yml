@@ -126,33 +126,6 @@ jobs:
             cat "$HOME/.bashrc" | grep "export SCT_DIR" | cut -d " " -f 2 >> $GITHUB_ENV
             cat "$HOME/.bashrc" | grep "export PATH" | grep -o "/.*" | cut -d ':' -f 1 >> $GITHUB_PATH
 
-      - name: Update environment variables (WSL)
-        if: runner.os == 'Windows' && matrix.wsl == true
-        shell: bash
-        run: |
-            # - Ideally, since WSL == Unix, we would use `shell: bash` and grep `~/.bashrc` for the SCT_DIR and PATH 
-            #   values, as we do in the "Unix" steps above..
-            # - But, WSL uses `shell: wsl-bash`, which in turn uses `$HOME=/root`, and `shell: bash` can't see `/root`!
-            # - Naturally we would then think to use `shell: wsl-bash` when grepping `.bashrc`. But `shell: wsl-bash`
-            #   cannot see $GITHUB_ENV or $GITHUB_PATH ("unbound variable" errors), so we're forced to use `bash` to 
-            #   set $GITHUB_ENV and $GITHUB_PATH.
-            # - Even more tragically, however, any paths set in `bash` are translated into *relative paths* for the
-            #   WSL filesystem. In other words, `/root` in bash gets translated to `/mnt/c/msys64/root`. So, in 
-            #   a separate step, we symlink `/mnt/c/msys64/root` to `/root` to make the PATH work.
-            export VERSION_TXT=$(< spinalcordtoolbox/version.txt)
-            export SCT_DIR="/root/sct_${VERSION_TXT}"
-            echo "SCT_DIR=$SCT_DIR" >> $GITHUB_ENV
-            echo "$SCT_DIR\bin" >> $GITHUB_PATH
-
-      - name: Symlink `/mnt/c/msys64/root` to `/root` (WSL)
-        if: runner.os == 'Windows' && matrix.wsl == true
-        run: |
-            # `/root` is where SCT gets installed (since $HOME=/root for wsl-bash by default)
-            # `/mnt/c/msys64/root`, however, is what gets added to $PATH (since anything set to $GITHUB_PATH in 
-            # `bash` gets translated to paths relative to the Windows filesystem, i.e. /mnt/c.)
-            # So, this symlink makes sure that the SCT binaries can be found in their actual location.
-            ln -s /root /mnt/c/msys64/root
-
       - name: Update environment variables (Windows)
         if: runner.os == 'Windows' && matrix.wsl == false
         run: |
@@ -172,17 +145,26 @@ jobs:
       - name: Check dependencies
         # windows + SCT v5.7 fails with a DLL error here, but I'm not sure if that impacts the tests too, so continue
         continue-on-error: true
-        run: sct_check_dependencies
+        run: |
+          export PATH=/root/sct_${{ matrix.sct_version }}/bin:$PATH  # hacky workaround for WSL $PATH issue
+          sct_check_dependencies
 
       # In SCT v5.4, the `sct_testing` testing framework was taken away, replaced with pytest.
       # But, in SCT v5.5, the `sct_testing` name was re-used as an alias for pytest.
       # This means that, for only v5.4, we need to run the tests differently by calling pytest directly.
       - name: Run tests (v5.4)
         if: matrix.sct_version == '5.4'
-        run: ./python/envs/venv_sct/bin/pytest ./testing
+        run: |
+          echo $PATH
+          export PATH=/root/sct_${{ matrix.sct_version }}/bin:$PATH  # hacky workaround for WSL $PATH issue
+          echo $PATH
+          ./python/envs/venv_sct/bin/pytest ./testing
+
       - name: Run tests (non-v5.4)
         if: matrix.sct_version != '5.4'
-        run: sct_testing
+        run: |
+          export PATH=/root/sct_${{ matrix.sct_version }}/bin:$PATH  # hacky workaround for WSL $PATH issue
+          sct_testing
 
       - name: Setup tmate session
         if: ${{ failure() }}
