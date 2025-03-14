@@ -10,11 +10,11 @@ In order to subtract the gray matter, we will first need to get the  full spinal
 
 .. code:: sh
 
-   sct_deepseg_sc -i t2s.nii.gz -c t2s -qc ~/qc_singleSubj
+   sct_deepseg -task seg_sc_contrast_agnostic -i t2s.nii.gz -qc ~/qc_singleSubj
 
 :Input arguments:
+   - ``-task``: Task to perform. Here, we are using ``seg_sc_contrast_agnostic`` to segment the spinal cord. This task is contrast-agnostic, meaning it can be used on any type of image (T1, T2, T2*, etc.)
    - ``-i`` : Input image.
-   - ``-c`` : Contrast of the input image.
    - ``-qc`` : Directory for Quality Control reporting. QC reports allow us to evaluate the results slice-by-slice.
 
 :Output files/folders:
@@ -30,11 +30,12 @@ Now that we have the spinal cord segmentation, we can subtract the gray matter a
 
 .. code:: sh
 
-   sct_maths -i t2s_seg.nii.gz -sub t2s_gmseg.nii.gz -o t2s_wmseg.nii.gz
+   sct_maths -i t2s_seg.nii.gz -sub t2s_gmseg.nii.gz -thr 0 -o t2s_wmseg.nii.gz
 
 :Input arguments:
    - ``-i`` : Input image. (The full segmentation of the spinal cord.)
    - ``-sub`` : Flag to invoke the "subtract" functionality of :ref:`sct_maths`, subtracting ``t2s_gmseg.nii.gz`` from the input image.
+   - ``-thr 0``: Threshold the output image to remove any negative values. (This would occur if there are voxels in the gray matter segmentation that are not in the spinal cord segmentation.)
    - ``-o`` : The filename of the output image.
 
 :Output files/folders:

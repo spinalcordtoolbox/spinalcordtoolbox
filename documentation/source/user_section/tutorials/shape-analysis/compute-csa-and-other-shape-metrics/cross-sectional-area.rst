@@ -83,11 +83,11 @@ Finally, to compute CSA for individual slices, set the ``-perslice`` argument to
 CSA (PMJ-based)
 ===============
 
-Although using vertebral levels as a reference to :ref:`compute CSA <csa-perlevel>` gives an approximation of the spinal levels, a drawback of that method is that it doesn’t consider neck flexion and extension `(Cadotte et al., 2015) <https://pubmed.ncbi.nlm.nih.gov/25523587/>`_.  
+Although using vertebral levels as a reference to :ref:`compute CSA <csa-perlevel>` gives an approximation of the spinal levels, a drawback of that method is that it doesn’t consider neck flexion and extension `(Cadotte et al., 2015) <https://pubmed.ncbi.nlm.nih.gov/25523587/>`__.
 
 To overcome this limitation, the CSA can instead be computed as a function of the distance to a neuroanatomical reference point. Here, we use the pontomedullary junction (PMJ) as a reference for computing CSA, since the distance from the PMJ along the spinal cord will vary depending on the position of the neck.
 
-Computing the PMJ-based CSA involves a 4-step process `(Bedard & Cohen-Adad, 2022) <https://doi.org/10.3389/fnimg.2022.1031253>`_: 
+Computing the PMJ-based CSA involves a 4-step process `(Bedard & Cohen-Adad, 2022) <https://doi.org/10.3389/fnimg.2022.1031253>`__:
 
 1. The PMJ is detected using :ref:`sct_detect_pmj`.
 2. The spinal cord centerline is extracted using a segmentation of the spinal cord, then the centerline is extended to the position of the PMJ label using linear interpolation and smoothing. 
@@ -149,3 +149,11 @@ Second, we compute CSA from a distance from the PMJ.
 .. csv-table:: CSA values computed at 64 mm from the PMJ.
    :file: csa_pmj.csv
    :header-rows: 1
+
+.. note::
+
+   The above commands will output the metrics in the subject space (with the original image's slice numbers) However, you can get the corresponding slice number in the PAM50 space by using the flag ``-normalize-PAM50 1``.
+
+   .. code:: sh
+
+      sct_process_segmentation -i t2_seg.nii.gz -vertfile t2_seg_labeled.nii.gz -perslice 1 -normalize-PAM50 1 -o csa_PAM50.csv

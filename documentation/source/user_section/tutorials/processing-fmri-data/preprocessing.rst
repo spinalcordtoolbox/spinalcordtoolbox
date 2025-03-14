@@ -28,7 +28,7 @@ First we compute the mean of the 4D fMRI data to obtain a coarse 3D approximatio
 Generating a spinal cord segmentation
 -------------------------------------
 
-Due to the low contrast between spinal cord and cerebrospinal fluid of fMRI data, it is difficult to directly obtain a spinal cord segmentation for fMRI data using :ref:`sct_deepseg_sc`. So, as a workaround, we will instead obtain a spinal cord segmentation for another contrast (T2), then transform it to the space of the fMRI data.
+Due to the low contrast between spinal cord and cerebrospinal fluid of fMRI data, it is difficult to directly obtain a spinal cord segmentation for fMRI data using :ref:`sct_deepseg`. So, as a workaround, we will instead obtain a spinal cord segmentation for another contrast (T2), then transform it to the space of the fMRI data.
 
 
 Generating a T2 segmentation
@@ -37,11 +37,11 @@ Generating a T2 segmentation
 .. code::
 
    cd ../t2
-   sct_deepseg_sc -i t2.nii.gz -c t2
+   sct_deepseg -task seg_sc_contrast_agnostic -i t2.nii.gz
 
 :Input arguments:
+   - ``-task``: Task to perform. Here, we are using ``seg_sc_contrast_agnostic`` to segment the spinal cord. This task is contrast-agnostic, meaning it can be used on any type of image (T1, T2, T2*, etc.)
    - ``-i`` : Input image
-   - ``-c`` : Contrast of the input image
 
 :Output files/folders:
    - ``t2_seg.nii.gz`` : 3D binary mask of the segmented spinal cord
@@ -76,12 +76,11 @@ Now that we have a spinal cord segmentation in the space of the fMRI data, we ca
 
 .. code::
 
-   sct_create_mask -i fmri.nii.gz -p centerline,t2_seg_reg.nii.gz -size 35mm -f cylinder
+   sct_create_mask -i fmri.nii.gz -p centerline,t2_seg_reg.nii.gz -size 35mm
 
 :Input arguments:
    - ``-i`` : The input image to create the mask from.
    - ``-p`` : The process used to position the mask. The ``centerline`` process will compute the center of mass for each slice of ``t2_seg_reg.nii.gz``, then use those locations to center of the mask at each slice.
-   - ``-f``: The shape of the mask. Here, we create cylinder around the centerline.
    - ``-size``: The diameter of the mask.
 
 :Output files/folders:

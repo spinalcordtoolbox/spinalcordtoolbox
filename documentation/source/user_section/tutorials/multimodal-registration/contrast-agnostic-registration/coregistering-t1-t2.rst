@@ -1,3 +1,8 @@
+..
+   comment:: This section is no longer included in the SCT course to save on
+             time. However, we still keep it in the tutorials because it is
+             relatively unobtrusive and may be useful to some users.
+
 Coregistering T1w with T2w
 ##########################
 
