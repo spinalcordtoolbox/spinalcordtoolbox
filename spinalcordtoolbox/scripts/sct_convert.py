@@ -22,14 +22,14 @@ def get_parser():
         description='Convert image file to another type.'
     )
 
-    mandatoryArguments = parser.add_argument_group("MANDATORY ARGUMENTS")
-    mandatoryArguments.add_argument(
+    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory.add_argument(
         "-i",
         required=True,
         help='File input. Example: data.nii.gz',
         metavar=Metavar.file,
     )
-    mandatoryArguments.add_argument(
+    mandatory.add_argument(
         "-o",
         required=True,
         help='File output (indicate new extension). Example: data.nii',
@@ -38,25 +38,15 @@ def get_parser():
 
     optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
     optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit")
-    optional.add_argument(
         "-squeeze",
         type=int,
-        help='Sueeze data dimension (remove unused dimension)',
+        help='Squeeze data dimension (remove unused dimension)',
         required=False,
         choices=(0, 1),
         default=1)
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
+
+    # Arguments which implement shared functionality
+    parser.add_common_args(optional)
 
     return parser
 

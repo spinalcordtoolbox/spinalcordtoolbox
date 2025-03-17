@@ -448,8 +448,8 @@ def get_parser():
                     ' If only one image is inputted, it will be only thinned'
     )
 
-    mandatoryArguments = parser.add_argument_group("MANDATORY ARGUMENTS")
-    mandatoryArguments.add_argument(
+    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory.add_argument(
         "-i",
         required=True,
         help='First Image on which you want to find the skeleton Example: t2star_manual_gmseg.nii.gz',
@@ -457,11 +457,6 @@ def get_parser():
     )
 
     optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
-    optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="show this help message and exit")
     optional.add_argument(
         "-d",
         help='Second Image on which you want to find the skeleton Example: t2star_manual_gmseg.nii.gz',
@@ -489,14 +484,9 @@ def get_parser():
         metavar=Metavar.str,
         required=False,
         default='hausdorff_distance.txt')
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
 
     return parser
 

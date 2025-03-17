@@ -111,6 +111,7 @@ def get_parser():
             Note: This flag should not be set to 1 when computing the MCC (i.e. using spinal canal segmentation). It should only be used when computing the MSCC (i.e. using spinal cord segmentation).
         """),  # noqa: E501 (line too long)
     )
+
     optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
     optional.add_argument(
         '-extent',
@@ -147,19 +148,9 @@ def get_parser():
         help='Output CSV file name. If not provided, the suffix `_compression_metrics` is added to the file name '
              'provided by the flag `-i`.'
     )
-    optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit")
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
 
     return parser
 

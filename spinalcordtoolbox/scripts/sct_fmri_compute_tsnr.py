@@ -90,27 +90,13 @@ def get_parser():
         required=True,
         help="Input fMRI data. Example:` fmri.nii.gz`"
     )
+
     optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
     optional.add_argument(
         '-m',
         help='Binary (or weighted) mask within which tSNR will be averaged. Example: `fmri_moco_mean_seg.nii.gz`',
         metavar=Metavar.file,
         )
-    optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit."
-    )
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode"
-    )
     optional.add_argument(
         '-o',
         metavar=Metavar.file,
@@ -130,6 +116,9 @@ def get_parser():
         '-qc-subject',
         metavar=Metavar.str,
         help='If provided, this string will be mentioned in the QC report as the subject the process was run on',)
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
 
     return parser
 

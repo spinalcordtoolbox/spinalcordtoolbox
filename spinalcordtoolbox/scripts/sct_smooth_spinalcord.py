@@ -74,12 +74,6 @@ def get_parser():
 
     optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
     optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit."
-    )
-    optional.add_argument(
         '-smooth',
         metavar=Metavar.list,
         type=list_type(',', float),
@@ -100,22 +94,10 @@ def get_parser():
         "-o",
         metavar=Metavar.file,
         help="Output filename. Example: `smooth_sc.nii.gz`. If not provided, the suffix `_smooth` will be added to the input file name."),
-    optional.add_argument(
-        '-r',
-        type=int,
-        choices=[0, 1],
-        default=1,
-        help="Whether to remove temporary files. 0 = no, 1 = yes"
-    )
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode"
-    )
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
+    parser.add_tempfile_args()
 
     return parser
 

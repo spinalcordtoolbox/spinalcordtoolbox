@@ -27,6 +27,7 @@ def get_parser():
                     "Cohen-Adad J. Topologically-preserving straightening of spinal cord MRI. J Magn "
                     "Reson Imaging. 2017 Oct;46(4):1209-1219"
     )
+
     mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
     mandatory.add_argument(
         "-i",
@@ -40,12 +41,8 @@ def get_parser():
              'sct_get_centerline. To obtain the segmentation you can use sct_propseg or sct_deepseg_sc. '
              'Example: centerline.nii.gz',
         required=True)
+
     optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
-    optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit")
     optional.add_argument(
         "-dest",
         metavar=Metavar.file,
@@ -144,7 +141,6 @@ def get_parser():
               - `template_orientation`: {0, 1}` Disable/Enable orientation of the straight image to be the same as the template. Default=`0`
         """),  # noqa: E501 (line too long)
         required=False)
-
     optional.add_argument(
         "-x",
         help="Final interpolation. Default: `spline`.",
@@ -167,21 +163,10 @@ def get_parser():
         help='If provided, this string will be mentioned in the QC report as the subject the '
              'process was run on',
         default=None)
-    optional.add_argument(
-        "-r",
-        type=int,
-        help="Remove temporary files.",
-        required=False,
-        choices=(0, 1),
-        default=1)
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
+    parser.add_tempfile_args()
 
     return parser
 

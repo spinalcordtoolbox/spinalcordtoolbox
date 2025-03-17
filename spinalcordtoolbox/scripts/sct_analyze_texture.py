@@ -29,14 +29,14 @@ def get_parser():
                     'called fnameInput_feature_distance_mean.nii.gz, is output.'
     )
 
-    mandatoryArguments = parser.add_argument_group("MANDATORY ARGUMENTS")
-    mandatoryArguments.add_argument(
+    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory.add_argument(
         "-i",
         required=True,
         help='Image to analyze. Example: t2.nii.gz',
         metavar=Metavar.file,
     )
-    mandatoryArguments.add_argument(
+    mandatory.add_argument(
         "-m",
         required=True,
         metavar=Metavar.file,
@@ -44,11 +44,6 @@ def get_parser():
     )
 
     optional = parser.add_argument_group("OPTIONALS ARGUMENTS")
-    optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit")
     optional.add_argument(
         "-feature",
         metavar=Metavar.str,
@@ -81,21 +76,10 @@ def get_parser():
         action=ActionCreateFolder,
         required=False,
         default=Param().path_results)
-    optional.add_argument(
-        "-r",
-        help="Remove temporary files.",
-        required=False,
-        type=int,
-        choices=(0, 1),
-        default=int(Param().rm_tmp))
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
+    parser.add_tempfile_args()
 
     return parser
 

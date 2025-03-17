@@ -43,12 +43,6 @@ def get_parser():
 
     optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
     optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit."
-    )
-    optional.add_argument(
         "-c",
         choices=['t1', 't2', 't2s', 'dwi'],
         help="Type of image contrast. Only with method=optic."
@@ -119,23 +113,6 @@ def get_parser():
         help="Gap in mm between manually selected points. Only with method=viewer."
     )
     optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode"
-    )
-    optional.add_argument(
-        '-r',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1],
-        default=1,
-        help="Whether to remove temporary files. 0 = no, 1 = yes"
-    )
-    optional.add_argument(
         "-qc",
         metavar=Metavar.folder,
         action=ActionCreateFolder,
@@ -151,6 +128,11 @@ def get_parser():
         metavar=Metavar.str,
         help="If provided, this string will be mentioned in the QC report as the subject the process was run on."
     )
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
+    parser.add_tempfile_args()
+
     return parser
 
 
