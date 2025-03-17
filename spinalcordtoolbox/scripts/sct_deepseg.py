@@ -194,7 +194,19 @@ def get_parser(subparser_to_return=None):
             metavar=Metavar.str,
             choices=('Axial', 'Sagittal'),
             default='Axial',
-            help="Plane of the output QC. If Sagittal, you must also provide the -s option. Default: Axial.")
+            help="Plane of the output QC. If Sagittal, it is highly recommended to provide the `-qc-seg` option, "
+                 "as it will ensure the output QC is cropped to a reasonable field of view. "
+                 "(Note: Sagittal view is not currently supported for rootlets/totalspineseg QC.)")
+        misc.add_argument(
+            "-qc-seg",
+            metavar=Metavar.file,
+            help=textwrap.dedent("""
+                    Segmentation file to use for cropping the QC. This option is useful when you want to QC a region that is different from the output segmentation. For example, for lesion segmentation, it might be useful to provide a cord segmentation to expand the QC field of view to include the full cord, while also still excluding irrelevant tissue.
+                    If not provided, the default behavior will depend on the `-qc-plane`:
+                       - 'Axial': A sensibly chosen crop radius between 15-40 vox, depending on the resolution and segmentation type.
+                       - 'Sagittal': The full image. (For very large images, this may cause a crash, so using `-qc-seg` is highly recommended.)
+                """)  # noqa: E501 (line too long)
+        )
 
     # Add options that only apply to a specific task
     parser_dict['tumor_edema_cavity_t1_t2'].add_argument(
@@ -394,22 +406,25 @@ def main(argv: Sequence[str]):
             json.dump(sidecar_json, fp, indent=4)
 
     if arguments.qc is not None:
+        # If `arguments.qc_seg is None`, each entry will be treated as an
+        # empty file with the same size as the corresponding input image
+        qc_seg = [arguments.qc_seg] * len(input_filenames)
         # Models can have multiple input images -- create 1 QC report per input image.
         if len(output_filenames) == len(input_filenames):
-            iterator = zip(input_filenames, output_filenames, [None] * len(input_filenames))
+            iterator = zip(input_filenames, output_filenames, [None] * len(input_filenames), qc_seg)
         # Special case: totalspineseg which outputs 5 files per 1 input file
         # Just use the 5th image ([4]) which represents the step2 output
         elif arguments.task == 'totalspineseg':
             assert len(output_filenames) == 5 * len(input_filenames)
-            iterator = zip(input_filenames, output_filenames[4::5], [None] * len(input_filenames))
+            iterator = zip(input_filenames, output_filenames[4::5], [None] * len(input_filenames), qc_seg)
         # Other models typically have 2 outputs per input (e.g. SC + lesion), so use both segs
         else:
             assert len(output_filenames) == 2 * len(input_filenames)
-            iterator = zip(input_filenames, output_filenames[0::2], output_filenames[1::2])
+            iterator = zip(input_filenames, output_filenames[0::2], output_filenames[1::2], qc_seg)
 
         # Create one QC report per input image, with one or two segs per image
         species = 'mouse' if 'mouse' in arguments.task else 'human'  # used for resampling
-        for fname_in, fname_seg1, fname_seg2 in iterator:
+        for fname_in, fname_seg1, fname_seg2, fname_qc_seg in iterator:
             qc2.sct_deepseg(
                 fname_input=fname_in,
                 fname_seg=fname_seg1,
@@ -420,6 +435,7 @@ def main(argv: Sequence[str]):
                 dataset=arguments.qc_dataset,
                 subject=arguments.qc_subject,
                 plane=arguments.qc_plane,
+                fname_qc_seg=fname_qc_seg
             )
 
     images = [arguments.i[0]]

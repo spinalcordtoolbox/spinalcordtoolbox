@@ -172,3 +172,17 @@ def test_segment_nifti_multiclass(fname_image, fnames_seg_manual, fname_out, suf
             im_seg_manual = Image(fname_seg_manual)
             dice_segmentation = compute_dice(im_seg, im_seg_manual, mode='3d', zboundaries=False)
             assert dice_segmentation > 0.94  # axial model is just barely under .95, so we'll accept .94
+
+
+@pytest.mark.parametrize("qc_plane", ["Axial", "Sagittal"])
+def test_deepseg_with_cropped_qc(qc_plane, tmp_path):
+    """
+    Test that `-qc-seg` cropping works with both Axial and Sagittal QCs.
+    """
+    fname_out = str(tmp_path / "t2_deepseg.nii.gz")
+    sct_deepseg.main(['-i', sct_test_path('t2', 't2_fake_lesion.nii.gz'),
+                      '-task', 'seg_sc_lesion_t2w_sci',
+                      '-o', fname_out,
+                      '-qc', str(tmp_path/'qc'),
+                      '-qc-plane', qc_plane,
+                      '-qc-seg', sct_test_path('t2', 't2_fake_lesion_sc_seg.nii.gz')])

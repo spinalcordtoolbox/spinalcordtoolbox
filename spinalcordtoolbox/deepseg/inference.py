@@ -306,6 +306,12 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device):
     if is_rootlet_model:
         targets = ["_rootlets"]
         outputs = [img_out]
+    # for spinal cord segmentation models with only 1 output label, save the image directly with specific "_seg" suffix
+    # this is added to preserve the typical expected output for SC models (`sct_propseg`, `sct_deepseg_sc`, etc.)
+    # see also: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4805
+    elif sorted(labels.keys()) == ['sc']:
+        targets = ["_seg"]
+        outputs = [img_out]
     # for the other multiclass models (SCI lesion/SC, mouse GM/WM, etc.), save 1 image per label
     else:
         targets, outputs = [], []
