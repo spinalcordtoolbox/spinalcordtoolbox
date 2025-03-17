@@ -180,8 +180,8 @@ def test_deepseg_with_cropped_qc(qc_plane, tmp_path):
     Test that `-qc-seg` cropping works with both Axial and Sagittal QCs.
     """
     fname_out = str(tmp_path / "t2_deepseg.nii.gz")
-    sct_deepseg.main(['-i', sct_test_path('t2', 't2_fake_lesion.nii.gz'),
-                      '-task', 'seg_sc_lesion_t2w_sci',
+    sct_deepseg.main(['lesion_sci_t2',
+                      '-i', sct_test_path('t2', 't2_fake_lesion.nii.gz'),
                       '-o', fname_out,
                       '-qc', str(tmp_path/'qc'),
                       '-qc-plane', qc_plane,
