@@ -28,20 +28,20 @@ def get_parser():
                     'MRI. Magn Reson Med 2008;60(6):1396-1407.'
     )
 
-    mandatoryArguments = parser.add_argument_group("MANDATORY ARGUMENTS")
-    mandatoryArguments.add_argument(
+    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory.add_argument(
         "-mt",
         required=True,
         help="Image with MT_ON",
         metavar=Metavar.file,
     )
-    mandatoryArguments.add_argument(
+    mandatory.add_argument(
         "-pd",
         required=True,
         help="Image PD weighted (typically, the MT_OFF)",
         metavar=Metavar.file,
     )
-    mandatoryArguments.add_argument(
+    mandatory.add_argument(
         "-t1",
         required=True,
         help="Image T1-weighted",
@@ -49,11 +49,6 @@ def get_parser():
     )
 
     optional = parser.add_argument_group('OPTIONAL ARGUMENTS')
-    optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit")
     optional.add_argument(
         "-trmt",
         help="TR [in s] for the MT image (MT on). By default, will be fetch from the json sidecar (if it exists).",
@@ -105,14 +100,9 @@ def get_parser():
         metavar=Metavar.str,
         help="Output file for T1map",
         default="t1map.nii.gz")
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
 
     return parser
 

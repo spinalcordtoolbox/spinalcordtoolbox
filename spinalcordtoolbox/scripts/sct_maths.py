@@ -115,11 +115,6 @@ def get_parser():
         choices=(0, 1),
         default=0
     )
-    optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit")
 
     basic = parser.add_argument_group('BASIC OPERATIONS')
     basic.add_argument(
@@ -368,15 +363,9 @@ def get_parser():
         default=None,  # needed because argument_default=argparse.SUPPRESS
         help='Output type.',
         required=False)
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode",
-        required=False)
+
+    # Arguments which implement shared functionality
+    parser.add_common_args(misc)
 
     return parser
 

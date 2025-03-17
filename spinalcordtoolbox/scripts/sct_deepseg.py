@@ -96,8 +96,8 @@ def get_parser():
              "https://github.com/ivadomed/model-spinal-rootlets/releases/download/r20240523/model-spinal-rootlets_ventral_D106_r20240523.zip'\n"
              "'sct_deepseg -i sub-amu01_T2w.nii.gz -task seg_spinal_rootlets_t2w'")
 
-    misc = parser.add_argument_group('PARAMETERS')
-    misc.add_argument(
+    params = parser.add_argument_group('PARAMETERS')
+    params.add_argument(
         "-thr",
         type=float,
         dest='binarize_prediction',
@@ -106,26 +106,20 @@ def get_parser():
              "(more info at https://github.com/sct-pipeline/deepseg-threshold).",
         metavar=Metavar.float,
         default=None)
-    misc.add_argument(
-        "-r",
-        type=int,
-        help="Remove temporary files.",
-        choices=(0, 1),
-        default=1)
-    misc.add_argument(
+    params.add_argument(
         "-largest",
         dest='keep_largest',
         type=int,
         help="Keep the largest connected-objects from the output segmentation. Specify the number of objects to keep."
              "To keep all objects, set to 0",
         default=None)
-    misc.add_argument(
+    params.add_argument(
         "-fill-holes",
         type=int,
         help="Fill small holes in the segmentation.",
         choices=(0, 1),
         default=None)
-    misc.add_argument(
+    params.add_argument(
         "-remove-small",
         type=str,
         nargs="+",
@@ -134,37 +128,24 @@ def get_parser():
              "smaller than 10 voxels for class 1 and 3, and smaller than 20 voxels for class 2).",
         default=None)
 
-    misc = parser.add_argument_group('MISC')
-    misc.add_argument(
+    qc = parser.add_argument_group('QUALITY CONTROL')
+    qc.add_argument(
         '-qc',
         metavar=Metavar.folder,
         action=ActionCreateFolder,
         help="The path where the quality control generated content will be saved."
     )
-    misc.add_argument(
+    qc.add_argument(
         '-qc-dataset',
         metavar=Metavar.str,
         help="If provided, this string will be mentioned in the QC report as the dataset the process was run on."
     )
-    misc.add_argument(
+    qc.add_argument(
         '-qc-subject',
         metavar=Metavar.str,
         help="If provided, this string will be mentioned in the QC report as the subject the process was run on."
     )
-    misc.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
-    misc.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit")
-    misc.add_argument(
+    qc.add_argument(
         "-qc-plane",
         metavar=Metavar.str,
         choices=('Axial', 'Sagittal'),
@@ -172,7 +153,7 @@ def get_parser():
         help="Plane of the output QC. If Sagittal, it is highly recommended to provide the `-qc-seg` option, "
              "as it will ensure the output QC is cropped to a reasonable field of view. "
              "(Note: Sagittal view is not currently supported for rootlets/totalspineseg QC.)")
-    misc.add_argument(
+    qc.add_argument(
         "-qc-seg",
         metavar=Metavar.file,
         help=textwrap.dedent("""
@@ -182,6 +163,10 @@ def get_parser():
                - 'Sagittal': The full image. (For very large images, this may cause a crash, so using `-qc-seg` is highly recommended.)
         """)  # noqa: E501 (line too long)
     )
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
+    parser.add_tempfile_args()
 
     return parser
 

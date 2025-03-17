@@ -33,8 +33,8 @@ def get_parser():
                     ' signal-to-noise ratios in MR images: Influence of multichannel coils, parallel '
                     'imaging, and reconstruction filters. J Magn Reson Imaging 2007; 26(2): 375-385].'
     )
-    mandatoryArguments = parser.add_argument_group("MANDATORY ARGUMENTS")
-    mandatoryArguments.add_argument(
+    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory.add_argument(
         '-i',
         required=True,
         help=textwrap.dedent("""
@@ -44,12 +44,8 @@ def get_parser():
               - For `-method single`, the image can either be 3D or 4D. If a 4D image is passed, a specific 3D volume should be specified using the `-vol` argument.
         """),
         metavar=Metavar.file)
+
     optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
-    optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit")
     optional.add_argument(
         '-m',
         help='Binary (or weighted) mask within which SNR will be averaged. Example: `dwi_moco_mean_seg.nii.gz`',
@@ -97,26 +93,17 @@ def get_parser():
         default=1,
         choices=(0, 1))
     optional.add_argument(
-        '-r',
-        type=int,
-        help='Remove temporary files.',
-        default=1,
-        choices=(0, 1))
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
-    optional.add_argument(
         '-o',
         metavar=Metavar.str,
         type=str,
         default=None,
         help="File name to write the computed SNR to."
     )
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
+    parser.add_tempfile_args()
+
     return parser
 
 

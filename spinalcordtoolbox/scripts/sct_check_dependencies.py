@@ -178,11 +178,7 @@ def get_parser():
     )
 
     optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
-    optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit")
+    parser.add_common_args(optional)
     optional.add_argument(
         '-complete',
         help="Complete test.",
@@ -198,7 +194,8 @@ def get_parser():
 def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
-    verbose = complete_test = arguments.complete
+    complete_test = arguments.complete
+    verbose = arguments.v
     set_loglevel(verbose=verbose, caller_module_name=__name__)
 
     print("\nSYSTEM INFORMATION"

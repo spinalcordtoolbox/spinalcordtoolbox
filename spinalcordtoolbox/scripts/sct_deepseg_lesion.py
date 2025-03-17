@@ -44,12 +44,6 @@ def get_parser():
 
     optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
     optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit",
-    )
-    optional.add_argument(
         "-centerline",
         help=textwrap.dedent("""
             Method used for extracting the centerline:
@@ -82,21 +76,10 @@ def get_parser():
         action=ActionCreateFolder,
         metavar=Metavar.str,
         default=os.getcwd())
-    optional.add_argument(
-        "-r",
-        type=int,
-        help="Remove temporary files.",
-        required=False,
-        choices=(0, 1),
-        default=1)
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
+    parser.add_tempfile_args()
 
     return parser
 

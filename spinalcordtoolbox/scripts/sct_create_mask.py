@@ -53,14 +53,14 @@ def get_parser():
         description='Create mask along z direction.'
     )
 
-    mandatoryArguments = parser.add_argument_group("MANDATORY ARGUMENTS")
-    mandatoryArguments.add_argument(
+    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory.add_argument(
         '-i',
         required=True,
         help='Image to create mask on. Only used to get header. Must be 3D. Example: `data.nii.gz`',
         metavar=Metavar.file,
     )
-    mandatoryArguments.add_argument(
+    mandatory.add_argument(
         '-p',
         default=param_default.process,
         required=True,
@@ -76,11 +76,6 @@ def get_parser():
     )
 
     optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
-    optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit")
     optional.add_argument(
         '-size',
         help='Diameter of the mask in the axial plane, given in pixel (Example: `35`) or in millimeter (Example: `35mm`). '
@@ -99,21 +94,10 @@ def get_parser():
         metavar=Metavar.str,
         help='Name of output mask, Example: `data.nii.gz`',
         required=False)
-    optional.add_argument(
-        "-r",
-        type=int,
-        help='Remove temporary files',
-        required=False,
-        default=1,
-        choices=(0, 1))
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
+    parser.add_tempfile_args()
 
     return parser
 

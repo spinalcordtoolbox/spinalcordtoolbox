@@ -45,8 +45,8 @@ def get_parser():
         """),  # noqa: E501 (line too long)
     )
 
-    mandatoryArguments = parser.add_argument_group("MANDATORY ARGUMENTS")
-    mandatoryArguments.add_argument(
+    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory.add_argument(
         '-i',
         required=True,
         help="Input image. Example: t2.nii.gz",
@@ -54,11 +54,6 @@ def get_parser():
     )
 
     optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
-    optional.add_argument(
-        '-h',
-        '--help',
-        action='help',
-        help="Show this help message and exit")
     optional.add_argument(
         '-o',
         help="Output image. By default, the suffix '_crop' will be added to the input image.",
@@ -145,14 +140,9 @@ def get_parser():
              "zeros outside the bounding box, use: '-b 0'",
         metavar=Metavar.int,
     )
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
 
     return parser
 

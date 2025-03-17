@@ -48,12 +48,6 @@ def get_parser():
 
     optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
     optional.add_argument(
-        "-h",
-        "--help",
-        action='help',
-        help="Show this help message and exit.",
-    )
-    optional.add_argument(
         "-model",
         help="Type of regression model used for self-supervised training within Patch2Self.",
         choices=('ols', 'ridge', 'lasso'),
@@ -75,14 +69,9 @@ def get_parser():
         help="Name of the output NIFTI image.",
         metavar=Metavar.str,
     )
-    optional.add_argument(
-        "-v",
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode.",
-    )
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
 
     return parser
 
