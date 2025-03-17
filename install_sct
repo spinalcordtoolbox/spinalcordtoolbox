@@ -473,7 +473,7 @@ echo -e "Installation type ... $SCT_INSTALL_TYPE"
 echo -e "Operating system .... $OS ($OSver)"
 echo -e "Shell config ........ $RC_FILE_PATH"
 
-# check permissions on shell config file (and fail if necessary)
+# check permissions on shell config file (but don't fail either way)
 echo ""
 check_permissions "$RC_FILE_PATH"
 
