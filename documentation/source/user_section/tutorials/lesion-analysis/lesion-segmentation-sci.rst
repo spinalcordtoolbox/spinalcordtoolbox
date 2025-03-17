@@ -21,8 +21,8 @@ Run the following command to segment the lesion using ``SCIseg`` from the input 
    sct_deepseg lesion_sci_t2 -i t2.nii.gz -qc ~/qc_singleSubj
 
 :Input arguments:
+   - ``lesion_sci_t2`` : Task to perform. In our case, we use the ``SCIseg`` model via the ``lesion_sci_t2`` task
    - ``-i`` : Input T2w image with fake lesion
-   - ``-task`` : Task to perform. In our case, we use the ``SCIseg`` model via the ``lesion_sci_t2`` task
    - ``-qc`` : Directory for Quality Control reporting. QC reports allow us to evaluate the segmentation slice-by-slice
 
 :Output files/folders:

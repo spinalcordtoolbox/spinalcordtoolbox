@@ -13,8 +13,8 @@ Run the following command to segment the spinal nerve rootlets from the input im
    sct_deepseg rootlets_t2 -i t2.nii.gz -qc ~/qc_singleSubj
 
 :Input arguments:
+    - ``rootlets_t2`` : Task to perform. In our case, we use the ``rootlets_t2`` task.
     - ``-i`` : Input T2w image
-    - ``-task`` : Task to perform. In our case, we use the ``rootlets_t2`` task.
     - ``-qc`` : Directory for Quality Control reporting. QC reports allow us to evaluate the segmentation slice-by-slice
 
 :Output files/folders:

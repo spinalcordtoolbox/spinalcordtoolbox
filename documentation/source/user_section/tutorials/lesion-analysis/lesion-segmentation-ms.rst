@@ -7,21 +7,21 @@ image contrast, you can use the following algorithms:
 Contrast-agnostic
 *****************
 
-As described in the :ref:`contrasts` section, SCT has moved towards developing contrast-agnostic segmentation tools. The ``seg_ms_lesion`` model is SCT's effort to create a contrast-agnostic lesion segmentation tool that can be used on any type of image (T1, T2, T2*, etc.), in order to ensure consistent lesion segmentation results between contrasts.
+As described in the :ref:`contrasts` section, SCT has moved towards developing contrast-agnostic segmentation tools. The ``ms_lesion`` model is SCT's effort to create a contrast-agnostic lesion segmentation tool that can be used on any type of image (T1, T2, T2*, etc.), in order to ensure consistent lesion segmentation results between contrasts.
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/ms_lesion.png
    :align: center
    :figwidth: 60%
 
-You can try the ``seg_ms_lesion`` on the sample T2w image using the following command:
+You can try the ``ms_lesion`` on the sample T2w image using the following command:
 
 .. code:: sh
 
-   sct_deepseg seg_ms_lesion -i t2.nii.gz -qc ./qc
+   sct_deepseg sms_lesion -i t2.nii.gz -qc ./qc
 
 :Input arguments:
+    - ``ms_lesion``: Task
     - ``-i`` : Input T2w image with fake lesion
-    - ``-task`` : Task to perform. In this case, we use the ``seg_ms_lesion`` model
     - ``-qc`` : Directory for Quality Control reporting. QC reports allow us to evaluate the segmentation slice-by-slice
 
 ----
@@ -45,8 +45,8 @@ As the model was trained on cropped images, we recommend cropping the input imag
    sct_deepseg lesion_ms_mp2rage -i IMAGE_UNIT1 -qc ./qc
 
 :Input arguments:
+    - ``lesion_ms_mp2rage`` : Task to perform. In this case, we use the ``lesion_ms_mp2rage`` model
     - ``-i`` : Input MP2RAGE UNIT1 image
-    - ``-task`` : Task to perform. In this case, we use the ``lesion_ms_mp2rage`` model
     - ``-qc`` : Directory for Quality Control reporting. QC reports allow us to evaluate the segmentation slice-by-slice
 
 ----

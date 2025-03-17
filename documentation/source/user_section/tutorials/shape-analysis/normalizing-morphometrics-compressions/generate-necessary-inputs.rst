@@ -19,10 +19,10 @@ These input files can be generated using the commands below. However, if you wou
 
 .. code:: sh
 
-   sct_deepseg -task seg_sc_contrast_agnostic -i t2_compressed.nii.gz -qc ~/qc_singleSubj
+   sct_deepseg spinalcord -i t2_compressed.nii.gz -qc ~/qc_singleSubj
 
 :Input arguments:
-   - ``-task``: Task to perform. Here, we are using ``seg_sc_contrast_agnostic`` to segment the spinal cord. This task is contrast-agnostic, meaning it can be used on any type of image (T1, T2, T2*, etc.)
+   - ``spinalcord``: Task to perform. Here, we are using ``spinalcord`` to segment the spinal cord. This task is contrast-agnostic, meaning it can be used on any type of image (T1, T2, T2*, etc.)
    - ``-i`` : Input image.
    - ``-qc`` : Directory for Quality Control reporting.
 
