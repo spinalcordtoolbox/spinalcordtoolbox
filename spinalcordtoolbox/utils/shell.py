@@ -243,7 +243,7 @@ class SCTArgumentParser(argparse.ArgumentParser):
                              + ANSIColors16.ResetAll)
         self.exit(2, message_formatted)
 
-    def add_common_args(self, arg_group = None):
+    def add_common_args(self, arg_group=None):
         """
         Adds two universally used arguments to the provided argument group:
             -h: The help flag. If present, displays help and terminates the program
@@ -276,7 +276,7 @@ class SCTArgumentParser(argparse.ArgumentParser):
         # Return the arg_group to allow for chained operations
         return arg_group
 
-    def add_tempfile_args(self, arg_group = None):
+    def add_tempfile_args(self, arg_group=None):
         """
         Adds a single argument:
             -r: The help flag. If present, denotes that temporary files should be removed after the program ends.
