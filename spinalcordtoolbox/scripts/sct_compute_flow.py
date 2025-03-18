@@ -6,7 +6,6 @@
 # License: see the file LICENSE
 
 import sys
-import textwrap
 from typing import Sequence
 
 from spinalcordtoolbox.image import Image, add_suffix
