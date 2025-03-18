@@ -98,7 +98,7 @@ def get_parser():
     # Arguments which implement shared functionality
     parser.add_common_args()
 
-    return optional
+    return parser
 
 
 def main(argv: Sequence[str]):
