@@ -41,32 +41,32 @@ def test_model_dict():
     (sct_test_path('t2s', 't2s.nii.gz'),
      sct_test_path('t2s', 't2s_seg-deepseg.nii.gz'),
      't2s_seg_deepseg.nii.gz',
-     'seg_sc_t2star',
+     'sc_t2star',
      0.9),
     (sct_test_path('t2', 't2.nii.gz'),
      sct_test_path('t2', 't2_seg-manual.nii.gz'),
      't2_seg_deepseg.nii.gz',
-     'seg_sc_contrast_agnostic',
+     'spinalcord',
      None),
     (sct_test_path('t2', 't2.nii.gz'),
      sct_test_path('t2', 't2_seg-deepseg_rootlets.nii.gz'),
      't2_seg_deepseg.nii.gz',
-     'seg_spinal_rootlets_t2w',
+     'rootlets_t2',
      None),
     (sct_test_path('t2', 't2.nii.gz'),  # dummy image since no EPI test data
      None,  # no ground truth, just test if it runs
      't2_seg_deepseg.nii.gz',
-     'seg_sc_epi',
+     'sc_epi',
      None),
     (sct_test_path('t2', 't2.nii.gz'),  # dummy image since no MP2RAGE test data
      None,  # no ground truth, just test if it runs
      't2_seg_deepseg.nii.gz',
-     'seg_ms_lesion_mp2rage',
+     'lesion_ms_mp2rage',
      None),
     (sct_test_path('t2', 't2.nii.gz'),
      None,  # no ground truth, just test if it runs
      't2_seg_deepseg.nii.gz',
-     'seg_ms_lesion',
+     'lesion_ms',
      None),
 ])
 def test_segment_nifti_binary_seg(fname_image, fname_seg_manual, fname_out, task, thr, tmp_path):
@@ -76,10 +76,10 @@ def test_segment_nifti_binary_seg(fname_image, fname_seg_manual, fname_out, task
     # Ignore warnings from ivadomed model source code changing
     warnings.filterwarnings("ignore", category=SourceChangeWarning)
     fname_out = str(tmp_path/fname_out)  # tmp_path for automatic cleanup
-    args = ['-i', fname_image, '-task', task, '-o', fname_out, '-qc', str(tmp_path/'qc')]
+    args = [task, '-i', fname_image, '-o', fname_out, '-qc', str(tmp_path/'qc')]
     if thr is not None:
         args.extend(['-thr', str(thr)])
-    if 'seg_sc' in task:
+    if 'sc_' in task:
         # TODO: Replace the "general" testing of these arguments with specific tests with specific input data
         args.extend(['-largest', '1', '-fill-holes', '1', '-remove-small', '5mm3'])
     sct_deepseg.main(argv=args)
@@ -123,20 +123,20 @@ def t2_ax_sc_seg():
       sct_test_path('t2', 't2_fake_lesion_lesion_seg.nii.gz')],
      't2_deepseg.nii.gz',
      ["_sc_seg", "_lesion_seg"],
-     'seg_sc_lesion_t2w_sci',
+     'lesion_sci_t2',
      0.5),
     (t2_ax(),          # Generate axial images on the fly
      [t2_ax_sc_seg(),  # Just test against SC ground truth, because the model generates SC segs well
       None],           # The model performs poorly on our fake t2_ax() image, so skip evaluating on lesion seg
      't2_deepseg.nii.gz',
      ["_sc_seg", "_lesion_seg"],
-     'seg_sc_ms_lesion_axial_t2w',
+     'lesion_ms_axial_t2',
      0.5),
     (sct_test_path('t1', 't1_mouse.nii.gz'),
      [None, None],
      't1_deepseg.nii.gz',
      ["_GM_seg", "_WM_seg"],
-     'seg_mouse_gm_wm_t1w',
+     'gm_wm_mouse_t1',
      0.5),
     (sct_test_path('t2', 't2.nii.gz'),
      [None, None, None, None, None],
@@ -158,7 +158,7 @@ def test_segment_nifti_multiclass(fname_image, fnames_seg_manual, fname_out, suf
         pytest.skip("Mouse data must be manually downloaded to run this test.")
 
     fname_out = str(tmp_path / fname_out)
-    sct_deepseg.main(['-i', fname_image, '-task', task, '-thr', str(thr), '-o', fname_out, '-qc', str(tmp_path/'qc'),
+    sct_deepseg.main([task, '-i', fname_image, '-thr', str(thr), '-o', fname_out, '-qc', str(tmp_path/'qc'),
                       '-largest', '1'])
     # The `-o` argument takes a single filename, even though one (or more!) files might be output.
     # If multiple output files will be produced, `sct_deepseg` will take this singular `-o` and add suffixes to it.
@@ -180,8 +180,8 @@ def test_deepseg_with_cropped_qc(qc_plane, tmp_path):
     Test that `-qc-seg` cropping works with both Axial and Sagittal QCs.
     """
     fname_out = str(tmp_path / "t2_deepseg.nii.gz")
-    sct_deepseg.main(['-i', sct_test_path('t2', 't2_fake_lesion.nii.gz'),
-                      '-task', 'seg_sc_lesion_t2w_sci',
+    sct_deepseg.main(['lesion_sci_t2',
+                      '-i', sct_test_path('t2', 't2_fake_lesion.nii.gz'),
                       '-o', fname_out,
                       '-qc', str(tmp_path/'qc'),
                       '-qc-plane', qc_plane,

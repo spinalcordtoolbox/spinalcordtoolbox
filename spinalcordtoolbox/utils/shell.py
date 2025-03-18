@@ -206,15 +206,14 @@ class SCTArgumentParser(argparse.ArgumentParser):
     """
     Parser that centralizes initialization steps common across all SCT scripts.
     """
-    def __init__(self, description, epilog=None, argument_default=None):
+    def __init__(self, **kwargs):
         super(SCTArgumentParser, self).__init__(
-            description=description,
-            epilog=epilog,
             formatter_class=SmartFormatter,
-            argument_default=argument_default,
             # Disable "add_help", because it won't properly add '-h' to our custom argument groups
             # (We use custom argument groups because of https://stackoverflow.com/a/24181138)
-            add_help=False
+            add_help=False,
+            # All arguments must be passed as keyword arguments (to encourage clarity at the caller level)
+            **kwargs
         )
 
         # Update "usage:" message to match how SCT scripts are actually called (no '.py')

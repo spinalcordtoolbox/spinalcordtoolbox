@@ -24,7 +24,7 @@ Then, to download and install the correct model, run:
 
 .. code:: sh
 
-   sct_deepseg -install-task seg_lumbar_sc_t2w
+   sct_deepseg sc_lumbar_t2 -install
 
 Now, :ref:`sct_deepseg` can be used to segment the lumbar region of the spinal cord.
 
@@ -35,11 +35,10 @@ Here, we simply feed the cropped image to the deep learning model to segment the
 
 .. code:: sh
 
-   sct_deepseg -i t2_lumbar.nii.gz -task seg_lumbar_sc_t2w -qc ~/qc_singleSubj
+   sct_deepseg sc_lumbar_t2 -i t2_lumbar.nii.gz -qc ~/qc_singleSubj
 
 :Input arguments:
    - ``-i`` : Input image
-   - ``-task`` : The deep learning segmentation task to apply to the image. In this case, we want `seg_lumbar_sc_t2w`.
    - ``-qc`` : Directory for Quality Control reporting. QC reports allow us to evaluate the results slice-by-slice.
 
 :Output files/folders:
