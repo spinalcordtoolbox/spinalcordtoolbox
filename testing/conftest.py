@@ -13,6 +13,7 @@ from hashlib import md5
 import tempfile
 from glob import glob
 import json
+import csv
 
 import pytest
 from nibabel import Nifti1Header
@@ -67,6 +68,8 @@ def summarize_files_in_folder(folder):
     for root, dirs, files in os.walk(folder, followlinks=True):
         for fname in files:
             fpath = os.path.join(root, fname)
+            if fname.endswith(".csv"):
+                fpath = filter_csv_columns(fpath, columns=["Timestamp", "SCT Version"])
             root_short = root.replace(folder, os.path.basename(folder))
             file_dict = {
                 # Use consistent characters to make cross-platform diffing work
@@ -83,6 +86,36 @@ def summarize_files_in_folder(folder):
                 arr_fields = {k: '' for k in generate_numpy_fields(zeros([1, 1, 1])).keys()}
             summary.append(file_dict | img_fields | arr_fields)
     return summary
+
+
+def filter_csv_columns(fpath, columns):
+    """
+    Filter out columns from a CSV file that are not in the list `columns`.
+
+    This helps when checking the filesize and md5 of CSV files, which can contain differing branches, timestamps, etc.
+    """
+    def read_csv(file_path):
+        """Read CSV into a list of dictionaries."""
+        with open(file_path, mode='r', newline='', encoding='utf-8') as fp:
+            reader = csv.DictReader(fp)
+            return [row for row in reader]
+
+    def write_csv(data, file_path):
+        """Write a list of dictionaries to a CSV."""
+        with open(file_path, mode='w', newline='', encoding='utf-8') as fp:
+            writer = csv.DictWriter(fp, fieldnames=data[0].keys())
+            writer.writeheader()
+            writer.writerows(data)
+
+    # filter CSV contents
+    csv_contents = read_csv(fpath)
+    csv_contents_filtered = [{k: v for k, v in row.items() if k not in columns}
+                             for row in csv_contents]
+    # write and return filtered CSV
+    fpath_tmp = os.path.join(tempfile.mkdtemp(), os.path.basename(fpath))
+    write_csv(csv_contents_filtered, fpath_tmp)
+
+    return fpath_tmp
 
 
 @pytest.fixture(autouse=True)
