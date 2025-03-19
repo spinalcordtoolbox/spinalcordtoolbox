@@ -40,7 +40,7 @@ def get_parser(subparser_to_return=None):
         description="Segment an anatomical structure or pathologies according to the specified deep learning model.",
         epilog=models.list_tasks_string()
     )
-    optional = parser.add_argument_group("OPTIONAL COMMANDS")
+    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
     optional.add_argument(
         "-list-tasks",
         action='store_true',
