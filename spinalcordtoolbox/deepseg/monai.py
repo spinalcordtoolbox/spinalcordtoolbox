@@ -43,7 +43,8 @@ nnunet_plans = {
     ],
     # NOTE: starting from contrast-agnostic v2.5, the monai-based nnunet model has more features at
     # the deeper layers of the network, hence update the max features in the `plans` dict
-    "unet_max_num_features": 384,
+    # NOTE 2: automatic github actions are not working when max=384, because v2.0 used 320
+    "unet_max_num_features": 320,
 }
 
 
