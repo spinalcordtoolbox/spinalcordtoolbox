@@ -54,7 +54,7 @@ def get_parser():
         metavar=Metavar.file,
     )
 
-    optional = parser.add_argument_group("OPTIONAL_ARGUMENTS")
+    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
     optional.add_argument(
         "-winv",
         help='Affine transformation(s) listed in flag -w which should be inverted before being used. Note that this '
