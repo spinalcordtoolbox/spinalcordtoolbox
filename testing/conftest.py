@@ -96,6 +96,11 @@ def filter_csv_columns(fpath, columns):
     """
     def read_csv(file_path):
         """Read CSV into a list of dictionaries."""
+        # DictReader will automatically use the first row as a header. If the CSV doesn't have a header,
+        # `csv` will interpret the first row of data as column names. Thus, if the first row has duplicate values,
+        # the columns will be interpreted as duplicates, and one of the columns might get thrown away!
+        # NOTE: The csv library has `csv.Sniffer.has_header()` to detect headers, but given that it's based
+        #       on heuristics, it's probably safer to check the parsed headers after the fact.
         with open(file_path, mode='r', newline='', encoding='utf-8') as fp:
             reader = csv.DictReader(fp)
             return [row for row in reader]
@@ -107,8 +112,12 @@ def filter_csv_columns(fpath, columns):
             writer.writeheader()
             writer.writerows(data)
 
-    # filter CSV contents
+    # return early if the parsed header doesn't contain any of the columns to filter (to avoid mangling no-header CSVs)
     csv_contents = read_csv(fpath)
+    if not any(col in csv_contents[0].keys() for col in columns):
+        return fpath
+
+    # filter CSV contents
     csv_contents_filtered = [{k: v for k, v in row.items() if k not in columns}
                              for row in csv_contents]
     # write and return filtered CSV
