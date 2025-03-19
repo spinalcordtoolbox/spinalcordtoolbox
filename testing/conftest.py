@@ -54,7 +54,7 @@ def pytest_sessionfinish():
                                 (os.path.join(__data_dir__, "sct_example_data"), "sct_example_data.json")]:
         fname_out = os.path.join(__sct_dir__, "testing", fname_out)
         if os.path.isdir(folder):
-            summary = summarize_files_in_folder(folder)
+            summary = summarize_files_in_folder(folder, exclude=['straightening.cache'])
             summary = sorted(summary, key=lambda d: d['path'])   # sort list-of-dicts by paths
             keys = [d.pop('path') for d in summary]              # remove paths from dicts
             summary = {key: d for key, d in zip(keys, summary)}  # convert to dict-of-dicts
@@ -62,11 +62,13 @@ def pytest_sessionfinish():
                 json.dump(summary, jsonfile, indent=2)
 
 
-def summarize_files_in_folder(folder):
+def summarize_files_in_folder(folder, exclude=None):
     # Construct a list of dictionaries summarizing all the files in a folder
     summary = []
     for root, dirs, files in os.walk(folder, followlinks=True):
         for fname in files:
+            if exclude and fname in exclude:
+                continue
             fpath = os.path.join(root, fname)
             if fname.endswith(".csv"):
                 fpath = filter_csv_columns(fpath, columns=["Timestamp", "SCT Version"])
