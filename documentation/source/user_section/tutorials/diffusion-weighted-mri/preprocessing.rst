@@ -33,10 +33,10 @@ The resulting 3D volume can then be used to obtain a cord segmentation.
 
 .. code::
 
-   sct_deepseg -task seg_sc_contrast_agnostic -i dmri_dwi_mean.nii.gz -qc ~/qc_singleSubj
+   sct_deepseg spinalcord -i dmri_dwi_mean.nii.gz -qc ~/qc_singleSubj
 
 :Input arguments:
-   - ``-task``: Task to perform. Here, we are using ``seg_sc_contrast_agnostic`` to segment the spinal cord. This task is contrast-agnostic, meaning it can be used on any type of image (T1, T2, T2*, etc.)
+   - ``spinalcord``: Task to perform. Here, we are using ``spinalcord`` to segment the spinal cord. This task is contrast-agnostic, meaning it can be used on any type of image (T1, T2, T2*, etc.)
    - ``-i`` : The input image.
    - ``-qc`` : Directory for Quality Control reporting. QC reports allow us to evaluate the results slice-by-slice.
 

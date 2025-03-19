@@ -3,9 +3,4 @@
 seg_sc_ms_lesion_stir_psir
 ==========================
                 
-.. argparse::
-   :ref: spinalcordtoolbox.scripts.sct_deepseg.get_parser
-   :prog: sct_deepseg -h
-   :markdownhelp:
-   :noepilog:
-                
+This model has been retired. Please switch to the contrast-agnostic MS lesion model (``sct_deepseg lesion_ms``) for further segmentation of STIR/PSIR MS lesions.

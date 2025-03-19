@@ -37,10 +37,10 @@ Generating a T2 segmentation
 .. code::
 
    cd ../t2
-   sct_deepseg -task seg_sc_contrast_agnostic -i t2.nii.gz
+   sct_deepseg spinalcord -i t2.nii.gz
 
 :Input arguments:
-   - ``-task``: Task to perform. Here, we are using ``seg_sc_contrast_agnostic`` to segment the spinal cord. This task is contrast-agnostic, meaning it can be used on any type of image (T1, T2, T2*, etc.)
+   - ``spinalcord``: Task to perform. Here, we are using ``spinalcord`` to segment the spinal cord. This task is contrast-agnostic, meaning it can be used on any type of image (T1, T2, T2*, etc.)
    - ``-i`` : Input image
 
 :Output files/folders:
