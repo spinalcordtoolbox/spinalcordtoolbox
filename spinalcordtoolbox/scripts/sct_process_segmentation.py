@@ -104,16 +104,15 @@ def get_parser():
         )
     )
 
-    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         '-i',
         metavar=Metavar.file,
-        required=True,
         help="Mask to compute morphometrics from. Could be binary or weighted. E.g., spinal cord segmentation."
              "Example: seg.nii.gz"
     )
 
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
+    optional = parser.optional_arggroup
     optional.add_argument(
         '-o',
         metavar=Metavar.file,
@@ -211,7 +210,7 @@ def get_parser():
         metavar=Metavar.file,
         type=get_absolute_path,
         help="Ponto-Medullary Junction (PMJ) label file. "
-             "Example: pmj.nii.gz"
+             "Example: `pmj.nii.gz`"
     )
     optional.add_argument(
         '-pmj-distance',

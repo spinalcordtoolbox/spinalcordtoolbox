@@ -18,16 +18,15 @@ def get_parser():
         description='Concatenate bval files in time.'
     )
 
-    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         "-i",
         nargs='+',
-        required=True,
         help='List of the bval files to concatenate. Example: `dmri_b700.bval dmri_b2000.bval`',
         metavar=Metavar.file,
     )
 
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
+    optional = parser.optional_arggroup
     optional.add_argument(
         "-o",
         help='Output file with bvals merged. Example: `dmri_b700_b2000_concat.bval`',

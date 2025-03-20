@@ -58,21 +58,19 @@ def get_parser():
         """),
     )
 
-    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         '-i',
         metavar=Metavar.file,
-        required=True,
         help="Image to smooth. Example: `data.nii.gz`"
     )
     mandatory.add_argument(
         '-s',
         metavar=Metavar.file,
-        required=True,
         help="Spinal cord centerline or segmentation. Example: `data_centerline.nii.gz`"
     )
 
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
+    optional = parser.optional_arggroup
     optional.add_argument(
         '-smooth',
         metavar=Metavar.list,
@@ -88,7 +86,7 @@ def get_parser():
         metavar=Metavar.str,
         choices=['bspline', 'polyfit'],
         default=param_default.algo_fitting,
-        help="Algorithm for curve fitting. For more information, see sct_straighten_spinalcord."
+        help="Algorithm for curve fitting. For more information, see `sct_straighten_spinalcord`."
     )
     optional.add_argument(
         "-o",

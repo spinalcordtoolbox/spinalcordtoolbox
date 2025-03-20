@@ -79,15 +79,14 @@ def get_parser():
             "s`ct_extract_metric -i mtr.nii.gz -f "
             "my_mask.nii.gz -z 1:4 -method wa`")
     )
-    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         '-i',
         metavar=Metavar.file,
-        required=True,
         help="Image file to extract metrics from. Example: `FA.nii.gz`"
     )
 
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
+    optional = parser.optional_arggroup
     optional.add_argument(
         '-f',
         metavar=Metavar.folder,

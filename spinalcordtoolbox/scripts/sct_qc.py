@@ -29,22 +29,20 @@ def get_parser():
         """),
     )
 
-    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         '-i',
         metavar='IMAGE',
-        help='Input image #1 (mandatory)',
-        required=True)
+        help='Input image #1 (mandatory)')
     mandatory.add_argument(
         '-p',
         help='SCT function associated with the QC report to generate',
         choices=('sct_propseg', 'sct_deepseg_sc', 'sct_deepseg_gm', 'sct_deepseg_lesion',
                  'sct_register_multimodal', 'sct_register_to_template', 'sct_warp_template',
                  'sct_label_vertebrae', 'sct_detect_pmj', 'sct_label_utils', 'sct_get_centerline',
-                 'sct_fmri_moco', 'sct_dmri_moco', 'sct_image_stitch', 'sct_fmri_compute_tsnr'),
-        required=True)
+                 'sct_fmri_moco', 'sct_dmri_moco', 'sct_image_stitch', 'sct_fmri_compute_tsnr'))
 
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
+    optional = parser.optional_arggroup
     optional.add_argument(
         '-s',
         metavar='SEG',
@@ -53,12 +51,11 @@ def get_parser():
         '-d',
         metavar='DEST',
         help='Input image #2 to overlay on image #1 (requires a segmentation), or output of another '
-             'process (e.g., sct_straighten_spinalcord)')
+             'process. Example: `sct_straighten_spinalcord`')
     optional.add_argument(
         '-plane',
         help='Plane of the output QC. Only relevant for `-p sct_deepseg_lesion`.',
-        choices=('axial', 'sagittal'),
-        required=False)
+        choices=('axial', 'sagittal'))
     optional.add_argument(
         '-resample',
         help='Millimeter resolution to resample the image to. Set to 0 to turn off resampling. You can '
@@ -74,20 +71,18 @@ def get_parser():
     optional.add_argument(
         '-qc',
         metavar='QC',
-        help='Path to save QC report. Default: `./qc`',
+        help='Path to save QC report.',
         default=os.path.join('.', 'qc'))
     optional.add_argument(
         '-qc-dataset',
         metavar='DATASET',
         help='If provided, this string will be mentioned in the QC report as the dataset the process '
-             'was run on',
-        required=False)
+             'was run on')
     optional.add_argument(
         '-qc-subject',
         metavar='SUBJECT',
         help='If provided, this string will be mentioned in the QC report as the subject the process '
-             'was run on',
-        required=False)
+             'was run on')
     optional.add_argument(
         '-fps',
         metavar='float',

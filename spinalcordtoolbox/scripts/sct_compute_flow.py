@@ -7,6 +7,7 @@
 
 import sys
 from typing import Sequence
+from textwrap import dedent
 
 from spinalcordtoolbox.image import Image, add_suffix
 from spinalcordtoolbox.qmri import flow
@@ -16,25 +17,25 @@ from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 
 def get_parser():
     parser = SCTArgumentParser(
-        description=("""\
-Compute velocity from the MRI phase image for velocity encoding (VENC) sequences.
-More details in: https://mriquestions.com/what-is-venc.html
-
-Further features are planned for this script. Please refer to this issue for more info:
-  - https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4298
-        """)
+        description=(dedent(
+            """\
+            Compute velocity from the MRI phase image for velocity encoding (VENC) sequences.
+            More details in: https://mriquestions.com/what-is-venc.html
+            
+            Further features are planned for this script. Please refer to this issue for more info:
+              - https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4298
+            """
+        ))
     )
 
-    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         "-i",
-        required=True,
         help="4D phase image. The 4th dimension should be the velocity encoding (VENC) in cm/s.",
         metavar=Metavar.file,
     )
     mandatory.add_argument(
         "-venc",
-        required=True,
         help="Maximum velocity encoding (VENC) in cm/s.",
         metavar=Metavar.float,
     )
@@ -43,10 +44,10 @@ Further features are planned for this script. Please refer to this issue for mor
     optional.add_argument(
         '-o',
         metavar=Metavar.file,
-        help='Output filename. Example: velocity.nii.gz')
+        help='Output filename. Example: `velocity.nii.gz`')
 
     # Arguments which implement shared functionality
-    parser.add_common_args(optional)
+    parser.add_common_args()
 
     return parser
 

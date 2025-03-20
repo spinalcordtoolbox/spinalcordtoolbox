@@ -62,21 +62,19 @@ def get_parser():
         """),  # noqa: E501 (line too long)
     )
 
-    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         "-tr",
         type=float,
-        required=True,
         help='Value of TR (in ms) to get the Ernst Angle. Example: `2000`',
         metavar=Metavar.float,
     )
 
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
+    optional = parser.optional_arggroup
     optional.add_argument(
         "-t1",
         type=float,
         help='T1 value (in ms). Example: `832.3`',
-        required=False,
         metavar=Metavar.float,
         default=832.0)
     optional.add_argument(
@@ -85,18 +83,15 @@ def get_parser():
         nargs=2,
         metavar=Metavar.float,
         help='Min/Max range of TR (in ms) separated with space. Only use with `-v 2`. Example: `500 3500`',
-        default=[500, 3500],
-        required=False)
+        default=[500, 3500])
     optional.add_argument(
         "-o",
         help="Name of the output file containing Ernst angle result.",
-        required=False,
         metavar=Metavar.str,
         default="ernst_angle.txt")
     optional.add_argument(
         "-ofig",
         help="Name of the output graph. Only use with -v 2.",
-        required=False,
         metavar=Metavar.str,
         default="ernst_angle.png")
 

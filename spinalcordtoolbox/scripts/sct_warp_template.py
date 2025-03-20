@@ -146,21 +146,19 @@ def get_parser():
         description="This function warps the template and all atlases to a destination image."
     )
 
-    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         '-d',
         metavar=Metavar.file,
-        required=True,
         help="Destination image the template will be warped to. Example: `dwi_mean.nii.gz`"
     )
     mandatory.add_argument(
         '-w',
         metavar=Metavar.file,
-        required=True,
-        help="Warping field. `Example: warp_template2dmri.nii.gz`"
+        help="Warping field. `Example: `warp_template2dmri.nii.gz`"
     )
 
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
+    optional = parser.optional_arggroup
     optional.add_argument(
         '-a',
         metavar=Metavar.int,

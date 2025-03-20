@@ -21,17 +21,16 @@ def get_parser():
         epilog=list_datasets(),
     )
 
-    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         '-d',
-        required=True,
         choices=['default'] + sorted(list(DATASET_DICT.keys()), key=str.casefold),
         metavar="<dataset>",
         help="Name of the dataset, as listed in the table below. If 'default' is specified, then all default datasets "
              "will be re-downloaded. (Default datasets are critical datasets downloaded during installation.)"
     )
 
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
+    optional = parser.optional_arggroup
     optional.add_argument(
         '-o',
         metavar=Metavar.folder,

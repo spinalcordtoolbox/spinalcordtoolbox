@@ -37,21 +37,19 @@ def get_parser():
                     "(_b0 and _dwi) appended to the input file name."
     )
 
-    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         '-i',
         metavar=Metavar.file,
-        required=True,
         help="Diffusion data. Example: `dmri.nii.gz`"
     )
     mandatory.add_argument(
         '-bvec',
         metavar=Metavar.file,
-        required=True,
         help="Bvecs file. Example: `bvecs.txt`"
     )
 
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
+    optional = parser.optional_arggroup
     optional.add_argument(
         '-a',
         type=int,

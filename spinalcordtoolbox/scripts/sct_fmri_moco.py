@@ -40,15 +40,14 @@ def get_parser():
         """),  # noqa: E501 (line too long)
     )
 
-    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         '-i',
         metavar=Metavar.file,
-        required=True,
         help="Input data (4D). Example: `fmri.nii.gz`"
     )
 
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
+    optional = parser.optional_arggroup
     optional.add_argument(
         '-g',
         metavar=Metavar.int,

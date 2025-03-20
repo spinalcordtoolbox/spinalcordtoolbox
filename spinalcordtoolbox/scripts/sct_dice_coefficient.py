@@ -23,56 +23,48 @@ def get_parser():
                     'size will set it to the full image extent for that dimension.'
     )
 
-    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         '-i',
-        required=True,
         metavar=Metavar.file,
-        help='First input image. Example: t2_seg.nii.gz',
+        help='First input image. Example: `t2_seg.nii.gz`',
     )
     mandatory.add_argument(
         '-d',
-        required=True,
-        help='Second input image. Example: t2_manual_seg.nii.gz',
+        help='Second input image. Example: `t2_manual_seg.nii.gz`',
         metavar=Metavar.file,
     )
 
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
+    optional = parser.optional_arggroup
     optional.add_argument(
         '-2d-slices',
         type=int,
         help='Compute DC on 2D slices in the specified dimension',
-        required=False,
         choices=(0, 1, 2))
     optional.add_argument(
         '-b',
         metavar=Metavar.list,
         help='Bounding box with the coordinates of the origin and the size of the box as follow: '
-             'x_origin,x_size,y_origin,y_size,z_origin,z_size. Example: 5,10,5,10,10,15',
-        required=False)
+             'x_origin,x_size,y_origin,y_size,z_origin,z_size. Example: 5,10,5,10,10,15')
     optional.add_argument(
         '-bmax',
         type=int,
         help='Use maximum bounding box of the images union to compute DC.',
-        required=False,
         choices=(0, 1))
     optional.add_argument(
         '-bzmax',
         type=int,
         help='Use maximum bounding box of the images union in the "Z" direction to compute DC.',
-        required=False,
         choices=(0, 1))
     optional.add_argument(
         '-bin',
         type=int,
         help='Binarize image before computing DC. (Put non-zero-voxels to 1)',
-        required=False,
         choices=(0, 1))
     optional.add_argument(
         '-o',
         metavar=Metavar.str,
-        help='Output file with DC results (.txt). Example: dice_coeff.txt',
-        required=False)
+        help='Output file with DC results (.txt). Example: `dice_coeff.txt`')
 
     # Arguments which implement shared functionality
     parser.add_common_args()

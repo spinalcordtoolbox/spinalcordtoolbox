@@ -177,8 +177,7 @@ def get_parser():
         description='Check the installation and environment variables of the toolbox and its dependencies.'
     )
 
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
-    parser.add_common_args(optional)
+    optional = parser.optional_arggroup
     optional.add_argument(
         '-complete',
         help="Complete test.",
@@ -187,6 +186,7 @@ def get_parser():
         "-short",
         help="Short test. Only shows SCT version, CPU cores and RAM available.",
         action="store_true")
+    parser.add_common_args(optional)
 
     return parser
 

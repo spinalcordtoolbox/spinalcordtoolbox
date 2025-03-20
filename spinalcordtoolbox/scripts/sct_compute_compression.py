@@ -62,11 +62,10 @@ def get_parser():
         """),  # noqa: E501 (line too long)
     )
 
-    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         '-i',
         metavar=Metavar.file,
-        required=True,
         help=textwrap.dedent("""
             Spinal cord or spinal canal segmentation mask to compute morphometrics from. If spinal cord segmentation is provided, MSCC is computed. If spinal canal segmentation (spinal cord + CSF) is provided, MCC is computed. Example: `sub-001_T2w_seg.nii.gz`
 
@@ -76,7 +75,6 @@ def get_parser():
     mandatory.add_argument(
         '-vertfile',
         metavar=Metavar.file,
-        required=True,
         help=textwrap.dedent("""
             Vertebral labeling file. Example: `sub-001_T2w_seg_labeled.nii.gz`
 
@@ -86,33 +84,14 @@ def get_parser():
     mandatory.add_argument(
         '-l',
         metavar=Metavar.file,
-        required=True,
         help=textwrap.dedent("""
             NIfTI file that includes labels at the compression sites. Each compression site is denoted by a single voxel of value `1`. Example: `sub-001_T2w_compression_labels.nii.gz`
 
             Note: The input and the compression label file must be in the same voxel coordinate system and must match the dimensions between each other.
         """),  # noqa: E501 (line too long)
     )
-    mandatory.add_argument(
-        '-metric',
-        required=False,
-        help='Metric to normalize. ',
-        default='diameter_AP',
-        choices=['diameter_AP', 'area', 'diameter_RL', 'eccentricity', 'solidity'],
-    )
-    mandatory.add_argument(
-        '-normalize-hc',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1],
-        help=textwrap.dedent("""
-            Set to 1 to normalize the metrics using a database of healthy controls. Set to 0 to not normalize.
 
-            Note: This flag should not be set to 1 when computing the MCC (i.e. using spinal canal segmentation). It should only be used when computing the MSCC (i.e. using spinal cord segmentation).
-        """),  # noqa: E501 (line too long)
-    )
-
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
+    optional = parser.optional_arggroup
     optional.add_argument(
         '-extent',
         type=float,
@@ -128,25 +107,49 @@ def get_parser():
         help='Distance (in mm) in the superior-inferior direction from the compression to average healthy slices.'
     )
     optional.add_argument(
-        '-sex',
-        type=str,
-        choices=['F', 'M'],
-        help='Sex of healthy subject to use for the normalization. By default, both sexes are used. '
-             'Set the `-normalize-hc 1` to use this flag.'
-    )
-    optional.add_argument(
-        '-age',
-        type=int,
-        nargs=2,
-        metavar="[0 100]",
-        help='Age range of healthy subjects to use for the normalization. Example: `-age 60 80"` By default, all ages '
-             'are considered. Set the `-normalize-hc 1` to use this flag.'
-    )
-    optional.add_argument(
         '-o',
         metavar=Metavar.file,
         help='Output CSV file name. If not provided, the suffix `_compression_metrics` is added to the file name '
              'provided by the flag `-i`.'
+    )
+
+    normalize_hc = parser.add_argument_group(
+        "NORMALIZATION ARGUMENTS"
+    )
+    # TODO: swap this over to a flag, rather than numeric
+    normalize_hc.add_argument(
+        '-normalize-hc',
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1],
+        help=textwrap.dedent(
+            """
+            Set to 1 to normalize the metrics using a database of healthy controls. Default: 0.
+
+            Note: This flag should not be set to 1 when computing the MCC (i.e. using spinal canal segmentation), 
+            and should only be used when computing the MSCC (i.e. using spinal cord segmentation).
+            """
+        ),
+    )
+    normalize_hc.add_argument(
+        '-metric',
+        help='Metric to normalize.',
+        default='diameter_AP',
+        choices=['diameter_AP', 'area', 'diameter_RL', 'eccentricity', 'solidity'],
+    )
+    normalize_hc.add_argument(
+        '-sex',
+        type=str,
+        choices=['F', 'M'],
+        help='Sex of healthy subject to use for the normalization. By default, both sexes are used.'
+    )
+    normalize_hc.add_argument(
+        '-age',
+        type=int,
+        nargs=2,
+        metavar="[0 100]",
+        help='Age range of healthy subjects to use for the normalization. Example: `-age 60 80"`. By default, all ages '
+             'are considered.'
     )
 
     # Arguments which implement shared functionality

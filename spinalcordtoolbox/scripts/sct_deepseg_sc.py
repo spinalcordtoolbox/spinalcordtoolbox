@@ -25,21 +25,19 @@ def get_parser():
                     "segmentation of the spinal cord and intramedullary multiple sclerosis lesions with convolutional "
                     "neural networks. Neuroimage. 2019 Jan 1;184:901-915."
     )
-    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         "-i",
-        required=True,
         metavar=Metavar.file,
         help='Input image. Example: `t1.nii.gz`',
     )
     mandatory.add_argument(
         "-c",
-        required=True,
         help="Type of image contrast.",
         choices=('t1', 't2', 't2s', 'dwi'),
     )
 
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
+    optional = parser.optional_arggroup
     optional.add_argument(
         "-centerline",
         help=textwrap.dedent("""

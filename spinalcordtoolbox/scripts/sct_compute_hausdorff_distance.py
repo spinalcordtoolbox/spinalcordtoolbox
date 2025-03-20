@@ -448,39 +448,34 @@ def get_parser():
                     ' If only one image is inputted, it will be only thinned'
     )
 
-    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         "-i",
-        required=True,
-        help='First Image on which you want to find the skeleton Example: t2star_manual_gmseg.nii.gz',
+        help='First image on which you want to find the skeleton. Example: `t2star_manual_gmseg.nii.gz`',
         metavar=Metavar.file,
     )
 
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
+    optional = parser.optional_arggroup
     optional.add_argument(
         "-d",
-        help='Second Image on which you want to find the skeleton Example: t2star_manual_gmseg.nii.gz',
-        metavar=Metavar.file,
-        required=False,
-        default=None)
+        help='Second Image on which you want to find the skeleton. Example: `t2star_manual_gmseg.nii.gz`',
+        metavar=Metavar.file)
     optional.add_argument(
         "-thinning",
         type=int,
         help="Thinning : find the skeleton of the binary images using the Zhang-Suen algorithm (1984) and use it to "
              "compute the hausdorff's distance",
-        required=False,
         default=1,
         choices=(0, 1))
     optional.add_argument(
         "-resampling",
         type=float,
-        help="pixel size in mm to resample to Example: 0.5",
+        help="Pixel size in mm to resample to. Example: 0.5",
         metavar=Metavar.float,
-        required=False,
         default=0.1)
     optional.add_argument(
         "-o",
-        help='Name of the output file Example: my_hausdorff_dist.txt',
+        help='Name of the output file. Example: `my_hausdorff_dist.txt`',
         metavar=Metavar.str,
         required=False,
         default='hausdorff_distance.txt')

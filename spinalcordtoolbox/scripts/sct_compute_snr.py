@@ -33,27 +33,23 @@ def get_parser():
                     ' signal-to-noise ratios in MR images: Influence of multichannel coils, parallel '
                     'imaging, and reconstruction filters. J Magn Reson Imaging 2007; 26(2): 375-385].'
     )
-    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         '-i',
         required=True,
         help=textwrap.dedent("""
-            Image to compute the SNR on. (Example: `b0s.nii.gz`)
+            Image to compute the SNR on. Example: `b0s.nii.gz`
 
               - For `-method diff` and `-method mult`, the image must be 4D, as SNR will be computed along the 4th dimension.
               - For `-method single`, the image can either be 3D or 4D. If a 4D image is passed, a specific 3D volume should be specified using the `-vol` argument.
         """),
         metavar=Metavar.file)
 
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
+    optional = parser.optional_arggroup
     optional.add_argument(
         '-m',
         help='Binary (or weighted) mask within which SNR will be averaged. Example: `dwi_moco_mean_seg.nii.gz`',
-        metavar=Metavar.file,
-        default='')
-    optional.add_argument(
-        '-m-noise',
-        help="Binary (or weighted) mask within which noise will be calculated. Only valid for `-method single`.",
         metavar=Metavar.file,
         default='')
     optional.add_argument(
@@ -71,6 +67,11 @@ def get_parser():
              "compute SNR on is specified by `-vol`.",
         choices=('diff', 'mult', 'single'),
         default='diff')
+    optional.add_argument(
+        '-m-noise',
+        help="Binary (or weighted) mask within which noise will be calculated. Only valid for `-method single`.",
+        metavar=Metavar.file,
+        default='')
     optional.add_argument(
         '-vol',
         help=textwrap.dedent("""

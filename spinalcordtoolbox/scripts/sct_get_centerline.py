@@ -33,20 +33,14 @@ def get_parser():
         )
     )
 
-    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         '-i',
         metavar=Metavar.file,
-        required=True,
         help="Input image. Example: `t1.nii.gz`"
     )
 
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
-    optional.add_argument(
-        "-c",
-        choices=['t1', 't2', 't2s', 'dwi'],
-        help="Type of image contrast. Only with method=optic."
-    )
+    optional = parser.optional_arggroup
     optional.add_argument(
         "-method",
         choices=['optic', 'viewer', 'fitseg'],
@@ -60,6 +54,11 @@ def get_parser():
         """),  # noqa: E501 (line too long)
     )
     optional.add_argument(
+        "-c",
+        choices=['t1', 't2', 't2s', 'dwi'],
+        help="Type of image contrast. Only relevant with `-method optic`."
+    )
+    optional.add_argument(
         "-centerline-algo",
         choices=['polyfit', 'bspline', 'linear', 'nurbs'],
         default='bspline',
@@ -70,7 +69,7 @@ def get_parser():
         metavar=Metavar.int,
         type=int,
         default=30,
-        help="Degree of smoothing for centerline fitting. Only for `-centerline-algo {bspline, linear}`."
+        help="Degree of smoothing for centerline fitting. Only relevant with `-centerline-algo {bspline, linear}`."
     )
     optional.add_argument(
         "-centerline-soft",

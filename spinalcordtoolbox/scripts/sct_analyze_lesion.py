@@ -48,18 +48,16 @@ def get_parser():
         """),  # noqa: E501 (line too long)
     )
 
-    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         "-m",
-        required=True,
         help='Binary mask of lesions (lesions are labeled as "1").',
         metavar=Metavar.file,
     )
 
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
+    optional = parser.optional_arggroup
     optional.add_argument(
         "-s",
-        required=False,
         help=textwrap.dedent("""
             Spinal cord centerline or segmentation file, which will be used to correct morphometric measures with cord angle with respect to slice. (e.g. `t2_seg.nii.gz`)
 
@@ -71,8 +69,7 @@ def get_parser():
         help='Image from which to extract average values within lesions (e.g. "t2.nii.gz"). If provided, the function '
              'computes the mean and standard deviation values of this image within each lesion.',
         metavar=Metavar.file,
-        default=None,
-        required=False)
+        default=None)
     optional.add_argument(
         "-f",
         help=textwrap.dedent("""
@@ -84,8 +81,7 @@ def get_parser():
             These percentage values are stored in different pages of the output `lesion_analysis.xlsx` spreadsheet; one page for each lesion (a.) plus a final page summarizing the total ROI occupation of all lesions (b.)
         """),  # noqa: E501 (line too long)
         metavar=Metavar.str,
-        default=None,
-        required=False)
+        default=None)
     optional.add_argument(
         "-perslice",
         help="Specify whether to aggregate atlas metrics (`-f` option) per slice (`-perslice 1`) or per vertebral "
@@ -93,16 +89,14 @@ def get_parser():
         metavar=Metavar.int,
         type=int,
         choices=(0, 1),
-        default=0,
-        required=False
+        default=0
     )
     optional.add_argument(
         "-ofolder",
         help='Output folder (e.g. "."). Default is the current folder (".").',
         metavar=Metavar.folder,
         action=ActionCreateFolder,
-        default='.',
-        required=False)
+        default='.')
     optional.add_argument(
         '-qc',
         metavar=Metavar.folder,

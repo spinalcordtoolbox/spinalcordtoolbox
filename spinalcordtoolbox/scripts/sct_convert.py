@@ -22,31 +22,28 @@ def get_parser():
         description='Convert image file to another type.'
     )
 
-    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         "-i",
-        required=True,
-        help='File input. Example: data.nii.gz',
+        help='File input. Example: `data.nii.gz`',
         metavar=Metavar.file,
     )
     mandatory.add_argument(
         "-o",
-        required=True,
-        help='File output (indicate new extension). Example: data.nii',
+        help="File output (including the file's extension). Example: `data.nii`",
         metavar=Metavar.str,
     )
 
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
+    optional = parser.optional_arggroup
     optional.add_argument(
         "-squeeze",
         type=int,
         help='Squeeze data dimension (remove unused dimension)',
-        required=False,
         choices=(0, 1),
         default=1)
 
     # Arguments which implement shared functionality
-    parser.add_common_args(optional)
+    parser.add_common_args()
 
     return parser
 

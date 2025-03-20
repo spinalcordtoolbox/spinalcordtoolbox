@@ -27,19 +27,18 @@ def get_parser():
         description='Display scatter plot of gradient directions from bvecs file. If you have multi-shell acquisition,'
                     'you can provide also bvals file to display individual shells in q-space.'
     )
-    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         '-bvec',
         metavar=Metavar.file,
-        required=True,
-        help="Input bvecs file. Example: sub-001_dwi.bvec",
+        help="Input bvecs file. Example: `sub-001_dwi.bvec`",
     )
 
     optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
     optional.add_argument(
         '-bval',
         metavar=Metavar.file,
-        help="Input bval file (for multi-shell acquisition). Example: sub-001_dwi.bval",
+        help="Input bval file (for multi-shell acquisition). Example: `sub-001_dwi.bval`",
     )
 
     # Arguments which implement shared functionality

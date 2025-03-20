@@ -28,21 +28,19 @@ def get_parser():
                     "Reson Imaging. 2017 Oct;46(4):1209-1219"
     )
 
-    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         "-i",
         metavar=Metavar.file,
-        help='Input image with curved spinal cord. Example: `t2.nii.gz`',
-        required=True)
+        help='Input image with curved spinal cord. Example: `t2.nii.gz`')
     mandatory.add_argument(
         "-s",
         metavar=Metavar.file,
         help='Spinal cord centerline (or segmentation) of the input image. To obtain the centerline, you can use '
              'sct_get_centerline. To obtain the segmentation you can use sct_propseg or sct_deepseg_sc. '
-             'Example: centerline.nii.gz',
-        required=True)
+             'Example: `centerline.nii.gz`')
 
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
+    optional = parser.optional_arggroup
     optional.add_argument(
         "-dest",
         metavar=Metavar.file,
@@ -52,8 +50,7 @@ def get_parser():
              "instead of linear scaling, the source centerline will be non-linearly matched so "
              "that the inter-vertebral discs of the input image will match that of the "
              "destination image. This feature is particularly useful for registering to a "
-             "template while accounting for disc alignment.",
-        required=False)
+             "template while accounting for disc alignment.")
     optional.add_argument(
         "-ldisc-input",
         metavar=Metavar.file,
@@ -62,26 +59,22 @@ def get_parser():
         "you are interested in levels C2 to C7, then you should provide disc labels 2,3,4,5,"
         "6,7). More details about label creation at "
         "https://spinalcordtoolbox.com/user_section/tutorials/vertebral-labeling.html. "
-        "This option must be used with the `-ldisc-dest` parameter.",
-        required=False)
+        "This option must be used with the `-ldisc-dest` parameter.")
     optional.add_argument(
         "-ldisc-dest",
         metavar=Metavar.file,
         help="Labels located at the posterior edge of the intervertebral discs, for the destination file (`-dest`). "
-             "The same comments as in `-ldisc-input` apply. This option must be used with the `-ldisc-input` parameter.",
-        required=False)
+             "The same comments as in `-ldisc-input` apply. This option must be used with the `-ldisc-input` parameter.")
     optional.add_argument(
         "-disable-straight2curved",
         action='store_true',
         help="Disable straight to curved transformation computation, in case you do not need the "
-             "output warping field straight-->curve (faster).",
-        required=False)
+             "output warping field straight-->curve (faster).")
     optional.add_argument(
         "-disable-curved2straight",
         action='store_true',
         help="Disable curved to straight transformation computation, in case you do not need the "
-             "output warping field curve-->straight (faster).",
-        required=False)
+             "output warping field curve-->straight (faster).")
     optional.add_argument(
         "-speed-factor",
         metavar=Metavar.float,
@@ -94,7 +87,6 @@ def get_parser():
              'will be downsampled to 2x2x2 mm3, providing a speed factor of approximately 8.'
              ' Note that accelerating the straightening process reduces the precision of the '
              'algorithm, and induces undesirable edges effects. Default=1 (no downsampling).',
-        required=False,
         default=1)
     optional.add_argument(
         "-xy-size",
@@ -102,20 +94,17 @@ def get_parser():
         type=float,
         help='Size of the output FOV in the RL/AP plane, in mm. The resolution of the destination '
              'image is the same as that of the source image (`-i`). Default: `35`.',
-        required=False,
         default=35.0)
     optional.add_argument(
         "-o",
         metavar=Metavar.file,
         help='Straightened file. By default, the suffix "_straight" will be added to the input file name.',
-        required=False,
         default='')
     optional.add_argument(
         "-ofolder",
         metavar=Metavar.folder,
         help="Output folder (all outputs will go there).",
         action=ActionCreateFolder,
-        required=False,
         default='.')
     optional.add_argument(
         '-centerline-algo',
@@ -140,7 +129,7 @@ def get_parser():
               - `accuracy_results`: `{0, 1}` Disable/Enable computation of accuracy results after straightening. Default=`0`
               - `template_orientation`: {0, 1}` Disable/Enable orientation of the straight image to be the same as the template. Default=`0`
         """),  # noqa: E501 (line too long)
-        required=False)
+        )
     optional.add_argument(
         "-x",
         help="Final interpolation. Default: `spline`.",

@@ -74,21 +74,19 @@ def get_parser():
         """),  # noqa: E501 (line too long)
     )
 
-    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         '-i',
         metavar=Metavar.file,
-        required=True,
         help="Image source. Example: `src.nii.gz`"
     )
     mandatory.add_argument(
         '-d',
         metavar=Metavar.file,
-        required=True,
         help="Image destination. Example: `dest.nii.gz`"
     )
 
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
+    optional = parser.optional_arggroup
     optional.add_argument(
         '-iseg',
         metavar=Metavar.file,

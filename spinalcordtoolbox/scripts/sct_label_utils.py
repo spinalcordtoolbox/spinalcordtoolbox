@@ -181,7 +181,7 @@ def get_parser():
         help="Keep labels of specific value (specified here) from reference image."
     )
 
-    optional = parser.add_argument_group("QUALITY CONTROL")
+    optional = parser.optional_arggroup
     optional.add_argument(
         '-msg',
         metavar=Metavar.str,

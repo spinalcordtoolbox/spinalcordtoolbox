@@ -32,29 +32,26 @@ def get_parser():
         description='Apply transformations. This function is a wrapper for antsApplyTransforms (ANTs).'
     )
 
-    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         "-i",
-        required=True,
-        help='Input image. Example: t2.nii.gz',
+        help='Input image. Example: `t2.nii.gz`',
         metavar=Metavar.file,
     )
     mandatory.add_argument(
         "-d",
-        required=True,
-        help='Destination image. Example: out.nii.gz',
+        help='Destination image. Example: `out.nii.gz`',
         metavar=Metavar.file,
     )
     mandatory.add_argument(
         "-w",
         nargs='+',
-        required=True,
         help='Transformation(s), which can be warping fields (nifti image) or affine transformation matrix (text '
              'file). Separate with space. Example: `warp1.nii.gz warp2.nii.gz`',
         metavar=Metavar.file,
     )
 
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
+    optional = parser.optional_arggroup
     optional.add_argument(
         "-winv",
         help='Affine transformation(s) listed in flag -w which should be inverted before being used. Note that this '
@@ -72,7 +69,7 @@ def get_parser():
         choices=(0, 1, 2))
     optional.add_argument(
         "-o",
-        help='Registered source. Example: dest.nii.gz',
+        help='Registered source. Example: `dest.nii.gz`',
         required=False,
         metavar=Metavar.file)
     optional.add_argument(

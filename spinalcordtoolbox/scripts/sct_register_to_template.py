@@ -113,21 +113,19 @@ def get_parser():
         """)  # noqa: E501 (line too long)
     )
 
-    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         '-i',
         metavar=Metavar.file,
-        required=True,
         help="Input anatomical image. Example: `anat.nii.gz`"
     )
     mandatory.add_argument(
         '-s',
         metavar=Metavar.file,
-        required=True,
         help="Spinal cord segmentation. Example: `anat_seg.nii.gz`"
     )
 
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
+    optional = parser.optional_arggroup
     optional.add_argument(
         '-s-template-id',
         metavar=Metavar.int,

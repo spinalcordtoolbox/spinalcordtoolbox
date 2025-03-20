@@ -53,47 +53,42 @@ def get_parser():
         description='Create mask along z direction.'
     )
 
-    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         '-i',
-        required=True,
         help='Image to create mask on. Only used to get header. Must be 3D. Example: `data.nii.gz`',
         metavar=Metavar.file,
     )
     mandatory.add_argument(
         '-p',
         default=param_default.process,
-        required=True,
         help=textwrap.dedent("""
             Process to generate mask.
 
-              - `coord,XxY`: Center mask at the X,Y coordinates. (e.g. `coord,20x15`)
-              - `point,FILE`: Center mask at the X,Y coordinates of the label defined in input volume FILE. (e.g. `point,label.nii.gz`)
+              - `coord,XxY`: Center mask at the X,Y coordinates. Example: `coord,20x15`
+              - `point,FILE`: Center mask at the X,Y coordinates of the label defined in input volume FILE. Example: `point,label.nii.gz`
               - `center`: Center mask in the middle of the FOV `[nx/2, ny/2]`.
-              - `centerline,FILE`: At each slice, the mask is centered at the spinal cord centerline, defined by the input segmentation FILE. (e.g. `centerline,t2_seg.nii.gz`)
+              - `centerline,FILE`: At each slice, the mask is centered at the spinal cord centerline, defined by the input segmentation FILE. Example: `centerline,t2_seg.nii.gz`
         """),
         metavar=Metavar.str,
     )
 
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
+    optional = parser.optional_arggroup
     optional.add_argument(
         '-size',
         help='Diameter of the mask in the axial plane, given in pixel (Example: `35`) or in millimeter (Example: `35mm`). '
              'If shape=gaussian, size instead corresponds to "sigma" (Example: `45`).',
         metavar=Metavar.str,
-        required=False,
         default=param_default.size)
     optional.add_argument(
         '-f',
         help='Shape of the mask',
-        required=False,
         default=param_default.shape,
         choices=('cylinder', 'box', 'gaussian'))
     optional.add_argument(
         '-o',
         metavar=Metavar.str,
-        help='Name of output mask, Example: `data.nii.gz`',
-        required=False)
+        help='Name of output mask, Example: `data.nii.gz`',)
 
     # Arguments which implement shared functionality
     parser.add_common_args()

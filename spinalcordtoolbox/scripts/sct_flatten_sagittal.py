@@ -62,17 +62,15 @@ def get_parser():
                     "Output data has suffix _flatten. Output type is float32 (regardless of input type) to minimize "
                     "loss of precision during conversion."
     )
-    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         '-i',
         metavar=Metavar.file,
-        required=True,
         help="Input volume. Example: `t2.nii.gz`"
     )
     mandatory.add_argument(
         '-s',
         metavar=Metavar.file,
-        required=True,
         help="Spinal cord segmentation or centerline. Example: `t2_seg.nii.gz`"
     )
 

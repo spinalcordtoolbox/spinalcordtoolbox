@@ -58,26 +58,24 @@ def get_parser():
         """),  # noqa: E501 (line too long)
     )
 
-    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         '-i',
         metavar=Metavar.file,
-        required=True,
-        help="Diffusion data. Example: dmri.nii.gz"
+        help="Diffusion data. Example: `dmri.nii.gz`"
     )
     mandatory.add_argument(
         '-bvec',
         metavar=Metavar.file,
-        required=True,
-        help='Bvecs file. Example: bvecs.txt'
+        help='Bvecs file. Example: `bvecs.txt`'
     )
 
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
+    optional = parser.optional_arggroup
     optional.add_argument(
         '-bval',
         metavar=Metavar.file,
         default=param_default.fname_bvals,
-        help='Bvals file. Example: bvals.txt',
+        help='Bvals file. Example: `bvals.txt`',
     )
     optional.add_argument(
         '-bvalmin',
@@ -98,7 +96,7 @@ def get_parser():
         metavar=Metavar.file,
         default=param_default.fname_mask,
         help='Binary mask to limit voxels considered by the registration metric. You may also provide a softmask '
-             '(nonbinary, [0, 1]), and it will be binarized at 0.5. Example: dmri_mask.nii.gz',
+             '(nonbinary, [0, 1]), and it will be binarized at 0.5. Example: `dmri_mask.nii.gz`',
     )
     optional.add_argument(
         '-param',
@@ -125,7 +123,7 @@ def get_parser():
         metavar=Metavar.folder,
         action=ActionCreateFolder,
         default=param_default.path_out,
-        help="Output folder. Example: dmri_moco_results"
+        help="Output folder. Example: `dmri_moco_results`"
     )
     optional.add_argument(
         '-qc',

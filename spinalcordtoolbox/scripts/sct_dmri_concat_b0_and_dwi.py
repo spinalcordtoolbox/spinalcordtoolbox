@@ -37,50 +37,43 @@ def get_parser():
             ```
         """),  # noqa: E501 (line too long)
     )
-    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         '-i',
         nargs='+',
-        required=True,
         help="Input 4d files, separated by space, listed in the right order of concatenation. Example: `b0.nii dmri1.nii dmri2.nii`",
         metavar=Metavar.file,
     )
     mandatory.add_argument(
         '-bval',
         nargs='+',
-        required=True,
         help="Bvals file(s). Example: `bvals.txt`",
         metavar=Metavar.file,
     )
     mandatory.add_argument(
         '-bvec',
         nargs='+',
-        required=True,
         help="Bvecs file(s). Example: `bvecs.txt`",
         metavar=Metavar.file,
     )
     mandatory.add_argument(
         '-order',
         nargs='+',
-        required=True,
         help="Order of b=0 and DWI files entered in flag `-i`, separated by space. Example: `b0 dwi dwi`",
         choices=['b0', 'dwi'],
     )
     mandatory.add_argument(
         '-o',
-        required=True,
         help="Output 4d concatenated file. Example: `b0_dmri_concat.nii`",
         metavar=Metavar.file,
     )
     mandatory.add_argument(
         '-obval',
-        required=True,
         help="Output concatenated bval file. Example: `bval_concat.txt`",
         metavar=Metavar.file,
     )
     mandatory.add_argument(
         '-obvec',
-        required=True,
         help="Output concatenated bvec file. Example: `bvec_concat.txt`",
         metavar=Metavar.file,
     )

@@ -18,7 +18,7 @@ def get_parser():
         description='Transpose bvecs file (if necessary) to get nx3 structure.'
     )
 
-    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         '-bvec',
         metavar=Metavar.file,
@@ -26,7 +26,7 @@ def get_parser():
         help="Input bvecs file. Example: `bvecs.txt`"
     )
 
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
+    optional = parser.optional_arggroup
     optional.add_argument(
         '-o',
         metavar=Metavar.file,

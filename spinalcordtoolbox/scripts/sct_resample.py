@@ -41,7 +41,7 @@ def get_parser():
         description="Anisotropic resampling of 3D or 4D data."
     )
 
-    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         '-i',
         metavar=Metavar.file,
@@ -49,6 +49,7 @@ def get_parser():
         help="Image to resample. Can be 3D or 4D. (Cannot be 2D) Example: `dwi.nii.gz`"
     )
 
+    # TODO: Make these arguments implicitly mutually exclusive
     resample_types = parser.add_argument_group(
         "\nMETHOD TO SPECIFY NEW SIZE:\n"
         "Please choose only one of the 4 options"
@@ -84,7 +85,7 @@ def get_parser():
              "be used."
     )
 
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
+    optional = parser.optional_arggroup
     optional.add_argument(
         '-x',
         choices=['nn', 'linear', 'spline'],

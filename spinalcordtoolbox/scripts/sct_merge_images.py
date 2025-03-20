@@ -44,37 +44,32 @@ def get_parser():
         """))  # noqa
     )
 
-    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         "-i",
         metavar=Metavar.file,
         nargs="+",
-        help="Input images",
-        required=True)
+        help="Input images")
     mandatory.add_argument(
         "-d",
         metavar=Metavar.file,
-        help="Destination image",
-        required=True)
+        help="Destination image")
     mandatory.add_argument(
         "-w",
         nargs="+",
         metavar=Metavar.file,
-        help="List of warping fields from input images to destination image",
-        required=True)
+        help="List of warping fields from input images to destination image")
 
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
+    optional = parser.optional_arggroup
     optional.add_argument(
         "-x",
         metavar=Metavar.str,
-        help="Interpolation for warping the input images to the destination image. Default is linear",
-        required=False,
+        help="Interpolation for warping the input images to the destination image.",
         default='linear')
     optional.add_argument(
         "-o",
         metavar=Metavar.file,
         help="Output image",
-        required=False,
         default='merged_images.nii.gz')
 
     # Arguments which implement shared functionality

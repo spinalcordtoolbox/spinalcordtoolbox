@@ -40,13 +40,14 @@ def get_parser(subparser_to_return=None):
         description="Segment an anatomical structure or pathologies according to the specified deep learning model.",
         epilog=models.list_tasks_string()
     )
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
+
+    optional = parser.optional_arggroup
     optional.add_argument(
         "-list-tasks",
         action='store_true',
         help="Display a list of tasks, along with detailed descriptions (including information on how the model was "
              "trained, what data it was trained on, any performance evaluations, associated papers, etc.)")
-    parser.add_common_args(optional)
+    parser.add_common_args()
 
     # Initialize the `subparsers` "special action object" that can be used to create subparsers
     # See https://docs.python.org/3/library/argparse.html#sub-commands for more details.
@@ -148,7 +149,7 @@ def get_parser(subparser_to_return=None):
                  "smaller than 10 voxels for class 1 and 3, and smaller than 20 voxels for class 2).",
             default=None)
 
-        misc = subparser.add_argument_group('\nMISC')
+        misc = subparser.misc_arggroup
         misc.add_argument(
             '-qc',
             metavar=Metavar.folder,

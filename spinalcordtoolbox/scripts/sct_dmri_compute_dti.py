@@ -18,27 +18,24 @@ def get_parser():
         description='Compute Diffusion Tensor Images (DTI) using dipy.'
     )
 
-    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         "-i",
-        required=True,
         help='Input 4d file. Example: `dmri.nii.gz`',
         metavar=Metavar.file,
     )
     mandatory.add_argument(
         "-bval",
-        required=True,
         help='Bvals file. Example: `bvals.txt`',
         metavar=Metavar.file,
     )
     mandatory.add_argument(
         "-bvec",
-        required=True,
         help='Bvecs file. Example: `bvecs.txt`',
         metavar=Metavar.file,
     )
 
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
+    optional = parser.optional_arggroup
     optional.add_argument(
         '-method',
         help=textwrap.dedent("""
@@ -63,7 +60,6 @@ def get_parser():
         '-o',
         help='Output prefix.',
         metavar=Metavar.str,
-        required=False,
         default='dti_')
 
     # Arguments which implement shared functionality

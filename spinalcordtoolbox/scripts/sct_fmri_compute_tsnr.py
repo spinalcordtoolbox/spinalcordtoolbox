@@ -83,15 +83,15 @@ def get_parser():
     parser = SCTArgumentParser(
         description="Compute temporal SNR (tSNR) in fMRI time series."
     )
-    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         '-i',
         metavar=Metavar.file,
-        required=True,
-        help="Input fMRI data. Example:` fmri.nii.gz`"
+        help="Input fMRI data. Example: `fmri.nii.gz`"
     )
 
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
+    optional = parser.optional_arggroup
     optional.add_argument(
         '-m',
         help='Binary (or weighted) mask within which tSNR will be averaged. Example: `fmri_moco_mean_seg.nii.gz`',

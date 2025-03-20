@@ -34,51 +34,44 @@ def get_parser():
                     'Inputs can be a number, a 4d image, or several 3d images separated with `,`'
     )
 
-    mandatory = parser.add_argument_group('MANDATORY ARGUMENTS')
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         '-i',
         nargs='+',
         metavar=Metavar.file,
         help='Input file(s). Example: `data.nii.gz`\n'
              'Note: Only `-concat`, `-omc` or `-stitch` support multiple input files. In those cases, separate filenames using '
-             'spaces. Example usage: `sct_image -i data1.nii.gz data2.nii.gz -concat`',
-        required=True)
+             'spaces. Example usage: `sct_image -i data1.nii.gz data2.nii.gz -concat`')
 
-    optional = parser.add_argument_group('OPTIONAL ARGUMENTS')
+    optional = parser.optional_arggroup
     optional.add_argument(
         '-o',
         metavar=Metavar.file,
-        help='Output file. Example: `data_pad.nii.gz`',
-        required=False)
+        help='Output file. Example: `data_pad.nii.gz`')
 
     image = parser.add_argument_group('IMAGE OPERATIONS')
     image.add_argument(
         '-pad',
         metavar=Metavar.list,
-        help='Pad 3D image. Specify padding as: `x,y,z` (in voxel). Example: `0,0,1`',
-        required=False)
+        help='Pad 3D image. Specify padding as: `x,y,z` (in voxel). Example: `0,0,1`')
     image.add_argument(
         '-pad-asym',
         metavar=Metavar.list,
         help='Pad 3D image with asymmetric padding. Specify padding as: `x_i,x_f,y_i,y_f,z_i,z_f` (in voxel). '
-             'Example: `0,0,5,10,1,1`',
-        required=False)
+             'Example: `0,0,5,10,1,1`')
     image.add_argument(
         '-split',
         help='Split data along the specified dimension. The suffix _DIM+NUMBER will be added to the intput file name.',
-        required=False,
         choices=('x', 'y', 'z', 't'))
     image.add_argument(
         '-concat',
         help='Concatenate data along the specified dimension',
-        required=False,
         choices=('x', 'y', 'z', 't'))
     image.add_argument(
         '-stitch',
         action='store_true',
         help='Stitch multiple images acquired in the same orientation utilizing '
-             'the algorithm by Lavdas, Glocker et al. (https://doi.org/10.1016/j.crad.2019.01.012).',
-        required=False)
+             'the algorithm by Lavdas, Glocker et al. (https://doi.org/10.1016/j.crad.2019.01.012).')
     image.add_argument(
         '-qc',
         metavar=Metavar.folder,
@@ -101,17 +94,14 @@ def get_parser():
     image.add_argument(
         '-remove-vol',
         metavar=Metavar.list,
-        help='Remove specific volumes from a 4d volume. Separate with `,`. Example: `0,5,10`',
-        required=False)
+        help='Remove specific volumes from a 4d volume. Separate with `,`. Example: `0,5,10`')
     image.add_argument(
         '-keep-vol',
         metavar=Metavar.list,
-        help='Keep specific volumes from a 4d volume (remove others). Separate with `,`. Example: `1,2,3,11`',
-        required=False)
+        help='Keep specific volumes from a 4d volume (remove others). Separate with `,`. Example: `1,2,3,11`')
     image.add_argument(
         '-type',
         help='Change file type',
-        required=False,
         choices=('uint8', 'int16', 'int32', 'float32', 'complex64', 'float64', 'int8', 'uint16', 'uint32', 'int64', 'uint64'))
 
     header = parser.add_argument_group('HEADER OPERATIONS')
@@ -201,7 +191,7 @@ def get_parser():
         help='Multi-component merge: Merge inputted images into one multi-component image. Requires several inputs.',
         required=False)
 
-    warping = parser.add_argument_group('WARPING FIELD OPERATIONS:')
+    warping = parser.add_argument_group('WARPING FIELD OPERATIONS')
     warping.add_argument(
         '-display-warp',
         action='store_true',

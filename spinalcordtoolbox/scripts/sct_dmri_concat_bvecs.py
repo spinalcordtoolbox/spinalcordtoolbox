@@ -20,20 +20,20 @@ def get_parser():
                     'sct_dmri_transpose_bvecs afterwards.'
     )
 
-    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         "-i",
         nargs='+',
         required=True,
-        help='List of the bvec files to concatenate. Example: dmri_b700.bvec dmri_b2000.bvec',
+        help='List of the bvec files to concatenate. Example: `dmri_b700.bvec dmri_b2000.bvec`',
         metavar=Metavar.file,
     )
 
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
+    optional = parser.optional_arggroup
     optional.add_argument(
         "-o",
         metavar=Metavar.file,
-        help='Output file with bvecs concatenated. Example: dmri_b700_b2000_concat.bvec')
+        help='Output file with bvecs concatenated. Example: `dmri_b700_b2000_concat.bvec`')
 
     # Arguments which implement shared functionality
     parser.add_common_args()

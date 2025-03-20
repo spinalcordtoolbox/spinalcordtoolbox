@@ -175,12 +175,12 @@ def get_parser():
         )
     )
 
-    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         '-i',
         metavar=Metavar.file,
         required=True,
-        help="Input image. Example: ti.nii.gz"
+        help="Input image. Example: `ti.nii.gz`"
     )
     mandatory.add_argument(
         '-c',
@@ -190,11 +190,11 @@ def get_parser():
              "t1 (cord bright / CSF dark) or t2 (cord dark / CSF bright)"
     )
 
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
+    optional = parser.optional_arggroup
     optional.add_argument(
         '-o',
         metavar=Metavar.file,
-        help='Output filename. Example: spinal_seg.nii.gz '
+        help='Output filename. Example: `spinal_seg.nii.gz`'
         )
     optional.add_argument(
         '-ofolder',
