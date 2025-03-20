@@ -126,7 +126,7 @@ def get_parser():
             """
             Set to 1 to normalize the metrics using a database of healthy controls. Default: 0.
 
-            Note: This flag should not be set to 1 when computing the MCC (i.e. using spinal canal segmentation), 
+            Note: This flag should not be set to 1 when computing the MCC (i.e. using spinal canal segmentation),
             and should only be used when computing the MSCC (i.e. using spinal cord segmentation).
             """
         ),

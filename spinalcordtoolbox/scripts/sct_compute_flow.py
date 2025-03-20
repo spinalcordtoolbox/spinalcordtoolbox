@@ -18,10 +18,10 @@ from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 def get_parser():
     parser = SCTArgumentParser(
         description=(dedent(
-            """\
+            """
             Compute velocity from the MRI phase image for velocity encoding (VENC) sequences.
             More details in: https://mriquestions.com/what-is-venc.html
-            
+
             Further features are planned for this script. Please refer to this issue for more info:
               - https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4298
             """
