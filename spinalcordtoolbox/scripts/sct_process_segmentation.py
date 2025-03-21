@@ -141,7 +141,7 @@ def get_parser():
         choices=[0, 1],
         default=0,
         help="Set to 1 to output one metric per slice instead of a single output metric. Please note that when "
-             "methods ml or map is used, outputing a single metric per slice and then averaging them all is not the "
+             "methods ml or map is used, outputting a single metric per slice and then averaging them all is not the "
              "same as outputting a single metric at once across all slices."
     )
     optional.add_argument(
