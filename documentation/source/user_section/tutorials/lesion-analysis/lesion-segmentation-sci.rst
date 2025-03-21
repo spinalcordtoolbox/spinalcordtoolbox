@@ -33,5 +33,5 @@ Run the following command to segment the lesion using ``SCIseg`` from the input 
 
 Details:
 
-* SCIsegV1: `Enamundram, N.K., Valošek, J., et al. medRxiv (2024) <https://doi.org/10.1101/2024.01.03.24300794>`_
-* SCIsegV2: `Enamundram, N.K., Valošek, J., et al. arXiv (2024) <https://doi.org/10.48550/arXiv.2407.17265>`_
+* SCIsegV1: `Enamundram, N.K., Valošek, J., et al. Radiol. Artif. Intell. (2024) <https://doi.org/10.1148/ryai.240005>`_
+* SCIsegV2: `Enamundram, N.K., Valošek, J., et al. Appl. Med. Artif. Intell. (2025) <https://doi.org/10.1007/978-3-031-82007-6_19>`_
