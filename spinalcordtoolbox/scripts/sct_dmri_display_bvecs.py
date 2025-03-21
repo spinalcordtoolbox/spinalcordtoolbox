@@ -34,7 +34,7 @@ def get_parser():
         help="Input bvecs file. Example: `sub-001_dwi.bvec`",
     )
 
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
+    optional = parser.optional_arggroup
     optional.add_argument(
         '-bval',
         metavar=Metavar.file,
