@@ -394,9 +394,7 @@ class SmartFormatter(argparse.ArgumentDefaultsHelpFormatter):
 
     def _get_help_string(self, action):
         """
-        Overrides the default _get_help_string method to make a few adjustments to how "default" is written
-          * Skip writing the default text for arguments that have an empty default value.
-          * If a default is specified, uses markdown formatting to make it stand out (by making it monospace)
+        Forced the "default" to not be printed if it's a meaningless default (i.e. an empty string)
         """
         # Return immediately if no default was specified, or if this is a suppressed "help" flag
         if action.default in [None, "", [], (), {}, '==SUPPRESS==']:
