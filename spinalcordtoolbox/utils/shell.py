@@ -402,13 +402,8 @@ class SmartFormatter(argparse.ArgumentDefaultsHelpFormatter):
         if action.default in [None, "", [], (), {}, '==SUPPRESS==']:
             return action.help
 
-        # Add help formatting only if it doesn't already exist, and is not suppressed
-        help_action = action.help
-        if '%(default)' not in action.help:
-            # Formatting modified to apply markdown monospace formatting to the default value
-            help_action += ' (default: `%(default)s`)'
-        print("\n", help_action)
-        return help_action
+        # Otherwise, format the string as-usual
+        return super()._get_help_string(action)
 
     def _fill_text(self, text, width, indent):
         """Overrides the default _fill_text method. It takes a single string
