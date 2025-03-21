@@ -119,12 +119,12 @@ def get_parser():
     mandatory.add_argument(
         '-i',
         metavar=Metavar.file,
-        help="Input image. Example: t2.nii.gz"
+        help="Input image. Example: `t2.nii.gz`"
     )
     mandatory.add_argument(
         '-s',
         metavar=Metavar.file,
-        help="Segmentation of the spinal cord. Example: t2_seg.nii.gz"
+        help="Segmentation of the spinal cord. Example: `t2_seg.nii.gz`"
     )
     mandatory.add_argument(
         '-c',

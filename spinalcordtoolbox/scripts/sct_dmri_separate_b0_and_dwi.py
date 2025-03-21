@@ -74,7 +74,7 @@ def get_parser():
         metavar=Metavar.folder,
         action=ActionCreateFolder,
         default='.',
-        help='Output folder. Example: `dmri_separate_results`',
+        help='Output folder.',
     )
 
     # Arguments which implement shared functionality

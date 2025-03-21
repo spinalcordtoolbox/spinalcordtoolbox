@@ -470,12 +470,12 @@ def get_parser():
     optional.add_argument(
         "-resampling",
         type=float,
-        help="Pixel size in mm to resample to. Example: 0.5",
+        help="Pixel size in mm to resample to.",
         metavar=Metavar.float,
         default=0.1)
     optional.add_argument(
         "-o",
-        help='Name of the output file. Example: `my_hausdorff_dist.txt`',
+        help='Name of the output file.',
         metavar=Metavar.str,
         default='hausdorff_distance.txt')
 

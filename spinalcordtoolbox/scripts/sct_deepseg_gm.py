@@ -55,7 +55,7 @@ def get_parser():
     optional.add_argument(
         "-thr",
         type=float,
-        help='Threshold to apply in the segmentation predictions, use 0 (zero) to disable it. Example: `0.999`',
+        help='Threshold to apply in the segmentation predictions, use 0 (zero) to disable it.',
         metavar=Metavar.float,
         default=0.999)
     optional.add_argument(

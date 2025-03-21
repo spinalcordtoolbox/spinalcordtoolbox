@@ -37,7 +37,7 @@ def get_parser():
     req_group.add_argument(
         '-i',
         metavar=Metavar.file,
-        help="Input image (Required) Example: t2_labels.nii.gz"
+        help="Input image (Required) Example: `t2_labels.nii.gz`"
     )
 
     io_group = parser.add_argument_group("OPTIONAL I/O")
@@ -45,7 +45,7 @@ def get_parser():
         '-o',
         metavar=Metavar.file,
         default='labels.nii.gz',
-        help="Output image. Note: Only some label utilities create an output image. Example: t2_labels.nii.gz"
+        help="Output image. Note: Only some label utilities create an output image."
     )
     io_group.add_argument(
         '-ilabel',

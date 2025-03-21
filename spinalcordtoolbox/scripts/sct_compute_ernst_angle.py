@@ -74,7 +74,7 @@ def get_parser():
     optional.add_argument(
         "-t1",
         type=float,
-        help='T1 value (in ms). Example: `832.3`',
+        help='T1 value (in ms).',
         metavar=Metavar.float,
         default=832.0)
     optional.add_argument(
@@ -82,7 +82,7 @@ def get_parser():
         type=float,
         nargs=2,
         metavar=Metavar.float,
-        help='Min/Max range of TR (in ms) separated with space. Only use with `-v 2`. Example: `500 3500`',
+        help='Min/Max range of TR (in ms) separated with space. Only use with `-v 2`.',
         default=[500, 3500])
     optional.add_argument(
         "-o",
@@ -91,7 +91,7 @@ def get_parser():
         default="ernst_angle.txt")
     optional.add_argument(
         "-ofig",
-        help="Name of the output graph. Only use with -v 2.",
+        help="Name of the output graph. Only use with `-v 2`.",
         metavar=Metavar.str,
         default="ernst_angle.png")
 

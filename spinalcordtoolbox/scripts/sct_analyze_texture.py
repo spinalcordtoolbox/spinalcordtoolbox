@@ -50,13 +50,13 @@ def get_parser():
     optional.add_argument(
         "-distance",
         metavar=Metavar.int,
-        help='Distance offset for GLCM computation, in pixel (suggested distance values between 1 and 5). Example: 1',
+        help='Distance offset for GLCM computation, in pixel (suggested distance values between 1 and 5).',
         default=ParamGLCM().distance)
     optional.add_argument(
         "-angle",
         metavar=Metavar.list,
         help='List of angles for GLCM computation, separate arguments with `,`, in degrees (suggested distance values '
-             'between 0 and 179). Example: `0,90`',
+             'between 0 and 179).',
         default=ParamGLCM().angle)
     optional.add_argument(
         "-dim",
@@ -66,7 +66,7 @@ def get_parser():
     optional.add_argument(
         "-ofolder",
         metavar=Metavar.folder,
-        help='Output folder. Example: `/my_texture/`',
+        help='Output folder.',
         action=ActionCreateFolder,
         default=Param().path_results)
 

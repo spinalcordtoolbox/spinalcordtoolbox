@@ -82,14 +82,14 @@ def get_parser():
         type=float,
         metavar=Metavar.float,
         default=param_default.bval_min,
-        help='B-value threshold (in s/mm2) below which data is considered as b=0. Example: 50.0',
+        help='B-value threshold (in s/mm2) below which data is considered as b=0.',
     )
     optional.add_argument(
         '-g',
         type=int,
         metavar=Metavar.int,
         default=param_default.group_size,
-        help='Group nvols successive dMRI volumes for more robustness. Example: 2',
+        help='Group nvols successive dMRI volumes for more robustness.',
     )
     optional.add_argument(
         '-m',
@@ -123,7 +123,7 @@ def get_parser():
         metavar=Metavar.folder,
         action=ActionCreateFolder,
         default=param_default.path_out,
-        help="Output folder. Example: `dmri_moco_results`"
+        help="Output folder."
     )
     optional.add_argument(
         '-qc',

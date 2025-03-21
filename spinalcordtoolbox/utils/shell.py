@@ -393,12 +393,22 @@ class SmartFormatter(argparse.ArgumentDefaultsHelpFormatter):
             logger.warning('Not able to fetch Terminal width. Using default: %s', self._width)
 
     def _get_help_string(self, action):
-        """Overrides the default _get_help_string method to skip writing the
-        '(default: )' text for arguments that have an empty default value."""
-        if action.default not in [None, "", [], (), {}]:
-            return super()._get_help_string(action)
-        else:
+        """
+        Overrides the default _get_help_string method to make a few adjustments to how "default" is written
+          * Skip writing the default text for arguments that have an empty default value.
+          * If a default is specified, uses markdown formatting to make it stand out (by making it monospace)
+        """
+        # Return immediately if no default was specified, or if this is a suppressed "help" flag
+        if action.default in [None, "", [], (), {}, '==SUPPRESS==']:
             return action.help
+
+        # Add help formatting only if it doesn't already exist, and is not suppressed
+        help_action = action.help
+        if '%(default)' not in action.help:
+            # Formatting modified to apply markdown monospace formatting to the default value
+            help_action += ' (default: `%(default)s`)'
+        print("\n", help_action)
+        return help_action
 
     def _fill_text(self, text, width, indent):
         """Overrides the default _fill_text method. It takes a single string

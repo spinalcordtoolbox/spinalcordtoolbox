@@ -132,7 +132,7 @@ def get_parser():
         metavar=Metavar.str,
         type=parse_num_list,
         default='',
-        help="Slice range to compute the metrics across. Example: 5:23"
+        help="Slice range to compute the metrics across. Example: `5:23`"
     )
     optional.add_argument(
         '-perslice',
