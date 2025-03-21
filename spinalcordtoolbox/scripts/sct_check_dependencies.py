@@ -186,7 +186,9 @@ def get_parser():
         "-short",
         help="Short test. Only shows SCT version, CPU cores and RAM available.",
         action="store_true")
-    parser.add_common_args(optional)
+
+    # Add common arguments
+    parser.add_common_args()
 
     return parser
 
