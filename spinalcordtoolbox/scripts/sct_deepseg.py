@@ -189,7 +189,6 @@ def get_parser(subparser_to_return=None):
         nargs="+",
         help="Contrast of the input. Specifies the contrast order of input images (e.g. `-c t1 t2`)",
         choices=('t1', 't2', 't2star'),
-        required=True,
         metavar=Metavar.str)
 
     if subparser_to_return:

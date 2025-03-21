@@ -121,7 +121,7 @@ def get_parser():
 
             !! WARNING: This command should ONLY be run to fix a wrong header (e.g., where the qform and/or sform between an image and a mask of the image do not match). Also note that the image is NOT affected by this command, so if the dimensions of the source and destination images do not match, then you should probably NOT use this command.
         """),  # noqa: E501 (line too long)
-        required=False)
+        )
     affine_fixes = header.add_mutually_exclusive_group(required=False)
     affine_fixes.add_argument(
         '-set-sform-to-qform',
@@ -142,8 +142,7 @@ def get_parser():
     orientation.add_argument(
         '-getorient',
         help='Get orientation of the input image',
-        action='store_true',
-        required=False)
+        action='store_true')
     orientation.add_argument(
         '-setorient',
         help='Set orientation of the input image (modifies BOTH the header and data array, similar to `fslswapdim`).',
@@ -154,8 +153,7 @@ def get_parser():
             'PLS', 'PLI', 'PRS', 'PRI', 'PSL', 'PSR', 'PIL', 'PIR',
             'SLA', 'SLP', 'SRA', 'SRP', 'SAL', 'SAR', 'SPL', 'SPR',
             'ILA', 'ILP', 'IRA', 'IRP', 'IAL', 'IAR', 'IPL', 'IPR',
-        ],
-        required=False)
+        ])
     orientation.add_argument(
         '-flip',
         help=textwrap.dedent("""
@@ -164,8 +162,7 @@ def get_parser():
               - WARNING: This option should only be used to fix the data array when it does not match the orientation string in the header. We recommend that you investigate and understand where the mismatch originated from in the first place before using this option.
               - Example: For an image with 'RPI' in its header, `-flip x` will flip the LR axis of the data array.
         """),  # noqa: E501 (line too long)
-        choices=DIM_LIST,
-        required=False)
+        choices=DIM_LIST)
     orientation.add_argument(
         '-transpose',
         metavar="ax1,ax2,ax3",
@@ -175,28 +172,24 @@ def get_parser():
               - WARNING: This option should only be used to fix the data array when it does not match the orientation string in the header. We recommend that you investigate and understand where the mismatch originated from in the first place before using this option.
               - Example: For a 3D image with 'RPI' in its header, `-transpose z,y,x` will swap the LR and SI axes of the data array.
         """),  # noqa: E501 (line too long)
-        type=list_type(',', str),
-        required=False)
+        type=list_type(',', str))
 
     multi = parser.add_argument_group('MULTI-COMPONENT OPERATIONS ON ITK COMPOSITE WARPING FIELDS')
     multi.add_argument(
         '-mcs',
         action='store_true',
         help='Multi-component split: Split ITK warping field into three separate displacement fields. '
-             'The suffixes `_X`, `_Y` and `_Z` will be added to the input file name.',
-        required=False)
+             'The suffixes `_X`, `_Y` and `_Z` will be added to the input file name.')
     multi.add_argument(
         '-omc',
         action='store_true',
-        help='Multi-component merge: Merge inputted images into one multi-component image. Requires several inputs.',
-        required=False)
+        help='Multi-component merge: Merge inputted images into one multi-component image. Requires several inputs.')
 
     warping = parser.add_argument_group('WARPING FIELD OPERATIONS')
     warping.add_argument(
         '-display-warp',
         action='store_true',
-        help='Create a grid and deform it using provided warping field.',
-        required=False)
+        help='Create a grid and deform it using provided warping field.')
     warping.add_argument(
         '-to-fsl',
         metavar=Metavar.file,
@@ -207,8 +200,7 @@ def get_parser():
         'validated so consider checking the results of `applywarp` against `sct_apply_transfo` before using in FSL '
         'pipelines. Example syntax: `sct_image -i WARP_SRC2DEST -to-fsl IM_SRC (IM_DEST) -o WARP_FSL`, '
         'followed by FSL: `applywarp -i IM_SRC -r IM_DEST -w WARP_FSL --abs -o IM_SRC2DEST` ',
-        nargs='*',
-        required=False)
+        nargs='*')
 
     # Arguments which implement shared functionality
     parser.add_common_args()

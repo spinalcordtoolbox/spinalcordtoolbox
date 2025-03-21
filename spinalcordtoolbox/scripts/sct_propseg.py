@@ -179,13 +179,11 @@ def get_parser():
     mandatory.add_argument(
         '-i',
         metavar=Metavar.file,
-        required=True,
         help="Input image. Example: `ti.nii.gz`"
     )
     mandatory.add_argument(
         '-c',
         choices=['t1', 't2', 't2s', 'dwi'],
-        required=True,
         help="Type of image contrast. If your contrast is not in the available options (t1, t2, t2s, dwi), use "
              "t1 (cord bright / CSF dark) or t2 (cord dark / CSF bright)"
     )
