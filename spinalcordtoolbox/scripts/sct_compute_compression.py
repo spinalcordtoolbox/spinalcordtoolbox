@@ -148,8 +148,8 @@ def get_parser():
         type=int,
         nargs=2,
         metavar="[0 100]",
-        help='Age range of healthy subjects to use for the normalization. Example: `-age 60 80"`. By default, all ages '
-             'are considered.'
+        help='Age range of healthy subjects to use for the normalization. Example: `-age 60 80`. '
+             'By default, all ages are considered.'
     )
 
     # Arguments which implement shared functionality
