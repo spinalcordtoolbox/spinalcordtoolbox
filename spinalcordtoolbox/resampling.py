@@ -105,10 +105,12 @@ def resample_nib(image, new_size=None, new_size_type=None, image_dest=None, inte
         for i in range(3):
             try:
                 R[i, i] = img.shape[i] / float(shape_r[i])
-            except ZeroDivisionError:
-                raise ZeroDivisionError("Destination size is zero for dimension {}. You are trying to resample to an "
-                                        "unrealistic dimension. Check your NIFTI pixdim values to make sure they are "
-                                        "not corrupted.".format(i))
+            except ZeroDivisionError as e:
+                raise ValueError(
+                    f"Requested resampling (`-{new_size_type} {'x'.join(new_size)}`) would resample the input image from {shape} to {shape_r}. "
+                    f"Please double-check the requested resampling parameters. (Note that for the 'factor' and 'mm' resampling types, "
+                    f"voxels will be rounded to the nearest whole number, which may result in a shape of [0].)"
+                ) from e
 
         affine_r = np.dot(affine, R)
         reference = (shape_r, affine_r)
