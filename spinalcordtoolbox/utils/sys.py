@@ -301,17 +301,22 @@ def run_proc(cmd, verbose=1, raise_exception=True, cwd=None, env=None, is_sct_bi
         cwd = os.getcwd()
 
     if env is None:
-        env = os.environ
+        env = os.environ.copy()
 
     if is_sct_binary:
+        # create an absolute path to the binary inside of SCT's bin directory
         name = cmd[0] if isinstance(cmd, list) else cmd.split(" ", 1)[0]
         path = os.path.join(__bin_dir__, name)
-
         if isinstance(cmd, list):
             cmd[0] = path
         elif isinstance(cmd, str):
             rem = cmd.split(" ", 1)[1:]
             cmd = path if len(rem) == 0 else "{} {}".format(path, rem[0])
+
+        # also, for windows, add the bin directory to the path (to allow ANTs to access 'msvc-runtime' DLLs)
+        # see also: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4655#issuecomment-2430178901
+        if sys.platform.startswith("win32"):
+            env['PATH'] = __bin_dir__ + os.pathsep + env['PATH']
 
     if isinstance(cmd, str):
         cmdline = cmd

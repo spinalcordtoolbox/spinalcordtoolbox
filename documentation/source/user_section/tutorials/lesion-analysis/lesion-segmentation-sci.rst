@@ -2,7 +2,7 @@ Lesion segmentation in spinal cord injury (SCI)
 ###############################################
 
 SCT provides a deep learning model called ``SCIseg`` for segmenting lesions in spinal cord injury (SCI) patients.
-The model is available in SCT v6.2 and higher via ``sct_deepseg -task seg_sc_lesion_t2w_sci``. In SCT v6.4, the model was updated to ``SCIsegV2``, the command remains the same.
+The model is available in SCT v6.2 and higher via ``sct_deepseg -task seg_sc_lesion_t2w_sci``. In SCT v6.4, the model was updated to ``SCIsegV2``, the command remains the same. In SCT v7.0, the command was changed to ``sct_deepseg lesion_sci_t2``.
 
 The model was trained on raw T2-weighted images of SCI patients comprising traumatic (acute preoperative, intermediate, chronic) and non-traumatic (ischemic SCI and degenerative cervical myelopathy, DCM) SCI lesions.
 
@@ -18,11 +18,11 @@ Run the following command to segment the lesion using ``SCIseg`` from the input 
 
 .. code:: sh
 
-   sct_deepseg -i t2.nii.gz -task seg_sc_lesion_t2w_sci -qc ~/qc_singleSubj
+   sct_deepseg lesion_sci_t2 -i t2.nii.gz -qc ~/qc_singleSubj
 
 :Input arguments:
+   - ``lesion_sci_t2`` : Task to perform. In our case, we use the ``SCIseg`` model via the ``lesion_sci_t2`` task
    - ``-i`` : Input T2w image with fake lesion
-   - ``-task`` : Task to perform. In our case, we use the ``SCIseg`` model via the ``seg_sc_lesion_t2w_sci`` task
    - ``-qc`` : Directory for Quality Control reporting. QC reports allow us to evaluate the segmentation slice-by-slice
 
 :Output files/folders:
@@ -33,5 +33,5 @@ Run the following command to segment the lesion using ``SCIseg`` from the input 
 
 Details:
 
-* SCIsegV1: `Enamundram, N.K., Valošek, J., et al. medRxiv (2024) <https://doi.org/10.1101/2024.01.03.24300794>`_
-* SCIsegV2: `Enamundram, N.K., Valošek, J., et al. arXiv (2024) <https://doi.org/10.48550/arXiv.2407.17265>`_
+* SCIsegV1: `Enamundram, N.K., Valošek, J., et al. Radiol. Artif. Intell. (2024) <https://doi.org/10.1148/ryai.240005>`_
+* SCIsegV2: `Enamundram, N.K., Valošek, J., et al. Appl. Med. Artif. Intell. (2025) <https://doi.org/10.1007/978-3-031-82007-6_19>`_

@@ -26,6 +26,16 @@ The following studies have used SCT:
 2025 
 ----
 
+-  Solanky *et al.* `Evaluation of magnetic resonance spectroscopy total sodium concentration measures, and associations with microstructure and physical impairment in cervical myelopathy <https://doi.org/10.1038/s41598-025-91658-w>`_, **Sci. Rep.** 2025
+-  Azzimonti *et al.* `Cervical spinal cord gray matter damage predicts disability worsening in multiple sclerosis: a longitudinal study <https://doi.org/10.1007/s00415-025-12979-4>`_, **J. Neurol.** 2025
+-  Stroman *et al.* `Evidence of a persistent altered neural state in people with fibromyalgia syndrome during functional MRI studies and its relationship with pain and anxiety <https://doi.org/10.1371/journal.pone.0316672>`_, **PLoS One** 2025
+-  Qiu *et al.* `Exploratory study on the ascending pain pathway in patients with chronic neck and shoulder pain based on combined brain and spinal cord diffusion tensor imaging <https://doi.org/10.3389/fnins.2025.1460881>`_, **Front. Neurosci.** 2025
+-  Kashani *et al.* `Magnetization Transfer Ratio in the Typically Developing Pediatric Spinal Cord: Normative Data and Age Correlation <https://doi.org/10.1111/jon.70019>`_, **J. Neuroimaging** 2025
+-  Lebret *et al.* `Test-retest repeatability of intravoxel incoherent motion (IVIM) measurements in the cervical cord <https://doi.org/10.1162/imag_a_00468>`_, **Imaging Neuroscience** 2025
+-  Karthik *et al.* `SCIsegV2: A Universal Tool for Segmentation of Intramedullary Lesions in Spinal Cord Injury <https://doi.org/10.1007/978-3-031-82007-6_19>`_, **Appl. Med. Artif. Intell.** 2025
+-  Hernandez-Charpak *et al.* `Towards personalized mapping through lumbosacral spinal cord task fMRI <https://doi.org/10.1162/imag_a_00455>`_, **Imaging Neuroscience** 2025
+-  Al-shawwa *et al.* `Spinal cord demyelination predicts neurological deterioration in patients with mild degenerative cervical myelopathy <https://doi.org/10.1136/bmjno-2024-000940>`_, **BMJ Neurol. Open** 2025
+-  Joo *et al.* `Establishing Normative Values for Entire Spinal Cord Morphometrics in East Asian Young Adults <https://doi.org/10.3348/kjr.2024.0907>`_, **Korean J. Radiol.** 2025	
 -  Farah *et al.* `T1 mapping using MP2RAGE in degenerative cervical myelopathy: a longitudinal study <https://doi.org/10.1007/s00586-025-08652-z>`_, **Eur. Spine J.** 2025
 -  Boudreau *et al.* `Longitudinal reproducibility of brain and spinal cord quantitative MRI measures <https://doi.org/10.1162/imag_a_00409>`_, **Imaging Neurosci.** 2025
 -  Mongay-Ocho *et al.* `Association of the Cervical Canal Area With Disability and Progression in People With Multiple Sclerosis <https://doi.org/10.1212/WNL.0000000000210136>`_, **Neurology** 2025
@@ -37,7 +47,7 @@ The following studies have used SCT:
 -  Gaubert *et al.* `Microstructural Damage and Repair in the Spinal Cord of Patients With Early Multiple Sclerosis and Association With Disability at 5 Years <https://doi.org/10.1212/NXI.0000000000200333>`_, **Neurol. Neuroimmunol. Neuroinflamm.** 2024
 -  Bozhko *et al.* `Diffusion tensor imaging of spinal cord in healthy children <https://www.rosped.ru/jour/article/view/1060?locale=en_US>`_, **Russ. Pediatr. J.** 2024
 -  Stuart *et al.* `Systemic inflammation associates with and precedes cord atrophy in progressive multiple sclerosis <https://doi.org/10.1093/braincomms/fcae143>`_, **Brain Commun.** 2024
--  Enamundram *et al.* `SCIseg: Automatic Segmentation of Intramedullary Lesions in Spinal Cord Injury on T2-weighted MRI Scans <https://doi.org/10.1148/ryai.240005>`_, **Radiol. Artif. Intell.** 2024
+-  Karthik *et al.* `SCIseg: Automatic Segmentation of Intramedullary Lesions in Spinal Cord Injury on T2-weighted MRI Scans <https://doi.org/10.1148/ryai.240005>`_, **Radiol. Artif. Intell.** 2024
 -  Negreiros *et al.* `Patterns of cognitive decline across different multiple sclerosis clinical courses <https://doi.org/10.1016/j.msard.2024.106172>`_, **Mult. Scler. Relat. Disord.** 2024
 -  Combes *et al.* `Spiral volumetric optoacoustic tomography of reduced oxygen saturation in the spinal cord of M83 mouse model of Parkinson’s disease <https://doi.org/10.1007/s00259-024-06938-w>`_, **Eur. J. Nucl. Med. Mol. Imaging** 2024 
 -  Papinutto *et al.* `A simplified approach to define cervical vertebral levels in spinal cord MRI studies <https://doi.org/10.1111/jon.13240>`_, **J. Neuroimaging** 2024

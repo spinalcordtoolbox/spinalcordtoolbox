@@ -151,7 +151,7 @@ Basic installation (No GUI)
 
       wsl --list --verbose
 
-   If WSL installed correctly, you should see a list of installed distributions (as well as their WSL versions). Find the name of the distribution you just installed (which should be something like ``Ubuntu`` or ``Ubuntu-20.04``), then specify that name in the following command:
+   If WSL installed correctly, you should see a list of installed distributions (as well as their WSL versions). Find the name of the distribution you just installed (which should be something like ``Ubuntu`` or ``Ubuntu-24.04``), then specify that name in the following command:
 
    .. code::
 

@@ -1,15 +1,15 @@
 Spinal cord segmentation for MT1 data
 #####################################
 
-First, we will run the :ref:`sct_deepseg_sc` command to segment the spinal cord from the MT1 image (i.e. the image that has the RF off-resonance pulse applied).
+First, we will run the :ref:`sct_deepseg` command to segment the spinal cord from the MT1 image (i.e. the image that has the RF off-resonance pulse applied).
 
 .. code:: sh
 
-   sct_deepseg_sc -i mt1.nii.gz -c t2 -qc ~/qc_singleSubj
+   sct_deepseg spinalcord -i mt1.nii.gz -qc ~/qc_singleSubj
 
 :Input arguments:
+   - ``spinalcord``: Task to perform. Here, we are using ``spinalcord`` to segment the spinal cord. This task is contrast-agnostic, meaning it can be used on any type of image (T1, T2, T2*, etc.)
    - ``-i`` : Input image
-   - ``-c`` : Contrast of the input image. T2 is chosen because of the visual similarity between MT1 and T2.
    - ``-qc`` : Directory for Quality Control reporting. QC reports allow us to evaluate the results slice-by-slice.
 
 :Output files/folders:
@@ -20,4 +20,4 @@ Once the command has finished, at the bottom of your terminal there will be inst
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/registering-additional-contrasts/io-sct_deepseg_sc.png
    :align: center
 
-   Input/output images for :ref:`sct_deepseg_sc`
+   Input/output images for :ref:`sct_deepseg`

@@ -22,6 +22,7 @@ from scipy.ndimage import center_of_mass
 import skimage.exposure
 
 from spinalcordtoolbox.centerline.core import get_centerline, ParamCenterline
+from spinalcordtoolbox.cropping import ImageCropper, BoundingBox
 from spinalcordtoolbox.image import Image, rpi_slice_to_orig_orientation
 import spinalcordtoolbox.reports
 from spinalcordtoolbox.reports.assets._assets.py import refresh_qc_entries
@@ -256,6 +257,7 @@ def sct_deepseg(
     dataset: Optional[str],
     subject: Optional[str],
     plane: Optional[str],
+    fname_qc_seg: Optional[str],
 ):
     """
     Generate a QC report for sct_deepseg, based on which task was used.
@@ -274,7 +276,7 @@ def sct_deepseg(
         subject=subject,
     ) as imgs_to_generate:
         # Custom QC to handle multiclass segmentation outside the spinal cord
-        if "seg_spinal_rootlets_t2w" in argv:
+        if "rootlets_t2" in argv:
             sct_deepseg_spinal_rootlets_t2w(
                 imgs_to_generate, fname_input, fname_seg, fname_seg2, species,
                 radius=(23, 23))
@@ -285,12 +287,12 @@ def sct_deepseg(
         # Non-rootlets, axial/sagittal DeepSeg QC report
         elif plane == 'Axial':
             sct_deepseg_axial(
-                imgs_to_generate, fname_input, fname_seg, fname_seg2, species)
+                imgs_to_generate, fname_input, fname_seg, fname_seg2, species, fname_qc_seg)
         else:
             assert plane == 'Sagittal', (f"`plane` must be either 'Axial' "
                                          f"or 'Sagittal', but got {plane}")
             sct_deepseg_sagittal(
-                imgs_to_generate, fname_input, fname_seg, fname_seg2, species)
+                imgs_to_generate, fname_input, fname_seg, fname_seg2, species, fname_qc_seg)
 
 
 def sct_deepseg_axial(
@@ -299,6 +301,7 @@ def sct_deepseg_axial(
     fname_seg_sc: str,
     fname_seg_lesion: Optional[str],
     species: str,
+    fname_qc_seg: Optional[str],
 ):
     """
     Generate a QC report for sct_deepseg, with varied colormaps depending on the type of segmentation.
@@ -313,6 +316,7 @@ def sct_deepseg_axial(
     img_input = Image(fname_input).change_orientation('SAL')
     img_seg_sc = Image(fname_seg_sc).change_orientation('SAL')
     img_seg_lesion = Image(fname_seg_lesion).change_orientation('SAL') if fname_seg_lesion else None
+    img_qc_seg = Image(fname_qc_seg).change_orientation('SAL') if fname_qc_seg else None
 
     # Resample images slice by slice
     logger.info('Resample images to %fx%f vox', p_resample, p_resample)
@@ -335,15 +339,30 @@ def sct_deepseg_axial(
     ) if fname_seg_lesion else None
     if fname_seg_lesion:
         img_seg_lesion.data = (img_seg_lesion.data > 0.5) * 1
+    img_qc_seg = resample_nib(
+        image=img_qc_seg,
+        image_dest=img_input,
+        interpolation='linear',
+    ) if fname_qc_seg else None
+
+    # Using -qc-seg mask if available, we remove slices which are empty (except for the first 3 and last 3 slices just around the segmented slices)
+    for img_to_crop in [img_input, img_seg_sc, img_seg_lesion, img_qc_seg]:
+        if fname_qc_seg and img_to_crop:
+            crop_with_mask(img_to_crop, img_qc_seg, pad=3)
 
     # Each slice is centered on the segmentation
     logger.info('Find the center of each slice')
-    centers = np.array([center_of_mass(slice) for slice in img_seg_sc.data])
+    # Use the -qc-seg mask if available, otherwise use the spinal cord mask
+    img_centers = img_qc_seg if fname_qc_seg else img_seg_sc
+    centers = np.array([center_of_mass(slice) for slice in img_centers.data])
     inf_nan_fill(centers[:, 0])
     inf_nan_fill(centers[:, 1])
 
+    # If -qc-seg is available, use it to generate the radius
+    radius = get_max_axial_radius(img_qc_seg) if fname_qc_seg else (15, 15)
+
     # Generate the first QC report image
-    img = equalize_histogram(mosaic(img_input, centers))
+    img = equalize_histogram(mosaic(img_input, centers, radius))
 
     # For QC reports, axial mosaics will often have smaller height than width
     # (e.g. WxH = 20x3 slice images). So, we want to reduce the fig height to match this.
@@ -372,7 +391,7 @@ def sct_deepseg_axial(
     for i, image in enumerate([img_seg_sc, img_seg_lesion]):
         if not image:
             continue
-        img = mosaic(image, centers)
+        img = mosaic(image, centers, radius)
         img = np.ma.masked_less_equal(img, 0)
         img.set_fill_value(0)
         ax.imshow(img,
@@ -400,7 +419,7 @@ def sct_deepseg_spinal_rootlets_t2w(
     outline: bool = True
 ):
     """
-    Generate a QC report for `sct_deepseg -task seg_spinal_rootlets_t2w`.
+    Generate a QC report for `sct_deepseg rootlets_t2`.
 
     This refactor is based off of the `listed_seg` method in qc.py, adapted to support multiple images.
     """
@@ -497,6 +516,7 @@ def sct_deepseg_sagittal(
     fname_seg_sc: str,
     fname_seg_lesion: Optional[str],
     species: str,
+    fname_qc_seg: Optional[str],
 ):
     """
     Generate a QC report for sct_deepseg, with varied colormaps depending on the type of segmentation.
@@ -511,14 +531,10 @@ def sct_deepseg_sagittal(
     img_input = Image(fname_input).change_orientation('RSP')
     img_seg_sc = Image(fname_seg_sc).change_orientation('RSP')
     img_seg_lesion = Image(fname_seg_lesion).change_orientation('RSP') if fname_seg_lesion else None
-
-    # if the image has more then 30 slices then we resample it to 30 slices on the R-L direction
-    if img_input.dim[0] > 30:
-        R_L_resolution = img_input.dim[4] * img_input.dim[0] / 30
-    else:
-        R_L_resolution = img_input.dim[4]
+    img_qc_seg = Image(fname_qc_seg).change_orientation('RSP') if fname_qc_seg else None
 
     # Resample images slice by slice
+    R_L_resolution = img_input.dim[4]
     logger.info('Resample images to %fx%fx%f vox', R_L_resolution, p_resample, p_resample)
     img_input = resample_nib(
         image=img_input,
@@ -539,15 +555,37 @@ def sct_deepseg_sagittal(
     ) if fname_seg_lesion else None
     if fname_seg_lesion:
         img_seg_lesion.data = (img_seg_lesion.data > 0.5) * 1
+    img_qc_seg = resample_nib(
+        image=img_qc_seg,
+        image_dest=img_input,
+        interpolation='linear',
+    ) if fname_qc_seg else None
 
-    # The radius is set to display the entire slice
-    radius = (img_input.dim[1]//2, img_input.dim[2]//2)
+    # Using -qc-seg mask if available, we remove slices which are empty (except for the first 2 and last 2 slices just around the segmented slices)
+    # If -qc-seg mask isn't available, but image would create a mosaic that's too large, keep only the center 30 sagittal slices (using segmnetation as a reference)
+    for img_to_crop in [img_input, img_seg_sc, img_seg_lesion, img_qc_seg]:
+        if img_to_crop is None:
+            continue  # don't crop missing images
+        if fname_qc_seg:
+            crop_with_mask(img_to_crop, img_qc_seg, pad=2)
+        elif img_input.dim[0] > 30:
+            crop_with_mask(img_to_crop, img_seg_sc, max_slices=30)
+            if img_to_crop == img_input:  # display a message only once
+                logger.warning("Source image is too large to display in a sagittal mosaic. Applying automatic cropping around segmentation.\n"
+                               "Please consider using `sct_deepseg -qc-seg` option to customize the crop. You can use `sct_create_mask` to create a suitable mask to pass to "
+                               "`-qc-seg`. If this message still occurs after cropping, please consider resampling your image to a lower resolution using `sct_resample`.")
 
-    # Each slice is centered on the segmentation
     logger.info('Find the center of each slice')
-    centers = np.array([radius] * img_input.data.shape[0])
-    inf_nan_fill(centers[:, 0])
-    inf_nan_fill(centers[:, 1])
+    # Use the -qc-seg mask if available to get crop radius (as well as the center of mass) for each slice
+    if fname_qc_seg:
+        radius = get_max_sagittal_radius(img_qc_seg)
+        centers = np.array([center_of_mass(slice) for slice in img_qc_seg.data])
+        inf_nan_fill(centers[:, 0])
+        inf_nan_fill(centers[:, 1])
+    # otherwise, if -qc-seg isn't provided, display the full sagittal slice and use the center of the uncropped image
+    else:
+        radius = (img_input.dim[1] // 2, img_input.dim[2] // 2)
+        centers = np.array([radius] * img_input.data.shape[0])
 
     # Generate the first QC report image
     img = equalize_histogram(mosaic(img_input, centers, radius=radius))
@@ -771,7 +809,12 @@ def mosaic(img: Image, centers: np.ndarray, radius: tuple[int, int] = (15, 15), 
     # Center and crop each axial slice
     cropped = []
     for center, slice in zip(centers.astype(int), img.data):
-        # Add a margin before cropping, in case the center is too close to the edge
+        # If the `center` coordinate is close to the edge, then move it away from the edge to capture more of the image
+        # In other words, make sure the `center` coordinate is at least `radius` pixels away from the edge
+        for i in [0, 1]:
+            center[i] = min(slice.shape[i] - radius[i], center[i])  # Check far edge first
+            center[i] = max(radius[i],                  center[i])  # Then check 0 edge last
+        # Add a margin before cropping, in case the center is still too close to one of the edges
         # Also, use Kronecker product to scale each block in multiples
         cropped.append(np.kron(np.pad(slice, [[r] for r in radius])[
             center[0]:center[0] + 2*radius[0],
@@ -1031,3 +1074,73 @@ def assign_label_colors_by_groups(labels):
                 color_list[label - labels.min()] = sampled_colors[j % len(sampled_colors)]
 
     return color_list
+
+
+def crop_with_mask(img_to_crop, img_ref, pad=3, max_slices=None):
+    """
+    Crop array along a specific axis based on nonzero slices in the reference image.
+
+    Use `pad` if you want to pad around the mask (no matter how big the mask is).
+
+    Use `max_slices` to pad only until that amount of slices is reached (overrides `pad`). If
+    the segmentation spans more slices than `max_slices`, then no padding will occur. Instead,
+    all slices containing the segmentation will be used (to preserve the segmentation).
+    """
+    # QC images are reoriented to SAL (axial) or RSP (sagittal) such that axis=0 is always the slice index
+    axis = 0
+    # get extents of segmentation used for cropping
+    first_slice = min(np.where(img_ref.data)[axis])
+    last_slice = max(np.where(img_ref.data)[axis])
+    # if `max_slices` is specified, then override `pad`
+    if max_slices is not None:
+        # use `max(0, ...)` to avoid cropping the segmentation if it would exceed `max_slices`
+        pad_total = max(0, max_slices - (last_slice - first_slice + 1))
+        l_pad = math.floor(pad_total / 2)
+        r_pad = math.ceil(pad_total / 2)
+    # otherwise, use the provided value as-is
+    else:
+        l_pad = r_pad = pad
+    # pad (but make sure the index slices are within the image bounds)
+    start_slice = max(first_slice - l_pad, 0)
+    stop_slice = min(last_slice + r_pad, img_ref.data.shape[axis] - 1)
+    # crop the image at the specified axis
+    cropper = ImageCropper(img_in=img_to_crop)
+    cropper.bbox = BoundingBox(xmin=start_slice, xmax=stop_slice,
+                               ymin=0, ymax=img_to_crop.data.shape[1]-1,
+                               zmin=0, zmax=img_to_crop.data.shape[2]-1)
+    img_cropped = cropper.crop()
+    # since `ImageCropper` returns a copy of the image, we need to update the original image
+    # we could instead just return the new copy, but that would require refactoring the qc
+    # function to no longer iterate over the images in-place, which would be a larger change
+    img_to_crop.data = img_cropped.data
+    img_to_crop.hdr = img_cropped.hdr
+
+
+def get_max_axial_radius(img):
+    """
+    Determine the maximum slicewise width/height of the nonzero voxels in img.
+
+    Input images should be SAL, such that each SI axial slice is composed of [1] -> AP and [2] -> LR.
+    """
+    # In Axial plane, the radius is the maximum width/height of the spinal cord mask dilated by 20% or 15, whichever is larger.
+    dilation = 1.2
+    default = 15
+    heights = [np.max(np.where(slice)[0]) - np.min(np.where(slice)[0]) if np.sum(slice) > 0 else 0 for slice in img.data]
+    widths = [np.max(np.where(slice)[1]) - np.min(np.where(slice)[1]) if np.sum(slice) > 0 else 0 for slice in img.data]
+    heights = [(h * dilation)//2 for h in heights]
+    widths = [(w * dilation)//2 for w in widths]
+    return max(default, max(heights)), max(default, max(widths))
+
+
+def get_max_sagittal_radius(img):
+    """
+    Determine the maximum slicewise width/height of the nonzero voxels for sagittal images.
+
+    Input images should be RSP, such that each LR sagittal slice is composed of [1] -> SI and [2] -> PA.
+    """
+    # In Sagittal plane, the radius is the maximum width of the spinal cord mask dilated by 20% or 1/2 of the image width, whichever is larger.
+    # The height is always the entirety of the image height (for example, to view possible lesions in the brain stem)
+    widths = [np.max(np.where(slice)[1]) - np.min(np.where(slice)[1]) if np.sum(slice) > 0 else 0 for slice in img.data]
+    widths = [w//2 + 0.1*w//2 for w in widths]
+    height = np.floor(img.data.shape[2]/2).astype(int)
+    return height, max(np.floor(img.data.shape[1]/4).astype(int), int(max(widths)))

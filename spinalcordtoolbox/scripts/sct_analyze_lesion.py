@@ -83,8 +83,8 @@ def get_parser():
         help=textwrap.dedent("""
             Path to folder containing the atlas/template registered to the anatomical image. If provided, the function computes:
 
-              - a. for each lesion, the proportion of that lesion within each vertebral level and each region of the template (e.g. GM, WM, WM tracts). Each cell contains a percentage value representing how much of the lesion volume exists within the region indicated by the row/column (rows represent vertebral levels, columns represent ROIs). The percentage values are summed to totals in both the bottom row and the right column, and the sum of all cells is 100 (i.e. 100 percent of the lesion), found in the bottom-right.
-              - b. the proportions of each ROI (e.g. vertebral level, GM, WM) occupied by lesions.
+              1. for each lesion, the proportion of that lesion within each vertebral level and each region of the template (e.g. GM, WM, WM tracts). Each cell contains a percentage value representing how much of the lesion volume exists within the region indicated by the row/column (rows represent vertebral levels, columns represent ROIs). The percentage values are summed to totals in both the bottom row and the right column, and the sum of all cells is 100 (i.e. 100 percent of the lesion), found in the bottom-right.
+              2. the proportions of each ROI (e.g. vertebral level, GM, WM) occupied by lesions.
 
             These percentage values are stored in different pages of the output `lesion_analysis.xlsx` spreadsheet; one page for each lesion (a.) plus a final page summarizing the total ROI occupation of all lesions (b.)
         """),  # noqa: E501 (line too long)
