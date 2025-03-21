@@ -37,7 +37,6 @@ def get_parser():
     mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         '-i',
-        required=True,
         help=textwrap.dedent("""
             Image to compute the SNR on. Example: `b0s.nii.gz`
 
