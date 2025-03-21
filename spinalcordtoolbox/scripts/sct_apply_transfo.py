@@ -63,14 +63,12 @@ def get_parser():
     optional.add_argument(
         "-crop",
         help="Crop Reference. 0: no reference, 1: sets background to 0, 2: use normal background.",
-        required=False,
         type=int,
         default=0,
         choices=(0, 1, 2))
     optional.add_argument(
         "-o",
         help='Registered source. Example: `dest.nii.gz`',
-        required=False,
         metavar=Metavar.file)
     optional.add_argument(
         "-x",
@@ -79,7 +77,6 @@ def get_parser():
 
             Note: The `label` method is a special interpolation method designed for single-voxel labels (e.g. disc labels used as registration landmarks, compression labels, etc.). This method is necessary because classical interpolation may corrupt the values of single-voxel labels, or cause them to disappear entirely. The function works by dilating each label, applying the transformation using nearest neighbour interpolation, then extracting the center-of-mass of each transformed 'blob' to get a single-voxel output label. Because the output is a single-voxel label, the `-x label` method is not appropriate for multi-voxel labeled segmentations (such as spinal cord or lesion masks).
         """),  # noqa: E501 (line too long)
-        required=False,
         default='spline',
         choices=('nn', 'linear', 'spline', 'label'))
 
