@@ -122,12 +122,6 @@ def get_parser(subparser_to_return=None):
             metavar=Metavar.float,
             default=None)
         misc.add_argument(
-            "-r",
-            type=int,
-            help="Remove temporary files.",
-            choices=(0, 1),
-            default=1)
-        misc.add_argument(
             "-largest",
             dest='keep_largest',
             type=int,
@@ -184,7 +178,10 @@ def get_parser(subparser_to_return=None):
                        - 'Sagittal': The full image. (For very large images, this may cause a crash, so using `-qc-seg` is highly recommended.)
                 """)  # noqa: E501 (line too long)
         )
-        subparser.add_common_args(misc)
+
+        # Add common arguments
+        subparser.add_common_args()
+        subparser.add_tempfile_args()
 
     # Add options that only apply to a specific task
     parser_dict['tumor_edema_cavity_t1_t2'].add_argument(
