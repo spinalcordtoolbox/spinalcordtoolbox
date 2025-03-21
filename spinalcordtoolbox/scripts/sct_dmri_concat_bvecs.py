@@ -24,7 +24,6 @@ def get_parser():
     mandatory.add_argument(
         "-i",
         nargs='+',
-        required=True,
         help='List of the bvec files to concatenate. Example: `dmri_b700.bvec dmri_b2000.bvec`',
         metavar=Metavar.file,
     )
