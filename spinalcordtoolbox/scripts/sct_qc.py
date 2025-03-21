@@ -33,7 +33,7 @@ def get_parser():
     mandatory.add_argument(
         '-i',
         metavar='IMAGE',
-        help='Input image #1 (mandatory)')
+        help='Input image #1')
     mandatory.add_argument(
         '-p',
         help='SCT function associated with the QC report to generate',
