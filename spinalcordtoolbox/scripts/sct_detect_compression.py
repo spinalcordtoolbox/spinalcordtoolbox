@@ -62,18 +62,16 @@ def get_parser():
         """),  # noqa: E501 (line too long)
     )
 
-    mandatoryArguments = parser.add_argument_group("MANDATORY ARGUMENTS")
-    mandatoryArguments.add_argument(
+    mandatory = parser.mandatory_arggroup
+    mandatory.add_argument(
         '-s',
         metavar=Metavar.file,
-        required=True,
         help="Segmentation of the spinal cord, which will be used to compute the shape metrics. "
              "Example: `t2s_seg.nii.gz`."
     )
-    mandatoryArguments.add_argument(
+    mandatory.add_argument(
         '-discfile',
         metavar=Metavar.file,
-        required=True,
         help=textwrap.dedent("""
             File with disc labels. Each label must be a single voxel. Only label values 4, 5, 6, and 7 (C3/C4 to C6/C7) are supported for now; all other labels will be ignored.
             Labels can be located either at the posterior edge of the intervertebral discs, or at the orthogonal projection of each disc onto the spinal cord.
@@ -83,7 +81,7 @@ def get_parser():
         """),  # noqa: E501 (line too long)
     )
 
-    optional = parser.add_argument_group('OPTIONAL ARGUMENTS')
+    optional = parser.optional_arggroup
     optional.add_argument(
         '-num-of-slices',
         metavar=Metavar.int,
@@ -110,19 +108,9 @@ def get_parser():
         help='Output CSV file name. If not provided, the suffix `compression_results` is added to the file name '
              'provided by the flag `-s`.'
     )
-    optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit")
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
 
     return parser
 

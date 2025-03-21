@@ -32,27 +32,19 @@ def get_parser():
         """),  # noqa: E501 (line too long)
     )
 
-    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         "-i",
-        required=True,
-        help="Input NIfTI image to be denoised. Example: image_input.nii.gz",
+        help="Input NIfTI image to be denoised. Example: `image_input.nii.gz`",
         metavar=Metavar.file,
     )
     mandatory.add_argument(
         "-b",
-        required=True,
-        help="Input bvals file corresponding to the NIfTI file to be denoised. Example: filename.bval",
+        help="Input bvals file corresponding to the NIfTI file to be denoised. Example: `filename.bval`",
         metavar=Metavar.file,
     )
 
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
-    optional.add_argument(
-        "-h",
-        "--help",
-        action='help',
-        help="Show this help message and exit.",
-    )
+    optional = parser.optional_arggroup
     optional.add_argument(
         "-model",
         help="Type of regression model used for self-supervised training within Patch2Self.",
@@ -75,14 +67,9 @@ def get_parser():
         help="Name of the output NIFTI image.",
         metavar=Metavar.str,
     )
-    optional.add_argument(
-        "-v",
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode.",
-    )
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
 
     return parser
 

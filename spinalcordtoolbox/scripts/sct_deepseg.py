@@ -40,24 +40,14 @@ def get_parser(subparser_to_return=None):
         description="Segment an anatomical structure or pathologies according to the specified deep learning model.",
         epilog=models.list_tasks_string()
     )
-    parser.add_argument(
+
+    optional = parser.optional_arggroup
+    optional.add_argument(
         "-list-tasks",
         action='store_true',
         help="Display a list of tasks, along with detailed descriptions (including information on how the model was "
              "trained, what data it was trained on, any performance evaluations, associated papers, etc.)")
-    parser.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
-    parser.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit")
+    parser.add_common_args()
 
     # Initialize the `subparsers` "special action object" that can be used to create subparsers
     # See https://docs.python.org/3/library/argparse.html#sub-commands for more details.
@@ -132,12 +122,6 @@ def get_parser(subparser_to_return=None):
             metavar=Metavar.float,
             default=None)
         misc.add_argument(
-            "-r",
-            type=int,
-            help="Remove temporary files.",
-            choices=(0, 1),
-            default=1)
-        misc.add_argument(
             "-largest",
             dest='keep_largest',
             type=int,
@@ -159,7 +143,7 @@ def get_parser(subparser_to_return=None):
                  "smaller than 10 voxels for class 1 and 3, and smaller than 20 voxels for class 2).",
             default=None)
 
-        misc = subparser.add_argument_group('\nMISC')
+        misc = subparser.misc_arggroup
         misc.add_argument(
             '-qc',
             metavar=Metavar.folder,
@@ -176,19 +160,6 @@ def get_parser(subparser_to_return=None):
             metavar=Metavar.str,
             help="If provided, this string will be mentioned in the QC report as the subject the process was run on."
         )
-        misc.add_argument(
-            '-v',
-            metavar=Metavar.int,
-            type=int,
-            choices=[0, 1, 2],
-            default=1,
-            # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-            help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
-        misc.add_argument(
-            "-h",
-            "--help",
-            action="help",
-            help="Show this help message and exit")
         misc.add_argument(
             "-qc-plane",
             metavar=Metavar.str,
@@ -208,13 +179,16 @@ def get_parser(subparser_to_return=None):
                 """)  # noqa: E501 (line too long)
         )
 
+        # Add common arguments
+        subparser.add_common_args()
+        subparser.add_tempfile_args()
+
     # Add options that only apply to a specific task
     parser_dict['tumor_edema_cavity_t1_t2'].add_argument(
         "-c",
         nargs="+",
         help="Contrast of the input. Specifies the contrast order of input images (e.g. `-c t1 t2`)",
         choices=('t1', 't2', 't2star'),
-        required=True,
         metavar=Metavar.str)
 
     if subparser_to_return:

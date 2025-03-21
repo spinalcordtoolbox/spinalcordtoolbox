@@ -58,53 +58,45 @@ def get_parser():
         """),  # noqa: E501 (line too long)
     )
 
-    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         '-i',
         metavar=Metavar.file,
-        required=True,
-        help="Diffusion data. Example: dmri.nii.gz"
+        help="Diffusion data. Example: `dmri.nii.gz`"
     )
     mandatory.add_argument(
         '-bvec',
         metavar=Metavar.file,
-        required=True,
-        help='Bvecs file. Example: bvecs.txt'
+        help='Bvecs file. Example: `bvecs.txt`'
     )
 
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
-    optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit."
-    )
+    optional = parser.optional_arggroup
     optional.add_argument(
         '-bval',
         metavar=Metavar.file,
         default=param_default.fname_bvals,
-        help='Bvals file. Example: bvals.txt',
+        help='Bvals file. Example: `bvals.txt`',
     )
     optional.add_argument(
         '-bvalmin',
         type=float,
         metavar=Metavar.float,
         default=param_default.bval_min,
-        help='B-value threshold (in s/mm2) below which data is considered as b=0. Example: 50.0',
+        help='B-value threshold (in s/mm2) below which data is considered as b=0.',
     )
     optional.add_argument(
         '-g',
         type=int,
         metavar=Metavar.int,
         default=param_default.group_size,
-        help='Group nvols successive dMRI volumes for more robustness. Example: 2',
+        help='Group nvols successive dMRI volumes for more robustness.',
     )
     optional.add_argument(
         '-m',
         metavar=Metavar.file,
         default=param_default.fname_mask,
         help='Binary mask to limit voxels considered by the registration metric. You may also provide a softmask '
-             '(nonbinary, [0, 1]), and it will be binarized at 0.5. Example: dmri_mask.nii.gz',
+             '(nonbinary, [0, 1]), and it will be binarized at 0.5. Example: `dmri_mask.nii.gz`',
     )
     optional.add_argument(
         '-param',
@@ -131,22 +123,7 @@ def get_parser():
         metavar=Metavar.folder,
         action=ActionCreateFolder,
         default=param_default.path_out,
-        help="Output folder. Example: dmri_moco_results"
-    )
-    optional.add_argument(
-        "-r",
-        choices=('0', '1'),
-        default=param_default.remove_temp_files,
-        help="Remove temporary files. 0 = no, 1 = yes"
-    )
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode"
+        help="Output folder."
     )
     optional.add_argument(
         '-qc',
@@ -178,6 +155,10 @@ def get_parser():
         metavar=Metavar.str,
         help="If provided, this string will be mentioned in the QC report as the subject the process was run on."
     )
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
+    parser.add_tempfile_args()
 
     return parser
 

@@ -20,22 +20,17 @@ def get_parser():
         description="Download binaries from the web.",
         epilog=list_datasets(),
     )
-    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         '-d',
-        required=True,
         choices=['default'] + sorted(list(DATASET_DICT.keys()), key=str.casefold),
         metavar="<dataset>",
         help="Name of the dataset, as listed in the table below. If 'default' is specified, then all default datasets "
              "will be re-downloaded. (Default datasets are critical datasets downloaded during installation.)"
     )
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
-    optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit."
-    )
+
+    optional = parser.optional_arggroup
     optional.add_argument(
         '-o',
         metavar=Metavar.folder,
@@ -51,15 +46,9 @@ def get_parser():
         action="store_true",
         help="Keep existing data in destination directory."
     )
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode"
-    )
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
 
     return parser
 

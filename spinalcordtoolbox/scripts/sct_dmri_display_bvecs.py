@@ -27,34 +27,22 @@ def get_parser():
         description='Display scatter plot of gradient directions from bvecs file. If you have multi-shell acquisition,'
                     'you can provide also bvals file to display individual shells in q-space.'
     )
-    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         '-bvec',
         metavar=Metavar.file,
-        required=True,
-        help="Input bvecs file. Example: sub-001_dwi.bvec",
+        help="Input bvecs file. Example: `sub-001_dwi.bvec`",
     )
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
+
+    optional = parser.optional_arggroup
     optional.add_argument(
         '-bval',
         metavar=Metavar.file,
-        help="Input bval file (for multi-shell acquisition). Example: sub-001_dwi.bval",
+        help="Input bval file (for multi-shell acquisition). Example: `sub-001_dwi.bval`",
     )
-    optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit."
-    )
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode"
-    )
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
 
     return parser
 

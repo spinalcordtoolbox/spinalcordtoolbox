@@ -177,12 +177,7 @@ def get_parser():
         description='Check the installation and environment variables of the toolbox and its dependencies.'
     )
 
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
-    optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit")
+    optional = parser.optional_arggroup
     optional.add_argument(
         '-complete',
         help="Complete test.",
@@ -192,13 +187,17 @@ def get_parser():
         help="Short test. Only shows SCT version, CPU cores and RAM available.",
         action="store_true")
 
+    # Add common arguments
+    parser.add_common_args()
+
     return parser
 
 
 def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
-    verbose = complete_test = arguments.complete
+    complete_test = arguments.complete
+    verbose = arguments.v
     set_loglevel(verbose=verbose, caller_module_name=__name__)
 
     print("\nSYSTEM INFORMATION"
