@@ -45,7 +45,6 @@ def get_parser():
     mandatory.add_argument(
         '-i',
         metavar=Metavar.file,
-        required=True,
         help="Image to resample. Can be 3D or 4D. (Cannot be 2D) Example: `dwi.nii.gz`"
     )
 
