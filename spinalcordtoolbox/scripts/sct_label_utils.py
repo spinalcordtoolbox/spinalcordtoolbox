@@ -37,7 +37,6 @@ def get_parser():
     req_group.add_argument(
         '-i',
         metavar=Metavar.file,
-        required=True,
         help="Input image (Required) Example: t2_labels.nii.gz"
     )
 
