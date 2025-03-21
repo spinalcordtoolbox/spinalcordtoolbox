@@ -477,7 +477,6 @@ def get_parser():
         "-o",
         help='Name of the output file. Example: `my_hausdorff_dist.txt`',
         metavar=Metavar.str,
-        required=False,
         default='hausdorff_distance.txt')
 
     # Arguments which implement shared functionality
