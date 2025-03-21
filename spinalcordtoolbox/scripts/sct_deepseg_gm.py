@@ -42,8 +42,7 @@ def get_parser():
     optional.add_argument(
         "-o",
         help="Output segmentation file name. Example: `sc_gm_seg.nii.gz`",
-        metavar=Metavar.file,
-        default=None)
+        metavar=Metavar.file)
     optional.add_argument(
         "-m",
         help="Model to use (large or challenge). "
