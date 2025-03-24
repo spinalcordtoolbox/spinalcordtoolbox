@@ -69,8 +69,7 @@ def get_parser():
     misc.add_argument(
         '-qc',
         help="The path where the quality control generated content will be saved.",
-        metavar=Metavar.str,
-        default=None)
+        metavar=Metavar.str)
     misc.add_argument(
         '-qc-dataset',
         help='If provided, this string will be mentioned in the QC report as the dataset the process was run on',

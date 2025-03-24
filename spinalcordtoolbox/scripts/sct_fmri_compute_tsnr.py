@@ -106,8 +106,7 @@ def get_parser():
         '-qc',
         metavar=Metavar.str,
         help='The path where the quality control generated content will be saved. Note: The `-m` parameter is '
-             'required to generate the QC report, as it is necessary to center the QC on the region of interest.',
-        default=None)
+             'required to generate the QC report, as it is necessary to center the QC on the region of interest.')
     optional.add_argument(
         '-qc-dataset',
         metavar=Metavar.str,

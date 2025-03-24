@@ -93,8 +93,7 @@ def get_parser():
     optional.add_argument(
         "-b1map",
         help="B1 map",
-        metavar=Metavar.file,
-        default=None)
+        metavar=Metavar.file)
     optional.add_argument(
         "-omtsat",
         metavar=Metavar.str,

@@ -79,8 +79,7 @@ def get_parser():
     optional.add_argument(
         '-qc',
         metavar=Metavar.str,
-        help='The path where the quality control generated content will be saved.',
-        default=None)
+        help='The path where the quality control generated content will be saved.')
     optional.add_argument(
         '-qc-dataset',
         metavar=Metavar.str,

@@ -96,7 +96,6 @@ def get_parser():
         '-o',
         metavar=Metavar.str,
         type=str,
-        default=None,
         help="File name to write the computed SNR to."
     )
 

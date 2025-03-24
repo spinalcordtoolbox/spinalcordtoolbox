@@ -68,8 +68,7 @@ def get_parser():
         "-i",
         help='Image from which to extract average values within lesions (e.g. "t2.nii.gz"). If provided, the function '
              'computes the mean and standard deviation values of this image within each lesion.',
-        metavar=Metavar.file,
-        default=None)
+        metavar=Metavar.file)
     optional.add_argument(
         "-f",
         help=textwrap.dedent("""
@@ -80,8 +79,7 @@ def get_parser():
 
             These percentage values are stored in different pages of the output `lesion_analysis.xlsx` spreadsheet; one page for each lesion (a.) plus a final page summarizing the total ROI occupation of all lesions (b.)
         """),  # noqa: E501 (line too long)
-        metavar=Metavar.str,
-        default=None)
+        metavar=Metavar.str)
     optional.add_argument(
         "-perslice",
         help="Specify whether to aggregate atlas metrics (`-f` option) per slice (`-perslice 1`) or per vertebral "

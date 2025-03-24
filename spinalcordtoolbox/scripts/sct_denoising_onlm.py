@@ -72,8 +72,7 @@ def get_parser():
     optional.add_argument(
         "-o",
         help="Name of the output NIFTI image.",
-        metavar=Metavar.str,
-        default=None)
+        metavar=Metavar.str)
 
     # Arguments which implement shared functionality
     parser.add_common_args()

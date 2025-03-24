@@ -119,29 +119,25 @@ def get_parser(subparser_to_return=None):
             help="Binarize segmentation with specified threshold. Set to 0 for no thresholding (i.e., soft segmentation). "
                  "Default value is model-specific and was set during optimization "
                  "(more info at https://github.com/sct-pipeline/deepseg-threshold).",
-            metavar=Metavar.float,
-            default=None)
+            metavar=Metavar.float)
         misc.add_argument(
             "-largest",
             dest='keep_largest',
             type=int,
             help="Keep the largest connected-objects from the output segmentation. Specify the number of objects to keep."
-                 "To keep all objects, set to 0",
-            default=None)
+                 "To keep all objects, set to 0")
         misc.add_argument(
             "-fill-holes",
             type=int,
             help="Fill small holes in the segmentation.",
-            choices=(0, 1),
-            default=None)
+            choices=(0, 1))
         misc.add_argument(
             "-remove-small",
             type=str,
             nargs="+",
             help="Minimal object size to keep with unit (mm3 or vox). A single value can be provided or one value per "
                  "prediction class. Single value example: 1mm3, 5vox. Multiple values example: 10 20 10vox (remove objects "
-                 "smaller than 10 voxels for class 1 and 3, and smaller than 20 voxels for class 2).",
-            default=None)
+                 "smaller than 10 voxels for class 1 and 3, and smaller than 20 voxels for class 2).")
 
         misc = subparser.misc_arggroup
         misc.add_argument(

@@ -61,8 +61,7 @@ def get_parser():
              "binarization (i.e. soft segmentation output). The default threshold is specific to each contrast and was "
              "estimated using an optimization algorithm. More details at: "
              "https://github.com/sct-pipeline/deepseg-threshold.",
-        metavar=Metavar.float,
-        default=None)
+        metavar=Metavar.float)
     optional.add_argument(
         "-brain",
         type=int,
@@ -87,8 +86,7 @@ def get_parser():
     optional.add_argument(
         '-qc',
         metavar=Metavar.str,
-        help='The path where the quality control generated content will be saved',
-        default=None)
+        help='The path where the quality control generated content will be saved')
     optional.add_argument(
         '-qc-dataset',
         metavar=Metavar.str,

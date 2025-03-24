@@ -138,20 +138,17 @@ def get_parser():
     optional.add_argument(
         '-qc',
         metavar=Metavar.str,
-        help='The path where the quality control generated content will be saved',
-        default=None)
+        help='The path where the quality control generated content will be saved')
     optional.add_argument(
         '-qc-dataset',
         metavar=Metavar.str,
         help='If provided, this string will be mentioned in the QC report as the dataset the '
-             'process was run on',
-        default=None)
+             'process was run on')
     optional.add_argument(
         '-qc-subject',
         metavar=Metavar.str,
         help='If provided, this string will be mentioned in the QC report as the subject the '
-             'process was run on',
-        default=None)
+             'process was run on')
 
     # Arguments which implement shared functionality
     parser.add_common_args()
