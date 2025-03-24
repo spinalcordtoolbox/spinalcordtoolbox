@@ -83,3 +83,5 @@ wquantiles
 # XlxsWriter is needed to write `.xlsx` files, since pandas removed support for the `xlwt` engine
 # Source: https://github.com/pandas-dev/pandas/pull/49296
 xlsxwriter
+# Temporary; pins SetupTools to <78
+setuptools<78.0
