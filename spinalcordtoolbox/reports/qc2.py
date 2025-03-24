@@ -9,12 +9,12 @@ from contextlib import contextmanager
 import datetime
 from hashlib import md5
 import importlib.resources
-from importlib.abc import Traversable
 import itertools as it
 import json
 import logging
 import math
 from pathlib import Path
+import shutil
 from typing import Optional, Sequence
 
 import numpy as np
@@ -25,7 +25,7 @@ from spinalcordtoolbox.centerline.core import get_centerline, ParamCenterline
 from spinalcordtoolbox.cropping import ImageCropper, BoundingBox
 from spinalcordtoolbox.image import Image, rpi_slice_to_orig_orientation
 import spinalcordtoolbox.reports
-from spinalcordtoolbox.reports.assets._assets.py import refresh_qc_entries
+from spinalcordtoolbox.reports.assets.py import refresh_qc_entries
 from spinalcordtoolbox.resampling import resample_nib
 from spinalcordtoolbox.utils.shell import display_open
 from spinalcordtoolbox.utils.sys import __version__, list2cmdline, LazyLoader
@@ -107,54 +107,31 @@ def create_qc_entry(
         path_result = path_json / f'qc_{timestamp}.json'
         with path_result.open('w') as file_result:
             json.dump({
-                'cwd': str(Path.cwd()),
+                'path': str(Path.cwd()),
                 'cmdline': cmdline,
                 'command': command,
-                'sct_version': __version__,
+                'sctVersion': __version__,
                 'dataset': dataset,
                 'subject': subject,
                 'contrast': contrast,
-                'fname_in': path_input.name,
+                'inputFile': path_input.name,
                 'plane': plane,
-                'background_img': str(imgs_to_generate['path_background_img'].relative_to(path_qc)),
-                'overlay_img': str(imgs_to_generate['path_overlay_img'].relative_to(path_qc)),
-                'moddate': mod_date.strftime("%Y-%m-%d %H:%M:%S"),
+                'backgroundImg': str(imgs_to_generate['path_background_img'].relative_to(path_qc)),
+                'overlayImg': str(imgs_to_generate['path_overlay_img'].relative_to(path_qc)),
+                'date': mod_date.strftime("%Y-%m-%d %H:%M:%S"),
                 'rank': '',
                 'qc': '',
             }, file_result, indent=1)
 
         # Copy any missing QC assets
-        path_assets = importlib.resources.files(spinalcordtoolbox.reports) / 'assets'
         path_qc.mkdir(parents=True, exist_ok=True)
-        update_files(path_assets / '_assets', path_qc)
-
+        path_assets = importlib.resources.files(spinalcordtoolbox.reports) / 'assets'
+        shutil.copytree(path_assets, path_qc, dirs_exist_ok=True, ignore=shutil.ignore_patterns('__pycache__', '__init__.py'))
         # Inject the JSON QC entries into the index.html file
         path_index_html = refresh_qc_entries.main(path_qc)
 
     logger.info('Successfully generated the QC results in %s', str(path_result))
     display_open(file=str(path_index_html), message="To see the results in a browser")
-
-
-def update_files(resource: Traversable, destination: Path):
-    """
-    Make sure that an up-to-date copy of `resource` exists at `destination`,
-    by creating or updating files and directories recursively.
-    """
-    if resource.name in ['__pycache__']:
-        return  # skip this one
-    path = destination / resource.name
-    if resource.is_dir():
-        path.mkdir(exist_ok=True)
-        for sub_resource in resource.iterdir():
-            update_files(sub_resource, path)
-    elif resource.is_file():
-        new_content = resource.read_bytes()
-        old_content = path.read_bytes() if path.is_file() else None
-        if new_content != old_content:
-            path.write_bytes(new_content)
-    else:
-        # Some weird kind of resource? Ignore it
-        pass
 
 
 def sct_register_multimodal(

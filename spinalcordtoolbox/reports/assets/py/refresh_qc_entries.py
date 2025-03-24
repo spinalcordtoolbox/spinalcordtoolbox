@@ -25,15 +25,13 @@ Note -- This script can be run two ways:
 
 import json
 from pathlib import Path
-import string
-
 
 def main(path_qc):
     path_qc = Path(path_qc)
 
     path_json = path_qc / '_json'
+    path_datasets_js = path_qc / 'js' / 'datasets.js'
     path_index_html = path_qc / 'index.html'
-    path_index_html_template = path_qc / '_assets' / 'html' / 'index.html'
 
     # Collect all existing QC report entries
     json_data = []
@@ -41,13 +39,11 @@ def main(path_qc):
         with path.open() as file:
             json_data.append(json.load(file))
 
-    # Insert the QC report entries into index.html
-    template = string.Template(path_index_html_template.read_text(encoding='utf-8'))
-    with open(path_index_html, mode='w', encoding="utf-8") as file_index_html:
-        file_index_html.write(template.substitute(sct_json_data=json.dumps(json_data)))
+    with open(path_datasets_js, mode='w', encoding="utf-8") as file_datasets_js:
+        file_datasets_js.write(f"window.SCT_QC_DATASETS = {json.dumps(json_data)};")
 
     return path_index_html
 
 
 if __name__ == "__main__":
-    main(path_qc=Path("../..").resolve())
+    main(path_qc=Path("..").resolve())
