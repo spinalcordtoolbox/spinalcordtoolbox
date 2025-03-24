@@ -9,7 +9,6 @@ os.environ['nnUNet_raw'] = "./nnUNet_raw"
 os.environ['nnUNet_preprocessed'] = "./nnUNet_preprocessed"
 os.environ['nnUNet_results'] = "./nnUNet_results"
 
-from batchgenerators.utilities.file_and_folder_operations import join  # noqa: E402
 from nnunetv2.inference.predict_from_raw_data import nnUNetPredictor   # noqa: E402
 
 if TYPE_CHECKING:
@@ -53,7 +52,7 @@ def create_nnunet_from_plans(path_model, device: 'torch.device'):
 
     # initializes the network architecture, loads the checkpoint
     predictor.initialize_from_trained_model_folder(
-        join(path_model),
+        os.path.join(path_model),
         use_folds=folds_avail,
         checkpoint_name=checkpoint_name,
     )
