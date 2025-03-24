@@ -24,7 +24,7 @@ build:
     # FURTHER READING:
     #  - https://docs.readthedocs.com/platform/stable/builds.html#understanding-the-build-process
     #  - https://docs.readthedocs.com/platform/stable/build-customization.html#extend-or-override-the-build-process
-    pre_install:
+    install:
       - python -m pip install setuptools==75.8.2
 
 python:
