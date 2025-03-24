@@ -10,6 +10,22 @@ build:
   tools:
       # This python version needs to be compatible with SCT, see setup.py
       python: "3.9"
+  jobs:
+    # NOTES:
+    # - Add fix for mismatch between `batchgenerators` and `setuptools==78.0`
+    # - We choose 75.8.2 to match the version installed in the conda 3.9 venv_sct
+    # - This step *should* run after the environment is created, but before
+    #   SCT+dependencies are installed (i.e. the `python: install:` config below)
+    # - The reason we can't just pin this in `requirements.txt` is because
+    #   RTD automatically upgrades `setuptools` beforehand. So we need to
+    #   downgrade it after the environment is created + upgraded, but *before*
+    #   installing everything in `requirements.txt`.
+    #
+    # FURTHER READING:
+    #  - https://docs.readthedocs.com/platform/stable/builds.html#understanding-the-build-process
+    #  - https://docs.readthedocs.com/platform/stable/build-customization.html#extend-or-override-the-build-process
+    post_create_environment:
+      - python -m pip install setuptools==75.8.2
 
 python:
   install:
