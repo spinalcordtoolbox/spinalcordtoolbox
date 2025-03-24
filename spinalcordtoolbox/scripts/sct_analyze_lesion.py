@@ -48,23 +48,16 @@ def get_parser():
         """),  # noqa: E501 (line too long)
     )
 
-    mandatory_arguments = parser.add_argument_group("MANDATORY ARGUMENTS")
-    mandatory_arguments.add_argument(
+    mandatory = parser.mandatory_arggroup
+    mandatory.add_argument(
         "-m",
-        required=True,
         help='Binary mask of lesions (lesions are labeled as "1").',
         metavar=Metavar.file,
     )
 
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
-    optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="show this help message and exit")
+    optional = parser.optional_arggroup
     optional.add_argument(
         "-s",
-        required=False,
         help=textwrap.dedent("""
             Spinal cord centerline or segmentation file, which will be used to correct morphometric measures with cord angle with respect to slice. (e.g. `t2_seg.nii.gz`)
 
@@ -75,9 +68,7 @@ def get_parser():
         "-i",
         help='Image from which to extract average values within lesions (e.g. "t2.nii.gz"). If provided, the function '
              'computes the mean and standard deviation values of this image within each lesion.',
-        metavar=Metavar.file,
-        default=None,
-        required=False)
+        metavar=Metavar.file)
     optional.add_argument(
         "-f",
         help=textwrap.dedent("""
@@ -88,9 +79,7 @@ def get_parser():
 
             These percentage values are stored in different pages of the output `lesion_analysis.xlsx` spreadsheet; one page for each lesion (a.) plus a final page summarizing the total ROI occupation of all lesions (b.)
         """),  # noqa: E501 (line too long)
-        metavar=Metavar.str,
-        default=None,
-        required=False)
+        metavar=Metavar.str)
     optional.add_argument(
         "-perslice",
         help="Specify whether to aggregate atlas metrics (`-f` option) per slice (`-perslice 1`) or per vertebral "
@@ -98,16 +87,14 @@ def get_parser():
         metavar=Metavar.int,
         type=int,
         choices=(0, 1),
-        default=0,
-        required=False
+        default=0
     )
     optional.add_argument(
         "-ofolder",
         help='Output folder (e.g. "."). Default is the current folder (".").',
         metavar=Metavar.folder,
         action=ActionCreateFolder,
-        default='.',
-        required=False)
+        default='.')
     optional.add_argument(
         '-qc',
         metavar=Metavar.folder,
@@ -124,21 +111,10 @@ def get_parser():
         metavar=Metavar.str,
         help="If provided, this string will be mentioned in the QC report as the subject the process was run on."
     )
-    optional.add_argument(
-        "-r",
-        type=int,
-        help="Remove temporary files.",
-        required=False,
-        default=1,
-        choices=(0, 1))
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
+    parser.add_tempfile_args()
 
     return parser
 

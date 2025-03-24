@@ -43,59 +43,38 @@ def get_parser():
             So this function acts like a weighted average operator, only in destination voxels that share multiple source voxels.
         """))  # noqa
     )
-    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         "-i",
         metavar=Metavar.file,
         nargs="+",
-        help="Input images",
-        required=True)
+        help="Input images")
     mandatory.add_argument(
         "-d",
         metavar=Metavar.file,
-        help="Destination image",
-        required=True)
+        help="Destination image")
     mandatory.add_argument(
         "-w",
         nargs="+",
         metavar=Metavar.file,
-        help="List of warping fields from input images to destination image",
-        required=True)
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
-    optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit")
+        help="List of warping fields from input images to destination image")
+
+    optional = parser.optional_arggroup
     optional.add_argument(
         "-x",
         metavar=Metavar.str,
-        help="Interpolation for warping the input images to the destination image. Default is linear",
-        required=False,
+        help="Interpolation for warping the input images to the destination image.",
         default='linear')
     optional.add_argument(
         "-o",
         metavar=Metavar.file,
         help="Output image",
-        required=False,
         default='merged_images.nii.gz')
 
-    misc = parser.add_argument_group('MISC')
-    misc.add_argument(
-        "-r",
-        type=int,
-        help='Remove temporary files.',
-        required=False,
-        default=1,
-        choices=(0, 1))
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
+    # Arguments which implement shared functionality
+    parser.add_common_args()
+    parser.add_tempfile_args()
 
     return parser
 
