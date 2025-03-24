@@ -57,6 +57,6 @@ def create_nnunet_from_plans(path_model, device: 'torch.device'):
         use_folds=folds_avail,
         checkpoint_name=checkpoint_name,
     )
-    print('Model loaded successfully. Fetching test data...')
+    print('Model loaded successfully.')
 
     return predictor

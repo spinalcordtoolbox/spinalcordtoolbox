@@ -13,6 +13,7 @@ from hashlib import md5
 import tempfile
 from glob import glob
 import json
+import csv
 
 import pytest
 from nibabel import Nifti1Header
@@ -53,7 +54,7 @@ def pytest_sessionfinish():
                                 (os.path.join(__data_dir__, "sct_example_data"), "sct_example_data.json")]:
         fname_out = os.path.join(__sct_dir__, "testing", fname_out)
         if os.path.isdir(folder):
-            summary = summarize_files_in_folder(folder)
+            summary = summarize_files_in_folder(folder, exclude=['straightening.cache'])
             summary = sorted(summary, key=lambda d: d['path'])   # sort list-of-dicts by paths
             keys = [d.pop('path') for d in summary]              # remove paths from dicts
             summary = {key: d for key, d in zip(keys, summary)}  # convert to dict-of-dicts
@@ -61,12 +62,16 @@ def pytest_sessionfinish():
                 json.dump(summary, jsonfile, indent=2)
 
 
-def summarize_files_in_folder(folder):
+def summarize_files_in_folder(folder, exclude=None):
     # Construct a list of dictionaries summarizing all the files in a folder
     summary = []
     for root, dirs, files in os.walk(folder, followlinks=True):
         for fname in files:
+            if exclude and fname in exclude:
+                continue
             fpath = os.path.join(root, fname)
+            if fname.endswith(".csv"):
+                fpath = filter_csv_columns(fpath, columns=["Timestamp", "SCT Version"])
             root_short = root.replace(folder, os.path.basename(folder))
             file_dict = {
                 # Use consistent characters to make cross-platform diffing work
@@ -83,6 +88,45 @@ def summarize_files_in_folder(folder):
                 arr_fields = {k: '' for k in generate_numpy_fields(zeros([1, 1, 1])).keys()}
             summary.append(file_dict | img_fields | arr_fields)
     return summary
+
+
+def filter_csv_columns(fpath, columns):
+    """
+    Filter out columns from a CSV file that are not in the list `columns`.
+
+    This helps when checking the filesize and md5 of CSV files, which can contain differing branches, timestamps, etc.
+    """
+    def read_csv(file_path):
+        """Read CSV into a list of dictionaries."""
+        # DictReader will automatically use the first row as a header. If the CSV doesn't have a header,
+        # `csv` will interpret the first row of data as column names. Thus, if the first row has duplicate values,
+        # the columns will be interpreted as duplicates, and one of the columns might get thrown away!
+        # NOTE: The csv library has `csv.Sniffer.has_header()` to detect headers, but given that it's based
+        #       on heuristics, it's probably safer to check the parsed headers after the fact.
+        with open(file_path, mode='r', newline='', encoding='utf-8') as fp:
+            reader = csv.DictReader(fp)
+            return [row for row in reader]
+
+    def write_csv(data, file_path):
+        """Write a list of dictionaries to a CSV."""
+        with open(file_path, mode='w', newline='', encoding='utf-8') as fp:
+            writer = csv.DictWriter(fp, fieldnames=data[0].keys())
+            writer.writeheader()
+            writer.writerows(data)
+
+    # return early if the parsed header doesn't contain any of the columns to filter (to avoid mangling no-header CSVs)
+    csv_contents = read_csv(fpath)
+    if not any(col in csv_contents[0].keys() for col in columns):
+        return fpath
+
+    # filter CSV contents
+    csv_contents_filtered = [{k: v for k, v in row.items() if k not in columns}
+                             for row in csv_contents]
+    # write and return filtered CSV
+    fpath_tmp = os.path.join(tempfile.mkdtemp(), os.path.basename(fpath))
+    write_csv(csv_contents_filtered, fpath_tmp)
+
+    return fpath_tmp
 
 
 @pytest.fixture(autouse=True)
