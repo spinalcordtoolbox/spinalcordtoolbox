@@ -5,6 +5,7 @@ from argparse import Action, SUPPRESS
 
 PROFILING_TIMER = None
 
+
 # Wrapper class which manages our profiling timer
 class Timer:
     def __init__(self):
@@ -48,5 +49,3 @@ def begin_timer():
     else:
         logging.warning("Tried to start a profiling timer more than once! Perhaps you forgot you had set the "
                         "'SCT_TIMER' variable?")
-
-
