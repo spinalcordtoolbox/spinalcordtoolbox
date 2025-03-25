@@ -1,7 +1,9 @@
 import atexit
 import logging
+import os
 import time
 from argparse import Action, SUPPRESS
+from textwrap import dedent
 
 PROFILING_TIMER = None
 
@@ -36,10 +38,10 @@ class StartProfilingTimer(Action):
 
     """argparse Action, which will start a timing tracker for us"""
     def __call__(self, *args, **kwargs):
-        begin_global_time()
+        begin_global_timer()
 
 
-def begin_global_time():
+def begin_global_timer():
     # Fetch the PROFILING_TIMER from the global space
     global PROFILING_TIMER
     # If it hasn't already been set, start the timer
@@ -47,5 +49,14 @@ def begin_global_time():
         PROFILING_TIMER = Timer()
     # Otherwise, skip and warn the user
     else:
-        logging.warning("Tried to start a profiling timer more than once! Perhaps you forgot you had set the "
-                        "'SCT_TIMER' variable?")
+        # If this was because the OS-level environmental variable was set
+        if "SCT_TIMER" in os.environ.keys():
+            logging.warning(
+                "Both the '-timeit' flag and the 'SCT_TIMER' environmental variable were used, resulting in the timer "
+                "being started twice; you should only do one or the other!"
+            )
+        else:
+            logging.warning(
+                "Tried to start the global profiling timer twice; you should generally leave this initialization to the "
+                "CLI, rather than calling 'begin_global_timer yourself!"
+            )

@@ -22,7 +22,7 @@ import tqdm
 
 # Expose Tensorflow's LazyLoader class in `utils.sys` namespace
 from contrib.tensorflow.lazy_loader import LazyLoader  # noqa
-from spinalcordtoolbox.utils.profiling import begin_global_time
+from spinalcordtoolbox.utils.profiling import begin_global_timer
 
 logger = logging.getLogger(__name__)
 
@@ -184,7 +184,7 @@ def init_sct():
 
     # Enable timer, if requested
     if os.environ.get("SCT_TIMER", None) is not None:
-        begin_global_time()
+        begin_global_timer()
 
     # Display SCT version
     logger.info('\n--\nSpinal Cord Toolbox ({})\n'.format(__version__))
