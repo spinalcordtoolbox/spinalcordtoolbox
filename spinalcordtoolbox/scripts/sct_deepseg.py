@@ -47,7 +47,10 @@ def get_parser(subparser_to_return=None):
         action='store_true',
         help="Display a list of tasks, along with detailed descriptions (including information on how the model was "
              "trained, what data it was trained on, any performance evaluations, associated papers, etc.)")
+
+    # Add some universal arguments and their associated functionality
     parser.add_common_args()
+    parser.add_profiling_args()
 
     # Initialize the `subparsers` "special action object" that can be used to create subparsers
     # See https://docs.python.org/3/library/argparse.html#sub-commands for more details.
@@ -178,6 +181,7 @@ def get_parser(subparser_to_return=None):
         # Add common arguments
         subparser.add_common_args()
         subparser.add_tempfile_args()
+        subparser.add_profiling_args()
 
     # Add options that only apply to a specific task
     parser_dict['tumor_edema_cavity_t1_t2'].add_argument(

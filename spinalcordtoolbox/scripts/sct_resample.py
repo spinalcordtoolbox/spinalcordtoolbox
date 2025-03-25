@@ -99,6 +99,7 @@ def get_parser():
 
     # Arguments which implement shared functionality
     parser.add_common_args()
+    parser.add_profiling_args()
 
     return parser
 
