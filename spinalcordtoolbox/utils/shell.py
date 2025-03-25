@@ -299,6 +299,13 @@ class SCTArgumentParser(argparse.ArgumentParser):
             help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode."
         )
 
+        # Add profiling-related arguments
+        arg_group.add_argument(
+            "-timeit",
+            action=StartProfilingTimer,
+            help="If this flag is present, the program will report its total runtime once it has finished running."
+        )
+
         # Return the arg_group to allow for chained operations
         return arg_group
 
@@ -320,17 +327,6 @@ class SCTArgumentParser(argparse.ArgumentParser):
             help="Remove temporary files.",
             default=1,
             choices=(0, 1)
-        )
-
-    def add_profiling_args(self, arg_group=None):
-        # If the user didn't specify an argument group, create a "PROFILING" group
-        if not arg_group:
-            arg_group = self.add_argument_group("PROFILING FLAGS")
-
-        arg_group.add_argument(
-            "-timeit",
-            action=StartProfilingTimer,
-            help="If this flag is present, the program will report its total runtime once it has finished running."
         )
 
 

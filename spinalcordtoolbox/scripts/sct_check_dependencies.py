@@ -189,7 +189,6 @@ def get_parser():
 
     # Add common arguments
     parser.add_common_args()
-    parser.add_profiling_args()
 
     return parser
 
