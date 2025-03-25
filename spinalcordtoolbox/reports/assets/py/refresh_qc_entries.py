@@ -26,6 +26,7 @@ Note -- This script can be run two ways:
 import json
 from pathlib import Path
 
+
 def main(path_qc):
     path_qc = Path(path_qc)
 
