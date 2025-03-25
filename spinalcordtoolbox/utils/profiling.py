@@ -25,9 +25,9 @@ class Timer:
 
 
 # ArgParse Action class which starts a timer when requested
-class StartProfilingTimer(Action):
+class StartGlobalTimer(Action):
     def __init__(self, option_strings, dest=SUPPRESS, default=SUPPRESS, help=None):
-        super(StartProfilingTimer, self).__init__(
+        super(StartGlobalTimer, self).__init__(
             option_strings=option_strings,
             dest=dest,
             default=default,
