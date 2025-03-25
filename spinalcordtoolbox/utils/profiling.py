@@ -36,10 +36,10 @@ class StartProfilingTimer(Action):
 
     """argparse Action, which will start a timing tracker for us"""
     def __call__(self, *args, **kwargs):
-        begin_timer()
+        begin_global_time()
 
 
-def begin_timer():
+def begin_global_time():
     # Fetch the PROFILING_TIMER from the global space
     global PROFILING_TIMER
     # If it hasn't already been set, start the timer
