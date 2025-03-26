@@ -49,10 +49,15 @@ def test_timeit_by_cli(false_atexit, caplog):
     assert profiling.PROFILING_TIMER is not None
 
     # Wait 1 second to give us some "time" to actually measure
-    time.sleep(1)
+    sleep_time = 1
+    time.sleep(sleep_time)
 
     false_atexit()
 
     # At this time, the last log should be the reported time; confirm this is correct
     most_recent_log = caplog.records[-1]
     assert "PROFILER:" in most_recent_log.message
+
+    # Confirm the reported runtime is ~1 second
+    prog_runtime = float(most_recent_log.message.split("; ")[-1].split(' ')[0])
+    assert prog_runtime == pytest.approx(sleep_time, 0.05)
