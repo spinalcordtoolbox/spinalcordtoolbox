@@ -69,7 +69,7 @@ def get_parser():
         choices=(0, 1, 2))
     optional.add_argument(
         "-o",
-        help='Registered source. Example: `out.nii.gz`',
+        help='Filename to use for the output image (i.e. the transformed image). Example: `out.nii.gz`',
         metavar=Metavar.file)
     optional.add_argument(
         "-x",
