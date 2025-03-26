@@ -16,12 +16,16 @@ def false_atexit(monkeypatch):
     """
     # Define a proxy functions for atexit's registration management, allowing them to be explicitly called
     teardown_fns = []
-    register_proxy = lambda fn: teardown_fns.append(fn)
-    unregister_proxy = lambda fn: teardown_fns.remove(fn)
+
+    def _register_proxy(fn):
+        teardown_fns.append(fn)
+
+    def _unregister_proxy(fn):
+        teardown_fns.remove(fn)
 
     # Monkeypatch it in
-    monkeypatch.setattr(atexit, "register", register_proxy)
-    monkeypatch.setattr(atexit, "unregister", unregister_proxy)
+    monkeypatch.setattr(atexit, "register", _register_proxy)
+    monkeypatch.setattr(atexit, "unregister", _unregister_proxy)
 
     # Return a method which will run each function in the teardown_fn list, simulating the program closing
     def _return_fn():
