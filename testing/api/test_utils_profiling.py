@@ -29,7 +29,7 @@ def false_atexit(monkeypatch):
 
     # Return a method which will run each function in the teardown_fn list, simulating the program closing
     def _return_fn():
-        for i, fn in enumerate(teardown_fns):
+        for fn in teardown_fns:
             fn()
 
     return _return_fn
