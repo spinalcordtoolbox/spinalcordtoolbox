@@ -212,9 +212,9 @@ MODELS = {
         ],
         "description": "Segmentation of spinal cord gray matter on any region and contrast MRI",
         "contrasts": ["any"],
-        "thr": None,  
+        "thr": None,
         "default": False,
-     }, 
+     },
 }
 
 
