@@ -7,6 +7,7 @@
 
 import sys
 from typing import Sequence
+from textwrap import dedent
 
 from spinalcordtoolbox.image import Image, add_suffix
 from spinalcordtoolbox.qmri import flow
@@ -16,47 +17,37 @@ from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 
 def get_parser():
     parser = SCTArgumentParser(
-        description=("""\
-Compute velocity from the MRI phase image for velocity encoding (VENC) sequences.
-More details in: https://mriquestions.com/what-is-venc.html
+        description=(dedent(
+            """
+            Compute velocity from the MRI phase image for velocity encoding (VENC) sequences.
+            More details in: https://mriquestions.com/what-is-venc.html
 
-Further features are planned for this script. Please refer to this issue for more info:
-  - https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4298
-        """)
+            Further features are planned for this script. Please refer to this issue for more info:
+              - https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4298
+            """
+        ))
     )
 
-    mandatoryArguments = parser.add_argument_group("MANDATORY ARGUMENTS")
-    mandatoryArguments.add_argument(
+    mandatory = parser.mandatory_arggroup
+    mandatory.add_argument(
         "-i",
-        required=True,
         help="4D phase image. The 4th dimension should be the velocity encoding (VENC) in cm/s.",
         metavar=Metavar.file,
     )
-    mandatoryArguments.add_argument(
+    mandatory.add_argument(
         "-venc",
-        required=True,
         help="Maximum velocity encoding (VENC) in cm/s.",
         metavar=Metavar.float,
     )
 
-    optional = parser.add_argument_group('OPTIONAL ARGUMENTS')
+    optional = parser.optional_arggroup
     optional.add_argument(
         '-o',
         metavar=Metavar.file,
-        help='Output filename. Example: velocity.nii.gz')
-    optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit")
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
+        help='Output filename. Example: `velocity.nii.gz`')
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
 
     return parser
 

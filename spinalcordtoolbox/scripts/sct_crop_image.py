@@ -45,20 +45,14 @@ def get_parser():
         """),  # noqa: E501 (line too long)
     )
 
-    mandatoryArguments = parser.add_argument_group("MANDATORY ARGUMENTS")
-    mandatoryArguments.add_argument(
+    mandatory = parser.mandatory_arggroup
+    mandatory.add_argument(
         '-i',
-        required=True,
-        help="Input image. Example: t2.nii.gz",
+        help="Input image. Example: `t2.nii.gz`",
         metavar=Metavar.file,
     )
 
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
-    optional.add_argument(
-        '-h',
-        '--help',
-        action='help',
-        help="Show this help message and exit")
+    optional = parser.optional_arggroup
     optional.add_argument(
         '-o',
         help="Output image. By default, the suffix '_crop' will be added to the input image.",
@@ -139,20 +133,14 @@ def get_parser():
     optional.add_argument(
         '-b',
         type=int,
-        default=None,
         help="If this flag is declared, the image will not be cropped (i.e. the dimension will not change). Instead, "
              "voxels outside the bounding box will be set to the value specified by this flag. For example, to have "
              "zeros outside the bounding box, use: '-b 0'",
         metavar=Metavar.int,
     )
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
 
     return parser
 

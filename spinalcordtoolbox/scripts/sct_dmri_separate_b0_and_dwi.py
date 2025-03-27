@@ -37,27 +37,19 @@ def get_parser():
                     "(_b0 and _dwi) appended to the input file name."
     )
 
-    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         '-i',
         metavar=Metavar.file,
-        required=True,
         help="Diffusion data. Example: `dmri.nii.gz`"
     )
     mandatory.add_argument(
         '-bvec',
         metavar=Metavar.file,
-        required=True,
         help="Bvecs file. Example: `bvecs.txt`"
     )
 
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
-    optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit."
-    )
+    optional = parser.optional_arggroup
     optional.add_argument(
         '-a',
         type=int,
@@ -82,22 +74,13 @@ def get_parser():
         metavar=Metavar.folder,
         action=ActionCreateFolder,
         default='.',
-        help='Output folder. Example: `dmri_separate_results`',
+        help='Output folder.',
     )
-    optional.add_argument(
-        "-r",
-        choices=('0', '1'),
-        default=param_default.remove_temp_files,
-        help="Remove temporary files. 0 = no, 1 = yes"
-    )
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
+    parser.add_tempfile_args()
+
     return parser
 
 
