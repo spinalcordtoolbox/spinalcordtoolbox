@@ -25,26 +25,19 @@ def get_parser():
                     "segmentation of the spinal cord and intramedullary multiple sclerosis lesions with convolutional "
                     "neural networks. Neuroimage. 2019 Jan 1;184:901-915."
     )
-    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         "-i",
-        required=True,
         metavar=Metavar.file,
         help='Input image. Example: `t1.nii.gz`',
     )
     mandatory.add_argument(
         "-c",
-        required=True,
         help="Type of image contrast.",
         choices=('t1', 't2', 't2s', 'dwi'),
     )
 
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
-    optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="show this help message and exit")
+    optional = parser.optional_arggroup
     optional.add_argument(
         "-centerline",
         help=textwrap.dedent("""
@@ -68,8 +61,7 @@ def get_parser():
              "binarization (i.e. soft segmentation output). The default threshold is specific to each contrast and was "
              "estimated using an optimization algorithm. More details at: "
              "https://github.com/sct-pipeline/deepseg-threshold.",
-        metavar=Metavar.float,
-        default=None)
+        metavar=Metavar.float)
     optional.add_argument(
         "-brain",
         type=int,
@@ -84,7 +76,7 @@ def get_parser():
     optional.add_argument(
         "-ofolder",
         metavar=Metavar.str,
-        help='Output folder. Example: `My_Output_Folder`',
+        help='Output folder.',
         action=ActionCreateFolder,
         default=os.getcwd())
     optional.add_argument(
@@ -92,24 +84,9 @@ def get_parser():
         metavar=Metavar.file,
         help='Output filename. Example: `spinal_seg.nii.gz`'),
     optional.add_argument(
-        '-r',
-        type=int,
-        help="Remove temporary files.",
-        choices=(0, 1),
-        default=1)
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
-    optional.add_argument(
         '-qc',
         metavar=Metavar.str,
-        help='The path where the quality control generated content will be saved',
-        default=None)
+        help='The path where the quality control generated content will be saved')
     optional.add_argument(
         '-qc-dataset',
         metavar=Metavar.str,
@@ -118,6 +95,10 @@ def get_parser():
         '-qc-subject',
         metavar=Metavar.str,
         help='If provided, this string will be mentioned in the QC report as the subject the process was run on',)
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
+    parser.add_tempfile_args()
 
     return parser
 

@@ -32,29 +32,27 @@ def get_parser():
         description='Apply transformations. This function is a wrapper for antsApplyTransforms (ANTs).'
     )
 
-    mandatoryArguments = parser.add_argument_group("MANDATORY ARGUMENTS")
-    mandatoryArguments.add_argument(
+    mandatory = parser.mandatory_arggroup
+    mandatory.add_argument(
         "-i",
-        required=True,
-        help='Input image. Example: t2.nii.gz',
+        help='Input image. Example: `t2.nii.gz`',
         metavar=Metavar.file,
     )
-    mandatoryArguments.add_argument(
+    mandatory.add_argument(
         "-d",
-        required=True,
-        help='Destination image. Example: out.nii.gz',
+        help='Destination image. For warping input images, the destination image defines the spacing, origin, size, '
+             'and direction of the output warped image. Example: `dest.nii.gz`',
         metavar=Metavar.file,
     )
-    mandatoryArguments.add_argument(
+    mandatory.add_argument(
         "-w",
         nargs='+',
-        required=True,
         help='Transformation(s), which can be warping fields (nifti image) or affine transformation matrix (text '
              'file). Separate with space. Example: `warp1.nii.gz warp2.nii.gz`',
         metavar=Metavar.file,
     )
 
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
+    optional = parser.optional_arggroup
     optional.add_argument(
         "-winv",
         help='Affine transformation(s) listed in flag -w which should be inverted before being used. Note that this '
@@ -64,21 +62,14 @@ def get_parser():
         metavar=Metavar.file,
         default=[])
     optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit")
-    optional.add_argument(
         "-crop",
         help="Crop Reference. 0: no reference, 1: sets background to 0, 2: use normal background.",
-        required=False,
         type=int,
         default=0,
         choices=(0, 1, 2))
     optional.add_argument(
         "-o",
-        help='Registered source. Example: dest.nii.gz',
-        required=False,
+        help='Filename to use for the output image (i.e. the transformed image). Example: `out.nii.gz`',
         metavar=Metavar.file)
     optional.add_argument(
         "-x",
@@ -87,24 +78,12 @@ def get_parser():
 
             Note: The `label` method is a special interpolation method designed for single-voxel labels (e.g. disc labels used as registration landmarks, compression labels, etc.). This method is necessary because classical interpolation may corrupt the values of single-voxel labels, or cause them to disappear entirely. The function works by dilating each label, applying the transformation using nearest neighbour interpolation, then extracting the center-of-mass of each transformed 'blob' to get a single-voxel output label. Because the output is a single-voxel label, the `-x label` method is not appropriate for multi-voxel labeled segmentations (such as spinal cord or lesion masks).
         """),  # noqa: E501 (line too long)
-        required=False,
         default='spline',
         choices=('nn', 'linear', 'spline', 'label'))
-    optional.add_argument(
-        "-r",
-        help="""Remove temporary files.""",
-        required=False,
-        type=int,
-        default=1,
-        choices=(0, 1))
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
+    parser.add_tempfile_args()
 
     return parser
 

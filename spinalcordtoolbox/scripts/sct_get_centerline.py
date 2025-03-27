@@ -33,26 +33,14 @@ def get_parser():
         )
     )
 
-    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         '-i',
         metavar=Metavar.file,
-        required=True,
         help="Input image. Example: `t1.nii.gz`"
     )
 
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
-    optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit."
-    )
-    optional.add_argument(
-        "-c",
-        choices=['t1', 't2', 't2s', 'dwi'],
-        help="Type of image contrast. Only with method=optic."
-    )
+    optional = parser.optional_arggroup
     optional.add_argument(
         "-method",
         choices=['optic', 'viewer', 'fitseg'],
@@ -66,6 +54,11 @@ def get_parser():
         """),  # noqa: E501 (line too long)
     )
     optional.add_argument(
+        "-c",
+        choices=['t1', 't2', 't2s', 'dwi'],
+        help="Type of image contrast. Only relevant with `-method optic`."
+    )
+    optional.add_argument(
         "-centerline-algo",
         choices=['polyfit', 'bspline', 'linear', 'nurbs'],
         default='bspline',
@@ -76,7 +69,7 @@ def get_parser():
         metavar=Metavar.int,
         type=int,
         default=30,
-        help="Degree of smoothing for centerline fitting. Only for `-centerline-algo {bspline, linear}`."
+        help="Degree of smoothing for centerline fitting. Only relevant with `-centerline-algo {bspline, linear}`."
     )
     optional.add_argument(
         "-centerline-soft",
@@ -119,23 +112,6 @@ def get_parser():
         help="Gap in mm between manually selected points. Only with method=viewer."
     )
     optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode"
-    )
-    optional.add_argument(
-        '-r',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1],
-        default=1,
-        help="Whether to remove temporary files. 0 = no, 1 = yes"
-    )
-    optional.add_argument(
         "-qc",
         metavar=Metavar.folder,
         action=ActionCreateFolder,
@@ -151,6 +127,11 @@ def get_parser():
         metavar=Metavar.str,
         help="If provided, this string will be mentioned in the QC report as the subject the process was run on."
     )
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
+    parser.add_tempfile_args()
+
     return parser
 
 

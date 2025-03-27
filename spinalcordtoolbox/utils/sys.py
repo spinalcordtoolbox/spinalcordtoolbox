@@ -11,9 +11,7 @@ import os
 import shutil
 import logging
 import subprocess
-import time
 import shlex
-import atexit
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -24,6 +22,7 @@ import tqdm
 
 # Expose Tensorflow's LazyLoader class in `utils.sys` namespace
 from contrib.tensorflow.lazy_loader import LazyLoader  # noqa
+from spinalcordtoolbox.utils.profiling import begin_global_timer
 
 logger = logging.getLogger(__name__)
 
@@ -185,7 +184,7 @@ def init_sct():
 
     # Enable timer, if requested
     if os.environ.get("SCT_TIMER", None) is not None:
-        add_elapsed_time_counter()
+        begin_global_timer()
 
     # Display SCT version
     logger.info('\n--\nSpinal Cord Toolbox ({})\n'.format(__version__))
@@ -197,17 +196,6 @@ def init_sct():
         arguments = ' '.join(sys.argv[1:])
         logger.info(f"{script} {arguments}\n"
                     f"--\n")
-
-
-def add_elapsed_time_counter():
-    class Timer():
-        def __init__(self):
-            self._t0 = time.time()
-
-        def atexit(self):
-            print("Elapsed time: %.3f seconds" % (time.time() - self._t0))
-    t = Timer()
-    atexit.register(t.atexit)
 
 
 def send_email(addr_to, addr_from, subject, message='', passwd=None, filename=None, html=False, smtp_host=None, smtp_port=None, login=None):

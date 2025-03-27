@@ -175,32 +175,24 @@ def get_parser():
         )
     )
 
-    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         '-i',
         metavar=Metavar.file,
-        required=True,
-        help="Input image. Example: ti.nii.gz"
+        help="Input image. Example: `ti.nii.gz`"
     )
     mandatory.add_argument(
         '-c',
         choices=['t1', 't2', 't2s', 'dwi'],
-        required=True,
         help="Type of image contrast. If your contrast is not in the available options (t1, t2, t2s, dwi), use "
              "t1 (cord bright / CSF dark) or t2 (cord dark / CSF bright)"
     )
 
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
-    optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit."
-    )
+    optional = parser.optional_arggroup
     optional.add_argument(
         '-o',
         metavar=Metavar.file,
-        help='Output filename. Example: spinal_seg.nii.gz '
+        help='Output filename. Example: `spinal_seg.nii.gz`'
         )
     optional.add_argument(
         '-ofolder',
@@ -219,23 +211,6 @@ def get_parser():
         metavar=Metavar.int,
         type=int,
         help="Up limit of the propagation. Default is the highest slice of the image."
-    )
-    optional.add_argument(
-        '-r',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1],
-        default=1,
-        help="Whether to remove temporary files. 0 = no, 1 = yes"
-    )
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode"
     )
     optional.add_argument(
         '-mesh',
@@ -393,6 +368,10 @@ def get_parser():
              "specifically, the algorithm checks if the segmentation is consistent with the centerline provided by "
              "isct_propseg."
     )
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
+    parser.add_tempfile_args()
 
     return parser
 
