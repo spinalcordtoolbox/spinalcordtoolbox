@@ -18,7 +18,6 @@ from functools import cached_property, partial
 
 from .sys import check_exe, printv, removesuffix, ANSIColors16
 from .fs import relpath_or_abspath
-from .profiling import StartGlobalTimer
 
 logger = logging.getLogger(__name__)
 
@@ -297,13 +296,6 @@ class SCTArgumentParser(argparse.ArgumentParser):
             default=1,
             # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
             help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode."
-        )
-
-        # Add profiling-related arguments
-        arg_group.add_argument(
-            "-timeit",
-            action=StartGlobalTimer,
-            help="If this flag is present, the program will report its total runtime once it has finished running."
         )
 
         # Return the arg_group to allow for chained operations

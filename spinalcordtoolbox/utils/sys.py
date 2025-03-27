@@ -182,9 +182,8 @@ def init_sct():
     hdlr.setFormatter(fmt)
     logging.root.addHandler(hdlr)
 
-    # Enable timer, if requested
-    if os.environ.get("SCT_TIMER", None) is not None:
-        begin_global_timer()
+    # Enable timing
+    begin_global_timer()
 
     # Display SCT version
     logger.info('\n--\nSpinal Cord Toolbox ({})\n'.format(__version__))
