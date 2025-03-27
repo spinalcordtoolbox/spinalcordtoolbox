@@ -37,7 +37,7 @@ def false_atexit(monkeypatch):
 
 def test_timeit_by_cli(false_atexit, caplog):
     """Confirm our profiling flags enable profiling correctly"""
-    # Capture all log input explicitly, so that we can test that the total runtime was run correctrly
+    # Capture all log input explicitly, so that we can test that the total runtime was run correctly
     caplog.set_level(logging.INFO)
 
     # Initiate a dummy argument parser
