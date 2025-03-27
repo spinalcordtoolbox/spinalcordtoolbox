@@ -146,27 +146,19 @@ def get_parser():
         description="This function warps the template and all atlases to a destination image."
     )
 
-    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         '-d',
         metavar=Metavar.file,
-        required=True,
         help="Destination image the template will be warped to. Example: `dwi_mean.nii.gz`"
     )
     mandatory.add_argument(
         '-w',
         metavar=Metavar.file,
-        required=True,
-        help="Warping field. `Example: warp_template2dmri.nii.gz`"
+        help="Warping field. `Example: `warp_template2dmri.nii.gz`"
     )
 
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
-    optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit."
-    )
+    optional = parser.optional_arggroup
     optional.add_argument(
         '-a',
         metavar=Metavar.int,
@@ -214,15 +206,6 @@ def get_parser():
         help="If provided, this string will be mentioned in the QC report as the subject the process was run on."
     )
     optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode"
-    )
-    optional.add_argument(
         '-histo',
         metavar=Metavar.int,
         type=int,
@@ -230,6 +213,9 @@ def get_parser():
         default=param_default.warp_histo,
         help="Warp histology atlas from Duval et al. Neuroimage 2019 (https://pubmed.ncbi.nlm.nih.gov/30326296/)."
     )
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
 
     return parser
 

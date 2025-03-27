@@ -79,21 +79,14 @@ def get_parser():
             "s`ct_extract_metric -i mtr.nii.gz -f "
             "my_mask.nii.gz -z 1:4 -method wa`")
     )
-    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         '-i',
         metavar=Metavar.file,
-        required=True,
         help="Image file to extract metrics from. Example: `FA.nii.gz`"
     )
 
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
-    optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit."
-    )
+    optional = parser.optional_arggroup
     optional.add_argument(
         '-f',
         metavar=Metavar.folder,
@@ -185,8 +178,8 @@ def get_parser():
         '-vert',
         metavar=Metavar.str,
         default=param_default.vertebral_levels,
-        help="Vertebral levels to compute the metrics across. Example: 2:9 for C2 to T2. If you also specify a range of "
-             "slices with flag `-z`, the intersection between the specified slices and vertebral levels will be "
+        help="Vertebral levels to compute the metrics across. Example: `2:9` for C2 to T2. If you also specify a range "
+             "of slices with flag `-z`, the intersection between the specified slices and vertebral levels will be "
              "considered."
     )
     optional.add_argument(
@@ -209,15 +202,6 @@ def get_parser():
 
             Please note that this flag needs to be used with the -vert option.
         """),
-    )
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode"
     )
 
     advanced = parser.add_argument_group("FOR ADVANCED USERS")
@@ -270,6 +254,9 @@ def get_parser():
         default='0',
         help='Whether to discard voxels with negative value when computing metrics statistics. 0 = no, 1 = yes'
     )
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
 
     return parser
 

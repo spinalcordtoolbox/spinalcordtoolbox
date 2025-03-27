@@ -29,73 +29,50 @@ def get_parser():
                     'called fnameInput_feature_distance_mean.nii.gz, is output.'
     )
 
-    mandatoryArguments = parser.add_argument_group("MANDATORY ARGUMENTS")
-    mandatoryArguments.add_argument(
+    mandatory = parser.mandatory_arggroup
+    mandatory.add_argument(
         "-i",
-        required=True,
-        help='Image to analyze. Example: t2.nii.gz',
+        help='Image to analyze. Example: `t2.nii.gz`',
         metavar=Metavar.file,
     )
-    mandatoryArguments.add_argument(
+    mandatory.add_argument(
         "-m",
-        required=True,
         metavar=Metavar.file,
-        help='Image mask Example: t2_seg.nii.gz',
+        help='Image mask. Example: `t2_seg.nii.gz`',
     )
 
-    optional = parser.add_argument_group("OPTIONALS ARGUMENTS")
-    optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit")
+    optional = parser.optional_arggroup
     optional.add_argument(
         "-feature",
         metavar=Metavar.str,
         help='List of GLCM texture features (separate arguments with `,`).',
-        required=False,
         default=ParamGLCM().feature)
     optional.add_argument(
         "-distance",
         metavar=Metavar.int,
-        help='Distance offset for GLCM computation, in pixel (suggested distance values between 1 and 5). Example: 1',
-        required=False,
+        help='Distance offset for GLCM computation, in pixel (suggested distance values between 1 and 5).',
         default=ParamGLCM().distance)
     optional.add_argument(
         "-angle",
         metavar=Metavar.list,
         help='List of angles for GLCM computation, separate arguments with `,`, in degrees (suggested distance values '
-             'between 0 and 179). Example: `0,90`',
-        required=False,
+             'between 0 and 179).',
         default=ParamGLCM().angle)
     optional.add_argument(
         "-dim",
         help="Compute the texture on the axial (ax), sagittal (sag) or coronal (cor) slices.",
-        required=False,
         choices=('ax', 'sag', 'cor'),
         default=Param().dim)
     optional.add_argument(
         "-ofolder",
         metavar=Metavar.folder,
-        help='Output folder. Example: /my_texture/',
+        help='Output folder.',
         action=ActionCreateFolder,
-        required=False,
         default=Param().path_results)
-    optional.add_argument(
-        "-r",
-        help="Remove temporary files.",
-        required=False,
-        type=int,
-        choices=(0, 1),
-        default=int(Param().rm_tmp))
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
+    parser.add_tempfile_args()
 
     return parser
 

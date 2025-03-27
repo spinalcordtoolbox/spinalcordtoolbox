@@ -112,22 +112,20 @@ def get_parser():
                     'A->B and B->C to yield A->C, then you have to input warping fields in this order: A->B B->C.',
     )
 
-    mandatoryArguments = parser.add_argument_group("MANDATORY ARGUMENTS")
-    mandatoryArguments.add_argument(
+    mandatory = parser.mandatory_arggroup
+    mandatory.add_argument(
         "-d",
-        required=True,
-        help='Destination image. (e.g. "mt.nii.gz")',
+        help='Destination image. Example: `mt.nii.gz`',
         metavar=Metavar.file,
     )
-    mandatoryArguments.add_argument(
+    mandatory.add_argument(
         "-w",
-        required=True,
         help='Transformation(s), which can be warping fields (nifti image) or affine transformation matrix (text '
              'file). Separate with space. Example: `warp1.nii.gz warp2.nii.gz`',
         nargs='+',
         metavar=Metavar.file)
 
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
+    optional = parser.optional_arggroup
     optional.add_argument(
         "-winv",
         help='Affine transformation(s) listed in flag `-w` which should be inverted before being used. Note that this '
@@ -137,22 +135,12 @@ def get_parser():
         metavar=Metavar.file,
         default=[])
     optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="show this help message and exit")
-    optional.add_argument(
         "-o",
-        help='Name of output warping field (e.g. "warp_template2mt.nii.gz")',
+        help='Name of output warping field. Example: `warp_template2mt.nii.gz`',
         metavar=Metavar.str)
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
 
     return parser
 
