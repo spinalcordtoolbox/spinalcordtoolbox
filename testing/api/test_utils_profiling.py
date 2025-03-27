@@ -4,9 +4,16 @@ import atexit
 import logging
 import time
 
+from collections import namedtuple
+from typing import Callable
+
 import pytest
 
 from spinalcordtoolbox.utils import profiling, shell
+
+
+# Named tuple to keep tabs on function arguments for us, in a `atexit` like way
+fn_tuple = namedtuple('fn_tuple', ['fn', 'args', 'kwargs'])
 
 
 @pytest.fixture()
@@ -15,13 +22,13 @@ def false_atexit(monkeypatch):
     Proxy's a program "ending" in the eyes of atexit, allowing the user to "end" the program at will
     """
     # Define a proxy functions for atexit's registration management, allowing them to be explicitly called
-    teardown_fns = []
+    teardown_fns: dict[Callable, fn_tuple] = dict()
 
-    def _register_proxy(fn):
-        teardown_fns.append(fn)
+    def _register_proxy(fn, *args, **kwargs):
+        teardown_fns[fn] = fn_tuple(fn, args, kwargs)
 
     def _unregister_proxy(fn):
-        teardown_fns.remove(fn)
+        teardown_fns.pop(fn)
 
     # Monkeypatch it in
     monkeypatch.setattr(atexit, "register", _register_proxy)
@@ -29,8 +36,8 @@ def false_atexit(monkeypatch):
 
     # Return a method which will run each function in the teardown_fn list, simulating the program closing
     def _return_fn():
-        for fn in teardown_fns:
-            fn()
+        for val in teardown_fns.values():
+            val.fn(*val.args, **val.kwargs)
 
     return _return_fn
 
