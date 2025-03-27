@@ -21,7 +21,7 @@ class Timer:
 
     def stop(self):
         time_delta = time.time() - self._t0
-        logging.warning(f"PROFILER: Elapsed time: {time_delta:.3f} seconds.")
+        logging.warning(f"PROFILER: Elapsed time; {time_delta:.3f} seconds.")
 
 
 # ArgParse Action class which starts a timer when requested
