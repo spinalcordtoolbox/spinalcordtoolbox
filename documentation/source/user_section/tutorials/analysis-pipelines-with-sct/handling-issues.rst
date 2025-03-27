@@ -51,7 +51,7 @@ Once your setup is ready, you can run the manual correction script.
 .. code:: sh
 
     # Run the manual correction script
-    $sct_python manual-correction/manual_correction.py -config qc_fail.yml -path-img output/data_processed/ -path-label output/data_processed -path-out data/derivatives/labels
+    $sct_python manual-correction/manual_correction.py -config qc_fail.yml -path-img output/data_processed/ -path-out data/derivatives/labels
     # Check the files output to the ‘derivatives/’ folder
     tree data/derivatives
 
