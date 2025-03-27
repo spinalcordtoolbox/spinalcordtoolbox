@@ -14,7 +14,7 @@ SCT provides a downloadable script called ``manual_correction.py`` that can be u
 Setting up the environment
 --------------------------
 
-As a prerequisite, make sure you have an image editor installed (in this case: FSLeyes):
+As a prerequisite, make sure you have an image viewer installed (in this case: FSLeyes):
 
 .. code:: sh
 
@@ -41,7 +41,7 @@ Next, download the manual correction script and check its options:
 
 .. note::
 
-    By typing ``$SCT_DIR/python/envs/venv_sct/bin/python`` instead of just ``python``, we can directly access the version of Python that lives inside the SCT installation. This is useful because the script depends on packages that are installed with SCT, but that may not be installed in your default Python environment.
+    By typing ``$SCT_DIR/python/envs/venv_sct/bin/python`` instead of just ``python``, we can directly access the version of Python that lives inside the SCT installation. This is useful because the ``manual-correction.py`` script depends on packages that are installed with SCT, but that may not be installed in your default Python environment.
 
 Running the correction script
 -----------------------------
