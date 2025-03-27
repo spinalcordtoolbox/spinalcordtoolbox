@@ -59,14 +59,7 @@ def test_timeit(false_atexit, caplog):
 
     # At this time, the last log should be the reported time; confirm this is correct
     most_recent_log = caplog.records[-1]
-    expected_text = "Total runtime;"
-    if expected_text not in most_recent_log.message:
-        last_5_logs = caplog.records[-5:]
-        log_buffer_str = '='*80
-        recent_log_msgs = (log_buffer_str + '\n').join([x.message for x in last_5_logs])
-        pytest.fail(
-            f"SCT's final log did not have '{expected_text}'. Last {min(5, len(caplog.records))} logs were as follows:"
-            f"\n\t{recent_log_msgs}\n{log_buffer_str}")
+    assert "Total runtime;" in most_recent_log.message
 
     # Confirm the reported runtime is ~1 second
     prog_runtime = float(most_recent_log.message.split("; ")[-1].split(' ')[0])
