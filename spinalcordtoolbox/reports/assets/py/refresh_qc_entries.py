@@ -25,6 +25,7 @@ Note -- This script can be run two ways:
 
 import json
 from pathlib import Path
+import uuid
 
 
 def main(path_qc):
@@ -40,8 +41,12 @@ def main(path_qc):
         with path.open() as file:
             json_data.append(json.load(file))
 
+    report_uuid = uuid.uuid4()
     with open(path_datasets_js, mode='w', encoding="utf-8") as file_datasets_js:
-        file_datasets_js.write(f"window.SCT_QC_DATASETS = {json.dumps(json_data)};")
+        file_datasets_js.write(f"""
+window.SCT_QC_UUID = '{report_uuid}';
+window.SCT_QC_DATASETS = {json.dumps(json_data)};
+""")
 
     return path_index_html
 
