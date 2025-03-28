@@ -9,7 +9,7 @@ If you spot any issues during QC, e.g., error during segmentation, you can corre
 Manual corrections
 ==================
 
-SCT provides a downloadable script called ``manual_correction.py`` that can be used to conveniently correct any segmentations with issues (i.e. the subjects that were marked with "Fail" during :ref:`the previous QC step <batch-qc_report>`).
+SCT provides a downloadable script called ``manual_correction.py`` that can be used to conveniently correct any problematic images (i.e. the subjects that were marked with "Fail" during :ref:`the previous QC step <batch-qc_report>`).
 
 Setting up the environment
 --------------------------

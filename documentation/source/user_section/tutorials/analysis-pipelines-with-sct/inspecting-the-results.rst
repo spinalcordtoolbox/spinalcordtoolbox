@@ -33,7 +33,7 @@ Because the ``-qc`` flag was used for each of the SCT commands within the ``proc
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/batch-processing-of-subjects/qc.png
    :align: center
 
-When processing batches of subjects, QC reports are especially useful as they have several features to help quickly assess batches of subjects all at once:
+When processing multiple subjects (e.g., using :ref:`sct_run_batch`), QC reports are especially useful as they have several features to help quickly assess multiple images all at once:
 
 - The columns of the QC report can be sorted. For example, you can sort by "Function" to review the :ref:`sct_deepseg` outputs for all of the subjects together, then all of the :ref:`sct_label_vertebrae` outputs, and so on.
 - You can also use keyboard shortcuts to quickly skim through subjects. The arrow keys can be used to switch subjects and toggle the overlay, while the 'F' key can be used to mark subjects as "Fail", "Artifact", or "Pass".
