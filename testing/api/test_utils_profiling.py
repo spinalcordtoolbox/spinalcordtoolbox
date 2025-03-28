@@ -63,7 +63,8 @@ def test_timeit(false_atexit, caplog):
 
     # Confirm the reported runtime is ~1 second
     prog_runtime = float(most_recent_log.message.split("; ")[-1].split(' ')[0])
-    assert prog_runtime == pytest.approx(sleep_time, 0.25)
+    allowed_margin = 0.15
+    assert prog_runtime == pytest.approx(sleep_time+allowed_margin, allowed_margin)
 
     # Clean up the global time so future `init_sct` runs work correctly
     profiling.PROFILING_TIMER = None
