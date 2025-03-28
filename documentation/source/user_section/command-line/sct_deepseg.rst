@@ -72,7 +72,7 @@ You can replace "``graymatter``" with any of the task names in the table below t
    :align: center
    :widths: 25 25 25
 
-   * - |graymatter| ``graymatter``
+   * - |graymatter_model| ``graymatter``
      - |gm_sc_7t_t2star| ``gm_sc_7t_t2star``
      - |gm_wm_exvivo_t2| ``gm_wm_exvivo_t2``
    * - |gm_wm_mouse_t1| ``gm_wm_mouse_t1``
