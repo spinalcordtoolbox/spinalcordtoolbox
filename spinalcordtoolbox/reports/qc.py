@@ -225,7 +225,7 @@ class QcImage:
                 * float(self.aspect_img))
         ]
 
-        fig = mpl_plt.figure()
+        fig = mpl_figure.Figure()
         fig.set_size_inches(size_fig[0], size_fig[1], forward=True)
         mpl_backend_agg.FigureCanvasAgg(fig)
         kwargs = {}
@@ -244,7 +244,7 @@ class QcImage:
         logger.info(str(imgs_to_generate['path_background_img']))
         self._save(fig, str(imgs_to_generate['path_background_img']), dpi=self.dpi)
 
-        fig = mpl_plt.figure()
+        fig = mpl_figure.Figure()
         fig.set_size_inches(size_fig[0], size_fig[1], forward=True)
         mpl_backend_agg.FigureCanvasAgg(fig)
         for i, action in enumerate(self.action_list):
