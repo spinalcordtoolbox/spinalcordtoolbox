@@ -6,12 +6,10 @@ import pytest
 
 from spinalcordtoolbox.qmri import mt
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.utils.sys import init_sct, set_loglevel
 
 
-# Set logger to "DEBUG"
-init_sct()
-set_loglevel(verbose=2, caller_module_name=__name__)
+# Enforce that all tests in this suite use verbose logging
+pytestmark = pytest.mark.usefixtures("verbose_logging")
 
 
 def make_sct_image(data):
