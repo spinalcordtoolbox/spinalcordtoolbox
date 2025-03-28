@@ -156,7 +156,7 @@ def test_data_integrity(request):
     request.addfinalizer(lambda: check_testing_data_integrity(files_checksums))
 
 
-@pytest.fixture(scope="class")
+@pytest.fixture(scope="module")
 def verbose_logging():
     """
     Temporarily sets the logging state to be verbose.
