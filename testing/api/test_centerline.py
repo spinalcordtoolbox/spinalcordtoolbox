@@ -10,11 +10,9 @@ import nibabel as nib
 from spinalcordtoolbox.centerline.curve_fitting import bspline
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline, find_and_sort_coord
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.utils.sys import init_sct, sct_test_path, set_loglevel
+from spinalcordtoolbox.utils.sys import sct_test_path
 
-# Set logger to "DEBUG"
-init_sct()
-set_loglevel(verbose=2, caller_module_name=__name__)
+
 # Separate setting for get_centerline. Set to 2 to save images ("DEBUG"), 0 otherwise ("INFO")
 VERBOSE = 0
 
@@ -147,82 +145,78 @@ param_optic = [
 ]
 
 
-@pytest.mark.parametrize('img_ctl,expected', im_ctl_find_and_sort_coord)
-def test_find_and_sort_coord(img_ctl, expected):
-    img = img_ctl[0].copy()
-    centermass = find_and_sort_coord(img)
-    assert centermass.shape == (3, 9)
-    assert np.linalg.norm(centermass - img_ctl[2]) == 0
+@pytest.mark.usefixtures("verbose_logging")
+class TestCenterline:
+    @pytest.mark.parametrize('img_ctl,expected', im_ctl_find_and_sort_coord)
+    def test_find_and_sort_coord(self, img_ctl, expected):
+        img = img_ctl[0].copy()
+        centermass = find_and_sort_coord(img)
+        assert centermass.shape == (3, 9)
+        assert np.linalg.norm(centermass - img_ctl[2]) == 0
 
+    @pytest.mark.parametrize('img_ctl,expected', im_ctl_zeroslice)
+    def test_get_centerline_polyfit_minmax(self, img_ctl, expected):
+        """Test centerline fitting with minmax=True"""
+        img_sub = img_ctl[1].copy()
+        img_out, arr_out, _, _ = get_centerline(
+            img_sub, ParamCenterline(algo_fitting='polyfit', degree=3, minmax=True), verbose=VERBOSE)
+        # Assess output size
+        assert arr_out.shape == expected
 
-@pytest.mark.parametrize('img_ctl,expected', im_ctl_zeroslice)
-def test_get_centerline_polyfit_minmax(img_ctl, expected):
-    """Test centerline fitting with minmax=True"""
-    img_sub = img_ctl[1].copy()
-    img_out, arr_out, _, _ = get_centerline(
-        img_sub, ParamCenterline(algo_fitting='polyfit', degree=3, minmax=True), verbose=VERBOSE)
-    # Assess output size
-    assert arr_out.shape == expected
+    @pytest.mark.parametrize('img_ctl,expected,params', im_centerlines)
+    def test_get_centerline_polyfit(self, img_ctl, expected, params):
+        """Test centerline fitting using polyfit"""
+        if 'exclude_polyfit':
+            return
+        img, img_sub = [img_ctl[0].copy(), img_ctl[1].copy()]
+        img_out, arr_out, arr_deriv_out, fit_results = get_centerline(
+            img_sub, ParamCenterline(algo_fitting='polyfit', minmax=False), verbose=VERBOSE)
+        assert np.median(find_and_sort_coord(img) - find_and_sort_coord(img_out)) == expected['median']
+        assert np.max(np.absolute(np.diff(arr_deriv_out))) < expected['laplacian']
+        # check arr_out only if input orientation is RPI (because the output array is always in RPI)
+        if img.orientation == 'RPI':
+            assert np.linalg.norm(find_and_sort_coord(img) - arr_out) < expected['norm']
 
+    @pytest.mark.parametrize('img_ctl,expected,params', im_centerlines)
+    def test_get_centerline_bspline(self, img_ctl, expected, params):
+        """Test centerline fitting using bspline"""
+        img, img_sub = [img_ctl[0].copy(), img_ctl[1].copy()]
+        img_out, arr_out, arr_deriv_out, fit_results = get_centerline(
+            img_sub, ParamCenterline(algo_fitting='bspline', minmax=False), verbose=VERBOSE)
+        assert np.median(find_and_sort_coord(img) - find_and_sort_coord(img_out)) == expected['median']
+        assert fit_results.rmse < expected['rmse']
+        assert fit_results.laplacian_max < expected['laplacian']
 
-@pytest.mark.parametrize('img_ctl,expected,params', im_centerlines)
-def test_get_centerline_polyfit(img_ctl, expected, params):
-    """Test centerline fitting using polyfit"""
-    if 'exclude_polyfit':
-        return
-    img, img_sub = [img_ctl[0].copy(), img_ctl[1].copy()]
-    img_out, arr_out, arr_deriv_out, fit_results = get_centerline(
-        img_sub, ParamCenterline(algo_fitting='polyfit', minmax=False), verbose=VERBOSE)
-    assert np.median(find_and_sort_coord(img) - find_and_sort_coord(img_out)) == expected['median']
-    assert np.max(np.absolute(np.diff(arr_deriv_out))) < expected['laplacian']
-    # check arr_out only if input orientation is RPI (because the output array is always in RPI)
-    if img.orientation == 'RPI':
-        assert np.linalg.norm(find_and_sort_coord(img) - arr_out) < expected['norm']
+    @pytest.mark.parametrize('img_ctl,expected,params', im_centerlines)
+    def test_get_centerline_linear(self, img_ctl, expected, params):
+        """Test centerline fitting using linear interpolation"""
+        img, img_sub = [img_ctl[0].copy(), img_ctl[1].copy()]
+        img_out, arr_out, arr_deriv_out, fit_results = get_centerline(
+            img_sub, ParamCenterline(algo_fitting='linear', minmax=False), verbose=VERBOSE)
+        assert np.median(find_and_sort_coord(img) - find_and_sort_coord(img_out)) == expected['median']
+        assert fit_results.laplacian_max < expected['laplacian']
 
+    @pytest.mark.parametrize('img_ctl,expected,params', im_centerlines)
+    def test_get_centerline_nurbs(self, img_ctl, expected, params):
+        """Test centerline fitting using nurbs"""
+        if 'exclude_nurbs':
+            return
+        img, img_sub = [img_ctl[0].copy(), img_ctl[1].copy()]
+        img_out, arr_out, arr_deriv_out, fit_results = get_centerline(
+            img_sub, ParamCenterline(algo_fitting='nurbs', minmax=False), verbose=VERBOSE)
+        assert np.median(find_and_sort_coord(img) - find_and_sort_coord(img_out)) == expected['median']
+        assert fit_results.laplacian_max < expected['laplacian']
 
-@pytest.mark.parametrize('img_ctl,expected,params', im_centerlines)
-def test_get_centerline_bspline(img_ctl, expected, params):
-    """Test centerline fitting using bspline"""
-    img, img_sub = [img_ctl[0].copy(), img_ctl[1].copy()]
-    img_out, arr_out, arr_deriv_out, fit_results = get_centerline(
-        img_sub, ParamCenterline(algo_fitting='bspline', minmax=False), verbose=VERBOSE)
-    assert np.median(find_and_sort_coord(img) - find_and_sort_coord(img_out)) == expected['median']
-    assert fit_results.rmse < expected['rmse']
-    assert fit_results.laplacian_max < expected['laplacian']
-
-
-@pytest.mark.parametrize('img_ctl,expected,params', im_centerlines)
-def test_get_centerline_linear(img_ctl, expected, params):
-    """Test centerline fitting using linear interpolation"""
-    img, img_sub = [img_ctl[0].copy(), img_ctl[1].copy()]
-    img_out, arr_out, arr_deriv_out, fit_results = get_centerline(
-        img_sub, ParamCenterline(algo_fitting='linear', minmax=False), verbose=VERBOSE)
-    assert np.median(find_and_sort_coord(img) - find_and_sort_coord(img_out)) == expected['median']
-    assert fit_results.laplacian_max < expected['laplacian']
-
-
-@pytest.mark.parametrize('img_ctl,expected,params', im_centerlines)
-def test_get_centerline_nurbs(img_ctl, expected, params):
-    """Test centerline fitting using nurbs"""
-    if 'exclude_nurbs':
-        return
-    img, img_sub = [img_ctl[0].copy(), img_ctl[1].copy()]
-    img_out, arr_out, arr_deriv_out, fit_results = get_centerline(
-        img_sub, ParamCenterline(algo_fitting='nurbs', minmax=False), verbose=VERBOSE)
-    assert np.median(find_and_sort_coord(img) - find_and_sort_coord(img_out)) == expected['median']
-    assert fit_results.laplacian_max < expected['laplacian']
-
-
-@pytest.mark.parametrize('params', param_optic)
-def test_get_centerline_optic(params):
-    """Test centerline extraction with optic"""
-    # TODO: add assert on the output .csv files for more precision
-    im = Image(params['fname_image'])
-    # Add non-numerical values at the top corner of the image for testing purpose
-    im.change_type('float32')
-    im.data[0, 0, 0] = np.nan
-    im.data[1, 0, 0] = np.inf
-    im_centerline, arr_out, _, _ = get_centerline(
-        im, ParamCenterline(algo_fitting='optic', contrast=params['contrast'], minmax=False), verbose=VERBOSE)
-    # Compare with ground truth centerline
-    assert np.all(im_centerline.data == Image(params['fname_centerline-optic']).data)
+    @pytest.mark.parametrize('params', param_optic)
+    def test_get_centerline_optic(self, params):
+        """Test centerline extraction with optic"""
+        # TODO: add assert on the output .csv files for more precision
+        im = Image(params['fname_image'])
+        # Add non-numerical values at the top corner of the image for testing purpose
+        im.change_type('float32')
+        im.data[0, 0, 0] = np.nan
+        im.data[1, 0, 0] = np.inf
+        im_centerline, arr_out, _, _ = get_centerline(
+            im, ParamCenterline(algo_fitting='optic', contrast=params['contrast'], minmax=False), verbose=VERBOSE)
+        # Compare with ground truth centerline
+        assert np.all(im_centerline.data == Image(params['fname_centerline-optic']).data)
