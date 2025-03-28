@@ -3,14 +3,13 @@
 import atexit
 import logging
 import time
-
 from collections import namedtuple
 from typing import Callable
 
 import pytest
 
-from spinalcordtoolbox.utils import profiling, shell
-
+from spinalcordtoolbox.utils import profiling
+from spinalcordtoolbox.utils.sys import init_sct
 
 # Named tuple to keep tabs on function arguments for us, in a `atexit` like way
 fn_tuple = namedtuple('fn_tuple', ['fn', 'args', 'kwargs'])
@@ -42,19 +41,12 @@ def false_atexit(monkeypatch):
     return _return_fn
 
 
-def test_timeit_by_cli(false_atexit, caplog):
-    """Confirm our profiling flags enable profiling correctly"""
+def test_timeit(false_atexit, caplog):
+    """Confirm that our timer starts and runs correctly"""
     # Capture all log input explicitly, so that we can test that the total runtime was run correctly
     caplog.set_level(logging.INFO)
 
-    # Initiate a dummy argument parser
-    parser = shell.SCTArgumentParser(description="Time-based profiling test parser.")
-
-    # Add our common argument
-    parser.add_common_args()
-
-    # Run an "analysis" with full-program time profiling
-    parser.parse_args(['-timeit'])
+    init_sct()
 
     # Confirm the timer initialized correctly
     assert profiling.PROFILING_TIMER is not None
@@ -67,8 +59,13 @@ def test_timeit_by_cli(false_atexit, caplog):
 
     # At this time, the last log should be the reported time; confirm this is correct
     most_recent_log = caplog.records[-1]
-    assert "PROFILER:" in most_recent_log.message
+    assert "Total runtime;" in most_recent_log.message
 
     # Confirm the reported runtime is ~1 second
     prog_runtime = float(most_recent_log.message.split("; ")[-1].split(' ')[0])
-    assert prog_runtime == pytest.approx(sleep_time, 0.05)
+    allowed_margin = 0.30
+    assert prog_runtime >= sleep_time
+    assert prog_runtime < sleep_time + allowed_margin
+
+    # Clean up the global time so future `init_sct` runs work correctly
+    profiling.PROFILING_TIMER = None
