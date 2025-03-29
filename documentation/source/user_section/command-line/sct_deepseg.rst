@@ -170,6 +170,9 @@ Retired models
 .. |ms_sc_mp2rage| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/ms_sc_mp2rage.png
    :target: deepseg/seg_ms_sc_mp2rage.html
 
+.. |sc_t2star| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/sc_t2star.png
+    :target: deepseg/sc_t2star.html
+
 These models have been replaced by newer, more advanced models. We recommend switching to the model listed in the table below.
 
 If you absolutely require these models, you can downgrade to version of SCT listed in the table below. If you do this, please let us know on the SCT Forum so we can better understand your use-case, and potentially reinstate the model if necessary.
