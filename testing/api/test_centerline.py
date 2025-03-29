@@ -10,11 +10,13 @@ import nibabel as nib
 from spinalcordtoolbox.centerline.curve_fitting import bspline
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline, find_and_sort_coord
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.utils.sys import init_sct, sct_test_path, set_loglevel
+from spinalcordtoolbox.utils.sys import sct_test_path
 
-# Set logger to "DEBUG"
-init_sct()
-set_loglevel(verbose=2, caller_module_name=__name__)
+
+# Enforce that all tests in this suite use verbose logging
+pytestmark = pytest.mark.usefixtures("verbose_logging")
+
+
 # Separate setting for get_centerline. Set to 2 to save images ("DEBUG"), 0 otherwise ("INFO")
 VERBOSE = 0
 
