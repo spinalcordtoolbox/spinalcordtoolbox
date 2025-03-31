@@ -17,9 +17,6 @@ Spinal cord
 .. |sc_epi| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/epi_bold.png
    :target: deepseg/sc_epi.html
 
-.. |sc_t2star| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/sc_t2star.png
-    :target: deepseg/sc_t2star.html
-
 .. |sc_mouse_t1| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/mouse_t1.png
    :target: deepseg/sc_mouse_t1.html
 
@@ -38,8 +35,8 @@ You can replace "``spinalcord``" with any of the task names in the table below t
    * - |spinalcord| ``spinalcord``
      - |sc_lumbar_t2| ``sc_lumbar_t2``
      - |sc_epi| ``sc_epi``
-   * - |sc_t2star| ``sc_t2star``
-     - |sc_mouse_t1| ``sc_mouse_t1``
+   * - |sc_mouse_t1| ``sc_mouse_t1``
+     -
      -
 
 Gray matter
@@ -173,6 +170,9 @@ Retired models
 .. |ms_sc_mp2rage| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/ms_sc_mp2rage.png
    :target: deepseg/seg_ms_sc_mp2rage.html
 
+.. |sc_t2star| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/sc_t2star.png
+    :target: deepseg/sc_t2star.html
+
 These models have been replaced by newer, more advanced models. We recommend switching to the model listed in the table below.
 
 If you absolutely require these models, you can downgrade to version of SCT listed in the table below. If you do this, please let us know on the SCT Forum so we can better understand your use-case, and potentially reinstate the model if necessary.
@@ -181,15 +181,18 @@ If you absolutely require these models, you can downgrade to version of SCT list
    :align: center
    :widths: 33 33 33
 
-   * - Model
-     - Last available
-     - Superseded by
+   * - **Model**
+     - **Last available**
+     - **Superseded by**
    * - |seg_sc_ms_lesion_stir_psir| ``seg_sc_ms_lesion_stir_psir``
      - SCT Version ``6.4``
      - ``lesion_ms`` (contrast-agnostic MS lesion segmentation)
    * - |ms_sc_mp2rage| ``ms_sc_mp2rage``
      - SCT Version ``6.4``
      - ``spinalcord`` (contrast-agnostic SC segmentation)
+   * - |sc_t2star| ``sc_t2star``
+     - SCT Version ``6.5``
+     - ``spinalcord`` (contrast-agnostic SC segmentation) and ``sc_epi`` (for EPI-BOLD fMRI SC segmentation)
 
 .. toctree::
    :hidden:
@@ -198,7 +201,6 @@ If you absolutely require these models, you can downgrade to version of SCT list
    deepseg/spinalcord
    deepseg/seg_ms_sc_mp2rage
    deepseg/sc_epi
-   deepseg/sc_t2star
    deepseg/sc_mouse_t1
    deepseg/sc_lumbar_t2
    deepseg/gm_wm_exvivo_t2
