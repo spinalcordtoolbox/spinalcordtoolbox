@@ -20,7 +20,7 @@ from nibabel import Nifti1Header
 from numpy import zeros
 
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.utils.sys import sct_test_path, __sct_dir__, __data_dir__
+from spinalcordtoolbox.utils.sys import sct_test_path, __sct_dir__, __data_dir__, set_loglevel
 from spinalcordtoolbox.download import install_named_dataset
 from contrib.fslhd import generate_nifti_fields, generate_numpy_fields
 
@@ -154,6 +154,22 @@ def test_data_integrity(request):
             files_checksums[fname] = chksum
 
     request.addfinalizer(lambda: check_testing_data_integrity(files_checksums))
+
+
+@pytest.fixture(scope="module")
+def verbose_logging():
+    """
+    Temporarily sets the logging state to be verbose.
+    Class scoped to allow for tests to be run together w/o repeated calls to the logger
+    """
+    # Make logging verbose
+    set_loglevel(verbose=True, caller_module_name=__name__)
+
+    # Run our tests
+    yield
+
+    # Return the logger to be non-verbose
+    set_loglevel(verbose=False, caller_module_name=__name__)
 
 
 def checksum(fname: os.PathLike) -> str:
