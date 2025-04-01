@@ -69,3 +69,62 @@ def test_timeit(false_atexit, caplog):
 
     # Clean up the global time so future `init_sct` runs work correctly
     profiling.PROFILING_TIMER = None
+
+
+def test_time_profiler(false_atexit, caplog, tmp_path):
+    # Generate a path we want to save the results too
+    out_path = tmp_path / "pytest_time_profiled.txt"
+
+    # For sanity's sake, ensure the file does not already exist yet
+    assert not out_path.exists()
+
+    # Initiate time profiling directly
+    profiling.begin_profiling_time(out_path)
+
+    # Confirm the time profiler was initialized
+    assert profiling.TIME_PROFILER is not None
+
+    # Run some stuff, split across two loops
+    no_calls = 100000
+    for i in range(no_calls):
+        num = i * (i+1)
+        logging.info(f"{i}: {num}")
+
+    for i in range(no_calls):
+        num = i * (i + 1)
+        logging.info(f"{i}: {num}")
+
+    total_calls = no_calls*2
+
+    # "End" the program
+    false_atexit()
+
+    # Confirm the file associated with the timing profiler exists
+    assert out_path.exists()
+
+    # Confirm the contents of the output is sensible
+    with open(out_path, 'r') as f:
+        # Confirm that the first line reports the total number of calls and runtime
+        first_line = f.readline()
+        assert "function calls" in first_line
+        assert "seconds" in first_line
+
+        # Iterate through the remaining lines for our tests (as they are not guaranteed to be in the same order)
+        line_vals = []
+        for line in f.readlines():
+            # Confirm that the `logger.info` function recorded as having been called `no_call` times
+            if "logging" in line and "(info)" in line:
+                assert str(total_calls) in line
+            # Append the line to a tracked list for a later test
+            if line != '\n':
+                l_vals = [x for x in line.split(' ') if x != '']
+                line_vals.append(l_vals)
+
+    # Skipping the two header lines, confirm that the runtime is sorted in descending order
+    for i in range(len(line_vals) - 3):
+        cval1 = line_vals[i+2][3]
+        cval2 = line_vals[i+3][3]
+        assert float(cval1) >= float(cval2)
+
+    # Clean up our global changes
+    profiling.TIME_PROFILER = None
