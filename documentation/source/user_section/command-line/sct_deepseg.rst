@@ -12,7 +12,7 @@ Contrast agnostic approaches
    :target: deepseg/spinalcord.html
 
 .. |graymatter_model| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/graymatter_model.png
-   :target: deepseg/graymatter_model.html
+   :target: deepseg/graymatter.html
 
 .. |lesion_ms| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/ms_lesion.png
    :target: deepseg/lesion_ms.html
