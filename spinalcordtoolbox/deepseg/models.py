@@ -105,9 +105,9 @@ MODELS = {
     #       - Models do not have a `.json` sidecar file, since they were not developed with ivadomed
     #       - So, threshold value is stored here, within the model dict
     #       - Binarization is applied within SCT code
-    "model_seg_sc_contrast_agnostic_softseg_nnunet": {
+    "model_seg_sc_contrast_agnostic_nnunet": {
         "url": [
-            "https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/releases/download/v2.5/model_contrast-agnostic_20240930-1002.zip"
+            "https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/releases/download/v3.0/model_contrast_agnostic_20250123.zip"
         ],
         "description": "Spinal cord segmentation agnostic to MRI contrasts",
         "contrasts": ["any"],
