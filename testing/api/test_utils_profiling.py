@@ -9,6 +9,7 @@ from typing import Callable
 import pytest
 
 from spinalcordtoolbox.utils import profiling
+from spinalcordtoolbox.utils.shell import SCTArgumentParser
 from spinalcordtoolbox.utils.sys import init_sct
 
 # Named tuple to keep tabs on function arguments for us, in a `atexit` like way
@@ -71,7 +72,7 @@ def test_timeit(false_atexit, caplog):
     profiling.PROFILING_TIMER = None
 
 
-def test_time_profiler(false_atexit, caplog, tmp_path):
+def test_time_profiler(false_atexit, tmp_path):
     # Generate a path we want to save the results too
     out_path = tmp_path / "pytest_time_profiled.txt"
 
@@ -125,6 +126,31 @@ def test_time_profiler(false_atexit, caplog, tmp_path):
         cval1 = line_vals[i+2][3]
         cval2 = line_vals[i+3][3]
         assert float(cval1) >= float(cval2)
+
+    # Clean up our global changes
+    profiling.TIME_PROFILER = None
+
+
+def test_cli_arguments_present(false_atexit, tmp_path):
+    # Generate a path we want to save the results too
+    out_path = tmp_path / "pytest_time_profiled.txt"
+
+    # Generate a "dummy" parser with the common command-line arguments
+    dummy_parser = SCTArgumentParser(
+        description="A dummy parser for PyTest profiling tests"
+    )
+    dummy_parser.add_common_args()
+
+    # Parse some arguments using it
+    dummy_parser.parse_args(["-profile-time", str(out_path)])
+
+    # Confirm the time profiler was initialized
+    assert profiling.TIME_PROFILER is not None
+
+    # Confirm that it writes a file on exit, but not before
+    assert not out_path.exists()
+    false_atexit()
+    assert out_path.exists()
 
     # Clean up our global changes
     profiling.TIME_PROFILER = None
