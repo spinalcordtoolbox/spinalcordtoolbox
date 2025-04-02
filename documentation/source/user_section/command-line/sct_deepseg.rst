@@ -5,8 +5,8 @@ sct_deepseg
 
 Here we provide a gallery of each model available in the ``sct_deepseg`` CLI tool.
 
-Contrast agnostic approaches 
------------
+Contrast agnostic approaches
+----------------------------
 
 .. |spinalcord| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/contrast_agnostic.png
    :target: deepseg/spinalcord.html
