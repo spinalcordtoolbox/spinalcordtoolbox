@@ -1,6 +1,7 @@
 name: Test past releases
 
-on:
+on: 
+  workflow_dispatch:
   schedule:
     # https://docs.github.com/en/free-pro-team@latest/actions/reference/workflow-syntax-for-github-actions#onschedule
     # > Scheduled workflows run on the latest commit on the default or base branch
