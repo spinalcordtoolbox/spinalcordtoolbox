@@ -39,7 +39,7 @@ def test_model_dict():
 
 @pytest.mark.parametrize('fname_image, fname_seg_manual, fname_out, task, thr', [
     (sct_test_path('t2s', 't2s.nii.gz'),
-     sct_test_path('t2s', 't2s_seg-deepseg.nii.gz'),
+     sct_test_path('t2s', 't2s_gmseg_manual.nii.gz'),
      't2s_seg_deepseg.nii.gz',
      'graymatter',
      None),
