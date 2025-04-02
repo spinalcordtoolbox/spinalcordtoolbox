@@ -107,11 +107,11 @@ MODELS = {
     #       - Binarization is applied within SCT code
     "model_seg_sc_contrast_agnostic_softseg_nnunet": {
         "url": [
-            "https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/releases/download/v3.1/model_contrast_agnostic_20250123.zip"
+            "https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/releases/download/v2.5/model_contrast-agnostic_20240930-1002.zip"
         ],
         "description": "Spinal cord segmentation agnostic to MRI contrasts",
         "contrasts": ["any"],
-        "thr": None,  # not using Softseg model anymore since switching to the more robust nnunet model
+        "thr": 0.5,  # Softseg model -> threshold at 0.5
         "default": False,
     },
     "model_seg_sci_multiclass_sc_lesion_nnunet": {
