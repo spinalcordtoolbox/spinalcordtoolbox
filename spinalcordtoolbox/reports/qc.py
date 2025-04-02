@@ -451,7 +451,6 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
                              Union[List[np.ndarray],
                                    Tuple[List[List[np.ndarray]], List[Tuple[int, int]]]]]
 
-
     # Get QC specifics based on SCT process
     # Axial orientation, switch between two input images
     stretch_contrast = True
