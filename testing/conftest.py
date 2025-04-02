@@ -160,7 +160,7 @@ def test_data_integrity(request):
 def verbose_logging():
     """
     Temporarily sets the logging state to be verbose.
-    Class scoped to allow for tests to be run together w/o repeated calls to the logger
+    Module scoped to allow for tests to be run together w/o repeated calls to the logger
     """
     # Make logging verbose
     set_loglevel(verbose=True, caller_module_name=__name__)
