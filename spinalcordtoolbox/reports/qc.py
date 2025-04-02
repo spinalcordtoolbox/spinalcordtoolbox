@@ -22,7 +22,6 @@ from spinalcordtoolbox.utils.sys import list2cmdline, LazyLoader
 
 mpl_figure = LazyLoader("mpl_figure", globals(), "matplotlib.figure")
 mpl_axes = LazyLoader("mpl_axes", globals(), "matplotlib.axes")
-mpl_plt = LazyLoader("mpl_plt", globals(), "matplotlib.pyplot")
 mpl_colors = LazyLoader("mpl_colors", globals(), "matplotlib.colors")
 mpl_backend_agg = LazyLoader("mpl_backend_agg", globals(), "matplotlib.backends.backend_agg")
 mpl_animation = LazyLoader("mpl_animation", globals(), "matplotlib.animation")
@@ -77,10 +76,13 @@ class QcImage:
 
     def no_seg_seg(self, mask, ax, cmap='gray', norm=None, colorbar=False, text=None):
         """Create figure with image overlay. Notably used by sct_registration_to_template"""
-        fig_ax = ax.imshow(mask, cmap=cmap, norm=norm, interpolation=self.interpolation, aspect=self.aspect_mask)
+        img = ax.imshow(mask, cmap=cmap, norm=norm, interpolation=self.interpolation, aspect=self.aspect_mask)
         if colorbar:
+            # Fetch the internal axis + associated figure
             cax = ax.inset_axes([1.005, 0.07, 0.011, 0.86])
-            cbar = mpl_plt.colorbar(fig_ax, cax=cax, orientation='vertical', pad=0.01, shrink=0.5, aspect=1, ticks=[norm.vmin, norm.vmax])
+            fig = ax.get_figure()
+            # Add a colorbar to our figure, and
+            cbar = fig.colorbar(img, cax=cax, orientation='vertical', pad=0.01, shrink=0.5, aspect=1, ticks=[norm.vmin, norm.vmax])
             cbar.ax.tick_params(labelsize=5, length=2, pad=1.7)
             ax.text(1.5, 6, text, color='white', size=3.25)
         self._add_orientation_label(ax)
@@ -448,6 +450,7 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
     qcslice_layout: Callable[[Slice],
                              Union[List[np.ndarray],
                                    Tuple[List[List[np.ndarray]], List[Tuple[int, int]]]]]
+
 
     # Get QC specifics based on SCT process
     # Axial orientation, switch between two input images
