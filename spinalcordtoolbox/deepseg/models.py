@@ -334,7 +334,7 @@ TASKS = {
                              '[T1w, T2w, T2star, MTon_MTS, GRE_T1w, DWI, mp2rage_UNIT1, PSIR, STIR, EPI], but '
                              'other contrasts that are close visual matches may also work well with this model.',
          'url': 'https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/',
-         'models': ['model_seg_sc_contrast_agnostic_softseg_nnunet'],
+         'models': ['model_seg_sc_contrast_agnostic_nnunet'],
          'citation': textwrap.dedent("""
              ```bibtex
              @misc{bédard2024contrastagnosticsoftsegmentationspinal,
