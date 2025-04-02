@@ -11,7 +11,7 @@ Contrast agnostic approaches
 .. |spinalcord| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/contrast_agnostic.png
    :target: deepseg/spinalcord.html
 
-.. |graymatter_model| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/graymatter_model.png
+.. |graymatter| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/graymatter.png
    :target: deepseg/graymatter.html
 
 .. |lesion_ms| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/ms_lesion.png
@@ -30,7 +30,7 @@ You can replace "``spinalcord``" with any of the task names in the table below t
    :widths: 25 25 25
 
    * - |spinalcord| ``spinalcord``
-     - |graymatter_model| ``graymatter``
+     - |graymatter| ``graymatter``
      - |lesion_ms| ``lesion_ms``
 
 
