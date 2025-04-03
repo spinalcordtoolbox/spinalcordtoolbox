@@ -65,7 +65,7 @@ def compute_shape(segmentation, angle_correction=True, centerline_path=None, par
     min_z_index, max_z_index = min(Z), max(Z)
 
     # Initialize dictionary of property_list, with 1d array of nan (default value if no property for a given slice).
-    shape_properties = {key: np.full_like(np.empty(nz), np.nan, dtype=np.double) for key in property_list}
+    shape_properties = {key: np.full(nz, np.nan, dtype=np.double) for key in property_list}
 
     fit_results = None
 
