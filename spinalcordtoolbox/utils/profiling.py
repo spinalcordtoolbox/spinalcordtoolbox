@@ -4,6 +4,7 @@ import io
 import logging
 import pstats
 import time
+import tracemalloc
 
 from argparse import Action
 from pathlib import Path
@@ -11,6 +12,7 @@ from pathlib import Path
 
 PROFILING_TIMER = None
 TIME_PROFILER = None
+MEMORY_PROFILER = None
 
 
 # == Time-based Profiling == #
@@ -132,3 +134,54 @@ class TimeProfilingAction(Action):
         begin_profiling_time(out_path)
 
         setattr(namespace, self.dest, out_path)
+
+
+# == Memory-based Profiling == #
+class MemoryProfilingManager:
+
+    default_output = Path('./memory_profiler_results.txt')
+
+    def __init__(self, out_file=None):
+        # Initialize and enable the profiler
+        tracemalloc.start()
+        # Track the output file, if it was provided
+        if out_file is not None:
+            self._output_file = out_file
+        else:
+            self._output_file = self.default_output
+        # Ensure the profiler completes its runtime at program exit
+        atexit.register(self._finish_profiling)
+
+    def __del__(self):
+        # If the profiler is deleted explicitly, just clean up without reporting anything
+        atexit.unregister(self._finish_profiling)
+        tracemalloc.stop()
+
+    def _finish_profiling(self):
+        # Get the peak memory consumed during the program, and save it
+        _, traced_peak = tracemalloc.get_traced_memory()
+
+        # Finish profiling after sampler (as otherwise the peak is reset to 0)
+        tracemalloc.stop()
+
+        # Save the peak results to the output file
+        with open(self._output_file, 'a') as fp:
+            fp.write(f"PEAK MEMORY USE; {traced_peak} KiB")
+
+        # Report that the file was written, and where to
+        logging.info(f"Saved memory profiling results to '{self._output_file.resolve()}'.")
+
+
+def begin_profiling_memory(out_path: Path = None):
+    # Fetch the MEMORY_PROFILER from the global space
+    global MEMORY_PROFILER
+    # If it hasn't already been set, initiate and set up the profiler
+    if MEMORY_PROFILER is None:
+        # Initialize the profiler
+        MEMORY_PROFILER = MemoryProfilingManager(out_path)
+    # Otherwise, skip and warn the user
+    else:
+        logging.warning(
+            "Tried to start the memory profiler twice; you should leave generally leave this to be handled by the CLI, "
+            "rather than calling 'begin_profiling_memory' directly!"
+        )

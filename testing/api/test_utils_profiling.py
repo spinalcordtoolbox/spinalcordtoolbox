@@ -154,3 +154,42 @@ def test_cli_arguments_present(false_atexit, tmp_path):
 
     # Clean up our global changes
     profiling.TIME_PROFILER = None
+
+
+def test_memory_profiler(false_atexit, tmp_path):
+    # Generate a path we want to save the results too
+    out_path = tmp_path / "pytest_memory_profiled.txt"
+
+    # For sanity's sake, ensure the file does not already exist yet
+    assert not out_path.exists()
+
+    # Initiate time profiling directly
+    profiling.begin_profiling_memory(out_path)
+
+    # Generate a gigantic list with a ton of integers (which are each 16 bits, or one byte)
+    n_numbers = 1000000
+    big_list = list(range(n_numbers))
+
+    # Explicit delete the big list to ensure the reported peak was still measured correctly
+    del big_list
+
+    # Calculate the minimum amount of memory this should have required, account for pointers as well;
+    #   n ints
+    #   n pointers, 1 per int
+    #   1 pointer to the list itself
+    #   16 bits per element (Convenient perk of python; everything is a Byte!)
+    min_n_bits = (2 * n_numbers + 1) * 16
+
+    # "End" the program
+    false_atexit()
+
+    # Confirm the output file now exists
+    assert out_path.exists()
+
+    # Confirm that the last line in the file is the peak memory use
+    with open(out_path, 'r') as fp:
+        last_line = [l for l in fp.readlines()][-1]
+
+    assert "PEAK MEMORY USE" in last_line
+    recorded_mem_kib = float(last_line.split('; ')[-1].split(' ')[0])
+    assert recorded_mem_kib > min_n_bits
