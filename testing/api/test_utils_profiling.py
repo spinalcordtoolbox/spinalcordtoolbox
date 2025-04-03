@@ -221,7 +221,7 @@ def test_memory_snapshot(false_atexit, tmp_path):
 
     # Generate a gigantic list with a ton of integers (which are each 16 bits, or one byte)
     n_numbers = 1000000
-    big_list = list(range(n_numbers))
+    big_list = list(range(n_numbers))  # noqa: F841 (necessary evil to prevent garbage collection messing w/ test)
 
     # Snapshot the memory, which should update the output
     profiling.snapshot_memory()

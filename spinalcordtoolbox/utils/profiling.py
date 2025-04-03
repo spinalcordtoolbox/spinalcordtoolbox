@@ -179,7 +179,6 @@ class MemoryTracingManager:
             fp.writelines([str(x) + '\n' for x in mem_stats])
             fp.write('\n')
 
-
     def _finish_tracing(self):
         # Get the peak memory consumed during the program, and save it
         _, traced_peak = tracemalloc.get_traced_memory()
@@ -212,7 +211,6 @@ def begin_tracing_memory(out_path: Path = None):
 
 def snapshot_memory():
     # Return early if memory tracing is not active
-    global MEMORY_TRACER
     if MEMORY_TRACER is None:
         return
 
