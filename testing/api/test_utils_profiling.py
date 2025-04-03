@@ -195,7 +195,7 @@ def test_memory_profiler(false_atexit, tmp_path):
 
     # Confirm that the last line in the output file is the peak memory use
     with open(out_path, 'r') as fp:
-        last_line = [l for l in fp.readlines()][-1]
+        last_line = [x for x in fp.readlines()][-1]
 
     assert "PEAK MEMORY USE" in last_line
     recorded_mem_kib = float(last_line.split('; ')[-1].split(' ')[0])
