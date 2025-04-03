@@ -156,18 +156,18 @@ def test_cli_arguments_present(false_atexit, tmp_path):
     profiling.TIME_PROFILER = None
 
 
-def test_memory_profiler(false_atexit, tmp_path):
+def test_memory_tracer(false_atexit, tmp_path):
     # Generate a path we want to save the results too
-    out_path = tmp_path / "pytest_memory_profiled.txt"
+    out_path = tmp_path / "pytest_memory_traced.txt"
 
     # For sanity's sake, ensure the file does not already exist yet
     assert not out_path.exists()
 
     # Initiate time profiling directly
-    profiling.begin_profiling_memory(out_path)
+    profiling.begin_tracing_memory(out_path)
 
     # Confirm the memory profiler was initialized
-    assert profiling.MEMORY_PROFILER is not None
+    assert profiling.MEMORY_TRACER is not None
 
     # Generate a gigantic list with a ton of integers (which are each 16 bits, or one byte)
     n_numbers = 1000000

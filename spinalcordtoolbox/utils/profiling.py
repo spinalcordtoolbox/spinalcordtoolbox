@@ -12,7 +12,7 @@ from pathlib import Path
 
 PROFILING_TIMER = None
 TIME_PROFILER = None
-MEMORY_PROFILER = None
+MEMORY_TRACER = None
 
 
 # == Time-based Profiling == #
@@ -137,9 +137,9 @@ class TimeProfilingAction(Action):
 
 
 # == Memory-based Profiling == #
-class MemoryProfilingManager:
+class MemoryTracingManager:
 
-    default_output = Path('./memory_profiler_results.txt')
+    default_output = Path('./memory_tracer_results.txt')
 
     def __init__(self, out_file=None):
         # Initialize and enable the profiler
@@ -150,14 +150,14 @@ class MemoryProfilingManager:
         else:
             self._output_file = self.default_output
         # Ensure the profiler completes its runtime at program exit
-        atexit.register(self._finish_profiling)
+        atexit.register(self._finish_tracing)
 
     def __del__(self):
         # If the profiler is deleted explicitly, just clean up without reporting anything
-        atexit.unregister(self._finish_profiling)
+        atexit.unregister(self._finish_tracing)
         tracemalloc.stop()
 
-    def _finish_profiling(self):
+    def _finish_tracing(self):
         # Get the peak memory consumed during the program, and save it
         _, traced_peak = tracemalloc.get_traced_memory()
 
@@ -169,16 +169,16 @@ class MemoryProfilingManager:
             fp.write(f"PEAK MEMORY USE; {traced_peak} KiB")
 
         # Report that the file was written, and where to
-        logging.info(f"Saved memory profiling results to '{self._output_file.resolve()}'.")
+        logging.info(f"Saved memory tracing results to '{self._output_file.resolve()}'.")
 
 
-def begin_profiling_memory(out_path: Path = None):
+def begin_tracing_memory(out_path: Path = None):
     # Fetch the MEMORY_PROFILER from the global space
-    global MEMORY_PROFILER
+    global MEMORY_TRACER
     # If it hasn't already been set, initiate and set up the profiler
-    if MEMORY_PROFILER is None:
+    if MEMORY_TRACER is None:
         # Initialize the profiler
-        MEMORY_PROFILER = MemoryProfilingManager(out_path)
+        MEMORY_TRACER = MemoryTracingManager(out_path)
     # Otherwise, skip and warn the user
     else:
         logging.warning(
