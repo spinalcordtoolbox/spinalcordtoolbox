@@ -163,7 +163,7 @@ def test_memory_tracer(false_atexit, tmp_path):
     # For sanity's sake, ensure the file does not already exist yet
     assert not out_path.exists()
 
-    # Initiate time profiling directly
+    # Initiate memory tracing directly
     profiling.begin_tracing_memory(out_path)
 
     # Confirm the memory profiler was initialized
@@ -205,6 +205,35 @@ def test_memory_tracer(false_atexit, tmp_path):
     profiling.MEMORY_TRACER = None
 
 
+def test_memory_snapshot(false_atexit, tmp_path):
+    # Generate a path we want to save the results too
+    out_path = tmp_path / "pytest_memory_snapshot.txt"
+
+    # For sanity's sake, ensure the file does not already exist yet
+    assert not out_path.exists()
+
+    # Initiate memory tracing directly
+    profiling.begin_tracing_memory(out_path)
+
+    # Generate a gigantic list with a ton of integers (which are each 16 bits, or one byte)
+    n_numbers = 1000000
+    big_list = list(range(n_numbers))
+
+    # Snapshot the memory, which should update the output
+    profiling.snapshot_memory()
+
+    # "End" the program
+    false_atexit()
+
+    # Confirm that the memory tracer saved the snapshot correctly
+    with open(out_path, 'r') as fp:
+        first_line = fp.readline()
+        assert "test_memory_snapshot (test_utils_profiling.py, line 223)" in first_line
+
+    # Clean up our global changes
+    profiling.MEMORY_TRACER = None
+
+
 def test_cli_memory_tracer(false_atexit, tmp_path):
     # Generate a path we want to save the results too
     out_path = tmp_path / "pytest_memory_traced.txt"
@@ -228,4 +257,3 @@ def test_cli_memory_tracer(false_atexit, tmp_path):
 
     # Clean up our global changes
     profiling.MEMORY_TRACER = None
-

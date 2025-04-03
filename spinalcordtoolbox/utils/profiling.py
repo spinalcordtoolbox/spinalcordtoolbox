@@ -1,5 +1,6 @@
 import atexit
 import cProfile
+import inspect
 import io
 import logging
 import pstats
@@ -144,11 +145,18 @@ class MemoryTracingManager:
     def __init__(self, out_file=None):
         # Initialize and enable the profiler
         tracemalloc.start()
+
         # Track the output file, if it was provided
         if out_file is not None:
             self._output_file = out_file
         else:
             self._output_file = self.default_output
+
+        # Reset the file if it already exists
+        if out_file.exists():
+            out_file.unlink()
+            out_file.touch()
+
         # Ensure the profiler completes its runtime at program exit
         atexit.register(self._finish_tracing)
 
@@ -156,6 +164,21 @@ class MemoryTracingManager:
         # If the profiler is deleted explicitly, just clean up without reporting anything
         atexit.unregister(self._finish_tracing)
         tracemalloc.stop()
+
+    def snapshot_memory(self, label: str):
+        # Snapshot the current memory state
+        mem_snapshot = tracemalloc.take_snapshot()
+        mem_stats = mem_snapshot.statistics('lineno', cumulative=True)
+
+        # Generate the header for this output
+        header = f"=== {label} ===\n"
+
+        # Save the stats to file with this header
+        with open(self._output_file, 'a') as fp:
+            fp.write(header)
+            fp.writelines([str(x) + '\n' for x in mem_stats])
+            fp.write('\n')
+
 
     def _finish_tracing(self):
         # Get the peak memory consumed during the program, and save it
@@ -185,6 +208,21 @@ def begin_tracing_memory(out_path: Path = None):
             "Tried to start the memory profiler twice; you should leave generally leave this to be handled by the CLI, "
             "rather than calling 'begin_profiling_memory' directly!"
         )
+
+
+def snapshot_memory():
+    # Return early if memory tracing is not active
+    global MEMORY_TRACER
+    if MEMORY_TRACER is None:
+        return
+
+    # Get the calling function
+    caller = inspect.stack()[1]
+    calling_id = f"{caller.function} ({Path(caller.filename).name}, line {caller.lineno})"
+
+    # Snapshot the current memory state, saving it to file immediately
+    # noinspection PyUnresolvedReferences
+    MEMORY_TRACER.snapshot_memory(calling_id)
 
 
 class MemoryTracingAction(Action):
