@@ -316,7 +316,7 @@ class SCTArgumentParser(argparse.ArgumentParser):
     def add_tempfile_args(self, arg_group=None):
         """
         Adds a single argument:
-            -r: The help flag. If present, denotes that temporary files should be removed after the program ends.
+            -r: The remove_temp flag. If present, denotes that temporary files should be removed after the program ends.
 
         If no argument group is provided, the arguments are placed into the "MISC" argument group
         """
