@@ -166,6 +166,9 @@ def test_memory_profiler(false_atexit, tmp_path):
     # Initiate time profiling directly
     profiling.begin_profiling_memory(out_path)
 
+    # Confirm the memory profiler was initialized
+    assert profiling.MEMORY_PROFILER is not None
+
     # Generate a gigantic list with a ton of integers (which are each 16 bits, or one byte)
     n_numbers = 1000000
     big_list = list(range(n_numbers))
@@ -183,10 +186,14 @@ def test_memory_profiler(false_atexit, tmp_path):
     # "End" the program
     false_atexit()
 
+    # Confirm that profiling has ceased at this point
+    import tracemalloc
+    assert not tracemalloc.is_tracing()
+
     # Confirm the output file now exists
     assert out_path.exists()
 
-    # Confirm that the last line in the file is the peak memory use
+    # Confirm that the last line in the output file is the peak memory use
     with open(out_path, 'r') as fp:
         last_line = [l for l in fp.readlines()][-1]
 
