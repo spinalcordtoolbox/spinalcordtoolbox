@@ -131,7 +131,7 @@ def test_time_profiler(false_atexit, tmp_path):
     profiling.TIME_PROFILER = None
 
 
-def test_cli_arguments_present(false_atexit, tmp_path):
+def test_cli_time_profiling(false_atexit, tmp_path):
     # Generate a path we want to save the results too
     out_path = tmp_path / "pytest_time_profiled.txt"
 
@@ -200,3 +200,32 @@ def test_memory_tracer(false_atexit, tmp_path):
     assert "PEAK MEMORY USE" in last_line
     recorded_mem_kib = float(last_line.split('; ')[-1].split(' ')[0])
     assert recorded_mem_kib > min_n_bits
+
+    # Clean up our memory profiler
+    profiling.MEMORY_TRACER = None
+
+
+def test_cli_memory_tracer(false_atexit, tmp_path):
+    # Generate a path we want to save the results too
+    out_path = tmp_path / "pytest_memory_traced.txt"
+
+    # Generate a "dummy" parser with the common command-line arguments
+    dummy_parser = SCTArgumentParser(
+        description="A dummy parser for PyTest profiling tests"
+    )
+    dummy_parser.add_common_args()
+
+    # Parse some arguments using it
+    dummy_parser.parse_args(["-trace-memory", str(out_path)])
+
+    # Confirm the time profiler was initialized
+    assert profiling.MEMORY_TRACER is not None
+
+    # Confirm that it writes a file on exit, but not before
+    assert not out_path.exists()
+    false_atexit()
+    assert out_path.exists()
+
+    # Clean up our global changes
+    profiling.MEMORY_TRACER = None
+

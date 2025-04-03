@@ -139,7 +139,7 @@ class TimeProfilingAction(Action):
 # == Memory-based Profiling == #
 class MemoryTracingManager:
 
-    default_output = Path('./memory_tracer_results.txt')
+    default_output = Path('memory_tracer_results.txt')
 
     def __init__(self, out_file=None):
         # Initialize and enable the profiler
@@ -185,3 +185,33 @@ def begin_tracing_memory(out_path: Path = None):
             "Tried to start the memory profiler twice; you should leave generally leave this to be handled by the CLI, "
             "rather than calling 'begin_profiling_memory' directly!"
         )
+
+
+class MemoryTracingAction(Action):
+    """
+    ArgParse action, which initialized the memory tracer when the argument is present.
+
+    The user can specify either the output directory or file, if they want the results saved somewhere specific.
+    If not, the file will be saved in the current working directory (unless the 'const' is explicitly set otherwise)
+    """
+    def __call__(self, parser, namespace, values, option_string=None):
+        # If the length of the values provided is greater than 1, raise an error
+        if values is not None and not isinstance(values, str) and len(values) > 1:
+            raise ValueError("Only one output file can be specified for profiler outputs!")
+
+        # If no value as provided, set the output path to be in the current directory
+        if values is None:
+            out_path = MemoryTracingManager.default_output
+        else:
+            # Otherwise, try to get the path associated with this parameter, and confirm its root exists
+            out_path = Path(values)
+
+        # Check to see if the file exists and is a directory
+        if out_path.exists() and out_path.is_dir():
+            # If so, set the result to be saved to our default file output
+            out_path /= MemoryTracingManager.default_output
+
+        # Finally, initiate the memory tracer, designating it's output file to be the user specified one
+        begin_tracing_memory(out_path)
+
+        setattr(namespace, self.dest, out_path)

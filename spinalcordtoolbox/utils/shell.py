@@ -18,7 +18,7 @@ from functools import cached_property, partial
 
 from .sys import check_exe, printv, removesuffix, ANSIColors16
 from .fs import relpath_or_abspath
-from .profiling import TimeProfilingAction
+from .profiling import TimeProfilingAction, MemoryTracingAction
 
 logger = logging.getLogger(__name__)
 
@@ -307,6 +307,15 @@ class SCTArgumentParser(argparse.ArgumentParser):
             action=TimeProfilingAction,
             help="Enables time-based profiling of the program, dumping the results to the specified file. "
                  "If no file is specified, the results are placed into a 'time_profiling_results.txt' document in the "
+                 "current directory."
+        )
+        arg_group.add_argument(
+            '-trace-memory',
+            nargs='?',
+            metavar=Metavar.file,
+            action=MemoryTracingAction,
+            help="Enables memory tracing of the program, dumping the results to the specified file. "
+                 "If no file is specified, the results are placed into a 'memory_tracer_results.txt' document in the "
                  "current directory."
         )
 
