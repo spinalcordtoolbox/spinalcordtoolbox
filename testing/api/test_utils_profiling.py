@@ -42,6 +42,22 @@ def false_atexit(monkeypatch):
     return _return_fn
 
 
+@pytest.fixture(autouse=True)
+def cleanup_globals():
+    # Do nothing initially
+    yield
+
+    # Once the fixture is done being "used", clean up the global space
+    del profiling.GLOBAL_TIMER
+    profiling.GLOBAL_TIMER = None
+
+    del profiling.TIME_PROFILER
+    profiling.TIME_PROFILER = None
+
+    del profiling.MEMORY_TRACER
+    profiling.MEMORY_TRACER = None
+
+
 def test_timeit(false_atexit, caplog):
     """Confirm that our timer starts and runs correctly"""
     # Capture all log input explicitly, so that we can test that the total runtime was run correctly
@@ -67,9 +83,6 @@ def test_timeit(false_atexit, caplog):
     allowed_margin = 0.30
     assert prog_runtime >= sleep_time
     assert prog_runtime < sleep_time + allowed_margin
-
-    # Clean up the global time so future `init_sct` runs work correctly
-    profiling.GLOBAL_TIMER = None
 
 
 def test_time_profiler(false_atexit, tmp_path):
@@ -127,9 +140,6 @@ def test_time_profiler(false_atexit, tmp_path):
         cval2 = line_vals[i+3][3]
         assert float(cval1) >= float(cval2)
 
-    # Clean up our global changes
-    profiling.TIME_PROFILER = None
-
 
 def test_cli_time_profiling(false_atexit, tmp_path):
     # Generate a path we want to save the results too
@@ -151,9 +161,6 @@ def test_cli_time_profiling(false_atexit, tmp_path):
     assert not out_path.exists()
     false_atexit()
     assert out_path.exists()
-
-    # Clean up our global changes
-    profiling.TIME_PROFILER = None
 
 
 def test_memory_tracer(false_atexit, tmp_path):
@@ -201,9 +208,6 @@ def test_memory_tracer(false_atexit, tmp_path):
     recorded_mem_kib = float(last_line.split('; ')[-1].split(' ')[0])
     assert recorded_mem_kib > (min_n_bits / 1024)
 
-    # Clean up our memory profiler
-    profiling.MEMORY_TRACER = None
-
 
 def test_memory_snapshot(false_atexit, tmp_path):
     # Generate a path we want to save the results too
@@ -228,10 +232,8 @@ def test_memory_snapshot(false_atexit, tmp_path):
     # Confirm that the memory tracer saved the snapshot correctly
     with open(out_path, 'r') as fp:
         first_line = fp.readline()
-        assert "test_memory_snapshot (test_utils_profiling.py, line 223)" in first_line
-
-    # Clean up our global changes
-    profiling.MEMORY_TRACER = None
+        # We don't test for the exact line, as it is prone to being changed
+        assert "test_memory_snapshot (test_utils_profiling.py, line " in first_line
 
 
 def test_cli_memory_tracer(false_atexit, tmp_path):
@@ -254,6 +256,3 @@ def test_cli_memory_tracer(false_atexit, tmp_path):
     assert not out_path.exists()
     false_atexit()
     assert out_path.exists()
-
-    # Clean up our global changes
-    profiling.MEMORY_TRACER = None
