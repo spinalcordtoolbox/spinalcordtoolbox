@@ -92,7 +92,7 @@ def test_time_profiler(false_atexit, tmp_path):
         logging.info(f"{i}: {num}")
 
     for i in range(no_calls):
-        num = i * (i + 1)
+        num = i * (i-1)
         logging.info(f"{i}: {num}")
 
     total_calls = no_calls*2
