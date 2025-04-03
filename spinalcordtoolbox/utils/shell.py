@@ -18,6 +18,7 @@ from functools import cached_property, partial
 
 from .sys import check_exe, printv, removesuffix, ANSIColors16
 from .fs import relpath_or_abspath
+from .profiling import TimeProfilingAction, MemoryTracingAction
 
 logger = logging.getLogger(__name__)
 
@@ -298,13 +299,33 @@ class SCTArgumentParser(argparse.ArgumentParser):
             help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode."
         )
 
+        # Add a flag which allows time-based profiling the profiler
+        arg_group.add_argument(
+            '-profile-time',
+            nargs='?',
+            metavar=Metavar.file,
+            action=TimeProfilingAction,
+            help="Enables time-based profiling of the program, dumping the results to the specified file. "
+                 "If no file is specified, the results are placed into a 'time_profiling_results.txt' document in the "
+                 "current directory."
+        )
+        arg_group.add_argument(
+            '-trace-memory',
+            nargs='?',
+            metavar=Metavar.file,
+            action=MemoryTracingAction,
+            help="Enables memory tracing of the program, dumping the results to the specified file. "
+                 "If no file is specified, the results are placed into a 'memory_tracer_results.txt' document in the "
+                 "current directory."
+        )
+
         # Return the arg_group to allow for chained operations
         return arg_group
 
     def add_tempfile_args(self, arg_group=None):
         """
         Adds a single argument:
-            -r: The help flag. If present, denotes that temporary files should be removed after the program ends.
+            -r: The remove_temp flag. If present, denotes that temporary files should be removed after the program ends.
 
         If no argument group is provided, the arguments are placed into the "MISC" argument group
         """

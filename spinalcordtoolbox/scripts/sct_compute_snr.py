@@ -53,8 +53,8 @@ def get_parser():
         default='')
     optional.add_argument(
         '-method',
-        help="Method to use to compute the SNR (default: diff):\n"
-             "  - diff: Substract two volumes (defined by -vol) and estimate noise variance within the ROI "
+        help="Method to use to compute the SNR:\n"
+             "  - `diff`: Substract two volumes (defined by -vol) and estimate noise variance within the ROI "
              "(flag `-m` is required). Requires a 4D volume.\n"
              "  - `mult`: Estimate noise variance over time across volumes specified with `-vol`. Requires a 4D volume.\n"
              "  - `single`: Compute the mean signal in the mask specified by `-m` and estimate the noise variance in a "
