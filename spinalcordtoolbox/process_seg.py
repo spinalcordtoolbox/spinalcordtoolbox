@@ -78,7 +78,6 @@ def compute_shape(segmentation, angle_correction=True, centerline_path=None, par
         else:
             im_centerline_r = im_segr
         # compute the spinal cord centerline based on the spinal cord segmentation
-        # here, param_centerline.minmax needs to be False because we need to retrieve the total number of input slices
         _, arr_ctl, arr_ctl_der, fit_results = get_centerline(im_centerline_r, param=param_centerline, verbose=verbose,
                                                               remove_temp_files=remove_temp_files)
 
