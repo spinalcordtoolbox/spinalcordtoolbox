@@ -189,7 +189,7 @@ class MemoryTracingManager:
 
         # Save the peak results to the output file
         with open(self._output_file, 'a') as fp:
-            fp.write(f"PEAK MEMORY USE; {traced_peak} KiB")
+            fp.write(f"PEAK MEMORY USE; {traced_peak / 1024:.3f} KiB")
 
         # Report that the file was written, and where to
         logging.info(f"Saved memory tracing results to '{self._output_file.resolve()}'.")

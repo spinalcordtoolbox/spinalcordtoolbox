@@ -199,7 +199,7 @@ def test_memory_tracer(false_atexit, tmp_path):
 
     assert "PEAK MEMORY USE" in last_line
     recorded_mem_kib = float(last_line.split('; ')[-1].split(' ')[0])
-    assert recorded_mem_kib > min_n_bits
+    assert recorded_mem_kib > (min_n_bits / 1024)
 
     # Clean up our memory profiler
     profiling.MEMORY_TRACER = None
