@@ -11,7 +11,7 @@ from argparse import Action
 from pathlib import Path
 
 
-PROFILING_TIMER = None
+GLOBAL_TIMER = None
 TIME_PROFILER = None
 MEMORY_TRACER = None
 
@@ -38,10 +38,10 @@ class Timer:
 
 def begin_global_timer():
     # Fetch the PROFILING_TIMER from the global space
-    global PROFILING_TIMER
+    global GLOBAL_TIMER
     # If it hasn't already been set, start the timer
-    if PROFILING_TIMER is None:
-        PROFILING_TIMER = Timer()
+    if GLOBAL_TIMER is None:
+        GLOBAL_TIMER = Timer()
     # Otherwise, skip and warn the user
     else:
         logging.warning(

@@ -50,7 +50,7 @@ def test_timeit(false_atexit, caplog):
     init_sct()
 
     # Confirm the timer initialized correctly
-    assert profiling.PROFILING_TIMER is not None
+    assert profiling.GLOBAL_TIMER is not None
 
     # Wait 1 second to give us some "time" to actually measure
     sleep_time = 1
@@ -69,7 +69,7 @@ def test_timeit(false_atexit, caplog):
     assert prog_runtime < sleep_time + allowed_margin
 
     # Clean up the global time so future `init_sct` runs work correctly
-    profiling.PROFILING_TIMER = None
+    profiling.GLOBAL_TIMER = None
 
 
 def test_time_profiler(false_atexit, tmp_path):
