@@ -60,10 +60,7 @@ You can replace "``sc_lumbar_t2``" with any of the task names in the table below
 
    * - |sc_lumbar_t2| ``sc_lumbar_t2``
      - |sc_epi| ``sc_epi``
-     - |sc_t2star| ``sc_t2star``
-   * - |sc_mouse_t1| ``sc_mouse_t1``
-     -
-     -
+     - |sc_mouse_t1| ``sc_mouse_t1``
 
 
 Gray matter
@@ -195,7 +192,7 @@ Retired models
    :target: deepseg/seg_ms_sc_mp2rage.html
 
 .. |sc_t2star| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/sc_t2star.png
-    :target: deepseg/sc_t2star.html
+    :target: deepseg/tar.html
 
 These models have been replaced by newer, more advanced models. We recommend switching to the model listed in the table below.
 
@@ -228,6 +225,7 @@ If you absolutely require these models, you can downgrade to version of SCT list
    deepseg/sc_epi
    deepseg/sc_mouse_t1
    deepseg/sc_lumbar_t2
+   deepseg/sc_t2star
    deepseg/gm_wm_exvivo_t2
    deepseg/gm_sc_7t_t2star
    deepseg/gm_mouse_t1
