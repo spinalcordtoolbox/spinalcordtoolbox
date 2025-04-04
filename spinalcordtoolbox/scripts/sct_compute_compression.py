@@ -552,6 +552,8 @@ def main(argv: Sequence[str]):
                          f" and segmentation [{img_seg.data.shape}]). "
                          f"Please verify that your compression labels and vertebral labels were done in the same space as your input segmentation.")
     path_ref = os.path.join(__data_dir__, 'PAM50_normalized_metrics')
+    path_ref_spinal_cord = os.path.join(path_ref, 'spinal_cord')
+
     # Check if path_ref with normalized metrics exists
     if arguments.normalize_hc and not os.path.isdir(path_ref):
         raise FileNotFoundError(f"Directory with normalized PAM50 metrics {path_ref} does not exist.\n"
@@ -614,7 +616,7 @@ def main(argv: Sequence[str]):
         # Fetch metrics of PAM50 template
         df_metrics_PAM50 = pd.read_csv(fname_metrics_PAM50).astype({metric: float})
         # Average metrics of healthy controls
-        df_avg_HC = average_hc(path_ref, metric, list_HC)
+        df_avg_HC = average_hc(path_ref_spinal_cord, metric, list_HC)
         # Get slices correspondence in PAM50 space
         compressed_levels_dict_PAM50 = get_slices_in_PAM50(compressed_levels_dict, df_metrics, df_metrics_PAM50)
         z_range_PAM50_below, z_range_PAM50_above = get_slices_upper_lower_level_from_PAM50(compressed_levels_dict_PAM50, df_metrics_PAM50, distance, extent, slice_thickness_PAM50)
