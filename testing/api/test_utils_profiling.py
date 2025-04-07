@@ -141,6 +141,41 @@ def test_time_profiler(false_atexit, tmp_path):
         assert float(cval1) >= float(cval2)
 
 
+def test_time_profiler_prof_out(false_atexit, tmp_path):
+    # Generate a path we want to save the results too, with a .prof extension
+    out_path = tmp_path / "pytest_time_profiled.prof"
+
+    # Initiate time profiling directly
+    profiling.begin_profiling_time(out_path)
+
+    # Run a recursive loop
+    def tmp_recurse(i: int):
+        if i > 0:
+            tmp_recurse(i-1)
+
+    # Run a short loop
+    no_calls = 100
+    tmp_recurse(no_calls)
+
+    # "End" the program
+    false_atexit()
+
+    # Confirm the output file was created, and that it has the correct extension
+    assert out_path.exists()
+    assert out_path.suffix == '.prof'
+
+    # Confirm the file is in the correct binary format and references the recursive call
+    with open(out_path, 'rb') as ofp:
+        # Get the "lead" of the file
+        part1 = ofp.read(4)
+        # Confirm it matches the signature of a .prof file
+        assert part1 == b'\xfb\xa9\x03\xda'
+
+        # Get the rest of the "binary chunk" to see if it tracked the recursive call
+        part2 = ofp.read(1020)
+        assert b"tmp_recurse" in part2
+
+
 def test_cli_time_profiling(false_atexit, tmp_path):
     # Generate a path we want to save the results too
     out_path = tmp_path / "pytest_time_profiled.txt"

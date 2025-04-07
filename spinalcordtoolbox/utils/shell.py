@@ -307,7 +307,8 @@ class SCTArgumentParser(argparse.ArgumentParser):
             action=TimeProfilingAction,
             help="Enables time-based profiling of the program, dumping the results to the specified file. "
                  "If no file is specified, the results are placed into a 'time_profiling_results.txt' document in the "
-                 "current directory."
+                 "current directory. If the specified file is a `.prof` file, the file will be in binary format, "
+                 "ready for use with common post-profiler utilities (such as `snakeviz`)."
         )
         arg_group.add_argument(
             '-trace-memory',

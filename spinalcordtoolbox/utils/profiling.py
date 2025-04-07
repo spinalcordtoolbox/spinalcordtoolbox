@@ -76,14 +76,19 @@ class TimeProfilingManager:
         self._profiler.disable()
 
         # Grab the stats, and organize them from most to least time-consuming (cumulatively)
-        io_stream = io.StringIO()
-        profiling_stats = pstats.Stats(self._profiler, stream=io_stream)
-        profiling_stats = profiling_stats.sort_stats(pstats.SortKey.CUMULATIVE)
-        profiling_stats.print_stats()
-
-        # Save the results to the desired file
-        with open(self._output_file, 'w') as out_stream:
-            out_stream.write(io_stream.getvalue())
+        if self._output_file.suffix == '.prof':
+            # If we want binary profiler output, dump the stats to file with the built-in
+            profiling_stats = pstats.Stats(self._profiler)
+            profiling_stats = profiling_stats.sort_stats(pstats.SortKey.CUMULATIVE)
+            profiling_stats.dump_stats(self._output_file)
+        else:
+            # Otherwise, dump the stats in a human-readable format
+            io_stream = io.StringIO()
+            profiling_stats = pstats.Stats(self._profiler, stream=io_stream)
+            profiling_stats = profiling_stats.sort_stats(pstats.SortKey.CUMULATIVE)
+            profiling_stats.print_stats()
+            with open(self._output_file, 'w') as out_stream:
+                out_stream.write(io_stream.getvalue())
 
         # Report that the file was written, and where to
         logging.info(f"Saved time profiling results to '{self._output_file.resolve()}'.")
