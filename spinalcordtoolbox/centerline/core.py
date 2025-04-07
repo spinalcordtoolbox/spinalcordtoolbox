@@ -103,6 +103,15 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
     if space not in ['pix', 'phys']:
         raise ValueError(f"'space' parameter must be either 'pix' or 'phys', but '{space}' was passed instead.")
 
+    # Handle whether we should keep the centerline as a temporary output
+    if remove_temp_files:
+        fname_ctr_temp = None  # Rather than creating then deleting the temp output, we can just skip creating it at all
+    else:
+        temp_path = tmp_create(basename="get-centerline")
+        fname_ctr = (add_suffix(os.path.basename(im_seg.absolutepath), "_ctr") if im_seg.absolutepath
+                     else "centerline.nii.gz")
+        fname_ctr_temp = os.path.join(temp_path, fname_ctr)
+
     # Open image and change to RPI orientation
     native_orientation = im_seg.orientation
     im_seg = im_seg.copy().change_orientation('RPI')  # Copy to avoid mutating input image
@@ -264,13 +273,6 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
             plt.savefig('fig_centerline_' + datetime.now().strftime("%y%m%d-%H%M%S%f") + '_' + param.algo_fitting + '.png')
             plt.close()
 
-    # Save centerline image to tmp_folder (but only if user hasn't opted to `remove_temp_files`)
-    if not remove_temp_files:
-        tmp_folder = tmp_create(basename="get-centerline")
-        fname_ctr = (add_suffix(os.path.basename(im_seg.absolutepath), "_ctr") if im_seg.absolutepath
-                     else "centerline.nii.gz")
-        im_centerline.save(os.path.join(tmp_folder, fname_ctr), mutable=True)
-
     arr_ctl = np.array([x_centerline_fit, y_centerline_fit, z_ref])
     arr_ctl_der = np.array([x_centerline_deriv, y_centerline_deriv, np.ones_like(z_ref)])
     # If 'phys' is specified, adjust centerline coordinates (`Centerline.points`) and
@@ -280,6 +282,9 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
         arr_ctl = im_seg.transfo_pix2phys(arr_ctl.T, mode='absolute').T
         arr_ctl_der = im_seg.transfo_pix2phys(arr_ctl_der.T, mode='relative').T
 
+    # Save outputs
+    if fname_ctr_temp:  # Preserve centerline image in tempdir for debugging purposes
+        im_centerline.save(fname_ctr_temp, mutable=True)
     return (im_centerline,
             arr_ctl,
             arr_ctl_der,
