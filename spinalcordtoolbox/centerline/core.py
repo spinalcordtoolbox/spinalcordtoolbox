@@ -266,11 +266,16 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
             plt.savefig('fig_centerline_' + datetime.now().strftime("%y%m%d-%H%M%S%f") + '_' + param.algo_fitting + '.png')
             plt.close()
 
-    # reorient centerline to native orientation
-    im_centerline.change_orientation(native_orientation)
-
+    # Construct the outputs (still in RPI- orientation)
+    im_centerline = im_centerline
     arr_ctl = np.array([x_centerline_fit, y_centerline_fit, z_ref])
     arr_ctl_der = np.array([x_centerline_deriv, y_centerline_deriv, np.ones_like(z_ref)])
+
+    # Reorient the outputs back to the original orientation
+    im_centerline.change_orientation(native_orientation)
+    arr_ctl = arr_ctl          # FIXME: Coords not reoriented! Still in RPI! (#4622)
+    arr_ctl_der = arr_ctl_der  # FIXME: Coords not reoriented! Still in RPI! (#4622)
+
     # If 'phys' is specified, adjust centerline coordinates (`Centerline.points`) and
     # derivatives (`Centerline.derivatives`) to physical ("phys") space and native (`im_seg`) orientation.
     if space == 'phys':
