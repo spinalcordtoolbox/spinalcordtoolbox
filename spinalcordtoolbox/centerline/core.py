@@ -9,7 +9,7 @@ import os
 import logging
 import numpy as np
 
-from spinalcordtoolbox.image import Image, zeros_like, add_suffix
+from spinalcordtoolbox.image import Image, zeros_like, add_suffix, reorient_coordinates
 from spinalcordtoolbox.centerline import curve_fitting
 from spinalcordtoolbox.utils.fs import tmp_create
 
@@ -272,8 +272,9 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
     arr_ctl_der = np.array([x_centerline_deriv, y_centerline_deriv, np.ones_like(z_ref)])
 
     # Reorient the outputs back to the original orientation
+    # Note: We transpose here because we need to go from [x_list, y_list, z_list] to list[[x, y, z], ...], then back
     im_centerline.change_orientation(native_orientation)
-    arr_ctl = arr_ctl          # FIXME: Coords not reoriented! Still in RPI! (#4622)
+    arr_ctl = np.array(reorient_coordinates(arr_ctl.T, im_centerline, native_orientation)).T
     arr_ctl_der = arr_ctl_der  # FIXME: Coords not reoriented! Still in RPI! (#4622)
 
     # If 'phys' is specified, adjust centerline coordinates (`Centerline.points`) and
