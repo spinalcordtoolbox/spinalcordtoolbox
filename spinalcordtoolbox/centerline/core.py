@@ -84,7 +84,7 @@ def find_and_sort_coord(img):
     return np.array(sorted_avg).T
 
 
-def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files=1, space='pix'):
+def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files=1, space='pix', reorient_array=False):
     """
     Extract centerline from an image (using optic) or from a binary or weighted segmentation (using the center of mass).
 
@@ -93,6 +93,7 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
     :param verbose: int: verbose level
     :param remove_temp_files: int: Whether to remove temporary files. 0 = no, 1 = yes.
     :param space: string: Defining space and orientation in which to output Centerline information. 'pix' = pixel space / RPI, 'phys' = physical space /native.
+    :param reorient_array: bool: Whether to reorient the output centerline coordinate arrays back to the original orientation of im_seg.
     :return: im_centerline: Image: Centerline in discrete coordinate (int)
     :return: arr_centerline: 3x1 array: Centerline in continuous coordinate (float) for each slice in RPI orientation.
     :return: arr_centerline_deriv: 3x1 array: Derivatives of x and y centerline wrt. z for each slice in RPI orient.
@@ -267,22 +268,31 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
             plt.close()
 
     # Construct the outputs (still in RPI- orientation)
-    im_centerline = im_centerline
-    arr_ctl = np.array([x_centerline_fit, y_centerline_fit, z_ref])
-    arr_ctl_der = np.array([x_centerline_deriv, y_centerline_deriv, np.ones_like(z_ref)])
+    im_centerline_rpi = im_centerline
+    arr_ctl_rpi = np.array([x_centerline_fit, y_centerline_fit, z_ref])
+    arr_ctl_der_rpi = np.array([x_centerline_deriv, y_centerline_deriv, np.ones_like(z_ref)])
 
     # Reorient the outputs back to the original orientation
+    im_centerline = im_centerline_rpi.change_orientation(native_orientation)
+    # Only reorient the centerline coordinate arrays if opted-in.
+    # This **should** be on by default. However, we've been using the buggy behavior for so long that it's not clear what
+    # impact turning this on ill have on the rest of the codebase.
     # Note: We transpose here because we need to go from [x_list, y_list, z_list] to list[[x, y, z], ...], then back
-    im_centerline.change_orientation(native_orientation)
-    arr_ctl = np.array(reorient_coordinates(arr_ctl.T, im_centerline, native_orientation, mode='absolute')).T
-    arr_ctl_der = np.array(reorient_coordinates(arr_ctl_der.T, im_centerline, native_orientation, mode='relative')).T
+    if reorient_array:
+        arr_ctl = np.array(reorient_coordinates(arr_ctl_rpi.T, im_centerline, native_orientation, mode='absolute')).T
+        arr_ctl_der = np.array(reorient_coordinates(arr_ctl_der_rpi.T, im_centerline, native_orientation, mode='relative')).T
+    else:
+        arr_ctl = arr_ctl_rpi
+        arr_ctl_der = arr_ctl_der_rpi
 
     # If 'phys' is specified, adjust centerline coordinates (`Centerline.points`) and
     # derivatives (`Centerline.derivatives`) to physical ("phys") space and native (`im_seg`) orientation.
     if space == 'phys':
+        # Select the image to use for transforming the centerline coordinates (Note: Orientations MUST match)
+        im_transfo = im_centerline if reorient_array else im_centerline_rpi
         # Transform centerline to physical coordinate system
-        arr_ctl = im_centerline.transfo_pix2phys(arr_ctl.T, mode='absolute').T
-        arr_ctl_der = im_centerline.transfo_pix2phys(arr_ctl_der.T, mode='relative').T
+        arr_ctl = im_transfo.transfo_pix2phys(arr_ctl.T, mode='absolute').T
+        arr_ctl_der = im_transfo.transfo_pix2phys(arr_ctl_der.T, mode='relative').T
 
     # Save outputs
     if fname_ctr_temp:  # Preserve centerline image in tempdir for debugging purposes
