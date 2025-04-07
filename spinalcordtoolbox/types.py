@@ -66,7 +66,7 @@ class Coordinate:
     def __ne__(self, other):
         return not self.__eq__(other)
 
-    def permute(self, img_src, orient_dest):
+    def permute(self, img_src, orient_dest, mode='absolute'):
         """
         Permute coordinate based on source and destination orientation.
 
@@ -74,6 +74,9 @@ class Coordinate:
                          is currently in. The source orientation and the dimensions are pulled from
                          this image, which are used to permute/invert the coordinate.
         :param orient_dest: The orientation to output the new coordinate in.
+        :param mode: Determines how inversions are handled. If 'absolute', the coordinate is recomputed using
+                     a new origin based on the source image's maximum dimension for the inverted axes. If
+                     'relative', the coordinate is treated as vector and inverted by multiplying by -1.
         :return: numpy array with the new coordinates in the destination orientation.
 
         Example:
@@ -92,7 +95,11 @@ class Coordinate:
         # invert indices based on maximum dimension for each axis
         for i in range(3):
             if inversion[i] == -1:
-                coord_permute[i] = dim_permute[i] - coord_permute[i]
+                if mode == 'absolute':
+                    coord_permute[i] = dim_permute[i] - coord_permute[i]
+                else:
+                    assert mode == 'relative'
+                    coord_permute[i] = -1 * coord_permute[i]
         return coord_permute
 
     def __add__(self, other):

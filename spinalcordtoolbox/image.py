@@ -79,7 +79,7 @@ def rpi_slice_to_orig_orientation(dim, orig_orientation, slice_number, axis):
     return (dim[axis] - 1 - slice_number) if inversion[axis] == -1 else slice_number
 
 
-def reorient_coordinates(coords, img_src, orient_dest):
+def reorient_coordinates(coords, img_src, orient_dest, mode='absolute'):
     """
     Reorient coordinates from source image orientation to destination orientation.
 
@@ -88,10 +88,13 @@ def reorient_coordinates(coords, img_src, orient_dest):
                     is currently in. The source orientation and the dimensions are pulled from
                     this image, which are used to permute/invert the coordinate.
     :param orient_dest: The orientation to output the new coordinate in.
+    :param mode: Determines how inversions are handled. If 'absolute', the coordinate is recomputed using
+             a new origin based on the source image's maximum dimension for the inverted axes. If
+             'relative', the coordinate is treated as vector and inverted by multiplying by -1.
     :return: numpy array with the new coordinates in the destination orientation.
     """
 
-    return [Coordinate(list(coord)).permute(img_src, orient_dest) for coord in coords]
+    return [Coordinate(list(coord)).permute(img_src, orient_dest, mode) for coord in coords]
 
 
 class Slicer(object):

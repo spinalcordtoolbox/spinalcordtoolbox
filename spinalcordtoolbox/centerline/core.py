@@ -274,8 +274,8 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
     # Reorient the outputs back to the original orientation
     # Note: We transpose here because we need to go from [x_list, y_list, z_list] to list[[x, y, z], ...], then back
     im_centerline.change_orientation(native_orientation)
-    arr_ctl = np.array(reorient_coordinates(arr_ctl.T, im_centerline, native_orientation)).T
-    arr_ctl_der = arr_ctl_der  # FIXME: Coords not reoriented! Still in RPI! (#4622)
+    arr_ctl = np.array(reorient_coordinates(arr_ctl.T, im_centerline, native_orientation, mode='absolute')).T
+    arr_ctl_der = np.array(reorient_coordinates(arr_ctl_der.T, im_centerline, native_orientation, mode='relative')).T
 
     # If 'phys' is specified, adjust centerline coordinates (`Centerline.points`) and
     # derivatives (`Centerline.derivatives`) to physical ("phys") space and native (`im_seg`) orientation.
