@@ -268,7 +268,6 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
 
     # reorient centerline to native orientation
     im_centerline.change_orientation(native_orientation)
-    im_seg.change_orientation(native_orientation)
 
     arr_ctl = np.array([x_centerline_fit, y_centerline_fit, z_ref])
     arr_ctl_der = np.array([x_centerline_deriv, y_centerline_deriv, np.ones_like(z_ref)])
@@ -276,8 +275,8 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
     # derivatives (`Centerline.derivatives`) to physical ("phys") space and native (`im_seg`) orientation.
     if space == 'phys':
         # Transform centerline to physical coordinate system
-        arr_ctl = im_seg.transfo_pix2phys(arr_ctl.T, mode='absolute').T
-        arr_ctl_der = im_seg.transfo_pix2phys(arr_ctl_der.T, mode='relative').T
+        arr_ctl = im_centerline.transfo_pix2phys(arr_ctl.T, mode='absolute').T
+        arr_ctl_der = im_centerline.transfo_pix2phys(arr_ctl_der.T, mode='relative').T
 
     # Save outputs
     if fname_ctr_temp:  # Preserve centerline image in tempdir for debugging purposes
