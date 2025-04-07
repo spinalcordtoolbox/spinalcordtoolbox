@@ -2,6 +2,7 @@
 
 import atexit
 import logging
+import re
 import time
 from collections import namedtuple
 from typing import Callable
@@ -210,8 +211,14 @@ def test_memory_tracer(false_atexit, tmp_path):
     n_numbers = 1000000
     big_list = list(range(n_numbers))
 
+    # Wait for a bit so the memory profiler can sample at this point
+    time.sleep(.1)
+
     # Explicit delete the big list to ensure the reported peak was still measured correctly
     del big_list
+
+    # Wait another second for sampling
+    time.sleep(.1)
 
     # Calculate the minimum amount of memory this should have required, account for pointers as well;
     #   n ints
@@ -230,11 +237,22 @@ def test_memory_tracer(false_atexit, tmp_path):
     # Confirm the output file now exists
     assert out_path.exists()
 
-    # Confirm that the last line in the output file is the peak memory use
+    # Get some samples to ensure the file is formatted correctly
     with open(out_path, 'r') as fp:
+        first_line = fp.readline()
+        second_line = fp.readline()
         last_line = [x for x in fp.readlines()][-1]
 
-    assert "PEAK MEMORY USE" in last_line
+    # Confirm the first line matches out header
+    assert first_line == "Time (s)\tMemory (KiB)\n"
+
+    # Confirm the second line is formatted correctly
+    assert '\t' in second_line
+    # Pattern is looking for two floating point values with 3 decimal places, separated by a tab
+    assert re.match(r"\d{1,}\.\d{1,3}\t\d{1,}\.\d{1,3}", second_line)
+
+    # Confirm the last line is correct
+    assert "PEAK" in last_line
     recorded_mem_kib = float(last_line.split('; ')[-1].split(' ')[0])
     assert recorded_mem_kib > (min_n_bits / 1024)
 

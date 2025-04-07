@@ -4,6 +4,7 @@ import inspect
 import io
 import logging
 import pstats
+import threading
 import time
 import tracemalloc
 
@@ -143,11 +144,18 @@ class TimeProfilingAction(Action):
 
 
 # == Memory-based Profiling == #
+class RepeatCallTimer(threading.Timer):
+    # Stolen shamelessly from: https://stackoverflow.com/a/48741004
+    def run(self):
+        while not self.finished.wait(self.interval):
+            self.function(*self.args, **self.kwargs)
+
 class MemoryTracingManager:
 
-    default_output = Path('memory_tracer_results.txt')
+    default_output = Path('memory_tracer_results.tsv')
+    default_interval = .1
 
-    def __init__(self, out_file=None):
+    def __init__(self, out_file=None, interval=default_interval):
         # Initialize and enable the profiler
         tracemalloc.start()
 
@@ -160,7 +168,24 @@ class MemoryTracingManager:
         # Reset the file if it already exists
         if out_file.exists():
             out_file.unlink()
-            out_file.touch()
+
+        # Open a file stream, rather than cacheing, to reduce the impact the memory profiling will have on memory
+        self._open_output = open(out_file, 'w')
+
+        # Write a header for easy of use
+        self._open_output.write("Time (s)\tMemory (KiB)\n")
+
+        # Function to assess the current memory use
+        self._start_time = time.time()
+        def sample_memory():
+            current_mem, _ = tracemalloc.get_traced_memory()
+            current_kib = current_mem/1024
+            current_time = time.time() - self._start_time
+            self._open_output.write(f"{current_time:.3f}\t{current_kib:.3f}\n")
+
+        # Initiate a non-blocking Timer to periodically save the current memory state
+        self._mem_timer = RepeatCallTimer(interval, sample_memory)
+        self._mem_timer.start()
 
         # Ensure the profiler completes its runtime at program exit
         atexit.register(self._finish_tracing)
@@ -169,6 +194,8 @@ class MemoryTracingManager:
         # If the profiler is deleted explicitly, just clean up without reporting anything
         atexit.unregister(self._finish_tracing)
         tracemalloc.stop()
+        self._mem_timer.cancel()
+        self._open_output.close()
 
     def snapshot_memory(self, label: str):
         # Snapshot the current memory state
@@ -185,15 +212,20 @@ class MemoryTracingManager:
             fp.write('\n')
 
     def _finish_tracing(self):
-        # Get the peak memory consumed during the program, and save it
+        # End the non-blocking timer to prevent any race conditions
+        self._mem_timer.cancel()
+
+        # Get the peak memory consumed during the program
         _, traced_peak = tracemalloc.get_traced_memory()
 
-        # Finish profiling after sampler (as otherwise the peak is reset to 0)
+        # Finish profiling after sampling (as otherwise the peak is reset to 0)
         tracemalloc.stop()
 
         # Save the peak results to the output file
-        with open(self._output_file, 'a') as fp:
-            fp.write(f"PEAK MEMORY USE; {traced_peak / 1024:.3f} KiB")
+        self._open_output.write(f"PEAK; {traced_peak / 1024:.3f}")
+
+        # Close the file
+        self._open_output.close()
 
         # Report that the file was written, and where to
         logging.info(f"Saved memory tracing results to '{self._output_file.resolve()}'.")
@@ -230,7 +262,7 @@ def snapshot_memory():
 
 class MemoryTracingAction(Action):
     """
-    ArgParse action, which initialized the memory tracer when the argument is present.
+    ArgParse action, which initializes the memory tracer when the argument is present.
 
     The user can specify either the output directory or file, if they want the results saved somewhere specific.
     If not, the file will be saved in the current working directory (unless the 'const' is explicitly set otherwise)

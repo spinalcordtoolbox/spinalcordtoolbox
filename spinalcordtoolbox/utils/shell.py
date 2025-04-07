@@ -316,8 +316,9 @@ class SCTArgumentParser(argparse.ArgumentParser):
             metavar=Metavar.file,
             action=MemoryTracingAction,
             help="Enables memory tracing of the program, dumping the results to the specified file. "
-                 "If no file is specified, the results are placed into a 'memory_tracer_results.txt' document in the "
-                 "current directory."
+                 "If no file is specified, the results are placed into a 'memory_tracer_results.tsv' document in the "
+                 "current directory. Not that this WILL incur an overhead to runtime, as the profiler samples memory "
+                 "use within the program every tenth of a second."
         )
 
         # Return the arg_group to allow for chained operations
