@@ -129,9 +129,6 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
         # TODO: Fix below with reorientation of axes
         _, x_centerline_deriv = curve_fitting.polyfit_1d(z_centerline, x_centerline_fit, z_centerline, deg=param.degree)
         _, y_centerline_deriv = curve_fitting.polyfit_1d(z_centerline, y_centerline_fit, z_centerline, deg=param.degree)
-        # reorient centerline to native orientation
-        im_centerline.change_orientation(native_orientation)
-        im_seg.change_orientation(native_orientation)
         # rename 'z' variable to match the name used the 'non-optic' methods
         z_ref = z_centerline
         # Fit metrics aren't computed for 'optic`, so return 'None'
@@ -220,10 +217,6 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
             # You can check if the sum of the voxels is equal to 1 with:
             # np.apply_over_axes(np.sum, im_centerline.data, [0, 1]).flatten()
 
-        # reorient centerline to native orientation
-        im_centerline.change_orientation(native_orientation)
-        im_seg.change_orientation(native_orientation)
-
         # Compute fitting metrics
         fit_results = FitResults()
         fit_results.rmse = np.sqrt(np.mean((x_mean - x_centerline_fit[index_mean]) ** 2) * px +
@@ -272,6 +265,10 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
 
             plt.savefig('fig_centerline_' + datetime.now().strftime("%y%m%d-%H%M%S%f") + '_' + param.algo_fitting + '.png')
             plt.close()
+
+    # reorient centerline to native orientation
+    im_centerline.change_orientation(native_orientation)
+    im_seg.change_orientation(native_orientation)
 
     arr_ctl = np.array([x_centerline_fit, y_centerline_fit, z_ref])
     arr_ctl_der = np.array([x_centerline_deriv, y_centerline_deriv, np.ones_like(z_ref)])
