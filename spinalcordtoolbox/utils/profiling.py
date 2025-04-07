@@ -150,6 +150,7 @@ class RepeatCallTimer(threading.Timer):
         while not self.finished.wait(self.interval):
             self.function(*self.args, **self.kwargs)
 
+
 class MemoryTracingManager:
 
     default_output = Path('memory_tracer_results.tsv')
@@ -177,6 +178,7 @@ class MemoryTracingManager:
 
         # Function to assess the current memory use
         self._start_time = time.time()
+
         def sample_memory():
             current_mem, _ = tracemalloc.get_traced_memory()
             current_kib = current_mem/1024
