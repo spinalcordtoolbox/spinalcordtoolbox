@@ -97,10 +97,10 @@ im_ctl_zeroslice = [
 
 im_centerlines = [
     (dummy_centerline(size_arr=(41, 7, 9), subsampling=1, orientation='SAL'),
-     {'median': 0, 'rmse': 0.4, 'laplacian': 2},
+     {'median': 0, 'rmse': 0.4, 'laplacian': 2, 'norm': 3},
      {}),
     (dummy_centerline(size_arr=(41, 7, 9), pixdim=(0.5, 0.5, 10), subsampling=1, orientation='SAL'),
-     {'median': 0, 'rmse': 0.3, 'laplacian': 2},
+     {'median': 0, 'rmse': 0.3, 'laplacian': 2, 'norm': 3},
      {}),
     (dummy_centerline(size_arr=(9, 9, 9), subsampling=3),
      {'median': 0, 'rmse': 0.3, 'laplacian': 0.5, 'norm': 2},
@@ -118,7 +118,7 @@ im_centerlines = [
      {'median': 0, 'rmse': 0.8, 'laplacian': 70, 'norm': 14},
      {'exclude_nurbs': True}),
     (dummy_centerline(size_arr=(30, 20, 50), subsampling=3, dilate_ctl=2, orientation='AIL'),
-     {'median': 0, 'rmse': 0.25, 'laplacian': 0.2},
+     {'median': 0, 'rmse': 0.25, 'laplacian': 0.2, 'norm': 3},
      {}),
     (dummy_centerline(size_arr=(30, 20, 50), subsampling=5),
      {'median': 0, 'rmse': 0.3, 'laplacian': 0.5, 'norm': 3.6},
@@ -175,9 +175,7 @@ def test_get_centerline_polyfit(img_ctl, expected, params):
         img_sub, ParamCenterline(algo_fitting='polyfit', minmax=False), verbose=VERBOSE)
     assert np.median(find_and_sort_coord(img) - find_and_sort_coord(img_out)) == expected['median']
     assert np.max(np.absolute(np.diff(arr_deriv_out))) < expected['laplacian']
-    # check arr_out only if input orientation is RPI (because the output array is always in RPI)
-    if img.orientation == 'RPI':
-        assert np.linalg.norm(find_and_sort_coord(img) - arr_out) < expected['norm']
+    assert np.linalg.norm(find_and_sort_coord(img) - arr_out) < expected['norm']
 
 
 @pytest.mark.parametrize('img_ctl,expected,params', im_centerlines)
