@@ -80,6 +80,9 @@ def compute_shape(segmentation, angle_correction=True, centerline_path=None, par
         # compute the spinal cord centerline based on the spinal cord segmentation
         _, arr_ctl, arr_ctl_der, fit_results = get_centerline(im_centerline_r, param=param_centerline, verbose=verbose,
                                                               remove_temp_files=remove_temp_files)
+        # the third column of `arr_ctl` contains the integer slice numbers, and the first two
+        # columns of `arr_ctl_der` contain the x and y components of the centerline derivative
+        deriv = {int(z_ref): arr_ctl_der[:2, index] for index, z_ref in enumerate(arr_ctl[2])}
 
     # Loop across z and compute shape analysis
     for iz in sct_progress_bar(range(min_z_index, max_z_index + 1), unit='iter', unit_scale=False, desc="Compute shape analysis",
@@ -87,10 +90,14 @@ def compute_shape(segmentation, angle_correction=True, centerline_path=None, par
         # Extract 2D patch
         current_patch = im_segr.data[:, :, iz]
         if angle_correction:
+            try:
+                dx, dy = deriv[iz]
+            except KeyError:
+                raise ValueError(f"The provided angle correction centerline does not cover slice {iz} of "
+                                 "the input mask. Please supply a more extensive -angle-corr-centerline, "
+                                 "or set -angle-corr to 0.") from None
             # Extract tangent vector to the centerline (i.e. its derivative)
-            tangent_vect = np.array([arr_ctl_der[0][iz - min_z_index] * px,
-                                     arr_ctl_der[1][iz - min_z_index] * py,
-                                     pz])
+            tangent_vect = np.array([dx * px, dy * py, pz])
             # Normalize vector by its L2 norm
             tangent_vect = tangent_vect / np.linalg.norm(tangent_vect)
             # Compute the angle about AP axis between the centerline and the normal vector to the slice
