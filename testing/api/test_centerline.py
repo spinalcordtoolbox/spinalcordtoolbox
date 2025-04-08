@@ -168,7 +168,7 @@ def test_get_centerline_polyfit_minmax(img_ctl, expected):
 @pytest.mark.parametrize('img_ctl,expected,params', im_centerlines)
 def test_get_centerline_polyfit(img_ctl, expected, params):
     """Test centerline fitting using polyfit"""
-    if 'exclude_polyfit':
+    if params.get('exclude_polyfit', False):
         return
     img, img_sub = [img_ctl[0].copy(), img_ctl[1].copy()]
     img_out, arr_out, arr_deriv_out, fit_results = get_centerline(
@@ -204,7 +204,7 @@ def test_get_centerline_linear(img_ctl, expected, params):
 @pytest.mark.parametrize('img_ctl,expected,params', im_centerlines)
 def test_get_centerline_nurbs(img_ctl, expected, params):
     """Test centerline fitting using nurbs"""
-    if 'exclude_nurbs':
+    if params.get('exclude_nurbs', False):
         return
     img, img_sub = [img_ctl[0].copy(), img_ctl[1].copy()]
     img_out, arr_out, arr_deriv_out, fit_results = get_centerline(
