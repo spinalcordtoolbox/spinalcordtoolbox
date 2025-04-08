@@ -153,25 +153,29 @@ class RepeatCallTimer(threading.Timer):
 
 class MemoryTracingManager:
 
-    default_output = Path('memory_tracer_results.txt')
+    time_file = Path('memory_across_time.tsv')
+    snapshot_file = Path('memory_snapshots.txt')
     default_interval = .1
 
-    def __init__(self, out_file=None, interval=default_interval):
+    def __init__(self, out_path=Path('.'), interval=default_interval):
         # Initialize and enable the profiler
         tracemalloc.start()
 
-        # Track the output file, if it was provided
-        if out_file is not None:
-            self._output_file = out_file
-        else:
-            self._output_file = self.default_output
+        # Generate the requested output directory
+        out_path.mkdir(parents=True, exist_ok=True)
 
-        # Reset the file if it already exists
-        if out_file.exists():
-            out_file.unlink()
+        # Track the output file destinations
+        self._timed_outputs = out_path / self.time_file
+        self._snapshot_outputs = out_path / self.snapshot_file
 
-        # Open a file stream, rather than cacheing, to reduce the impact the memory profiling will have on memory
-        self._open_output = open(out_file, 'w')
+        # Reset the files if they already exist
+        if self._timed_outputs.exists():
+            self._timed_outputs.unlink()
+        if self._snapshot_outputs.exists():
+            self._snapshot_outputs.unlink()
+
+        # Open a file stream for timings, rather than cacheing, to reduce the impact the profiling will have on memory
+        self._open_output = open(self._timed_outputs, 'x')
 
         # Write a header for easy of use
         self._open_output.write("Time (s)\tMemory (KiB)\n")
@@ -199,18 +203,23 @@ class MemoryTracingManager:
         self._mem_timer.cancel()
         self._open_output.close()
 
-    def snapshot_memory(self, label: str):
+    def snapshot_memory(self, caller) -> Path:
         # Snapshot the current memory state
         mem_snapshot = tracemalloc.take_snapshot()
         mem_stats = mem_snapshot.statistics('lineno', cumulative=True)
 
         # Generate the header for this output
-        header = f"=== {label} ===\n"
+        header = f"=== {caller.function} ({Path(caller.filename).name}, line {caller.lineno}) ===\n"
 
-        # Save the stats to file with this header
-        self._open_output.write(header)
-        self._open_output.writelines([str(x) + '\n' for x in mem_stats])
-        self._open_output.write('\n')
+        # Creat the initial file if it doesn't already exist
+        if not self._snapshot_outputs.exists():
+            self._snapshot_outputs.touch()
+
+        # Save the snapshot
+        with open(self._snapshot_outputs, 'a') as fp:
+            fp.write(header)
+            fp.writelines([str(x) + '\n' for x in mem_stats])
+            fp.write('\n')
 
     def _finish_tracing(self):
         # End the non-blocking timer to prevent any race conditions
@@ -229,7 +238,7 @@ class MemoryTracingManager:
         self._open_output.close()
 
         # Report that the file was written, and where to
-        logging.info(f"Saved memory tracing results to '{self._output_file.resolve()}'.")
+        logging.info(f"Saved memory tracing results to '{self._timed_outputs.resolve()}'.")
 
 
 def begin_tracing_memory(out_path: Path = None):
@@ -254,11 +263,10 @@ def snapshot_memory():
 
     # Get the calling function
     caller = inspect.stack()[1]
-    calling_id = f"{caller.function} ({Path(caller.filename).name}, line {caller.lineno})"
 
-    # Snapshot the current memory state, saving it to file immediately
+    # Snapshot the current memory state, saving it to file immediately and
     # noinspection PyUnresolvedReferences
-    MEMORY_TRACER.snapshot_memory(calling_id)
+    MEMORY_TRACER.snapshot_memory(caller)
 
 
 class MemoryTracingAction(Action):
@@ -275,7 +283,7 @@ class MemoryTracingAction(Action):
 
         # If no value as provided, set the output path to be in the current directory
         if values is None:
-            out_path = MemoryTracingManager.default_output
+            out_path = MemoryTracingManager.time_file
         else:
             # Otherwise, try to get the path associated with this parameter, and confirm its root exists
             out_path = Path(values)
@@ -283,7 +291,7 @@ class MemoryTracingAction(Action):
         # Check to see if the file exists and is a directory
         if out_path.exists() and out_path.is_dir():
             # If so, set the result to be saved to our default file output
-            out_path /= MemoryTracingManager.default_output
+            out_path /= MemoryTracingManager.time_file
 
         # Finally, initiate the memory tracer, designating it's output file to be the user specified one
         begin_tracing_memory(out_path)

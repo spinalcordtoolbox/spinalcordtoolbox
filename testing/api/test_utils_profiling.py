@@ -199,10 +199,11 @@ def test_cli_time_profiling(false_atexit, tmp_path):
 
 def test_memory_tracer(false_atexit, tmp_path):
     # Generate a path we want to save the results too
-    out_path = tmp_path / "pytest_memory_traced.txt"
+    out_path = tmp_path / "pytest_memory_traced"
+    out_file = out_path / profiling.MemoryTracingManager.time_file
 
     # For sanity's sake, ensure the file does not already exist yet
-    assert not out_path.exists()
+    assert not out_file.exists()
 
     # Initiate memory tracing directly
     profiling.begin_tracing_memory(out_path)
@@ -238,10 +239,10 @@ def test_memory_tracer(false_atexit, tmp_path):
     assert not tracemalloc.is_tracing()
 
     # Confirm the output file now exists
-    assert out_path.exists()
+    assert out_file.exists()
 
     # Get some samples to ensure the file is formatted correctly
-    with open(out_path, 'r') as fp:
+    with open(out_file, 'r') as fp:
         first_line = fp.readline()
         second_line = fp.readline()
         last_line = [x for x in fp.readlines()][-1]
@@ -262,13 +263,17 @@ def test_memory_tracer(false_atexit, tmp_path):
 
 def test_memory_snapshot(false_atexit, tmp_path):
     # Generate a path we want to save the results too
-    out_path = tmp_path / "pytest_memory_snapshot.txt"
+    out_path = tmp_path / "pytest_memory_snapshot"
+    out_file = out_path / profiling.MemoryTracingManager.snapshot_file
 
     # For sanity's sake, ensure the file does not already exist yet
-    assert not out_path.exists()
+    assert not out_file.exists()
 
     # Initiate memory tracing directly
     profiling.begin_tracing_memory(out_path)
+
+    # Confirm that no snapshot file exists yet
+    assert not out_file.exists()
 
     # Generate a gigantic list with a ton of integers (which are each 16 bits, or one byte)
     n_numbers = 1000000
@@ -277,28 +282,26 @@ def test_memory_snapshot(false_atexit, tmp_path):
     # Snapshot the memory, which should update the output
     profiling.snapshot_memory()
 
+    # Confirm that the memory tracer saved a snapshot
+    assert out_file.exists()
+
     # "End" the program
     false_atexit()
 
-    # Confirm that the memory tracer saved the snapshot correctly
-    found_snapshot = False
-    with open(out_path, 'r') as fp:
-        # See if any line has our snapshot header; which line can change from run to run, unfortunately
-        for l in fp.readlines():
-            # We don't test for the exact line, as it is prone to being changed
-            print(l)
-            if "test_memory_snapshot (test_utils_profiling.py, line " in l:
-                found_snapshot = True
-                break
-
-    if not found_snapshot:
-        pytest.fail("No snapshot was captured during the test, despite a snapshot call being made!")
-
+    # Confirm the header was saved correctly
+    with open(out_file, 'r') as fp:
+        # We only made one snapshot, so the first line should have out header
+        first_line = fp.readline()
+        assert "test_memory_snapshot (test_utils_profiling.py, line " in first_line
 
 
 def test_cli_memory_tracer(false_atexit, tmp_path):
     # Generate a path we want to save the results too
-    out_path = tmp_path / "pytest_memory_traced.txt"
+    out_path = tmp_path / "pytest_memory_traced"
+    out_file = out_path / profiling.MemoryTracingManager.time_file
+
+    # Confirm that no timings exist yet
+    assert not out_file.exists()
 
     # Generate a "dummy" parser with the common command-line arguments
     dummy_parser = SCTArgumentParser(
@@ -314,4 +317,4 @@ def test_cli_memory_tracer(false_atexit, tmp_path):
 
     # Confirm that it writes a file on exit, but not before
     false_atexit()
-    assert out_path.exists()
+    assert out_file.exists()

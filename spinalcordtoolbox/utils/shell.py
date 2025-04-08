@@ -315,10 +315,13 @@ class SCTArgumentParser(argparse.ArgumentParser):
             nargs='?',
             metavar=Metavar.file,
             action=MemoryTracingAction,
-            help="Enables memory tracing of the program, dumping the results to the specified file. "
-                 "If no file is specified, the results are placed into a 'memory_tracer_results.tsv' document in the "
-                 "current directory. Not that this WILL incur an overhead to runtime, as the profiler samples memory "
-                 "use within the program every tenth of a second."
+            help="Enables memory tracing of the program, dumping the results to the specified directory. "
+                 "If no directory is specified, the results are placed into the current directory."
+                 "When active, two files can be produced: `memory_across_time.tsv`, which tracks the memory used "
+                 "over time in the program (sampled every 10th of a second), and `memory_snapshots.txt`, which tracks "
+                 "the memory trace at any point within the program which has a `snapshot_memory` call."
+                 "Note that this WILL incur an overhead to runtime, so it is generally advised that you do not run "
+                 "this in conjunction with the time profiler."
         )
 
         # Return the arg_group to allow for chained operations
