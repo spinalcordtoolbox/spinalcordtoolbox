@@ -276,7 +276,7 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
     im_centerline = im_centerline_rpi.change_orientation(native_orientation)
     # Only reorient the centerline coordinate arrays if opted-in.
     # This **should** be on by default. However, we've been using the buggy behavior for so long that it's not clear what
-    # impact turning this on ill have on the rest of the codebase.
+    # impact turning this on will have on the rest of the codebase.
     # Note: We transpose here because we need to go from [x_list, y_list, z_list] to list[[x, y, z], ...], then back
     if reorient_array:
         arr_ctl = np.array(reorient_coordinates(arr_ctl_rpi.T, im_centerline, native_orientation, mode='absolute')).T
