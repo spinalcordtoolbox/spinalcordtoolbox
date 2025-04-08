@@ -153,7 +153,7 @@ class RepeatCallTimer(threading.Timer):
 
 class MemoryTracingManager:
 
-    default_output = Path('memory_tracer_results.tsv')
+    default_output = Path('memory_tracer_results.txt')
     default_interval = .1
 
     def __init__(self, out_file=None, interval=default_interval):
@@ -208,10 +208,9 @@ class MemoryTracingManager:
         header = f"=== {label} ===\n"
 
         # Save the stats to file with this header
-        with open(self._output_file, 'a') as fp:
-            fp.write(header)
-            fp.writelines([str(x) + '\n' for x in mem_stats])
-            fp.write('\n')
+        self._open_output.write(header)
+        self._open_output.writelines([str(x) + '\n' for x in mem_stats])
+        self._open_output.write('\n')
 
     def _finish_tracing(self):
         # End the non-blocking timer to prevent any race conditions

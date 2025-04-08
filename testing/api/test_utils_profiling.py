@@ -281,10 +281,19 @@ def test_memory_snapshot(false_atexit, tmp_path):
     false_atexit()
 
     # Confirm that the memory tracer saved the snapshot correctly
+    found_snapshot = False
     with open(out_path, 'r') as fp:
-        first_line = fp.readline()
-        # We don't test for the exact line, as it is prone to being changed
-        assert "test_memory_snapshot (test_utils_profiling.py, line " in first_line
+        # See if any line has our snapshot header; which line can change from run to run, unfortunately
+        for l in fp.readlines():
+            # We don't test for the exact line, as it is prone to being changed
+            print(l)
+            if "test_memory_snapshot (test_utils_profiling.py, line " in l:
+                found_snapshot = True
+                break
+
+    if not found_snapshot:
+        pytest.fail("No snapshot was captured during the test, despite a snapshot call being made!")
+
 
 
 def test_cli_memory_tracer(false_atexit, tmp_path):
