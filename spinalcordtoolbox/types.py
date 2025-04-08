@@ -97,9 +97,11 @@ class Coordinate:
             if inversion[i] == -1:
                 if mode == 'absolute':
                     coord_permute[i] = (dim_permute[i] - 1) - coord_permute[i]
-                else:
-                    assert mode == 'relative'
+                elif mode == 'relative':
                     coord_permute[i] = -1 * coord_permute[i]
+                else:
+                    raise ValueError(f"Permutations can be 'absolute' or 'relative', but a '{mode}' permutation was "
+                                     f"requested instead.")
         return coord_permute
 
     def __add__(self, other):
