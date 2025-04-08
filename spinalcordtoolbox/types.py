@@ -96,7 +96,7 @@ class Coordinate:
         for i in range(3):
             if inversion[i] == -1:
                 if mode == 'absolute':
-                    coord_permute[i] = dim_permute[i] - coord_permute[i]
+                    coord_permute[i] = (dim_permute[i] - 1) - coord_permute[i]
                 else:
                     assert mode == 'relative'
                     coord_permute[i] = -1 * coord_permute[i]
