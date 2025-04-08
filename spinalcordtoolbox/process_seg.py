@@ -98,8 +98,6 @@ def compute_shape(segmentation, angle_correction=True, centerline_path=None, par
                                  "or set -angle-corr to 0.") from None
             # Extract tangent vector to the centerline (i.e. its derivative)
             tangent_vect = np.array([dx * px, dy * py, pz])
-            # Normalize vector by its L2 norm
-            tangent_vect = tangent_vect / np.linalg.norm(tangent_vect)
             # Compute the angle about AP axis between the centerline and the normal vector to the slice
             angle_AP_rad = math.atan2(tangent_vect[0], tangent_vect[2])
             # Compute the angle about RL axis between the centerline and the normal vector to the slice
