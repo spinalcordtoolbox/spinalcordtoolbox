@@ -555,13 +555,13 @@ def main(argv: Sequence[str]):
     # Fetch the subfolder that contains the "sub-{site}_{contrast}_PAM50.csv" files
     path_ref_hc = next((folder for (folder, _, filenames) in os.walk(path_ref)
                         if any((f.startswith('sub-') and f.endswith('.csv')) for f in filenames)), None)
-    if arguments.normalize_hc and not path_ref_hc:
-        raise FileNotFoundError(f"Directory with normalized PAM50 metrics {path_ref} does not contain any CSV files.\n"
-                                f"You can try re-downloading it using 'sct_download_data -d PAM50_normalized_metrics'.")
     # Check if path_ref with normalized metrics exists
     if arguments.normalize_hc and not os.path.isdir(path_ref):
         raise FileNotFoundError(f"Directory with normalized PAM50 metrics {path_ref} does not exist.\n"
                                 f"You can download it using 'sct_download_data -d PAM50_normalized_metrics'.")
+    if arguments.normalize_hc and not path_ref_hc:
+        raise FileNotFoundError(f"Directory with normalized PAM50 metrics {path_ref} does not contain any CSV files.\n"
+                                f"You can try re-downloading it using 'sct_download_data -d PAM50_normalized_metrics'.")
 
     # Print warning if sex or age are specified without normalized-hc
     if sex and not arguments.normalize_hc:
