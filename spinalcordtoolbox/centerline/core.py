@@ -271,15 +271,15 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
     arr_ctl_rpi = np.array([x_centerline_fit, y_centerline_fit, z_ref])
     arr_ctl_der_rpi = np.array([x_centerline_deriv, y_centerline_deriv, np.ones_like(z_ref)])
 
-    # Reorient the outputs back to the original orientation
-    im_centerline = im_centerline_rpi.change_orientation(native_orientation)
+    # Reorient the outputs back to the original orientation (copy to avoid mutating `im_centerline_rpi`)
+    im_centerline = im_centerline_rpi.copy().change_orientation(native_orientation)
     # Only reorient the centerline coordinate arrays if opted-in.
     # This **should** be on by default. However, we've been using the buggy behavior for so long that it's not clear what
     # impact turning this on will have on the rest of the codebase.
     # Note: We transpose here because we need to go from [x_list, y_list, z_list] to list[[x, y, z], ...], then back
     if reorient_array:
-        arr_ctl = np.array(reorient_coordinates(arr_ctl_rpi.T, im_centerline, native_orientation, mode='absolute')).T
-        arr_ctl_der = np.array(reorient_coordinates(arr_ctl_der_rpi.T, im_centerline, native_orientation, mode='relative')).T
+        arr_ctl = np.array(reorient_coordinates(arr_ctl_rpi.T, im_centerline_rpi, native_orientation, mode='absolute')).T
+        arr_ctl_der = np.array(reorient_coordinates(arr_ctl_der_rpi.T, im_centerline_rpi, native_orientation, mode='relative')).T
     else:
         arr_ctl = arr_ctl_rpi
         arr_ctl_der = arr_ctl_der_rpi
