@@ -127,7 +127,6 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
         im_centerline = optic.detect_centerline(im_seg, param.contrast, remove_temp_files)
         x_centerline_fit, y_centerline_fit, z_centerline = find_and_sort_coord(im_centerline)
         # Compute derivatives using polynomial fit
-        # TODO: Fix below with reorientation of axes
         _, x_centerline_deriv = curve_fitting.polyfit_1d(z_centerline, x_centerline_fit, z_centerline, deg=param.degree)
         _, y_centerline_deriv = curve_fitting.polyfit_1d(z_centerline, y_centerline_fit, z_centerline, deg=param.degree)
         # rename 'z' variable to match the name used the 'non-optic' methods
