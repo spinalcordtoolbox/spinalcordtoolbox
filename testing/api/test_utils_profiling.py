@@ -49,14 +49,17 @@ def cleanup_globals():
     yield
 
     # Once the fixture is done being "used", clean up the global space
-    del profiling.GLOBAL_TIMER
-    profiling.GLOBAL_TIMER = None
+    if profiling.GLOBAL_TIMER is not None:
+        profiling.GLOBAL_TIMER.__del__()
+        profiling.GLOBAL_TIMER = None
 
-    del profiling.TIME_PROFILER
-    profiling.TIME_PROFILER = None
+    if profiling.TIME_PROFILER is not None:
+        profiling.TIME_PROFILER.__del__()
+        profiling.TIME_PROFILER = None
 
-    del profiling.MEMORY_TRACER
-    profiling.MEMORY_TRACER = None
+    if profiling.MEMORY_TRACER is not None:
+        profiling.MEMORY_TRACER.__del__()
+        profiling.MEMORY_TRACER = None
 
 
 def test_timeit(false_atexit, caplog):
