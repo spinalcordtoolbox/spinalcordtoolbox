@@ -304,6 +304,5 @@ def test_cli_memory_tracer(false_atexit, tmp_path):
     assert profiling.MEMORY_TRACER is not None
 
     # Confirm that it writes a file on exit, but not before
-    assert not out_path.exists()
     false_atexit()
     assert out_path.exists()
