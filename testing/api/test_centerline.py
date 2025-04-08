@@ -172,10 +172,14 @@ def test_get_centerline_polyfit(img_ctl, expected, params):
         return
     img, img_sub = [img_ctl[0].copy(), img_ctl[1].copy()]
     img_out, arr_out, arr_deriv_out, fit_results = get_centerline(
-        img_sub, ParamCenterline(algo_fitting='polyfit', minmax=False), verbose=VERBOSE)
+        img_sub, ParamCenterline(algo_fitting='polyfit', minmax=False), verbose=VERBOSE, reorient_array=True)
     assert np.median(find_and_sort_coord(img) - find_and_sort_coord(img_out)) == expected['median']
     assert np.max(np.absolute(np.diff(arr_deriv_out))) < expected['laplacian']
-    assert np.linalg.norm(find_and_sort_coord(img) - arr_out) < expected['norm']
+    # sort `arr_out` to match the sorting from `find_and_sort_coord`
+    dim_si = [img.orientation.find(x) for x in ['I', 'S'] if img.orientation.find(x) != -1][0]
+    sort_indices = np.argsort(arr_out[dim_si])
+    arr_out_sorted = arr_out[:, sort_indices]
+    assert np.linalg.norm(find_and_sort_coord(img) - arr_out_sorted) < expected['norm']
 
 
 @pytest.mark.parametrize('img_ctl,expected,params', im_centerlines)
