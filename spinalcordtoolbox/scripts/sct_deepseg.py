@@ -95,6 +95,11 @@ def get_parser(subparser_to_return=None):
         action='store_true',
         help="Display a list of tasks, along with detailed descriptions (including information on how the model was "
              "trained, what data it was trained on, any performance evaluations, associated papers, etc.)")
+    optional.add_argument(
+        "-h", "--help",
+        action="help",
+        help="Show this help message and exit."
+    )
 
     # Initialize the `subparsers` "special action object" that can be used to create subparsers
     # See https://docs.python.org/3/library/argparse.html#sub-commands for more details.
