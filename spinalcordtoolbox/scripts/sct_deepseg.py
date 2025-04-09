@@ -91,10 +91,10 @@ def get_parser(subparser_to_return=None):
 
     optional = parser.optional_arggroup
     optional.add_argument(
-        "-list-tasks",
+        "-task-details",
         action='store_true',
         help="Display a list of tasks, along with detailed descriptions (including information on how the model was "
-             "trained, what data it was trained on, any performance evaluations, associated papers, etc.)")
+             "trained, what data it was trained on, and any performance evaluations, associated papers, etc. it may have)")
     optional.add_argument(
         "-h", "--help",
         action="help",
