@@ -96,9 +96,6 @@ def get_parser(subparser_to_return=None):
         help="Display a list of tasks, along with detailed descriptions (including information on how the model was "
              "trained, what data it was trained on, any performance evaluations, associated papers, etc.)")
 
-    # Add some universal arguments and their associated functionality
-    parser.add_common_args()
-
     # Initialize the `subparsers` "special action object" that can be used to create subparsers
     # See https://docs.python.org/3/library/argparse.html#sub-commands for more details.
     parser_dict = {}
