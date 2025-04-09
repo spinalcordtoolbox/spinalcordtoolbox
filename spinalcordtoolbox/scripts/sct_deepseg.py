@@ -51,7 +51,7 @@ class _TaskDeprecationAction(Action):
             dest=dest,
             default=default,
             nargs='?',
-            metavar='<task-name>',
+            metavar='TASK',
             help=help)
 
     def __call__(self, parser, namespace, values, option_string=None):
@@ -106,10 +106,10 @@ def get_parser(subparser_to_return=None):
     parser_dict = {}
     subparsers = parser.add_subparsers(help=dedent("""
         Segmentation task to perform.
-            - To install a task, run `sct_deepseg TASK_NAME -install`
-            - To segment an image, run `sct_deepseg TASK_NAME -i input.nii.gz`
-            - To view additional options for a given task, run `sct_deepseg TASK_NAME -h`
-    """), metavar="TASK_NAME", dest="task")
+            - To install a task, run `sct_deepseg TASK -install`
+            - To segment an image, run `sct_deepseg TASK -i input.nii.gz`
+            - To view additional options for a given task, run `sct_deepseg TASK -h`
+    """), metavar="TASK", dest="task")
 
     # Generate 1 subparser per task, and add the following arguments to all subparsers
     # Even if all subparsers share these arguments, it's better to duplicate them, since it allows for the usage:
