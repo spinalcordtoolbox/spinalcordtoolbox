@@ -218,9 +218,7 @@ def main(argv: Sequence[str]):
                                                          param=param_centerline,
                                                          space=arguments.space,
                                                          verbose=verbose,
-                                                         remove_temp_files=arguments.r,
-                                                         # Make sure output CSV matches the original orientation
-                                                         reorient_array=True)
+                                                         remove_temp_files=arguments.r)
 
     # save centerline as nifti (discrete) and csv (continuous) files
     im_centerline.save(file_output)

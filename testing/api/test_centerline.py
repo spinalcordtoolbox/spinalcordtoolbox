@@ -172,7 +172,7 @@ def test_get_centerline_polyfit(img_ctl, expected, params):
         return
     img, img_sub = [img_ctl[0].copy(), img_ctl[1].copy()]
     img_out, arr_out, arr_deriv_out, fit_results = get_centerline(
-        img_sub, ParamCenterline(algo_fitting='polyfit', minmax=False), verbose=VERBOSE, reorient_array=True)
+        img_sub, ParamCenterline(algo_fitting='polyfit', minmax=False), verbose=VERBOSE)
     assert np.median(find_and_sort_coord(img) - find_and_sort_coord(img_out)) == expected['median']
     assert np.max(np.absolute(np.diff(arr_deriv_out))) < expected['laplacian']
     # sort `arr_out` to match the sorting from `find_and_sort_coord`
