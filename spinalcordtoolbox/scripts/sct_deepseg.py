@@ -61,15 +61,15 @@ class _TaskDeprecationAction(Action):
 
         # Print out an informative message for the user to help them transition to the new task
         printv(dedent(f"""
-        The '-task' flag has been deprecated as of SCT version 7.0. 
+        The '-task' flag has been deprecated as of SCT version 7.0.
         To resolve this, change your command from this:
-        
+
         > sct_deepseg -task {values} ...
-        
+
         To this:
-        
+
         > sct_deepseg {values} ...
-        """[1:])) # noqa: E501 (line too long)
+        """[1:]))  # noqa: E501 (line too long)
         #   ^ This removes the implicit newline that `dedent` likes to add
 
         # Stop parsing immediately
@@ -116,15 +116,15 @@ def get_parser(subparser_to_return=None):
         optional_ref = (f"{task_dict['citation']}\n\n" if task_dict['citation'] else "")
         subparser = parser_dict[task_name] = subparsers.add_parser(task_name, description=(dedent(f"""
             {task_dict["description"]}
-            
+
             {task_dict["long_description"]}
-            
+
             ## Reference
-            
+
             {optional_ref}Project URL: [{task_dict["url"]}]({task_dict["url"]})
-            
+
             ## Usage
-            
+
         """)))
 
         input_output = subparser.add_argument_group("\nINPUT/OUTPUT")
