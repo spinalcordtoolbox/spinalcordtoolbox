@@ -254,16 +254,18 @@ for task in models.TASKS.keys():
 def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
-    verbose = arguments.v
-    set_loglevel(verbose=verbose, caller_module_name=__name__)
 
+    # If the user called the command without arguments, display our help w/ an additional instructive message
     if not (
-        arguments.list_tasks
+        hasattr(arguments, 'task_details')
         or (arguments.task and arguments.install)
         or (arguments.task and arguments.i)
     ):
         parser.error("You must specify either a task name + '-install', a task name + an image ('-i'), or "
-                     "'-list-tasks'.")
+                     "'-task-details'.")
+
+    verbose = arguments.v
+    set_loglevel(verbose=verbose, caller_module_name=__name__)
 
     # Deal with task long description
     if arguments.list_tasks:
