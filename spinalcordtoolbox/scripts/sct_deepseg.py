@@ -12,6 +12,7 @@
 # TODO: Fetch default value (and display) depending on the model that is used.
 # TODO: accommodate multiclass segmentation
 
+from argparse import SUPPRESS, Action
 import json
 import os
 import sys
@@ -34,11 +35,58 @@ models = LazyLoader("models", globals(), 'spinalcordtoolbox.deepseg.models')
 logger = logging.getLogger(__name__)
 
 
+class _TaskDeprecationAction(Action):
+    """
+    ArgParse action which, similar to help, terminates the program early if the user tries to use the old `-task`
+    syntax and prompts them to update their command with the new `deepseg task_name` syntax instead
+    """
+    def __init__(self,
+                 option_strings,
+                 dest=SUPPRESS,
+                 default=SUPPRESS,
+                 help=SUPPRESS):
+        # Slight modification of `_HelpAction` __init__, as this functions more-or-less identically
+        super(_TaskDeprecationAction, self).__init__(
+            option_strings=option_strings,
+            dest=dest,
+            default=default,
+            nargs='?',
+            metavar='<task-name>',
+            help=help)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        # If no task name was provided for some reason, use the metavar instead
+        if values is None:
+            values = self.metavar
+
+        # Print out an informative message for the user to help them transition to the new task
+        printv(dedent(f"""
+        The '-task' flag has been deprecated as of SCT version 7.0. 
+        To resolve this, change your command from this:
+        
+        > sct_deepseg -task {values} ...
+        
+        To this:
+        
+        > sct_deepseg {values} ...
+        """[1:])) # noqa: E501 (line too long)
+        #   ^ This removes the implicit newline that `dedent` likes to add
+
+        # Stop parsing immediately
+        parser.exit()
+
+
 def get_parser(subparser_to_return=None):
     # Initialize the top-level `sct_deepseg` argparser
     parser = SCTArgumentParser(
         description="Segment an anatomical structure or pathologies according to the specified deep learning model.",
         epilog=models.list_tasks_string()
+    )
+
+    # Hidden `-task` argument to help users transition to the command format
+    parser.add_argument(
+        "-task",
+        action=_TaskDeprecationAction
     )
 
     optional = parser.optional_arggroup
