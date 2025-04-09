@@ -163,8 +163,8 @@ def get_parser(subparser_to_return=None):
                  "https://github.com/ivadomed/model-spinal-rootlets/releases/download/r20240523/model-spinal-rootlets_ventral_D106_r20240523.zip`\n"
                  "`sct_deepseg rootlets_t2 -i sub-amu01_T2w.nii.gz`")
 
-        misc = subparser.add_argument_group('\nPARAMETERS')
-        misc.add_argument(
+        params = subparser.add_argument_group('\nPARAMETERS')
+        params.add_argument(
             "-thr",
             type=float,
             dest='binarize_prediction',
@@ -172,18 +172,18 @@ def get_parser(subparser_to_return=None):
                  "Default value is model-specific and was set during optimization "
                  "(more info at https://github.com/sct-pipeline/deepseg-threshold).",
             metavar=Metavar.float)
-        misc.add_argument(
+        params.add_argument(
             "-largest",
             dest='keep_largest',
             type=int,
             help="Keep the largest connected-objects from the output segmentation. Specify the number of objects to keep."
                  "To keep all objects, set to 0")
-        misc.add_argument(
+        params.add_argument(
             "-fill-holes",
             type=int,
             help="Fill small holes in the segmentation.",
             choices=(0, 1))
-        misc.add_argument(
+        params.add_argument(
             "-remove-small",
             type=str,
             nargs="+",
