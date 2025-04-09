@@ -76,6 +76,32 @@ class _TaskDeprecationAction(Action):
         parser.exit()
 
 
+class _ListTaskDetailsAction(Action):
+    """
+    ArgParse action which, similar to help, terminates the program early if the user wants the tasks listed out for
+    them. Making this an action prevents some nasty side effects which might be caused by parsing other arguments.
+    """
+    def __init__(self,
+                 option_strings,
+                 dest=SUPPRESS,
+                 default=SUPPRESS,
+                 help=SUPPRESS):
+        # Slight modification of `_HelpAction` __init__, as this functions more-or-less identically
+        super(_ListTaskDetailsAction, self).__init__(
+            option_strings=option_strings,
+            dest=dest,
+            default=default,
+            nargs=0,
+            help=help)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        # Display the detailed task list
+        models.display_list_tasks()
+
+        # Stop parsing immediately
+        parser.exit()
+
+
 def get_parser(subparser_to_return=None):
     # Initialize the top-level `sct_deepseg` argparser
     parser = SCTArgumentParser(
@@ -92,7 +118,7 @@ def get_parser(subparser_to_return=None):
     optional = parser.optional_arggroup
     optional.add_argument(
         "-task-details",
-        action='store_true',
+        action=_ListTaskDetailsAction,
         help="Display a list of tasks, along with detailed descriptions (including information on how the model was "
              "trained, what data it was trained on, and any performance evaluations, associated papers, etc. it may have)")
     optional.add_argument(
@@ -266,11 +292,6 @@ def main(argv: Sequence[str]):
 
     verbose = arguments.v
     set_loglevel(verbose=verbose, caller_module_name=__name__)
-
-    # Deal with task long description
-    if arguments.list_tasks:
-        models.display_list_tasks()
-        exit(0)
 
     if arguments.install:
         models_to_install = models.TASKS[arguments.task]['models']
