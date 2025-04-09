@@ -92,10 +92,14 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
     :param param: ParamCenterline() class:
     :param verbose: int: verbose level
     :param remove_temp_files: int: Whether to remove temporary files. 0 = no, 1 = yes.
-    :param space: string: Defining space and orientation in which to output Centerline information. 'pix' = pixel space / RPI, 'phys' = physical space /native.
+    :param space: string: Defines the coordinate space in which to output Centerline arrays (`arr_*`).
+                          (NOTE: This parameter has no bearing on the orientation of the output coordinates.)
+                             - `space='pix'`: The coordinates are in pixel space, and the orientation is the same as the input image.
+                             - `space='phys'`: The coordinates are in physical (scanner) space, and the orientation will be RAS+, as
+                                               defined by the affine matrix transformation according to the NIFTI spec.
     :return: im_centerline: Image: Centerline in discrete coordinate (int)
-    :return: arr_centerline: 3x1 array: Centerline in continuous coordinate (float) for each slice in RPI orientation.
-    :return: arr_centerline_deriv: 3x1 array: Derivatives of x and y centerline wrt. z for each slice in RPI orient.
+    :return: arr_centerline: 3x1 array: Centerline in continuous coordinate (float) for each slice.
+    :return: arr_centerline_deriv: 3x1 array: Derivatives of x and y centerline wrt. z for each slice.
     :return: fit_results: FitResults class
     """
     if not isinstance(im_seg, Image):
