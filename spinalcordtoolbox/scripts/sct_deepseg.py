@@ -17,7 +17,7 @@ import os
 import sys
 import logging
 from typing import Sequence
-import textwrap
+from textwrap import dedent
 import functools
 
 from spinalcordtoolbox.reports import qc2
@@ -54,7 +54,7 @@ def get_parser(subparser_to_return=None):
     # Initialize the `subparsers` "special action object" that can be used to create subparsers
     # See https://docs.python.org/3/library/argparse.html#sub-commands for more details.
     parser_dict = {}
-    subparsers = parser.add_subparsers(help=textwrap.dedent("""
+    subparsers = parser.add_subparsers(help=dedent("""
         Segmentation task to perform.
             - To install a task, run `sct_deepseg TASK_NAME -install`
             - To segment an image, run `sct_deepseg TASK_NAME -i input.nii.gz`
@@ -69,18 +69,18 @@ def get_parser(subparser_to_return=None):
     #    `sct_deepseg -i input.nii.gz TASK_NAME`
     for task_name, task_dict in models.TASKS.items():
         optional_ref = (f"{task_dict['citation']}\n\n" if task_dict['citation'] else "")
-        subparser = parser_dict[task_name] = subparsers.add_parser(task_name, description=(f"""
-{task_dict["description"]}
-
-{task_dict["long_description"]}
-
-## Reference
-
-{optional_ref}Project URL: [{task_dict["url"]}]({task_dict["url"]})
-
-## Usage
-
-"""))
+        subparser = parser_dict[task_name] = subparsers.add_parser(task_name, description=(dedent(f"""
+            {task_dict["description"]}
+            
+            {task_dict["long_description"]}
+            
+            ## Reference
+            
+            {optional_ref}Project URL: [{task_dict["url"]}]({task_dict["url"]})
+            
+            ## Usage
+            
+        """)))
 
         input_output = subparser.add_argument_group("\nINPUT/OUTPUT")
         input_output.add_argument(
@@ -169,7 +169,7 @@ def get_parser(subparser_to_return=None):
         misc.add_argument(
             "-qc-seg",
             metavar=Metavar.file,
-            help=textwrap.dedent("""
+            help=dedent("""
                     Segmentation file to use for cropping the QC. This option is useful when you want to QC a region that is different from the output segmentation. For example, for lesion segmentation, it might be useful to provide a cord segmentation to expand the QC field of view to include the full cord, while also still excluding irrelevant tissue.
                     If not provided, the default behavior will depend on the `-qc-plane`:
                        - 'Axial': A sensibly chosen crop radius between 15-40 vox, depending on the resolution and segmentation type.
