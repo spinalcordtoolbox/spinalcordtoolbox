@@ -208,8 +208,10 @@ def get_parser(subparser_to_return=None):
         params.add_argument(
             "-fill-holes",
             type=int,
-            help="Fill small holes in the segmentation.",
-            choices=(0, 1))
+            choices=(0, 1),
+            default=0,
+            help="If set, small holes in the segmentation will be filled in automatically."
+        )
         params.add_argument(
             "-remove-small",
             type=str,
