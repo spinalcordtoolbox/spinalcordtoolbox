@@ -725,7 +725,7 @@ def list_tasks_string():
 
     table += 'To read in-depth descriptions of the training data, model architecture, '
     table += 'etc. used for these tasks, type the following command:\n\n'
-    table += '    {}'.format(stylize('sct_deepseg -list-tasks', ['LightBlue', 'Bold']))
+    table += '    {}'.format(stylize('sct_deepseg -task-details', ['LightBlue', 'Bold']))
     return table
 
 
