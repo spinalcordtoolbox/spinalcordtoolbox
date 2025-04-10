@@ -202,8 +202,9 @@ def get_parser(subparser_to_return=None):
             "-largest",
             dest='keep_largest',
             type=int,
-            help="Keep the largest connected-objects from the output segmentation. Specify the number of objects to keep."
-                 "To keep all objects, set to 0")
+            default=0,
+            choices=(0, 1),
+            help="Keep the largest connected object from each output segmentation; if not set, all objects are kept.")
         params.add_argument(
             "-fill-holes",
             type=int,
