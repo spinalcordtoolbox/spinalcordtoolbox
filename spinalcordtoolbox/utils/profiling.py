@@ -4,7 +4,6 @@ import inspect
 import io
 import logging
 import pstats
-import threading
 import time
 import tracemalloc
 
