@@ -694,21 +694,12 @@ def check_model_software_type(path_model):
         raise ValueError("Model type cannot be determined.")
 
 
-def list_tasks():
-    """
-    Display available tasks with description.
-    :return: dict: Tasks that are installed
-    """
-    return {name: value for name, value in TASKS.items()}
-
-
 def list_tasks_string():
-    tasks = list_tasks()
     # Display coloured output
     color = {True: 'LightGreen', False: 'LightRed'}
     table = f"{'TASK':<30s}{'DESCRIPTION':<50s}\n"
     table += f"{'-' * 80}\n"
-    for name_task, value in tasks.items():
+    for name_task, value in TASKS.items():
         path_models = [folder(name_model) for name_model in value['models']]
         path_models = [find_model_folder_paths(path) for path in path_models]
         are_models_valid = [is_valid(path_model) for path_model in path_models]
@@ -717,7 +708,7 @@ def list_tasks_string():
         description_status = stylize(value['description'].ljust(50),
                                      color[all(are_models_valid)])
 
-        table += "{}{}".format(task_status, description_status) + "\n"
+        table += f"{task_status}{description_status}\n"
 
     table += '\nLegend: {} | {}\n\n'.format(
             stylize("installed", color[True]),
@@ -730,7 +721,7 @@ def list_tasks_string():
 
 
 def display_list_tasks():
-    for name_task, value in list_tasks().items():
+    for name_task, value in TASKS.items():
         indent_len = len("LONG_DESCRIPTION: ")
         print("{}{}".format("TASK:".ljust(indent_len), stylize(name_task, 'Bold')))
 
