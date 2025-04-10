@@ -94,8 +94,8 @@ def compute_shape(segmentation, angle_correction=True, centerline_path=None, par
                 dx, dy = deriv[iz]
             except KeyError:
                 raise ValueError(f"The provided angle correction centerline does not cover slice {iz} of "
-                                 "the input mask. Please supply a more extensive -angle-corr-centerline, "
-                                 "or set -angle-corr to 0.") from None
+                                 "the input mask. Please supply a more extensive '-angle-corr-centerline', "
+                                 "or disable angle correction ('-angle-corr 0').") from None
             # Extract tangent vector to the centerline (i.e. its derivative)
             tangent_vect = np.array([dx * px, dy * py, pz])
             # Compute the angle about AP axis between the centerline and the normal vector to the slice
