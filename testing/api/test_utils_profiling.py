@@ -215,14 +215,8 @@ def test_memory_tracer(false_atexit, tmp_path):
     n_numbers = 1000000
     big_list = list(range(n_numbers))
 
-    # Wait for a bit so the memory profiler can sample at this point
-    time.sleep(.1)
-
     # Explicit delete the big list to ensure the reported peak was still measured correctly
     del big_list
-
-    # Wait another second for sampling
-    time.sleep(.1)
 
     # Calculate the minimum amount of memory this should have required, account for pointers as well;
     #   n ints
@@ -241,19 +235,9 @@ def test_memory_tracer(false_atexit, tmp_path):
     # Confirm the output file now exists
     assert out_file.exists()
 
-    # Get some samples to ensure the file is formatted correctly
+    # Get the last line in the file
     with open(out_file, 'r') as fp:
-        first_line = fp.readline()
-        second_line = fp.readline()
         last_line = [x for x in fp.readlines()][-1]
-
-    # Confirm the first line matches out header
-    assert first_line == "Time (s)\tMemory (KiB)\n"
-
-    # Confirm the second line is formatted correctly
-    assert '\t' in second_line
-    # Pattern is looking for two floating point values with 3 decimal places, separated by a tab
-    assert re.match(r"\d{1,}\.\d{1,3}\t\d{1,}\.\d{1,3}", second_line)
 
     # Confirm the last line is correct
     assert "PEAK" in last_line

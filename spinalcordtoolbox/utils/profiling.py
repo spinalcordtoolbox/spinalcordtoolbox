@@ -144,20 +144,12 @@ class TimeProfilingAction(Action):
 
 
 # == Memory-based Profiling == #
-class RepeatCallTimer(threading.Timer):
-    # Stolen shamelessly from: https://stackoverflow.com/a/48741004
-    def run(self):
-        while not self.finished.wait(self.interval):
-            self.function(*self.args, **self.kwargs)
-
-
 class MemoryTracingManager:
 
-    time_file = Path('memory_across_time.tsv')
+    time_file = Path('memory_across_time.txt')
     snapshot_file = Path('memory_snapshots.txt')
-    default_interval = .1
 
-    def __init__(self, out_path=Path('.'), interval=default_interval):
+    def __init__(self, out_path=Path('.')):
         # Initialize and enable the profiler
         tracemalloc.start()
 
@@ -174,24 +166,8 @@ class MemoryTracingManager:
         if self._snapshot_outputs.exists():
             self._snapshot_outputs.unlink()
 
-        # Open a file stream for timings, rather than cacheing, to reduce the impact the profiling will have on memory
-        self._open_output = open(self._timed_outputs, 'x')
-
-        # Write a header for easy of use
-        self._open_output.write("Time (s)\tMemory (KiB)\n")
-
         # Function to assess the current memory use
         self._start_time = time.time()
-
-        def sample_memory():
-            current_mem, _ = tracemalloc.get_traced_memory()
-            current_kib = current_mem/1024
-            current_time = time.time() - self._start_time
-            self._open_output.write(f"{current_time:.3f}\t{current_kib:.3f}\n")
-
-        # Initiate a non-blocking Timer to periodically save the current memory state
-        self._mem_timer = RepeatCallTimer(interval, sample_memory)
-        self._mem_timer.start()
 
         # Ensure the profiler completes its runtime at program exit
         atexit.register(self._finish_tracing)
@@ -200,8 +176,6 @@ class MemoryTracingManager:
         # If the profiler is deleted explicitly, just clean up without reporting anything
         atexit.unregister(self._finish_tracing)
         tracemalloc.stop()
-        self._mem_timer.cancel()
-        self._open_output.close()
 
     def snapshot_memory(self, caller) -> Path:
         # Snapshot the current memory state
@@ -222,9 +196,6 @@ class MemoryTracingManager:
             fp.write('\n')
 
     def _finish_tracing(self):
-        # End the non-blocking timer to prevent any race conditions
-        self._mem_timer.cancel()
-
         # Get the peak memory consumed during the program
         _, traced_peak = tracemalloc.get_traced_memory()
 
@@ -232,10 +203,8 @@ class MemoryTracingManager:
         tracemalloc.stop()
 
         # Save the peak results to the output file
-        self._open_output.write(f"PEAK; {traced_peak / 1024:.3f}")
-
-        # Close the file
-        self._open_output.close()
+        with open(self._timed_outputs, 'x') as ofp:
+            ofp.write(f"PEAK; {traced_peak / 1024:.3f}")
 
         # Report that the file was written, and where to
         logging.info(f"Saved memory tracing results to '{self._timed_outputs.resolve()}'.")
