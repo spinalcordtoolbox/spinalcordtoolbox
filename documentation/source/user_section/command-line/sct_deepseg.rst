@@ -140,25 +140,10 @@ You can replace "``rootlets_t2``" with any of the task names in the table below 
 
    * - |rootlets_t2| ``rootlets_t2``
      - |totalspineseg| ``totalspineseg``
-     -
+     - |sc_canal_t2| ``sc_canal_t2``
 
 .. |sc_canal_t2| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/spinal_canal_t2.png
    :target: deepseg/sc_canal_t2.html
-
-Spinal Canal segmentation can be performed by running the following sample command:
-
-.. code::
-
-   sct_deepseg sc_canal_t2 -i input.nii.gz
-
-
-.. list-table::
-   :align: center
-   :widths: 25 25 25
-
-   * - |sc_canal_t2| ``sc_canal_t2``
-     - 
-     -
 
 
 Retired models
