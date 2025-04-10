@@ -76,9 +76,12 @@ class TimeProfilingManager:
         # Finish profiling
         self._profiler.disable()
 
+        # Ensure the parent folder for the output exists before trying to save it
+        self._output_file.parent.mkdir(exist_ok=True, parents=True)
+
         # Grab the stats, and organize them from most to least time-consuming (cumulatively)
         if self._output_file.suffix == '.prof':
-            # If we want binary profiler output, dump the stats to file with the built-in
+            # If we want binary profiler output, dump the stats to file with the built-in `dump_stats` method
             profiling_stats = pstats.Stats(self._profiler)
             profiling_stats = profiling_stats.sort_stats(pstats.SortKey.CUMULATIVE)
             profiling_stats.dump_stats(self._output_file)
