@@ -252,15 +252,10 @@ class MemoryTracingAction(Action):
 
         # If no value as provided, set the output path to be in the current directory
         if values is None:
-            out_path = MemoryTracingManager.time_file
+            out_path = Path('.')
         else:
             # Otherwise, try to get the path associated with this parameter, and confirm its root exists
             out_path = Path(values)
-
-        # Check to see if the file exists and is a directory
-        if out_path.exists() and out_path.is_dir():
-            # If so, set the result to be saved to our default file output
-            out_path /= MemoryTracingManager.time_file
 
         # Finally, initiate the memory tracer, designating it's output file to be the user specified one
         begin_tracing_memory(out_path)
