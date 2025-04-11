@@ -3,7 +3,6 @@ import cProfile
 import inspect
 import io
 import logging
-import os
 import pstats
 import time
 import tracemalloc
