@@ -3,6 +3,7 @@ import cProfile
 import inspect
 import io
 import logging
+import os
 import pstats
 import time
 import tracemalloc
@@ -209,7 +210,9 @@ class MemoryTracingManager:
             ofp.write(f"PEAK; {traced_peak / 1024:.3f}")
 
         # Report that the file was written, and where to
-        logging.info(f"Saved memory tracing results to '{self._timed_outputs.resolve()}'.")
+        logging.info(f"Saved peak memory result to '{self._timed_outputs.resolve()}'.")
+        if self._snapshot_outputs.exists():
+            logging.info(f"Saved memory snapshot results to '{self._snapshot_outputs.resolve()}'")
 
 
 def begin_tracing_memory(out_path: Path = None):
