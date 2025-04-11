@@ -200,8 +200,14 @@ MODELS = {
 }
 
 
-# List of task. The convention for task names is: action_(animal)_region_(contrast)
-# Regions could be: sc, gm, lesion, tumor
+# List of tasks. The convention for task names is: action_(animal)_region_(contrast)
+#   Regions could be: sc, gm, lesion, tumor
+#   If the animal is human, omit it from the task label.
+# Some optional tags to help with groupin and sorting during help display are as follows:
+#   Group: The sub-header the tasks should be displayed under. If not specified, the model is placed under "OTHER"
+#   Priority: Higher priority tasks are displayed higher within their own group, and vice versa. Default priority is 0,
+#     and ties are sorted alphabetically.
+
 CROP_MESSAGE = (
     'To crop the data you can first segment the spinal cord using the contrast agnostic model. This could be '
     'done using: "sct_deepseg spinalcord -i IMAGE -o IMAGE_sc", then crop the '
@@ -221,6 +227,8 @@ TASKS = {
          'url': 'https://github.com/ivadomed/mice_uqueensland_sc/',
          'models': ['mice_uqueensland_sc'],
          'citation': None,
+         'group': 'spinal_cord',
+         'priority': -1
          },
     'gm_mouse_t1':
         {'description': 'Gray matter segmentation on mouse MRI',
@@ -233,6 +241,8 @@ TASKS = {
          'url': 'https://github.com/ivadomed/mice_uqueensland_gm/',
          'models': ['mice_uqueensland_gm'],
          'citation': None,
+         'group': 'gray_matter',
+         'priority': -1  # Mouse segmentation tends to be less common
          },
     'tumor_t2':
         {'description': 'Cord tumor segmentation on T2-weighted contrast',
@@ -245,6 +255,7 @@ TASKS = {
          'url': 'https://github.com/sct-pipeline/tumor-segmentation',
          'models': ['findcord_tumor', 't2_tumor'],
          'citation': None,
+         'group': 'pathology'
          },
     'tumor_edema_cavity_t1_t2':
         {'description': 'Multiclass cord tumor/edema/cavity segmentation',
@@ -274,6 +285,7 @@ TASKS = {
              }
              ```
          """),
+         'group': 'pathology'
          },
     'gm_wm_exvivo_t2':
         {'description': 'Grey/white matter seg on exvivo human T2w',
@@ -287,6 +299,7 @@ TASKS = {
          'url': 'https://github.com/ivadomed/model_seg_exvivo_gm-wm_t2_unet2d-multichannel-softseg',
          'models': ['model_seg_exvivo_gm-wm_t2_unet2d-multichannel-softseg'],
          'citation': None,
+         'group': 'gray_matter'
          },
     'gm_sc_7t_t2star':
         {'description': 'SC/GM seg on T2*-weighted contrast at 7T',
@@ -313,6 +326,7 @@ TASKS = {
              }
              ```
          """),
+         'group': 'gray_matter'
          },
     'sc_lumbar_t2':
         {'description': 'Lumbar cord segmentation with 3D UNet',
@@ -323,6 +337,7 @@ TASKS = {
          'url': 'https://github.com/ivadomed/lumbar_seg_EPFL',
          'models': ['model_seg_epfl_t2w_lumbar_sc'],
          'citation': None,
+         'group': 'spinal_cord'
          },
     'spinalcord':
         {'description': 'Spinal cord segmentation agnostic to MRI contrasts',
@@ -346,8 +361,9 @@ TASKS = {
                    primaryClass={eess.IV},
                    url={https://arxiv.org/abs/2310.15402},
              }
-             ```
-         """),  # noqa E501 (line too long)
+             ```"""),  # noqa E501 (line too long)
+         'group': 'spinal_cord',
+         'priority': 100  # Force this, and its group, to be displayed first, as it's our main model
          },
     'lesion_sci_t2':
         {'description': 'Intramedullary SCI lesion and cord segmentation in T2w MRI',
@@ -373,8 +389,8 @@ TASKS = {
                             abstract="Spinal cord injury (SCI) is a devastating incidence leading to permanent paralysis and loss of sensory-motor functions potentially resulting in the formation of lesions within the spinal cord. Imaging biomarkers obtained from magnetic resonance imaging (MRI) scans can predict the functional recovery of individuals with SCI and help choose the optimal treatment strategy. Currently, most studies employ manual quantification of these MRI-derived biomarkers, which is a subjective and tedious task. In this work, we propose (i) a universal tool for the automatic segmentation of intramedullary SCI lesions, dubbed SCIsegV2, and (ii) a method to automatically compute the width of the tissue bridges from the segmented lesion. Tissue bridges represent the spared spinal tissue adjacent to the lesion, which is associated with functional recovery in SCI patients. The tool was trained and validated on a heterogeneous dataset from 7 sites comprising patients from different SCI phases (acute, sub-acute, and chronic) and etiologies (traumatic SCI, ischemic SCI, and degenerative cervical myelopathy). Tissue bridges quantified automatically did not significantly differ from those computed manually, suggesting that the proposed automatic tool can be used to derive relevant MRI biomarkers. SCIsegV2 and the automatic tissue bridges computation are open-source and available in Spinal Cord Toolbox (v6.4 and above) via the sct{\_}deepseg -task seg{\_}sc{\_}lesion{\_}t2w{\_}sci and sct{\_}analyze{\_}lesion functions, respectively.",
                             isbn="978-3-031-82007-6"
             }
-             ```
-         """),  # noqa E501 (line too long)
+             ```"""),  # noqa E501 (line too long)
+         'group': 'pathology'
          },
     'rootlets_t2':
         {'description': 'Segmentation of spinal nerve rootlets for T2w contrast',
@@ -385,7 +401,7 @@ TASKS = {
                              'from healthy subjects from two different open-access datasets.',
          'url': 'https://github.com/ivadomed/model-spinal-rootlets',
          'models': ['model_seg_spinal_rootlets_nnunet'],
-         'citation': None,
+         'citation': None
          },
     'gm_wm_mouse_t1':
         {'description': 'Exvivo mouse GM/WM segmentation for T1w contrast',
@@ -410,8 +426,9 @@ TASKS = {
                        doi={10.5281/zenodo.10819207},
                        url={https://doi.org/10.5281/zenodo.10819207}
              }
-             ```
-         """),
+             ```"""),
+         'group': 'gray_matter',
+         'priority': -1  # Mouse segmentation tends to be less common
          },
     'sc_epi':
         {'description': 'Spinal cord segmentation for EPI-BOLD fMRI data',
@@ -436,8 +453,8 @@ TASKS = {
                       eprint{https://www.biorxiv.org/content/early/2025/01/27/2025.01.07.631402.full.pdf},
                       journal{bioRxiv}
              }
-             ```
-         """),  # noqa E501 (line too long)
+             ```"""),  # noqa E501 (line too long)
+         'group': 'spinal_cord'
          },
     'lesion_ms_mp2rage':
         {'description': 'MS lesion segmentation on cropped MP2RAGE data',
@@ -461,8 +478,8 @@ TASKS = {
                       doi{10.1162/imag_a_00218},
                       url{https://doi.org/10.1162/imag_a_00218},
              }
-             ```
-         """),
+             ```"""),
+         'group': 'pathology'
          },
     'lesion_ms':
         {'description': 'MS lesion segmentation on spinal cord MRI images',
@@ -476,6 +493,7 @@ TASKS = {
          'url': 'https://github.com/ivadomed/ms-lesion-agnostic',
          'models': ['model_seg_ms_lesion'],
          'citation': None,
+         'group': 'pathology'
          },
     'sc_canal_t2':
         {'description': 'Segmentation of spinal canal on T2w contrast',
@@ -488,7 +506,7 @@ TASKS = {
                              'false positives segmentations of other anatomical structures.',
          'url': 'https://github.com/ivadomed/model-canal-seg',
          'models': ['model_seg_canal_t2w'],
-         'citation': None,
+         'citation': None
          },
     'totalspineseg':
         {'description': 'Intervertebral discs labeling and vertebrae segmentation',
@@ -497,7 +515,7 @@ TASKS = {
                              'and resolutions. The model used in TotalSpineSeg is based on nnU-Net as the backbone for training and inference.',
          'url': 'https://github.com/neuropoly/totalspineseg',
          'models': ['totalspineseg'],
-         'citation': None,
+         'citation': None
          },
     'lesion_ms_axial_t2':
         {'description': 'Intramedullary MS lesion and spinal cord segmentation in Axial T2w MRI',
@@ -512,6 +530,7 @@ TASKS = {
          'url': 'https://github.com/ivadomed/model-seg-ms-axial-t2w',
          'models': ['model_seg_ms_sc_lesion_bavaria_quebec_nnunet'],
          'citation': None,
+         'group': 'pathology'
          },
 }
 
@@ -694,22 +713,71 @@ def check_model_software_type(path_model):
         raise ValueError("Model type cannot be determined.")
 
 
+def _priority_then_alpha(dict_key: str) -> (int, str):
+    # NOTE: The negation is required to allow for an "alternating" ascending/descending sort
+    return -TASKS[dict_key].get('priority', 0), dict_key
+
+
+def _group_tasks(sorted_task_keys: list) -> dict[str, list[str]]:
+    """
+    Group our tasks by their task labels. The order of tasks provided determines the order of groups as well, so you
+    should probably sort it how you like before passing it into this function.
+    """
+    groups = dict()
+
+    # Keep track of tasks without a group separate, as they need to be appended last
+    other_set = []
+
+    # Iterate through our tasks to find their groups
+    for k in sorted_task_keys:
+        task_group = TASKS[k].get('group', None)
+        if task_group is None:
+            other_set.append(k)
+        else:
+            group_vals = groups.get(task_group, [])
+            group_vals.append(k)
+            groups[task_group] = group_vals
+
+    # Add the "other" group last, if any models fell within it
+    if len(other_set) > 0:
+        groups['other'] = other_set
+
+    # Return the result
+    return groups
+
+
 def list_tasks_string():
+    # Some set-up to make uniformity easier to maintain
+    table_width = 80
+    task_width = 30  # Description width does not need to be defined, as we are left-justified
+
     # Display coloured output
     color = {True: 'LightGreen', False: 'LightRed'}
-    table = f"{'TASK':<30s}{'DESCRIPTION':<50s}\n"
-    table += f"{'-' * 80}\n"
-    for name_task, value in TASKS.items():
-        path_models = [folder(name_model) for name_model in value['models']]
-        path_models = [find_model_folder_paths(path) for path in path_models]
-        are_models_valid = [is_valid(path_model) for path_model in path_models]
-        task_status = stylize(name_task.ljust(30),
-                              color[all(are_models_valid)])
-        description_status = stylize(value['description'].ljust(50),
-                                     color[all(are_models_valid)])
+    table = "{}{}\n".format('TASK'.ljust(task_width), 'DESCRIPTION')
+    table += f"{'=' * table_width}\n"
 
-        table += f"{task_status}{description_status}\n"
+    sorted_groups = _group_tasks(sorted(TASKS, key=_priority_then_alpha))
 
+    for group_name, group_tasks in sorted_groups.items():
+        # Format the group name in all-caps w/ underscores replaced with spaces
+        formatted_group_name = " ".join(group_name.split('_')).upper()
+        # Add the header for this group
+        table += f"\n{formatted_group_name}\n"
+        table += f"{'-' * table_width}\n"
+        # Print out the task details
+        for task_name in group_tasks:
+            # Grab the details for this task from our dict
+            task_details = TASKS[task_name]
+            # Extract and format the metadata for the task
+            path_models = [folder(name_model) for name_model in task_details['models']]
+            path_models = [find_model_folder_paths(path) for path in path_models]
+            are_models_valid = [is_valid(path_model) for path_model in path_models]
+            task_status = stylize(task_name.ljust(task_width), color[all(are_models_valid)])
+            description_status = stylize(task_details['description'], color[all(are_models_valid)])
+            # Add it to the task list
+            table += f"{task_status}{description_status}\n"
+
+    # Add a legend to denote which tools are installed or not and the end
     table += '\nLegend: {} | {}\n\n'.format(
             stylize("installed", color[True]),
             stylize("not installed", color[False]))
@@ -721,32 +789,67 @@ def list_tasks_string():
 
 
 def display_list_tasks():
-    for name_task, value in TASKS.items():
-        indent_len = len("LONG_DESCRIPTION: ")
-        print("{}{}".format("TASK:".ljust(indent_len), stylize(name_task, 'Bold')))
+    # Define the labels which can be used for each entry
+    task_label = "TASK:"
+    contrast_label = "CONTRAST:"
+    model_label = "MODELS:"
+    description_label = "DESCRIPTION:"
+    url_label = "URL:"
+    installed_label = "INSTALLED:"
 
-        input_contrasts = str(', '.join(model_name for model_name in
-                                        get_required_contrasts(name_task))).ljust(15)
-        print("{}{}".format("CONTRAST:".ljust(indent_len), input_contrasts))
+    # Get the left-justified indent required for the longest of these labels
+    padded_len = max([len(x) for x in [task_label, contrast_label, model_label, description_label, url_label]])
 
-        path_models = [folder(name_model) for name_model in value['models']]
-        path_models = [find_model_folder_paths(path) for path in path_models]
-        are_models_valid = [is_valid(path_model) for path_model in path_models]
-        models_status = ', '.join([model_name
-                                   for model_name, validity in zip(value['models'], are_models_valid)])
-        print("{}{}".format("MODELS:".ljust(indent_len), models_status))
-        print('\n'.join(textwrap.wrap(value['long_description'],
-                        width=shutil.get_terminal_size()[0]-1,
-                        initial_indent="LONG_DESCRIPTION: ",
-                        subsequent_indent=' '*indent_len)))
+    # Sort the tasks by priority, then alphanumerically
+    sorted_tasks = sorted(TASKS, key=_priority_then_alpha)
 
-        print("{}{}".format("URL:".ljust(indent_len), stylize(value['url'], 'Cyan')))
-        if all(are_models_valid):
-            installed = stylize("Yes", 'LightGreen')
-        else:
-            installed = stylize("No", 'LightRed')
-        print("{}{}\n".format("INSTALLED:".ljust(indent_len), installed))
-    exit(0)
+    # Iterate through each task and add its corresponding entry to the output
+    for task_name in sorted_tasks:
+        # Grab the details of the task from the TASKS dict
+        task_details = TASKS[task_name]
+
+        # Boilerplate reduction; define the formatting string once and re-use it throughout
+        fmt_str = "{} {}"
+
+        # Lead with the task name, bolded to draw the user's attention
+        print(fmt_str.format(task_label.ljust(padded_len), stylize(task_name, 'Bold')))
+
+        # List out the valid contrasts for this model
+        contrast_str = ', '.join(get_required_contrasts(task_name))
+        print(fmt_str.format(contrast_label.ljust(padded_len), contrast_str))
+
+        # List out the model(s) used by this task
+        task_models = task_details['models']
+        model_paths = [find_model_folder_paths(folder(path)) for path in task_models]
+        # Filter out models which are missing necessary files to avoid misleading the user
+        model_validity = [is_valid(path_model) for path_model in model_paths]
+        model_str = ', '.join([model_name for model_name, validity in zip(task_models, model_validity)])
+        print(fmt_str.format(model_label.ljust(padded_len), model_str))
+
+        # Write out the "long" description, wrapped to fit within the console the user is using
+        formatted_description = '\n'.join(textwrap.wrap(
+            text=task_details['long_description'],
+            # Account for our padding left padding too!
+            width=shutil.get_terminal_size()[0] - padded_len ,
+            # +1 padding to ensure at least 1 space always separates the labels and contents
+            subsequent_indent=' ' * (padded_len + 1),
+
+        ))
+        print(fmt_str.format(description_label.ljust(padded_len), formatted_description))
+
+        # The URL where the model was downloaded from; 'cyan' formatting is forced in case the console doesn't do it
+        formatted_url = stylize(task_details['url'], styles='Cyan')
+        print(fmt_str.format(url_label.ljust(padded_len), formatted_url))
+
+        # Whether the model is installed already or not
+        formatted_installed = (
+            stylize("Yes", 'LightGreen') if all(model_validity)
+            else stylize("No", 'LightRed')
+        )
+        print(fmt_str.format(installed_label.ljust(padded_len), formatted_installed))
+
+        # Add a separating newline
+        print('')
 
 
 def get_metadata(folder_model):
