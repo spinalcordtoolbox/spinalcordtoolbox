@@ -830,7 +830,7 @@ def display_list_tasks():
         formatted_description = '\n'.join(textwrap.wrap(
             text=task_details['long_description'],
             # Account for our padding left padding too!
-            width=shutil.get_terminal_size()[0] - padded_len ,
+            width=shutil.get_terminal_size()[0] - padded_len,
             # +1 padding to ensure at least 1 space always separates the labels and contents
             subsequent_indent=' ' * (padded_len + 1),
 
