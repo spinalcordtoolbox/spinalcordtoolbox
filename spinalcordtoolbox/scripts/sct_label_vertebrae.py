@@ -263,7 +263,7 @@ def main(argv: Sequence[str]):
             "`sct_deepseg totalspineseg` instead.", ["Red", "Bold"]
         ), DeprecationWarning
     )
-    sleep(3) # Give the user 3 seconds to read the message
+    sleep(3)  # Give the user 3 seconds to read the message
 
     parser = get_parser()
     arguments = parser.parse_args(argv)
