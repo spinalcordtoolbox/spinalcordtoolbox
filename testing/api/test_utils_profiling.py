@@ -88,7 +88,10 @@ def test_timeit(false_atexit, caplog):
     assert prog_runtime < sleep_time + allowed_margin
 
 
-def test_time_profiler(false_atexit, tmp_path):
+def test_time_profiler(false_atexit, tmp_path, caplog):
+    # Capture all log input explicitly, so that we can test that the total runtime was run correctly
+    caplog.set_level(logging.INFO)
+
     # Generate a path we want to save the results too
     out_path = tmp_path / "pytest_time_profiled.txt"
 
@@ -101,15 +104,22 @@ def test_time_profiler(false_atexit, tmp_path):
     # Confirm the time profiler was initialized
     assert profiling.TIME_PROFILER is not None
 
-    # Run some stuff, split across two loops
+    # Dummy function to measure the number of calls across both loops
+    def shared_do_nothing():
+        pass
+
+    # Dummy function which is only called in the latter loop alone
+    def latter_do_nothing():
+        pass
+
+    # Run some stuff, split across two loops, which call our dummy function to confirm they are tracked correctly
     no_calls = 100000
     for i in range(no_calls):
-        num = i * (i+1)
-        logging.info(f"{i}: {num}")
+        shared_do_nothing()
 
     for i in range(no_calls):
-        num = i * (i-1)
-        logging.info(f"{i}: {num}")
+        latter_do_nothing()
+        shared_do_nothing()
 
     total_calls = no_calls*2
 
@@ -118,6 +128,10 @@ def test_time_profiler(false_atexit, tmp_path):
 
     # Confirm the file associated with the timing profiler exists
     assert out_path.exists()
+
+    # The most recent log should denote where the output was saved, in full
+    most_recent_log = caplog.records[-1]
+    assert str(out_path.resolve()) in most_recent_log.message
 
     # Confirm the contents of the output is sensible
     with open(out_path, 'r') as f:
@@ -129,9 +143,12 @@ def test_time_profiler(false_atexit, tmp_path):
         # Iterate through the remaining lines for our tests (as they are not guaranteed to be in the same order)
         line_vals = []
         for line in f.readlines():
-            # Confirm that the `logger.info` function recorded as having been called `no_call` times
-            if "logging" in line and "(info)" in line:
+            # Confirm that the `shared_do_nothing` function was recorded as having been called `total_call` times
+            if "shared_do_nothing" in line:
                 assert str(total_calls) in line
+            # Confirm that the `latter_do_nothing` function was recorded as having been called `no_calls` times
+            if "latter_do_nothing" in line:
+                assert str(no_calls) in line
             # Append the line to a tracked list for a later test
             if line != '\n':
                 l_vals = [x for x in line.split(' ') if x != '']
@@ -144,7 +161,10 @@ def test_time_profiler(false_atexit, tmp_path):
         assert float(cval1) >= float(cval2)
 
 
-def test_time_profiler_prof_out(false_atexit, tmp_path):
+def test_time_profiler_prof_out(false_atexit, tmp_path, caplog):
+    # Capture all log input explicitly, so that we can test that the total runtime was run correctly
+    caplog.set_level(logging.INFO)
+
     # Generate a path we want to save the results too, with a .prof extension
     out_path = tmp_path / "pytest_time_profiled.prof"
 
@@ -167,6 +187,10 @@ def test_time_profiler_prof_out(false_atexit, tmp_path):
     assert out_path.exists()
     assert out_path.suffix == '.prof'
 
+    # At this time, the last log should be the reported time; confirm this is correct
+    most_recent_log = caplog.records[-1]
+    assert str(out_path.resolve()) in most_recent_log.message
+
     # Confirm the file is in the correct binary format and references the recursive call
     with open(out_path, 'rb') as ofp:
         # Read the file in binary, and confirm the `tmp_recurse` function is in the first chunk
@@ -174,7 +198,10 @@ def test_time_profiler_prof_out(false_atexit, tmp_path):
         assert b"tmp_recurse" in part
 
 
-def test_cli_time_profiling(false_atexit, tmp_path):
+def test_cli_time_profiling(false_atexit, tmp_path, caplog):
+    # Capture all log input explicitly, so that we can test that the total runtime was run correctly
+    caplog.set_level(logging.INFO)
+
     # Generate a path we want to save the results too
     out_path = tmp_path / "pytest_time_profiled.txt"
 
@@ -194,6 +221,10 @@ def test_cli_time_profiling(false_atexit, tmp_path):
     assert not out_path.exists()
     false_atexit()
     assert out_path.exists()
+
+    # Confirm that the location of the output was reported to the user
+    most_recent_log = caplog.records[-1]
+    assert str(out_path.resolve()) in most_recent_log.message
 
 
 def test_memory_tracer(false_atexit, tmp_path):
