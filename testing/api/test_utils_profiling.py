@@ -227,7 +227,10 @@ def test_cli_time_profiling(false_atexit, tmp_path, caplog):
     assert str(out_path.resolve()) in most_recent_log.message
 
 
-def test_memory_tracer(false_atexit, tmp_path):
+def test_memory_tracer(false_atexit, tmp_path, caplog):
+    # Capture all log input explicitly, so that we can test that the total runtime was run correctly
+    caplog.set_level(logging.INFO)
+
     # Generate a path we want to save the results too
     out_path = tmp_path / "pytest_memory_traced"
     out_file = out_path / profiling.MemoryTracingManager.time_file
@@ -262,6 +265,10 @@ def test_memory_tracer(false_atexit, tmp_path):
     import tracemalloc
     assert not tracemalloc.is_tracing()
 
+    # Confirm that the location of the output was reported to the user
+    most_recent_log = caplog.records[-1]
+    assert str(out_file.resolve()) in most_recent_log.message
+
     # Confirm the output file now exists
     assert out_file.exists()
 
@@ -275,19 +282,23 @@ def test_memory_tracer(false_atexit, tmp_path):
     assert recorded_mem_kib > (min_n_bits / 1024)
 
 
-def test_memory_snapshot(false_atexit, tmp_path):
+def test_memory_snapshot(false_atexit, tmp_path, caplog):
+    # Capture all log input explicitly, so that we can test that the total runtime was run correctly
+    caplog.set_level(logging.INFO)
+
     # Generate a path we want to save the results too
     out_path = tmp_path / "pytest_memory_snapshot"
-    out_file = out_path / profiling.MemoryTracingManager.snapshot_file
+    time_file = out_path / profiling.MemoryTracingManager.time_file
+    snapshot_file = out_path / profiling.MemoryTracingManager.snapshot_file
 
     # For sanity's sake, ensure the file does not already exist yet
-    assert not out_file.exists()
+    assert not snapshot_file.exists()
 
     # Initiate memory tracing directly
     profiling.begin_tracing_memory(out_path)
 
     # Confirm that no snapshot file exists yet
-    assert not out_file.exists()
+    assert not snapshot_file.exists()
 
     # Generate a gigantic list with a ton of integers (which are each 16 bits, or one byte)
     n_numbers = 1000000
@@ -297,19 +308,30 @@ def test_memory_snapshot(false_atexit, tmp_path):
     profiling.snapshot_memory()
 
     # Confirm that the memory tracer saved a snapshot
-    assert out_file.exists()
+    assert snapshot_file.exists()
 
     # "End" the program
     false_atexit()
 
+    # Confirm that the location of the peak memory file was still reported to the user
+    most_recent_log = caplog.records[-2]
+    assert str(time_file.resolve()) in most_recent_log.message
+
+    # Confirm that the location of the snapshot file was reported to the user
+    most_recent_log = caplog.records[-1]
+    assert str(snapshot_file.resolve()) in most_recent_log.message
+
     # Confirm the header was saved correctly
-    with open(out_file, 'r') as fp:
+    with open(snapshot_file, 'r') as fp:
         # We only made one snapshot, so the first line should have out header
         first_line = fp.readline()
         assert "test_memory_snapshot (test_utils_profiling.py, line " in first_line
 
 
-def test_cli_memory_tracer(false_atexit, tmp_path):
+def test_cli_memory_tracer(false_atexit, tmp_path, caplog):
+    # Capture all log input explicitly, so that we can test that the total runtime was run correctly
+    caplog.set_level(logging.INFO)
+
     # Generate a path we want to save the results too
     out_path = tmp_path / "pytest_memory_traced"
     out_file = out_path / profiling.MemoryTracingManager.time_file
@@ -329,6 +351,12 @@ def test_cli_memory_tracer(false_atexit, tmp_path):
     # Confirm the time profiler was initialized
     assert profiling.MEMORY_TRACER is not None
 
-    # Confirm that it writes a file on exit, but not before
+    # "End" the program
     false_atexit()
+
+    # Confirm that the location of the output was reported to the user
+    most_recent_log = caplog.records[-1]
+    assert str(out_path.resolve()) in most_recent_log.message
+
+    # Confirm an output file now exists
     assert out_file.exists()
