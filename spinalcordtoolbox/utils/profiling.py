@@ -148,7 +148,7 @@ class TimeProfilingAction(Action):
 # == Memory-based Profiling == #
 class MemoryTracingManager:
 
-    time_file = Path('memory_across_time.txt')
+    time_file = Path('peak_memory.txt')
     snapshot_file = Path('memory_snapshots.txt')
 
     def __init__(self, out_path=Path('.')):
