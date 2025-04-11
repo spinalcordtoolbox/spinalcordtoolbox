@@ -16,6 +16,13 @@ scripts_where_no_args_is_valid = [
     'sct_testing'              # No args -> runs pytest in $SCT_DIR
 ]
 
+# Scripts which have a deprecation warning in front of them, extending their no-arg runtime by 3 seconds
+deprecated_scripts = [
+    'sct_deepseg_lesion',
+    'sct_deepseg_sc',
+    'sct_label_vertebrae'
+]
+
 scripts_to_test = [s for s in scripts if s not in scripts_where_no_args_is_valid]
 
 
@@ -23,7 +30,7 @@ scripts_to_test = [s for s in scripts if s not in scripts_where_no_args_is_valid
 def test_calling_scripts_with_no_args_shows_usage(capsys, script):
     """
     Test that SCT's scripts all return error code 2 and show usage descriptions when called with no arguments.
-    Also, ensure that calling the help takes under 2.0 seconds per script.
+    Also, ensure that calling the help takes under 2.0 seconds (excluding deprecation warning time) per script.
     """
     start_time = time.time()
     completed_process = subprocess.run([script], capture_output=True)
@@ -34,4 +41,5 @@ def test_calling_scripts_with_no_args_shows_usage(capsys, script):
     #     and other times scripts take significantly longer. It's possible to just "retry" the GHA run, but to save
     #     development headache, we just skip this check if we're on a macOS GitHub Actions runner.
     if not (sys.platform.startswith("darwin") and "CI" in os.environ):
-        assert duration < 2.0, f"Expected '{script} -h' to execute in under 2.0s, but took {duration}"
+        max_duration = 2.0 if script not in deprecated_scripts else 5.0
+        assert duration < max_duration, f"Expected '{script} -h' to execute in under {max_duration}s; took {duration}"
