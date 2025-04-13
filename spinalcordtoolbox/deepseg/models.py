@@ -525,11 +525,12 @@ TASKS = {
     'graymatter':
         {'description': 'Segmentation of gray matter agnostic to MRI contrasts and regions',
          'long_description': 'This model for spinal cord gray matter (GM) segmentation uses a 2D nnU-Net architecture. It outputs a binary '
-                             'segmentation. The model was trained and tested on datasets including >20 sites, 8 contrasts, 1311 subjects '
-                             'included: 3T T2star (n=540), 3T MTR (n=42), 3T rAMIRA (n=58), 3T PSIR (n=176), 3T T1w (n=65), 7T T2star (n=72), '
-                             '7T MP2RAGE UNIT1 and T1map (n=145) acquired in the cervical, thoracic and lumbar regions from healthy controls, '
+                             'segmentation. The model was trained and tested on datasets including >20 sites, 3 magnetic field strengths, 9 sequences, '
+                             '1367 subjects included: 1.5T-PDw(N = 8), 3T-MGE-T2starw(N = 509), 3T-MTR(N = 21), 3T-PDw(N = 145), 3T-PSIR(N = 176), '
+                             '3T-rAMIRA(N = 48), 3T-TSE-T1w(N = 64), 7T-MGE-T2starw(N = 89), 7T-MP2RAGE-T1map(N = 144), 7T-MP2RAGE-UNI(N = 144), '
+                             '7T-QSM(N = 14), 7T-SWI(N = 5), acquired in the cervical, thoracic and lumbar regions from healthy controls, pediatrics, '
                              'multiple sclerosis, spinal muscular atrophy, cervical degenerative myelopathy, spinal cord injury, '
-                             'amyotrophic lateral sclerosis and post-polio syndrome.',
+                             'amyotrophic lateral sclerosis post-polio syndrome and stroke.',
          'url': 'https://github.com/ivadomed/model-gm-contrast-region-agnostic',
          'models': ['model_seg_gm_contrast_region_agnostic'],
          'citation': None,
