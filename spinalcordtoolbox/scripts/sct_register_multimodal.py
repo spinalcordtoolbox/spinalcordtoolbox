@@ -28,6 +28,7 @@ import os
 import time
 from copy import deepcopy
 from typing import Sequence
+import textwrap
 
 import numpy as np
 
@@ -49,60 +50,52 @@ DEFAULT_PARAMREGMULTI = ParamregMultiStep([step0, step1])
 def get_parser():
     # Initialize the parser
     parser = SCTArgumentParser(
-        description="This program co-registers two 3D volumes. The deformation is non-rigid and is constrained along "
-                    "Z direction (i.e., axial plane). Hence, this function assumes that orientation of the destination "
-                    "image is axial (RPI). If you need to register two volumes with large deformations and/or "
-                    "different contrasts, it is recommended to input spinal cord segmentations (binary mask) in order "
-                    "to achieve maximum robustness. The program outputs a warping field that can be used to register "
-                    "other images to the destination image. To apply the warping field to another image, use "
-                    "'sct_apply_transfo'\n"
-                    "\n"
-                    "Tips:\n"
-                    " - For a registration step using segmentations, use the MeanSquares metric. Also, simple "
-                    "algorithm will be very efficient, for example centermass as a 'preregistration'.\n"
-                    " - For a registration step using images of different contrast, use the Mutual Information (MI) "
-                    "metric.\n"
-                    " - Combine the steps by increasing the complexity of the transformation performed in each step, "
-                    "for example: -param step=1,type=seg,algo=slicereg,metric=MeanSquares:"
-                    "step=2,type=seg,algo=affine,metric=MeanSquares,gradStep=0.2:"
-                    "step=3,type=im,algo=syn,metric=MI,iter=5,shrink=2\n"
-                    " - When image contrast is low, a good option is to perform registration only based on the image "
-                    "segmentation, i.e. using type=seg\n"
-                    " - Columnwise algorithm needs to be applied after a translation and rotation such as centermassrot "
-                    "algorithm. For example: -param step=1,type=seg,algo=centermassrot,metric=MeanSquares:"
-                    "step=2,type=seg,algo=columnwise,metric=MeanSquares"
+        description=textwrap.dedent("""
+                    This program co-registers two 3D volumes. The deformation is non-rigid and is constrained along Z direction (i.e., axial plane). Hence, this function assumes that orientation of the destination image is axial (RPI). If you need to register two volumes with large deformations and/or different contrasts, it is recommended to input spinal cord segmentations (binary mask) in order to achieve maximum robustness. The program outputs a warping field that can be used to register other images to the destination image. To apply the warping field to another image, use `sct_apply_transfo`
+
+                    Tips:
+
+                     - For a registration step using segmentations, use the MeanSquares metric. Also, simple algorithm will be very efficient, for example centermass as a 'preregistration'.
+                     - For a registration step using images of different contrast, use the Mutual Information (MI) metric.
+                     - Combine the steps by increasing the complexity of the transformation performed in each step, for example:
+
+                       ```
+                       -param step=1,type=seg,algo=slicereg,metric=MeanSquares:
+                              step=2,type=seg,algo=affine,metric=MeanSquares,gradStep=0.2:
+                              step=3,type=im,algo=syn,metric=MI,iter=5,shrink=2
+                       ```
+                     - When image contrast is low, a good option is to perform registration only based on the image segmentation, i.e. using type=seg
+                     - Columnwise algorithm needs to be applied after a translation and rotation such as centermassrot algorithm. For example:
+
+                      ```
+                      -param step=1,type=seg,algo=centermassrot,metric=MeanSquares:
+                             step=2,type=seg,algo=columnwise,metric=MeanSquares
+                      ```
+        """),  # noqa: E501 (line too long)
     )
 
-    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         '-i',
         metavar=Metavar.file,
-        required=True,
-        help="Image source. Example: src.nii.gz"
+        help="Image source. Example: `src.nii.gz`"
     )
     mandatory.add_argument(
         '-d',
         metavar=Metavar.file,
-        required=True,
-        help="Image destination. Example: dest.nii.gz"
+        help="Image destination. Example: `dest.nii.gz`"
     )
 
-    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
-    optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit."
-    )
+    optional = parser.optional_arggroup
     optional.add_argument(
         '-iseg',
         metavar=Metavar.file,
-        help="Segmentation source. Example: src_seg.nii.gz"
+        help="Segmentation source. Example: `src_seg.nii.gz`"
     )
     optional.add_argument(
         '-dseg',
         metavar=Metavar.file,
-        help="Segmentation destination. Example: dest_seg.nii.gz"
+        help="Segmentation destination. Example: `dest_seg.nii.gz`"
     )
     optional.add_argument(
         '-ilabel',
@@ -129,12 +122,12 @@ def get_parser():
         '-m',
         metavar=Metavar.file,
         help="Mask that can be created with sct_create_mask to improve accuracy over region of interest. This mask "
-             "will be used on the destination image. Example: mask.nii.gz"
+             "will be used on the destination image. Masks will be binarized at 0.5. Example: `mask.nii.gz`"
     )
     optional.add_argument(
         '-o',
         metavar=Metavar.file,
-        help="Name of output file. Example: src_reg.nii.gz"
+        help="Name of output file. Example: `src_reg.nii.gz`"
     )
     optional.add_argument(
         '-owarp',
@@ -150,12 +143,15 @@ def get_parser():
         '-param',
         metavar=Metavar.list,
         type=list_type(':', str),
-        help=(f"Parameters for registration. Separate arguments with \",\". Separate steps with \":\".\n"
+        help=(f"Parameters for registration. Separate arguments with `,`. Separate steps with `:`.\n"
               f"Example: step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=im,algo=syn,metric=MI,iter=5,"
               f"shrink=2\n"
               f"  - step: <int> Step number (starts at 1, except for type=label).\n"
-              f"  - type: {{im, seg, imseg, label}} type of data used for registration. Use type=label only at "
-              f"step=0.\n"
+              f"  - type: {{im, seg, imseg, label}} type of data used for registration. If you specify 'im', you must also "
+              f"provide arguments -i and -d. If you specify 'seg', you must provide -iseg and -dseg. If you specify imseg, "
+              f"you must provide all four arguments. If you specify -label, you must provide -ilabel and -dlabel. ((Note: "
+              f"Use type=label only at step=0. Use type=imseg only for algo=centermassrot along with rot_method=hog or "
+              f"rot_method=pca_hog.))\n"
               f"  - algo: The algorithm used to compute the transformation. Default={DEFAULT_PARAMREGMULTI.steps['1'].algo}\n"
               f"    * translation: translation in X-Y plane (2dof)\n"
               f"    * rigid: translation + rotation in X-Y plane (4dof)\n"
@@ -209,7 +205,7 @@ def get_parser():
               f"  - pca_eigenratio_th: <int> Min ratio between the two eigenvalues for PCA-based angular adjustment "
               f"(only for algo=centermassrot and rot_method=pca). "
               f"Default={DEFAULT_PARAMREGMULTI.steps['1'].pca_eigenratio_th}.\n"
-              f"  - dof: <str> Degree of freedom for type=label. Separate with '_'. "
+              f"  - dof: <str> Degree of freedom for type=label. Separate with `_`. "
               f"Default={DEFAULT_PARAMREGMULTI.steps['0'].dof}. T stands for translation, R stands for rotation, and S "
               f"stands for scaling. x, y, and z indicate the direction. Examples:\n"
               f"    * Tx_Ty_Tz_Rx_Ry_Rz would allow translation on x, y and z axes and rotation on x, y and z axes\n"
@@ -249,13 +245,13 @@ def get_parser():
         '-ofolder',
         metavar=Metavar.folder,
         action=ActionCreateFolder,
-        help="Output folder. Example: reg_results"
+        help="Output folder. Example: `reg_results`"
     )
     optional.add_argument(
         '-qc',
         metavar=Metavar.folder,
         action=ActionCreateFolder,
-        help="The path where the quality control generated content will be saved. Note: This flag requires the '-dseg' "
+        help="The path where the quality control generated content will be saved. Note: This flag requires the `-dseg` "
              "flag."
     )
     optional.add_argument(
@@ -268,23 +264,11 @@ def get_parser():
         metavar=Metavar.str,
         help="If provided, this string will be mentioned in the QC report as the subject the process was run on."
     )
-    optional.add_argument(
-        '-r',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1],
-        default=1,
-        help="Whether to remove temporary files. 0 = no, 1 = yes"
-    )
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode"
-    )
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
+    parser.add_tempfile_args()
+
     return parser
 
 

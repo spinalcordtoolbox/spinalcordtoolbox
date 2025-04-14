@@ -9,6 +9,7 @@ import sys
 import os
 import argparse
 from typing import Sequence
+import textwrap
 
 import numpy as np
 
@@ -114,33 +115,24 @@ def get_parser():
         )
     )
 
-    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         '-i',
         metavar=Metavar.file,
-        required=True,
-        help="Input image. Example: t2.nii.gz"
+        help="Input image. Example: `t2.nii.gz`"
     )
     mandatory.add_argument(
         '-s',
         metavar=Metavar.file,
-        required=True,
-        help="Segmentation of the spinal cord. Example: t2_seg.nii.gz"
+        help="Segmentation of the spinal cord. Example: `t2_seg.nii.gz`"
     )
     mandatory.add_argument(
         '-c',
         choices=['t1', 't2'],
-        required=True,
         help="Type of image contrast. 't2': cord dark / CSF bright. 't1': cord bright / CSF dark"
     )
 
-    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
-    optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit."
-    )
+    optional = parser.optional_arggroup
     optional.add_argument(
         '-t',
         metavar=Metavar.folder,
@@ -151,9 +143,11 @@ def get_parser():
         '-initz',
         metavar=Metavar.list,
         type=parse_initz,
-        help="Initialize using slice number and disc value. Example: 68,4 (slice 68 corresponds to disc C3/C4).\n"
-             "WARNING: Slice number should correspond to superior-inferior direction (i.e. Z in RPI orientation, but "
-             "Y in LIP orientation)."
+        help=textwrap.dedent("""
+            Initialize using slice number and disc value. Example: `68,4` (slice 68 corresponds to disc C3/C4).
+
+            WARNING: Slice number should correspond to superior-inferior direction (i.e. Z in RPI orientation, but Y in LIP orientation).
+        """),
     )
     optional.add_argument(
         '-initcenter',
@@ -167,14 +161,14 @@ def get_parser():
         metavar=Metavar.file,
         action=InitFileAction,
         dest=argparse.SUPPRESS,
-        help="Initialize labeling by providing a text file which includes either -initz or -initcenter flag."
+        help="Initialize labeling by providing a text file which includes either `-initz` or `-initcenter` flag."
     )
     optional.add_argument(
         '-initlabel',
         metavar=Metavar.file,
         help="Initialize vertebral labeling by providing a nifti file that has a single disc label. An example of "
              "such file is a single voxel with value '3', which would be located at the posterior tip of C2-C3 disc. "
-             "Such label file can be created using: sct_label_utils -i IMAGE_REF -create-viewer 3 ; or by using the "
+             "Such label file can be created using: `sct_label_utils -i IMAGE_REF -create-viewer 3`; or by using the "
              "Python module 'detect_c2c3' implemented in 'spinalcordtoolbox/vertebrae/detect_c2c3.py'."
     )
     optional.add_argument(
@@ -225,28 +219,14 @@ def get_parser():
         metavar=Metavar.list,
         type=vertebral_detection_param,
         default=','.join(f'{key}={value}' for key, value in param_default.items()),
-        help='Advanced parameters. Assign value with "="; Separate arguments with ","\n'
-             '  - shift_AP [mm]: AP shift of centerline for disc search\n'
-             '  - size_AP [mm]: AP window size for disc search\n'
-             '  - size_RL [mm]: RL window size for disc search\n'
-             '  - size_IS [mm]: IS window size for disc search\n',
-    )
-    optional.add_argument(
-        '-r',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1],
-        default=1,
-        help="Remove temporary files."
-    )
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode"
+        help=textwrap.dedent("""
+            Advanced parameters. Assign value with `=`; Separate arguments with `,`
+
+              - shift_AP `[mm]`: AP shift of centerline for disc search
+              - size_AP `[mm]`: AP window size for disc search
+              - size_RL `[mm]`: RL window size for disc search
+              - size_IS `[mm]`: IS window size for disc search
+        """),
     )
     optional.add_argument(
         '-qc',
@@ -264,6 +244,10 @@ def get_parser():
         metavar=Metavar.str,
         help="If provided, this string will be mentioned in the QC report as the subject the process was run on."
     )
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
+    parser.add_tempfile_args()
 
     return parser
 
@@ -390,7 +374,7 @@ def main(argv: Sequence[str]):
             im_label_c2c3.save(fname_labelz)
 
         # dilate label so it is not lost when applying warping
-        dilate(Image(fname_labelz), 3, 'ball').save(fname_labelz)
+        dilate(Image(fname_labelz), 3, 'ball', islabel=True).save(fname_labelz)
 
         # Apply straightening to z-label
         printv('\nAnd apply straightening to label...', verbose)

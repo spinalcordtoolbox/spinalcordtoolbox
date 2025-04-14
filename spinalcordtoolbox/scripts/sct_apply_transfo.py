@@ -12,6 +12,7 @@ import sys
 import os
 import functools
 from typing import Sequence
+import textwrap
 
 from spinalcordtoolbox.image import Image, generate_output_file, add_suffix
 from spinalcordtoolbox.cropping import ImageCropper
@@ -31,29 +32,27 @@ def get_parser():
         description='Apply transformations. This function is a wrapper for antsApplyTransforms (ANTs).'
     )
 
-    mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
-    mandatoryArguments.add_argument(
+    mandatory = parser.mandatory_arggroup
+    mandatory.add_argument(
         "-i",
-        required=True,
-        help='Input image. Example: t2.nii.gz',
+        help='Input image. Example: `t2.nii.gz`',
         metavar=Metavar.file,
     )
-    mandatoryArguments.add_argument(
+    mandatory.add_argument(
         "-d",
-        required=True,
-        help='Destination image. Example: out.nii.gz',
+        help='Destination image. For warping input images, the destination image defines the spacing, origin, size, '
+             'and direction of the output warped image. Example: `dest.nii.gz`',
         metavar=Metavar.file,
     )
-    mandatoryArguments.add_argument(
+    mandatory.add_argument(
         "-w",
         nargs='+',
-        required=True,
         help='Transformation(s), which can be warping fields (nifti image) or affine transformation matrix (text '
-             'file). Separate with space. Example: warp1.nii.gz warp2.nii.gz',
+             'file). Separate with space. Example: `warp1.nii.gz warp2.nii.gz`',
         metavar=Metavar.file,
     )
 
-    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional = parser.optional_arggroup
     optional.add_argument(
         "-winv",
         help='Affine transformation(s) listed in flag -w which should be inverted before being used. Note that this '
@@ -63,52 +62,67 @@ def get_parser():
         metavar=Metavar.file,
         default=[])
     optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit")
-    optional.add_argument(
         "-crop",
         help="Crop Reference. 0: no reference, 1: sets background to 0, 2: use normal background.",
-        required=False,
         type=int,
         default=0,
         choices=(0, 1, 2))
     optional.add_argument(
         "-o",
-        help='Registered source. Example: dest.nii.gz',
-        required=False,
+        help='Filename to use for the output image (i.e. the transformed image). Example: `out.nii.gz`',
         metavar=Metavar.file)
     optional.add_argument(
         "-x",
-        help="Interpolation method.\n"
-             "Note: The 'label' method is a special interpolation method designed for single-voxel labels (e.g. disc "
-             "labels used as registration landmarks, compression labels, etc.). This method is necessary because "
-             "classical interpolation may corrupt the values of single-voxel labels, or cause them to disappear "
-             "entirely. The function works by dilating each label, applying the transformation using nearest neighbour "
-             "interpolation, then extracting the center-of-mass of each transformed 'blob' to get a single-voxel "
-             "output label. Because the output is a single-voxel label, the `-x label` method is not appropriate for "
-             "multi-voxel labeled segmentations (such as spinal cord or lesion masks).",
-        required=False,
+        help=textwrap.dedent("""
+            Interpolation method.
+
+            Note: The `label` method is a special interpolation method designed for single-voxel labels (e.g. disc labels used as registration landmarks, compression labels, etc.). This method is necessary because classical interpolation may corrupt the values of single-voxel labels, or cause them to disappear entirely. The function works by dilating each label, applying the transformation using nearest neighbour interpolation, then extracting the center-of-mass of each transformed 'blob' to get a single-voxel output label. Because the output is a single-voxel label, the `-x label` method is not appropriate for multi-voxel labeled segmentations (such as spinal cord or lesion masks).
+        """),  # noqa: E501 (line too long)
         default='spline',
         choices=('nn', 'linear', 'spline', 'label'))
-    optional.add_argument(
-        "-r",
-        help="""Remove temporary files.""",
-        required=False,
-        type=int,
-        default=1,
-        choices=(0, 1))
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
+    parser.add_tempfile_args()
 
     return parser
+
+
+def isct_antsApplyTransforms(dimensionality,
+                             fname_input,
+                             fname_output,
+                             fname_reference,
+                             transforms,
+                             interpolation_args,
+                             verbose):
+    """
+    Wrapper for CLI binary that allows for pre/postprocessing steps.
+
+    Note: Most logic should still go in `sct_apply_transfo`, because our SCT
+    script is essentially one big wrapper script for the ANTs call. Only use
+    this wrapper to fix bugs in the binary itself, or to compensate for
+    missing behavior/options in the ANTs source code. This wrapper should more
+    or less function like the original binary (with only minor tweaks added).
+    """
+    run_proc(['isct_antsApplyTransforms',
+              '-d', dimensionality,
+              '-i', fname_input,
+              '-o', fname_output,
+              '-t'] + transforms +  # list of transforms
+             ['-r', fname_reference] +
+             interpolation_args,  # list of ['-n', interp_type]
+             verbose=verbose,
+             is_sct_binary=True)
+    # Preserve integer datatype when interpolation is NearestNeighour to
+    # counter ANTs behavior of always outputting float64 images
+    im_out = Image(fname_output)
+    dtype_in = Image(fname_input).data.dtype
+    if 'NearestNeighbor' in interpolation_args:
+        im_out.data = im_out.data.astype(dtype_in)
+        im_out.hdr.set_data_dtype(dtype_in)
+        im_out.save(verbose=0)
+    # FIXME: Consider returning an `Image` type if the extra save/loads
+    #        add significant overhead to `sct_apply_transfo`.
 
 
 class Transform:
@@ -162,7 +176,7 @@ class Transform:
                     and Image(list_warp[idx_warp]).header.get_intent()[0] != 'vector':
                 raise ValueError("Displacement field in {} is invalid: should be encoded"
                                  " in a 5D file with vector intent code"
-                                 " (see https://nifti.nimh.nih.gov/pub/dist/src/niftilib/nifti1.h"
+                                 " (see https://web.archive.org/web/20241009085040/https://nifti.nimh.nih.gov/pub/dist/src/niftilib/nifti1.h"
                                  .format(path_warp))
         # need to check if last warping field is an affine transfo
         isLastAffine = False
@@ -198,22 +212,23 @@ class Transform:
                 dim = '3'
             # if labels, dilate before resampling
             if islabel:
-                printv("\nDilate labels before warping...")
+                printv("\nDilate labels before warping...", verbose)
                 path_tmp = tmp_create(basename="apply-transfo-3d-label")
                 fname_dilated_labels = os.path.join(path_tmp, "dilated_data.nii")
                 # dilate points
-                dilate(Image(fname_src), 3, 'ball').save(fname_dilated_labels)
+                dilate(Image(fname_src), 3, 'ball', islabel=True).save(fname_dilated_labels)
                 fname_src = fname_dilated_labels
 
             printv("\nApply transformation and resample to destination space...", verbose)
-            run_proc(['isct_antsApplyTransforms',
-                      '-d', dim,
-                      '-i', fname_src,
-                      '-o', fname_out,
-                      '-t'
-                      ] + fname_warp_list_invert + ['-r', fname_dest] + interp,
-                     verbose=verbose,
-                     is_sct_binary=True)
+            isct_antsApplyTransforms(
+                dimensionality=dim,
+                fname_input=fname_src,
+                fname_output=fname_out,
+                transforms=fname_warp_list_invert,
+                fname_reference=fname_dest,
+                interpolation_args=interp,
+                verbose=verbose,
+            )
 
         # if 4d, loop across the T dimension
         else:
@@ -252,14 +267,15 @@ class Transform:
                 file_data_split = 'data_T' + str(it).zfill(4) + '.nii'
                 file_data_split_reg = 'data_reg_T' + str(it).zfill(4) + '.nii'
 
-                status, output = run_proc(['isct_antsApplyTransforms',
-                                           '-d', '3',
-                                           '-i', file_data_split,
-                                           '-o', file_data_split_reg,
-                                           '-t',
-                                           ] + fname_warp_list_invert_tmp + [
-                    '-r', file_dest + ext_dest,
-                ] + interp, verbose, is_sct_binary=True)
+                isct_antsApplyTransforms(
+                    dimensionality='3',
+                    fname_input=file_data_split,
+                    fname_output=file_data_split_reg,
+                    transforms=fname_warp_list_invert_tmp,
+                    fname_reference=(file_dest + ext_dest),
+                    interpolation_args=interp,
+                    verbose=verbose,
+                )
 
             # Merge files back
             printv('\nMerge file back...', verbose)
@@ -287,7 +303,7 @@ class Transform:
         im_src_reg.save(verbose=0)  # set verbose=0 to avoid warning message about rewriting file
 
         if islabel:
-            printv("\nTake the center of mass of each registered dilated labels...")
+            printv("\nTake the center of mass of each registered dilated labels...", verbose)
             labeled_img = cubic_to_point(im_src_reg)
             labeled_img.save(path=fname_out)
             if remove_temp_files:

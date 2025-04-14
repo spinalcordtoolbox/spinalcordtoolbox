@@ -10,12 +10,19 @@ import os
 import logging
 from typing import Mapping
 from hashlib import md5
+import tempfile
+from glob import glob
+import json
+import csv
 
 import pytest
+from nibabel import Nifti1Header
+from numpy import zeros
 
-from spinalcordtoolbox.utils.sys import sct_test_path
+from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.utils.sys import sct_test_path, __sct_dir__, __data_dir__, set_loglevel
 from spinalcordtoolbox.download import install_named_dataset
-
+from contrib.fslhd import generate_nifti_fields, generate_numpy_fields
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +38,95 @@ def pytest_sessionstart():
     if not os.path.exists(sct_test_path()):
         logger.info("Downloading sct test data")
         install_named_dataset('sct_testing_data', dest_folder=sct_test_path())
+
+
+def pytest_sessionfinish():
+    """Perform actions that must be done after the test session."""
+    # get the newest temporary path created by pytest
+    tmp_path = max(
+        glob(os.path.join(tempfile.gettempdir(), "pytest-of-*", "pytest-current")),
+        key=lambda p: os.path.getctime(p),
+    )
+
+    # generate directory summaries for both sct_testing_data and the temporary directory
+    for (folder, fname_out) in [(tmp_path, "pytest-tmp.json"),
+                                (sct_test_path(), "sct_testing_data.json"),
+                                (os.path.join(__data_dir__, "sct_example_data"), "sct_example_data.json")]:
+        fname_out = os.path.join(__sct_dir__, "testing", fname_out)
+        if os.path.isdir(folder):
+            summary = summarize_files_in_folder(folder, exclude=['straightening.cache'])
+            summary = sorted(summary, key=lambda d: d['path'])   # sort list-of-dicts by paths
+            keys = [d.pop('path') for d in summary]              # remove paths from dicts
+            summary = {key: d for key, d in zip(keys, summary)}  # convert to dict-of-dicts
+            with open(fname_out, 'w', newline='\n') as jsonfile:
+                json.dump(summary, jsonfile, indent=2)
+
+
+def summarize_files_in_folder(folder, exclude=None):
+    # Construct a list of dictionaries summarizing all the files in a folder
+    summary = []
+    for root, dirs, files in os.walk(folder, followlinks=True):
+        for fname in files:
+            if exclude and fname in exclude:
+                continue
+            fpath = os.path.join(root, fname)
+            if fname.endswith(".csv"):
+                fpath = filter_csv_columns(fpath, columns=["Timestamp", "SCT Version"])
+            root_short = root.replace(folder, os.path.basename(folder))
+            file_dict = {
+                # Use consistent characters to make cross-platform diffing work
+                "path": "/".join(os.path.split(os.path.join(root_short, fname))),
+                "size": os.path.getsize(fpath),
+                "md5": checksum(fpath),
+            }
+            if any(fname.endswith(ext) for ext in [".nii", ".nii.gz"]):
+                img = Image(fpath)
+                img_fields = generate_nifti_fields(img.header)
+                arr_fields = generate_numpy_fields(img.data)
+            else:
+                img_fields = {k: '' for k in generate_nifti_fields(Nifti1Header()).keys()}
+                arr_fields = {k: '' for k in generate_numpy_fields(zeros([1, 1, 1])).keys()}
+            summary.append(file_dict | img_fields | arr_fields)
+    return summary
+
+
+def filter_csv_columns(fpath, columns):
+    """
+    Filter out columns from a CSV file that are not in the list `columns`.
+
+    This helps when checking the filesize and md5 of CSV files, which can contain differing branches, timestamps, etc.
+    """
+    def read_csv(file_path):
+        """Read CSV into a list of dictionaries."""
+        # DictReader will automatically use the first row as a header. If the CSV doesn't have a header,
+        # `csv` will interpret the first row of data as column names. Thus, if the first row has duplicate values,
+        # the columns will be interpreted as duplicates, and one of the columns might get thrown away!
+        # NOTE: The csv library has `csv.Sniffer.has_header()` to detect headers, but given that it's based
+        #       on heuristics, it's probably safer to check the parsed headers after the fact.
+        with open(file_path, mode='r', newline='', encoding='utf-8') as fp:
+            reader = csv.DictReader(fp)
+            return [row for row in reader]
+
+    def write_csv(data, file_path):
+        """Write a list of dictionaries to a CSV."""
+        with open(file_path, mode='w', newline='', encoding='utf-8') as fp:
+            writer = csv.DictWriter(fp, fieldnames=data[0].keys())
+            writer.writeheader()
+            writer.writerows(data)
+
+    # return early if the parsed header doesn't contain any of the columns to filter (to avoid mangling no-header CSVs)
+    csv_contents = read_csv(fpath)
+    if not any(col in csv_contents[0].keys() for col in columns):
+        return fpath
+
+    # filter CSV contents
+    csv_contents_filtered = [{k: v for k, v in row.items() if k not in columns}
+                             for row in csv_contents]
+    # write and return filtered CSV
+    fpath_tmp = os.path.join(tempfile.mkdtemp(), os.path.basename(fpath))
+    write_csv(csv_contents_filtered, fpath_tmp)
+
+    return fpath_tmp
 
 
 @pytest.fixture(autouse=True)
@@ -58,6 +154,22 @@ def test_data_integrity(request):
             files_checksums[fname] = chksum
 
     request.addfinalizer(lambda: check_testing_data_integrity(files_checksums))
+
+
+@pytest.fixture(scope="module")
+def verbose_logging():
+    """
+    Temporarily sets the logging state to be verbose.
+    Module scoped to allow for tests to be run together w/o repeated calls to the logger
+    """
+    # Make logging verbose
+    set_loglevel(verbose=True, caller_module_name=__name__)
+
+    # Run our tests
+    yield
+
+    # Return the logger to be non-verbose
+    set_loglevel(verbose=False, caller_module_name=__name__)
 
 
 def checksum(fname: os.PathLike) -> str:

@@ -28,73 +28,72 @@ def get_parser():
                     'MRI. Magn Reson Med 2008;60(6):1396-1407.'
     )
 
-    mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
-    mandatoryArguments.add_argument(
+    mandatory = parser.mandatory_arggroup
+    mandatory.add_argument(
         "-mt",
-        required=True,
         help="Image with MT_ON",
         metavar=Metavar.file,
     )
-    mandatoryArguments.add_argument(
+    mandatory.add_argument(
         "-pd",
-        required=True,
         help="Image PD weighted (typically, the MT_OFF)",
         metavar=Metavar.file,
     )
-    mandatoryArguments.add_argument(
+    mandatory.add_argument(
         "-t1",
-        required=True,
         help="Image T1-weighted",
         metavar=Metavar.file,
     )
 
-    optional = parser.add_argument_group('\nOPTIONAL ARGUMENTS')
-    optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit")
-    optional.add_argument(
+    sidecar_overrides = parser.add_argument_group(
+        "JSON SIDECAR OVERRIDES",
+        description="Any arguments within this group will override their corresponding values in the JSON side-car files "
+                    "of the MRI sequences you have provided. Otherwise, all values will be fetched from the "
+                    "associated JSON sidecar, assuming it exists. If not, you should provide the corresponding metrics "
+                    " using these arguments."
+    )
+    sidecar_overrides.add_argument(
         "-trmt",
-        help="TR [in s] for the MT image (MT on). By default, will be fetch from the json sidecar (if it exists).",
+        help="TR [in s] for the MT image (MT on).",
         type=float,
         metavar=Metavar.float,
     )
-    optional.add_argument(
+    sidecar_overrides.add_argument(
         "-trpd",
-        help="TR [in s] for proton density weighted image (MT off). By default, will be fetch from the json sidecar (if it exists).",
+        help="TR [in s] for proton density weighted image (MT off).",
         type=float,
         metavar=Metavar.float,
     )
-    optional.add_argument(
+    sidecar_overrides.add_argument(
         "-trt1",
-        help="TR [in s] for T1-weighted image. By default, will be fetch from the json sidecar (if it exists).",
+        help="TR [in s] for the T1-weighted image.",
         type=float,
         metavar=Metavar.float,
     )
-    optional.add_argument(
+    sidecar_overrides.add_argument(
         "-famt",
-        help="Flip angle [in deg] for mt image. By default, will be fetch from the json sidecar (if it exists).",
+        help="Flip angle [in deg] for the MT-weighted image.",
         type=float,
         metavar=Metavar.float,
     )
-    optional.add_argument(
+    sidecar_overrides.add_argument(
         "-fapd",
-        help="Flip angle [in deg] for pd image. By default, will be fetch from the json sidecar (if it exists).",
+        help="Flip angle [in deg] for the PD-weighted image.",
         type=float,
         metavar=Metavar.float,
     )
-    optional.add_argument(
+    sidecar_overrides.add_argument(
         "-fat1",
-        help="Flip angle [in deg] for t1 image. By default, will be fetch from the json sidecar (if it exists).",
+        help="Flip angle [in deg] for the T1-weighted image.",
         type=float,
         metavar=Metavar.float,
     )
+
+    optional = parser.optional_arggroup
     optional.add_argument(
         "-b1map",
         help="B1 map",
-        metavar=Metavar.file,
-        default=None)
+        metavar=Metavar.file)
     optional.add_argument(
         "-omtsat",
         metavar=Metavar.str,
@@ -105,14 +104,9 @@ def get_parser():
         metavar=Metavar.str,
         help="Output file for T1map",
         default="t1map.nii.gz")
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
 
     return parser
 

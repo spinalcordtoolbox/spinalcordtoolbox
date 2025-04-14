@@ -4,3 +4,4 @@ sphinx_rtd_theme
 sphinx-copybutton
 furo==2023.09.10
 sphinx
+sphinx_argparse

@@ -7,6 +7,7 @@
 
 import sys
 from typing import Sequence
+import textwrap
 
 from spinalcordtoolbox.cropping import ImageCropper
 from spinalcordtoolbox.image import Image, add_suffix
@@ -18,35 +19,40 @@ def get_parser():
     parser = SCTArgumentParser(
         description="Tools to crop an image. Either via command line or via a Graphical User Interface (GUI). See "
                     "example usage at the end.",
-        epilog="EXAMPLES:\n"
-               "- To crop an image using the GUI (this does not allow to crop along the right-left dimension):\n"
-               "sct_crop_image -i t2.nii.gz -g 1\n\n"
-               "- To crop an image using a binary mask:\n"
-               "sct_crop_image -i t2.nii.gz -m mask.nii.gz\n\n"
-               "- To crop an image using a reference image:\n"
-               "sct_crop_image -i t2.nii.gz -ref mt1.nii.gz\n\n"
-               "- To crop an image by specifying min/max (you don't need to specify all dimensions). In the example "
-               "below, cropping will occur between x=5 and x=60, and between z=5 and z=zmax-1\n"
-               "sct_crop_image -i t2.nii.gz -xmin 5 -xmax 60 -zmin 5 -zmax -2\n\n"
-               "- To crop an image using a binary mask, and keep a margin of 5 voxels on each side in the x and y "
-               "directions only:\n"
-               "sct_crop_image -i t2.nii.gz -m mask.nii.gz -dilate 5x5x0\n\n"
+        epilog=textwrap.dedent("""
+            EXAMPLES:
+
+            - To crop an image using the GUI (this does not allow to crop along the right-left dimension):
+              ```
+              sct_crop_image -i t2.nii.gz -g 1
+              ```
+            - To crop an image using a binary mask:
+              ```
+              sct_crop_image -i t2.nii.gz -m mask.nii.gz
+              ```
+            - To crop an image using a reference image:
+              ```
+              sct_crop_image -i t2.nii.gz -ref mt1.nii.gz
+              ```
+            - To crop an image by specifying min/max (you don't need to specify all dimensions). In the example below, cropping will occur between x=5 and x=60, and between z=5 and z=zmax-1
+              ```
+              sct_crop_image -i t2.nii.gz -xmin 5 -xmax 60 -zmin 5 -zmax -2
+              ```
+            - To crop an image using a binary mask, and keep a margin of 5 voxels on each side in the x and y directions only:
+              ```
+              sct_crop_image -i t2.nii.gz -m mask.nii.gz -dilate 5x5x0
+              ```
+        """),  # noqa: E501 (line too long)
     )
 
-    mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
-    mandatoryArguments.add_argument(
+    mandatory = parser.mandatory_arggroup
+    mandatory.add_argument(
         '-i',
-        required=True,
-        help="Input image. Example: t2.nii.gz",
+        help="Input image. Example: `t2.nii.gz`",
         metavar=Metavar.file,
     )
 
-    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
-    optional.add_argument(
-        '-h',
-        '--help',
-        action='help',
-        help="Show this help message and exit")
+    optional = parser.optional_arggroup
     optional.add_argument(
         '-o',
         help="Output image. By default, the suffix '_crop' will be added to the input image.",
@@ -55,23 +61,24 @@ def get_parser():
     optional.add_argument(
         '-dilate',
         type=list_type('x', int),
-        help="Number of extra voxels to keep around the bounding box on each side. Can be specified as a single "
-             "number, or a list of 3 numbers separated by 'x'. For example:\n"
-             "  - '-dilate 5' will add a margin of 5 voxels in each direction\n"
-             "  - '-dilate 2x3x0' will add margin of 2 voxels on each side in the x-axis, 3 voxels on each side in the y-axis, "
-             "and no extra margin in the z-axis.",
+        help=textwrap.dedent("""
+            Number of extra voxels to keep around the bounding box on each side. Can be specified as a single number, or a list of 3 numbers separated by `x`. For example:
+
+              - `-dilate 5` will add a margin of 5 voxels in each direction
+              - `-dilate 2x3x0` will add margin of 2 voxels on each side in the x-axis, 3 voxels on each side in the y-axis, and no extra margin in the z-axis.
+        """),
         metavar=Metavar.list,
     ),
     optional.add_argument(
         '-g',
         type=int,
-        help="0: Cropping via command line | 1: Cropping via GUI. Has priority over -m.",
+        help="`0`: Cropping via command line | `1`: Cropping via GUI. Has priority over `-m`.",
         choices=(0, 1),
         default=0,
     )
     optional.add_argument(
         '-m',
-        help="Binary mask that will be used to extract bounding box for cropping the image. Has priority over -ref.",
+        help="Binary mask that will be used to extract bounding box for cropping the image. Has priority over `-ref`.",
         metavar=Metavar.file,
     )
     optional.add_argument(
@@ -91,8 +98,8 @@ def get_parser():
         '-xmax',
         type=int,
         default=-1,
-        help="Higher bound for cropping along X. Setting '-1' will crop to the maximum dimension (i.e. no change), "
-             "'-2' will crop to the maximum dimension minus 1 slice, etc.",
+        help="Higher bound for cropping along X. Setting `-1` will crop to the maximum dimension (i.e. no change), "
+             "`-2` will crop to the maximum dimension minus 1 slice, etc.",
         metavar=Metavar.int,
     )
     optional.add_argument(
@@ -126,20 +133,14 @@ def get_parser():
     optional.add_argument(
         '-b',
         type=int,
-        default=None,
         help="If this flag is declared, the image will not be cropped (i.e. the dimension will not change). Instead, "
              "voxels outside the bounding box will be set to the value specified by this flag. For example, to have "
              "zeros outside the bounding box, use: '-b 0'",
         metavar=Metavar.int,
     )
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
 
     return parser
 

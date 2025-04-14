@@ -10,6 +10,7 @@
 import sys
 import os
 from typing import Sequence
+import textwrap
 
 from spinalcordtoolbox.straightening import SpinalCordStraightener
 from spinalcordtoolbox.centerline.core import ParamCenterline
@@ -26,64 +27,54 @@ def get_parser():
                     "Cohen-Adad J. Topologically-preserving straightening of spinal cord MRI. J Magn "
                     "Reson Imaging. 2017 Oct;46(4):1209-1219"
     )
-    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         "-i",
         metavar=Metavar.file,
-        help='Input image with curved spinal cord. Example: "t2.nii.gz"',
-        required=True)
+        help='Input image with curved spinal cord. Example: `t2.nii.gz`')
     mandatory.add_argument(
         "-s",
         metavar=Metavar.file,
         help='Spinal cord centerline (or segmentation) of the input image. To obtain the centerline, you can use '
              'sct_get_centerline. To obtain the segmentation you can use sct_propseg or sct_deepseg_sc. '
-             'Example: centerline.nii.gz',
-        required=True)
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
-    optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit")
+             'Example: `centerline.nii.gz`')
+
+    optional = parser.optional_arggroup
     optional.add_argument(
         "-dest",
         metavar=Metavar.file,
         help="Spinal cord centerline (or segmentation) of a destination image (which could be "
              "straight or curved). An algorithm scales the length of the input centerline to match that of the "
-             "destination centerline. If using -ldisc-input and -ldisc-dest with this parameter, "
+             "destination centerline. If using `-ldisc-input` and `-ldisc-dest` with this parameter, "
              "instead of linear scaling, the source centerline will be non-linearly matched so "
              "that the inter-vertebral discs of the input image will match that of the "
              "destination image. This feature is particularly useful for registering to a "
-             "template while accounting for disc alignment.",
-        required=False)
+             "template while accounting for disc alignment.")
     optional.add_argument(
         "-ldisc-input",
         metavar=Metavar.file,
         help="Labels located at the posterior edge of the intervertebral discs, for the input  "
-        "image (-i). All disc covering the region of interest should be provided. Exmaple: if "
+        "image (`-i`). All disc covering the region of interest should be provided. Exmaple: if "
         "you are interested in levels C2 to C7, then you should provide disc labels 2,3,4,5,"
         "6,7). More details about label creation at "
         "https://spinalcordtoolbox.com/user_section/tutorials/vertebral-labeling.html. "
-        "This option must be used with the -ldisc-dest parameter.",
-        required=False)
+        "This option must be used with the `-ldisc-dest` parameter.")
     optional.add_argument(
         "-ldisc-dest",
         metavar=Metavar.file,
-        help="Labels located at the posterior edge of the intervertebral discs, for the destination file (-dest). "
-             "The same comments as in -ldisc-input apply. This option must be used with the -ldisc-input parameter.",
-        required=False)
+        help="Labels located at the posterior edge of the intervertebral discs, for the destination file (`-dest`). "
+             "The same comments as in `-ldisc-input` apply. This option must be used with the `-ldisc-input` parameter.")
     optional.add_argument(
         "-disable-straight2curved",
         action='store_true',
         help="Disable straight to curved transformation computation, in case you do not need the "
-             "output warping field straight-->curve (faster).",
-        required=False)
+             "output warping field straight-->curve (faster).")
     optional.add_argument(
         "-disable-curved2straight",
         action='store_true',
         help="Disable curved to straight transformation computation, in case you do not need the "
-             "output warping field curve-->straight (faster).",
-        required=False)
+             "output warping field curve-->straight (faster).")
     optional.add_argument(
         "-speed-factor",
         metavar=Metavar.float,
@@ -96,28 +87,24 @@ def get_parser():
              'will be downsampled to 2x2x2 mm3, providing a speed factor of approximately 8.'
              ' Note that accelerating the straightening process reduces the precision of the '
              'algorithm, and induces undesirable edges effects. Default=1 (no downsampling).',
-        required=False,
         default=1)
     optional.add_argument(
         "-xy-size",
         metavar=Metavar.float,
         type=float,
         help='Size of the output FOV in the RL/AP plane, in mm. The resolution of the destination '
-             'image is the same as that of the source image (-i). Default: 35.',
-        required=False,
+             'image is the same as that of the source image (`-i`). Default: `35`.',
         default=35.0)
     optional.add_argument(
         "-o",
         metavar=Metavar.file,
         help='Straightened file. By default, the suffix "_straight" will be added to the input file name.',
-        required=False,
         default='')
     optional.add_argument(
         "-ofolder",
         metavar=Metavar.folder,
         help="Output folder (all outputs will go there).",
         action=ActionCreateFolder,
-        required=False,
         default='.')
     optional.add_argument(
         '-centerline-algo',
@@ -128,59 +115,44 @@ def get_parser():
         '-centerline-smooth',
         metavar=Metavar.int,
         type=int,
-        help='Degree of smoothing for centerline fitting. Only use with -centerline-algo {bspline, linear}. Default: 10',
+        help='Degree of smoothing for centerline fitting. Only use with -centerline-algo {bspline, linear}. Default: `10`',
         default=10)
 
     optional.add_argument(
         "-param",
         metavar=Metavar.list,
-        help="Parameters for spinal cord straightening. Separate arguments with \",\".\n"
-             "  - precision: Float [1, inf) Precision factor of straightening, related to the number of slices. "
-             "Increasing this parameter increases the precision along with increased computational time. "
-             "Not taken into account with Hanning fitting method. Default=2\n"
-             "  - threshold_distance: Float [0, inf) Threshold at which voxels are not considered into displacement. "
-             "Increase this threshold if the image is blackout around the spinal cord too much. Default=10\n"
-             "  - accuracy_results: {0, 1} Disable/Enable computation of accuracy results after straightening. Default=0\n"
-             "  - template_orientation: {0, 1} Disable/Enable orientation of the straight image to be the same as the template. Default=0",
-        required=False)
+        help=textwrap.dedent("""
+            Parameters for spinal cord straightening. Separate arguments with ','.
 
+              - `precision`: Float `[1, inf)` Precision factor of straightening, related to the number of slices. Increasing this parameter increases the precision along with increased computational time. Not taken into account with Hanning fitting method. Default=`2`
+              - `threshold_distance`: Float `[0, inf)` Threshold at which voxels are not considered into displacement. Increase this threshold if the image is blackout around the spinal cord too much. Default=`10`
+              - `accuracy_results`: `{0, 1}` Disable/Enable computation of accuracy results after straightening. Default=`0`
+              - `template_orientation`: {0, 1}` Disable/Enable orientation of the straight image to be the same as the template. Default=`0`
+        """),  # noqa: E501 (line too long)
+        )
     optional.add_argument(
         "-x",
-        help="Final interpolation. Default: spline.",
+        help="Final interpolation. Default: `spline`.",
         choices=("nn", "linear", "spline"),
         default="spline")
     optional.add_argument(
         '-qc',
         metavar=Metavar.str,
-        help='The path where the quality control generated content will be saved',
-        default=None)
+        help='The path where the quality control generated content will be saved')
     optional.add_argument(
         '-qc-dataset',
         metavar=Metavar.str,
         help='If provided, this string will be mentioned in the QC report as the dataset the '
-             'process was run on',
-        default=None)
+             'process was run on')
     optional.add_argument(
         '-qc-subject',
         metavar=Metavar.str,
         help='If provided, this string will be mentioned in the QC report as the subject the '
-             'process was run on',
-        default=None)
-    optional.add_argument(
-        "-r",
-        type=int,
-        help="Remove temporary files.",
-        required=False,
-        choices=(0, 1),
-        default=1)
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
+             'process was run on')
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
+    parser.add_tempfile_args()
 
     return parser
 

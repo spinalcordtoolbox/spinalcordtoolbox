@@ -8,6 +8,7 @@
 import os
 import sys
 from typing import Sequence
+import textwrap
 
 import numpy as np
 
@@ -32,49 +33,43 @@ def get_parser():
         )
     )
 
-    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         '-i',
         metavar=Metavar.file,
-        required=True,
-        help="Input image. Example: t1.nii.gz"
+        help="Input image. Example: `t1.nii.gz`"
     )
 
-    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
-    optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit."
-    )
-    optional.add_argument(
-        "-c",
-        choices=['t1', 't2', 't2s', 'dwi'],
-        help="Type of image contrast. Only with method=optic."
-    )
+    optional = parser.optional_arggroup
     optional.add_argument(
         "-method",
         choices=['optic', 'viewer', 'fitseg'],
         default='optic',
-        help="Method used for extracting the centerline.\n"
-             "  - optic: automatic spinal cord detection method\n"
-             "  - viewer: manual selection a few points followed by interpolation\n"
-             "  - fitseg: fit a regularized centerline on an already-existing cord segmentation. This method "
-             "will interpolate if any slices are missing. Also, if  '-extrapolation 1' is specified, this method will "
-             "extrapolate beyond the segmentation boundaries (i.e., every axial slice will exhibit a centerline pixel)."
+        help=textwrap.dedent("""
+            Method used for extracting the centerline.
+
+              - `optic`: automatic spinal cord detection method
+              - `viewer`: manual selection a few points followed by interpolation
+              - `fitseg`: fit a regularized centerline on an already-existing cord segmentation. This method will interpolate if any slices are missing. Also, if  `-extrapolation 1` is specified, this method will extrapolate beyond the segmentation boundaries (i.e., every axial slice will exhibit a centerline pixel).
+        """),  # noqa: E501 (line too long)
+    )
+    optional.add_argument(
+        "-c",
+        choices=['t1', 't2', 't2s', 'dwi'],
+        help="Type of image contrast. Only relevant with `-method optic`."
     )
     optional.add_argument(
         "-centerline-algo",
         choices=['polyfit', 'bspline', 'linear', 'nurbs'],
         default='bspline',
-        help="Algorithm for centerline fitting. Only relevant with -method fitseg."
+        help="Algorithm for centerline fitting. Only relevant with `-method fitseg`."
     )
     optional.add_argument(
         "-centerline-smooth",
         metavar=Metavar.int,
         type=int,
         default=30,
-        help="Degree of smoothing for centerline fitting. Only for -centerline-algo {bspline, linear}."
+        help="Degree of smoothing for centerline fitting. Only relevant with `-centerline-algo {bspline, linear}`."
     )
     optional.add_argument(
         "-centerline-soft",
@@ -82,7 +77,7 @@ def get_parser():
         type=int,
         choices=[0, 1],
         default=0,
-        help="Binary or soft centerline. 0 = binarized, 1 = soft. Only relevant with -method fitseg."
+        help="Binary or soft centerline. `0` = binarized, `1` = soft. Only relevant with `-method fitseg`."
     )
     optional.add_argument(
         "-space",
@@ -99,15 +94,15 @@ def get_parser():
         type=int,
         choices=[0, 1],
         default=0,
-        help="Extrapolate beyond the segmentation boundaries. 0 = no extrapolation, 1 = extrapolation. Only relevant with -method fitseg."
-             "Note: '-extrapolation 1' works best with lower-order (linear, nurbs) centerline fitting algorithms"
+        help="Extrapolate beyond the segmentation boundaries. `0` = no extrapolation, `1` = extrapolation. Only relevant with `-method fitseg`."
+             "Note: `-extrapolation 1` works best with lower-order (linear, nurbs) centerline fitting algorithms"
     )
     optional.add_argument(
         "-o",
         metavar=Metavar.file,
         help="File name for the centerline output file. If file extension is not provided, "
-             "'.nii.gz' will be used by default. If '-o' is not provided, then the output file will "
-             "be the input with suffix '_centerline'. Example: 'centerline_optic.nii.gz'"
+             "`.nii.gz` will be used by default. If `-o` is not provided, then the output file will "
+             "be the input with suffix `_centerline`. Example: `centerline_optic.nii.gz`"
     )
     optional.add_argument(
         "-gap",
@@ -115,23 +110,6 @@ def get_parser():
         type=float,
         default=20.0,
         help="Gap in mm between manually selected points. Only with method=viewer."
-    )
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode"
-    )
-    optional.add_argument(
-        '-r',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1],
-        default=1,
-        help="Whether to remove temporary files. 0 = no, 1 = yes"
     )
     optional.add_argument(
         "-qc",
@@ -149,6 +127,11 @@ def get_parser():
         metavar=Metavar.str,
         help="If provided, this string will be mentioned in the QC report as the subject the process was run on."
     )
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
+    parser.add_tempfile_args()
+
     return parser
 
 

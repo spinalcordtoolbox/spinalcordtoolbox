@@ -22,6 +22,7 @@ from scipy.ndimage import center_of_mass
 import skimage.exposure
 
 from spinalcordtoolbox.centerline.core import get_centerline, ParamCenterline
+from spinalcordtoolbox.cropping import ImageCropper, BoundingBox
 from spinalcordtoolbox.image import Image, rpi_slice_to_orig_orientation
 import spinalcordtoolbox.reports
 from spinalcordtoolbox.reports.assets._assets.py import refresh_qc_entries
@@ -39,7 +40,6 @@ mpl_colors = LazyLoader("mpl_colors", globals(), "matplotlib.colors")
 mpl_backend_agg = LazyLoader("mpl_backend_agg", globals(), "matplotlib.backends.backend_agg")
 mpl_patheffects = LazyLoader("mpl_patheffects", globals(), "matplotlib.patheffects")
 mpl_collections = LazyLoader("mpl_collections", globals(), "matplotlib.collections")
-mpl_plt = LazyLoader("mpl_plt", globals(), "matplotlib.pyplot")
 
 
 logger = logging.getLogger(__name__)
@@ -118,6 +118,7 @@ def create_qc_entry(
                 'background_img': str(imgs_to_generate['path_background_img'].relative_to(path_qc)),
                 'overlay_img': str(imgs_to_generate['path_overlay_img'].relative_to(path_qc)),
                 'moddate': mod_date.strftime("%Y-%m-%d %H:%M:%S"),
+                'rank': '',
                 'qc': '',
             }, file_result, indent=1)
 
@@ -254,6 +255,8 @@ def sct_deepseg(
     path_qc: str,
     dataset: Optional[str],
     subject: Optional[str],
+    plane: Optional[str],
+    fname_qc_seg: Optional[str],
 ):
     """
     Generate a QC report for sct_deepseg, based on which task was used.
@@ -267,24 +270,37 @@ def sct_deepseg(
         path_qc=Path(path_qc),
         command=command,
         cmdline=list2cmdline(cmdline),
-        plane='Axial',
+        plane=plane,
         dataset=dataset,
         subject=subject,
     ) as imgs_to_generate:
-        if "seg_spinal_rootlets_t2w" in argv:
+        # Custom QC to handle multiclass segmentation outside the spinal cord
+        if "rootlets_t2" in argv:
             sct_deepseg_spinal_rootlets_t2w(
-                imgs_to_generate, fname_input, fname_seg, fname_seg2, species)
+                imgs_to_generate, fname_input, fname_seg, fname_seg2, species,
+                radius=(23, 23))
+        elif "totalspineseg" in argv:
+            sct_deepseg_spinal_rootlets_t2w(
+                imgs_to_generate, fname_input, fname_seg, fname_seg2, species,
+                radius=(40, 40))
+        # Non-rootlets, axial/sagittal DeepSeg QC report
+        elif plane == 'Axial':
+            sct_deepseg_axial(
+                imgs_to_generate, fname_input, fname_seg, fname_seg2, species, fname_qc_seg)
         else:
-            sct_deepseg_default(
-                imgs_to_generate, fname_input, fname_seg, fname_seg2, species)
+            assert plane == 'Sagittal', (f"`plane` must be either 'Axial' "
+                                         f"or 'Sagittal', but got {plane}")
+            sct_deepseg_sagittal(
+                imgs_to_generate, fname_input, fname_seg, fname_seg2, species, fname_qc_seg)
 
 
-def sct_deepseg_default(
+def sct_deepseg_axial(
     imgs_to_generate: dict[str, Path],
     fname_input: str,
     fname_seg_sc: str,
     fname_seg_lesion: Optional[str],
     species: str,
+    fname_qc_seg: Optional[str],
 ):
     """
     Generate a QC report for sct_deepseg, with varied colormaps depending on the type of segmentation.
@@ -299,6 +315,7 @@ def sct_deepseg_default(
     img_input = Image(fname_input).change_orientation('SAL')
     img_seg_sc = Image(fname_seg_sc).change_orientation('SAL')
     img_seg_lesion = Image(fname_seg_lesion).change_orientation('SAL') if fname_seg_lesion else None
+    img_qc_seg = Image(fname_qc_seg).change_orientation('SAL') if fname_qc_seg else None
 
     # Resample images slice by slice
     logger.info('Resample images to %fx%f vox', p_resample, p_resample)
@@ -313,20 +330,38 @@ def sct_deepseg_default(
         image_dest=img_input,
         interpolation='linear',
     )
+    img_seg_sc.data = (img_seg_sc.data > 0.5) * 1
     img_seg_lesion = resample_nib(
         image=img_seg_lesion,
         image_dest=img_input,
         interpolation='linear',
     ) if fname_seg_lesion else None
+    if fname_seg_lesion:
+        img_seg_lesion.data = (img_seg_lesion.data > 0.5) * 1
+    img_qc_seg = resample_nib(
+        image=img_qc_seg,
+        image_dest=img_input,
+        interpolation='linear',
+    ) if fname_qc_seg else None
+
+    # Using -qc-seg mask if available, we remove slices which are empty (except for the first 3 and last 3 slices just around the segmented slices)
+    for img_to_crop in [img_input, img_seg_sc, img_seg_lesion, img_qc_seg]:
+        if fname_qc_seg and img_to_crop:
+            crop_with_mask(img_to_crop, img_qc_seg, pad=3)
 
     # Each slice is centered on the segmentation
     logger.info('Find the center of each slice')
-    centers = np.array([center_of_mass(slice) for slice in img_seg_sc.data])
+    # Use the -qc-seg mask if available, otherwise use the spinal cord mask
+    img_centers = img_qc_seg if fname_qc_seg else img_seg_sc
+    centers = np.array([center_of_mass(slice) for slice in img_centers.data])
     inf_nan_fill(centers[:, 0])
     inf_nan_fill(centers[:, 1])
 
+    # If -qc-seg is available, use it to generate the radius
+    radius = get_max_axial_radius(img_qc_seg) if fname_qc_seg else (15, 15)
+
     # Generate the first QC report image
-    img = equalize_histogram(mosaic(img_input, centers))
+    img = equalize_histogram(mosaic(img_input, centers, radius))
 
     # For QC reports, axial mosaics will often have smaller height than width
     # (e.g. WxH = 20x3 slice images). So, we want to reduce the fig height to match this.
@@ -355,14 +390,14 @@ def sct_deepseg_default(
     for i, image in enumerate([img_seg_sc, img_seg_lesion]):
         if not image:
             continue
-        img = mosaic(image, centers)
+        img = mosaic(image, centers, radius)
         img = np.ma.masked_less_equal(img, 0)
         img.set_fill_value(0)
         ax.imshow(img,
                   cmap=colormaps[i],
                   norm=mpl_colors.Normalize(vmin=0.5, vmax=1),
                   # img==1 -> opaque, but soft regions -> more transparent as value decreases
-                  alpha=(img / img.max()),  # scale to [0, 1]
+                  alpha=1.0,
                   interpolation='none',
                   aspect=1.0)
 
@@ -379,30 +414,39 @@ def sct_deepseg_spinal_rootlets_t2w(
     fname_seg_sc: str,
     fname_seg_lesion: Optional[str],
     species: str,
+    radius: Sequence[int],
+    outline: bool = True
 ):
     """
-    Generate a QC report for `sct_deepseg -task seg_spinal_rootlets_t2w`.
+    Generate a QC report for `sct_deepseg rootlets_t2`.
 
     This refactor is based off of the `listed_seg` method in qc.py, adapted to support multiple images.
     """
     # Axial orientation, switch between one anat image and 1-2 seg images
     # FIXME: This code is more or less duplicated with the 'sct_register_multimodal' report, because both reports
     #        use the old qc.py method "_make_QC_image_for_3d_volumes" for generating the background img.
-    # Resample images slice by slice
-    p_resample = {'human': 0.6, 'mouse': 0.1}[species]
+
+    # Load the input images
     img_input = Image(fname_input).change_orientation('SAL')
     img_seg_sc = Image(fname_seg_sc).change_orientation('SAL')
     img_seg_lesion = Image(fname_seg_lesion).change_orientation('SAL') if fname_seg_lesion else None
 
-    # Rootlets need a larger "base" radius as they exist outside the SC
-    radius = (23, 23)
-    # The radius size is suited to the species-specific resolutions. But, since we plan to skip
-    # resampling, we need to instead adjust the crop radius to suit the *actual* resolution.
-    p_original = img_seg_sc.dim[5]  # dim[0:3] => shape, dim[4:7] => pixdim, so dim[5] == pixdim[1]
-    radius = tuple(int(v * (p_resample / p_original)) for v in radius)
-    # If the resolution is greater than the resampling resolution, then the crop size will be smaller.
-    # To compensate for this (and ensure the QC is visually readable), we scale up the image
-    scale = int(math.ceil(p_original / p_resample))  # e.g. 0.8mm human -> 0.8/0.6 -> 1.33x => 2x scale
+    # - Normally, we would apply isotropic resampling to the image to a specific mm resolution (based on the species).
+    p_resample = {'human': 0.6, 'mouse': 0.1}[species]
+    #   Choosing a fixed resolution allows us to crop the image around the spinal cord at a fixed radius that matches the chosen resolution,
+    #   while also handling anisotropic images (so that they display correctly on an isotropic grid).
+    # - However, we cannot apply resampling here because rootlets labels are often small (~1vox wide), and so resampling might
+    #   corrupt the labels and cause them to be displayed unfaithfully.
+    # - So, instead of resampling the image to fit the default crop radius, we scale the crop radius to suit the original resolution.
+    p_original = (img_seg_sc.dim[5], img_seg_sc.dim[6])  # Image may be anisotropic, so use both resolutions (H,W)
+    p_ratio = tuple(p_resample / p for p in p_original)
+    radius = tuple(int(r * p) for r, p in zip(radius, p_ratio))
+    # - One problem with this, however, is that if the crop radius ends up being smaller than the default, the QC will in turn be smaller as well.
+    #   So, to ensure that the QC is still readable, we scale up by an integer factor whenever the p_ratio is < 1
+    scale = int(math.ceil(1 / max(p_ratio)))  # e.g. 0.8mm human => p_ratio == 0.6/0.8 == 0.75; scale == 1/p_ratio == 1/0.75 == 1.33 => 2x scale
+    # - One other problem is that for anisotropic images, the aspect ratio won't be 1:1 between width/height.
+    #   So, we use `aspect` to adjust the image via imshow, and `radius` to know where to place the text in x/y coords
+    aspect = p_ratio[1] / p_ratio[0]
 
     # Each slice is centered on the segmentation
     logger.info('Find the center of each slice')
@@ -418,13 +462,13 @@ def sct_deepseg_spinal_rootlets_t2w(
     # For QC reports, axial mosaics will often have smaller height than width
     # (e.g. WxH = 20x3 slice images). So, we want to reduce the fig height to match this.
     # `size_fig` is in inches. So, dpi=300 --> 1500px, dpi=100 --> 500px, etc.
-    size_fig = [5, 5 * img.shape[0] / img.shape[1]]
+    size_fig = [5, 5 * (img.shape[0] / img.shape[1]) * aspect]
 
     fig = mpl_figure.Figure()
     fig.set_size_inches(*size_fig, forward=True)
     mpl_backend_agg.FigureCanvasAgg(fig)
     ax = fig.add_axes((0, 0, 1, 1))
-    ax.imshow(img, cmap='gray', interpolation='none', aspect=1.0)
+    ax.imshow(img, cmap='gray', interpolation='none', aspect=aspect)
     add_orientation_labels(ax, radius=tuple(r*scale for r in radius))
     ax.get_xaxis().set_visible(False)
     ax.get_yaxis().set_visible(False)
@@ -452,10 +496,136 @@ def sct_deepseg_spinal_rootlets_t2w(
                   norm=None,
                   alpha=1.0,
                   interpolation='none',
-                  aspect=1.0)
-        # linewidth 0.5 is too thick, 0.25 is too thin
-        plot_outlines(img, ax=ax, facecolor='none', edgecolor='black', linewidth=0.3)
+                  aspect=aspect)
+        if outline:
+            # linewidth 0.5 is too thick, 0.25 is too thin
+            plot_outlines(img, ax=ax, facecolor='none', edgecolor='black', linewidth=0.3)
         add_segmentation_labels(ax, img, colors=colormaps[i].colors, radius=tuple(r*scale for r in radius))
+
+    ax.get_xaxis().set_visible(False)
+    ax.get_yaxis().set_visible(False)
+    img_path = str(imgs_to_generate['path_overlay_img'])
+    logger.debug('Save image %s', img_path)
+    fig.savefig(img_path, format='png', transparent=True, dpi=300)
+
+
+def sct_deepseg_sagittal(
+    imgs_to_generate: dict[str, Path],
+    fname_input: str,
+    fname_seg_sc: str,
+    fname_seg_lesion: Optional[str],
+    species: str,
+    fname_qc_seg: Optional[str],
+):
+    """
+    Generate a QC report for sct_deepseg, with varied colormaps depending on the type of segmentation.
+
+    This refactor is based off of the `listed_seg` method in qc.py, adapted to support multiple images.
+    """
+    # Axial orientation, switch between one anat image and 1-2 seg images
+    # FIXME: This code is more or less duplicated with the 'sct_register_multimodal' report, because both reports
+    #        use the old qc.py method "_make_QC_image_for_3d_volumes" for generating the background img.
+    # Resample images slice by slice
+    p_resample = {'human': 0.6, 'mouse': 0.1}[species]
+    img_input = Image(fname_input).change_orientation('RSP')
+    img_seg_sc = Image(fname_seg_sc).change_orientation('RSP')
+    img_seg_lesion = Image(fname_seg_lesion).change_orientation('RSP') if fname_seg_lesion else None
+    img_qc_seg = Image(fname_qc_seg).change_orientation('RSP') if fname_qc_seg else None
+
+    # Resample images slice by slice
+    R_L_resolution = img_input.dim[4]
+    logger.info('Resample images to %fx%fx%f vox', R_L_resolution, p_resample, p_resample)
+    img_input = resample_nib(
+        image=img_input,
+        new_size=[R_L_resolution, p_resample, p_resample],
+        new_size_type='mm',
+        interpolation='spline',
+    )
+    img_seg_sc = resample_nib(
+        image=img_seg_sc,
+        image_dest=img_input,
+        interpolation='linear',
+    )
+    img_seg_sc.data = (img_seg_sc.data > 0.5) * 1
+    img_seg_lesion = resample_nib(
+        image=img_seg_lesion,
+        image_dest=img_input,
+        interpolation='linear',
+    ) if fname_seg_lesion else None
+    if fname_seg_lesion:
+        img_seg_lesion.data = (img_seg_lesion.data > 0.5) * 1
+    img_qc_seg = resample_nib(
+        image=img_qc_seg,
+        image_dest=img_input,
+        interpolation='linear',
+    ) if fname_qc_seg else None
+
+    # Using -qc-seg mask if available, we remove slices which are empty (except for the first 2 and last 2 slices just around the segmented slices)
+    # If -qc-seg mask isn't available, but image would create a mosaic that's too large, keep only the center 30 sagittal slices (using segmnetation as a reference)
+    for img_to_crop in [img_input, img_seg_sc, img_seg_lesion, img_qc_seg]:
+        if img_to_crop is None:
+            continue  # don't crop missing images
+        if fname_qc_seg:
+            crop_with_mask(img_to_crop, img_qc_seg, pad=2)
+        elif img_input.dim[0] > 30:
+            crop_with_mask(img_to_crop, img_seg_sc, max_slices=30)
+            if img_to_crop == img_input:  # display a message only once
+                logger.warning("Source image is too large to display in a sagittal mosaic. Applying automatic cropping around segmentation.\n"
+                               "Please consider using `sct_deepseg -qc-seg` option to customize the crop. You can use `sct_create_mask` to create a suitable mask to pass to "
+                               "`-qc-seg`. If this message still occurs after cropping, please consider resampling your image to a lower resolution using `sct_resample`.")
+
+    logger.info('Find the center of each slice')
+    # Use the -qc-seg mask if available to get crop radius (as well as the center of mass) for each slice
+    if fname_qc_seg:
+        radius = get_max_sagittal_radius(img_qc_seg)
+        centers = np.array([center_of_mass(slice) for slice in img_qc_seg.data])
+        inf_nan_fill(centers[:, 0])
+        inf_nan_fill(centers[:, 1])
+    # otherwise, if -qc-seg isn't provided, display the full sagittal slice and use the center of the uncropped image
+    else:
+        radius = (img_input.dim[1] // 2, img_input.dim[2] // 2)
+        centers = np.array([radius] * img_input.data.shape[0])
+
+    # Generate the first QC report image
+    img = equalize_histogram(mosaic(img_input, centers, radius=radius))
+
+    # For QC reports, axial mosaics will often have smaller height than width
+    # (e.g. WxH = 20x3 slice images). So, we want to reduce the fig height to match this.
+    # `size_fig` is in inches. So, dpi=300 --> 1500px, dpi=100 --> 500px, etc.
+    size_fig = [5, 5 * img.shape[0] / img.shape[1]]
+
+    fig = mpl_figure.Figure()
+    fig.set_size_inches(*size_fig, forward=True)
+    mpl_backend_agg.FigureCanvasAgg(fig)
+    ax = fig.add_axes((0, 0, 1, 1))
+    ax.imshow(img, cmap='gray', interpolation='none', aspect=1.0)
+    add_orientation_labels(ax, radius=radius, letters=['S', 'I', 'P', 'A'])
+    ax.get_xaxis().set_visible(False)
+    ax.get_yaxis().set_visible(False)
+    img_path = str(imgs_to_generate['path_background_img'])
+    logger.debug('Save image %s', img_path)
+    fig.savefig(img_path, format='png', transparent=True, dpi=300)
+
+    # Generate the second QC report image
+    fig = mpl_figure.Figure()
+    fig.set_size_inches(*size_fig, forward=True)
+    mpl_backend_agg.FigureCanvasAgg(fig)
+    ax = fig.add_axes((0, 0, 1, 1))
+    colormaps = [mpl_colors.ListedColormap(["#ff0000"]),  # Red for first image
+                 mpl_colors.ListedColormap(["#00ffff"])]  # Cyan for second
+    for i, image in enumerate([img_seg_sc, img_seg_lesion]):
+        if not image:
+            continue
+        img = mosaic(image, centers, radius=radius)
+        img = np.ma.masked_less_equal(img, 0)
+        img.set_fill_value(0)
+        ax.imshow(img,
+                  cmap=colormaps[i],
+                  norm=mpl_colors.Normalize(vmin=0.5, vmax=1),
+                  # img==1 -> opaque, but soft regions -> more transparent as value decreases
+                  alpha=1.0,
+                  interpolation='none',
+                  aspect=1.0)
 
     ax.get_xaxis().set_visible(False)
     ax.get_yaxis().set_visible(False)
@@ -516,10 +686,6 @@ def sct_analyze_lesion(
         # Get the number of slices containing the lesion. For example, if a lesion cover slices 7,8,9, get 3
         num_of_sag_slices = max_sag_slice - min_sag_slice + 1
 
-        # Get the midsagittal slice of the spinal cord
-        # Note: as the midsagittal slice is the same for all lesions, we can pick the first lesion ([0]) to get it
-        mid_sagittal_sc_slice = measure_pd.loc[0, 'midsagittal_spinal_cord_slice']
-
         #  Create a figure
         #  The figure has one row per lesion and one column per sagittal slice containing the lesion
         fig, axes = mpl_plt.subplots(num_of_lesions,
@@ -560,11 +726,7 @@ def sct_analyze_lesion(
 
                 # Add title for each column
                 if idx_row == 0:
-                    if sagittal_slice == mid_sagittal_sc_slice:
-                        axes[idx_row, idx_col].set_title(f'Midsagittal slice\n'
-                                                         f'Sagittal slice #{sagittal_slice}')
-                    else:
-                        axes[idx_row, idx_col].set_title(f'Sagittal slice #{sagittal_slice}')
+                    axes[idx_row, idx_col].set_title(f'Sagittal slice #{sagittal_slice}')
 
                 # Add title to each row, (i.e., y-axis)
                 if idx_col == 0:
@@ -646,9 +808,14 @@ def mosaic(img: Image, centers: np.ndarray, radius: tuple[int, int] = (15, 15), 
     # Center and crop each axial slice
     cropped = []
     for center, slice in zip(centers.astype(int), img.data):
-        # Add a margin before cropping, in case the center is too close to the edge
+        # If the `center` coordinate is close to the edge, then move it away from the edge to capture more of the image
+        # In other words, make sure the `center` coordinate is at least `radius` pixels away from the edge
+        for i in [0, 1]:
+            center[i] = min(slice.shape[i] - radius[i], center[i])  # Check far edge first
+            center[i] = max(radius[i],                  center[i])  # Then check 0 edge last
+        # Add a margin before cropping, in case the center is still too close to one of the edges
         # Also, use Kronecker product to scale each block in multiples
-        cropped.append(np.kron(np.pad(slice, radius)[
+        cropped.append(np.kron(np.pad(slice, [[r] for r in radius])[
             center[0]:center[0] + 2*radius[0],
             center[1]:center[1] + 2*radius[1],
         ], np.ones((scale, scale))))
@@ -661,7 +828,7 @@ def mosaic(img: Image, centers: np.ndarray, radius: tuple[int, int] = (15, 15), 
     return np.block([cropped[i:i+num_col] for i in range(0, len(cropped), num_col)])
 
 
-def add_orientation_labels(ax: mpl_axes.Axes, radius: tuple[int, int] = (15, 15)):
+def add_orientation_labels(ax: mpl_axes.Axes, radius: tuple[int, int] = (15, 15), letters: tuple[str, str, str, str] = ('A', 'P', 'L', 'R')):
     """
     Add orientation labels (A, P, L, R) to a figure, yellow with a black outline.
     """
@@ -670,10 +837,10 @@ def add_orientation_labels(ax: mpl_axes.Axes, radius: tuple[int, int] = (15, 15)
     # L     R   -->  [0, 17]            [24, 17]
     #    P                    [12, 28]
     for letter, x, y, in [
-        ('A', radius[0] - 3,   6),
-        ('P', radius[0] - 3,   radius[1]*2 - 2),
-        ('L', 0,               radius[1] + 2),
-        ('R', radius[0]*2 - 6, radius[1] + 2)
+        (letters[0], radius[1] - 3,   6),
+        (letters[1], radius[1] - 3,   radius[0]*2 - 2),
+        (letters[2], 0,               radius[0] + 2),
+        (letters[3], radius[1]*2 - 6, radius[0] + 2)
     ]:
         ax.text(x, y, letter, color='yellow', size=4).set_path_effects([
             mpl_patheffects.Stroke(linewidth=1, foreground='black'),
@@ -689,8 +856,9 @@ def add_segmentation_labels(ax: mpl_axes.Axes, seg_mosaic: np.ndarray, colors: l
     # Fetch mosaic shape properties
     bbox = [2*radius[0], 2*radius[1]]
     grid_shape = [s // bb for s, bb in zip(seg_mosaic.shape, bbox)]
-    # Fetch set of labels in the mosaic
-    labels = [v for v in np.unique(seg_mosaic) if v]
+    # Fetch set of labels in the mosaic (including labels in between min/max)
+    labels = [float(val) for val in range(int(np.unique(seg_mosaic).min()),
+                                          int(np.unique(seg_mosaic).max())+1)]
     # Iterate over each sub-array in the mosaic
     for row in range(grid_shape[0]):
         for col in range(grid_shape[1]):
@@ -701,8 +869,9 @@ def add_segmentation_labels(ax: mpl_axes.Axes, seg_mosaic: np.ndarray, colors: l
             # Check for nonzero labels, then draw text for each label found
             labels_in_arr = [v for v in np.unique(arr) if v]
             for idx_pos, l_arr in enumerate(labels_in_arr, start=1):
+                lr_shift = -4 * (len(str(int(l_arr))) - 1)
                 y, x = (extents[0].stop - 6*idx_pos + 3,  # Shift each subsequent label up in case there are >1
-                        extents[1].stop - 6)
+                        extents[1].stop - 6 + lr_shift)   # Shift labels left if double/triple digit
                 color = colors[0] if len(colors) == 1 else colors[labels.index(l_arr)]
                 ax.text(x, y, str(int(l_arr)), color=color, size=4).set_path_effects([
                     mpl_patheffects.Stroke(linewidth=1, foreground='black'),
@@ -737,9 +906,9 @@ def equalize_histogram(img: np.ndarray):
     return np.array(c * (max_ - min_) + min_, dtype=img.dtype)
 
 
-def plot_outlines(bool_img: np.ndarray, ax: mpl_axes.Axes, **kwargs):
+def plot_outlines(img: np.ndarray, ax: mpl_axes.Axes, **kwargs):
     """
-    Draw the outlines of a 2D binary Numpy array with Matplotlib.
+    Draw the outlines of every equal-value area of a 2D Numpy array with Matplotlib.
 
     kwargs are forwarded to `matplotlib.collections.PolyCollection` for styling.
     """
@@ -748,52 +917,106 @@ def plot_outlines(bool_img: np.ndarray, ax: mpl_axes.Axes, **kwargs):
     # https://matplotlib.org/stable/users/explain/artists/imshow_extent.html#default-extent
 
     # Add a frame of zeros around the image to account for cells on the border
-    padded = np.pad(bool_img, 1)
+    padded = np.pad(img, 1)
 
-    # horizontal_edge[r, c] is True when there should be a visible horizontal
-    # outline between bool_img[r, c+1] and bool_img[r+1, c+1]
-    horizontal_edge = (padded[:-1, :] != padded[1:, :])
+    # First we compute the endpoints of every horizontal segment of the outline
 
-    # corner[r, c] is True when a run of horizontal edges starts or stops at
-    # the upper left corner of bool_img[r, c]
-    corner = (horizontal_edge[:, :-1] != horizontal_edge[:, 1:])
-
-    # List the corners in order: first by row (from top to bottom), then by
-    # column within each row (from left to right). These will be all the
-    # polygon vertices we need, and the two endpoints of each run of horizontal
-    # edges appearing side by side in the list
-    vertices = sorted(map(tuple, np.argwhere(corner)))
-
+    # edge[r, c] is True when there should be a visible horizontal outline
+    # between img[r, c+1] and img[r+1, c+1]
+    edge = (padded[:-1, :] != padded[1:, :])
+    # run[r, c] is True when a run of horizontal edges starts or stops at the
+    # upper left corner of img[r, c]
+    run = (edge[:, :-1] != edge[:, 1:])
+    # Get the coordinates from the big boolean array. They are sorted so that
+    # the horizontal segments start at even vertices and stop at the next (odd)
+    # vertex: v0--v1, v2--v3, v4--v5, ...
+    vertices = sorted(map(tuple, np.argwhere(run)))
     # Given a vertex, we want to quickly travel to its horizontal neighbour
-    # i^1 == i+1 when i is even (0->1, 2->3, ...)
-    # i^1 == i-1 when i is odd (1->0, 3->2, ...)
-    horizontal_move = {v: vertices[i ^ 1] for i, v in enumerate(vertices)}
+    # i^1 == i+1 when i is even (v0->v1, v2->v3, ...)
+    # i^1 == i-1 when i is odd (v1->v0, v3->v2, ...)
+    horizontal_segment = {v: vertices[i ^ 1] for i, v in enumerate(vertices)}
 
-    # We also want to quickly travel to vertical neighbours. We can do the same
-    # thing as above, with a different sorting order: by column, then by row
-    vertices.sort(key=lambda v: v[::-1])
-    vertical_move = {v: vertices[i ^ 1] for i, v in enumerate(vertices)}
+    # Second, we compute endpoints for the vertical segments
 
-    # Now build each polygon by listing its vertices in order. We remove the
-    # vertices from horizontal_move as we visit them
-    polys = []
-    while horizontal_move:
+    # edge[r, c] is True when there should be a visible vertical outline
+    # between img[r+1, c] and img[r+1, c+1]
+    edge = (padded[:, :-1] != padded[:, 1:])
+    # run[r, c] is True when a run of vertical edges starts or stops at the
+    # upper left corner of img[r, c]
+    run = (edge[:-1, :] != edge[1:, :])
+    # Get the coordinates from the big boolean array. They are sorted so that
+    # the vertical segments start at even vertices and stop at the next (odd)
+    # vertex: v0--v1, v2--v3, v4--v5, ...
+    vertices = sorted(map(tuple, np.argwhere(run)), key=lambda v: v[::-1])
+    # Given a vertex, we want to quickly travel to its vertical neighbour
+    # i^1 == i+1 when i is even (v0->v1, v2->v3, ...)
+    # i^1 == i-1 when i is odd (v1->v0, v3->v2, ...)
+    vertical_segment = {v: vertices[i ^ 1] for i, v in enumerate(vertices)}
+
+    # Now we need to collect the horizontal and vertical segments into a list
+    # of polygons. We may need some open-ended polygons, which start and end
+    # at vertices which are in the middle of a perpendicular segment. And we
+    # may need some closed polygons, which loop back to their starting vertex.
+
+    # The open-ended polygons:
+    open_polygons = []
+    open_vertices = set(horizontal_segment).symmetric_difference(vertical_segment)
+    while open_vertices:
         polygon = []
-        # Start at an arbitrary unvisited vertex
-        v1 = next(iter(horizontal_move))
-        while v1 in horizontal_move:
-            # Keep alternating horizontal and vertical moves, until we revisit
-            # the polygon's first vertex
-            polygon.append(v1)
-            v2 = horizontal_move.pop(v1)  # remove one endpoint
-            polygon.append(v2)
-            del horizontal_move[v2]  # remove the other endpoint
-            v1 = vertical_move[v2]
-        # Convert (row, column) coordinates to (x, y)
-        polys.append(np.array(polygon)[:, ::-1] - 0.5)
+        vertex = open_vertices.pop()
+        # Build the polygon by listing its vertices in order. We remove
+        # vertices from horizontal_segment and vertical_segment as we trace
+        # over them with the polygon.
+        while True:
+            polygon.append(vertex)
+            if vertex in horizontal_segment:
+                # Move to the other endpoint of the segment, and make sure to
+                # remove both endpoints from the dictionary.
+                vertex = horizontal_segment.pop(vertex)
+                del horizontal_segment[vertex]
+            elif vertex in vertical_segment:
+                # Move to the other endpoint of the segment, and make sure to
+                # remove both endpoints from the dictionary.
+                vertex = vertical_segment.pop(vertex)
+                del vertical_segment[vertex]
+            else:
+                # We have reached the end of the current open-ended polygon.
+                open_vertices.remove(vertex)
+                # Convert (row, column) coordinates to (x, y)
+                open_polygons.append(np.array(polygon)[:, ::-1] - 0.5)
+                break
 
-    # Draw it
-    ax.add_collection(mpl_collections.PolyCollection(polys, **kwargs))
+    # The closed polygons:
+    closed_polygons = []
+    while horizontal_segment:
+        polygon = []
+        # Remove both endpoints of an arbitrary segment.
+        vertex, other = horizontal_segment.popitem()
+        del horizontal_segment[other]
+        while True:
+            polygon.append(vertex)
+            if vertex in horizontal_segment:
+                # Move to the other endpoint of the segment, and make sure to
+                # remove both endpoints from the dictionary.
+                vertex = horizontal_segment.pop(vertex)
+                del horizontal_segment[vertex]
+            elif vertex in vertical_segment:
+                # Move to the other endpoint of the segment, and make sure to
+                # remove both endpoints from the dictionary.
+                vertex = vertical_segment.pop(vertex)
+                del vertical_segment[vertex]
+            else:
+                # We have reached the end of the current closed polygon.
+                # Convert (row, column) coordinates to (x, y)
+                closed_polygons.append(np.array(polygon)[:, ::-1] - 0.5)
+                break
+    assert not vertical_segment
+
+    # Draw the outline
+    ax.add_collection(mpl_collections.PolyCollection(
+        open_polygons, closed=False, **kwargs))
+    ax.add_collection(mpl_collections.PolyCollection(
+        closed_polygons, closed=True, **kwargs))
 
 
 def assign_label_colors_by_groups(labels):
@@ -807,7 +1030,8 @@ def assign_label_colors_by_groups(labels):
     should each be assigned their own distinct colormap, as to group them semantically.
     """
     # Arrange colormaps for max contrast between colormaps, and max contrast between colors in colormaps
-    distinct_colormaps = ['Blues', 'Reds', 'Greens', 'Oranges', 'Purples']
+    # Put reds first because SC labels tend to be ~1, so they will usually be first in a list of labels
+    distinct_colormaps = ['Reds', 'Blues', 'Greens', 'Oranges', 'Purples']
     colormap_sampling = [0.25, 0.5, 0.75, 0.5]  # light -> medium -> dark -> medium -> (repeat)
 
     # Split labels into subgroups --> we split the groups wherever the difference between labels is > 1
@@ -849,3 +1073,73 @@ def assign_label_colors_by_groups(labels):
                 color_list[label - labels.min()] = sampled_colors[j % len(sampled_colors)]
 
     return color_list
+
+
+def crop_with_mask(img_to_crop, img_ref, pad=3, max_slices=None):
+    """
+    Crop array along a specific axis based on nonzero slices in the reference image.
+
+    Use `pad` if you want to pad around the mask (no matter how big the mask is).
+
+    Use `max_slices` to pad only until that amount of slices is reached (overrides `pad`). If
+    the segmentation spans more slices than `max_slices`, then no padding will occur. Instead,
+    all slices containing the segmentation will be used (to preserve the segmentation).
+    """
+    # QC images are reoriented to SAL (axial) or RSP (sagittal) such that axis=0 is always the slice index
+    axis = 0
+    # get extents of segmentation used for cropping
+    first_slice = min(np.where(img_ref.data)[axis])
+    last_slice = max(np.where(img_ref.data)[axis])
+    # if `max_slices` is specified, then override `pad`
+    if max_slices is not None:
+        # use `max(0, ...)` to avoid cropping the segmentation if it would exceed `max_slices`
+        pad_total = max(0, max_slices - (last_slice - first_slice + 1))
+        l_pad = math.floor(pad_total / 2)
+        r_pad = math.ceil(pad_total / 2)
+    # otherwise, use the provided value as-is
+    else:
+        l_pad = r_pad = pad
+    # pad (but make sure the index slices are within the image bounds)
+    start_slice = max(first_slice - l_pad, 0)
+    stop_slice = min(last_slice + r_pad, img_ref.data.shape[axis] - 1)
+    # crop the image at the specified axis
+    cropper = ImageCropper(img_in=img_to_crop)
+    cropper.bbox = BoundingBox(xmin=start_slice, xmax=stop_slice,
+                               ymin=0, ymax=img_to_crop.data.shape[1]-1,
+                               zmin=0, zmax=img_to_crop.data.shape[2]-1)
+    img_cropped = cropper.crop()
+    # since `ImageCropper` returns a copy of the image, we need to update the original image
+    # we could instead just return the new copy, but that would require refactoring the qc
+    # function to no longer iterate over the images in-place, which would be a larger change
+    img_to_crop.data = img_cropped.data
+    img_to_crop.hdr = img_cropped.hdr
+
+
+def get_max_axial_radius(img):
+    """
+    Determine the maximum slicewise width/height of the nonzero voxels in img.
+
+    Input images should be SAL, such that each SI axial slice is composed of [1] -> AP and [2] -> LR.
+    """
+    # In Axial plane, the radius is the maximum width/height of the spinal cord mask dilated by 20% or 15, whichever is larger.
+    dilation = 1.2
+    default = 15
+    heights = [np.max(np.where(slice)[0]) - np.min(np.where(slice)[0]) if np.sum(slice) > 0 else 0 for slice in img.data]
+    widths = [np.max(np.where(slice)[1]) - np.min(np.where(slice)[1]) if np.sum(slice) > 0 else 0 for slice in img.data]
+    heights = [(h * dilation)//2 for h in heights]
+    widths = [(w * dilation)//2 for w in widths]
+    return max(default, max(heights)), max(default, max(widths))
+
+
+def get_max_sagittal_radius(img):
+    """
+    Determine the maximum slicewise width/height of the nonzero voxels for sagittal images.
+
+    Input images should be RSP, such that each LR sagittal slice is composed of [1] -> SI and [2] -> PA.
+    """
+    # In Sagittal plane, the radius is the maximum width of the spinal cord mask dilated by 20% or 1/2 of the image width, whichever is larger.
+    # The height is always the entirety of the image height (for example, to view possible lesions in the brain stem)
+    widths = [np.max(np.where(slice)[1]) - np.min(np.where(slice)[1]) if np.sum(slice) > 0 else 0 for slice in img.data]
+    widths = [w//2 + 0.1*w//2 for w in widths]
+    height = np.floor(img.data.shape[2]/2).astype(int)
+    return height, max(np.floor(img.data.shape[1]/4).astype(int), int(max(widths)))

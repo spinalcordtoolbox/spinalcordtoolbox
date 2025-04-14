@@ -3,9 +3,9 @@
 Generate the necessary input files
 ##################################
 
-The ``sct_compute_compression`` command uses the shape metric of the spinal cord at the level of compression and computes a ratio with non-compressed levels above and below the compression site.
+The :ref:`sct_compute_compression` command uses the shape metric of the spinal cord at the level of compression and computes a ratio with non-compressed levels above and below the compression site.
 
-To use ``sct_compute_compression``, we need the 3 following input files:
+To use :ref:`sct_compute_compression`, we need the 3 following input files:
 
 1. Spinal cord segmentation
 2. Vertebral labels
@@ -19,11 +19,11 @@ These input files can be generated using the commands below. However, if you wou
 
 .. code:: sh
 
-   sct_deepseg_sc -i t2_compressed.nii.gz -c t2 -qc ~/qc_singleSubj
+   sct_deepseg spinalcord -i t2_compressed.nii.gz -qc ~/qc_singleSubj
 
 :Input arguments:
+   - ``spinalcord``: Task to perform. Here, we are using ``spinalcord`` to segment the spinal cord. This task is contrast-agnostic, meaning it can be used on any type of image (T1, T2, T2*, etc.)
    - ``-i`` : Input image.
-   - ``-c`` : Contrast of the input image.
    - ``-qc`` : Directory for Quality Control reporting.
 
 
@@ -81,4 +81,4 @@ These input files can be generated using the commands below. However, if you wou
 8. In the same mask, repeat steps 3, 4 and 7 for the remaining three compression sites.
 9. Save with the filename ``t2_compressed_labels-compression.nii.gz`` and quit.
 
-If you need to label multiple patients, you can use the ``manual_correction.py`` script from the `manual-correction repository <https://github.com/spinalcordtoolbox/manual-correction>`_; see the example `here <https://github.com/spinalcordtoolbox/manual-correction/wiki#manual-labeling-of-spinal-cord-compression>`_.
+If you need to label multiple patients, you can use the ``manual_correction.py`` script from the `manual-correction repository <https://github.com/spinalcordtoolbox/manual-correction>`__; see the example `here <https://github.com/spinalcordtoolbox/manual-correction/wiki#manual-labeling-of-spinal-cord-compression>`__.

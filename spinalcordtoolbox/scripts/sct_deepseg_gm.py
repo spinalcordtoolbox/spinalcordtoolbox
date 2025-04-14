@@ -31,40 +31,19 @@ def get_parser():
                     'dilated convolutions. Sci Rep 2018;8(1):5966.'
     )
 
-    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         "-i",
-        required=True,
-        help="Image filename to segment (3D volume). Example: t2s.nii.gz.",
+        help="Image filename to segment (3D volume). Example: `t2s.nii.gz`.",
         metavar=Metavar.file
     )
 
-    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
-    optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit")
+    optional = parser.optional_arggroup
     optional.add_argument(
         "-o",
-        help="Output segmentation file name. Example: sc_gm_seg.nii.gz",
-        metavar=Metavar.file,
-        default=None)
-    misc = parser.add_argument_group('\nMISC')
-    misc.add_argument(
-        '-qc',
-        help="The path where the quality control generated content will be saved.",
-        metavar=Metavar.str,
-        default=None)
-    misc.add_argument(
-        '-qc-dataset',
-        help='If provided, this string will be mentioned in the QC report as the dataset the process was run on',
-        metavar=Metavar.str)
-    misc.add_argument(
-        '-qc-subject',
-        help='If provided, this string will be mentioned in the QC report as the subject the process was run on',
-        metavar=Metavar.str)
-    misc.add_argument(
+        help="Output segmentation file name. Example: `sc_gm_seg.nii.gz`",
+        metavar=Metavar.file)
+    optional.add_argument(
         "-m",
         help="Model to use (large or challenge). "
              "The model 'large' will be slower but "
@@ -73,26 +52,35 @@ def get_parser():
              "the following challenge: goo.gl/h4AVar.",
         choices=('large', 'challenge'),
         default='large')
-    misc.add_argument(
+    optional.add_argument(
         "-thr",
         type=float,
-        help='Threshold to apply in the segmentation predictions, use 0 (zero) to disable it. Example: 0.999',
+        help='Threshold to apply in the segmentation predictions, use 0 (zero) to disable it.',
         metavar=Metavar.float,
         default=0.999)
-    misc.add_argument(
+    optional.add_argument(
         "-t",
         help="Enable TTA (test-time augmentation). "
              "Better results, but takes more time and "
              "provides non-deterministic results.",
         metavar='')
+
+    misc = parser.misc_arggroup
     misc.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
+        '-qc',
+        help="The path where the quality control generated content will be saved.",
+        metavar=Metavar.str)
+    misc.add_argument(
+        '-qc-dataset',
+        help='If provided, this string will be mentioned in the QC report as the dataset the process was run on',
+        metavar=Metavar.str)
+    misc.add_argument(
+        '-qc-subject',
+        help='If provided, this string will be mentioned in the QC report as the subject the process was run on',
+        metavar=Metavar.str)
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
 
     return parser
 

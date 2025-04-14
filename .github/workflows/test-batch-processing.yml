@@ -22,8 +22,9 @@ jobs:
   batch_processing:
     name: Test batch_processing.sh
     strategy:
+      fail-fast: false
       matrix:
-        os: [ ubuntu-20.04, macos-12, windows-2022 ]
+        os: [ ubuntu-22.04, ubuntu-24.04, macos-13, windows-2022 ]
     runs-on: ${{ matrix.os }}
     # NB: Setting `bash` as the default shell is a bit of a hack workaround for Windows to allow it to run .sh scripts.
     #     Normally, we would ask the user to install a Windows-compatible bash via either Cygwin or Git for Windows.
@@ -84,3 +85,79 @@ jobs:
           else
                sct_testing testing/batch_processing/test_batch_processing.py
           fi
+
+      - name: Rename and move folder summaries for easier download
+        # When uploading a single artifact, the only way to exclude the parent directory
+        # is to move the file to its own folder, then point `path` to that folder.
+        # See: # https://github.com/actions/upload-artifact/issues/30#issuecomment-582156316
+        if: always()
+        run: |
+          mkdir jsons
+          mv testing/sct_example_data.json jsons/sct_example_data_${{ matrix.os }}.json
+
+      - name: Upload folder summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sct_example_data_${{ matrix.os }}.json
+          path: jsons
+
+  compare-results:
+    name: Compare cross-platform results
+    runs-on: macos-13  # brew is the easiest way to install `jd`
+    needs: batch_processing
+    env:
+      YDIFF_OPTIONS: "--side-by-side --pager=cat --color=always --width=120 --nowrap"
+    steps:
+      - name: Install `ydiff`  # https://github.com/ymattw/ydiff
+        run: brew install ydiff
+
+      - name: Download summaries
+        uses: actions/download-artifact@v4
+        # See: https://github.com/actions/download-artifact?tab=readme-ov-file#download-all-artifacts
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Download summaries (master branch)
+        id: download-artifact
+        uses: dawidd6/action-download-artifact@v8
+        with:
+          workflow: test-batch-processing.yml
+          branch: master
+          event: schedule
+          path: artifacts_master
+          name_is_regexp: true
+          name: sct_example_data_.*\.json
+          # Note: Because `dawidd6/action-download-artifact@v8` doesn't have a corresponding
+          #       `merge-multiple` option, the downloaded json files get put into parent
+          #       folders with the same name as the file itself.
+
+      - name: Diff summaries (PR vs. master)
+        continue-on-error: true
+        run: |
+          DIFF_FILE=diff.txt
+          WORKFLOW_FILE=".github/workflows/test-batch-processing.yml"
+          for os in "macos-13" "windows-2022" "ubuntu-22.04" "ubuntu-24.04";
+          do
+            # Full log output
+            echo "::group::Diff for $os"
+            # diff will throw exit code 1 if diff is non-empty, so use '|| true' to prevent the job from failing
+            diff -u "artifacts_master/sct_example_data_$os.json/sct_example_data_$os.json" "artifacts/sct_example_data_$os.json" > $DIFF_FILE || true
+            ydiff < $DIFF_FILE
+            echo "::endgroup::"
+          
+            # Emit warning if diff is nonempty
+            if [ -e "$DIFF_FILE" ] && [ ! -s "$DIFF_FILE" ]; then
+                echo "Hurrah! $DIFF_FILE is empty, so there's no difference between this PR and master."
+            else
+                WARNING_TITLE="batch_processing.sh results diff with master - $os"
+                if [ ! -e "$DIFF_FILE" ]; then
+                    WARNING_MSG="$DIFF_FILE is missing. Did diff fail?"
+                else
+                    ADDED_LINES=$(grep -c '^+[^+]\+' $DIFF_FILE)
+                    WARNING_MSG="$DIFF_FILE exists and is not empty. $ADDED_LINES file properties differ between PR and master."
+                fi
+                echo "::warning file=$WORKFLOW_FILE,line=142,col=13,endColumn=31,title=$WARNING_TITLE::$WARNING_MSG"
+            fi
+          done

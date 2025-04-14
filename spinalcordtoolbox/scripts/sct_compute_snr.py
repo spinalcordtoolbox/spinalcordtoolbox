@@ -11,6 +11,7 @@
 
 import sys
 from typing import Sequence
+import textwrap
 
 import numpy as np
 
@@ -32,54 +33,55 @@ def get_parser():
                     ' signal-to-noise ratios in MR images: Influence of multichannel coils, parallel '
                     'imaging, and reconstruction filters. J Magn Reson Imaging 2007; 26(2): 375-385].'
     )
-    mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
-    mandatoryArguments.add_argument(
+
+    mandatory = parser.mandatory_arggroup
+    mandatory.add_argument(
         '-i',
-        required=True,
-        help="Image to compute the SNR on. (Example: b0s.nii.gz)\n"
-             "- For '-method diff' and '-method mult', the image must be 4D, as SNR will be computed "
-             "along the 4th dimension.\n"
-             "- For '-method single', the image can either be 3D or 4D. If a 4D image is passed, a specific "
-             "3D volume should be specified using the '-vol' argument.",
+        help=textwrap.dedent("""
+            Image to compute the SNR on. Example: `b0s.nii.gz`
+
+              - For `-method diff` and `-method mult`, the image must be 4D, as SNR will be computed along the 4th dimension.
+              - For `-method single`, the image can either be 3D or 4D. If a 4D image is passed, a specific 3D volume should be specified using the `-vol` argument.
+        """),
         metavar=Metavar.file)
-    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
-    optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit")
+
+    optional = parser.optional_arggroup
     optional.add_argument(
         '-m',
-        help='Binary (or weighted) mask within which SNR will be averaged. Example: dwi_moco_mean_seg.nii.gz',
-        metavar=Metavar.file,
-        default='')
-    optional.add_argument(
-        '-m-noise',
-        help="Binary (or weighted) mask within which noise will be calculated. Only valid for '-method single'.",
+        help='Binary (or weighted) mask within which SNR will be averaged. Example: `dwi_moco_mean_seg.nii.gz`',
         metavar=Metavar.file,
         default='')
     optional.add_argument(
         '-method',
-        help='Method to use to compute the SNR (default: diff):\n'
+        help="Method to use to compute the SNR (default: diff):\n"
              "  - diff: Substract two volumes (defined by -vol) and estimate noise variance within the ROI "
-             "(flag '-m' is required). Requires a 4D volume.\n"
-             "  - mult: Estimate noise variance over time across volumes specified with '-vol'. Requires a 4D volume.\n"
-             "  - single: Compute the mean signal in the mask specified by '-m' and estimate the noise variance in a "
-             "mask specified by '-m-noise'. If the noise mask is in the background (air), the noise variance needs to "
-             "be corrected for Rayleigh distribution (set '-rayleigh 1'). If the noise mask is located in a "
+             "(flag `-m` is required). Requires a 4D volume.\n"
+             "  - `mult`: Estimate noise variance over time across volumes specified with `-vol`. Requires a 4D volume.\n"
+             "  - `single`: Compute the mean signal in the mask specified by `-m` and estimate the noise variance in a "
+             "mask specified by `-m-noise`. If the noise mask is in the background (air), the noise variance needs to "
+             "be corrected for Rayleigh distribution (set `-rayleigh 1`). If the noise mask is located in a "
              "region with high signal (eg: tissue), noise distribution can be assumed Gaussian and there is no need to "
-             "correct for Rayleigh distribution (use '-rayleigh 0'). This implementation corresponds to the SNRstdv "
+             "correct for Rayleigh distribution (use `-rayleigh 0`). This implementation corresponds to the SNRstdv "
              "in the Dietrich et al. article. Uses a 3D or a 4D volume. If a 4D volume is input, the volume to "
-             "compute SNR on is specified by '-vol'.",
+             "compute SNR on is specified by `-vol`.",
         choices=('diff', 'mult', 'single'),
         default='diff')
     optional.add_argument(
+        '-m-noise',
+        help="Binary (or weighted) mask within which noise will be calculated. Only valid for `-method single`.",
+        metavar=Metavar.file,
+        default='')
+    optional.add_argument(
         '-vol',
-        help="Volumes to compute SNR from. Separate with ',' (Example: '-vol 0,1'), or select range "
-             "using ':' (Example: '-vol 2:50'). If this argument is not passed:\n"
-             "  - For '-method mult', all volumes will be used.\n"
-             "  - For '-method diff', the first two volumes will be used.\n"
-             "  - For '-method single', the first volume will be used.",
+        help=textwrap.dedent("""
+            Volumes to compute SNR from. Separate with `,` (Example: `-vol 0,1`), or select range using `:` (Example: `-vol 2:50`).
+
+            If this argument is not passed:
+
+              - For `-method mult`, all volumes will be used.
+              - For `-method diff`, the first two volumes will be used.
+              - For `-method single`, the first volume will be used.
+        """),
         metavar=Metavar.str,
         default='')
     optional.add_argument(
@@ -91,26 +93,16 @@ def get_parser():
         default=1,
         choices=(0, 1))
     optional.add_argument(
-        '-r',
-        type=int,
-        help='Remove temporary files.',
-        default=1,
-        choices=(0, 1))
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
-    optional.add_argument(
         '-o',
         metavar=Metavar.str,
         type=str,
-        default=None,
         help="File name to write the computed SNR to."
     )
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
+    parser.add_tempfile_args()
+
     return parser
 
 

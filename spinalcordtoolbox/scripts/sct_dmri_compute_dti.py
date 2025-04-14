@@ -7,6 +7,7 @@
 
 import sys
 from typing import Sequence
+import textwrap
 
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 from spinalcordtoolbox.utils.shell import Metavar, SCTArgumentParser
@@ -17,37 +18,32 @@ def get_parser():
         description='Compute Diffusion Tensor Images (DTI) using dipy.'
     )
 
-    mandatory = parser.add_argument_group("MANDATORY ARGMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         "-i",
-        required=True,
-        help='Input 4d file. Example: dmri.nii.gz',
+        help='Input 4d file. Example: `dmri.nii.gz`',
         metavar=Metavar.file,
     )
     mandatory.add_argument(
         "-bval",
-        required=True,
-        help='Bvals file. Example: bvals.txt',
+        help='Bvals file. Example: `bvals.txt`',
         metavar=Metavar.file,
     )
     mandatory.add_argument(
         "-bvec",
-        required=True,
-        help='Bvecs file. Example: bvecs.txt',
+        help='Bvecs file. Example: `bvecs.txt`',
         metavar=Metavar.file,
     )
 
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
-    optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit")
+    optional = parser.optional_arggroup
     optional.add_argument(
         '-method',
-        help='Type of method to calculate the diffusion tensor:\n'
-             ' standard: Standard equation [Basser, Biophys J 1994]\n'
-             ' restore: Robust fitting with outlier detection [Chang, MRM 2005]',
+        help=textwrap.dedent("""
+            Type of method to calculate the diffusion tensor:
+
+              - `standard:` Standard equation [Basser, Biophys J 1994]
+              - `restore`: Robust fitting with outlier detection [Chang, MRM 2005]
+        """),
         default='standard',
         choices=('standard', 'restore'))
     optional.add_argument(
@@ -59,21 +55,15 @@ def get_parser():
     optional.add_argument(
         '-m',
         metavar=Metavar.file,
-        help='Mask used to compute DTI in for faster processing. Example: mask.nii.gz')
+        help='Mask used to compute DTI in for faster processing. Example: `mask.nii.gz`')
     optional.add_argument(
         '-o',
         help='Output prefix.',
         metavar=Metavar.str,
-        required=False,
         default='dti_')
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
 
     return parser
 

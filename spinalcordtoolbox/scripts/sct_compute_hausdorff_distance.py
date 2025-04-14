@@ -448,55 +448,39 @@ def get_parser():
                     ' If only one image is inputted, it will be only thinned'
     )
 
-    mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
-    mandatoryArguments.add_argument(
+    mandatory = parser.mandatory_arggroup
+    mandatory.add_argument(
         "-i",
-        required=True,
-        help='First Image on which you want to find the skeleton Example: t2star_manual_gmseg.nii.gz',
+        help='First image on which you want to find the skeleton. Example: `t2star_manual_gmseg.nii.gz`',
         metavar=Metavar.file,
     )
 
-    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
-    optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="show this help message and exit")
+    optional = parser.optional_arggroup
     optional.add_argument(
         "-d",
-        help='Second Image on which you want to find the skeleton Example: t2star_manual_gmseg.nii.gz',
-        metavar=Metavar.file,
-        required=False,
-        default=None)
+        help='Second Image on which you want to find the skeleton. Example: `t2star_manual_gmseg.nii.gz`',
+        metavar=Metavar.file)
     optional.add_argument(
         "-thinning",
         type=int,
         help="Thinning : find the skeleton of the binary images using the Zhang-Suen algorithm (1984) and use it to "
              "compute the hausdorff's distance",
-        required=False,
         default=1,
         choices=(0, 1))
     optional.add_argument(
         "-resampling",
         type=float,
-        help="pixel size in mm to resample to Example: 0.5",
+        help="Pixel size in mm to resample to.",
         metavar=Metavar.float,
-        required=False,
         default=0.1)
     optional.add_argument(
         "-o",
-        help='Name of the output file Example: my_hausdorff_dist.txt',
+        help='Name of the output file.',
         metavar=Metavar.str,
-        required=False,
         default='hausdorff_distance.txt')
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
 
     return parser
 

@@ -11,8 +11,10 @@ import re
 import shutil
 import logging
 import argparse
+import itertools
 
 from enum import Enum
+from functools import cached_property, partial
 
 from .sys import check_exe, printv, removesuffix, ANSIColors16
 from .fs import relpath_or_abspath
@@ -49,11 +51,16 @@ SUPPORTED_VIEWERS = ['fsleyes', 'fslview_deprecated', 'fslview', 'itk-snap', 'it
 #   How imtypes are mapped to CLI options is a bit convoluted, but tl;dr: only 2 image types (gray, seg) are supported.
 #   Surprisingly, softseg images can only be properly displayed as grayscale images, hence the use of 'gray' for them.
 IMTYPES_COLORMAP = {
-    'anat':        {'fsleyes': 'greyscale',      'fslview': 'Greyscale',       'itksnap': 'gray'},
-    'seg':         {'fsleyes': 'red',            'fslview': 'Red',             'itksnap': 'seg'},
-    'seg-labeled': {'fsleyes': 'subcortical',    'fslview': 'MGH-Subcortical', 'itksnap': 'seg'},
-    'softseg':     {'fsleyes': 'YlOrRd',         'fslview': 'YlOrRd',      'itksnap': 'gray'},
-    'softseg-alt': {'fsleyes': 'blue-lightblue', 'fslview': 'Blue-Lightblue',  'itksnap': 'gray'},
+    'anat':        {'fsleyes': 'greyscale',             'fslview': 'Greyscale',             'itksnap': 'gray'},
+    'seg-1':       {'fsleyes': 'red',                   'fslview': 'Red',                   'itksnap': 'seg'},
+    'seg-2':       {'fsleyes': 'blue-lightblue',        'fslview': 'Blue-Lightblue',        'itksnap': 'seg'},
+    'seg-3':       {'fsleyes': 'green',                 'fslview': 'Green',                 'itksnap': 'seg'},
+    'seg-4':       {'fsleyes': 'yellow',                'fslview': 'Yellow',                'itksnap': 'seg'},
+    'seg-labeled': {'fsleyes': 'subcortical',           'fslview': 'MGH-Subcortical',       'itksnap': 'seg'},
+    'softseg-1':   {'fsleyes': 'YlOrRd',                'fslview': 'YlOrRd',                'itksnap': 'gray'},
+    'softseg-2':   {'fsleyes': 'blue-lightblue',        'fslview': 'Blue-Lightblue',        'itksnap': 'gray'},
+    'softseg-3':   {'fsleyes': 'brain_colours_2winter', 'fslview': 'Brain_Colours_2winter', 'itksnap': 'gray'},
+    'softseg-4':   {'fsleyes': 'brain_colours_3warm',   'fslview': 'Brain_Colours_3warm',   'itksnap': 'gray'},
 }
 
 
@@ -109,6 +116,7 @@ def display_viewer_syntax(files, verbose, im_types=[], minmax=[], opacities=[], 
 
 def _construct_fslview_syntax(viewer, files, im_types, minmax, opacities, mode):
     cmd = viewer
+    n = itertools.cycle([1, 2, 3, 4])  # There are 4 colormaps for segs
     # add mode (only supported by fslview for the moment)
     if mode:
         cmd += ' -m ' + mode
@@ -116,7 +124,11 @@ def _construct_fslview_syntax(viewer, files, im_types, minmax, opacities, mode):
         cmd += ' ' + files[i]
         if im_types:
             if im_types[i]:
-                cmd += ' -l ' + IMTYPES_COLORMAP[im_types[i]]['fslview']
+                key = im_types[i]
+                # use different colormaps for each subsequent seg
+                if key in ("seg", "softseg"):
+                    key = f"{key}-{next(n)}"  # There are 4 colormaps for segs, so take modulo
+                cmd += ' -l ' + IMTYPES_COLORMAP[key]['fslview']
         if minmax:
             if minmax[i]:
                 cmd += ' -b ' + minmax[i]  # a,b
@@ -130,11 +142,16 @@ def _construct_fslview_syntax(viewer, files, im_types, minmax, opacities, mode):
 
 def _construct_fsleyes_syntax(viewer, files, im_types, minmax, opacities):
     cmd = viewer
+    n = itertools.cycle([1, 2, 3, 4])  # There are 4 colormaps for segs
     for i in range(len(files)):
         cmd += ' ' + files[i]
         if im_types:
             if im_types[i]:
-                cmd += ' -cm ' + IMTYPES_COLORMAP[im_types[i]]['fsleyes']
+                key = im_types[i]
+                # use different colormaps for each subsequent seg
+                if key in ("seg", "softseg"):
+                    key = f"{key}-{next(n)}"
+                cmd += ' -cm ' + IMTYPES_COLORMAP[key]['fsleyes']
         if minmax:
             if minmax[i]:
                 cmd += ' -dr ' + ' '.join(minmax[i].split(','))  # a b
@@ -154,7 +171,11 @@ def _construct_itksnap_syntax(viewer, files, im_types):
         if not im_types:
             gray_images.append(files[i])
         else:
-            colormap = IMTYPES_COLORMAP[im_types[i]]['itksnap']
+            # itksnap only has 1 colormap per seg, so always use cm "1" for segs
+            key = im_types[i]
+            if key in ("seg", "softseg"):
+                key = f"{key}-1"
+            colormap = IMTYPES_COLORMAP[key]['itksnap']
             if colormap == 'gray':
                 gray_images.append(files[i])
             elif colormap == 'seg':
@@ -183,30 +204,27 @@ def _construct_itksnap_syntax(viewer, files, im_types):
 
 class SCTArgumentParser(argparse.ArgumentParser):
     """
-        Parser that centralizes initialization steps common across all SCT scripts.
-
-        TODO: Centralize `-v`, `-r`, and `-h` arguments here too, as they're copied
-              and pasted across all SCT scripts.
+    Parser that centralizes initialization steps common across all SCT scripts.
     """
-    def __init__(self, description, epilog=None, argument_default=None):
+    def __init__(self, **kwargs):
         super(SCTArgumentParser, self).__init__(
-            description=description,
-            epilog=epilog,
             formatter_class=SmartFormatter,
-            argument_default=argument_default,
             # Disable "add_help", because it won't properly add '-h' to our custom argument groups
             # (We use custom argument groups because of https://stackoverflow.com/a/24181138)
-            add_help=False
+            add_help=False,
+            # All arguments must be passed as keyword arguments (to encourage clarity at the caller level)
+            **kwargs
         )
 
         # Update "usage:" message to match how SCT scripts are actually called (no '.py')
         self.prog = removesuffix(self.prog, ".py")
 
+    # == OVERRIDES == #
     def error(self, message):
         """
-            Overridden parent method. Ensures that help is printed when called with invalid args.
+        Overridden parent method. Ensures that help is printed when called with invalid args.
 
-            See https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3137.
+        See https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3137.
         """
         # Source: https://stackoverflow.com/a/4042861
         self.print_help(sys.stderr)
@@ -215,6 +233,94 @@ class SCTArgumentParser(argparse.ArgumentParser):
                              + ANSIColors16.ResetAll)
         self.exit(2, message_formatted)
 
+    # == STANDARD ARGUMENT GROUPS == #
+    @cached_property
+    def mandatory_arggroup(self):
+        """
+        The "MANDATORY" argument group.
+
+        This should include arguments which are required for the CLI task to run.
+        """
+        mandatory = self.add_argument_group("MANDATORY ARGUMENTS")
+
+        # Force arguments in this group to be required via in-place function override
+        _f = partial(mandatory.add_argument, required=True)
+        mandatory.add_argument = _f
+
+        return mandatory
+
+    @cached_property
+    def optional_arggroup(self):
+        """
+        The "OPTIONAL" argument group.
+        This should include arguments relevant to the task (such as slice in the MRI), but not strictly required
+        by the user (i.e. they have a default value, or only enable optional functionality)
+        """
+        optional = self.add_argument_group("OPTIONAL ARGUMENTS")
+        return optional
+
+    @cached_property
+    def misc_arggroup(self):
+        """
+        The "MISC" argument group; should contain arguments which do not directly affect the CLI task, but will change
+        how the task is presented or logged to the user. The -h, -v, and -r arguments are placed here by default.
+        """
+        misc = self.add_argument_group("MISC ARGUMENTS")
+        return misc
+
+    # == COMMON ARGUMENT ADDITIONS == #
+    def add_common_args(self, arg_group=None):
+        """
+        Adds two universally used arguments to the provided argument group:
+            -h: The help flag. If present, displays help and terminates the program
+            -v: The verbosity flag. If present, increases the verbosity of the program's output
+
+        If no argument group is provided, the arguments are placed into the "MISC" argument group.
+        """
+        # If the user didn't specify an argument group, use the "MISC" group
+        if not arg_group:
+            arg_group = self.misc_arggroup
+
+        # Add the help flag
+        arg_group.add_argument(
+            "-h", "--help",
+            action="help",
+            help="Show this help message and exit."
+        )
+        # Add the verbosity flag # TODO update/deprecate to address Issue #2676
+        arg_group.add_argument(
+            '-v',
+            metavar=Metavar.int,
+            type=int,
+            choices=[0, 1, 2],
+            default=1,
+            # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
+            help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode."
+        )
+
+        # Return the arg_group to allow for chained operations
+        return arg_group
+
+    def add_tempfile_args(self, arg_group=None):
+        """
+        Adds a single argument:
+            -r: The help flag. If present, denotes that temporary files should be removed after the program ends.
+
+        If no argument group is provided, the arguments are placed into the "MISC" argument group
+        """
+        # If the user didn't specify an argument group, use the "MISC" group
+        if not arg_group:
+            arg_group = self.misc_arggroup
+
+        # TODO: Change this to a flag, rather than a number
+        arg_group.add_argument(
+            "-r",
+            type=int,
+            help="Remove temporary files.",
+            default=1,
+            choices=(0, 1)
+        )
+
 
 class ActionCreateFolder(argparse.Action):
     """
@@ -222,7 +328,7 @@ class ActionCreateFolder(argparse.Action):
     already exists, do nothing.
 
     The action will strip off trailing slashes from the folder's name.
-    Source: https://argparse-actions.readthedocs.io/en/latest/
+    Source: archive.is/pgUKF (`argparse_actions` -> project now 404s)
     """
     @staticmethod
     def create_folder(folder_name):
@@ -287,12 +393,15 @@ class SmartFormatter(argparse.ArgumentDefaultsHelpFormatter):
             logger.warning('Not able to fetch Terminal width. Using default: %s', self._width)
 
     def _get_help_string(self, action):
-        """Overrides the default _get_help_string method to skip writing the
-        '(default: )' text for arguments that have an empty default value."""
-        if action.default not in [None, "", [], (), {}]:
-            return super()._get_help_string(action)
-        else:
+        """
+        Forced the "default" to not be printed if it's a meaningless default (i.e. an empty string)
+        """
+        # Return immediately if no default was specified, or if this is a suppressed "help" flag
+        if action.default in [None, "", [], (), {}, '==SUPPRESS==']:
             return action.help
+
+        # Otherwise, format the string as-usual
+        return super()._get_help_string(action)
 
     def _fill_text(self, text, width, indent):
         """Overrides the default _fill_text method. It takes a single string

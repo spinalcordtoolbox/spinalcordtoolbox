@@ -74,7 +74,7 @@ For macOS and Linux users, the simplest way to install SCT is to download `the l
 
    ./install_sct
 
-For more complex installation setups (Windows users, Docker, FSLeyes integration), see the `Installation <https://spinalcordtoolbox.com/en/latest/user_section/installation.html>`_ page.
+For more complex installation setups (Windows users, Docker, FSLeyes integration), see the `Installation <https://spinalcordtoolbox.com/user_section/installation.html>`_ page.
 
 
 Usage
@@ -105,19 +105,19 @@ For a full overview of the available commands, see the `Command-Line Tools <http
 
 **2. Multi-command pipelines**
 
-To facilitate multi-subject analyses, commands can be chained together to build processing pipelines. The best starting point for constructing a typical pipeline is the `batch_processing.sh <https://spinalcordtoolbox.com/en/latest/user_section/getting-started.html#batch-processing-example>`_ script, which is provided with your installation of SCT.
+To facilitate multi-subject analyses, commands can be chained together to build processing pipelines. The best starting point for constructing a typical pipeline is the `batch_processing.sh <https://spinalcordtoolbox.com/user_section/getting-started.html#batch-processing-example>`_ script, which is provided with your installation of SCT.
 
 **3. GUI (FSLeyes integration)**
 
-SCT provides a graphical user interface via a FSLeyes plugin. For more details, see the `FSLeyes Integration <https://spinalcordtoolbox.com/en/latest/user_section/fsleyes.html>`_ page.
+SCT provides a graphical user interface via a FSLeyes plugin. For more details, see the `FSLeyes Integration <https://spinalcordtoolbox.com/user_section/fsleyes.html>`_ page.
 
 
 Who is using SCT?
 -----------------
 
-SCT is trusted by the research labs of many highly-regarded institutions worldwide. A full list of endorsements can be found on the `Testimonials <https://spinalcordtoolbox.com/en/latest/overview/testimonials.html>`_ page.
+SCT is trusted by the research labs of many highly-regarded institutions worldwide. A full list of endorsements can be found on the `Testimonials <https://spinalcordtoolbox.com/overview/testimonials.html>`_ page.
 
-For a list of neuroimaging studies that depend on SCT, visit the `Studies using SCT <https://spinalcordtoolbox.com/en/latest/overview/studies.html>`_ page.
+For a list of neuroimaging studies that depend on SCT, visit the `Studies using SCT <https://spinalcordtoolbox.com/overview/studies.html>`_ page.
 
 
 Contact

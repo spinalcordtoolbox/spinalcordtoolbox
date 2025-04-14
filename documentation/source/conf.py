@@ -41,7 +41,8 @@ extensions = [
     'sphinx.ext.viewcode',
     'recommonmark',
     'sphinx.ext.extlinks',
-    'sphinx_copybutton'
+    'sphinx_copybutton',
+    'sphinxarg.ext',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -97,7 +98,7 @@ todo_include_todos = False
 extlinks = {
     # e.g. :sct_tutorial_data:`data_template-registration.zip` gets expanded into:
     # 'github.com/spinalcordtoolbox/sct_tutorial_data/releases/download/<tag>/data_template-registration.zip'
-    'sct_tutorial_data': ('https://github.com/spinalcordtoolbox/sct_tutorial_data/releases/download/r20231129/%s', '%s')
+    'sct_tutorial_data': ('https://github.com/spinalcordtoolbox/sct_tutorial_data/releases/download/r20250310/%s', '%s')
 }
 
 

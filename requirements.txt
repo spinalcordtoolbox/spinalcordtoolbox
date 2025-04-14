@@ -2,6 +2,9 @@
 #     stable releases. We do this because `pip freeze` will not capture options (e.g. --extra-index-url) or
 #     platform-specific requirements (e.g. sys.platform == 'win32')
 
+# acvl_utils is a utility package used by `nnunetv2`. v0.2.1 broke usage of `nnunetv2`, so skip it:
+# See: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4679
+acvl_utils!=0.2.1
 # Avoid 1.6 and 1.7 due to method=restore bug: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4209#issuecomment-1739644328
 dipy!=1.6.*,!=1.7.*,<1.9.0
 # PyTorch's Linux distribution is very large due to its GPU support,
@@ -24,10 +27,12 @@ monai[nibabel]
 msvc-runtime==14.29.30133; sys.platform == 'win32' # append_to_freeze
 nibabel
 nilearn
-# 2.4.2 causes empty predictions (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4556)
-# 2.4.0/2.4.1 fail during inference due to https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4444
+# Only allow nnunetv2==2.3.1 or 2.5.1 (NB: there is no 2.5.0)
 # 2.3.0 and below are incompatible due to breaking API change (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4380)
-nnunetv2==2.3.1
+# 2.4.0/2.4.1 fail during inference due to https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4444
+# 2.4.2 causes empty predictions (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4556)
+# 2.5.2 and above will be tested manually when they are released.
+nnunetv2>2.3.0,!=2.4.*,<=2.5.1
 # SCT is compatible, however the upgrade to numpy==2.0.0 broke *many* upstream packages. Let's try again later. See https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4535
 numpy<2
 # 1.7.0>onnxruntime>=1.5.1 required `brew install libomp` on macOS.
@@ -54,7 +59,20 @@ requirements-parser
 scipy
 scikit-image
 scikit-learn
+totalspineseg
 xlwt
+# - torch<2.6: In January 2025, PyTorch changed the default of `torch.load()` to `weights_only=True`, breaking the
+#              loading of some of our models. We can set `weights_only=False` to retain the old behavior, however
+#              there are additional calls to `torch.load()` within our dependencies as well, meaning that we need to
+#              wait until they update themselves (or become compatible with `weights_only=True`). Until then, we can
+#              pin torch to a version prior to this breaking change.
+# - torch<2.3: PyTorch 2.3.0 removed support for Intel Macs. If we leave this unpinned, then version 2.2.2 will be
+#              installed on Intel Macs, while a newer version (e.g. 2.5.1) will be installed on all other platforms.
+#              To keep the versions in sync between platforms, we pin torch to `<2.3`. See:
+#              -> https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4781
+# - NOTE: nnunetv2 currently requries `torch>=2.1.2`, meaning that the above restriction results in a range of
+#         `2.1.2 <= torch < 2.3`, i.e. most likely version `2.2.2` will be installed.
+torch<2.3 # append_to_freeze
 tqdm
 transforms3d
 urllib3

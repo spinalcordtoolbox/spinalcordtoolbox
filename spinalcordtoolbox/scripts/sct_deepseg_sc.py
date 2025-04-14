@@ -8,6 +8,7 @@
 import os
 import sys
 from typing import Sequence
+import textwrap
 
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
@@ -24,54 +25,48 @@ def get_parser():
                     "segmentation of the spinal cord and intramedullary multiple sclerosis lesions with convolutional "
                     "neural networks. Neuroimage. 2019 Jan 1;184:901-915."
     )
-    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         "-i",
-        required=True,
         metavar=Metavar.file,
-        help='Input image. Example: t1.nii.gz',
+        help='Input image. Example: `t1.nii.gz`',
     )
     mandatory.add_argument(
         "-c",
-        required=True,
         help="Type of image contrast.",
         choices=('t1', 't2', 't2s', 'dwi'),
     )
 
-    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
-    optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="show this help message and exit")
+    optional = parser.optional_arggroup
     optional.add_argument(
         "-centerline",
-        help="Method used for extracting the centerline:\n"
-             " svm: Automatic detection using Support Vector Machine algorithm.\n"
-             " cnn: Automatic detection using Convolutional Neural Network.\n"
-             " viewer: Semi-automatic detection using manual selection of a few points with an interactive viewer "
-             "followed by regularization.\n"
-             " file: Use an existing centerline (use with flag -file_centerline)",
+        help=textwrap.dedent("""
+            Method used for extracting the centerline:
+
+              - `svm`: Automatic detection using Support Vector Machine algorithm.
+              - `cnn`: Automatic detection using Convolutional Neural Network.
+              - `viewer`: Semi-automatic detection using manual selection of a few points with an interactive viewer followed by regularization.
+              - `file`: Use an existing centerline (use with flag `-file_centerline`)
+        """),
         choices=('svm', 'cnn', 'viewer', 'file'),
         default="svm")
     optional.add_argument(
         "-file_centerline",
         metavar=Metavar.str,
-        help='Input centerline file (to use with flag -centerline file). Example: t2_centerline_manual.nii.gz')
+        help='Input centerline file (to use with flag `-centerline` file). Example: `t2_centerline_manual.nii.gz`')
     optional.add_argument(
         "-thr",
         type=float,
-        help="Binarization threshold (between 0 and 1) to apply to the segmentation prediction. Set to -1 for no "
+        help="Binarization threshold (between `0` and `1`) to apply to the segmentation prediction. Set to `-1` for no "
              "binarization (i.e. soft segmentation output). The default threshold is specific to each contrast and was "
              "estimated using an optimization algorithm. More details at: "
              "https://github.com/sct-pipeline/deepseg-threshold.",
-        metavar=Metavar.float,
-        default=None)
+        metavar=Metavar.float)
     optional.add_argument(
         "-brain",
         type=int,
         help='Indicate if the input image contains brain sections (to speed up segmentation). Only use with '
-             '"-centerline cnn". (default: 1 for T1/T2 contrasts, 0 for T2*/DWI contrasts)',
+             '`-centerline cnn`. (default: `1` for T1/T2 contrasts, `0` for T2*/DWI contrasts)',
         choices=(0, 1))
     optional.add_argument(
         "-kernel",
@@ -81,32 +76,17 @@ def get_parser():
     optional.add_argument(
         "-ofolder",
         metavar=Metavar.str,
-        help='Output folder. Example: My_Output_Folder ',
+        help='Output folder.',
         action=ActionCreateFolder,
         default=os.getcwd())
     optional.add_argument(
         '-o',
         metavar=Metavar.file,
-        help='Output filename. Example: spinal_seg.nii.gz '),
-    optional.add_argument(
-        '-r',
-        type=int,
-        help="Remove temporary files.",
-        choices=(0, 1),
-        default=1)
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
+        help='Output filename. Example: `spinal_seg.nii.gz`'),
     optional.add_argument(
         '-qc',
         metavar=Metavar.str,
-        help='The path where the quality control generated content will be saved',
-        default=None)
+        help='The path where the quality control generated content will be saved')
     optional.add_argument(
         '-qc-dataset',
         metavar=Metavar.str,
@@ -115,6 +95,10 @@ def get_parser():
         '-qc-subject',
         metavar=Metavar.str,
         help='If provided, this string will be mentioned in the QC report as the subject the process was run on',)
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
+    parser.add_tempfile_args()
 
     return parser
 

@@ -158,8 +158,8 @@ def get_dependencies(requirements_txt=None):
 
     requirements_txt = open(requirements_txt, "r", encoding="utf-8")
 
-    # workaround for https://github.com/davidfischer/requirements-parser/issues/39
-    warnings.filterwarnings(action='ignore', module='requirements')
+    # workaround for https://github.com/madpah/requirements-parser/issues/39
+    warnings.filterwarnings(message='Private repos not supported', action='ignore', category=UserWarning)
 
     for req in requirements.parse(requirements_txt):
         if ';' in req.line:  # handle environment markers; TODO: move this upstream into requirements-parser
@@ -177,12 +177,7 @@ def get_parser():
         description='Check the installation and environment variables of the toolbox and its dependencies.'
     )
 
-    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
-    optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit")
+    optional = parser.optional_arggroup
     optional.add_argument(
         '-complete',
         help="Complete test.",
@@ -192,13 +187,17 @@ def get_parser():
         help="Short test. Only shows SCT version, CPU cores and RAM available.",
         action="store_true")
 
+    # Add common arguments
+    parser.add_common_args()
+
     return parser
 
 
 def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
-    verbose = complete_test = arguments.complete
+    complete_test = arguments.complete
+    verbose = arguments.v
     set_loglevel(verbose=verbose, caller_module_name=__name__)
 
     print("\nSYSTEM INFORMATION"

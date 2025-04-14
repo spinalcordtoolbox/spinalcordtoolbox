@@ -12,11 +12,11 @@ First, we obtain a segmentation image that highlights the spinal cord.
 
 .. code::
 
-   sct_deepseg_sc -i t2.nii.gz -c t2 -qc ~/qc_singleSubj
+   sct_deepseg spinalcord -i t2.nii.gz -qc ~/qc_singleSubj
 
 :Input arguments:
+   - ``spinalcord``: Task to perform. Here, we are using ``spinalcord`` to segment the spinal cord. This task is contrast-agnostic, meaning it can be used on any type of image (T1, T2, T2*, etc.)
    - ``-i`` : The input image.
-   - ``-c`` : The contrast of the input image.
    - ``-qc`` : Directory for Quality Control reporting. QC reports allow us to evaluate the results slice-by-slice.
 
 :Output files/folders:
@@ -29,7 +29,7 @@ Once the segmentation is obtained, we can use it to create a mask around the cor
 
 .. code::
 
-   sct_create_mask -i t2.nii.gz -p centerline,t2_seg.nii.gz -size 35mm -f cylinder -o mask_t2.nii.gz
+   sct_create_mask -i t2.nii.gz -p centerline,t2_seg.nii.gz -size 35mm -o mask_t2.nii.gz
 
 :Input arguments:
    - ``-i`` : The input image to create the mask from.
@@ -64,4 +64,4 @@ This cropped image will be used during coregistration.
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/contrast-agnostic-registration/preprocessing-t2.png
    :align: center
 
-   Input/output images for ``sct_create_mask`` and ``sct_crop_image``
+   Input/output images for :ref:`sct_create_mask` and :ref:`sct_crop_image`

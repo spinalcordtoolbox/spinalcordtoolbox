@@ -61,7 +61,7 @@ def main(argv: Sequence[str]):
                 and Image(fname_warp_list[idx_warp]).header.get_intent()[0] != 'vector':
             raise ValueError("Displacement field in {} is invalid: should be encoded"
                              " in a 5D file with vector intent code"
-                             " (see https://nifti.nimh.nih.gov/pub/dist/src/niftilib/nifti1.h"
+                             " (see https://web.archive.org/web/20241009085040/https://nifti.nimh.nih.gov/pub/dist/src/niftilib/nifti1.h"
                              .format(path_warp))
 
     # check if destination file is 3d
@@ -112,47 +112,35 @@ def get_parser():
                     'A->B and B->C to yield A->C, then you have to input warping fields in this order: A->B B->C.',
     )
 
-    mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
-    mandatoryArguments.add_argument(
+    mandatory = parser.mandatory_arggroup
+    mandatory.add_argument(
         "-d",
-        required=True,
-        help='Destination image. (e.g. "mt.nii.gz")',
+        help='Destination image. Example: `mt.nii.gz`',
         metavar=Metavar.file,
     )
-    mandatoryArguments.add_argument(
+    mandatory.add_argument(
         "-w",
-        required=True,
         help='Transformation(s), which can be warping fields (nifti image) or affine transformation matrix (text '
-             'file). Separate with space. Example: warp1.nii.gz warp2.nii.gz',
+             'file). Separate with space. Example: `warp1.nii.gz warp2.nii.gz`',
         nargs='+',
         metavar=Metavar.file)
 
-    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional = parser.optional_arggroup
     optional.add_argument(
         "-winv",
-        help='Affine transformation(s) listed in flag -w which should be inverted before being used. Note that this '
+        help='Affine transformation(s) listed in flag `-w` which should be inverted before being used. Note that this '
              'only concerns affine transformation (not warping fields). If you would like to use an inverse warping '
-             'field, then directly input the inverse warping field in flag -w.',
+             'field, then directly input the inverse warping field in flag `-w`.',
         nargs='*',
         metavar=Metavar.file,
         default=[])
     optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="show this help message and exit")
-    optional.add_argument(
         "-o",
-        help='Name of output warping field (e.g. "warp_template2mt.nii.gz")',
+        help='Name of output warping field. Example: `warp_template2mt.nii.gz`',
         metavar=Metavar.str)
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
 
     return parser
 

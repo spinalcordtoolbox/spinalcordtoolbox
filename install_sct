@@ -168,8 +168,6 @@ function fetch_os_type() {
       export LANG=en_US.UTF-8
     fi
     OS="osx"
-    # make sure bashrc is loaded when starting a new Terminal
-    force_bashrc_loading
   # Linux
   elif echo "$uname_output" | grep -i linux >/dev/null 2>&1; then
     OS="linux"
@@ -259,28 +257,53 @@ function get_shell_rc_path() {
   fi
 }
 
-# Force bashrc loading
-function force_bashrc_loading() {
-  sourceblock="
-if [[ -n \"\$BASH_VERSION\" ]]; then
-    # include .bashrc if it exists
-    if [[ -f \"\$HOME/.bashrc\" ]]; then
-    . \"\$HOME/.bashrc\"
-    fi
-fi"
-  bidon=""
-  for profile in ~/.bash_profile ~/.bash_login ~/.profile; do
-    if [[ -a "$profile" ]]; then
-      if ! grep -E "(\.|source) .*bashrc" "$profile" >/dev/null 2>&1; then
-        echo "$sourceblock" >>"$profile"
-      fi
-      bidon="done"
-      break
-    fi
-  done
+# Deal with permission issues on files used by SCT installer
+# It is strangely common for a user to not have read/write access to files
+# present in their own home directory (e.g. not owning .bashrc, somehow).
+# So, we provide advice here so that they can hopefully fix the issue
+# themselves, rather than having to contact us.
+function check_permissions() {
+  FILE_TO_CHECK="$1"
+  echo -n "Checking permissions on required file $FILE_TO_CHECK:"
 
-  if [[ -z "$bidon" ]]; then
-    echo "$sourceblock" >>~/.bash_profile
+  if [ -e "$FILE_TO_CHECK" ]; then EXIST="True"; else EXIST="False"; fi
+  if [ -O "$FILE_TO_CHECK" ]; then OWNED="True"; else OWNED="False"; fi
+  if [ -r "$FILE_TO_CHECK" ]; then READS="True"; else READS="False"; fi
+  if [ -w "$FILE_TO_CHECK" ]; then WRITE="True"; else WRITE="False"; fi
+
+  MSG_EXIST="  - File exists: $EXIST"
+  MSG_OWNED="  - File ownership: $OWNED"
+  MSG_READS="  - Read permissions: $READS"
+  MSG_WRITE="  - Write permissions: $WRITE"
+
+  WARNING="False"
+  if [ $EXIST == "False" ]; then
+    MSG_EXIST+="\n    NOTE: The SCT installer will create this file."
+  fi
+  if [ $OWNED == "False" ]; then
+    MSG_OWNED+="\n    WARNING: If you encounter permission issues, you can try running the following command:"
+    MSG_OWNED+="\n             sudo chown \"$(whoami)\" \"$FILE_TO_CHECK\""
+    WARNING="True"
+  fi
+  if [ $READS == "False" ]; then
+    MSG_READS+="\n    WARNING: If you encounter permission issues, you can try running the following command:"
+    MSG_READS+="\n             sudo chmod u+r \"$FILE_TO_CHECK\""
+    WARNING="True"
+  fi
+  if [ $WRITE == "False" ]; then
+    MSG_WRITE+="\n    WARNING: If you encounter permission issues, you can try running the following command:"
+    MSG_WRITE+="\n             sudo chmod u+w \"$FILE_TO_CHECK\""
+    WARNING="True"
+  fi
+
+  # Note: Ideally we would properly color each individual message, however `print` adds a *lot* of
+  #       unnecessary spacing, so chaining multiple `print` messages looks very bad. We could remove
+  #       the spacing from `print`, but this would drastically change the output of our installer.
+  MSG_TO_WRITE="$MSG_EXIST\n$MSG_OWNED\n$MSG_READS\n$MSG_WRITE"
+  if [ $WARNING == "True" ]; then
+    print warning "$MSG_TO_WRITE"
+  else
+    print info "$MSG_TO_WRITE"
   fi
 }
 
@@ -450,6 +473,10 @@ echo -e "Installation type ... $SCT_INSTALL_TYPE"
 echo -e "Operating system .... $OS ($OSver)"
 echo -e "Shell config ........ $RC_FILE_PATH"
 
+# check permissions on shell config file (but don't fail either way)
+echo ""
+check_permissions "$RC_FILE_PATH"
+
 # if installing from git folder, then becomes default installation folder
 if [[ "$SCT_INSTALL_TYPE" == "in-place" ]]; then
   SCT_DIR="$SCT_SOURCE"
@@ -514,13 +541,17 @@ done
 # Create directory
 mkdir -p "$SCT_DIR"
 # check if directory was created
+PERMISSION_ADVICE="\n\nMake sure that you own the folder you're writing to, and that the folder has write permissions.
+\nTo ensure this, either change the installation directory, or consider running the following commands:
+    sudo chown \"$(whoami)\" \"$(dirname "$SCT_DIR")\" \"$SCT_DIR\"
+    sudo chmod u+w \"$(dirname "$SCT_DIR")\" \"$SCT_DIR\""
 if [[ -d "$SCT_DIR" ]]; then
   # check write permission
   if [[ ! -w "$SCT_DIR" ]]; then
-    die "ERROR: $SCT_DIR exists but does not have write permission."
+    die "ERROR: $SCT_DIR exists but does not have write permission.$PERMISSION_ADVICE"
   fi
 else
-  die "ERROR: $SCT_DIR cannot be created. Make sure you have write permission."
+  die "ERROR: $SCT_DIR cannot be created.$PERMISSION_ADVICE"
 fi
 
 # Copy files to destination directory
@@ -584,20 +615,20 @@ fi
 # Install Python
 # ----------------------------------------------------------------------------------------------------------------------
 
-# Download miniconda
-print info "Downloading Miniconda..."
+# Download miniforge
+print info "Downloading Miniforge..."
 case $OS in
 linux)
-  download "$TMP_DIR/"miniconda.sh https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+  download "$TMP_DIR/"miniforge.sh https://github.com/conda-forge/miniforge/releases/download/24.11.2-1/Miniforge3-Linux-x86_64.sh
   ;;
 osx)
-  download "$TMP_DIR/"miniconda.sh https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
+  download "$TMP_DIR/"miniforge.sh https://github.com/conda-forge/miniforge/releases/download/24.11.2-1/Miniforge3-MacOSX-x86_64.sh
   ;;
 esac
 
 # Run conda installer
-print info "Installing Miniconda..."
-run bash "$TMP_DIR/miniconda.sh" -p "$SCT_DIR/$PYTHON_DIR" -b -f
+print info "Installing Miniforge..."
+run bash "$TMP_DIR/miniforge.sh" -p "$SCT_DIR/$PYTHON_DIR" -b -f
 
 # Workaround for WSL "HTTP 000 Connection Failed" error
 # See: https://github.com/conda/conda/issues/9948#issuecomment-909989810
@@ -618,7 +649,7 @@ find "$SCT_DIR/$PYTHON_DIR" -type f -exec touch {} +
 # * Fix details: https://github.com/conda/conda/issues/7173#issuecomment-980496682
 echo "include-system-site-packages = false" > "$SCT_DIR/$PYTHON_DIR/envs/venv_sct/pyvenv.cfg"
 
-# activate miniconda
+# activate miniforge
 # shellcheck disable=SC1091
 source python/etc/profile.d/conda.sh
 set +u #disable safeties, for conda is not written to their standard.
@@ -653,6 +684,7 @@ if [[ "$INSTALL_GPU_TORCH" == "yes" ]]; then
     echo "Ignoring '-g' option on macOS: CUDA is not supported by PyTorch on this system"
   else
     grep -v "download.pytorch.org/whl/cpu" "$REQUIREMENTS_FILE" > "$TMP_DIR/requirements_gpu.txt"
+    perl -pi -e 's/monai\[nibabel\]/monai[nibabel,cucim]/' "$TMP_DIR/requirements_gpu.txt"
     REQUIREMENTS_FILE="$TMP_DIR/requirements_gpu.txt"
   fi
 fi

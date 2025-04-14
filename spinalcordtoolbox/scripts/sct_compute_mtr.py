@@ -20,42 +20,25 @@ def get_parser():
         description='Compute magnetization transfer ratio (MTR). Output is given in percentage.'
     )
 
-    mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
-    mandatoryArguments.add_argument(
+    mandatory = parser.mandatory_arggroup
+    mandatory.add_argument(
         '-mt0',
-        required=True,
         help='Image without MT pulse (MT0)',
         metavar=Metavar.float,
     )
-    mandatoryArguments.add_argument(
+    mandatory.add_argument(
         '-mt1',
-        required=True,
         help='Image with MT pulse (MT1)',
         metavar=Metavar.float,
     )
 
-    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional = parser.optional_arggroup
     optional.add_argument(
         "-thr",
         type=float,
         help="Threshold to clip MTR output values in case of division by small number. This implies that the output image "
-             "range will be [-thr, +thr]. Default: 100.",
+             "range will be [-thr, +thr]. Default: `100`.",
         default=100
-    )
-    optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit"
-    )
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode"
     )
     optional.add_argument(
         '-o',
@@ -63,6 +46,10 @@ def get_parser():
         metavar=Metavar.str,
         default=os.path.join('.', 'mtr.nii.gz')
     )
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
+
     return parser
 
 

@@ -11,9 +11,7 @@ import os
 import shutil
 import logging
 import subprocess
-import time
 import shlex
-import atexit
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -24,6 +22,7 @@ import tqdm
 
 # Expose Tensorflow's LazyLoader class in `utils.sys` namespace
 from contrib.tensorflow.lazy_loader import LazyLoader  # noqa
+from spinalcordtoolbox.utils.profiling import begin_global_timer
 
 logger = logging.getLogger(__name__)
 
@@ -183,10 +182,6 @@ def init_sct():
     hdlr.setFormatter(fmt)
     logging.root.addHandler(hdlr)
 
-    # Enable timer, if requested
-    if os.environ.get("SCT_TIMER", None) is not None:
-        add_elapsed_time_counter()
-
     # Display SCT version
     logger.info('\n--\nSpinal Cord Toolbox ({})\n'.format(__version__))
 
@@ -198,16 +193,8 @@ def init_sct():
         logger.info(f"{script} {arguments}\n"
                     f"--\n")
 
-
-def add_elapsed_time_counter():
-    class Timer():
-        def __init__(self):
-            self._t0 = time.time()
-
-        def atexit(self):
-            print("Elapsed time: %.3f seconds" % (time.time() - self._t0))
-    t = Timer()
-    atexit.register(t.atexit)
+    # Enable timing
+    begin_global_timer()
 
 
 def send_email(addr_to, addr_from, subject, message='', passwd=None, filename=None, html=False, smtp_host=None, smtp_port=None, login=None):
@@ -301,17 +288,22 @@ def run_proc(cmd, verbose=1, raise_exception=True, cwd=None, env=None, is_sct_bi
         cwd = os.getcwd()
 
     if env is None:
-        env = os.environ
+        env = os.environ.copy()
 
     if is_sct_binary:
+        # create an absolute path to the binary inside of SCT's bin directory
         name = cmd[0] if isinstance(cmd, list) else cmd.split(" ", 1)[0]
         path = os.path.join(__bin_dir__, name)
-
         if isinstance(cmd, list):
             cmd[0] = path
         elif isinstance(cmd, str):
             rem = cmd.split(" ", 1)[1:]
             cmd = path if len(rem) == 0 else "{} {}".format(path, rem[0])
+
+        # also, for windows, add the bin directory to the path (to allow ANTs to access 'msvc-runtime' DLLs)
+        # see also: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4655#issuecomment-2430178901
+        if sys.platform.startswith("win32"):
+            env['PATH'] = __bin_dir__ + os.pathsep + env['PATH']
 
     if isinstance(cmd, str):
         cmdline = cmd

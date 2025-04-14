@@ -351,16 +351,23 @@ class Image(object):
         # Make sure sform and qform are the same.
         # Context: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/2429
         if check_sform and not check_affines_match(self):
-            if self.absolutepath is None:
-                logger.error("Internal code has produced an image with inconsistent qform and sform "
-                             "please report this on github at https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues "
-                             " or on the SCT forum https://forum.spinalcordmri.org/.")
-            else:
-                logger.error(f"Image {self._path} has different qform and sform matrices. This can produce incorrect "
-                             f"results. Please use 'sct_image -i {self._path} -header' to check that both affine "
-                             f"matrices are valid. Then, consider running either 'sct_image -set-sform-to-qform' or "
-                             f"'sct_image -set-qform-to-sform' to fix any discrepancies you may find.")
-            raise ValueError("Image sform does not match qform")
+            logger.error(f"Image {self._path} has different qform and sform matrices. This can produce incorrect "
+                         f"results. Please use 'sct_image -i {self._path} -header' to check that both affine "
+                         f"matrices are valid. Then, consider running either 'sct_image -set-sform-to-qform' or "
+                         f"'sct_image -set-qform-to-sform' to fix any discrepancies you may find.")
+            logger.error("If internal SCT code has produced an intermediate/temporary file with this issue, please report this on GitHub at "
+                         "https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues or on the SCT forum https://forum.spinalcordmri.org/.")
+
+            # Temporarily skip raising an error, because we now know that "orthogonal qform matrices" from reorientation can cause sform/qform
+            # discrepancies that trigger this error.
+            #
+            # raise ValueError("Image sform does not match qform")
+            #
+            # Ideally, we would solve the sform/qform discrepancies at the source. But doing so produced an even greater breaking change.
+            # So, the safest approach in the short term is to keep the existing results, but skip the above failure and just emit a message.
+            # This way, if the above error would trigger, the user at least knows that there may be an issue.
+            # Original issue: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4689
+            # Secondary issue caused by the "fix" for the first issue: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4744
 
     @property
     def dim(self):
@@ -1684,36 +1691,6 @@ def _align_dict(dictionary, use_tabs=True, delimiter=""):
             padding = " " * (len_max - len(k))
         out.append(f"{k}{padding}{delimiter}{v}")
     return '\n'.join(out)
-
-
-def apply_mask_if_soft(fname_im: str, fname_mask: str):
-    """
-    Check to see if a mask is soft (non-binary), and if it is:
-        * Apply the mask directly to the image and save it as a separate image file.
-        * Set the mask filename to None to avoid the mask being used.
-
-    This is a workaround needed for ANTs binaries (e.g. antsSliceRegularizedRegistration), because
-    they don't natively support softmasks. This fix is needed everywhere that we use those binaries.
-
-    :param fname_im: (str) Filename of the image to apply the mask to.
-    :param fname_mask: (str) Filename of the mask to check.
-    :return: Filenames of the image and mask. (If the mask was applied, the filename of the image will be
-             updated as to not overwrite the image, and the filename of the mask will be set to None.)
-    """
-    # FIXME: Since this is a problem inherent to the binaries themselves, it would be nice if this fix
-    #        was automatically applied whenever we call the binaries. For example, if we had a light wrapper for each
-    #        ANTs binary, then we could ensure that the workaround is applied in a consistent way, no matter how the
-    #        binaries are called. However, this idea is not currently compatible with how moco.py is structured.
-    #        (See: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3075#issuecomment-871366336)
-    im = Image(fname_im)
-    im_mask = Image(fname_mask)
-    if not np.array_equal(im_mask.data, im_mask.data.astype(bool)):
-        fname_mask = None
-        fname_im = add_suffix(im.absolutepath, "_masked")
-        # NB: casting="unsafe" -> https://github.com/numpy/numpy/issues/7225#issuecomment-380051749
-        im.data = np.multiply(im.data, im_mask.data, casting="unsafe")
-        im.save(fname_im, mutable=True)
-    return fname_im, fname_mask
 
 
 def compute_cross_corr_3d(image: Image, coord, xrange=list(range(-10, 10)), xshift=10, yshift=10, zshift=10):

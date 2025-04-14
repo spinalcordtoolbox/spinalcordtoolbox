@@ -20,33 +20,22 @@ def get_parser():
                     'sct_dmri_transpose_bvecs afterwards.'
     )
 
-    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         "-i",
         nargs='+',
-        required=True,
-        help='List of the bvec files to concatenate. Example: dmri_b700.bvec dmri_b2000.bvec',
+        help='List of the bvec files to concatenate. Example: `dmri_b700.bvec dmri_b2000.bvec`',
         metavar=Metavar.file,
     )
 
-    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
-    optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit")
+    optional = parser.optional_arggroup
     optional.add_argument(
         "-o",
         metavar=Metavar.file,
-        help='Output file with bvecs concatenated. Example: dmri_b700_b2000_concat.bvec')
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
+        help='Output file with bvecs concatenated. Example: `dmri_b700_b2000_concat.bvec`')
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
 
     return parser
 

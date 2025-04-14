@@ -13,6 +13,7 @@ import sys
 import os
 import time
 from typing import Sequence
+import textwrap
 
 import numpy as np
 
@@ -58,6 +59,7 @@ class Param:
 step0 = Paramreg(step='0', type='label', dof='Tx_Ty_Tz_Rx_Ry_Rz_Sz')  # affine, requires 3 orthogonal labels
 step1 = Paramreg(step='1', type='imseg', algo='centermassrot', rot_method='pcahog')
 step2 = Paramreg(step='2', type='seg', algo='bsplinesyn', metric='MeanSquares', iter='3', smooth='1', slicewise='0')
+step_rootlet = Paramreg(step='1', type='rootlet', algo='bsplinesyn', metric='CC', iter='6x6x3', shrink='8x4x2', smooth='0x0x0', slicewise='0', deformation='0x0x1', gradStep='0.1')
 paramregmulti = ParamregMultiStep([step0, step1, step2])
 
 
@@ -66,121 +68,117 @@ paramregmulti = ParamregMultiStep([step0, step1, step2])
 def get_parser():
     param = Param()
     parser = SCTArgumentParser(
-        description=(
-            "Register an anatomical image to the spinal cord MRI template (default: PAM50).\n"
-            "\n"
-            "The registration process includes three main registration steps:\n"
-            "  1. straightening of the image using the spinal cord segmentation (see sct_straighten_spinalcord for "
-            "details);\n"
-            "  2. vertebral alignment between the image and the template, using labels along the spine;\n"
-            "  3. iterative slice-wise non-linear registration (see sct_register_multimodal for details)\n"
-            "\n"
-            "To register a subject to the template, try the default command:\n"
-            "  sct_register_to_template -i data.nii.gz -s data_seg.nii.gz -l data_labels.nii.gz\n"
-            "\n"
-            "If this default command does not produce satisfactory results, the '-param' "
-            "argument should be tweaked according to the tips given here:\n"
-            "  https://spinalcordtoolbox.com/en/latest/user_section/command-line.html#sct-register-multimodal\n"
-            "\n"
-            "The default registration method brings the subject image to the template, which can be problematic with "
-            "highly non-isotropic images as it would induce large interpolation errors during the straightening "
-            "procedure. Although the default method is recommended, you may want to register the template to the "
-            "subject (instead of the subject to the template) by skipping the straightening procedure. To do so, use "
-            "the parameter '-ref subject'. Example below:\n"
-            "  sct_register_to_template -i data.nii.gz -s data_seg.nii.gz -l data_labels.nii.gz -ref subject -param "
-            "step=1,type=seg,algo=centermassrot,smooth=0:step=2,type=seg,algo=columnwise,smooth=0,smoothWarpXY=2\n"
-            "\n"
-            "Vertebral alignment (step 2) consists in aligning the vertebrae between the subject and the template. "
-            "Two types of labels are possible:\n"
-            "  - Vertebrae mid-body labels, created at the center of the spinal cord using the parameter '-l';\n"
-            "  - Posterior edge of the intervertebral discs, using the parameter '-ldisc'.\n"
-            "\n"
-            "If only one label is provided, a simple translation will be applied between the subject label and the "
-            "template label. No scaling will be performed. \n"
-            "\n"
-            "If two labels are provided, a linear transformation (translation + rotation + superior-inferior linear "
-            "scaling) will be applied. The strategy here is to define labels that cover the region of interest. For "
-            "example, if you are interested in studying C2 to C6 levels, then provide one label at C2 and another at "
-            "C6. However, note that if the two labels are very far apart (e.g. C2 and T12), there might be a "
-            "mis-alignment of discs because a subject's intervertebral discs distance might differ from that of the "
-            "template.\n"
-            "\n"
-            "If more than two labels are used, a non-linear registration will be applied to align the each "
-            "intervertebral disc between the subject and the template, as described in "
-            "sct_straighten_spinalcord. This the most accurate method, however it has some serious caveats: \n"
-            "  - This feature is not compatible with the parameter '-ref subject', where only a rigid registration is performed.\n"
-            "  - Due to the non-linear registration in the S-I direction, the warping field will be cropped above the "
-            "top label and below the bottom label. Applying this warping field will result in a strange-looking "
-            "registered image that has the same value above the top label and below the bottom label. But if you are "
-            "not interested in these regions, you do not need to worry about it.\n"
-            "\n"
-            "We recommend starting with 2 labels, then trying the other "
-            "options on a case-by-case basis depending on your data.\n"
-            "\n"
-            "More information about label creation can be found at "
-            "https://spinalcordtoolbox.com/user_section/tutorials/vertebral-labeling.html"
-        )
+        description=textwrap.dedent("""
+            Register an anatomical image to the spinal cord MRI template (default: PAM50).
+
+            The registration process includes three main registration steps:
+
+              1. straightening of the image using the spinal cord segmentation (see sct_straighten_spinalcord for details);
+              2. vertebral alignment between the image and the template, using labels along the spine;
+              3. iterative slice-wise non-linear registration (see sct_register_multimodal for details)
+
+            To register a subject to the template, try the default command:
+
+              ```
+              sct_register_to_template -i data.nii.gz -s data_seg.nii.gz -l data_labels.nii.gz
+              ```
+
+            If this default command does not produce satisfactory results, the `-param` argument should be tweaked according to the tips given here: https://spinalcordtoolbox.com/user_section/command-line.html#sct-register-multimodal
+
+            The default registration method brings the subject image to the template, which can be problematic with highly non-isotropic images as it would induce large interpolation errors during the straightening procedure. Although the default method is recommended, you may want to register the template to the subject (instead of the subject to the template) by skipping the straightening procedure. To do so, use the parameter `-ref subject`. Example below:
+
+              ```
+              sct_register_to_template -i data.nii.gz -s data_seg.nii.gz -l data_labels.nii.gz -ref subject -param step=1,type=seg,algo=centermassrot,smooth=0:step=2,type=seg,algo=columnwise,smooth=0,smoothWarpXY=2
+              ```
+
+            Vertebral alignment (step 2) consists in aligning the vertebrae between the subject and the template.
+
+            Two types of labels are possible:
+
+              - Vertebrae mid-body labels, created at the center of the spinal cord using the parameter `-l`;
+              - Posterior edge of the intervertebral discs, using the parameter `-ldisc`.
+
+            If only one label is provided, a simple translation will be applied between the subject label and the template label. No scaling will be performed.
+
+            If two labels are provided, a linear transformation (translation + rotation + superior-inferior linear scaling) will be applied. The strategy here is to define labels that cover the region of interest. For example, if you are interested in studying C2 to C6 levels, then provide one label at C2 and another at C6. However, note that if the two labels are very far apart (e.g. C2 and T12), there might be a mis-alignment of discs because a subject's intervertebral discs distance might differ from that of the template.
+
+            If more than two labels are used, a non-linear registration will be applied to align the each intervertebral disc between the subject and the template, as described in sct_straighten_spinalcord. This the most accurate method, however it has some serious caveats:
+
+              - This feature is not compatible with the parameter `-ref subject`, where only a rigid registration is performed.
+              - Due to the non-linear registration in the S-I direction, the warping field will be cropped above the top label and below the bottom label. Applying this warping field will result in a strange-looking registered image that has the same value above the top label and below the bottom label. But if you are not interested in these regions, you do not need to worry about it.
+
+            We recommend starting with 2 labels, then trying the other options on a case-by-case basis depending on your data.
+
+            More information about label creation can be found at https://spinalcordtoolbox.com/user_section/tutorials/vertebral-labeling.html
+        """)  # noqa: E501 (line too long)
     )
 
-    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         '-i',
         metavar=Metavar.file,
-        required=True,
-        help="Input anatomical image. Example: anat.nii.gz"
+        help="Input anatomical image. Example: `anat.nii.gz`"
     )
     mandatory.add_argument(
         '-s',
         metavar=Metavar.file,
-        required=True,
-        help="Spinal cord segmentation. Example: anat_seg.nii.gz"
+        help="Spinal cord segmentation. Example: `anat_seg.nii.gz`"
     )
 
-    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
-    optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit."
-    )
+    optional = parser.optional_arggroup
     optional.add_argument(
         '-s-template-id',
         metavar=Metavar.int,
         type=int,
         help="Segmentation file ID to use for registration. The ID is an integer indicated in the file "
              "'template/info_label.txt'. This 'info_label.txt' file corresponds to the template indicated by the flag "
-             "'-t'. By default, the spinal cord segmentation is used (ID=3), but if available, a different segmentation"
+             "`-t`. By default, the spinal cord segmentation is used (ID=3), but if available, a different segmentation"
              " such as white matter segmentation could produce better registration results.",
         default=3
         )
     optional.add_argument(
         '-l',
         metavar=Metavar.file,
-        help="One or two labels (preferred) located at the center of the spinal cord, on the mid-vertebral slice. "
-             "Example: anat_labels.nii.gz\n"
-             "For more information about label creation, please see: "
-             "https://spinalcordtoolbox.com/user_section/tutorials/vertebral-labeling.html"
+        help=textwrap.dedent("""
+            One or two labels (preferred) located at the center of the spinal cord, on the mid-vertebral slice. Example: `anat_labels.nii.gz`
+
+            For more information about label creation, please see: https://spinalcordtoolbox.com/user_section/tutorials/vertebral-labeling.html
+        """)
     )
     optional.add_argument(
         '-ldisc',
         metavar=Metavar.file,
-        help="File containing disc labels. Labels can be located either at the posterior edge "
-             "of the intervertebral discs, or at the orthogonal projection of each disc onto "
-             "the spinal cord (e.g.: the file 'xxx_seg_labeled_discs.nii.gz' output by sct_label_vertebrae).\n"
-             "If you are using more than 2 labels, all discs covering the region of interest should be provided. "
-             "E.g., if you are interested in levels C2 to C7, then you should provide disc labels 2,3,4,5,6,7. "
-             "For more information about label creation, please refer to "
-             "https://spinalcordtoolbox.com/user_section/tutorials/vertebral-labeling.html"
+        help=textwrap.dedent("""
+            File containing disc labels. Labels can be located either at the posterior edge of the intervertebral discs, or at the orthogonal projection of each disc onto the spinal cord (e.g.: the file `xxx_seg_labeled_discs.nii.gz` output by sct_label_vertebrae)
+
+            If you are using more than 2 labels, all discs covering the region of interest should be provided. E.g., if you are interested in levels C2 to C7, then you should provide disc labels 2,3,4,5,6,7. For more information about label creation, please refer to https://spinalcordtoolbox.com/user_section/tutorials/vertebral-labeling.html
+        """)  # noqa: E501 (line too long)
     )
     optional.add_argument(
         '-lspinal',
         metavar=Metavar.file,
-        help="Labels located in the center of the spinal cord, at the superior-inferior level corresponding to the "
-             "mid-point of the spinal level. Example: anat_labels.nii.gz\n"
-             "Each label is a single voxel, which value corresponds to the spinal level (e.g.: 2 for spinal level 2). "
-             "If you are using more than 2 labels, all spinal levels covering the region of interest should be "
-             "provided (e.g., if you are interested in levels C2 to C7, then you should provide spinal level labels "
-             "2,3,4,5,6,7)."
+        help=textwrap.dedent("""
+            Labels located in the center of the spinal cord, at the superior-inferior level corresponding to the mid-point of the spinal level. Example: `anat_labels.nii.gz`
+
+            Each label is a single voxel, which value corresponds to the spinal level (e.g.: 2 for spinal level 2). If you are using more than 2 labels, all spinal levels covering the region of interest should be provided (e.g., if you are interested in levels C2 to C7, then you should provide spinal level labels 2,3,4,5,6,7)."
+        """)  # noqa: E501 (line too long)
+    )
+    optional.add_argument(
+        '-lrootlet',
+        metavar=Metavar.file,
+        help=textwrap.dedent("""
+            Dorsal nerve rootlets segmentation. Example: `anat_rootlets.nii.gz`
+            Only labels within the range C2-C8 are supported. If labels outside this range are provided, they will be ignored.
+            Each value corresponds to the spinal level (e.g.: 2 for spinal level 2). If you are using more than 2 labels, all spinal levels covering the region of interest should be provided (e.g., if you are interested in levels C2 to C7, then you should provide spinal level labels 2,3,4,5,6,7).
+            By default, the rootlets labels will be used in 2 places:
+
+              - step=0: The center of mass of each label will be used as landmarks for SI-axis slice alignment with the rootlets of the template.
+              - step=1: ANTs BSplineSyn adjustment in the SI-axis using the shape of the rootlets combined with the image.
+
+            If you are customizing the `-param` argument, you can choose to omit `step=1`, or choose to manually specify `step=1` yourself. We recommend starting with the following `step=1` parameters and adjusting as needed:
+
+                step=1,type=rootlet,algo=bsplinesyn,metric=CC,iter=6x6x3,shrink=8x4x2,smooth=0x0x0,slicewise=0,deformation=0x0x1,gradStep=0.1
+        """)  # noqa: E501 (line too long)
     )
     optional.add_argument(
         '-ofolder',
@@ -268,23 +266,10 @@ def get_parser():
         metavar=Metavar.str,
         help="If provided, this string will be mentioned in the QC report as the subject the process was run on."
     )
-    optional.add_argument(
-        '-r',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1],
-        default=param.remove_temp_files,
-        help="Whether to remove temporary files. 0 = no, 1 = yes"
-    )
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode"
-    )
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
+    parser.add_tempfile_args()
 
     return parser
 
@@ -305,6 +290,10 @@ def main(argv: Sequence[str]):
     if arguments.l is not None:
         fname_landmarks = arguments.l
         label_type = 'body'
+    elif arguments.lrootlet is not None:
+        fname_landmarks = arguments.lrootlet
+        fname_rootlets = arguments.lrootlet
+        label_type = 'rootlet'
     elif arguments.ldisc is not None:
         fname_landmarks = arguments.ldisc
         label_type = 'disc'
@@ -336,6 +325,11 @@ def main(argv: Sequence[str]):
         # add user parameters
         for paramStep in arguments.param:
             paramregmulti.addStep(paramStep)
+    elif label_type == 'rootlet':
+        # Add rootlet steps before step 1 and 2
+        step1.step = '2'
+        step2.step = '3'
+        paramregmulti = ParamregMultiStep([step0, step_rootlet, step1, step2])
     else:
         paramregmulti = ParamregMultiStep([step0, step1, step2])
 
@@ -349,6 +343,11 @@ def main(argv: Sequence[str]):
     elif label_type == 'disc':
         # point-wise intervertebral disc labels
         file_template_labeling = get_file_label(os.path.join(path_template, 'template'), id_label=10)
+    elif label_type == 'rootlet':
+        # spinal rootlets midpoints
+        file_template_labeling = get_file_label(os.path.join(path_template, 'template'), id_label=17)
+        file_template_labeling_rootlets = get_file_label(os.path.join(path_template, 'template'), id_label=16)
+        fname_template_labeling_rootlets = os.path.join(path_template, 'template', file_template_labeling_rootlets)
     else:
         # spinal cord mask with discrete vertebral levels
         file_template_labeling = get_file_label(os.path.join(path_template, 'template'), id_label=7)
@@ -366,11 +365,12 @@ def main(argv: Sequence[str]):
     fname_template_seg = os.path.join(path_template, 'template', file_template_seg)
 
     # check file existence
-    # TODO: no need to do that!
     printv('\nCheck template files...')
     check_file_exist(fname_template, verbose)
     check_file_exist(fname_template_labeling, verbose)
     check_file_exist(fname_template_seg, verbose)
+    if label_type == 'rootlet':
+        check_file_exist(fname_template_labeling_rootlets, verbose)
     path_data, file_data, ext_data = extract_fname(fname_data)
 
     # printv(arguments)
@@ -381,13 +381,17 @@ def main(argv: Sequence[str]):
     printv('  Path template:        ' + path_template, verbose)
     printv('  Remove temp files:    ' + str(param.remove_temp_files), verbose)
 
+    # Compute center-of-mass of the rootlets segmentation:
+    if label_type == 'rootlet':
+        fname_rootlets_points = 'rootlets_mid.nii.gz'
+        fname_landmarks = sct_labels.cubic_to_point(Image(fname_rootlets)).save(fname_rootlets_points)
+        # TODO: remove rootlets_mid
+
     # check input labels
     labels = check_labels(fname_landmarks, label_type=label_type)
-
     level_alignment = False
-    if len(labels) > 2 and label_type in ['disc', 'spinal']:
+    if len(labels) > 2 and label_type in ['disc', 'spinal', 'rootlet']:
         level_alignment = True
-
     path_tmp = tmp_create(basename="register-to-template")
 
     # set temporary file names
@@ -397,7 +401,12 @@ def main(argv: Sequence[str]):
     ftmp_template = 'template.nii'
     ftmp_template_seg = 'template_seg.nii.gz'
     ftmp_template_label = 'template_label.nii.gz'
-
+    if label_type == 'rootlet':
+        ftmp_rootlet = 'rootlets.nii.gz'
+        ftmp_template_rootlets = 'template_rootlets.nii.gz'
+    else:
+        ftmp_rootlet = None
+        ftmp_template_rootlets = None
     # copy files to temporary folder
     printv('\nCopying input data to tmp folder and convert to nii...', verbose)
     try:
@@ -407,6 +416,10 @@ def main(argv: Sequence[str]):
         Image(fname_template, check_sform=True).save(os.path.join(path_tmp, ftmp_template))
         Image(fname_template_seg, check_sform=True).save(os.path.join(path_tmp, ftmp_template_seg))
         Image(fname_template_labeling, check_sform=True).save(os.path.join(path_tmp, ftmp_template_label))
+        if label_type == 'rootlet':
+            Image(fname_rootlets, check_sform=True).save(os.path.join(path_tmp, ftmp_rootlet))
+            Image(fname_template_labeling_rootlets, check_sform=True).save(os.path.join(path_tmp, ftmp_template_rootlets))
+
     except ValueError as e:
         printv("\nImages could not be saved to temporary folder. Aborting registration.\n"
                f"    {e.__class__.__name__}: '{e}'", 1, 'error')
@@ -441,7 +454,8 @@ def main(argv: Sequence[str]):
     # template's labels (centered in the cord) and the subject's labels (assumed to be centered in the cord).
     # If labels are not centered, mis-registration errors are observed (see issue #1826)
     ftmp_label = project_labels_on_spinalcord(ftmp_label, ftmp_seg, param_centerline, param.remove_temp_files)
-
+    if verbose == 2:
+        Image(ftmp_label, check_sform=True).save(os.path.join(curdir, path_output, 'labels_projected.nii.gz'))
     # binarize segmentation (in case it has values below 0 caused by manual editing)
     printv('\nBinarize segmentation', verbose)
     ftmp_seg_, ftmp_seg = ftmp_seg, add_suffix(ftmp_seg, "_bin")
@@ -464,6 +478,11 @@ def main(argv: Sequence[str]):
     img_tmp_label = Image(ftmp_label).change_orientation("RPI")
     ftmp_label = add_suffix(img_tmp_label.absolutepath, "_rpi")
     img_tmp_label.save(ftmp_label, mutable=True)
+
+    if label_type == 'rootlet':
+        img_tmp_rootlets = Image(ftmp_rootlet).change_orientation("RPI")
+        ftmp_rootlet = add_suffix(img_tmp_rootlets.absolutepath, "_rpi")
+        img_tmp_rootlets.save(ftmp_rootlet, mutable=True)
 
     # Switch between modes: subject->template or template->subject
     if ref == 'template':
@@ -560,7 +579,6 @@ def main(argv: Sequence[str]):
                 sc_straight.use_straight_reference = True
                 sc_straight.discs_input_filename = ftmp_label
                 sc_straight.discs_ref_filename = ftmp_template_label
-
             sc_straight.straighten()
             cache_save("straightening.cache", cache_sig)
 
@@ -642,6 +660,7 @@ def main(argv: Sequence[str]):
             '-o', add_suffix(ftmp_data, '_straightAffine'),
             '-d', ftmp_template,
             '-w', 'warp_curve2straightAffine.nii.gz',
+            '-x', 'spline',
             '-v', '0',
         ])
         ftmp_data = add_suffix(ftmp_data, '_straightAffine')
@@ -654,6 +673,19 @@ def main(argv: Sequence[str]):
             '-v', '0',
         ])
         ftmp_seg = add_suffix(ftmp_seg, '_straightAffine')
+
+        # Apply straightening to rootlets
+        if label_type == 'rootlet':
+            # Apply transformation to rootlets
+            sct_apply_transfo.main(argv=[
+                '-i', ftmp_rootlet,
+                '-o', add_suffix(ftmp_rootlet, '_straightAffine'),
+                '-d', ftmp_template,
+                '-w', 'warp_curve2straightAffine.nii.gz',
+                '-x', 'nn',
+                '-v', '0',
+            ])
+            ftmp_rootlet = add_suffix(ftmp_rootlet, '_straightAffine')
 
         """
         # Benjamin: Issue from Allan Martin, about the z=0 slice that is screwed up, caused by the affine transform.
@@ -711,6 +743,8 @@ def main(argv: Sequence[str]):
             paramregmulti.steps[key].rot_dest = 0
         fname_src2dest, fname_dest2src, warp_forward, warp_inverse = register_wrapper(
             ftmp_data, ftmp_template, param, paramregmulti, fname_src_seg=ftmp_seg, fname_dest_seg=ftmp_template_seg,
+            fname_src_label=(ftmp_rootlet if label_type == 'rootlet' else None),
+            fname_dest_label=(ftmp_template_rootlets if label_type == 'rootlet' else None),
             same_space=True)
 
         # Concatenate transformations: anat --> template
@@ -729,10 +763,6 @@ def main(argv: Sequence[str]):
         if level_alignment:
             dimensionality = len(Image("data.nii").hdr.get_data_shape())
             cmd = ['isct_ComposeMultiTransform', f"{dimensionality}", 'warp_template2anat.nii.gz', '-R', 'data.nii', 'warp_straight2curve.nii.gz', warp_inverse]
-            status, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
-            if status != 0:
-                raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
-
         else:
             dimensionality = len(Image("data.nii").hdr.get_data_shape())
             cmd = [
@@ -744,9 +774,10 @@ def main(argv: Sequence[str]):
                 '-i', 'straight2templateAffine.txt',
                 warp_inverse,
             ]
-            status, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
-            if status != 0:
-                raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
+        status, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
+        print(output)
+        if status != 0:
+            raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
 
     # register template->subject
     else:

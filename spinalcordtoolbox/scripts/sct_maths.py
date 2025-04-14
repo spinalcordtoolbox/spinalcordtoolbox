@@ -10,6 +10,7 @@ import pickle
 import gzip
 import argparse
 from typing import Sequence, Union
+import textwrap
 
 import numpy as np
 
@@ -87,35 +88,30 @@ def get_parser():
     # Make sure the list of operations to perform gets initialized
     parser.set_defaults(todo=[])
 
-    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         "-i",
         metavar=Metavar.file,
-        help="Input file. Example: data.nii.gz",
-        required=True)
+        help="Input file. Example: `data.nii.gz`")
     mandatory.add_argument(
         "-o",
         metavar=Metavar.file,
-        help='Output file. Example: data_mean.nii.gz',
-        required=True)
+        help='Output file. Example: `data_mean.nii.gz`')
 
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
+    optional = parser.optional_arggroup
     optional.add_argument(
         '-volumewise',
         type=int,
-        help='Specifying this option will process a 4D image in a "volumewise" manner:\n'
-             '  - Split the 4D input into individual 3D volumes\n'
-             '  - Apply the maths operations to each 3D volume\n'
-             '  - Merge the processed 3D volumes back into a single 4D output image',
-        required=False,
+        help=textwrap.dedent("""
+            Specifying this option will process a 4D image in a "volumewise" manner:
+
+              - Split the 4D input into individual 3D volumes
+              - Apply the maths operations to each 3D volume
+              - Merge the processed 3D volumes back into a single 4D output image
+        """),
         choices=(0, 1),
         default=0
     )
-    optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit")
 
     basic = parser.add_argument_group('BASIC OPERATIONS')
     basic.add_argument(
@@ -124,24 +120,29 @@ def get_parser():
         nargs="*",
         type=number_or_fname,
         action=AppendTodo,
-        help='Add following input. Can be a number or one or more 3D/4D images (separated with space). Examples:'
-             '\n  - sct_maths -i 3D.nii.gz -add 5                       (Result: 3D image with "5" added to each voxel)'
-             '\n  - sct_maths -i 3D.nii.gz -add 3D_2.nii.gz             (Result: 3D image)'
-             '\n  - sct_maths -i 4D.nii.gz -add 4D_2.nii.gz             (Result: 4D image)'
-             '\n  - sct_maths -i 4D_nii.gz -add 4D_2.nii.gz 4D_3.nii.gz (Result: 4D image)'
-             '\nNote: If your terminal supports it, you can also specify multiple images using a pattern:'
-             '\n  - sct_maths -i 4D.nii.gz -add 4D_*.nii.gz (Result: Adding 4D_2.nii.gz, 4D_3.nii.gz, etc.)'
-             '\nNote: If the input image is 4D, you can also leave "-add" empty to sum the 3D volumes within the image:'
-             '\n  - sct_maths -i 4D.nii.gz -add             (Result: 3D image, with 3D volumes summed within 4D image)',
-        required=False)
+        help=textwrap.dedent("""
+            Add following input. Can be a number or one or more 3D/4D images (separated with space). Examples:
+
+              - `sct_maths -i 3D.nii.gz -add 5`                       (Result: 3D image with `5` added to each voxel)
+              - `sct_maths -i 3D.nii.gz -add 3D_2.nii.gz`             (Result: 3D image)
+              - `sct_maths -i 4D.nii.gz -add 4D_2.nii.gz`             (Result: 4D image)
+              - `sct_maths -i 4D_nii.gz -add 4D_2.nii.gz 4D_3.nii.gz` (Result: 4D image)
+
+            Note: If your terminal supports it, you can also specify multiple images using a pattern:
+
+              - `sct_maths -i 4D.nii.gz -add 4D_*.nii.gz` (Result: Adding `4D_2.nii.gz`, `4D_3.nii.gz`, etc.)
+
+            Note: If the input image is 4D, you can also leave `-add` empty to sum the 3D volumes within the image:
+
+              - `sct_maths -i 4D.nii.gz -add` (Result: 3D image, with 3D volumes summed within 4D image)
+        """))
     basic.add_argument(
         "-sub",
         metavar='',
         nargs="+",
         type=number_or_fname,
         action=AppendTodo,
-        help='Subtract following input. Can be a number, or one or more 3D/4D images (separated with space).',
-        required=False)
+        help='Subtract following input. Can be a number, or one or more 3D/4D images (separated with space).')
     basic.add_argument(
         "-mul",
         metavar='',
@@ -149,41 +150,41 @@ def get_parser():
         type=number_or_fname,
         action=AppendTodo,
         help='Multiply by following input. Can be a number, or one or more 3D/4D images (separated with space). '
-             '(See -add for examples.)',
-        required=False)
+             '(See `-add` for examples.)')
     basic.add_argument(
         "-div",
         metavar='',
         nargs="+",
         type=number_or_fname,
         action=AppendTodo,
-        help='Divide by following input. Can be a number, or one or more 3D/4D images (separated with space).',
-        required=False)
+        help='Divide by following input. Can be a number, or one or more 3D/4D images (separated with space).')
     basic.add_argument(
         '-mean',
         choices=('x', 'y', 'z', 't'),
         action=AppendTodo,
-        help='Average data across dimension.',
-        required=False)
+        help='Average data across dimension.')
     basic.add_argument(
         '-rms',
         choices=('x', 'y', 'z', 't'),
         action=AppendTodo,
-        help='Compute root-mean-squared across dimension.',
-        required=False)
+        help='Compute root-mean-squared across dimension.')
     basic.add_argument(
         '-std',
         choices=('x', 'y', 'z', 't'),
         action=AppendTodo,
-        help='Compute STD across dimension.',
-        required=False)
+        help='Compute STD across dimension.')
     basic.add_argument(
         "-bin",
         metavar=Metavar.float,
         type=float,
         action=AppendTodo,
-        help='Binarize image using specified threshold. Example: 0.5',
-        required=False)
+        help='Binarize image using specified threshold. Example: `0.5`')
+    basic.add_argument(
+        '-slicewise-mean',
+        type=int,
+        choices=(0, 1, 2),
+        action=AppendTodo,
+        help='Compute slicewise mean the specified dimension. Zeros are not inlcuded in the mean.')
 
     thresholding = parser.add_argument_group("THRESHOLDING METHODS")
     thresholding.add_argument(
@@ -191,52 +192,52 @@ def get_parser():
         metavar=Metavar.int,
         type=int,
         action=AppendTodo,
-        help='Threshold image using Otsu algorithm (from skimage). Specify the number of bins (e.g. 16, 64, 128)',
-        required=False)
+        help='Threshold image using Otsu algorithm (from skimage). Specify the number of bins (e.g. 16, 64, 128)')
     thresholding.add_argument(
         "-adap",
         metavar=Metavar.list,
         type=list_type(',', int, 2),
         action=AppendTodo,
-        help="Threshold image using Adaptive algorithm (from skimage). Provide 2 values separated by ',' that "
-             "correspond to the parameters below. For example, '-adap 7,0' corresponds to a block size of 7 and an "
-             "offset of 0.\n"
-             "  - Block size: Odd size of pixel neighborhood which is used to calculate the threshold value. \n"
-             "  - Offset: Constant subtracted from weighted mean of neighborhood to calculate the local threshold "
-             "value. Suggested offset is 0.",
-        required=False)
+        help=textwrap.dedent("""
+            Threshold image using Adaptive algorithm (from skimage). Provide 2 values separated by `,` that correspond to the parameters below. For example, `-adap 7,0` corresponds to a block size of 7 and an offset of 0.
+
+              - Block size: Odd size of pixel neighborhood which is used to calculate the threshold value.
+              - Offset: Constant subtracted from weighted mean of neighborhood to calculate the local threshold value. Suggested offset is 0.
+        """),  # noqa: E501 (line too long)
+        )
     thresholding.add_argument(
         "-otsu-median",
         metavar=Metavar.list,
         type=list_type(',', int, 2),
         action=AppendTodo,
-        help="Threshold image using Median Otsu algorithm (from dipy). Provide 2 values separated by ',' that "
-             "correspond to the parameters below. For example, '-otsu-median 3,5' corresponds to a filter size of 3 "
-             "repeated over 5 iterations.\n"
-             "  - Size: Radius (in voxels) of the applied median filter.\n"
-             "  - Iterations: Number of passes of the median filter.",
-        required=False)
+        help=textwrap.dedent("""
+            Threshold image using Median Otsu algorithm (from Dipy). Provide 2 values separated by `,` that correspond to the parameters below. For example, `-otsu-median 3,5` corresponds to a filter size of 3 repeated over 5 iterations.
+
+              - Size: Radius (in voxels) of the applied median filter.
+              - Iterations: Number of passes of the median filter.
+        """),  # noqa: E501 (line too long)
+        )
     thresholding.add_argument(
         '-percent',
         metavar=Metavar.int,
         type=int,
         action=AppendTodo,
         help="Threshold image using percentile of its histogram.",
-        required=False)
+        )
     thresholding.add_argument(
         "-thr",
         metavar=Metavar.float,
         type=float,
         action=AppendTodo,
         help='Lower threshold limit (zero below number).',
-        required=False)
+        )
     thresholding.add_argument(
         "-uthr",
         metavar=Metavar.float,
         type=float,
         action=AppendTodo,
         help='Upper threshold limit (zero above number).',
-        required=False)
+        )
 
     mathematical = parser.add_argument_group("MATHEMATICAL MORPHOLOGY")
     mathematical.add_argument(
@@ -247,7 +248,7 @@ def get_parser():
         help="Dilate binary or greyscale image with specified size. If shape={'square', 'cube'}: size corresponds to the length of "
              "an edge (size=1 has no effect). If shape={'disk', 'ball'}: size corresponds to the radius, not including "
              "the center element (size=0 has no effect).",
-        required=False)
+        )
     mathematical.add_argument(
         '-erode',
         metavar=Metavar.int,
@@ -256,15 +257,18 @@ def get_parser():
         help="Erode binary or greyscale image with specified size. If shape={'square', 'cube'}: size corresponds to the length of "
              "an edge (size=1 has no effect). If shape={'disk', 'ball'}: size corresponds to the radius, not including "
              "the center element (size=0 has no effect).",
-        required=False)
+        )
     mathematical.add_argument(
         '-shape',
         choices=('square', 'cube', 'disk', 'ball'),
         action='append',  # to output a warning if used more than once
         default=[],
-        help="Shape of the structuring element for the mathematical morphology operation. Default: ball.\n"
-             "If a 2D shape {'disk', 'square'} is selected, -dim must be specified.",
-        required=False)
+        help=textwrap.dedent("""
+            Shape of the structuring element for the mathematical morphology operation. Default: `ball`.
+
+            If a 2D shape `{'disk', 'square'}` is selected, `-dim` must be specified.
+        """),
+        )
     mathematical.add_argument(
         '-dim',
         type=int,
@@ -273,7 +277,7 @@ def get_parser():
         default=[],
         help="Dimension of the array which 2D structural element will be orthogonal to. For example, if you wish to "
              "apply a 2D disk kernel in the X-Y plane, leaving Z unaffected, parameters will be: shape=disk, dim=2.",
-        required=False)
+        )
 
     filtering = parser.add_argument_group("FILTERING METHODS")
     filtering.add_argument(
@@ -283,8 +287,8 @@ def get_parser():
         action=AppendTodo,
         help='Gaussian smoothing filtering. Supply values for standard deviations in mm. If a single value is provided, '
              'it will be applied to each axis of the image. If multiple values are provided, there must be one value '
-             'per image axis. (Examples: "-smooth 2.0,3.0,2.0" (3D image), "-smooth 2.0" (any-D image)).',
-        required=False)
+             'per image axis. (Examples: `-smooth 2.0,3.0,2.0` (3D image), `-smooth 2.0` (any-D image)).',
+        )
     filtering.add_argument(
         '-laplacian',
         metavar=Metavar.list,
@@ -292,65 +296,63 @@ def get_parser():
         action=AppendTodo,
         help='Laplacian filtering. Supply values for standard deviations in mm. If a single value is provided, it will '
              'be applied to each axis of the image. If multiple values are provided, there must be one value per '
-             'image axis. (Examples: "-laplacian 2.0,3.0,2.0" (3D image), "-laplacian 2.0" (any-D image)).',
-        required=False)
+             'image axis. (Examples: `-laplacian 2.0,3.0,2.0` (3D image), `-laplacian 2.0` (any-D image)).',
+        )
     filtering.add_argument(
         '-denoise',
         type=denoise_params,
         action=AppendTodo,
-        help='Non-local means adaptative denoising from P. Coupe et al. as implemented in dipy. Separate with "," Example: p=1,b=3\n'
-             ' p: (patch radius) similar patches in the non-local means are searched for locally, inside a cube of side 2*p+1 centered at each voxel of interest. Default: p=1\n'
-             ' b: (block radius) the size of the block to be used (2*b+1) in the blockwise non-local means implementation. Default: b=5 '
-             '    Note, block radius must be smaller than the smaller image dimension: default value is lowered for small images)\n'
-             'To use default parameters, write -denoise 1',
-        required=False)
+        help=textwrap.dedent("""
+            Non-local means adaptative denoising from P. Coupe et al. as implemented in dipy. Separate with `,` Example: `p=1,b=3`
+
+              - `p`: (patch radius) similar patches in the non-local means are searched for locally, inside a cube of side `2*p+1` centered at each voxel of interest. Default: `p=1`
+              - `b`: (block radius) the size of the block to be used (2*b+1) in the blockwise non-local means implementation. Default: `b=5`.
+                Note, block radius must be smaller than the smaller image dimension: default value is lowered for small images)
+
+            To use default parameters, write `-denoise 1`
+        """),  # noqa: E501 (line too long)
+        )
 
     similarity = parser.add_argument_group("SIMILARITY METRIC")
     similarity.add_argument(
         '-mi',
         metavar=Metavar.file,
         action=AppendTodo,
-        help='Compute the mutual information (MI) between both input files (-i and -mi) as in: '
+        help='Compute the mutual information (MI) between both input files (`-i` and `-mi`) as in: '
              'https://scikit-learn.org/stable/modules/generated/sklearn.metrics.mutual_info_score.html',
-        required=False)
+        )
     similarity.add_argument(
         '-minorm',
         metavar=Metavar.file,
         action=AppendTodo,
-        help='Compute the normalized mutual information (MI) between both input files (-i and -mi) as in: '
+        help='Compute the normalized mutual information (MI) between both input files (`-i` and `-mi`) as in: '
              'https://scikit-learn.org/stable/modules/generated/sklearn.metrics.normalized_mutual_info_score.html',
-        required=False)
+        )
     similarity.add_argument(
         '-corr',
         metavar=Metavar.file,
         action=AppendTodo,
-        help='Compute the cross correlation (CC) between both input files (-i and -corr).',
-        required=False)
+        help='Compute the cross correlation (CC) between both input files (`-i` and `-corr`).',
+        )
 
-    misc = parser.add_argument_group("MISC")
+    misc = parser.misc_arggroup
     misc.add_argument(
         '-symmetrize',
         type=int,
         choices=(0, 1, 2),
         action=AppendTodo,
         help='Symmetrize data along the specified dimension.',
-        required=False)
+        )
     misc.add_argument(
         '-type',
         choices=('uint8', 'int16', 'int32', 'float32', 'complex64', 'float64',
                  'int8', 'uint16', 'uint32', 'int64', 'uint64'),
         default=None,  # needed because argument_default=argparse.SUPPRESS
         help='Output type.',
-        required=False)
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode",
-        required=False)
+        )
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
 
     return parser
 
@@ -440,14 +442,18 @@ def main(argv: Sequence[str]):
                         list_data = get_data_arrays(data.shape, arg_value)
                     except ValueError as e:
                         printv(f"ERROR: -{arg_name}: {e}", 1, 'error')
-                    data += np.sum(list_data, axis=0)
+                    # for addition, this dtype is usually ok
+                    safe_dtype = np.result_type(data, *list_data)
+                    data = np.add(data, np.sum(list_data, axis=0, dtype=safe_dtype), dtype=safe_dtype)
 
             elif arg_name == "sub":
                 try:
                     list_data = get_data_arrays(data.shape, arg_value)
                 except ValueError as e:
                     printv(f"ERROR: -{arg_name}: {e}", 1, 'error')
-                data -= np.sum(list_data, axis=0)
+                # for subtraction, make sure the dtype is at least signed by including int8
+                safe_dtype = np.result_type(data, *list_data, np.int8)
+                data = np.subtract(data, np.sum(list_data, axis=0, dtype=safe_dtype), dtype=safe_dtype)
 
             elif arg_name == "mul":
                 if data.ndim == 4 and not arg_value:
@@ -458,14 +464,18 @@ def main(argv: Sequence[str]):
                         list_data = get_data_arrays(data.shape, arg_value)
                     except ValueError as e:
                         printv(f"ERROR: -{arg_name}: {e}", 1, 'error')
-                    data *= np.prod(list_data, axis=0)
+                    # for multiplication, this dtype is usually ok
+                    safe_dtype = np.result_type(data, *list_data)
+                    data = np.multiply(data, np.prod(list_data, axis=0, dtype=safe_dtype), dtype=safe_dtype)
 
             elif arg_name == "div":
                 try:
                     list_data = get_data_arrays(data.shape, arg_value)
                 except ValueError as e:
                     printv(f"ERROR: -{arg_name}: {e}", 1, 'error')
-                data /= np.prod(list_data, axis=0)
+                # for division, make sure the dtype is at least floating point by including float32
+                safe_dtype = np.result_type(data, *list_data, np.float32)
+                data = np.divide(data, np.prod(list_data, axis=0, dtype=safe_dtype), dtype=safe_dtype)
 
             elif arg_name == "mean":
                 axis = ('x', 'y', 'z', 't').index(arg_value)
@@ -504,6 +514,11 @@ def main(argv: Sequence[str]):
             elif arg_name == "bin":
                 bin_thr = arg_value
                 data = sct_math.binarize(data, bin_thr)
+
+            elif arg_name == "slicewise_mean":
+                axis = arg_value
+                # TODO: add option to include zeros in mean.
+                data = sct_math.slicewise_mean(data, axis)
 
             elif arg_name == "otsu":
                 nbins = arg_value

@@ -1,16 +1,54 @@
 # pytest unit tests for sct_maths
 
+import os
 import pytest
 import traceback as tb
 import logging
 
 import numpy as np
 
-from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.image import Image, compute_dice
 from spinalcordtoolbox.utils.sys import sct_test_path
 from spinalcordtoolbox.scripts import sct_maths
 
 logger = logging.getLogger(__name__)
+
+
+@pytest.mark.parametrize("ofolder", ["tmp_path", None])
+@pytest.mark.parametrize("args_to_test, fname_in, fname_gt", [
+    (["-denoise", "1"],       sct_test_path("t2", "t2.nii.gz"), None),  # TODO: Add gt
+    (["-otsu-median", "5,5"], sct_test_path("t2", "t2.nii.gz"), None),  # TODO: Add gt
+], ids=["-denoise", "-otsu-median"])
+def test_sct_maths_basic(args_to_test, fname_in, fname_gt, ofolder, tmp_path):
+    """Basic test to ensure core functionality runs without error."""
+    # base args to test
+    args = ["-i", fname_in]
+    args.extend(args_to_test)
+
+    # test all combinations of both (user-supplied and default) output filenames/folders
+    fname_out = "img_out.nii.gz"
+    path_out = (str(tmp_path) if ofolder == "tmp_path" else os.getcwd())
+    fpath_out = os.path.join(path_out, fname_out)
+    # sct_maths doesn't have an -ofolder argument, so we simulate it by passing the absolute path (if ofolder)
+    args.extend(["-o", fpath_out if ofolder else fname_out])
+
+    # run script
+    sct_maths.main(argv=args)
+
+    # test all output files exist
+    assert os.path.exists(fpath_out)
+
+    # test against ground truth (if specified)
+    if fname_gt:
+        im_out = Image(fpath_out)
+        im_gt = Image(fname_gt)
+        # replace with allclose, etc. depending on ground truth
+        dice_segmentation = compute_dice(im_out, im_gt, mode='3d', zboundaries=False)
+        assert dice_segmentation > 0.95
+
+    # remove output files if tmp_path wasn't used
+    if ofolder != "tmp_path":
+        os.unlink(fpath_out)
 
 
 @pytest.mark.sct_testing
@@ -39,6 +77,84 @@ def test_sct_maths_symmetrize(dim, tmp_path):
     im_out = Image(path_out)
     assert np.array_equal(im_out.data,
                           (im_in.data + np.flip(im_in.data, axis=int(dim))) / 2.0)
+
+
+def test_arithmetic_mixed_dtype(tmp_path):
+    """Test whether arithmetic operations can be performed on images with different dtypes without crashing."""
+    # make a dummy integer image
+    path_im_int = str(tmp_path / "im_int.nii.gz")
+    Image(np.ones((2, 3, 4), dtype=int)).save(path_im_int)
+
+    # make a dummy floating point image
+    path_im_float = str(tmp_path / "im_float.nii.gz")
+    Image(np.ones((2, 3, 4), dtype=float)).save(path_im_float)
+
+    # output filename, will be overwritten several times
+    path_im_out = str(tmp_path / "im_out.nii.gz")
+
+    # for each operation, test various combinations
+    for op in ["-add", "-sub", "-mul", "-div"]:
+        sct_maths.main([
+            "-i", path_im_int,
+            op, path_im_float, path_im_int,
+            "-o", path_im_out,
+        ])
+        sct_maths.main([
+            "-i", path_im_int,
+            op, path_im_int, path_im_float,
+            "-o", path_im_out,
+        ])
+        sct_maths.main([
+            "-i", path_im_float,
+            op, path_im_int,
+            "-o", path_im_out,
+        ])
+
+
+def test_sub_between_uints(tmp_path):
+    """Make sure subtracting uints results in a signed integer, rather than a wrapped-around uint."""
+    # make two dummy unsigned integer images, one zeros and one ones
+    path_im_uint_zeros = str(tmp_path / "im_uint_zeros.nii.gz")
+    Image(np.zeros((2, 3, 4), dtype=np.uint8)).save(path_im_uint_zeros)
+    path_im_uint_ones = str(tmp_path / "im_uint_ones.nii.gz")
+    Image(np.ones((2, 3, 4), dtype=np.uint8)).save(path_im_uint_ones)
+
+    # test subtraction
+    path_im_out = str(tmp_path / "im_out.nii.gz")
+    sct_maths.main([
+        "-i", path_im_uint_zeros,
+        "-sub", path_im_uint_ones,
+        "-o", path_im_out,
+    ])
+
+    # ensure that output matches expected value
+    expected = np.ones((2, 3, 4), dtype=np.int16) * -1
+    actual = Image(path_im_out).data
+    assert np.array_equal(expected, actual)
+    assert expected.dtype == actual.dtype
+
+
+def test_div_between_uints(tmp_path):
+    """Make sure dividing uints results in a float, rather than a truncated uint."""
+    # make two dummy unsigned integer images, one ones and one twos
+    path_im_uint_twos = str(tmp_path / "im_uint_zeros.nii.gz")
+    Image(np.ones((2, 3, 4), dtype=np.uint8) * 2).save(path_im_uint_twos)
+    path_im_uint_ones = str(tmp_path / "im_uint_ones.nii.gz")
+    Image(np.ones((2, 3, 4), dtype=np.uint8)).save(path_im_uint_ones)
+
+    # test division
+    path_im_out = str(tmp_path / "im_out.nii.gz")
+    sct_maths.main([
+        "-i", path_im_uint_ones,
+        "-div", path_im_uint_twos,
+        "-o", path_im_out,
+    ])
+
+    # ensure that output matches expected value
+    expected = np.ones((2, 3, 4), dtype=np.float32) * 0.5
+    actual = Image(path_im_out).data
+    assert np.array_equal(expected, actual)
+    assert expected.dtype == actual.dtype
 
 
 def run_arithmetic_operation(tmp_path, dims, ops):

@@ -8,6 +8,7 @@
 import sys
 import os
 from typing import Sequence
+import textwrap
 
 from spinalcordtoolbox.moco import ParamMoco, moco_wrapper
 from spinalcordtoolbox.utils.sys import init_sct, set_loglevel
@@ -22,36 +23,31 @@ def get_parser():
 
     # parser initialisation
     parser = SCTArgumentParser(
-        description="Motion correction of fMRI data. Some robust features include:\n"
-                    "  - group-wise (-g)\n"
-                    "  - slice-wise regularized along z using polynomial function (-p)\n"
-                    "    (For more info about the method, type: isct_antsSliceRegularizedRegistration)\n"
-                    "  - masking (-m)\n"
-                    "  - iterative averaging of target volume\n"
-                    "\n"
-                    "The outputs of the motion correction process are:\n"
-                    "  - the motion-corrected fMRI volumes\n"
-                    "  - the time average of the corrected fMRI volumes\n"
-                    "  - a time-series with 1 voxel in the XY plane, for the X and Y motion direction (two separate "
-                    "files), as required for FSL analysis.\n"
-                    "  - a TSV file with one row for each time point, with the slice-wise average of the "
-                    "motion correction magnitude for that time point, that can be used for Quality Control.\n"
+        description=textwrap.dedent("""
+            Motion correction of fMRI data. Some robust features include:
+
+              - group-wise (`-g`)
+              - slice-wise regularized along z using polynomial function (`-p`). For more info about the method, type: `isct_antsSliceRegularizedRegistration`
+              - masking (`-m`)
+              - iterative averaging of target volume
+
+            The outputs of the motion correction process are:
+
+              - the motion-corrected fMRI volumes
+              - the time average of the corrected fMRI volumes
+              - a time-series with 1 voxel in the XY plane, for the X and Y motion direction (two separate files), as required for FSL analysis.
+              - a TSV file with one row for each time point, with the slice-wise average of the motion correction magnitude for that time point, that can be used for Quality Control.
+        """),  # noqa: E501 (line too long)
     )
 
-    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         '-i',
         metavar=Metavar.file,
-        required=True,
-        help="Input data (4D). Example: fmri.nii.gz"
+        help="Input data (4D). Example: `fmri.nii.gz`"
     )
-    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
-    optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit."
-    )
+
+    optional = parser.optional_arggroup
     optional.add_argument(
         '-g',
         metavar=Metavar.int,
@@ -61,7 +57,8 @@ def get_parser():
     optional.add_argument(
         '-m',
         metavar=Metavar.file,
-        help="Binary mask to limit voxels considered by the registration metric."
+        help="Binary mask to limit voxels considered by the registration metric. You may also provide a softmask "
+             "(nonbinary, [0, 1]), and it will be binarized at 0.5."
     )
     optional.add_argument(
         '-param',
@@ -95,34 +92,17 @@ def get_parser():
         help="Final interpolation."
     )
     optional.add_argument(
-        '-r',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1],
-        default=1,
-        help="Remove temporary files. 0 = no, 1 = yes"
-    )
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode"
-    )
-    optional.add_argument(
         '-qc',
         metavar=Metavar.folder,
         action=ActionCreateFolder,
         help="The path where the quality control generated content will be saved. (Note: "
-             "Both '-qc' and '-qc-seg' are required in order to generate a QC report.)"
+             "Both `-qc` and `-qc-seg` are required in order to generate a QC report.)"
     )
     optional.add_argument(
         '-qc-seg',
         metavar=Metavar.file,
         help="Segmentation of spinal cord to improve cropping in qc report. (Note: "
-             "Both '-qc' and '-qc-seg' are required in order to generate a QC report.)"
+             "Both `-qc` and `-qc-seg` are required in order to generate a QC report.)"
     )
     optional.add_argument(
         '-qc-fps',
@@ -141,6 +121,10 @@ def get_parser():
         metavar=Metavar.str,
         help="If provided, this string will be mentioned in the QC report as the subject the process was run on."
     )
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
+    parser.add_tempfile_args()
 
     return parser
 

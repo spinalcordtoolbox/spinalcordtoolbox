@@ -3,10 +3,11 @@
 SCT Courses
 ###########
 
-We organize a **free** in-person SCT course each year after the ISMRM conference. The course provides a guided walkthrough of SCT, with developers and researchers on-hand to provide support and to answer any questions you may have. If you’d like to be added to the mailing list for course announcements, please visit `this link <https://docs.google.com/forms/d/e/1FAIpQLSdvsXwLRj07bx85O2wPM9ut1sC-20dFKdTVe-OckyvkfncV3Q/viewform>`_.
+We organize a **free** annual SCT course. The course provides a guided walkthrough of SCT, with developers and researchers on-hand to provide support and to answer any questions you may have. If you’d like to be added to the mailing list for course announcements, please visit `this link <https://docs.google.com/forms/d/e/1FAIpQLSdvsXwLRj07bx85O2wPM9ut1sC-20dFKdTVe-OckyvkfncV3Q/viewform>`_.
 
 The past courses handouts are listed below:
 
+-  `SCT course (v6.5), Online, 2024-12-09`_ \| `Video recording <https://youtu.be/CDj8PYW1WaA>`__
 -  `SCT course (v6.1), Online, 2023-11-20`_ \| `Video recording <https://youtu.be/hTbJo8GO5IU>`__
 -  `SCT course (v5.4.0), Boston, 2021-11-16`_ \| `Video recording <https://www.youtube.com/watch?v=Pcg2ngc9hj8&list=PLJ5-Fnq9XpaXmDmtwDPycLyZoitv8PsTi&index=2>`__
 -  `SCT course (v4.2.1), London, 2020-01-21`_ \| `Video recording <https://www.youtube.com/watch?v=whbtjYNtHko>`__
@@ -19,6 +20,7 @@ The past courses handouts are listed below:
 -  `SCT course (v3.0_beta1), Montreal, 2016-04-19`_
 -  `SCT Hands-on Workshop (v2.0.4), Toronto, 2015-06-15`_
 
+.. _SCT course (v6.5), Online, 2024-12-09: https://docs.google.com/presentation/d/1uUOpgshwnyC2p8r2GalXlUczQLpX6PfJbtzNELxbqdI/edit?usp=sharing
 .. _SCT course (v6.1), Online, 2023-11-20: https://docs.google.com/presentation/d/1t40Fd0fS0SwWR5FU_GWKEvHkB9d96LVddLQW6L3QAx0/edit?usp=sharing
 .. _SCT course (v5.4.0), Boston, 2021-11-16: https://drive.google.com/file/d/1Oe9XHepUbd-nMNZvlNojh4YttEPep01P/view?usp=sharing
 .. _SCT course (v4.2.1), London, 2020-01-21: https://drive.google.com/file/d/1TZireJ6yhV8q7PbKKXyXg7Heov9-YJMu/view?usp=sharing

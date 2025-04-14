@@ -15,7 +15,10 @@ from scipy.ndimage import gaussian_filter, gaussian_laplace, label, generate_bin
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.utils.sys import LazyLoader
 
-dipy = LazyLoader("dipy", globals(), "dipy")
+dipy_patch2self = LazyLoader("dipy_patch2self", globals(), "dipy.denoise.patch2self")
+dipy_mask = LazyLoader("dipy_mask", globals(), "dipy.segment.mask")
+dipy_nlmeans = LazyLoader("dipy_nlmeans", globals(), "dipy.denoise.nlmeans")
+dipy_noise = LazyLoader("dipy_noise", globals(), "dipy.denoise.noise_estimate")
 skl_metrics = LazyLoader("skl_metrics", globals(), "sklearn.metrics")
 scipy_stats = LazyLoader("scipy_stats", globals(), "scipy.stats")
 
@@ -51,17 +54,10 @@ def _get_footprint(shape, size, dim):
 
     # If 2d kernel, replicate it along the specified dimension
     if len(footprint.shape) == 2:
-        footprint3d = np.zeros([footprint.shape[0]] * 3)
-        imid = np.floor(footprint.shape[0] / 2).astype(int)
-        if dim == 0:
-            footprint3d[imid, :, :] = footprint
-        elif dim == 1:
-            footprint3d[:, imid, :] = footprint
-        elif dim == 2:
-            footprint3d[:, :, imid] = footprint
-        else:
+        if dim not in [0, 1, 2]:
             raise ValueError("dim can only take values: {0, 1, 2}")
-        footprint = footprint3d
+        footprint = np.expand_dims(footprint, dim)
+
     return footprint
 
 
@@ -96,7 +92,7 @@ def dice(im1, im2):
     return 2. * intersection.sum() / (im1.sum() + im2.sum())
 
 
-def dilate(data, size, shape, dim=None):
+def dilate(data, size, shape, dim=None, islabel=False):
     """
     Dilate data using ball structuring element
 
@@ -110,14 +106,89 @@ def dilate(data, size, shape, dim=None):
     """
     if isinstance(data, Image):
         im_out = data.copy()
-        im_out.data = dilate(data.data, size, shape, dim)
+        im_out.data = dilate(data.data, size, shape, dim, islabel)
         return im_out
     else:
         footprint = _get_footprint(shape, size, dim)
-        if data.dtype in ['uint8', 'uint16']:
-            return rank.maximum(data, footprint=footprint)
+        if islabel:
+            return _dilate_point_labels(data, footprint=footprint)
         else:
-            return dilation(data, footprint=footprint, out=None)
+            if data.dtype in ['uint8', 'uint16']:
+                return rank.maximum(data, footprint=footprint)
+            else:
+                return dilation(data, footprint=footprint)
+
+
+def _dilate_point_labels(data, footprint):
+    """
+    A more efficient dilation algorithm when we know the image is mostly zero (i.e. point label image)
+    """
+    dim = len(data.shape)  # 2D or 3D
+    if dim != len(footprint.shape):
+        raise ValueError(f"incompatible shapes: {data.shape=} {footprint.shape=}")
+    if footprint.size == 0:
+        raise ValueError(f"cannot handle empty footprint: {footprint.shape=}")
+
+    # To dilate each voxel, we multiply the footprint by the voxel's value.
+    #
+    # But, to preserve overlapping dilated voxels, we'd like to use `np.maximum`
+    # to take the maximum (so that the '0' voxels in the footprint don't overwrite
+    # any existing nonzero voxels in the image).
+    #
+    # To perform `np.maximum` in place, we use the `np.ufunc.at` syntax, which
+    # requires an `indices` argument to specify *where* to perform the maximum at.
+    # So, we just need to compute the bounding box surrounding the voxel,
+    # specified as a tuple of `slice` objects, which acts like
+    # data_out[x1:x2, y1:y2, z1:z2] (in 3D) or data_out[x1:x2, y1:y2] (in 2D).
+    #
+    # As an added complication, we may also need to crop the footprint, if the
+    # pixel to be dilated is close to an edge of the array. So, we also need to
+    # compute a bounding box surrounding the center of the footprint, also as
+    # a tuple of `slice` objects.
+
+    data_corners = np.array([[0]*dim, data.shape], dtype=int)
+    fp_corners = np.array([[0]*dim, footprint.shape], dtype=int)
+
+    # For odd-length dimensions, the center of the footprint is unique.
+    # For even-length dimensions, we round up.
+    fp_center = (fp_corners[0] + (fp_corners[1] - 1) + 1) // 2
+
+    data_out = np.zeros_like(data)
+    for data_coords in np.argwhere(data):
+        # data_coords is a numpy array, which behaves differently from tuples
+        # when indexing another numpy array. We want the tuple behaviour.
+        data_value = data[tuple(data_coords)]
+
+        # Make sure that the footprint doesn't exceed the image boundaries
+        # If the footprint fits inside the image, then:
+        #    - (width of footprint) <= (distance from voxel to image boundary)
+        # However, if the footprint would go outside the boundaries, then:
+        #    - (distance from voxel to image boundary) < (width of footprint)
+        # So we take the minimum to always use the shorter of the two distances.
+        distances = [
+            # Distance from 0 --> voxel
+            np.minimum(data_coords - data_corners[0],
+                       fp_center - fp_corners[0]),
+            # Distance from voxel --> data boundaries
+            np.minimum(data_corners[1] - data_coords,
+                       fp_corners[1] - fp_center),
+        ]
+        data_start = data_coords - distances[0]
+        data_stop = data_coords + distances[1]
+        fp_start = fp_center - distances[0]
+        fp_stop = fp_center + distances[1]
+
+        data_indices = tuple(slice(start, stop) for start, stop in zip(data_start, data_stop))
+        fp_indices = tuple(slice(start, stop) for start, stop in zip(fp_start, fp_stop))
+
+        # Now we can apply the (possibly truncated) footprint to the right part
+        # of the data array, blending in the data value with the "max" function
+        np.maximum.at(
+            data_out, data_indices,
+            data_value*footprint[fp_indices],
+        )
+
+    return data_out
 
 
 def erode(data, size, shape, dim=None):
@@ -250,7 +321,7 @@ def adap(data, block_size, offset):
 
 
 def otsu_median(data, size, n_iter):
-    data, mask = dipy.segment.mask.median_otsu(data, size, n_iter)
+    data, mask = dipy_mask.median_otsu(data, size, n_iter)
     return mask
 
 
@@ -313,8 +384,8 @@ def denoise_nlmeans(data_in, patch_radius=1, block_radius=5):
     block_radius_max = min(data_in.shape) - 1
     block_radius = block_radius_max if block_radius > block_radius_max else block_radius
 
-    sigma = dipy.denoise.noise_estimate.estimate_sigma(data_in)
-    denoised = dipy.denoise.nlmeans.nlmeans(data_in, sigma, patch_radius=patch_radius, block_radius=block_radius)
+    sigma = dipy_noise.estimate_sigma(data_in)
+    denoised = dipy_nlmeans.nlmeans(data_in, sigma, patch_radius=patch_radius, block_radius=block_radius)
 
     return denoised
 
@@ -331,6 +402,30 @@ def symmetrize(data, dim):
     return data_out
 
 
+def slicewise_mean(data, dim, exclude_zeros=False):
+    """
+    Compute slicewise mean the specified dimension. Zeros are not inlcuded in the mean.
+    :param data: numpy.array 3D data.
+    :param dim: dimension of array to symmetrize along.
+
+    :return data_out: slicewise averaged data
+    """
+    if exclude_zeros:
+        data[data == 0] = np.nan
+    data_out = np.zeros_like(data)
+    for slices in range(data.shape[dim]):
+        idx_to_slice = [slice(None)] * data.ndim
+        idx_to_slice[dim] = slices
+        idx_to_slice = tuple(idx_to_slice)  # requirement of numpy indexing
+        if np.isnan(data[idx_to_slice]).all():
+            mean_data = [[0]]
+        else:
+            mean_data = np.nanmean(data[idx_to_slice], keepdims=True)
+        data_out[idx_to_slice] = np.broadcast_to(mean_data, data[idx_to_slice].shape)
+
+    return data_out
+
+
 def denoise_patch2self(data_in, bvals_in, patch_radius=0, model='ols'):
     """
     :param data_in: 4d array to denoise
@@ -342,7 +437,7 @@ def denoise_patch2self(data_in, bvals_in, patch_radius=0, model='ols'):
         for more info about patch_radius and model, please refer to the dipy website:
         https://docs.dipy.org/stable/examples_built/preprocessing/denoise_patch2self.html
     """
-    denoised = dipy.denoise.patch2self.patch2self(data_in, bvals_in, patch_radius=patch_radius, model=model)
+    denoised = dipy_patch2self.patch2self(data_in, bvals_in, patch_radius=patch_radius, model=model)
 
     return denoised
 

@@ -1,5 +1,7 @@
 import os
 import glob
+import math
+import multiprocessing as mp
 
 import torch
 import torch.nn.functional as F
@@ -39,7 +41,9 @@ nnunet_plans = {
         [3, 3, 3],
         [3, 3, 3]
     ],
-    "unet_max_num_features": 320,
+    # NOTE: starting from contrast-agnostic v2.5, the monai-based nnunet model has more features at
+    # the deeper layers of the network, hence update the max features in the `plans` dict
+    "unet_max_num_features": 384,
 }
 
 
@@ -162,7 +166,7 @@ def prepare_data(path_image, crop_size=(64, 160, 320), padding='edge'):
         ThresholdIntensityd(keys=["pred"], threshold=1.0, above=False, cval=1.0)
     ])
     test_ds = Dataset(data=[{"image": path_image}], transform=transforms_test)
-    test_loader = DataLoader(test_ds, batch_size=1, shuffle=False, num_workers=8, pin_memory=True)
+    test_loader = DataLoader(test_ds, batch_size=1, shuffle=False, num_workers=math.ceil(mp.cpu_count() / 2), pin_memory=True)
 
     return test_loader, test_post_pred
 
@@ -172,7 +176,7 @@ def inference_transforms_single_image(crop_size, padding='edge'):
         LoadImaged(keys=["image"], image_only=False),
         EnsureChannelFirstd(keys=["image"]),
         Orientationd(keys=["image"], axcodes="RPI"),
-        Spacingd(keys=["image"], pixdim=(1.0, 1.0, 1.0), mode=2),
+        Spacingd(keys=["image"], pixdim=(1.0, 1.0, 1.0), mode=2),   # "2" refers to spline interpolation
         ResizeWithPadOrCropd(keys=["image"], spatial_size=crop_size, mode=padding),
         DivisiblePadd(keys=["image"], k=2 ** 5, mode=padding),
         # pad inputs to ensure divisibility by no. of layers nnUNet has (5)

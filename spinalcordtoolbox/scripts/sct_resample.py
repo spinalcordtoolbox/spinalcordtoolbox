@@ -9,6 +9,7 @@
 
 import sys
 from typing import Sequence
+import textwrap
 
 from spinalcordtoolbox.utils.sys import init_sct, set_loglevel
 from spinalcordtoolbox.utils.shell import Metavar, SCTArgumentParser
@@ -40,14 +41,14 @@ def get_parser():
         description="Anisotropic resampling of 3D or 4D data."
     )
 
-    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         '-i',
         metavar=Metavar.file,
-        required=True,
-        help="Image to resample. Can be 3D or 4D. (Cannot be 2D) Example: dwi.nii.gz"
+        help="Image to resample. Can be 3D or 4D. (Cannot be 2D) Example: `dwi.nii.gz`"
     )
 
+    # TODO: Make these arguments implicitly mutually exclusive
     resample_types = parser.add_argument_group(
         "\nMETHOD TO SPECIFY NEW SIZE:\n"
         "Please choose only one of the 4 options"
@@ -55,21 +56,26 @@ def get_parser():
     resample_types.add_argument(
         '-f',
         metavar=Metavar.str,
-        help="Resampling factor in each dimensions (x,y,z). Separate with 'x'. Example: 0.5x0.5x1\n"
-             "For 2x upsampling, set to 2. For 2x downsampling set to 0.5"
+        help=textwrap.dedent("""
+            Resampling factor in each dimensions (x,y,z). Separate with `x`. Example: `0.5x0.5x1`
+
+            For 2x upsampling, set to `2`. For 2x downsampling set to `0.5`
+        """),
     )
     resample_types.add_argument(
         '-mm',
         metavar=Metavar.str,
-        help="New resolution in mm. Separate dimension with 'x'. Example: 0.1x0.1x5\n"
-             "Note: Resampling can only approximate a desired `mm` resolution, given the limitations of discrete voxel "
-             "data arrays."
+        help=textwrap.dedent("""
+            New resolution in mm. Separate dimension with `x`. Example: `0.1x0.1x5`
+
+            Note: Resampling can only approximate a desired `mm` resolution, given the limitations of discrete voxel data arrays.
+        """),
         # Context: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4077
     )
     resample_types.add_argument(
         '-vox',
         metavar=Metavar.str,
-        help="Resampling size in number of voxels in each dimensions (x,y,z). Separate with 'x'."
+        help="Resampling size in number of voxels in each dimensions (x,y,z). Separate with `x`."
     )
     resample_types.add_argument(
         '-ref',
@@ -78,13 +84,7 @@ def get_parser():
              "be used."
     )
 
-    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
-    optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit."
-    )
+    optional = parser.optional_arggroup
     optional.add_argument(
         '-x',
         choices=['nn', 'linear', 'spline'],
@@ -94,17 +94,11 @@ def get_parser():
     optional.add_argument(
         '-o',
         metavar=Metavar.file,
-        help="Output file name. Example: dwi_resampled.nii.gz"
+        help="Output file name. Example: `dwi_resampled.nii.gz`"
     )
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode"
-    )
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
 
     return parser
 

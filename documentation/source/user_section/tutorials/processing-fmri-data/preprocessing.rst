@@ -18,7 +18,7 @@ First we compute the mean of the 4D fMRI data to obtain a coarse 3D approximatio
 
 :Input arguments:
    - ``-i`` : The input image.
-   - ``-mean`` : The dimension to compute the mean across. In this case, ``sct_maths`` will assume that the fMRI image is a 4D stack of 3D volumes, with dimension ``[x, y, z, t]``. Therefore, ``-mean t`` will average the 3D volumes across the temporal dimension.
+   - ``-mean`` : The dimension to compute the mean across. In this case, :ref:`sct_maths` will assume that the fMRI image is a 4D stack of 3D volumes, with dimension ``[x, y, z, t]``. Therefore, ``-mean t`` will average the 3D volumes across the temporal dimension.
    - ``-o``: The filename of the output image.
 
 :Output files/folders:
@@ -28,7 +28,7 @@ First we compute the mean of the 4D fMRI data to obtain a coarse 3D approximatio
 Generating a spinal cord segmentation
 -------------------------------------
 
-Due to the low contrast between spinal cord and cerebrospinal fluid of fMRI data, it is difficult to directly obtain a spinal cord segmentation for fMRI data using ``sct_deepseg_sc``. So, as a workaround, we will instead obtain a spinal cord segmentation for another contrast (T2), then transform it to the space of the fMRI data.
+Due to the low contrast between spinal cord and cerebrospinal fluid of fMRI data, it is difficult to directly obtain a spinal cord segmentation for fMRI data using :ref:`sct_deepseg`. So, as a workaround, we will instead obtain a spinal cord segmentation for another contrast (T2), then transform it to the space of the fMRI data.
 
 
 Generating a T2 segmentation
@@ -37,11 +37,11 @@ Generating a T2 segmentation
 .. code::
 
    cd ../t2
-   sct_deepseg_sc -i t2.nii.gz -c t2
+   sct_deepseg spinalcord -i t2.nii.gz
 
 :Input arguments:
+   - ``spinalcord``: Task to perform. Here, we are using ``spinalcord`` to segment the spinal cord. This task is contrast-agnostic, meaning it can be used on any type of image (T1, T2, T2*, etc.)
    - ``-i`` : Input image
-   - ``-c`` : Contrast of the input image
 
 :Output files/folders:
    - ``t2_seg.nii.gz`` : 3D binary mask of the segmented spinal cord
@@ -50,7 +50,7 @@ Generating a T2 segmentation
 Transforming the T2 segmentation to the fMRI space
 ==================================================
 
-Since the segmentation image will only be used to coarsely highlight the region of interest, a complex transformation is not necessary, so we supply the ``-identity`` to ``sct_register_multimodal`` to speed up processing.
+Since the segmentation image will only be used to coarsely highlight the region of interest, a complex transformation is not necessary, so we supply the ``-identity`` to :ref:`sct_register_multimodal` to speed up processing.
 
 .. code::
 
@@ -76,12 +76,11 @@ Now that we have a spinal cord segmentation in the space of the fMRI data, we ca
 
 .. code::
 
-   sct_create_mask -i fmri.nii.gz -p centerline,t2_seg_reg.nii.gz -size 35mm -f cylinder
+   sct_create_mask -i fmri.nii.gz -p centerline,t2_seg_reg.nii.gz -size 35mm
 
 :Input arguments:
    - ``-i`` : The input image to create the mask from.
    - ``-p`` : The process used to position the mask. The ``centerline`` process will compute the center of mass for each slice of ``t2_seg_reg.nii.gz``, then use those locations to center of the mask at each slice.
-   - ``-f``: The shape of the mask. Here, we create cylinder around the centerline.
    - ``-size``: The diameter of the mask.
 
 :Output files/folders:

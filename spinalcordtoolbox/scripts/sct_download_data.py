@@ -5,8 +5,10 @@
 # Copyright (c) 2015 Polytechnique Montreal <www.neuro.polymtl.ca>
 # License: see the file LICENSE
 
+import os
 import sys
 from typing import Sequence
+import textwrap
 
 from spinalcordtoolbox.download import install_named_dataset, DATASET_DICT, list_datasets, install_default_datasets
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder
@@ -18,44 +20,35 @@ def get_parser():
         description="Download binaries from the web.",
         epilog=list_datasets(),
     )
-    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         '-d',
-        required=True,
         choices=['default'] + sorted(list(DATASET_DICT.keys()), key=str.casefold),
         metavar="<dataset>",
         help="Name of the dataset, as listed in the table below. If 'default' is specified, then all default datasets "
              "will be re-downloaded. (Default datasets are critical datasets downloaded during installation.)"
     )
-    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
-    optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit."
-    )
+
+    optional = parser.optional_arggroup
     optional.add_argument(
         '-o',
         metavar=Metavar.folder,
         action=ActionCreateFolder,
-        help="Path to a directory to save the downloaded data.\n"
-             "(If not provided, the dataset will be downloaded to the SCT installation directory by default. Directory will be created if it does not exist. Warning: existing "
-             "data in the directory will be erased unless -k is provided.)\n"
+        help=textwrap.dedent("""
+            Path to a directory to save the downloaded data.
+
+            (If not provided, the dataset will be downloaded to the SCT installation directory by default. Directory will be created if it does not exist. Warning: existing data in the directory will be erased unless `-k` is provided.)
+        """),  # noqa: E501 (line too long)
     )
     optional.add_argument(
         '-k',
         action="store_true",
         help="Keep existing data in destination directory."
     )
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode"
-    )
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
 
     return parser
 
@@ -69,7 +62,28 @@ def main(argv: Sequence[str]):
     if arguments.d == "default":
         install_default_datasets(keep=arguments.k)
     else:
-        install_named_dataset(arguments.d, dest_folder=arguments.o, keep=arguments.k)
+        keep = arguments.k
+        dest_folder = arguments.o
+
+        # Make sure we don't accidentally overwrite a critical user folder
+        if dest_folder is not None and os.path.isdir(dest_folder) and os.listdir(dest_folder) and not keep:
+            printv(f"Output directory '{dest_folder}' exists and is non-empty. Contents will be erased.",
+                   type="warning")
+
+            while True:
+                answer = input("Do you wish to overwrite this directory? ([Y]es/[N]o): ")
+                if answer.lower() in ["y", "yes"]:
+                    break  # keep = False
+                elif answer.lower() in ["n", "no"]:
+                    keep = True
+                    break
+                else:
+                    printv(f"Invalid input '{answer}'", type="warning")
+
+            printv("Note: You can suppress this message by specifying `-k` (keep) or by deleting the "
+                   "directory in advance.", type="warning")
+
+        install_named_dataset(arguments.d, dest_folder=dest_folder, keep=keep)
 
     printv('Done!\n', verbose)
 

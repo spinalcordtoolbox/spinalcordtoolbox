@@ -7,6 +7,7 @@
 
 import sys
 from typing import Sequence
+import textwrap
 
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
@@ -54,31 +55,26 @@ class ErnstAngle:
 
 def get_parser():
     parser = SCTArgumentParser(
-        description='Function to compute the Ernst Angle. For examples of T1 values in the brain, see Wansapura et al. '
-                    'NMR relaxation times in the human brain at 3.0 tesla. Journal of magnetic resonance imaging : '
-                    'JMRI (1999) vol. 9 (4) pp. 531-8. \nT1 in WM: 832ms\nT1 in GM: 1331ms'
+        description=textwrap.dedent("""
+            Function to compute the Ernst Angle.
+
+            For examples of T1 values in the brain, see Wansapura et al. NMR relaxation times in the human brain at 3.0 tesla. Journal of magnetic resonance imaging : JMRI (1999) vol. 9 (4) pp. 531-8. T1 in WM: 832msT1 in GM: 1331ms
+        """),  # noqa: E501 (line too long)
     )
 
-    mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
-    mandatoryArguments.add_argument(
+    mandatory = parser.mandatory_arggroup
+    mandatory.add_argument(
         "-tr",
         type=float,
-        required=True,
-        help='Value of TR (in ms) to get the Ernst Angle. Example: 2000',
+        help='Value of TR (in ms) to get the Ernst Angle. Example: `2000`',
         metavar=Metavar.float,
     )
 
-    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
-    optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit")
+    optional = parser.optional_arggroup
     optional.add_argument(
         "-t1",
         type=float,
-        help='T1 value (in ms). Example: 832.3',
-        required=False,
+        help='T1 value (in ms).',
         metavar=Metavar.float,
         default=832.0)
     optional.add_argument(
@@ -86,29 +82,21 @@ def get_parser():
         type=float,
         nargs=2,
         metavar=Metavar.float,
-        help='Min/Max range of TR (in ms) separated with space. Only use with -v 2. Example: 500 3500',
-        default=[500, 3500],
-        required=False)
+        help='Min/Max range of TR (in ms) separated with space. Only use with `-v 2`.',
+        default=[500, 3500])
     optional.add_argument(
         "-o",
         help="Name of the output file containing Ernst angle result.",
-        required=False,
         metavar=Metavar.str,
         default="ernst_angle.txt")
     optional.add_argument(
         "-ofig",
-        help="Name of the output graph. Only use with -v 2.",
-        required=False,
+        help="Name of the output graph. Only use with `-v 2`.",
         metavar=Metavar.str,
         default="ernst_angle.png")
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
 
     return parser
 

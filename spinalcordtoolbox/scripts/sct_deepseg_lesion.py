@@ -8,6 +8,7 @@
 import os
 import sys
 from typing import Sequence
+import textwrap
 
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
@@ -21,76 +22,58 @@ def get_parser():
                     'neural networks. Neuroimage. 2018 Oct 6;184:901-915.'
     )
 
-    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         "-i",
-        required=True,
-        help='Input image. Example: t2.nii.gz',
+        help='Input image. Example: `t2.nii.gz`',
         metavar=Metavar.file,
     )
     mandatory.add_argument(
         "-c",
-        required=True,
-        help='Type of image contrast.\n'
-             ' t2: T2w scan with isotropic or anisotropic resolution.\n'
-             ' t2_ax: T2w scan with axial orientation and thick slices.\n'
-             ' t2s: T2*w scan with axial orientation and thick slices.',
+        help=textwrap.dedent("""
+            Type of image contrast.
+
+              - `t2`: T2w scan with isotropic or anisotropic resolution.
+              - `t2_ax`: T2w scan with axial orientation and thick slices.
+              - `t2s`: T2*w scan with axial orientation and thick slices.
+        """),
         choices=('t2', 't2_ax', 't2s'),
     )
 
-    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
-    optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit",
-    )
+    optional = parser.optional_arggroup
     optional.add_argument(
         "-centerline",
-        help="Method used for extracting the centerline:\n"
-             " svm: Automatic detection using Support Vector Machine algorithm.\n"
-             " cnn: Automatic detection using Convolutional Neural Network.\n"
-             " viewer: Semi-automatic detection using manual selection of a few points with an interactive viewer "
-             "followed by regularization.\n"
-             " file: Use an existing centerline (use with flag -file_centerline)",
-        required=False,
+        help=textwrap.dedent("""
+            Method used for extracting the centerline:
+
+              - `svm`: Automatic detection using Support Vector Machine algorithm.
+              - `cnn`: Automatic detection using Convolutional Neural Network.
+              - `viewer`: Semi-automatic detection using manual selection of a few points with an interactive viewer followed by regularization.
+              - `file`: Use an existing centerline (use with flag `-file_centerline`)
+        """),
         choices=('svm', 'cnn', 'viewer', 'file'),
         default="svm")
     optional.add_argument(
         "-file_centerline",
-        help='Input centerline file (to use with flag -centerline file). Example: t2_centerline_manual.nii.gz',
-        metavar=Metavar.str,
-        required=False)
+        help='Input centerline file (to use with flag `-centerline` file). Example: `t2_centerline_manual.nii.gz`',
+        metavar=Metavar.str,)
     optional.add_argument(
         "-brain",
         type=int,
         help='Indicate if the input image contains brain sections (to speed up segmentation). This flag is only '
-             'effective with "-centerline cnn".',
-        required=False,
+             'effective with `-centerline cnn`.',
         choices=(0, 1),
         default=1)
     optional.add_argument(
         "-ofolder",
-        help='Output folder. Example: My_Output_Folder',
-        required=False,
+        help='Output folder.',
         action=ActionCreateFolder,
         metavar=Metavar.str,
         default=os.getcwd())
-    optional.add_argument(
-        "-r",
-        type=int,
-        help="Remove temporary files.",
-        required=False,
-        choices=(0, 1),
-        default=1)
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
+    parser.add_tempfile_args()
 
     return parser
 

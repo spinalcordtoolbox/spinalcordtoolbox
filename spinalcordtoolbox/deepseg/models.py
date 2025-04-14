@@ -14,10 +14,12 @@ import textwrap
 import shutil
 import glob
 from pathlib import Path
+from importlib.metadata import metadata
 
 from spinalcordtoolbox import download
-from spinalcordtoolbox.utils.sys import stylize, __deepseg_dir__
+from spinalcordtoolbox.utils.sys import stylize, __deepseg_dir__, LazyLoader
 
+tss_init = LazyLoader("tss_init", globals(), 'totalspineseg.init_inference')
 
 logger = logging.getLogger(__name__)
 
@@ -28,15 +30,6 @@ logger = logging.getLogger(__name__)
 #     2) A dict of <mirror URL lists>, where each list corresponds to a different seed (for model ensembling), and
 #        each dictionary key corresponds to the seed's name (seed names are used to create subfolders per-seed)
 MODELS = {
-    "t2star_sc": {
-        "url": [
-            "https://github.com/ivadomed/t2star_sc/releases/download/r20231004/r20231004_t2star_sc.zip",
-            "https://osf.io/8nk5w/download",
-        ],
-        "description": "Cord segmentation model on T2*-weighted contrast.",
-        "contrasts": ["t2star"],
-        "default": True,
-    },
     "mice_uqueensland_sc": {
         "url": [
             "https://github.com/ivadomed/mice_uqueensland_sc/releases/download/r20200622/r20200622_mice_uqueensland_sc.zip",
@@ -87,14 +80,6 @@ MODELS = {
         "contrasts": ["t2"],
         "default": False,
     },
-    "model_seg_ms_sc_mp2rage": {
-        "url": [
-            "https://github.com/ivadomed/model_seg_ms_mp2rage/releases/download/r20211223/model_seg_ms_sc_mp2rage.zip"
-        ],
-        "description": "Segmentation of spinal cord on MP2RAGE data from MS participants.",
-        "contrasts": ["mp2rage"],
-        "default": False,
-    },
     "model_7t_multiclass_gm_sc_unet2d": {
         "url": [
             "https://github.com/ivadomed/model_seg_gm-wm_t2star_7t_unet3d-multiclass/archive/refs/tags/r20211012.zip"
@@ -120,13 +105,13 @@ MODELS = {
     #       - Models do not have a `.json` sidecar file, since they were not developed with ivadomed
     #       - So, threshold value is stored here, within the model dict
     #       - Binarization is applied within SCT code
-    "model_seg_sc_contrast_agnostic_softseg_monai": {
+    "model_seg_sc_contrast_agnostic_nnunet": {
         "url": [
-            "https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/releases/download/v2.4/model_soft_bin_20240425-170840.zip"
+            "https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/releases/download/v3.0/model_contrast_agnostic_20250123.zip"
         ],
-        "description": "Spinal cord segmentation agnostic to MRI contrasts using MONAI-based nnUNet model",
+        "description": "Spinal cord segmentation agnostic to MRI contrasts",
         "contrasts": ["any"],
-        "thr": 0.5,  # Softseg model -> threshold at 0.5
+        "thr": None,  # We're now using an nnUNet model, which does not need a threshold
         "default": False,
     },
     "model_seg_sci_multiclass_sc_lesion_nnunet": {
@@ -156,15 +141,6 @@ MODELS = {
          "thr": None,  # Images are already binarized when splitting into gm-seg and wm-seg
          "default": False,
      },
-    "model_seg_sc_lesion_canproco_nnunet": {
-         "url": [
-             "https://github.com/ivadomed/canproco/releases/download/r20240125/model_ms_seg_sc-lesion_regionBased_2d.zip"
-         ],
-         "description": "MS lesion/SC seg for STIR/PSIR contrasts",
-         "contrasts": ["stir", "psir"],
-         "thr": None,  # Images are already binarized when splitting into spinal cord and lesion
-         "default": False,
-    },
     "model_seg_sc_epi_nnunet": {
          "url": [
              "https://github.com/sct-pipeline/fmri-segmentation/releases/download/v0.2/model-fmri-segmentation-v0.2_nnUNetTrainer.zip"
@@ -183,24 +159,58 @@ MODELS = {
          "thr": None,  # Images are already binarized
          "default": False,
      },
+    "model_seg_ms_sc_lesion_bavaria_quebec_nnunet": {
+        "url": [
+            "https://github.com/ivadomed/model-seg-ms-axial-t2w/releases/download/r20241111/model_bavaria_quebec_axial_t2w_ms.zip"
+        ],
+        "description": "Intramedullary MS lesion and spinal cord segmentation in Axial T2w MRI",
+        "contrasts": ["t2"],
+        "thr": None,  # Images are already binarized when splitting into sc-seg + lesion-seg
+        "default": False,
+    },
+    "model_seg_ms_lesion": {
+         "url": [
+             "https://github.com/ivadomed/ms-lesion-agnostic/releases/download/r20241101/model_seg_ms_lesion_unet3d.zip"
+         ],
+         "description": "Segmentation of spinal cord MS lesions",
+         "contrasts": ["any"],
+         "thr": None,  # Images are already binarized
+         "default": False,
+     },
+    "model_seg_canal_t2w": {
+        "url": [
+            "https://github.com/ivadomed/model-canal-seg/releases/download/r20241126/model-canal-seg_r20241126.zip"
+        ],
+        "description": "Segmentation of spinal canal on T2w contrast",
+        "contrasts": ["t2"],
+        "thr": None,  # Images are already binarized
+        "default": False,
+    },
+    "totalspineseg": {
+         # NB: Rather than hardcoding the URLs ourselves, use the URLs from the totalspineseg package.
+         # This means that when the totalspineseg package is updated, the URLs will be too, thus triggering
+         # a re-installation of the model URLs
+         "url": dict([meta.split(', ') for meta in metadata('totalspineseg').get_all('Project-URL')
+                      if meta.startswith('Dataset')]),
+         "description": "Instance segmentation of vertebrae, intervertebral discs (IVDs), spinal cord, and spinal canal on multi-contrasts MRI scans.",
+         "contrasts": ["any"],
+         "thr": None,  # Images are already binarized
+         "default": False,
+     },
 }
 
 
 # List of task. The convention for task names is: action_(animal)_region_(contrast)
 # Regions could be: sc, gm, lesion, tumor
+CROP_MESSAGE = (
+    'To crop the data you can first segment the spinal cord using the contrast agnostic model. This could be '
+    'done using: "sct_deepseg spinalcord -i IMAGE -o IMAGE_sc", then crop the '
+    'image with 30 mm of dilation on axial orientation around the spinal cord. This could be done using: '
+    '"sct_crop_image -i IMAGE -m IMAGE_sc -dilate 30x30x5". Note that 30 is only for 1mm isotropic '
+    'resolution, for images with another resolution divide 30/your_axial_resolution.'
+)
 TASKS = {
-    'seg_sc_t2star':
-        {'description': 'Cord segmentation on T2*-weighted contrast',
-         'long_description': 'This segmentation model for T2*w spinal cords uses the UNet architecture, and was '
-                             'created with the `ivadomed` package. A subset of a private dataset (sct_testing_large) '
-                             'was used, and consists of 236 subjects across 9 different sessions. A total of 388 pairs '
-                             'of T2* images were used (anatomical image + manual cord segmentation). The image '
-                             'properties include various orientations (superior, inferior) and crops (C1-C3, C4-C7, '
-                             'etc.). The dataset was comprised of both non-pathological (healthy) and pathological (MS '
-                             'lesion) adult patients.',
-         'url': 'https://github.com/ivadomed/t2star_sc',
-         'models': ['t2star_sc']},
-    'seg_mice_sc':
+    'sc_mouse_t1':
         {'description': 'Cord segmentation on mouse MRI',
          'long_description': 'This segmentation model for T1w mouse spinal cord segmentation uses the UNet '
                              'architecture, and was created with the `ivadomed` package. Training data was provided by '
@@ -209,8 +219,10 @@ TASKS = {
                              'The dataset was comprised of both non-pathological (healthy) and pathological (diseased) '
                              'mice.',
          'url': 'https://github.com/ivadomed/mice_uqueensland_sc/',
-         'models': ['mice_uqueensland_sc']},
-    'seg_mice_gm':
+         'models': ['mice_uqueensland_sc'],
+         'citation': None,
+         },
+    'gm_mouse_t1':
         {'description': 'Gray matter segmentation on mouse MRI',
          'long_description': 'This segmentation model for T1w mouse spinal gray matter segmentation uses the UNet '
                              'architecture, and was created with the `ivadomed` package. Training data was provided by '
@@ -219,8 +231,10 @@ TASKS = {
                              'The dataset was comprised of both non-pathological (healthy) and pathological (diseased) '
                              'mice.',
          'url': 'https://github.com/ivadomed/mice_uqueensland_gm/',
-         'models': ['mice_uqueensland_gm']},
-    'seg_tumor_t2':
+         'models': ['mice_uqueensland_gm'],
+         'citation': None,
+         },
+    'tumor_t2':
         {'description': 'Cord tumor segmentation on T2-weighted contrast',
          'long_description': 'This segmentation model for T2w spinal tumor segmentation uses the UNet '
                              'architecture, and was created with the `ivadomed` package. Training data consisted of '
@@ -229,28 +243,39 @@ TASKS = {
                              'model for specialized cord localisation of spinal cords with tumors '
                              '(https://github.com/ivadomed/findcord_tumor).',
          'url': 'https://github.com/sct-pipeline/tumor-segmentation',
-         'models': ['findcord_tumor', 't2_tumor']},
-    'seg_ms_sc_mp2rage':
-        {'description': 'Cord segmentation on MP2RAGE in MS patients',
-         'long_description': 'This segmentation model for MP2RAGE spinal cord segmentation uses a Modified3DUNet '
-                             'architecture, and was created with the `ivadomed` package. Training data consisted of '
-                             'scans from 30 multiple sclerosis (MS) patients, and the dataset included manual '
-                             'segmentations of MS lesions. This dataset was provided by the University of Basel.',
-         'url': 'https://github.com/ivadomed/model_seg_ms_mp2rage',
-         'models': ['model_seg_ms_sc_mp2rage']},
-    'seg_tumor-edema-cavity_t1-t2':
+         'models': ['findcord_tumor', 't2_tumor'],
+         'citation': None,
+         },
+    'tumor_edema_cavity_t1_t2':
         {'description': 'Multiclass cord tumor/edema/cavity segmentation',
          'long_description': 'This segmentation model for T1w and T2w spinal tumor, edema, and cavity segmentation '
                              'uses a 3D UNet architecture, and was created with the `ivadomed` package. Training data '
-                             'consisted of a subset of the dataset used for the model `seg_tumor_t2`, with 243 '
+                             'consisted of a subset of the dataset used for the model `tumor_t2`, with 243 '
                              'subjects in total: 49 with tumors of type Astrocytoma, 83 with Ependymoma, and 111 with '
                              'Hemangioblastoma. For each subject, the requisite parts of the affected region (tumor, '
                              'edema, cavity) were segmented individually for training purposes. This model is used in '
                              'tandem with another model for specialized cord localisation of spinal cords with tumors '
                              '(https://github.com/ivadomed/findcord_tumor).',
          'url': 'https://github.com/ivadomed/model_seg_sctumor-edema-cavity_t2-t1_unet3d-multichannel',
-         'models': ['findcord_tumor', 'model_seg_sctumor-edema-cavity_t2-t1_unet3d-multichannel']},
-    'seg_exvivo_gm-wm_t2':
+         'models': ['findcord_tumor', 'model_seg_sctumor-edema-cavity_t2-t1_unet3d-multichannel'],
+         'citation': textwrap.dedent("""
+             ```bibtex
+             @article{LEMAY2021102766,
+                      title={Automatic multiclass intramedullary spinal cord tumor segmentation on MRI with deep learning},
+                      journal={NeuroImage: Clinical},
+                      volume={31},
+                      pages={102766},
+                      year-2021},
+                      issn-2213-1582},
+                      doi-https://doi.org/10.1016/j.nicl.2021.102766},
+                      url-https://www.sciencedirect.com/science/article/pii/S2213158221002102},
+                      author-Andreanne Lemay and Charley Gros and Zhizheng Zhuo and Jie Zhang and Yunyun Duan and Julien Cohen-Adad and Yaou Liu},
+                      keywords-Deep learning, Automatic segmentation, Spinal cord tumor, MRI, Multiclass, CNN}
+             }
+             ```
+         """),
+         },
+    'gm_wm_exvivo_t2':
         {'description': 'Grey/white matter seg on exvivo human T2w',
          'long_description': 'This segmentation model for T2w human spinal gray and white matter uses a 2D Unet '
                              'architecture, and was created with the `ivadomed` package. Training data consisted '
@@ -260,8 +285,10 @@ TASKS = {
                              'model was subsequently applied to the development of an ex vivo spinal cord template '
                              '(https://archive.ismrm.org/2020/1171.html).',
          'url': 'https://github.com/ivadomed/model_seg_exvivo_gm-wm_t2_unet2d-multichannel-softseg',
-         'models': ['model_seg_exvivo_gm-wm_t2_unet2d-multichannel-softseg']},
-    'seg_gm_sc_7t_t2star':
+         'models': ['model_seg_exvivo_gm-wm_t2_unet2d-multichannel-softseg'],
+         'citation': None,
+         },
+    'gm_sc_7t_t2star':
         {'description': 'SC/GM seg on T2*-weighted contrast at 7T',
          'long_description': 'This multiclass model (SC/GM) was developed by N.J. Laines Medina, V. Callot and A. Le '
                              'Troter at the Center for Magnetic Resonance in Biology and Medicine (CRMBM-CEMEREM, UMR '
@@ -273,26 +300,56 @@ TASKS = {
                              'with anatomically constrained deformation fields). Finally, it was tested with an '
                              'external multicentric database. For more information, see the following URL.',
          'url': 'https://github.com/ivadomed/model_seg_gm-wm_t2star_7t_unet3d-multiclass',
-         'models': ['model_7t_multiclass_gm_sc_unet2d']},
-    'seg_lumbar_sc_t2w':
+         'models': ['model_7t_multiclass_gm_sc_unet2d'],
+         'citation': textwrap.dedent("""
+             ```bibtex
+             @misc{medina20212d,
+                   title={2D Multi-Class Model for Gray and White Matter Segmentation of the Cervical Spinal Cord at 7T},
+                   author={Nilser J. Laines Medina and Charley Gros and Julien Cohen-Adad and Virginie Callot and Arnaud Le Troter},
+                   year={2021},
+                   eprint={2110.06516},
+                   archivePrefix={arXiv},
+                   primaryClass={eess.IV}
+             }
+             ```
+         """),
+         },
+    'sc_lumbar_t2':
         {'description': 'Lumbar cord segmentation with 3D UNet',
          'long_description': 'This segmentation model for T2w spinal cord segmentation uses a 3D UNet architecture, '
                              'and was created with the ivadomed package. Training data was provided by Nawal Kinany '
                              'and Dimitry Van De Ville of EPFL, with the files consisting of lumbar T2w scans (and '
                              'manual spinal cord segmentations) of 11 healthy (non-pathological) patients.',
          'url': 'https://github.com/ivadomed/lumbar_seg_EPFL',
-         'models': ['model_seg_epfl_t2w_lumbar_sc']},
-    'seg_sc_contrast_agnostic':
+         'models': ['model_seg_epfl_t2w_lumbar_sc'],
+         'citation': None,
+         },
+    'spinalcord':
         {'description': 'Spinal cord segmentation agnostic to MRI contrasts',
-         'long_description': 'This model for contrast agnostic spinal cord segmentation uses an nnUNet '
-                             'architecture, and was created with the MONAI package. Training data consists of healthy '
-                             'controls from the open-source Spine Generic Multi Subject database and pathologies from '
-                             'private datasets including DCM and MS patients. Segmentation has been tested with the '
-                             'following contrasts: [T1w, T2w, T2star, MTon_MTS, GRE_T1w, DWI, mp2rage_UNIT1], but '
+         'long_description': 'The contrast agnostic spinal cord segmentation uses a 3D CNN model based on the nnUNet '
+                             'framework. Training data consists of healthy controls from the open-source Spine Generic '
+                             'Multi Subject database and pathologies from private datasets including DCM, MS, '
+                             'SCI (Acute, Intermediate and Chronic; Pre/Post-operative) patients. Segmentations have been '
+                             'tested with the following contrasts: '
+                             '[T1w, T2w, T2star, MTon_MTS, GRE_T1w, DWI, mp2rage_UNIT1, PSIR, STIR, EPI], but '
                              'other contrasts that are close visual matches may also work well with this model.',
          'url': 'https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/',
-         'models': ['model_seg_sc_contrast_agnostic_softseg_monai']},
-    'seg_sc_lesion_t2w_sci':
+         'models': ['model_seg_sc_contrast_agnostic_nnunet'],
+         'citation': textwrap.dedent("""
+             ```bibtex
+             @misc{bédard2024contrastagnosticsoftsegmentationspinal,
+                   title={Towards contrast-agnostic soft segmentation of the spinal cord},
+                   author={Sandrine Bédard and Enamundram Naga Karthik and Charidimos Tsagkas and Emanuele Pravatà and Cristina Granziera and Andrew Smith and Kenneth Arnold Weber II au2 and Julien Cohen-Adad},
+                   year={2024},
+                   eprint={2310.15402},
+                   archivePrefix={arXiv},
+                   primaryClass={eess.IV},
+                   url={https://arxiv.org/abs/2310.15402},
+             }
+             ```
+         """),  # noqa E501 (line too long)
+         },
+    'lesion_sci_t2':
         {'description': 'Intramedullary SCI lesion and cord segmentation in T2w MRI',
          'long_description': 'This segmentation model for spinal cord injury segmentation uses a 3D U-Net '
                              'architecture, and was trained with the nnUNetV2 framework. It is a multiclass model, '
@@ -301,8 +358,25 @@ TASKS = {
                              'chronic), non-traumatic (DCM) and ischemic SCI lesions spanning numerous resolutions, '
                              'orientations, as well as multiple scanner manufacturers and field strengths.',
          'url': 'https://github.com/ivadomed/model_seg_sci',
-         'models': ['model_seg_sci_multiclass_sc_lesion_nnunet']},
-    'seg_spinal_rootlets_t2w':
+         'models': ['model_seg_sci_multiclass_sc_lesion_nnunet'],
+         'citation': textwrap.dedent("""
+             ```bibtex
+             @InProceedings{10.1007/978-3-031-82007-6_19,
+                            author="Karthik, Enamundram Naga and Valo{\v{s}}ek, Jan and Farner, Lynn and Pfyffer, Dario and Schading-Sassenhausen, Simon and Lebret, Anna and David, Gergely and Smith, Andrew C. and Weber II, Kenneth A. and Seif, Maryam and Freund, Patrick and Cohen-Adad, Julien",
+                            editor="Wu, Shandong and Shabestari, Behrouz and Xing, Lei",
+                            title="SCIsegV2: A Universal Tool for Segmentation of Intramedullary Lesions in Spinal Cord Injury",
+                            booktitle="Applications of Medical Artificial Intelligence",
+                            year="2025",
+                            publisher="Springer Nature Switzerland",
+                            address="Cham",
+                            pages="198--209",
+                            abstract="Spinal cord injury (SCI) is a devastating incidence leading to permanent paralysis and loss of sensory-motor functions potentially resulting in the formation of lesions within the spinal cord. Imaging biomarkers obtained from magnetic resonance imaging (MRI) scans can predict the functional recovery of individuals with SCI and help choose the optimal treatment strategy. Currently, most studies employ manual quantification of these MRI-derived biomarkers, which is a subjective and tedious task. In this work, we propose (i) a universal tool for the automatic segmentation of intramedullary SCI lesions, dubbed SCIsegV2, and (ii) a method to automatically compute the width of the tissue bridges from the segmented lesion. Tissue bridges represent the spared spinal tissue adjacent to the lesion, which is associated with functional recovery in SCI patients. The tool was trained and validated on a heterogeneous dataset from 7 sites comprising patients from different SCI phases (acute, sub-acute, and chronic) and etiologies (traumatic SCI, ischemic SCI, and degenerative cervical myelopathy). Tissue bridges quantified automatically did not significantly differ from those computed manually, suggesting that the proposed automatic tool can be used to derive relevant MRI biomarkers. SCIsegV2 and the automatic tissue bridges computation are open-source and available in Spinal Cord Toolbox (v6.4 and above) via the sct{\_}deepseg -task seg{\_}sc{\_}lesion{\_}t2w{\_}sci and sct{\_}analyze{\_}lesion functions, respectively.",
+                            isbn="978-3-031-82007-6"
+            }
+             ```
+         """),  # noqa E501 (line too long)
+         },
+    'rootlets_t2':
         {'description': 'Segmentation of spinal nerve rootlets for T2w contrast',
          'long_description': 'This segmentation model for spinal nerve rootlets segmentation uses a 3D U-Net '
                              'architecture, and was trained with the nnUNetV2 framework. It is a multiclass model, '
@@ -310,8 +384,10 @@ TASKS = {
                              'dorsal spinal cord nerve rootlets. Training data consisted of 31 isotropic T2w images '
                              'from healthy subjects from two different open-access datasets.',
          'url': 'https://github.com/ivadomed/model-spinal-rootlets',
-         'models': ['model_seg_spinal_rootlets_nnunet']},
-    'seg_mouse_gm_wm_t1w':
+         'models': ['model_seg_spinal_rootlets_nnunet'],
+         'citation': None,
+         },
+    'gm_wm_mouse_t1':
         {'description': 'Exvivo mouse GM/WM segmentation for T1w contrast',
          'long_description': 'This segmentation model for gray and white matter segmentation of exvivo mice spinal '
                              'cords uses an NNunet architecture, and was created with the nnUNetV2 package. It is a '
@@ -321,18 +397,23 @@ TASKS = {
                              'a resolution of 0.05mm isotropic. Training data was provided by the Balgrist Center at'
                              'the University of Zurich.',
          'url': 'https://github.com/ivadomed/model_seg_mouse-sc_wm-gm_t1',
-         'models': ['model_seg_gm_wm_mouse_nnunet']},
-    'seg_sc_ms_lesion_stir_psir':
-        {'description': 'Segmentation of spinal cord and MS lesions for STIR and PSIR contrasts',
-         'long_description': 'This segmentation model for MS lesion segmentation uses a 2D U-Net architecture, and was '
-                             'trained with the nnUNetV2 framework. It is a region-based model, outputting a single '
-                             'segmentation image containing 2 classes representing the spinal cord and MS lesions. '
-                             'Training data consisted of sagittal PSIR 0.7×0.7×3 mm3 (4 sites, 333 participants) multiplied '
-                             'by -1 and sagittal STIR 0.7×0.7×3 mm3 (1 site, 92 participants) images of the cervical SC from '
-                             'the Canadian Prospective Cohort Study (CanProCo).',
-         'url': 'https://github.com/ivadomed/canproco',
-         'models': ['model_seg_sc_lesion_canproco_nnunet']},
-    'seg_sc_epi':
+         'models': ['model_seg_gm_wm_mouse_nnunet'],
+         'citation': textwrap.dedent("""
+             ```bibtex
+             @software{cohen_adad_2024_10819207,
+                       author={Cohen-Adad, Julien},
+                       title={{Segmentation model of ex vivo mouse spinal cord white and gray matter}},
+                       month=mar,
+                       year=2024,
+                       publisher={Zenodo},
+                       version={v0.5},
+                       doi={10.5281/zenodo.10819207},
+                       url={https://doi.org/10.5281/zenodo.10819207}
+             }
+             ```
+         """),
+         },
+    'sc_epi':
         {'description': 'Spinal cord segmentation for EPI-BOLD fMRI data',
          'long_description': 'This segmentation model for spinal cord on EPI data (single 3D volume) uses a 3D UNet model built from '
                              'the nnUNetv2 framework. The training data consists of 3D images (n=192) spanning numerous resolutions '
@@ -340,22 +421,98 @@ TASKS = {
                              'University of Geneva, Stanford University, Kings College London, Universitätsklinikum Hamburg. The '
                              'dataset has healthy control subjects. The model has been trained in a human-in-the-loop active learning fashion.',
          'url': 'https://github.com/sct-pipeline/fmri-segmentation',
-         'models': ['model_seg_sc_epi_nnunet']},
-    'seg_ms_lesion_mp2rage':
+         'models': ['model_seg_sc_epi_nnunet'],
+         'citation': textwrap.dedent("""
+             ```
+             @article{Banerjee2025.01.07.631402,
+                      author={Banerjee, Rohan and Kaptan, Merve and Tinnermann, Alexandra and Khatibi, Ali and Dabbagh, Alice and B{\"u}chel, Christian and K{\"u}ndig, Christian W. and Law, Christine S.W. and Pfyffer, Dario and Lythgoe, David J. and Tsivaka, Dimitra and Van De Ville, Dimitri and Eippert, Falk and Muhammad, Fauziyya and Glover, Gary H. and David, Gergely and Haynes, Grace and Haaker, Jan and Brooks, Jonathan C. W. and Finsterbusch, J{\"u}rgen and Martucci, Katherine T. and Hemmerling, Kimberly J. and Mobarak-Abadi, Mahdi and Hoggarth, Mark A. and Howard, Matthew A. and Bright, Molly G. and Kinany, Nawal and Kowalczyk, Olivia S. and Freund, Patrick and Barry, Robert L. and Mackey, Sean and Vahdat, Shahabeddin and Schading, Simon and McMahon, Stephen B. and Parish, Todd and Marchand-Pauvert, V{\'e}ronique and Chen, Yufen and Smith, Zachary A. and Weber, Kenneth A. and De Leener, Benjamin and Cohen-Adad, Julien},
+                      title={EPISeg: Automated segmentation of the spinal cord on echo planar images using open-access multi-center data},
+                      elocation-id{2025.01.07.631402},
+                      year{2025},
+                      doi{10.1101/2025.01.07.631402},
+                      publisher{Cold Spring Harbor Laboratory},
+                      abstract{Functional magnetic resonance imaging (fMRI) of the spinal cord is relevant for studying sensation, movement, and autonomic function. Preprocessing of spinal cord fMRI data involves segmentation of the spinal cord on gradient-echo echo planar imaging (EPI) images. Current automated segmentation methods do not work well on these data, due to the low spatial resolution, susceptibility artifacts causing distortions and signal drop-out, ghosting, and motion-related artifacts. Consequently, this segmentation task demands a considerable amount of manual effort which takes time and is prone to user bias. In this work, we (i) gathered a multi-center dataset of spinal cord gradient-echo EPI with ground-truth segmentations and shared it on OpenNeuro https://openneuro.org/datasets/ds005143/versions/1.3.0, and (ii) developed a deep learning-based model, EPISeg, for the automatic segmentation of the spinal cord on gradient-echo EPI data. We observe a significant improvement in terms of segmentation quality compared to other available spinal cord segmentation models. Our model is resilient to different acquisition protocols as well as commonly observed artifacts in fMRI data. The training code is available at https://github.com/sct-pipeline/fmri-segmentation/, and the model has been integrated into the Spinal Cord Toolbox as a command-line tool.Competing Interest StatementSince January 2024, Dr. Barry has been employed by the National Institute of Biomedical Imaging and Bioengineering at the National Institutes of Health. This work was co-authored by Robert Barry in his personal capacity. The opinions expressed in this study are his own and do not necessarily reflect the views of the National Institutes of Health, the Department of Health and Human Services, or the United States government. The other authors declared no potential conflicts of interest with respect to the research, authorship, and/or publication of this article.},
+                      URL{https://www.biorxiv.org/content/early/2025/01/27/2025.01.07.631402},
+                      eprint{https://www.biorxiv.org/content/early/2025/01/27/2025.01.07.631402.full.pdf},
+                      journal{bioRxiv}
+             }
+             ```
+         """),  # noqa E501 (line too long)
+         },
+    'lesion_ms_mp2rage':
         {'description': 'MS lesion segmentation on cropped MP2RAGE data',
-         'long_description': 'This segmentation model for multiple sclerosis lesion segmentation on cropped MP2RAGE-UNIT1 spinal cord data. '
-                             'Uses a 3D U-Net, trained with the nnUNetV2 framework. It is a single-class model outputting binary MS lesions '
-                             'segmentations. Training consisted of MP2RAGE data on UNIT1 contrast at 1.0 mm3 isotropic (322 subjects from '
-                             '3 sites: National Institutes of Health, Bethesda, USA, University Hospital Basel and University of Basel, Basel, '
-                             'Switzerland and Center for Magnetic Resonance in Biology and Medicine, CRMBM-CEMEREM, UMR 7339, CNRS,  '
-                             'Aix-Marseille University, Marseille, France). '
-                             'To crop the data you can first segment the spinal cord using the contrast agnostic model, This could be '
-                             'done using: "sct_deepseg -i IMAGE_UNIT1 -task seg_sc_contrast_agnostic -o IMAGE_UNIT1_sc", then crop the '
-                             'IMAGE_UNIT1 image with 30 mm of dilation on axial orientation around the spinal cord. This could be done using: '
-                             '"sct_crop_image -i IMAGE_UNIT1 -m IMAGE_seg -dilate 30x30x5" . Note that 30 is only for 1mm isotropic '
-                             'resolution, for images with another resolution divide 30/your_axial_resolution.',
+         'long_description': f'This segmentation model for multiple sclerosis lesion segmentation on cropped MP2RAGE-UNIT1 spinal cord data. '
+                             f'Uses a 3D U-Net, trained with the nnUNetV2 framework. It is a single-class model outputting binary MS lesions '
+                             f'segmentations. Training consisted of MP2RAGE data on UNIT1 contrast at 1.0 mm3 isotropic (322 subjects from '
+                             f'3 sites: National Institutes of Health, Bethesda, USA, University Hospital Basel and University of Basel, Basel, '
+                             f'Switzerland and Center for Magnetic Resonance in Biology and Medicine, CRMBM-CEMEREM, UMR 7339, CNRS,  '
+                             f'Aix-Marseille University, Marseille, France). {CROP_MESSAGE}',
          'url': 'https://github.com/ivadomed/model_seg_ms_mp2rage',
-         'models': ['model_seg_ms_lesion_mp2rage']},
+         'models': ['model_seg_ms_lesion_mp2rage'],
+         'citation': textwrap.dedent("""
+             ```bibtex
+             @article{10.1162/imag_a_00218,
+                      author{Valošek, Jan and Mathieu, Theo and Schlienger, Raphaëlle and Kowalczyk, Olivia S. and Cohen-Adad, Julien},
+                      title"{Automatic Segmentation of the Spinal Cord Nerve Rootlets}",
+                      journal{Imaging Neuroscience},
+                      year{2024},
+                      month{06},
+                      issn{2837-6056},
+                      doi{10.1162/imag_a_00218},
+                      url{https://doi.org/10.1162/imag_a_00218},
+             }
+             ```
+         """),
+         },
+    'lesion_ms':
+        {'description': 'MS lesion segmentation on spinal cord MRI images',
+         'long_description': 'This segmentation model for spinal cord MS lesion segmentation uses a 3D U-Net architecture. It outputs a binary '
+                             'segmentation of MS lesions. The model was trained and tested on datasets including 25 sites, 1611 patients and 2988 '
+                             'volumes. The datasets, mostly coming from “real world” clinical scans at 1.5T and 3T (on GE, Siemens and Philips), '
+                             'included: T1w (n=52), PDw (n=33), T2w (n=1806), T2*w (n=474), PSIR (n=286), STIR (n=72), MP2RAGE-UNI (n=265). '
+                             'The field-of-view coverage varied across sites (some included the brain and the upper cord, while others only '
+                             'included the spinal cord), and acquisitions were either 2D (axial: 1708, sagittal: 976) or 3D (n=304), with voxel '
+                             'dimensions ranging from 0.2mm to 9.5mm (including inter-slice gap).',
+         'url': 'https://github.com/ivadomed/ms-lesion-agnostic',
+         'models': ['model_seg_ms_lesion'],
+         'citation': None,
+         },
+    'sc_canal_t2':
+        {'description': 'Segmentation of spinal canal on T2w contrast',
+         'long_description': 'This model segments the spinal canal, or in an anatomic definition the dural sac, on T2w contrast. '
+                             'Uses a 3D U-Net, trained with the nnUNetV2 framework. It is a single-class model outputting the binary canal segmentation. '
+                             'Training consisted of an active learning procedure, correcting segmentations with ITK Snap. Last training '
+                             'procedure can be found here : https://github.com/ivadomed/model-canal-seg/issues/20 '
+                             'Images used present different resolutions, FOV, and pathologies. A script is added as post-processing to '
+                             'keep the largest connected component of the segmentation, since spinal canal is connected, to avoid '
+                             'false positives segmentations of other anatomical structures.',
+         'url': 'https://github.com/ivadomed/model-canal-seg',
+         'models': ['model_seg_canal_t2w'],
+         'citation': None,
+         },
+    'totalspineseg':
+        {'description': 'Intervertebral discs labeling and vertebrae segmentation',
+         'long_description': 'TotalSpineSeg is a tool for automatic instance segmentation of all vertebrae, intervertebral discs (IVDs), '
+                             'spinal cord, and spinal canal in MRI images. It is robust to various MRI contrasts, acquisition orientations, '
+                             'and resolutions. The model used in TotalSpineSeg is based on nnU-Net as the backbone for training and inference.',
+         'url': 'https://github.com/neuropoly/totalspineseg',
+         'models': ['totalspineseg'],
+         'citation': None,
+         },
+    'lesion_ms_axial_t2':
+        {'description': 'Intramedullary MS lesion and spinal cord segmentation in Axial T2w MRI',
+         'long_description': 'This MS lesion segmentation uses a 2D U-Net '
+                             'architecture, and was trained with the nnUNetV2 framework. The model outputs '
+                             'lesion mask along with the spinal cord segmentation mask. Training and evaluation'
+                             'data consisting of highly-anisotropic axial T2w chunks was gathered from 4 sites: Klinikum Rechts der Isar, '
+                             'Technical University of Munich, Germany, NYU Langone Medical Center, NY, USA, '
+                             'Zuckerberg SF General Hospital, UCSF, CA, USA, and Brigham and Womens Hospital, '
+                             'Harvard Medical School, Boston, USA . Unlike typical MS lesion segmentation models, this models works equally well on '
+                             'cervical, thoracic and lumbar spinal cord regions.',
+         'url': 'https://github.com/ivadomed/model-seg-ms-axial-t2w',
+         'models': ['model_seg_ms_sc_lesion_bavaria_quebec_nnunet'],
+         'citation': None,
+         },
 }
 
 
@@ -383,7 +540,7 @@ def folder(name_model):
     return os.path.join(__deepseg_dir__, name_model)
 
 
-def install_model(name_model):
+def install_model(name_model, custom_url=None):
     """
     Download and install specified model under SCT installation dir.
 
@@ -391,7 +548,7 @@ def install_model(name_model):
     :return: None
     """
     logger.info("\nINSTALLING MODEL: {}".format(name_model))
-    url_field = MODELS[name_model]['url']
+    url_field = MODELS[name_model]['url'] if not custom_url else [custom_url]  # [] -> mimic a list of mirror URLs
     # List of mirror URLs corresponding to a single model
     if isinstance(url_field, list):
         model_urls = url_field
@@ -401,15 +558,24 @@ def install_model(name_model):
     else:
         if not isinstance(url_field, dict):
             raise ValueError("Invalid url field in MODELS")
-        urls_used = {}
-        for seed_name, model_urls in url_field.items():
-            logger.info(f"\nInstalling '{seed_name}'...")
-            urls_used[seed_name] = download.install_data(model_urls,
-                                                         folder(os.path.join(name_model, seed_name)), keep=True)
+        # totalspineseg handles data downloading itself, so just pass the urls along
+        if name_model == 'totalspineseg':
+            tss_init.init_inference(data_path=Path(folder(name_model)), quiet=False, dict_urls=url_field,
+                                    store_export=False)  # Avoid having duplicate .zip files stored on disk
+            urls_used = url_field
+        else:
+            urls_used = {}
+            for seed_name, model_urls in url_field.items():
+                logger.info(f"\nInstalling '{seed_name}'...")
+                urls_used[seed_name] = download.install_data(model_urls,
+                                                             folder(os.path.join(name_model, seed_name)), keep=True)
     # Write `source.json` (for model provenance / updating)
     source_dict = {
         'model_name': name_model,
-        'model_urls': urls_used
+        'model_urls': urls_used,
+        # NB: If a custom URL is used, then it would just get overwritten as "out of date" when running the task
+        #     So, we add a flag to tell `sct_deepseg` *not* to reinstall the model if a custom URL was used.
+        'custom': bool(custom_url)
     }
     with open(os.path.join(folder(name_model), "source.json"), "w") as fp:
         json.dump(source_dict, fp, indent=4)
@@ -443,8 +609,14 @@ def is_up_to_date(path_model):
     if model_name not in MODELS:
         logger.warning(f"Model name '{model_name}' from source.json does not match model names in SCT source code.")
         return False
+
     expected_model_urls = MODELS[model_name]['url'].copy()
     actual_model_urls = source_dict["model_urls"]
+
+    if "custom" in source_dict and source_dict["custom"] is True:
+        logger.warning(f"Using custom model from URL '{actual_model_urls}'.")
+        return True  # Don't reinstall the model if the 'custom' flag is set (since custom URLs would fail comparison)
+
     # Single-seed models
     if isinstance(expected_model_urls, list) and isinstance(actual_model_urls, str):
         if actual_model_urls not in expected_model_urls:

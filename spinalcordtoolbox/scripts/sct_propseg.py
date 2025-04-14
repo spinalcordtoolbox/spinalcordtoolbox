@@ -12,6 +12,7 @@ import pathlib
 import sys
 import logging
 from typing import Sequence
+import textwrap
 
 import numpy as np
 from scipy.ndimage import label, center_of_mass
@@ -149,15 +150,15 @@ def get_parser():
             "This program segments automatically the spinal cord on T1- and T2-weighted images, for any field of view. "
             "You must provide the type of contrast, the image as well as the output folder path. The segmentation "
             "follows the spinal cord centerline, which is provided by an automatic tool: Optic. The initialization of "
-            "the segmentation is made on the median slice of the centerline, and can be ajusted using the -init "
+            "the segmentation is made on the median slice of the centerline, and can be adjusted using the `-init` "
             "parameter. The initial radius of the tubular mesh that will be propagated should be adapted to size of "
             "the spinal cord on the initial propagation slice. \n"
             "\n"
             "Primary output is the binary mask of the spinal cord segmentation. This method must provide VTK "
-            "triangular mesh of the segmentation (option -mesh). Spinal cord centerline is available as a binary image "
-            "(-centerline-binary) or a text file with coordinates in world referential (-centerline-coord).\n"
+            "triangular mesh of the segmentation (option `-mesh`). Spinal cord centerline is available as a binary image "
+            "(`-centerline-binary`) or a text file with coordinates in world referential (`-centerline-coord`).\n"
             "\n"
-            "Cross-sectional areas along the spinal cord can be available (-cross). Several tips on segmentation "
+            "Cross-sectional areas along the spinal cord can be available (`-cross`). Several tips on segmentation "
             "correction can be found on the 'Correcting sct_propseg' page in the Tutorials section of the "
             "documentation.\n"
             "\n"
@@ -174,32 +175,24 @@ def get_parser():
         )
     )
 
-    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         '-i',
         metavar=Metavar.file,
-        required=True,
-        help="Input image. Example: ti.nii.gz"
+        help="Input image. Example: `ti.nii.gz`"
     )
     mandatory.add_argument(
         '-c',
         choices=['t1', 't2', 't2s', 'dwi'],
-        required=True,
         help="Type of image contrast. If your contrast is not in the available options (t1, t2, t2s, dwi), use "
              "t1 (cord bright / CSF dark) or t2 (cord dark / CSF bright)"
     )
 
-    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
-    optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit."
-    )
+    optional = parser.optional_arggroup
     optional.add_argument(
         '-o',
         metavar=Metavar.file,
-        help='Output filename. Example: spinal_seg.nii.gz '
+        help='Output filename. Example: `spinal_seg.nii.gz`'
         )
     optional.add_argument(
         '-ofolder',
@@ -218,23 +211,6 @@ def get_parser():
         metavar=Metavar.int,
         type=int,
         help="Up limit of the propagation. Default is the highest slice of the image."
-    )
-    optional.add_argument(
-        '-r',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1],
-        default=1,
-        help="Whether to remove temporary files. 0 = no, 1 = yes"
-    )
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode"
     )
     optional.add_argument(
         '-mesh',
@@ -274,10 +250,11 @@ def get_parser():
     optional.add_argument(
         '-init-centerline',
         metavar=Metavar.file,
-        help="Filename of centerline to use for the propagation. Use format .txt or .nii; see file structure in "
-             "documentation.\n"
-             "Replace filename by 'viewer' to use interactive viewer for providing centerline. Example: "
-             "-init-centerline viewer"
+        help=textwrap.dedent("""
+            Filename of centerline to use for the propagation. Use format `.txt` or `.nii`; see file structure in documentation.
+
+            Replace filename by `viewer` to use interactive viewer for providing centerline. Example: `-init-centerline viewer`
+        """),
     )
     optional.add_argument(
         '-init',
@@ -288,8 +265,11 @@ def get_parser():
     optional.add_argument(
         '-init-mask',
         metavar=Metavar.file,
-        help="Mask containing three center of the spinal cord, used to initiate the propagation.\n"
-             "Replace filename by 'viewer' to use interactive viewer for providing mask. Example: -init-mask viewer"
+        help=textwrap.dedent("""
+            Mask containing three center of the spinal cord, used to initiate the propagation.
+
+            Replace filename by `viewer` to use interactive viewer for providing mask. Example: `-init-mask viewer`
+        """),
     )
     optional.add_argument(
         '-mask-correction',
@@ -305,7 +285,7 @@ def get_parser():
         default=1.0,
         help="Rescale the image (only the header, not the data) in order to enable segmentation on spinal cords with "
              "dimensions different than that of humans (e.g., mice, rats, elephants, etc.). For example, if the "
-             "spinal cord is 2x smaller than that of human, then use -rescale 2"
+             "spinal cord is 2x smaller than that of human, then use `-rescale 2`"
     )
     optional.add_argument(
         '-radius',
@@ -388,6 +368,10 @@ def get_parser():
              "specifically, the algorithm checks if the segmentation is consistent with the centerline provided by "
              "isct_propseg."
     )
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
+    parser.add_tempfile_args()
 
     return parser
 
@@ -618,7 +602,7 @@ def propseg(img_input, options_dict):
 
     # check status is not 0
     if not status == 0:
-        printv('Automatic cord detection failed. Please initialize using -init-centerline or -init-mask (see help)',
+        printv('Automatic cord detection failed. Please initialize using `-init-centerline` or `-init-mask` (see help)',
                1, 'error')
         sys.exit(1)
 

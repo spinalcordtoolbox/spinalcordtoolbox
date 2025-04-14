@@ -15,6 +15,7 @@
 import os
 import sys
 from typing import Sequence
+import textwrap
 
 import numpy as np
 
@@ -32,40 +33,35 @@ def get_parser():
         description="Utility functions for label images."
     )
 
-    req_group = parser.add_argument_group("\nREQUIRED I/O")
+    req_group = parser.add_argument_group("REQUIRED I/O")
     req_group.add_argument(
         '-i',
         metavar=Metavar.file,
-        required=True,
-        help="Input image (Required) Example: t2_labels.nii.gz"
+        help="Input image (Required) Example: `t2_labels.nii.gz`"
     )
 
-    io_group = parser.add_argument_group("\nOPTIONAL I/O")
-
+    io_group = parser.add_argument_group("OPTIONAL I/O")
     io_group.add_argument(
         '-o',
         metavar=Metavar.file,
         default='labels.nii.gz',
-        help="Output image. Note: Only some label utilities create an output image. Example: t2_labels.nii.gz"
+        help="Output image. Note: Only some label utilities create an output image."
     )
-
     io_group.add_argument(
         '-ilabel',
         metavar=Metavar.file,
         help="File that contain labels that you want to correct. It is possible to add new points with this option. "
-             "Use with -create-viewer. Example: t2_labels_auto.nii.gz"
+             "Use with `-create-viewer`. Example: `t2_labels_auto.nii.gz`"
     )
 
-    functions = parser.add_argument_group("\nLABEL FUNCTIONS")
+    functions = parser.add_argument_group("LABEL FUNCTIONS")
     func_group = functions.add_mutually_exclusive_group(required=True)
-
     func_group.add_argument(
         '-add',
         metavar=Metavar.int,
         type=int,
         help="Add value to all labels. Value can be negative."
     )
-
     func_group.add_argument(
         '-create',
         metavar=Metavar.list,
@@ -73,69 +69,62 @@ def get_parser():
         help="Create labels in a new image. List labels as: x1,y1,z1,value1:x2,y2,z2,value2. "
              "Example: 12,34,32,1:12,35,33,2"
     )
-
     func_group.add_argument(
         '-create-add',
         metavar=Metavar.list,
         type=list_type(':', Coordinate),
-        help="Same as '-create', but add labels to the input image instead of creating a new image. "
+        help="Same as `-create`, but add labels to the input image instead of creating a new image. "
              "Example: 12,34,32,1:12,35,33,2"
     )
-
     func_group.add_argument(
         '-create-seg',
         metavar=Metavar.list,
         type=list_type(':', list_type(',', int)),
-        help="Create labels on a cord segmentation (or centerline) image defined by '-i'. Each label should be "
-             "specified using the form 'v1,v2' where 'v1' is value of the slice index along the inferior-superior "
-             "axis, and 'v2' is the value of the label. Separate each label with ':'. \n"
-             "Example: '-create-seg 5,1:14,2:23,3' adds three labels at the axial slices 5, 14, and 23 (starting from "
-             "the most inferior slice)."
-    )
+        help=textwrap.dedent("""
+            Create labels on a cord segmentation (or centerline) image defined by `-i`. Each label should be specified using the form `v1,v2` where `v1` is value of the slice index along the inferior-superior axis, and `v2` is the value of the label. Separate each label with `:`.
 
+            Example: `-create-seg 5,1:14,2:23,3` adds three labels at the axial slices 5, 14, and 23 (starting from the most inferior slice).
+        """),  # noqa: E501 (line too long)
+    )
     func_group.add_argument(
         '-create-seg-mid',
         metavar=Metavar.int,
         type=int,
-        help="Similar to '-create-seg'. This option takes a single label value, and will automatically select the "
-             "mid-point slice in the inferior-superior direction (so there is no need for a slice index).\n"
-             "This is useful for when you have centered the field of view of your data at a specific location. "
-             "For example, if you already know that the C2-C3 disc is centered in the I-S direction, then "
-             "you can enter '-create-seg-mid 3' for that label. This saves you the trouble of having to manually "
-             "specify a slice index using '-create-seg'."
-    )
+        help=textwrap.dedent("""
+            Similar to `-create-seg`. This option takes a single label value, and will automatically select the mid-point slice in the inferior-superior direction (so there is no need for a slice index).
 
+            This is useful for when you have centered the field of view of your data at a specific location. For example, if you already know that the C2-C3 disc is centered in the I-S direction, then you can enter `-create-seg-mid 3` for that label. This saves you the trouble of having to manually specify a slice index using `-create-seg`.
+        """),  # noqa: E501 (line too long)
+    )
     func_group.add_argument(
         '-create-viewer',
         metavar=Metavar.list,
         help="Manually label from a GUI a list of labels IDs. Provide a comma-separated list "
-             "containing individual values and/or intervals. Example: '-create-viewer 1:4,6,8' "
+             "containing individual values and/or intervals. Example: `-create-viewer 1:4,6,8` "
              "will allow you to add labels [1,2,3,4,6,8] using the GUI."
     )
-
     func_group.add_argument(
         '-cubic-to-point',
         action="store_true",
         help="Compute the center-of-mass for each label value."
     )
-
     func_group.add_argument(
         '-disc',
         metavar=Metavar.file,
-        help="Project disc labels ('-disc') onto a spinal cord segmentation ('-i') within the axial plane to create a labeled segmentation.\n"
-             "Note: Unlike 'sct_label_vertebrae -discfile', this function does NOT involve cord straightening.\n"
-             "Note: This method does NOT involve orthogonal projection onto the cord centerline. "
-             "Details: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3395#issuecomment-1478435265\n"
-             "The disc labeling follows the convention: "
-             "https://spinalcordtoolbox.com/user_section/tutorials/vertebral-labeling/labeling-conventions.html"
-    )
+        help=textwrap.dedent("""
+            Project disc labels (`-disc`) onto a spinal cord segmentation (`-i`) within the axial plane to create a labeled segmentation.
 
+            - Note: Unlike `sct_label_vertebrae -discfile`, this function does NOT involve cord straightening.
+            - Note: This method does NOT involve orthogonal projection onto the cord centerline. Details: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3395#issuecomment-1478435265
+
+            The disc labeling follows the convention: https://spinalcordtoolbox.com/user_section/tutorials/vertebral-labeling/labeling-conventions.html
+        """),  # noqa: E501 (line too long)
+    )
     func_group.add_argument(
         '-project-centerline',
         metavar=Metavar.file,
         help="Project disc labels onto the spinal cord centerline."
     )
-
     func_group.add_argument(
         '-display',
         action="store_true",
@@ -151,11 +140,12 @@ def get_parser():
         '-vert-body',
         metavar=Metavar.list,
         type=list_type(',', int),
-        help="From vertebral labeling, create points that are centered at the mid-vertebral levels. Separate "
-             "desired levels with ','. Example: 3,8\n"
-             "To get all levels, enter 0."
-    )
+        help=textwrap.dedent("""
+            From vertebral labeling, create points that are centered at the mid-vertebral levels. Separate desired levels with `,`. Example: `3,8`
 
+            To get all levels, enter 0.
+        """),
+    )
     func_group.add_argument(
         '-vert-continuous',
         action="store_true",
@@ -169,13 +159,13 @@ def get_parser():
     func_group.add_argument(
         '-remove-reference',
         metavar=Metavar.file,
-        help="Remove labels from input image (-i) that are not in reference image (specified here)."
+        help="Remove labels from input image (`-i`) that are not in reference image (specified here)."
     )
     func_group.add_argument(
         '-remove-sym',
         metavar=Metavar.file,
-        help="Remove labels from input image (-i) and reference image (specified here) that don't match. You must "
-             "provide two output names separated by ','."
+        help="Remove labels from input image (`-i`) and reference image (specified here) that don't match. You must "
+             "provide two output names separated by `,`."
     )
     func_group.add_argument(
         '-remove',
@@ -190,48 +180,31 @@ def get_parser():
         help="Keep labels of specific value (specified here) from reference image."
     )
 
-    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
-    optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit."
-    )
-
+    optional = parser.optional_arggroup
     optional.add_argument(
         '-msg',
         metavar=Metavar.str,
         help="Display a message to explain the labeling task. Use with -create-viewer"
     )
-
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode"
-    )
-
     optional.add_argument(
         '-qc',
         metavar=Metavar.folder,
         action=ActionCreateFolder,
         help="The path where the quality control generated content will be saved."
     )
-
     optional.add_argument(
         '-qc-dataset',
         metavar=Metavar.str,
         help="If provided, this string will be mentioned in the QC report as the dataset the process was run on."
     )
-
     optional.add_argument(
         '-qc-subject',
         metavar=Metavar.str,
         help="If provided, this string will be mentioned in the QC report as the subject the process was run on."
     )
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
 
     return parser
 

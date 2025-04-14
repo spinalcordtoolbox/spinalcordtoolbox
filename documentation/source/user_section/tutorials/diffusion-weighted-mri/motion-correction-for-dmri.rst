@@ -17,7 +17,7 @@ SCT features a complex motion correction algorithm inspired by `[Xu et al., Neur
 Applying the algorithm
 ----------------------
 
-To apply the algorithm, we use the ``sct_dmri_moco`` command:
+To apply the algorithm, we use the :ref:`sct_dmri_moco` command:
 
 .. code::
 
