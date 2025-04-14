@@ -305,23 +305,30 @@ class SCTArgumentParser(argparse.ArgumentParser):
             nargs='?',
             metavar=Metavar.file,
             action=TimeProfilingAction,
-            help="Enables time-based profiling of the program, dumping the results to the specified file. "
-                 "If no file is specified, the results are placed into a 'time_profiling_results.txt' document in the "
-                 "current directory. If the specified file is a `.prof` file, the file will be in binary format, "
-                 "ready for use with common post-profiler utilities (such as `snakeviz`)."
+            help="Enables time-based profiling of the program, dumping the results to the specified file.\n"
+                 "\n"
+                 "If no file is specified, human-readable results are placed into a 'time_profiling_results.txt' "
+                 f"document in the current directory ('{os.getcwd()}'). If the specified file is a `.prof` file, the "
+                 "file will instead be in binary format, ready for use with common post-profiler utilities (such as "
+                 "`snakeviz`)."
         )
         arg_group.add_argument(
             '-trace-memory',
             nargs='?',
-            metavar=Metavar.file,
+            metavar=Metavar.folder,
             action=MemoryTracingAction,
-            help="Enables memory tracing of the program, dumping the results to the specified directory. "
-                 "If no directory is specified, the results are placed into the current directory."
-                 "When active, two files can be produced: `memory_across_time.tsv`, which tracks the memory used "
-                 "over time in the program (sampled every 10th of a second), and `memory_snapshots.txt`, which tracks "
-                 "the memory trace at any point within the program which has a `snapshot_memory` call."
+            help="Enables memory tracing of the program.\n"
+                 "\n"
+                 "When active, a measure of the peak memory (in KiB) will be output to the file `peak_memory.txt`. "
+                 "Optionally, developers can also modify the SCT code to add additional `snapshot_memory()` calls. "
+                 "These calls will 'snapshot' the memory usage at that moment, saving the memory trace at that point "
+                 "into a second file (`memory_snapshots.txt`).\n"
+                 "\n"
+                 f"By default, both outputs will be placed in the current directory ('{os.getcwd()}'). Optionally, you "
+                 "may provide an alternative directory (`-trace-memory <dir_name>`), in which case all files will "
+                 "be placed in that directory instead.\n"
                  "Note that this WILL incur an overhead to runtime, so it is generally advised that you do not run "
-                 "this in conjunction with the time profiler."
+                 "this in conjunction with the time profiler or in time-sensitive contexts."
         )
 
         # Return the arg_group to allow for chained operations
