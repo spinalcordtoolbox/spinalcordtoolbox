@@ -105,13 +105,13 @@ MODELS = {
     #       - Models do not have a `.json` sidecar file, since they were not developed with ivadomed
     #       - So, threshold value is stored here, within the model dict
     #       - Binarization is applied within SCT code
-    "model_seg_sc_contrast_agnostic_softseg_nnunet": {
+    "model_seg_sc_contrast_agnostic_nnunet": {
         "url": [
-            "https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/releases/download/v3.1/model_contrast_agnostic_20250123.zip"
+            "https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/releases/download/v3.0/model_contrast_agnostic_20250123.zip"
         ],
         "description": "Spinal cord segmentation agnostic to MRI contrasts",
         "contrasts": ["any"],
-        "thr": None,  # not using Softseg model anymore since switching to the more robust nnunet model
+        "thr": None,  # We're now using an nnUNet model, which does not need a threshold
         "default": False,
     },
     "model_seg_sci_multiclass_sc_lesion_nnunet": {
@@ -334,7 +334,7 @@ TASKS = {
                              '[T1w, T2w, T2star, MTon_MTS, GRE_T1w, DWI, mp2rage_UNIT1, PSIR, STIR, EPI], but '
                              'other contrasts that are close visual matches may also work well with this model.',
          'url': 'https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/',
-         'models': ['model_seg_sc_contrast_agnostic_softseg_nnunet'],
+         'models': ['model_seg_sc_contrast_agnostic_nnunet'],
          'citation': textwrap.dedent("""
              ```bibtex
              @misc{bédard2024contrastagnosticsoftsegmentationspinal,

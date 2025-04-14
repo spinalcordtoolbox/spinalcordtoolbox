@@ -15,6 +15,7 @@ from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.aggregate_slicewise import Metric
 from spinalcordtoolbox.centerline.core import get_centerline
 from spinalcordtoolbox.resampling import resample_nib
+from spinalcordtoolbox.utils.shell import parse_num_list_inv
 from spinalcordtoolbox.utils.sys import sct_progress_bar
 
 # NB: We use a threshold to check if an array is empty, instead of checking if it's exactly 0. This is because
@@ -65,7 +66,7 @@ def compute_shape(segmentation, angle_correction=True, centerline_path=None, par
     min_z_index, max_z_index = min(Z), max(Z)
 
     # Initialize dictionary of property_list, with 1d array of nan (default value if no property for a given slice).
-    shape_properties = {key: np.full_like(np.empty(nz), np.nan, dtype=np.double) for key in property_list}
+    shape_properties = {key: np.full(nz, np.nan, dtype=np.double) for key in property_list}
 
     fit_results = None
 
@@ -78,9 +79,21 @@ def compute_shape(segmentation, angle_correction=True, centerline_path=None, par
         else:
             im_centerline_r = im_segr
         # compute the spinal cord centerline based on the spinal cord segmentation
-        # here, param_centerline.minmax needs to be False because we need to retrieve the total number of input slices
         _, arr_ctl, arr_ctl_der, fit_results = get_centerline(im_centerline_r, param=param_centerline, verbose=verbose,
                                                               remove_temp_files=remove_temp_files)
+        # the third column of `arr_ctl` contains the integer slice numbers, and the first two
+        # columns of `arr_ctl_der` contain the x and y components of the centerline derivative
+        deriv = {int(z_ref): arr_ctl_der[:2, index] for index, z_ref in enumerate(arr_ctl[2])}
+
+        # check for slices in the input mask not covered by the centerline
+        missing_slices = sorted(set(range(min_z_index, max_z_index + 1)).difference(deriv.keys()))
+        if missing_slices:
+            raise ValueError(
+                "The provided angle correction centerline does not cover slice(s) "
+                f"{parse_num_list_inv(missing_slices)} of the input mask. Please "
+                "supply a more extensive '-angle-corr-centerline', or disable angle "
+                "correction ('-angle-corr 0')."
+            ) from None
 
     # Loop across z and compute shape analysis
     for iz in sct_progress_bar(range(min_z_index, max_z_index + 1), unit='iter', unit_scale=False, desc="Compute shape analysis",
@@ -89,19 +102,11 @@ def compute_shape(segmentation, angle_correction=True, centerline_path=None, par
         current_patch = im_segr.data[:, :, iz]
         if angle_correction:
             # Extract tangent vector to the centerline (i.e. its derivative)
-            tangent_vect = np.array([arr_ctl_der[0][iz - min_z_index] * px,
-                                     arr_ctl_der[1][iz - min_z_index] * py,
-                                     pz])
-            # Normalize vector by its L2 norm
-            tangent_vect = tangent_vect / np.linalg.norm(tangent_vect)
+            tangent_vect = np.array([deriv[iz][0] * px, deriv[iz][1] * py, pz])
             # Compute the angle about AP axis between the centerline and the normal vector to the slice
-            v0 = [tangent_vect[0], tangent_vect[2]]
-            v1 = [0, 1]
-            angle_AP_rad = math.atan2(np.linalg.det([v0, v1]), np.dot(v0, v1))
+            angle_AP_rad = math.atan2(tangent_vect[0], tangent_vect[2])
             # Compute the angle about RL axis between the centerline and the normal vector to the slice
-            v0 = [tangent_vect[1], tangent_vect[2]]
-            v1 = [0, 1]
-            angle_RL_rad = math.atan2(np.linalg.det([v0, v1]), np.dot(v0, v1))
+            angle_RL_rad = math.atan2(tangent_vect[1], tangent_vect[2])
             # Apply affine transformation to account for the angle between the centerline and the normal to the patch
             tform = transform.AffineTransform(scale=(np.cos(angle_RL_rad), np.cos(angle_AP_rad)))
             # Convert to float64, to avoid problems in image indexation causing issues when applying transform.warp
