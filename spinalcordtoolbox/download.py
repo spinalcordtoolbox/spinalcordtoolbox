@@ -66,7 +66,7 @@ DATASET_DICT = {
     },
     "PAM50": {
         "mirrors": [
-            "https://github.com/spinalcordtoolbox/PAM50/releases/download/r20250109/PAM50-r20250109.zip",
+            "https://github.com/spinalcordtoolbox/PAM50/archive/refs/heads/jv/33-remove_pixels_outside_of_cord.zip",
             "https://osf.io/nkqtx/?action=download",
         ],
         "default_location": os.path.join(__sct_dir__, "data", "PAM50"),
