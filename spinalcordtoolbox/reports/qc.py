@@ -22,7 +22,6 @@ from spinalcordtoolbox.utils.sys import list2cmdline, LazyLoader
 
 mpl_figure = LazyLoader("mpl_figure", globals(), "matplotlib.figure")
 mpl_axes = LazyLoader("mpl_axes", globals(), "matplotlib.axes")
-mpl_plt = LazyLoader("mpl_plt", globals(), "matplotlib.pyplot")
 mpl_colors = LazyLoader("mpl_colors", globals(), "matplotlib.colors")
 mpl_backend_agg = LazyLoader("mpl_backend_agg", globals(), "matplotlib.backends.backend_agg")
 mpl_animation = LazyLoader("mpl_animation", globals(), "matplotlib.animation")
@@ -77,10 +76,13 @@ class QcImage:
 
     def no_seg_seg(self, mask, ax, cmap='gray', norm=None, colorbar=False, text=None):
         """Create figure with image overlay. Notably used by sct_registration_to_template"""
-        fig_ax = ax.imshow(mask, cmap=cmap, norm=norm, interpolation=self.interpolation, aspect=self.aspect_mask)
+        img = ax.imshow(mask, cmap=cmap, norm=norm, interpolation=self.interpolation, aspect=self.aspect_mask)
         if colorbar:
+            # Fetch the internal axis + associated figure
             cax = ax.inset_axes([1.005, 0.07, 0.011, 0.86])
-            cbar = mpl_plt.colorbar(fig_ax, cax=cax, orientation='vertical', pad=0.01, shrink=0.5, aspect=1, ticks=[norm.vmin, norm.vmax])
+            fig = ax.get_figure()
+            # Add a colorbar to our figure, and
+            cbar = fig.colorbar(img, cax=cax, orientation='vertical', pad=0.01, shrink=0.5, aspect=1, ticks=[norm.vmin, norm.vmax])
             cbar.ax.tick_params(labelsize=5, length=2, pad=1.7)
             ax.text(1.5, 6, text, color='white', size=3.25)
         self._add_orientation_label(ax)
@@ -225,7 +227,7 @@ class QcImage:
                 * float(self.aspect_img))
         ]
 
-        fig = mpl_plt.figure()
+        fig = mpl_figure.Figure()
         fig.set_size_inches(size_fig[0], size_fig[1], forward=True)
         mpl_backend_agg.FigureCanvasAgg(fig)
         kwargs = {}
@@ -244,7 +246,7 @@ class QcImage:
         logger.info(str(imgs_to_generate['path_background_img']))
         self._save(fig, str(imgs_to_generate['path_background_img']), dpi=self.dpi)
 
-        fig = mpl_plt.figure()
+        fig = mpl_figure.Figure()
         fig.set_size_inches(size_fig[0], size_fig[1], forward=True)
         mpl_backend_agg.FigureCanvasAgg(fig)
         for i, action in enumerate(self.action_list):

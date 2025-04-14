@@ -7,8 +7,9 @@ import tempfile
 import nibabel
 import csv
 
-from spinalcordtoolbox.scripts import sct_process_segmentation
+from spinalcordtoolbox.scripts import sct_process_segmentation, sct_image
 from spinalcordtoolbox.utils.sys import sct_test_path
+from spinalcordtoolbox.image import add_suffix
 
 logger = logging.getLogger(__name__)
 
@@ -45,6 +46,43 @@ def test_sct_process_segmentation_check_pmj(dummy_3d_mask_nib, dummy_3d_pmj_labe
         assert row['DistancePMJ'] == '8.0'
         assert row['VertLevel'] == ''
         assert row['SUM(length)'] == '4.0'
+
+
+def test_sct_process_segmentation_check_pmj_reoriented(dummy_3d_mask_nib, dummy_3d_pmj_label, tmp_path):
+    """
+    Make sure that the results are the same regardless of the input orientation.
+
+    This should never really fail, since `sct_process_segmentation` reorients to RPI prior to processing,
+    but it will hopefully act as a canary for #4622, since PMJ CSA calls `get_centerline` in two different places.
+    """
+    # Note down filenames for easier iteration
+    fname_dict = {
+        "rpi": {
+            "i": dummy_3d_mask_nib,
+            "pmj": dummy_3d_pmj_label,
+            "out": str(tmp_path / 'csa_rpi.csv'),
+        },
+        "sal": {
+            "i": add_suffix(dummy_3d_mask_nib, suffix='_sal'),
+            "pmj": add_suffix(dummy_3d_pmj_label, suffix='_sal'),
+            "out": str(tmp_path / 'csa_sal.csv'),
+        }
+    }
+    # Create duplicate images, reoriented to SAL
+    sct_image.main(argv=["-setorient", "SAL", "-i", fname_dict['rpi']["i"], "-o", fname_dict['sal']["i"]])
+    sct_image.main(argv=["-setorient", "SAL", "-i", fname_dict['rpi']["pmj"], "-o", fname_dict['sal']["pmj"]])
+    # Run sct_process_segmentation on both sets of images, then compare results
+    results = []
+    for fnames in fname_dict.values():
+        sct_process_segmentation.main(argv=['-i', fnames["i"], '-pmj', fnames["i"], '-o', fnames["out"],
+                                            '-pmj-distance', '8', '-pmj-extent', '4'])
+        with open(fnames["out"], "r") as csvfile:
+            reader = csv.DictReader(csvfile, delimiter=',')
+            results.append(next(reader))
+    # Check that the results are the same
+    for key in results[0].keys():
+        if key not in ['Timestamp', 'SCT Version', "Filename"]:
+            assert results[0][key] == results[1][key]
 
 
 def test_sct_process_segmentation_check_pmj_perslice(dummy_3d_mask_nib, dummy_3d_pmj_label, tmp_path):

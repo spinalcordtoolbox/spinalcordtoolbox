@@ -40,7 +40,6 @@ mpl_colors = LazyLoader("mpl_colors", globals(), "matplotlib.colors")
 mpl_backend_agg = LazyLoader("mpl_backend_agg", globals(), "matplotlib.backends.backend_agg")
 mpl_patheffects = LazyLoader("mpl_patheffects", globals(), "matplotlib.patheffects")
 mpl_collections = LazyLoader("mpl_collections", globals(), "matplotlib.collections")
-mpl_plt = LazyLoader("mpl_plt", globals(), "matplotlib.pyplot")
 
 
 logger = logging.getLogger(__name__)

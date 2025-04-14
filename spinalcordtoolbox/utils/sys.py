@@ -182,10 +182,6 @@ def init_sct():
     hdlr.setFormatter(fmt)
     logging.root.addHandler(hdlr)
 
-    # Enable timer, if requested
-    if os.environ.get("SCT_TIMER", None) is not None:
-        begin_global_timer()
-
     # Display SCT version
     logger.info('\n--\nSpinal Cord Toolbox ({})\n'.format(__version__))
 
@@ -196,6 +192,9 @@ def init_sct():
         arguments = ' '.join(sys.argv[1:])
         logger.info(f"{script} {arguments}\n"
                     f"--\n")
+
+    # Enable timing
+    begin_global_timer()
 
 
 def send_email(addr_to, addr_from, subject, message='', passwd=None, filename=None, html=False, smtp_host=None, smtp_port=None, login=None):

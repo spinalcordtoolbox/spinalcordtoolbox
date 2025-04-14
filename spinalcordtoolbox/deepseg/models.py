@@ -30,15 +30,6 @@ logger = logging.getLogger(__name__)
 #     2) A dict of <mirror URL lists>, where each list corresponds to a different seed (for model ensembling), and
 #        each dictionary key corresponds to the seed's name (seed names are used to create subfolders per-seed)
 MODELS = {
-    "t2star_sc": {
-        "url": [
-            "https://github.com/ivadomed/t2star_sc/releases/download/r20231004/r20231004_t2star_sc.zip",
-            "https://osf.io/8nk5w/download",
-        ],
-        "description": "Cord segmentation model on T2*-weighted contrast.",
-        "contrasts": ["t2star"],
-        "default": True,
-    },
     "mice_uqueensland_sc": {
         "url": [
             "https://github.com/ivadomed/mice_uqueensland_sc/releases/download/r20200622/r20200622_mice_uqueensland_sc.zip",
@@ -114,13 +105,13 @@ MODELS = {
     #       - Models do not have a `.json` sidecar file, since they were not developed with ivadomed
     #       - So, threshold value is stored here, within the model dict
     #       - Binarization is applied within SCT code
-    "model_seg_sc_contrast_agnostic_softseg_nnunet": {
+    "model_seg_sc_contrast_agnostic_nnunet": {
         "url": [
-            "https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/releases/download/v3.1/model_contrast_agnostic_20250123.zip"
+            "https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/releases/download/v3.0/model_contrast_agnostic_20250123.zip"
         ],
         "description": "Spinal cord segmentation agnostic to MRI contrasts",
         "contrasts": ["any"],
-        "thr": None,  # not using Softseg model anymore since switching to the more robust nnunet model
+        "thr": None,  # We're now using an nnUNet model, which does not need a threshold
         "default": False,
     },
     "model_seg_sci_multiclass_sc_lesion_nnunet": {
@@ -219,19 +210,6 @@ CROP_MESSAGE = (
     'resolution, for images with another resolution divide 30/your_axial_resolution.'
 )
 TASKS = {
-    'sc_t2star':
-        {'description': 'Cord segmentation on T2*-weighted contrast',
-         'long_description': 'This segmentation model for T2*w spinal cords uses the UNet architecture, and was '
-                             'created with the `ivadomed` package. A subset of a private dataset (sct_testing_large) '
-                             'was used, and consists of 236 subjects across 9 different sessions. A total of 388 pairs '
-                             'of T2* images were used (anatomical image + manual cord segmentation). The image '
-                             'properties include various orientations (superior, inferior) and crops (C1-C3, C4-C7, '
-                             'etc.). The dataset was comprised of both non-pathological (healthy) and pathological (MS '
-                             'lesion) adult patients.',
-         'url': 'https://github.com/ivadomed/t2star_sc',
-         'models': ['t2star_sc'],
-         'citation': None
-         },
     'sc_mouse_t1':
         {'description': 'Cord segmentation on mouse MRI',
          'long_description': 'This segmentation model for T1w mouse spinal cord segmentation uses the UNet '
@@ -356,7 +334,7 @@ TASKS = {
                              '[T1w, T2w, T2star, MTon_MTS, GRE_T1w, DWI, mp2rage_UNIT1, PSIR, STIR, EPI], but '
                              'other contrasts that are close visual matches may also work well with this model.',
          'url': 'https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/',
-         'models': ['model_seg_sc_contrast_agnostic_softseg_nnunet'],
+         'models': ['model_seg_sc_contrast_agnostic_nnunet'],
          'citation': textwrap.dedent("""
              ```bibtex
              @misc{bédard2024contrastagnosticsoftsegmentationspinal,
