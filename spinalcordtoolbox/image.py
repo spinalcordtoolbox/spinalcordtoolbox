@@ -71,10 +71,30 @@ def rpi_slice_to_orig_orientation(dim, orig_orientation, slice_number, axis):
             rpi_slice_to_orig_orientation((20, 640, 640), 'AIL', 13, 0) -> 6
     Note: we use 0 as the last arg in this example as it corresponds to the R-L direction (first axis in RPI)
     """
+    # TODO: Consider rewriting this function to use `Coordinate.permute` in much the same way as `reorient_coordinates`.
+    #       Since this function basically reimplements the same logic, it's probably overkill.
     # Get the inversions
     _, inversion = _get_permutations('RPI', orig_orientation)
 
     return (dim[axis] - 1 - slice_number) if inversion[axis] == -1 else slice_number
+
+
+def reorient_coordinates(coords, img_src, orient_dest, mode='absolute'):
+    """
+    Reorient coordinates from source image orientation to destination orientation.
+
+    :param coords: iterable of [x, y, z] coordinates to be reoriented
+    :param img_src: spinalcordtoolbox.Image() object. Must represent the space that the coordinate
+                    is currently in. The source orientation and the dimensions are pulled from
+                    this image, which are used to permute/invert the coordinate.
+    :param orient_dest: The orientation to output the new coordinate in.
+    :param mode: Determines how inversions are handled. If 'absolute', the coordinate is recomputed using
+             a new origin based on the source image's maximum dimension for the inverted axes. If
+             'relative', the coordinate is treated as vector and inverted by multiplying by -1.
+    :return: numpy array with the new coordinates in the destination orientation.
+    """
+
+    return [Coordinate(list(coord)).permute(img_src, orient_dest, mode) for coord in coords]
 
 
 class Slicer(object):
