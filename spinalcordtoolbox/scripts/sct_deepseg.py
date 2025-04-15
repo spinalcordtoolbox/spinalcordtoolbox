@@ -108,12 +108,12 @@ def get_parser(subparser_to_return=None):
         description="Segment an anatomical structure or pathologies according to the specified deep learning model.",
         usage=dedent("""
         sct_deepseg TASK ...
-        
+
         Examples:
             sct_deepseg spinalcord -h
             sct_deepseg gm_mouse_t1 -install
             sct_deepseg lesion_ms -i cMRI3712.nii.gz
-        
+
         View available tasks:
             sct_deepseg -h
             sct_deepseg -task-details
