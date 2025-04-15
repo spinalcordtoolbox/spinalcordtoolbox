@@ -20,7 +20,6 @@ scripts_where_no_args_is_valid = [
 deprecated_scripts = [
     'sct_deepseg_lesion',
     'sct_deepseg_sc',
-    'sct_label_vertebrae'
 ]
 
 scripts_to_test = [s for s in scripts if s not in scripts_where_no_args_is_valid]
