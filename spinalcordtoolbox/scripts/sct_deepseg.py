@@ -197,7 +197,7 @@ def get_parser(subparser_to_return=None):
                  "find release you wish to install, and right-click + copy the URL of the `.zip` listed under 'Assets'.\n"
                  "NB: For multi-model tasks, provide multiple URLs. For single models, just provide one URL.\n"
                  "Example:\n"
-                 "`sct_deepseg -install rootlets_t2 -custom-url "
+                 "`sct_deepseg rootlets_t2 -install -custom-url "
                  "https://github.com/ivadomed/model-spinal-rootlets/releases/download/r20240523/model-spinal-rootlets_ventral_D106_r20240523.zip`\n"
                  "`sct_deepseg rootlets_t2 -i sub-amu01_T2w.nii.gz`")
 
