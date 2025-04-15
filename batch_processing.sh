@@ -60,12 +60,14 @@ if [[ "$SCT_BP_DOWNLOAD" == "1" ]]; then
 fi
 cd "$SCT_DIR/data/sct_example_data"
 
+# install the sct_deepseg model this script will use later
+sct_deepseg spinalcord -install
 
 # t2
 # ===========================================================================================
 cd t2
 # Segment spinal cord
-sct_deepseg_sc -i t2.nii.gz -c t2 -qc "$SCT_BP_QC_FOLDER"
+sct_deepseg spinalcord -i t2.nii.gz -c t2 -qc "$SCT_BP_QC_FOLDER"
 # Tips: If you are not satisfied with the results you can try with another algorithm:
 # sct_propseg -i t2.nii.gz -c t2 -qc "$SCT_BP_QC_FOLDER"
 # Fit binarized centerline from SC seg (default settings)
@@ -107,7 +109,7 @@ cd ..
 # ===========================================================================================
 cd t2s
 # Spinal cord segmentation
-sct_deepseg_sc -i t2s.nii.gz -c t2s -qc "$SCT_BP_QC_FOLDER"
+sct_deepseg spinalcord -i t2s.nii.gz -c t2s -qc "$SCT_BP_QC_FOLDER"
 # Segment gray matter
 sct_deepseg_gm -i t2s.nii.gz -qc "$SCT_BP_QC_FOLDER"
 # Register template->t2s (using warping field generated from template<->t2 registration)
@@ -134,12 +136,12 @@ cd ..
 cd t1
 # Contrast-agnostic registration
 # 1. t1w preprocessing (cropping around spinal cord)
-sct_deepseg_sc -i t1.nii.gz -c t1 -centerline cnn
+sct_deepseg spinalcord -i t1.nii.gz -c t1 -centerline cnn
 sct_create_mask -i t1.nii.gz -p centerline,t1_seg.nii.gz -size 35mm -f cylinder -o mask_t1.nii.gz
 sct_crop_image -i t1.nii.gz -m mask_t1.nii.gz
 # 2. t2w preprocessing (cropping around spinal cord)
 cp ../t2/t2.nii.gz ./t2.nii.gz
-sct_deepseg_sc -i t2.nii.gz -c t2
+sct_deepseg spinalcord -i t2.nii.gz -c t2
 sct_create_mask -i t2.nii.gz -p centerline,t2_seg.nii.gz -size 35mm -f cylinder -o mask_t2.nii.gz
 sct_crop_image -i t2.nii.gz -m mask_t2.nii.gz
 # 3. Perform registration
@@ -165,7 +167,7 @@ sct_create_mask -i mt1.nii.gz -p centerline,mt1_centerline.nii.gz -size 45mm
 # Crop data for faster processing
 sct_crop_image -i mt1.nii.gz -m mask_mt1.nii.gz -o mt1_crop.nii.gz
 # Segment spinal cord
-sct_deepseg_sc -i mt1_crop.nii.gz -c t2 -qc "$SCT_BP_QC_FOLDER"
+sct_deepseg spinalcord -i mt1_crop.nii.gz -c t2 -qc "$SCT_BP_QC_FOLDER"
 # Register mt0->mt1
 # Tips: here we only use rigid transformation because both images have very similar sequence parameters. We don't want to use SyN/BSplineSyN to avoid introducing spurious deformations.
 # Tips: here we input -dseg because it is needed by the QC report
@@ -207,7 +209,7 @@ sct_create_mask -i dmri_dwi_mean.nii.gz -p centerline,t2_seg_reg.nii.gz -size 35
 # Tips: if data have very low SNR you can increase the number of successive images that are averaged into group with "-g". Also see: sct_dmri_moco -h
 sct_dmri_moco -i dmri.nii.gz -bvec bvecs.txt -m mask_dmri_dwi_mean.nii.gz
 # segment spinal cord
-sct_deepseg_sc -i dmri_moco_dwi_mean.nii.gz -c dwi -qc "$SCT_BP_QC_FOLDER"
+sct_deepseg spinalcord -i dmri_moco_dwi_mean.nii.gz -c dwi -qc "$SCT_BP_QC_FOLDER"
 # Generate QC for sct_dmri_moco ('dmri_moco_dwi_mean_seg.nii.gz' is needed to align each slice in the QC mosaic)
 sct_qc -i dmri.nii.gz -d dmri_moco.nii.gz -s dmri_moco_dwi_mean_seg.nii.gz -p sct_dmri_moco -qc "$SCT_BP_QC_FOLDER"
 # Register template to dwi
@@ -239,7 +241,7 @@ sct_create_mask -i fmri_mean.nii.gz -p centerline,fmri_mean_centerline.nii.gz -s
 # Tips: Here data have sufficient SNR and there is visible motion between two consecutive scans, so motion correction is more efficient with -g 1 (i.e. not average consecutive scans)
 sct_fmri_moco -i fmri.nii.gz -g 1 -m mask_fmri_mean.nii.gz
 # Segment spinal cord manually
-#   Since these data have very poor cord/CSF contrast, it is difficult to segment the cord properly using sct_deepseg_sc
+#   Since these data have very poor cord/CSF contrast, it is difficult to segment the cord properly using sct_deepseg
 #   and hence in this case we do it manually. The file is called: fmri_crop_moco_mean_seg_manual.nii.gz
 #   There is no command for this step, because the file is included in the 'sct_example_data' dataset.
 # Generate QC for sct_fmri_moco ('fmri_crop_moco_mean_seg_manual.nii.gz' is needed to align each slice in the QC mosaic)
