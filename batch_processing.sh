@@ -67,7 +67,7 @@ sct_deepseg spinalcord -install
 # ===========================================================================================
 cd t2
 # Segment spinal cord
-sct_deepseg spinalcord -i t2.nii.gz -c t2 -qc "$SCT_BP_QC_FOLDER"
+sct_deepseg spinalcord -i t2.nii.gz -qc "$SCT_BP_QC_FOLDER"
 # Tips: If you are not satisfied with the results you can try with another algorithm:
 # sct_propseg -i t2.nii.gz -c t2 -qc "$SCT_BP_QC_FOLDER"
 # Fit binarized centerline from SC seg (default settings)
@@ -109,7 +109,7 @@ cd ..
 # ===========================================================================================
 cd t2s
 # Spinal cord segmentation
-sct_deepseg spinalcord -i t2s.nii.gz -c t2s -qc "$SCT_BP_QC_FOLDER"
+sct_deepseg spinalcord -i t2s.nii.gz -qc "$SCT_BP_QC_FOLDER"
 # Segment gray matter
 sct_deepseg_gm -i t2s.nii.gz -qc "$SCT_BP_QC_FOLDER"
 # Register template->t2s (using warping field generated from template<->t2 registration)
@@ -136,12 +136,12 @@ cd ..
 cd t1
 # Contrast-agnostic registration
 # 1. t1w preprocessing (cropping around spinal cord)
-sct_deepseg spinalcord -i t1.nii.gz -c t1 -centerline cnn
+sct_deepseg spinalcord -i t1.nii.gz
 sct_create_mask -i t1.nii.gz -p centerline,t1_seg.nii.gz -size 35mm -f cylinder -o mask_t1.nii.gz
 sct_crop_image -i t1.nii.gz -m mask_t1.nii.gz
 # 2. t2w preprocessing (cropping around spinal cord)
 cp ../t2/t2.nii.gz ./t2.nii.gz
-sct_deepseg spinalcord -i t2.nii.gz -c t2
+sct_deepseg spinalcord -i t2.nii.gz
 sct_create_mask -i t2.nii.gz -p centerline,t2_seg.nii.gz -size 35mm -f cylinder -o mask_t2.nii.gz
 sct_crop_image -i t2.nii.gz -m mask_t2.nii.gz
 # 3. Perform registration
@@ -167,7 +167,7 @@ sct_create_mask -i mt1.nii.gz -p centerline,mt1_centerline.nii.gz -size 45mm
 # Crop data for faster processing
 sct_crop_image -i mt1.nii.gz -m mask_mt1.nii.gz -o mt1_crop.nii.gz
 # Segment spinal cord
-sct_deepseg spinalcord -i mt1_crop.nii.gz -c t2 -qc "$SCT_BP_QC_FOLDER"
+sct_deepseg spinalcord -i mt1_crop.nii.gz -qc "$SCT_BP_QC_FOLDER"
 # Register mt0->mt1
 # Tips: here we only use rigid transformation because both images have very similar sequence parameters. We don't want to use SyN/BSplineSyN to avoid introducing spurious deformations.
 # Tips: here we input -dseg because it is needed by the QC report
@@ -209,7 +209,7 @@ sct_create_mask -i dmri_dwi_mean.nii.gz -p centerline,t2_seg_reg.nii.gz -size 35
 # Tips: if data have very low SNR you can increase the number of successive images that are averaged into group with "-g". Also see: sct_dmri_moco -h
 sct_dmri_moco -i dmri.nii.gz -bvec bvecs.txt -m mask_dmri_dwi_mean.nii.gz
 # segment spinal cord
-sct_deepseg spinalcord -i dmri_moco_dwi_mean.nii.gz -c dwi -qc "$SCT_BP_QC_FOLDER"
+sct_deepseg spinalcord -i dmri_moco_dwi_mean.nii.gz -qc "$SCT_BP_QC_FOLDER"
 # Generate QC for sct_dmri_moco ('dmri_moco_dwi_mean_seg.nii.gz' is needed to align each slice in the QC mosaic)
 sct_qc -i dmri.nii.gz -d dmri_moco.nii.gz -s dmri_moco_dwi_mean_seg.nii.gz -p sct_dmri_moco -qc "$SCT_BP_QC_FOLDER"
 # Register template to dwi
