@@ -635,7 +635,7 @@ def main(argv: Sequence[str]):
         compressed_levels_dict_PAM50 = get_slices_in_PAM50(compressed_levels_dict, df_metrics, df_metrics_PAM50)
         z_range_PAM50_below, z_range_PAM50_above = get_slices_upper_lower_level_from_PAM50(compressed_levels_dict_PAM50, df_metrics_PAM50, distance, extent, slice_thickness_PAM50)
 
-    # Step 3. Compute MSCC metrics for each compressed level
+    # Step 3a. Compute MSCC metrics for each compressed level
     # ------------------------------------------------------
     if compressed_levels_dict:
         # Loop through all compressed levels (compute one MSCC per compressed level)
