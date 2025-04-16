@@ -361,7 +361,7 @@ def get_slices_upper_lower_level_from_centerline(centerline, distance, extent, z
     : param centerline: Centerline(): Spinal cord centerline object
     : param distance: float: distance (mm) from the compression from where to average healthy slices.
     : param extent: float: extent (mm) to average healthy slices.
-    : param z_compressions: list: list of slice that have a compression.
+    : param z_compressions: list: list of slices that have a compression.
     : param z_ref: list: z index corresponding to the segmentation since the centerline only includes slices of the segmentation.
     : return
     """
@@ -594,10 +594,10 @@ def main(argv: Sequence[str]):
     # Fetch metrics of subject
     df_metrics = pd.read_csv(fname_metrics).astype({metric: float})
     # Get vertebral level corresponding to the slice with the compression
-    slice_compressed = get_compressed_slice(img_labels)
+    slices_compressed = get_compressed_slice(img_labels)
     compressed_levels_dict = {}
     if arguments.vertfile:
-        compressed_levels_dict = get_verterbral_level_from_slice(slice_compressed, df_metrics)
+        compressed_levels_dict = get_verterbral_level_from_slice(slices_compressed, df_metrics)
 
     # Step 2: Get normalization metrics and slices (using non-compressed subject slices)
     # -----------------------------------------------------------
@@ -610,7 +610,7 @@ def main(argv: Sequence[str]):
     # Get centerline object
     centerline = get_centerline_object(img_seg, verbose=verbose)
     # Get healthy slices to average for level above and below
-    z_range_centerline_above, z_range_centerline_below = get_slices_upper_lower_level_from_centerline(centerline, distance, extent, slice_compressed, z_ref)
+    z_range_centerline_above, z_range_centerline_below = get_slices_upper_lower_level_from_centerline(centerline, distance, extent, slices_compressed, z_ref)
     logger.debug(f'Slice range above: {z_range_centerline_above}')
     logger.debug(f'Slice range below: {z_range_centerline_below}')
 
