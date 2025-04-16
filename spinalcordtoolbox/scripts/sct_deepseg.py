@@ -194,10 +194,10 @@ def get_parser(subparser_to_return=None):
             params.add_argument(
                 "-step1-only",
                 type=int,
-                help="If set to '1', only step one will be performed.\n"
-                     "- Step 1: <>\n"
-                     "- Step 2: <>\n"
-                     "More details on TotalSpineSeg's steps can be found here: https://github.com/neuropoly/totalspineseg/?tab=readme-ov-file#model-description",
+                help="If set to '1', only Step 1 will be performed. If not provided, both steps will be run.\n"
+                     "- Step 1: Segments the spinal cord, spinal canal, vertebrae, and intervertebral discs (IVDs).\n"
+                     "- Step 2: Fine-tunes the segmentation, applies vertebral labels, and segments the sacrum if present.\n"
+                     "More details on TotalSpineSeg's two models can be found here: https://github.com/neuropoly/totalspineseg/?tab=readme-ov-file#model-description",
                 choices=(0, 1),
                 default=0)
 
