@@ -352,16 +352,15 @@ TASKS = {
          'models': ['model_seg_sc_contrast_agnostic_nnunet'],
          'citation': textwrap.dedent("""
              ```bibtex
-             @misc{bédard2024contrastagnosticsoftsegmentationspinal,
-                   title={Towards contrast-agnostic soft segmentation of the spinal cord},
-                   author={Sandrine Bédard and Enamundram Naga Karthik and Charidimos Tsagkas and Emanuele Pravatà and Cristina Granziera and Andrew Smith and Kenneth Arnold Weber II au2 and Julien Cohen-Adad},
-                   year={2024},
-                   eprint={2310.15402},
-                   archivePrefix={arXiv},
-                   primaryClass={eess.IV},
-                   url={https://arxiv.org/abs/2310.15402},
-             }
-             ```"""),  # noqa E501 (line too long)
+             @article{bedard2025towards,
+                  title={Towards contrast-agnostic soft segmentation of the spinal cord},
+                  author={Bédard, Sandrine and Karthik, Enamundram Naga and Tsagkas, Charidimos and Pravatà, Emanuele and Granziera, Cristina and Smith, Andrew and Weber II, Kenneth Arnold and Cohen-Adad, Julien},
+                  journal={Medical Image Analysis},
+                  pages={103473},
+                  year={2025},
+                  publisher={Elsevier}
+            }
+            ```"""),  # noqa E501 (line too long)
          'group': 'spinal_cord',
          'priority': 100  # Force this, and its group, to be displayed first, as it's our main model
          },
