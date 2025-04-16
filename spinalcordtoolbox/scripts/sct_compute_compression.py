@@ -467,8 +467,8 @@ def average_metric(df, metric, z_range_above, z_range_below, slices_avg):
     :param z_range_below: list: list of slices of level below compression.
     :param slices_avg: list: list of slices at the level of compression.
     :return: ma: float64: Metric above the compression
-    :retrun: mb: float64: Metric below the compression
-    :retrun: mi: float64: Metric at the compression level
+    :return: mb: float64: Metric below the compression
+    :return: mi: float64: Metric at the compression level
     """
     # find index of slices to average
     idx_compression = df['Slice (I->S)'].isin(slices_avg).tolist()
