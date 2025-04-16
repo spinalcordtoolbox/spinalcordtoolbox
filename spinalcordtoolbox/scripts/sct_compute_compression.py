@@ -73,15 +73,6 @@ def get_parser():
         """),  # noqa: E501 (line too long)
     )
     mandatory.add_argument(
-        '-vertfile',
-        metavar=Metavar.file,
-        help=textwrap.dedent("""
-            Vertebral labeling file. Example: `sub-001_T2w_seg_labeled.nii.gz`
-
-            Note: The input and the vertebral labelling file must be in the same voxel coordinate system and must match the dimensions between each other.
-        """),
-    )
-    mandatory.add_argument(
         '-l',
         metavar=Metavar.file,
         help=textwrap.dedent("""
@@ -92,6 +83,15 @@ def get_parser():
     )
 
     optional = parser.optional_arggroup
+    optional.add_argument(
+        '-vertfile',
+        metavar=Metavar.file,
+        help=textwrap.dedent("""
+            Vertebral labeling file. Example: `sub-001_T2w_seg_labeled.nii.gz`
+
+            Note: The '-i' and '-vertfile' files must be in the same voxel coordinate system and must match the dimensions between each other.
+        """),
+    )
     optional.add_argument(
         '-extent',
         type=float,
@@ -546,11 +546,12 @@ def main(argv: Sequence[str]):
     # Check if segmentation, compression labels, and vertebral label files have same dimensions
     img_seg = Image(fname_segmentation).change_orientation('RPI')
     img_labels = Image(fname_labels).change_orientation('RPI')
-    img_vertfile = Image(fname_vertfile).change_orientation('RPI')
-    if not img_seg.data.shape == img_labels.data.shape == img_vertfile.data.shape:
-        raise ValueError(f"Shape mismatch between compression labels [{img_labels.data.shape}], vertebral labels [{img_vertfile.data.shape}]"
-                         f" and segmentation [{img_seg.data.shape}]). "
-                         f"Please verify that your compression labels and vertebral labels were done in the same space as your input segmentation.")
+    if arguments.vertfile:
+        img_vertfile = Image(fname_vertfile).change_orientation('RPI')
+        if not img_seg.data.shape == img_labels.data.shape == img_vertfile.data.shape:
+            raise ValueError(f"Shape mismatch between compression labels [{img_labels.data.shape}], vertebral labels [{img_vertfile.data.shape}]"
+                             f" and segmentation [{img_seg.data.shape}]). "
+                             f"Please verify that your compression labels and vertebral labels were done in the same space as your input segmentation.")
     path_ref = os.path.join(__data_dir__, 'PAM50_normalized_metrics')
     # Fetch the subfolder that contains the "sub-{site}_{contrast}_PAM50.csv" files
     path_ref_hc = next((folder for (folder, _, filenames) in os.walk(path_ref)
@@ -581,12 +582,16 @@ def main(argv: Sequence[str]):
     # Call sct_process_segmentation to get morphometrics perslice in native space
     path, file_name, ext = extract_fname(get_absolute_path(arguments.i))
     fname_metrics = os.path.join(path, file_name + '_metrics' + '.csv')
-    sct_process_segmentation.main(argv=['-i', fname_segmentation, '-vertfile', fname_vertfile, '-perslice', '1', '-o', fname_metrics])
+    # If vertebral labeling file is provided, use it for the sct_process_segmentation call
+    if arguments.vertfile:
+        sct_process_segmentation.main(argv=['-i', fname_segmentation, '-vertfile', fname_vertfile, '-perslice', '1', '-o', fname_metrics])
     # Fetch metrics of subject
     df_metrics = pd.read_csv(fname_metrics).astype({metric: float})
     # Get vertebral level corresponding to the slice with the compression
     slice_compressed = get_compressed_slice(img_labels)
-    compressed_levels_dict = get_verterbral_level_from_slice(slice_compressed, df_metrics)
+    compressed_levels_dict = {}
+    if arguments.vertfile:
+        compressed_levels_dict = get_verterbral_level_from_slice(slice_compressed, df_metrics)
 
     # Step 2: Get normalization metrics and slices (using non-compressed subject slices)
     # -----------------------------------------------------------
@@ -627,56 +632,57 @@ def main(argv: Sequence[str]):
 
     # Step 3. Compute MSCC metrics for each compressed level
     # ------------------------------------------------------
-    # Loop through all compressed levels (compute one MSCC per compressed level)
-    rows = []
-    for idx in compressed_levels_dict.keys():
-        # Get compressed level and slice
-        level = list(compressed_levels_dict[idx].keys())[0]  # TODO change if more than one level
-        slice_list = compressed_levels_dict[idx][level]
-        slice_num = slice_list[0]
-        printv(f'\nCompression at level {int(level)} (slice {slice_num})', verbose=verbose, type='info')
+    if compressed_levels_dict:
+        # Loop through all compressed levels (compute one MSCC per compressed level)
+        rows = []
+        for idx in compressed_levels_dict.keys():
+            # Get compressed level and slice
+            level = list(compressed_levels_dict[idx].keys())[0]  # TODO change if more than one level
+            slice_list = compressed_levels_dict[idx][level]
+            slice_num = slice_list[0]
+            printv(f'\nCompression at level {int(level)} (slice {slice_num})', verbose=verbose, type='info')
 
-        # Compute metric ratio (non-normalized)
-        metrics_patient = average_metric(df_metrics, metric, z_range_centerline_above, z_range_centerline_below, slice_list)
-        metric_ratio_result = metric_ratio(metrics_patient[0], metrics_patient[1], metrics_patient[2])
+            # Compute metric ratio (non-normalized)
+            metrics_patient = average_metric(df_metrics, metric, z_range_centerline_above, z_range_centerline_below, slice_list)
+            metric_ratio_result = metric_ratio(metrics_patient[0], metrics_patient[1], metrics_patient[2])
 
-        if arguments.normalize_hc:
-            # Compute metric ratio (normalized, PAM50)
-            # NB: This PAM50 dict has the same structure as the regular dict, so it's safe to re-use `idx` here
-            slice_avg_PAM50 = list(compressed_levels_dict_PAM50[idx].values())[0]
-            metrics_patient_PAM50 = average_metric(df_metrics_PAM50, metric, z_range_PAM50_above, z_range_PAM50_below, slice_avg_PAM50)
-            metric_ratio_PAM50_result = metric_ratio(metrics_patient_PAM50[0], metrics_patient_PAM50[1], metrics_patient_PAM50[2])
-            # Get metrics of healthy controls
-            metrics_HC = average_metric(df_avg_HC, metric, z_range_PAM50_above, z_range_PAM50_below, slice_avg_PAM50)
-            logger.debug(f'\nmetric_a_HC = {metrics_HC[0]}, metric_b_HC = {metrics_HC[1]}, metric_i_HC = {metrics_HC[2]}')
-            # Compute metric ratio (normalized, PAM50 + HC)
-            metric_ratio_norm_result = metric_ratio_norm(metrics_patient_PAM50, metrics_HC)
-        else:
-            # If not `normalize_hc`, then skip computing normalized metrics
-            metric_ratio_PAM50_result = None
-            metric_ratio_norm_result = None
+            if arguments.normalize_hc:
+                # Compute metric ratio (normalized, PAM50)
+                # NB: This PAM50 dict has the same structure as the regular dict, so it's safe to re-use `idx` here
+                slice_avg_PAM50 = list(compressed_levels_dict_PAM50[idx].values())[0]
+                metrics_patient_PAM50 = average_metric(df_metrics_PAM50, metric, z_range_PAM50_above, z_range_PAM50_below, slice_avg_PAM50)
+                metric_ratio_PAM50_result = metric_ratio(metrics_patient_PAM50[0], metrics_patient_PAM50[1], metrics_patient_PAM50[2])
+                # Get metrics of healthy controls
+                metrics_HC = average_metric(df_avg_HC, metric, z_range_PAM50_above, z_range_PAM50_below, slice_avg_PAM50)
+                logger.debug(f'\nmetric_a_HC = {metrics_HC[0]}, metric_b_HC = {metrics_HC[1]}, metric_i_HC = {metrics_HC[2]}')
+                # Compute metric ratio (normalized, PAM50 + HC)
+                metric_ratio_norm_result = metric_ratio_norm(metrics_patient_PAM50, metrics_HC)
+            else:
+                # If not `normalize_hc`, then skip computing normalized metrics
+                metric_ratio_PAM50_result = None
+                metric_ratio_norm_result = None
 
-        rows.append([arguments.i, level, slice_num,
-                     metric_ratio_result,
-                     metric_ratio_PAM50_result,
-                     metric_ratio_norm_result])
+            rows.append([arguments.i, level, slice_num,
+                         metric_ratio_result,
+                         metric_ratio_PAM50_result,
+                         metric_ratio_norm_result])
 
-        # Display results
-        logger.debug(f'\nmetric_a = {metrics_patient[0]}, metric_b = {metrics_patient[1]}, metric_i = {metrics_patient[2]}')
-        printv(f'{arguments.metric}_ratio = {metric_ratio_result}', verbose=verbose, type='info')
-        if arguments.normalize_hc:
-            logger.debug(f'PAM50: metric_a = {metrics_patient_PAM50[0]}, metric_b = {metrics_patient_PAM50[1]}, metric_i = {metrics_patient_PAM50[2]}')
-            printv(f'{arguments.metric}_ratio_PAM50 = {metric_ratio_PAM50_result}', verbose=verbose, type='info')
-            printv(f'{arguments.metric}_ratio_PAM50_normalized = {metric_ratio_norm_result}', verbose=verbose, type='info')
+            # Display results
+            logger.debug(f'\nmetric_a = {metrics_patient[0]}, metric_b = {metrics_patient[1]}, metric_i = {metrics_patient[2]}')
+            printv(f'{arguments.metric}_ratio = {metric_ratio_result}', verbose=verbose, type='info')
+            if arguments.normalize_hc:
+                logger.debug(f'PAM50: metric_a = {metrics_patient_PAM50[0]}, metric_b = {metrics_patient_PAM50[1]}, metric_i = {metrics_patient_PAM50[2]}')
+                printv(f'{arguments.metric}_ratio_PAM50 = {metric_ratio_PAM50_result}', verbose=verbose, type='info')
+                printv(f'{arguments.metric}_ratio_PAM50_normalized = {metric_ratio_norm_result}', verbose=verbose, type='info')
 
-    metric_columns = [
-        f'{arguments.metric}_ratio',
-        f'{arguments.metric}_ratio_PAM50',
-        f'{arguments.metric}_ratio_PAM50_normalized',
-    ]
-    df_metric_ratios = pd.DataFrame.from_records(rows, index=INDEX_COLUMNS, columns=INDEX_COLUMNS + metric_columns)
-    save_df_to_csv(df_metric_ratios, fname_out)
-    printv(f'\nSaved: {os.path.abspath(fname_out)}')
+        metric_columns = [
+            f'{arguments.metric}_ratio',
+            f'{arguments.metric}_ratio_PAM50',
+            f'{arguments.metric}_ratio_PAM50_normalized',
+        ]
+        df_metric_ratios = pd.DataFrame.from_records(rows, index=INDEX_COLUMNS, columns=INDEX_COLUMNS + metric_columns)
+        save_df_to_csv(df_metric_ratios, fname_out)
+        printv(f'\nSaved: {os.path.abspath(fname_out)}')
 
 
 if __name__ == "__main__":
