@@ -1,5 +1,5 @@
+.. _sct_deepseg_gm_mouse_t1:
 
-                
 gm_mouse_t1
 ===========
                 
