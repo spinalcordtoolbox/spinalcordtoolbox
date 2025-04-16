@@ -699,7 +699,6 @@ def main(argv: Sequence[str]):
         # has the minimum 'MEAN(diameter_AP)' value in `df_metrics`.
         # This metric is computed from either the spinal cord or spinal canal segmentation (`arguments.i`).
         df_filtered = df_metrics[df_metrics['Slice (I->S)'].isin(slices_compressed)]
-        # Find the slice with the lowest metric value
         # NOTE: we use 'MEAN(diameter_AP)' for all metrics here as this definition was used in the original publication:
         #  https://pubmed.ncbi.nlm.nih.gov/10101829/
         min_idx = df_filtered['MEAN(diameter_AP)'].idxmin()
