@@ -114,6 +114,7 @@ def get_parser(subparser_to_return=None):
                  "`sct_deepseg rootlets_t2 -i sub-amu01_T2w.nii.gz`")
 
         misc = subparser.add_argument_group('\nPARAMETERS')
+        params = misc  # FIXME: This PR is dependent on #4852 to disambiguate the 'misc' groups
         misc.add_argument(
             "-thr",
             type=float,
@@ -181,23 +182,24 @@ def get_parser(subparser_to_return=None):
         subparser.add_common_args()
         subparser.add_tempfile_args()
 
-    # Add options that only apply to a specific task
-    parser_dict['tumor_edema_cavity_t1_t2'].add_argument(
-        "-c",
-        nargs="+",
-        help="Contrast of the input. Specifies the contrast order of input images (e.g. `-c t1 t2`)",
-        choices=('t1', 't2', 't2star'),
-        metavar=Metavar.str)
-    parser_dict['totalspineseg'].add_argument(
-        "-step1-only",
-        type=int,
-        help="If set to '1', only step one will be performed.\n"
-             "- Step 1: <>\n"
-             "- Step 2: <>\n"
-             "More details on TotalSpineSeg's steps can be found here: https://github.com/neuropoly/totalspineseg/?tab=readme-ov-file#model-description",
-        choices=(0, 1),
-        default=0
-    )
+        # # Add options that only apply to a specific task
+        if task_name == 'tumor_edema_cavity_t1_t2':
+            input_output.add_argument(
+                "-c",
+                nargs="+",
+                help="Contrast of the input. Specifies the contrast order of input images (e.g. `-c t1 t2`)",
+                choices=('t1', 't2', 't2star'),
+                metavar=Metavar.str)
+        if task_name == 'totalspineseg':
+            params.add_argument(
+                "-step1-only",
+                type=int,
+                help="If set to '1', only step one will be performed.\n"
+                     "- Step 1: <>\n"
+                     "- Step 2: <>\n"
+                     "More details on TotalSpineSeg's steps can be found here: https://github.com/neuropoly/totalspineseg/?tab=readme-ov-file#model-description",
+                choices=(0, 1),
+                default=0)
 
     if subparser_to_return:
         return parser_dict[subparser_to_return]
