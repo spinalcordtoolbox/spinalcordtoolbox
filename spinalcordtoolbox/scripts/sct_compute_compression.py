@@ -585,6 +585,9 @@ def main(argv: Sequence[str]):
     # If vertebral labeling file is provided, use it for the sct_process_segmentation call
     if arguments.vertfile:
         sct_process_segmentation.main(argv=['-i', fname_segmentation, '-vertfile', fname_vertfile, '-perslice', '1', '-o', fname_metrics])
+    # But sometimes, the vertebral labeling file is not available (e.g., in severe injuries)
+    else:
+        sct_process_segmentation.main(argv=['-i', fname_segmentation, '-perslice', '1', '-o', fname_metrics])
     # Fetch metrics of subject
     df_metrics = pd.read_csv(fname_metrics).astype({metric: float})
     # Get vertebral level corresponding to the slice with the compression
