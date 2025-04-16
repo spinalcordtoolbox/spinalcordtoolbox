@@ -174,7 +174,7 @@ def get_slice_thickness(img):
 def get_compressed_slice(img):
     """
     Get all the compression labels (voxels of value: '1') that are contained in the input image.
-    :param img: Image: source image
+    :param img: Image: RPI-oriented source image
     :return list: list of slices number
     """
     # Get all coordinates
@@ -183,8 +183,8 @@ def get_compressed_slice(img):
     # Check it coordinates is empty
     if not coordinates:
         raise ValueError('No compression labels found.')
-    # Return only slices number
-    return [int(coordinate.z) for coordinate in coordinates]
+    # Return only axial slice numbers (z coordinate in RPI orientation)
+    return set([int(coordinate.z) for coordinate in coordinates])
 
 
 def get_verterbral_level_from_slice(slices, df_metrics):
