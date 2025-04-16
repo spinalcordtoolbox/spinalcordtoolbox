@@ -465,7 +465,7 @@ def average_metric(df, metric, z_range_above, z_range_below, slices_avg):
     :param metric: str: metric to perform normalization
     :param z_range_above: list: list of slices of level above compression.
     :param z_range_below: list: list of slices of level below compression.
-    :param slices_avg: Slices in PAM50 space to average metrics.
+    :param slices_avg: list: list of slices at the level of compression.
     :return: ma: float64: Metric above the compression
     :retrun: mb: float64: Metric below the compression
     :retrun: mi: float64: Metric at the compression level
