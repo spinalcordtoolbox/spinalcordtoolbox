@@ -188,6 +188,16 @@ def get_parser(subparser_to_return=None):
         help="Contrast of the input. Specifies the contrast order of input images (e.g. `-c t1 t2`)",
         choices=('t1', 't2', 't2star'),
         metavar=Metavar.str)
+    parser_dict['totalspineseg'].add_argument(
+        "-step1-only",
+        type=int,
+        help="If set to '1', only step one will be performed.\n"
+             "- Step 1: <>\n"
+             "- Step 2: <>\n"
+             "More details on TotalSpineSeg's steps can be found here: https://github.com/neuropoly/totalspineseg/?tab=readme-ov-file#model-description",
+        choices=(0, 1),
+        default=0
+    )
 
     if subparser_to_return:
         return parser_dict[subparser_to_return]
@@ -322,7 +332,12 @@ def main(argv: Sequence[str]):
                 keep_largest=1 if arguments.task == 'spinalcord' else arguments.keep_largest,
                 fill_holes_in_pred=arguments.fill_holes,
                 remove_small=arguments.remove_small,
-                use_gpu=use_gpu, remove_temp_files=arguments.r)
+                use_gpu=use_gpu, remove_temp_files=arguments.r,
+                # Pass any "extra" kwargs defined in task-specific subparsers
+                extra_inference_kwargs={arg_name: getattr(arguments, arg_name)
+                                        for arg_name in ["step1_only"]  # Used only by totalspineseg
+                                        if hasattr(arguments, arg_name)}
+            )
 
         # Delete intermediate outputs
         if fname_prior and os.path.isfile(fname_prior) and arguments.r:
