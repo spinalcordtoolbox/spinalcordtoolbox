@@ -695,10 +695,17 @@ def main(argv: Sequence[str]):
     # Step 3b. Compute MSCC metrics for the lesion
     # ------------------------------------------------------
     if not compressed_levels_dict:
-        # Lesion middle slice
-        z_middle = int(np.mean([min(slice_compressed), max(slice_compressed)]))
-        logger.debug(f'\nz_middle = {z_middle}')
-        slice_list = [z_middle]     # int --> list to make it compatible with the 'average_metric' function below
+        # Identify the level of maximum injury, defined as the axial slice within the lesion (`slices_compressed`) that
+        # has the minimum 'MEAN(diameter_AP)' value in `df_metrics`.
+        # This metric is computed from either the spinal cord or spinal canal segmentation (`arguments.i`).
+        df_filtered = df_metrics[df_metrics['Slice (I->S)'].isin(slices_compressed)]
+        # Find the slice with the lowest metric value
+        # NOTE: we use 'MEAN(diameter_AP)' for all metrics here as this definition was used in the original publication:
+        #  https://pubmed.ncbi.nlm.nih.gov/10101829/
+        min_idx = df_filtered['MEAN(diameter_AP)'].idxmin()
+        slice_num = df_filtered.loc[min_idx, 'Slice (I->S)']    # this might not be necessary as the index is already the slice
+        logger.debug(f'\nmaximum injury z slice = {slice_num}')
+        slice_list = [slice_num]     # int --> list to make it compatible with the 'average_metric' function below
 
         # Compute metric ratio (non-normalized)
         ma, mb, mi = average_metric(df_metrics, metric, z_range_centerline_above, z_range_centerline_below, slice_list)
@@ -710,7 +717,7 @@ def main(argv: Sequence[str]):
         logger.debug(f'metric_a = {ma*pixdim2:.2f}mm, metric_b = {mb*pixdim2:.2f}mm, metric_i = {mi*pixdim2:.2f}mm')
         printv(f'{arguments.metric}_ratio = {metric_ratio_result}', verbose=verbose, type='info')
 
-        row = [[arguments.i, None, z_middle, metric_ratio_result, None, None]]  # nested list to be compatible with the 'DataFrame.from_records' function
+        row = [[arguments.i, None, slice_num, metric_ratio_result, None, None]]  # nested list to be compatible with the 'DataFrame.from_records' function
         metric_columns = [
             f'{arguments.metric}_ratio',
             f'{arguments.metric}_ratio_PAM50',
