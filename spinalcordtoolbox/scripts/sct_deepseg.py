@@ -5,7 +5,6 @@
 #
 # Copyright (c) 2020 Polytechnique Montreal <www.neuro.polymtl.ca>
 # License: see the file LICENSE
-import textwrap
 # TODO: Add link to example image so users can decide wether their images look "close enough" to some of the proposed
 #  models (e.g., mice, etc.).
 # TODO: add test to make sure that all postprocessing flags match the core.DEFAULT dictionary items
@@ -20,8 +19,6 @@ import logging
 from typing import Sequence
 from textwrap import dedent
 import functools
-
-from Cython.Debugger.Cygdb import usage
 
 from spinalcordtoolbox.reports import qc2
 from spinalcordtoolbox.image import splitext, Image, check_image_kind
@@ -164,14 +161,12 @@ def get_parser(subparser_to_return=None):
 
             {task_dict["long_description"]}
 
-            ## Reference
-            
+            ## Reference\n
         """)
         if task_dict.get('citation', False):
             description_text += f"{task_dict['citation']}\n\n"
         description_text += f"Project URL: [{task_dict['url']}]({task_dict['url']})"
 
-        optional_ref = (f"{task_dict['citation']}\n\n" if task_dict['citation'] else "")
         subparser = parser_dict[task_name] = subparsers.add_parser(
             task_name,
             description=description_text
