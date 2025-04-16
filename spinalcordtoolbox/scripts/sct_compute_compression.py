@@ -183,8 +183,9 @@ def get_compressed_slice(img):
     # Check it coordinates is empty
     if not coordinates:
         raise ValueError('No compression labels found.')
-    # Return only axial slice numbers (z coordinate in RPI orientation)
-    return set([int(coordinate.z) for coordinate in coordinates])
+    # Return only unique axial slice numbers (z coordinate in RPI orientation)
+    # 'set' is used to get unique z coordinates (as lesion can have multiple pixels within a single slice)
+    return list(set([int(coordinate.z) for coordinate in coordinates]))
 
 
 def get_verterbral_level_from_slice(slices, df_metrics):
