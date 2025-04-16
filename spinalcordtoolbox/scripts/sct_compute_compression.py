@@ -687,6 +687,34 @@ def main(argv: Sequence[str]):
         save_df_to_csv(df_metric_ratios, fname_out)
         printv(f'\nSaved: {os.path.abspath(fname_out)}')
 
+    # Step 3b. Compute MSCC metrics for the lesion
+    # ------------------------------------------------------
+    if not compressed_levels_dict:
+        # Lesion middle slice
+        z_middle = int(np.mean([min(slice_compressed), max(slice_compressed)]))
+        logger.debug(f'\nz_middle = {z_middle}')
+        slice_list = [z_middle]     # int --> list to make it compatible with the 'average_metric' function below
+
+        # Compute metric ratio (non-normalized)
+        ma, mb, mi = average_metric(df_metrics, metric, z_range_centerline_above, z_range_centerline_below, slice_list)
+        metric_ratio_result = metric_ratio(ma, mb, mi)
+
+        # Display results
+        pixdim2 = img_seg.dim[5]
+        logger.debug(f'\nmetric_a = {ma}, metric_b = {mb}, metric_i = {mi}')
+        logger.debug(f'metric_a = {ma*pixdim2:.2f}mm, metric_b = {mb*pixdim2:.2f}mm, metric_i = {mi*pixdim2:.2f}mm')
+        printv(f'{arguments.metric}_ratio = {metric_ratio_result}', verbose=verbose, type='info')
+
+        row = [[arguments.i, None, z_middle, metric_ratio_result, None, None]]  # nested list to be compatible with the 'DataFrame.from_records' function
+        metric_columns = [
+            f'{arguments.metric}_ratio',
+            f'{arguments.metric}_ratio_PAM50',
+            f'{arguments.metric}_ratio_PAM50_normalized',
+        ]
+        df_metric_ratios = pd.DataFrame.from_records(row, index=INDEX_COLUMNS, columns=INDEX_COLUMNS + metric_columns)
+        save_df_to_csv(df_metric_ratios, fname_out)
+        printv(f'\nSaved: {os.path.abspath(fname_out)}')
+
 
 if __name__ == "__main__":
     init_sct()
