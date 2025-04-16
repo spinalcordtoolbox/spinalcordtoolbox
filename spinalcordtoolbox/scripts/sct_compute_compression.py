@@ -610,6 +610,8 @@ def main(argv: Sequence[str]):
     centerline = get_centerline_object(img_seg, verbose=verbose)
     # Get healthy slices to average for level above and below
     z_range_centerline_above, z_range_centerline_below = get_slices_upper_lower_level_from_centerline(centerline, distance, extent, slice_compressed, z_ref)
+    logger.debug(f'Slice range above: {z_range_centerline_above}')
+    logger.debug(f'Slice range below: {z_range_centerline_below}')
 
     # Step 2: Get normalization metrics and slices (using PAM50 and reference dataset)
     # -----------------------------------------------------------
