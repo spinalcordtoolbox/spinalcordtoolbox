@@ -59,11 +59,6 @@ if [[ "$SCT_BP_DOWNLOAD" == "1" ]]; then
   sct_download_data -d sct_example_data
 fi
 
-# If there is no SCT_DIR set (i.e. this is a git clone), try to use the current directory instead
-if [[ -z "$SCT_DIR" ]]; then
-  SCT_DIR="$PWD"
-fi
-
 # Enter our data directory
 cd "$SCT_DIR/data/sct_example_data"
 
