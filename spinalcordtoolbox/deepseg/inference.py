@@ -338,7 +338,7 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device):
     return fnames_out, targets
 
 
-def segment_totalspineseg(path_img, tmpdir, predictor, device):
+def segment_totalspineseg(path_img, tmpdir, predictor, device, step1_only=False):
     # for totalspineseg, the 'predictor' is just the model path
     path_model = predictor
     # fetch the release subdirectory from the model path
@@ -375,9 +375,14 @@ def segment_totalspineseg(path_img, tmpdir, predictor, device):
         # Try to address stalling due to the use of concurrent.futures in totalspineseg
         max_workers=1,
         max_workers_nnunet=1,
+        # Optional argument to choose which models to run
+        step1_only=bool(step1_only)
     )
     fnames_out, targets = [], []
-    for output_dirname in ["step1_canal", "step1_cord", "step1_levels", "step1_output", "step2_output"]:
+    expected_outputs = ["step1_canal", "step1_cord", "step1_levels", "step1_output"]
+    if not step1_only:
+        expected_outputs.append("step2_output")
+    for output_dirname in expected_outputs:
         fnames_out.append(os.path.join(tmpdir_nnunet, output_dirname, os.path.basename(path_img)))
         targets.append(f"_{output_dirname}")
 
