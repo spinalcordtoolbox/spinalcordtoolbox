@@ -36,9 +36,12 @@ def get_parser():
     mandatory.add_argument(
         "-s",
         metavar=Metavar.file,
-        help='Spinal cord centerline (or segmentation) of the input image. To obtain the centerline, you can use '
-             'sct_get_centerline. To obtain the segmentation you can use sct_propseg or sct_deepseg_sc. '
-             'Example: `centerline.nii.gz`')
+        help=textwrap.dedent("""
+            Spinal cord centerline (or segmentation) of the input image. To obtain the centerline, you can use sct_get_centerline. 
+            To obtain the segmentation you can use `sct_propseg` or `sct_deepseg spinalcord`. 
+            Example: `centerline.nii.gz`
+        """)
+    )
 
     optional = parser.optional_arggroup
     optional.add_argument(
