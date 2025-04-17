@@ -1,5 +1,7 @@
 # Minimal SCT Apptainer installation w/ Ubuntu 22.04
 
+**_EXPERIMENTAL AS OF SCT 7.0: Use at your own risk!_**
+
 This directory contains files needed to install a minimal Apptainer (formally Singularity) instance of SCT, for use on High Performance Computing (HPC) clusters which do not support Conda/Mamba. In short, generates a compressed "image" of SCT into a single `.sif` (Singularity Image Format) file, which can then be run as a program, without needing to install or provide SCT's usual dependencies yourself.
 
 For those familiar with Docker, Apptainer is a close analog, with Apptainer `.def` files being equivalent to Docker `docker` files. Likewise, the container resulting from using a `.def` file (a "Singularity Image Format", or `.sif`, file) can then be run as a program via the `apptainer exec {container_name}.sif` command, similar to `docker run {container_name}`.
@@ -41,6 +43,8 @@ This will usually take a few minutes to complete. Optionally, if you know you wi
 If you need to install a `sct_deepseg` model after the initial `sct` container is completed, you can do so with the following command instead: 
 
     ./install_deepseg_task.sh task1 task2 task3
+
+Note that this can take a substantial amount of time, as to do this the `.sif` file must be packed and unpacked each time `install_deepseg_task.sh` is called. You should really try to avoid using as much as possible. 
 
 ## Running the Container
 
