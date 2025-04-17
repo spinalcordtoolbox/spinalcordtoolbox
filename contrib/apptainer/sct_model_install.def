@@ -5,10 +5,18 @@ From: sct.sif
     # The list of tasks to install. Need to be provided by the user explicitly with
     task_installs=''
 
+%environment
+    # Update the PATH so that SCT commands are always available
+    export PATH=$PATH:/sct/bin
+
 %post
+    # Ubuntu 24.04 AppArmour strips the path, but doesn't run %environment to restore it for god knows why
+    export PATH=$PATH:/sct/bin
+
     # If no tasks were designated, tell the user how to use this definition
-    if [ "{{ task_installs }}" == '' ]; then
+    if [ -z "{{ task_installs }}" ]; then
         echo "You must provide at least one task name (from `sct_deepseg -h`) to install models into the container."
+        exit 1
     fi
 
     # Install the models for the designated tasks, one by one

@@ -34,15 +34,17 @@ Once there, run the following command:
 
     ./install_sct_containered.sh
 
-This will usually take a few minutes to complete.
-
-If you want to run DeepSeg tasks, you can install the requisite models with the following command (replacing the `task` entries with the task name(s) you want to run):
+This will usually take a few minutes to complete. Optionally, if you know you will need to run certain `sct_deepseg` tasks, you can list them after the command to install their requisite models immediately (replacing the `task` entries with the task name(s) you want to run):
 
     ./install_sct_containered.sh task1 task2 task3
 
+If you need to install a `sct_deepseg` model after the initial `sct` container is completed, you can do so with the following command instead: 
+
+    ./install_deepseg_task.sh task1 task2 task3
+
 ## Running the Container
 
-Once the `.sif` file has been generated, you can run any SCT command by prepending the following before it and running the command within this directory:
+Once the `sct.sif` file has been generated, you can run any SCT command by prepending the following before it and running the command within this directory:
 
     apptainer exec sct.sif
 

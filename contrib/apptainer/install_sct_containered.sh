@@ -1,2 +1,7 @@
-# TODO: Replace "tasks" with a command-line argument passed in by the user
-APPTAINER_BIND=' ' apptainer build --build-arg task_installs="tasks" sct.sif sct_model_install.def
+# TODO: Add argument to allow user to specify SCT version
+
+# Literally just the list of position arguments, for ease of use. Will need to be updated for future SCT versions.
+TASK_LIST="$@"
+
+# The leading APPTAINER_BIND declaration forces Apptainer to not use any existing Conda installs, helping w/ portability
+APPTAINER_BIND=' ' apptainer build --build-arg task_installs="$TASK_LIST" sct.sif sct.def

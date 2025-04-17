@@ -55,3 +55,5 @@ sct_example_data/
 # Documentation
 documentation/build
 
+# Containers
+/contrib/apptainer/sct.sif
