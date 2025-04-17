@@ -2,7 +2,7 @@
 
 # Ensure that at least one task was requested
 if [ "$#" == "0" ]; then
-  echo "You must provide at least one task name (from `sct_deepseg -h`) to install models into the container."
+  echo "You must provide at least one task name (from \`sct_deepseg -h\`) to install models into the container."
   exit 1
 fi
 
