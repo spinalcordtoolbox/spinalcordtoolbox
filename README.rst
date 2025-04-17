@@ -90,27 +90,14 @@ The primary way to invoke SCT is through terminal commands. For example:
 
     $ sct_deepseg spinalcord -i t2.nii.gz
 
-    --
-    Spinal Cord Toolbox
-
-    sct_deepseg spinalcord -i t2.nii.gz
-    --
-
-    Model 'model_seg_sc_contrast_agnostic_nnunet' is up to date (Source: https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/releases/download/v3.0/model_contrast_agnostic_20250123.zip)
-    Running inference on device: cpu
     Model loaded successfully.
-    Creating temporary folder (/tmp/sct_2025-04-15_14-43-27_sct_deepseg_gnf56tl3)
-    Copied t2.nii.gz to /tmp/sct_2025-04-15_14-43-27_sct_deepseg_gnf56tl3/t2.nii.gz
-    Orientation (based on dataset.json): RPI
     Changing orientation of the input to the model orientation (RPI)...
     Starting inference...
-    100%|█████████████████████████████████████████████████████████| 54/54 [06:08<00:00,  6.83s/it]
+    100%|████████████████████████████████████| 54/54 [00:00<00:00,  6.83s/it]
     Inference done.
     Total inference time: 6 minute(s) 27 seconds
     Reorienting the prediction back to original orientation...
     Reorientation to original orientation LPI done.
-    Saving results to: /tmp/sct_2025-04-15_14-43-27_sct_deepseg_gnf56tl3/nnUNet_prediction/t2_pred_seg.nii.gz
-    Total runtime; 394.706 seconds.
 
 For a full overview of the available commands, see the `Command-Line Tools <https://spinalcordtoolbox.com/user_section/command-line.html>`_ page.
 
