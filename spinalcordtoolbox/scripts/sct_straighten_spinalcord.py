@@ -37,8 +37,8 @@ def get_parser():
         "-s",
         metavar=Metavar.file,
         help=textwrap.dedent("""
-            Spinal cord centerline (or segmentation) of the input image. To obtain the centerline, you can use sct_get_centerline. 
-            To obtain the segmentation you can use `sct_propseg` or `sct_deepseg spinalcord`. 
+            Spinal cord centerline (or segmentation) of the input image. To obtain the centerline, you can use sct_get_centerline.
+            To obtain the segmentation you can use `sct_propseg` or `sct_deepseg spinalcord`.
             Example: `centerline.nii.gz`
         """)
     )
