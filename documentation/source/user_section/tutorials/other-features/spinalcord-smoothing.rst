@@ -54,11 +54,11 @@ You can compare the quality of the segmentation produced on the smoothed image b
 .. code:: sh
 
    # Second-pass segmentation using the smoothed anatomical image
-   sct_deepseg_sc -i t1_smooth.nii.gz -c t1 -qc ~/qc_singleSubj
+   sct_deepseg spinalcord -i t1_smooth.nii.gz -qc ~/qc_singleSubj
 
 ..
    comment:: Is this really necessary anymore? We have the contrast-agnostic
              segmentation, which should provide a more accurate segmentation
              with CSA that is consistent between contrasts. I am wondering
-             how trustworthy the results of ``sct_deepseg_sc`` are on a smoothed
+             how trustworthy the results of ``sct_deepseg`` are on a smoothed
              spinal cord now that we have a new gold-standard for segmentation.
