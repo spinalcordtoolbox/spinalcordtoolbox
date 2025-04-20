@@ -199,7 +199,7 @@ MODELS = {
      },
     "model_seg_gm_contrast_region_agnostic": {
         "url": [
-            "https://github.com/ivadomed/model-gm-contrast-region-agnostic/releases/download/r20250328/Dataset809_gm-seg.zip"
+            "https://github.com/ivadomed/model-gm-contrast-region-agnostic/releases/download/r20250420/Dataset820_gm-seg.zip"
         ],
         "description": "Segmentation of spinal cord gray matter on any region and contrast MRI",
         "contrasts": ["any"],
