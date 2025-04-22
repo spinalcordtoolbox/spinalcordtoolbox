@@ -114,6 +114,7 @@ def get_parser(subparser_to_return=None):
                  "`sct_deepseg rootlets_t2 -i sub-amu01_T2w.nii.gz`")
 
         misc = subparser.add_argument_group('\nPARAMETERS')
+        params = misc  # FIXME: This PR is dependent on #4852 to disambiguate the 'misc' groups
         misc.add_argument(
             "-thr",
             type=float,
@@ -181,13 +182,24 @@ def get_parser(subparser_to_return=None):
         subparser.add_common_args()
         subparser.add_tempfile_args()
 
-    # Add options that only apply to a specific task
-    parser_dict['tumor_edema_cavity_t1_t2'].add_argument(
-        "-c",
-        nargs="+",
-        help="Contrast of the input. Specifies the contrast order of input images (e.g. `-c t1 t2`)",
-        choices=('t1', 't2', 't2star'),
-        metavar=Metavar.str)
+        # # Add options that only apply to a specific task
+        if task_name == 'tumor_edema_cavity_t1_t2':
+            input_output.add_argument(
+                "-c",
+                nargs="+",
+                help="Contrast of the input. Specifies the contrast order of input images (e.g. `-c t1 t2`)",
+                choices=('t1', 't2', 't2star'),
+                metavar=Metavar.str)
+        if task_name == 'totalspineseg':
+            params.add_argument(
+                "-step1-only",
+                type=int,
+                help="If set to '1', only Step 1 will be performed. If not provided, both steps will be run.\n"
+                     "- Step 1: Segments the spinal cord, spinal canal, vertebrae, and intervertebral discs (IVDs). Labels the IVDs, but vertebrae are left unlabeled.\n"
+                     "- Step 2: Fine-tunes the segmentation, applies labels to vertebrae, and segments the sacrum if present.\n"
+                     "More details on TotalSpineSeg's two models can be found here: https://github.com/neuropoly/totalspineseg/?tab=readme-ov-file#model-description",
+                choices=(0, 1),
+                default=0)
 
     if subparser_to_return:
         return parser_dict[subparser_to_return]
@@ -322,7 +334,12 @@ def main(argv: Sequence[str]):
                 keep_largest=1 if arguments.task == 'spinalcord' else arguments.keep_largest,
                 fill_holes_in_pred=arguments.fill_holes,
                 remove_small=arguments.remove_small,
-                use_gpu=use_gpu, remove_temp_files=arguments.r)
+                use_gpu=use_gpu, remove_temp_files=arguments.r,
+                # Pass any "extra" kwargs defined in task-specific subparsers
+                extra_inference_kwargs={arg_name: getattr(arguments, arg_name)
+                                        for arg_name in ["step1_only"]  # Used only by totalspineseg
+                                        if hasattr(arguments, arg_name)}
+            )
 
         # Delete intermediate outputs
         if fname_prior and os.path.isfile(fname_prior) and arguments.r:
@@ -384,11 +401,17 @@ def main(argv: Sequence[str]):
         # Models can have multiple input images -- create 1 QC report per input image.
         if len(output_filenames) == len(input_filenames):
             iterator = zip(input_filenames, output_filenames, [None] * len(input_filenames), qc_seg)
-        # Special case: totalspineseg which outputs 5 files per 1 input file
-        # Just use the 5th image ([4]) which represents the step2 output
+        # Special case: totalspineseg which outputs 4-5 files per 1 input file
         elif arguments.task == 'totalspineseg':
-            assert len(output_filenames) == 5 * len(input_filenames)
-            iterator = zip(input_filenames, output_filenames[4::5], [None] * len(input_filenames), qc_seg)
+            # `-step1-only: 1`: Use the 4th image ([3]) which represents the step1 output
+            if getattr(arguments, "step1_only") == 1:
+                assert len(output_filenames) == 4 * len(input_filenames)
+                output_filenames_qc = output_filenames[3::4]
+            # `-step1-only: 0`: Use the 5th image ([4]) which represents the step2 output
+            else:
+                assert len(output_filenames) == 5 * len(input_filenames)
+                output_filenames_qc = output_filenames[4::5]
+            iterator = zip(input_filenames, output_filenames_qc, [None] * len(input_filenames), qc_seg)
         # Other models typically have 2 outputs per input (e.g. SC + lesion), so use both segs
         else:
             assert len(output_filenames) == 2 * len(input_filenames)
