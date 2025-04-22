@@ -184,6 +184,7 @@ If you absolutely require these models, you can downgrade to version of SCT list
    :maxdepth: 2
 
    deepseg/spinalcord
+   deepseg/sc_t2star
    deepseg/seg_ms_sc_mp2rage
    deepseg/sc_epi
    deepseg/sc_mouse_t1
