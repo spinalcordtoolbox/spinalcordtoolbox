@@ -112,35 +112,46 @@ def t2_ax_sc_seg():
     return fname_out
 
 
-@pytest.mark.parametrize('fname_image, fnames_seg_manual, fname_out, suffixes, task, thr', [
+@pytest.mark.parametrize('fname_image, fnames_seg_manual, fname_out, suffixes, task, thr, extra_args', [
     (sct_test_path('t2', 't2_fake_lesion.nii.gz'),
      [sct_test_path('t2', 't2_fake_lesion_sc_seg.nii.gz'),
       sct_test_path('t2', 't2_fake_lesion_lesion_seg.nii.gz')],
      't2_deepseg.nii.gz',
      ["_sc_seg", "_lesion_seg"],
      'lesion_sci_t2',
-     0.5),
+     0.5,
+     []),
     (t2_ax(),          # Generate axial images on the fly
      [t2_ax_sc_seg(),  # Just test against SC ground truth, because the model generates SC segs well
       None],           # The model performs poorly on our fake t2_ax() image, so skip evaluating on lesion seg
      't2_deepseg.nii.gz',
      ["_sc_seg", "_lesion_seg"],
      'lesion_ms_axial_t2',
-     0.5),
+     0.5,
+     []),
     (sct_test_path('t1', 't1_mouse.nii.gz'),
      [None, None],
      't1_deepseg.nii.gz',
      ["_GM_seg", "_WM_seg"],
      'gm_wm_mouse_t1',
-     0.5),
+     0.5,
+     []),
     (sct_test_path('t2', 't2.nii.gz'),
      [None, None, None, None, None],
      't2_deepseg.nii.gz',
      ["_step1_canal", "_step1_cord", "_step1_levels", "_step1_output", "_step2_output"],
      'totalspineseg',
-     0),
+     0,
+     []),
+    (sct_test_path('t2', 't2.nii.gz'),
+     [None, None, None, None, None],
+     't2_deepseg.nii.gz',
+     ["_step1_canal", "_step1_cord", "_step1_levels", "_step1_output"],
+     'totalspineseg',
+     0,
+     ["-step1-only", "1"]),
 ])
-def test_segment_nifti_multiclass(fname_image, fnames_seg_manual, fname_out, suffixes, task, thr,
+def test_segment_nifti_multiclass(fname_image, fnames_seg_manual, fname_out, suffixes, task, thr, extra_args,
                                   tmp_path):
     """
     Uses the locally-installed sct_testing_data
@@ -154,7 +165,7 @@ def test_segment_nifti_multiclass(fname_image, fnames_seg_manual, fname_out, suf
 
     fname_out = str(tmp_path / fname_out)
     sct_deepseg.main([task, '-i', fname_image, '-thr', str(thr), '-o', fname_out, '-qc', str(tmp_path/'qc'),
-                      '-largest', '1'])
+                      '-largest', '1'] + extra_args)
     # The `-o` argument takes a single filename, even though one (or more!) files might be output.
     # If multiple output files will be produced, `sct_deepseg` will take this singular `-o` and add suffixes to it.
     fnames_out = [add_suffix(fname_out, suffix) for suffix in suffixes]
