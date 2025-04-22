@@ -101,11 +101,24 @@ def test_segment_nifti_binary_seg(fname_image, fname_seg_manual, fname_out, task
             dice_segmentation = compute_dice(im_seg, im_seg_manual, mode='3d', zboundaries=False)
             assert dice_segmentation > expected_dice
         else:
+            # Confirm the output type is a labelled segmentation instead
             assert output_type == 'seg-labeled', f"ground truth is unexpected type {output_type}"
+
+            # Get all labels in the segmentation, and those that we expect to see
             expected_labels = {coord.value for coord in im_seg_manual.getCoordinatesAveragedByValue()}
             detected_labels = {coord.value for coord in im_seg.getCoordinatesAveragedByValue()}
-            for label in expected_labels:
-                assert label in detected_labels
+
+            # See if any labels we expected to see are missing
+            missing_labels = expected_labels - detected_labels
+            if len(missing_labels) > 0:
+                pytest.fail(f"Test expected label(s) '{missing_labels}' in segmentation which were not present.")
+
+            # See if any labels we weren't expecting showed up.
+            unexpected_labels = detected_labels - expected_labels
+            if len(unexpected_labels) > 0:
+                warnings.warn(
+                    f"Test produced label(s) '{unexpected_labels}' in segmentation which were not expected to appear."
+                )
 
 
 def t2_ax():

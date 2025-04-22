@@ -5,19 +5,19 @@
 #
 # Copyright (c) 2020 Polytechnique Montreal <www.neuro.polymtl.ca>
 # License: see the file LICENSE
-
 # TODO: Add link to example image so users can decide wether their images look "close enough" to some of the proposed
 #  models (e.g., mice, etc.).
 # TODO: add test to make sure that all postprocessing flags match the core.DEFAULT dictionary items
 # TODO: Fetch default value (and display) depending on the model that is used.
 # TODO: accommodate multiclass segmentation
 
+from argparse import SUPPRESS, Action
 import json
 import os
 import sys
 import logging
 from typing import Sequence
-import textwrap
+from textwrap import dedent
 import functools
 
 from spinalcordtoolbox.reports import qc2
@@ -34,32 +34,119 @@ models = LazyLoader("models", globals(), 'spinalcordtoolbox.deepseg.models')
 logger = logging.getLogger(__name__)
 
 
+class _TaskDeprecationAction(Action):
+    """
+    ArgParse action which, similar to help, terminates the program early if the user tries to use the old `-task`
+    syntax and prompts them to update their command with the new `deepseg task_name` syntax instead
+    """
+    def __init__(self,
+                 option_strings,
+                 dest=SUPPRESS,
+                 default=SUPPRESS,
+                 help=SUPPRESS):
+        # Slight modification of `_HelpAction` __init__, as this functions more-or-less identically
+        super(_TaskDeprecationAction, self).__init__(
+            option_strings=option_strings,
+            dest=dest,
+            default=default,
+            nargs='?',
+            metavar='TASK',
+            help=help)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        # If no task name was provided for some reason, use the metavar instead
+        if values is None:
+            values = self.metavar
+
+        # Print out an informative message for the user to help them transition to the new task
+        printv(dedent(f"""
+        The '-task' flag has been deprecated as of SCT version 7.0.
+        To resolve this, change your command from this:
+
+        > sct_deepseg -task {values} ...
+
+        To this:
+
+        > sct_deepseg {values} ...
+        """[1:]))  # noqa: E501 (line too long)
+        #   ^ This removes the implicit newline that `dedent` likes to add
+
+        # Stop parsing immediately
+        parser.exit()
+
+
+class _ListTaskDetailsAction(Action):
+    """
+    ArgParse action which, similar to help, terminates the program early if the user wants the tasks listed out for
+    them. Making this an action prevents some nasty side effects which might be caused by parsing other arguments.
+    """
+    def __init__(self,
+                 option_strings,
+                 dest=SUPPRESS,
+                 default=SUPPRESS,
+                 help=SUPPRESS):
+        # Slight modification of `_HelpAction` __init__, as this functions more-or-less identically
+        super(_ListTaskDetailsAction, self).__init__(
+            option_strings=option_strings,
+            dest=dest,
+            default=default,
+            nargs=0,
+            help=help)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        # Display the detailed task list
+        models.display_list_tasks()
+
+        # Stop parsing immediately
+        parser.exit()
+
+
 def get_parser(subparser_to_return=None):
     # Initialize the top-level `sct_deepseg` argparser
     parser = SCTArgumentParser(
         description="Segment an anatomical structure or pathologies according to the specified deep learning model.",
+        usage=dedent("""
+        sct_deepseg TASK ...
+
+        Examples:
+            sct_deepseg spinalcord -h
+            sct_deepseg gm_mouse_t1 -install
+            sct_deepseg lesion_ms -i cMRI3712.nii.gz
+
+        View available tasks:
+            sct_deepseg -h
+            sct_deepseg -task-details
+        """[1:]),
         epilog=models.list_tasks_string()
+    )
+
+    # Hidden `-task` argument to help users transition to the command format
+    parser.add_argument(
+        "-task",
+        action=_TaskDeprecationAction
     )
 
     optional = parser.optional_arggroup
     optional.add_argument(
-        "-list-tasks",
-        action='store_true',
+        "-task-details",
+        action=_ListTaskDetailsAction,
         help="Display a list of tasks, along with detailed descriptions (including information on how the model was "
-             "trained, what data it was trained on, any performance evaluations, associated papers, etc.)")
-
-    # Add some universal arguments and their associated functionality
-    parser.add_common_args()
+             "trained, what data it was trained on, and any performance evaluations, associated papers, etc. it may have)")
+    optional.add_argument(
+        "-h", "--help",
+        action="help",
+        help="Show this help message and exit."
+    )
 
     # Initialize the `subparsers` "special action object" that can be used to create subparsers
     # See https://docs.python.org/3/library/argparse.html#sub-commands for more details.
     parser_dict = {}
-    subparsers = parser.add_subparsers(help=textwrap.dedent("""
+    subparsers = parser.add_subparsers(help=dedent("""
         Segmentation task to perform.
-            - To install a task, run `sct_deepseg TASK_NAME -install`
-            - To segment an image, run `sct_deepseg TASK_NAME -i input.nii.gz`
-            - To view additional options for a given task, run `sct_deepseg TASK_NAME -h`
-    """), metavar="TASK_NAME", dest="task")
+            - To install a task, run `sct_deepseg TASK -install`
+            - To segment an image, run `sct_deepseg TASK -i input.nii.gz`
+            - To view additional options for a given task, run `sct_deepseg TASK -h`
+    """), metavar="TASK", dest="task")
 
     # Generate 1 subparser per task, and add the following arguments to all subparsers
     # Even if all subparsers share these arguments, it's better to duplicate them, since it allows for the usage:
@@ -68,19 +155,22 @@ def get_parser(subparser_to_return=None):
     # to use the following usage instead, which feels weird when we're using subcommands:
     #    `sct_deepseg -i input.nii.gz TASK_NAME`
     for task_name, task_dict in models.TASKS.items():
-        optional_ref = (f"{task_dict['citation']}\n\n" if task_dict['citation'] else "")
-        subparser = parser_dict[task_name] = subparsers.add_parser(task_name, description=(f"""
-{task_dict["description"]}
+        # Build up the description text in parts so dedent doesn't have a stroke
+        description_text = dedent(f"""
+            {task_dict["description"]}
 
-{task_dict["long_description"]}
+            {task_dict["long_description"]}
 
-## Reference
+            ## Reference\n
+        """)
+        if task_dict.get('citation', False):
+            description_text += f"{task_dict['citation']}\n\n"
+        description_text += f"Project URL: [{task_dict['url']}]({task_dict['url']})"
 
-{optional_ref}Project URL: [{task_dict["url"]}]({task_dict["url"]})
-
-## Usage
-
-"""))
+        subparser = parser_dict[task_name] = subparsers.add_parser(
+            task_name,
+            description=description_text
+        )
 
         input_output = subparser.add_argument_group("\nINPUT/OUTPUT")
         input_output.add_argument(
@@ -109,13 +199,12 @@ def get_parser(subparser_to_return=None):
                  "find release you wish to install, and right-click + copy the URL of the `.zip` listed under 'Assets'.\n"
                  "NB: For multi-model tasks, provide multiple URLs. For single models, just provide one URL.\n"
                  "Example:\n"
-                 "`sct_deepseg -install rootlets_t2 -custom-url "
+                 "`sct_deepseg rootlets_t2 -install -custom-url "
                  "https://github.com/ivadomed/model-spinal-rootlets/releases/download/r20240523/model-spinal-rootlets_ventral_D106_r20240523.zip`\n"
                  "`sct_deepseg rootlets_t2 -i sub-amu01_T2w.nii.gz`")
 
-        misc = subparser.add_argument_group('\nPARAMETERS')
-        params = misc  # FIXME: This PR is dependent on #4852 to disambiguate the 'misc' groups
-        misc.add_argument(
+        params = subparser.add_argument_group('\nPARAMETERS')
+        params.add_argument(
             "-thr",
             type=float,
             dest='binarize_prediction',
@@ -123,18 +212,21 @@ def get_parser(subparser_to_return=None):
                  "Default value is model-specific and was set during optimization "
                  "(more info at https://github.com/sct-pipeline/deepseg-threshold).",
             metavar=Metavar.float)
-        misc.add_argument(
+        params.add_argument(
             "-largest",
             dest='keep_largest',
             type=int,
-            help="Keep the largest connected-objects from the output segmentation. Specify the number of objects to keep."
-                 "To keep all objects, set to 0")
-        misc.add_argument(
+            default=0,
+            choices=(0, 1),
+            help="Keep the largest connected object from each output segmentation; if not set, all objects are kept.")
+        params.add_argument(
             "-fill-holes",
             type=int,
-            help="Fill small holes in the segmentation.",
-            choices=(0, 1))
-        misc.add_argument(
+            choices=(0, 1),
+            default=0,
+            help="If set, small holes in the segmentation will be filled in automatically."
+        )
+        params.add_argument(
             "-remove-small",
             type=str,
             nargs="+",
@@ -170,7 +262,7 @@ def get_parser(subparser_to_return=None):
         misc.add_argument(
             "-qc-seg",
             metavar=Metavar.file,
-            help=textwrap.dedent("""
+            help=dedent("""
                     Segmentation file to use for cropping the QC. This option is useful when you want to QC a region that is different from the output segmentation. For example, for lesion segmentation, it might be useful to provide a cord segmentation to expand the QC field of view to include the full cord, while also still excluding irrelevant tissue.
                     If not provided, the default behavior will depend on the `-qc-plane`:
                        - 'Axial': A sensibly chosen crop radius between 15-40 vox, depending on the resolution and segmentation type.
@@ -216,21 +308,18 @@ for task in models.TASKS.keys():
 def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
-    verbose = arguments.v
-    set_loglevel(verbose=verbose, caller_module_name=__name__)
 
+    # If the user called the command without arguments, display our help w/ an additional instructive message
     if not (
-        arguments.list_tasks
+        hasattr(arguments, 'task_details')
         or (arguments.task and arguments.install)
         or (arguments.task and arguments.i)
     ):
         parser.error("You must specify either a task name + '-install', a task name + an image ('-i'), or "
-                     "'-list-tasks'.")
+                     "'-task-details'.")
 
-    # Deal with task long description
-    if arguments.list_tasks:
-        models.display_list_tasks()
-        exit(0)
+    verbose = arguments.v
+    set_loglevel(verbose=verbose, caller_module_name=__name__)
 
     if arguments.install:
         models_to_install = models.TASKS[arguments.task]['models']

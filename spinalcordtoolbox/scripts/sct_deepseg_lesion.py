@@ -80,6 +80,18 @@ def get_parser():
 
 def main(argv: Sequence[str]):
     """Main function."""
+    # METHOD IS DEPRECATED, WARN THE USER AND UPDATE THEM ON WHAT TO USE INSTEAD
+    from warnings import warn
+    from spinalcordtoolbox.utils.sys import stylize
+    from time import sleep
+    warn(
+        stylize(
+            "`sct_deepseg_lesion` is deprecated, and will be removed in a future version of SCT. Please use "
+            "`sct_deepseg ms_lesion` instead.", ["Red", "Bold"]
+        ), DeprecationWarning
+    )
+    sleep(3)  # Give the user 3 seconds to read the message
+
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v

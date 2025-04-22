@@ -1,4 +1,4 @@
-
+.. _sct_deepseg_seg_ms_sc_mp2rage:
                 
 seg_ms_sc_mp2rage
 =================
