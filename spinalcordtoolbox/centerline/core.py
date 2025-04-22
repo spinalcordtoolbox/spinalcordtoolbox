@@ -9,7 +9,7 @@ import os
 import logging
 import numpy as np
 
-from spinalcordtoolbox.image import Image, zeros_like, add_suffix
+from spinalcordtoolbox.image import Image, zeros_like, add_suffix, reorient_coordinates
 from spinalcordtoolbox.centerline import curve_fitting
 from spinalcordtoolbox.utils.fs import tmp_create
 
@@ -92,16 +92,29 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
     :param param: ParamCenterline() class:
     :param verbose: int: verbose level
     :param remove_temp_files: int: Whether to remove temporary files. 0 = no, 1 = yes.
-    :param space: string: Defining space and orientation in which to output Centerline information. 'pix' = pixel space / RPI, 'phys' = physical space /native.
+    :param space: string: Defines the coordinate space in which to output Centerline arrays (`arr_*`).
+                          (NOTE: This parameter has no bearing on the orientation of the output coordinates.)
+                             - `space='pix'`: The coordinates are in pixel space, and the orientation is the same as the input image.
+                             - `space='phys'`: The coordinates are in physical (scanner) space, and the orientation will be RAS+, as
+                                               defined by the affine matrix transformation according to the NIFTI spec.
     :return: im_centerline: Image: Centerline in discrete coordinate (int)
-    :return: arr_centerline: 3x1 array: Centerline in continuous coordinate (float) for each slice in RPI orientation.
-    :return: arr_centerline_deriv: 3x1 array: Derivatives of x and y centerline wrt. z for each slice in RPI orient.
+    :return: arr_centerline: 3x1 array: Centerline in continuous coordinate (float) for each slice.
+    :return: arr_centerline_deriv: 3x1 array: Derivatives of x and y centerline wrt. z for each slice.
     :return: fit_results: FitResults class
     """
     if not isinstance(im_seg, Image):
         raise ValueError("Expecting an image")
     if space not in ['pix', 'phys']:
         raise ValueError(f"'space' parameter must be either 'pix' or 'phys', but '{space}' was passed instead.")
+
+    # Handle whether we should keep the centerline as a temporary output
+    if remove_temp_files:
+        fname_ctr_temp = None  # Rather than creating then deleting the temp output, we can just skip creating it at all
+    else:
+        temp_path = tmp_create(basename="get-centerline")
+        fname_ctr = (add_suffix(os.path.basename(im_seg.absolutepath), "_ctr") if im_seg.absolutepath
+                     else "centerline.nii.gz")
+        fname_ctr_temp = os.path.join(temp_path, fname_ctr)
 
     # Open image and change to RPI orientation
     native_orientation = im_seg.orientation
@@ -117,12 +130,8 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
         im_centerline = optic.detect_centerline(im_seg, param.contrast, remove_temp_files)
         x_centerline_fit, y_centerline_fit, z_centerline = find_and_sort_coord(im_centerline)
         # Compute derivatives using polynomial fit
-        # TODO: Fix below with reorientation of axes
         _, x_centerline_deriv = curve_fitting.polyfit_1d(z_centerline, x_centerline_fit, z_centerline, deg=param.degree)
         _, y_centerline_deriv = curve_fitting.polyfit_1d(z_centerline, y_centerline_fit, z_centerline, deg=param.degree)
-        # reorient centerline to native orientation
-        im_centerline.change_orientation(native_orientation)
-        im_seg.change_orientation(native_orientation)
         # rename 'z' variable to match the name used the 'non-optic' methods
         z_ref = z_centerline
         # Fit metrics aren't computed for 'optic`, so return 'None'
@@ -211,10 +220,6 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
             # You can check if the sum of the voxels is equal to 1 with:
             # np.apply_over_axes(np.sum, im_centerline.data, [0, 1]).flatten()
 
-        # reorient centerline to native orientation
-        im_centerline.change_orientation(native_orientation)
-        im_seg.change_orientation(native_orientation)
-
         # Compute fitting metrics
         fit_results = FitResults()
         fit_results.rmse = np.sqrt(np.mean((x_mean - x_centerline_fit[index_mean]) ** 2) * px +
@@ -264,22 +269,29 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
             plt.savefig('fig_centerline_' + datetime.now().strftime("%y%m%d-%H%M%S%f") + '_' + param.algo_fitting + '.png')
             plt.close()
 
-    # Save centerline image to tmp_folder (but only if user hasn't opted to `remove_temp_files`)
-    if not remove_temp_files:
-        tmp_folder = tmp_create(basename="get-centerline")
-        fname_ctr = (add_suffix(os.path.basename(im_seg.absolutepath), "_ctr") if im_seg.absolutepath
-                     else "centerline.nii.gz")
-        im_centerline.save(os.path.join(tmp_folder, fname_ctr), mutable=True)
+    # Construct the outputs (still in RPI- orientation)
+    im_centerline_rpi = im_centerline
+    arr_ctl_rpi = np.array([x_centerline_fit, y_centerline_fit, z_ref])
+    arr_ctl_der_rpi = np.array([x_centerline_deriv, y_centerline_deriv, np.ones_like(z_ref)])
 
-    arr_ctl = np.array([x_centerline_fit, y_centerline_fit, z_ref])
-    arr_ctl_der = np.array([x_centerline_deriv, y_centerline_deriv, np.ones_like(z_ref)])
+    # Reorient the outputs back to the original orientation (copy to avoid mutating `im_centerline_rpi`)
+    im_centerline = im_centerline_rpi.copy().change_orientation(native_orientation)
+    # Note: We transpose here because we need to go from [x_list, y_list, z_list] to list[[x, y, z], ...], then back
+    arr_ctl = np.array(reorient_coordinates(arr_ctl_rpi.T, im_centerline_rpi, native_orientation, mode='absolute')).T
+    arr_ctl_der = np.array(reorient_coordinates(arr_ctl_der_rpi.T, im_centerline_rpi, native_orientation, mode='relative')).T
+
     # If 'phys' is specified, adjust centerline coordinates (`Centerline.points`) and
     # derivatives (`Centerline.derivatives`) to physical ("phys") space and native (`im_seg`) orientation.
     if space == 'phys':
         # Transform centerline to physical coordinate system
-        arr_ctl = im_seg.transfo_pix2phys(arr_ctl.T, mode='absolute').T
-        arr_ctl_der = im_seg.transfo_pix2phys(arr_ctl_der.T, mode='relative').T
+        # Note: We **must** use the reoriented image (`im_centerline`), because the orientation of the affine must
+        #       match the orientation of the coordinates. See: https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4622
+        arr_ctl = im_centerline.transfo_pix2phys(arr_ctl.T, mode='absolute').T
+        arr_ctl_der = im_centerline.transfo_pix2phys(arr_ctl_der.T, mode='relative').T
 
+    # Save outputs
+    if fname_ctr_temp:  # Preserve centerline image in tempdir for debugging purposes
+        im_centerline.save(fname_ctr_temp, mutable=True)
     return (im_centerline,
             arr_ctl,
             arr_ctl_der,

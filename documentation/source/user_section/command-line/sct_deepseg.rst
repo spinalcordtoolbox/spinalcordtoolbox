@@ -41,6 +41,9 @@ You can replace "``spinalcord``" with any of the task names in the table below t
 
 Gray matter
 -----------
+   
+.. |graymatter| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/graymatter.png
+   :target: deepseg/graymatter.html
 
 .. |gm_sc_7t_t2star| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/gm_sc_7t_t2star.png
    :target: deepseg/gm_sc_7t_t2star.html
@@ -58,19 +61,19 @@ Gray matter segmentation can be performed by running the following sample comman
 
 .. code::
 
-   sct_deepseg gm_sc_7t_t2star -i input.nii.gz
+   sct_deepseg graymatter -i input.nii.gz
 
-You can replace "``gm_sc_7t_t2star``" with any of the task names in the table below to perform different tasks. Click on a task below for more information.
+You can replace "``graymatter``" with any of the task names in the table below to perform different tasks. Click on a task below for more information.
 
 .. list-table::
    :align: center
    :widths: 25 25 25
 
-   * - |gm_sc_7t_t2star| ``gm_sc_7t_t2star``
+   * - |graymatter| ``graymatter``
+     - |gm_sc_7t_t2star| ``gm_sc_7t_t2star``
      - |gm_wm_exvivo_t2| ``gm_wm_exvivo_t2``
-     - |gm_wm_mouse_t1| ``gm_wm_mouse_t1``
-   * - |gm_mouse_t1| ``gm_mouse_t1``
-     -
+   * - |gm_wm_mouse_t1| ``gm_wm_mouse_t1``
+     - |gm_mouse_t1| ``gm_mouse_t1``
      -
 
 
@@ -189,6 +192,7 @@ If you absolutely require these models, you can downgrade to version of SCT list
    deepseg/sc_epi
    deepseg/sc_mouse_t1
    deepseg/sc_lumbar_t2
+   deepseg/graymatter
    deepseg/gm_wm_exvivo_t2
    deepseg/gm_sc_7t_t2star
    deepseg/gm_mouse_t1

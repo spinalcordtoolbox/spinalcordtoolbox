@@ -18,6 +18,7 @@ from functools import cached_property, partial
 
 from .sys import check_exe, printv, removesuffix, ANSIColors16
 from .fs import relpath_or_abspath
+from .profiling import TimeProfilingAction, MemoryTracingAction
 
 logger = logging.getLogger(__name__)
 
@@ -298,13 +299,45 @@ class SCTArgumentParser(argparse.ArgumentParser):
             help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode."
         )
 
+        # Add a flag which allows time-based profiling the profiler
+        arg_group.add_argument(
+            '-profile-time',
+            nargs='?',
+            metavar=Metavar.file,
+            action=TimeProfilingAction,
+            help="Enables time-based profiling of the program, dumping the results to the specified file.\n"
+                 "\n"
+                 "If no file is specified, human-readable results are placed into a 'time_profiling_results.txt' "
+                 f"document in the current directory ('{os.getcwd()}'). If the specified file is a `.prof` file, the "
+                 "file will instead be in binary format, ready for use with common post-profiler utilities (such as "
+                 "`snakeviz`)."
+        )
+        arg_group.add_argument(
+            '-trace-memory',
+            nargs='?',
+            metavar=Metavar.folder,
+            action=MemoryTracingAction,
+            help="Enables memory tracing of the program.\n"
+                 "\n"
+                 "When active, a measure of the peak memory (in KiB) will be output to the file `peak_memory.txt`. "
+                 "Optionally, developers can also modify the SCT code to add additional `snapshot_memory()` calls. "
+                 "These calls will 'snapshot' the memory usage at that moment, saving the memory trace at that point "
+                 "into a second file (`memory_snapshots.txt`).\n"
+                 "\n"
+                 f"By default, both outputs will be placed in the current directory ('{os.getcwd()}'). Optionally, you "
+                 "may provide an alternative directory (`-trace-memory <dir_name>`), in which case all files will "
+                 "be placed in that directory instead.\n"
+                 "Note that this WILL incur an overhead to runtime, so it is generally advised that you do not run "
+                 "this in conjunction with the time profiler or in time-sensitive contexts."
+        )
+
         # Return the arg_group to allow for chained operations
         return arg_group
 
     def add_tempfile_args(self, arg_group=None):
         """
         Adds a single argument:
-            -r: The help flag. If present, denotes that temporary files should be removed after the program ends.
+            -r: The remove_temp flag. If present, denotes that temporary files should be removed after the program ends.
 
         If no argument group is provided, the arguments are placed into the "MISC" argument group
         """
