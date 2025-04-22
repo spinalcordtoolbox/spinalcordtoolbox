@@ -80,9 +80,6 @@ You can replace "``graymatter``" with any of the task names in the table below t
 Pathologies
 -----------
 
-.. |lesion_ms| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/ms_lesion.png
-   :target: deepseg/lesion_ms.html
-
 .. |lesion_sci_t2| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/sci_lesion_sc_t2.png
    :target: deepseg/lesion_sci_t2.html
 
@@ -91,6 +88,9 @@ Pathologies
 
 .. |lesion_ms_axial_t2| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/ms_lesion_sc_axial_t2.png
    :target: deepseg/lesion_ms_axial_t2.html
+
+.. |lesion_ms| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/ms_lesion.png
+   :target: deepseg/lesion_ms.html
 
 .. |tumor_edema_cavity_t1_t2| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/tumor_edema_cavity_t1_t2.png
    :target: deepseg/tumor_edema_cavity_t1_t2.html
@@ -102,17 +102,17 @@ Pathology segmentation can be performed by running the following sample command:
 
 .. code::
 
-   sct_deepseg lesion_ms -i input.nii.gz
+   sct_deepseg lesion_sci_t2 -i input.nii.gz
 
-You can replace "``lesion_ms``" with any of the task names in the table below to perform different tasks. Click on a task below for more information.
+You can replace "``lesion_sci_t2``" with any of the task names in the table below to perform different tasks. Click on a task below for more information.
 
 
 .. list-table::
    :align: center
    :widths: 25 25 25
 
-   * - |lesion_ms| ``lesion_ms``
-     - |lesion_sci_t2| ``lesion_sci_t2``
+   * - |lesion_sci_t2| ``lesion_sci_t2``
+     - |lesion_ms| ``lesion_ms``
      - |lesion_ms_axial_t2| ``lesion_ms_axial_t2``
    * - |lesion_ms_mp2rage| ``lesion_ms_mp2rage``
      - |tumor_edema_cavity_t1_t2| ``tumor_edema_cavity_t1_t2``
@@ -174,7 +174,7 @@ Retired models
    :target: deepseg/seg_ms_sc_mp2rage.html
 
 .. |sc_t2star| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/sc_t2star.png
-    :target: deepseg/tar.html
+    :target: deepseg/sc_t2star.html
 
 These models have been replaced by newer, more advanced models. We recommend switching to the model listed in the table below.
 
