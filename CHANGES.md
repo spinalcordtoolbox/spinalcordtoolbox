@@ -29,7 +29,7 @@
  - **sct_get_centerline**: Update `get_centerline` to ensure that output arrays match the orientation of the output centerline image. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4622)
  - **sct_process_segmentation**: Fix slice indexing for `-angle-corr-centerline`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4850)
  - **sct_qc**: Replace `pyplot` usage in `qc.py` to address crashing in Jupyter notebooks. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4838)
- - Implement QC outlines for multi-valued segmentations. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4723)
+ - **sct_qc**: Implement QC outlines for multi-valued segmentations. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4723)
 
 **INSTALLATION**
  - Change over to MiniForge as the package manager (from MiniConda prior). [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4768)
