@@ -22,8 +22,7 @@
  - **sct_qc**: Overhaul the QC report backend to use modern web technologies (Vite/React/Tailwind/Typescript). [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4827)
  - **sct_resample**: Improve clarity of `ZeroDivisionError` message when resampling. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4821)
  - Change over to MiniForge as the package manager (from MiniConda prior). [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4768)
- - Add `-timeit` argument to "common args" argparse group to enable profiling for CLI scripts. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4825)
- - Remove opt-in `-timeit` flag in favor of running a timer by default . [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4836)
+ - Add basic automatic time profiling for all CLI scripts by default. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4836)
 
 **BUG**
  - **sct_deepseg**: Preserve the `_seg` suffix for the contrast-agnostic model. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4809)
