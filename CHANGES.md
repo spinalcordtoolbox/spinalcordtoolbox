@@ -18,7 +18,7 @@
 
 **ENHANCEMENT**
  - **sct_analyze_lesion**: Update interpolation logic used when determining the midsagittal slice of lesions. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4702)
- - **sct_deepseg**: Improve `deepseg` usage and help in preparation for 7.0. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4852)
+ - **sct_deepseg**: Updated `sct_deepseg` usage to improve clarity and ease of use. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4852)
  - **sct_qc**: Overhaul the QC report backend to use modern web technologies (Vite/React/Tailwind/Typescript). [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4827)
  - **sct_resample**: Improve clarity of `ZeroDivisionError` message when resampling. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4821)
  - Change over to MiniForge as the package manager (from MiniConda prior). [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4768)
