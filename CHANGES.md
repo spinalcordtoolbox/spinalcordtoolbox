@@ -33,11 +33,9 @@
 
 **INSTALLATION**
  - Change over to MiniForge as the package manager (from MiniConda prior). [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4768)
- - Temporarily set `torch<2.6` due to upstream `weights_only=True` change. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4776)
- - Ensure that `torch<2.6` requirement gets copied over to `requirements-freeze.txt`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4779)
+ - Pin `torch` to `<2.3` to keep versions in sync with Intel Mac platforms. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4788)
  - Transfer hotfixes from the `test-past-releases.yml` CI workflow to the 5.x-6.x series of SCT releases. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4780)
  - Allow ANTs binaries to access `msvc-runtime` DLLs to avoid DLL not found errors. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4784)
- - Pin `torch` to `<2.3` to keep versions in sync with Intel Mac platforms. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4788)
  - Gracefully handle permission issues on RC files during installation. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4812)
 
 **DOCUMENTATION**
