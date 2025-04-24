@@ -41,6 +41,9 @@ You can replace "``spinalcord``" with any of the task names in the table below t
 
 Gray matter
 -----------
+   
+.. |graymatter| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/graymatter.png
+   :target: deepseg/graymatter.html
 
 .. |gm_sc_7t_t2star| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/gm_sc_7t_t2star.png
    :target: deepseg/gm_sc_7t_t2star.html
@@ -58,19 +61,19 @@ Gray matter segmentation can be performed by running the following sample comman
 
 .. code::
 
-   sct_deepseg gm_sc_7t_t2star -i input.nii.gz
+   sct_deepseg graymatter -i input.nii.gz
 
-You can replace "``gm_sc_7t_t2star``" with any of the task names in the table below to perform different tasks. Click on a task below for more information.
+You can replace "``graymatter``" with any of the task names in the table below to perform different tasks. Click on a task below for more information.
 
 .. list-table::
    :align: center
    :widths: 25 25 25
 
-   * - |gm_sc_7t_t2star| ``gm_sc_7t_t2star``
+   * - |graymatter| ``graymatter``
+     - |gm_sc_7t_t2star| ``gm_sc_7t_t2star``
      - |gm_wm_exvivo_t2| ``gm_wm_exvivo_t2``
-     - |gm_wm_mouse_t1| ``gm_wm_mouse_t1``
-   * - |gm_mouse_t1| ``gm_mouse_t1``
-     -
+   * - |gm_wm_mouse_t1| ``gm_wm_mouse_t1``
+     - |gm_mouse_t1| ``gm_mouse_t1``
      -
 
 
@@ -140,25 +143,10 @@ You can replace "``rootlets_t2``" with any of the task names in the table below 
 
    * - |rootlets_t2| ``rootlets_t2``
      - |totalspineseg| ``totalspineseg``
-     -
+     - |sc_canal_t2| ``sc_canal_t2``
 
 .. |sc_canal_t2| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/spinal_canal_t2.png
    :target: deepseg/sc_canal_t2.html
-
-Spinal Canal segmentation can be performed by running the following sample command:
-
-.. code::
-
-   sct_deepseg sc_canal_t2 -i input.nii.gz
-
-
-.. list-table::
-   :align: center
-   :widths: 25 25 25
-
-   * - |sc_canal_t2| ``sc_canal_t2``
-     - 
-     -
 
 
 Retired models
@@ -199,10 +187,12 @@ If you absolutely require these models, you can downgrade to version of SCT list
    :maxdepth: 2
 
    deepseg/spinalcord
+   deepseg/sc_t2star
    deepseg/seg_ms_sc_mp2rage
    deepseg/sc_epi
    deepseg/sc_mouse_t1
    deepseg/sc_lumbar_t2
+   deepseg/graymatter
    deepseg/gm_wm_exvivo_t2
    deepseg/gm_sc_7t_t2star
    deepseg/gm_mouse_t1

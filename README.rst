@@ -72,7 +72,7 @@ For macOS and Linux users, the simplest way to install SCT is to download `the l
 
 .. code::
 
-   ./install_sct
+    ./install_sct
 
 For more complex installation setups (Windows users, Docker, FSLeyes integration), see the `Installation <https://spinalcordtoolbox.com/user_section/installation.html>`_ page.
 
@@ -88,18 +88,16 @@ The primary way to invoke SCT is through terminal commands. For example:
 
 .. code-block:: console
 
-  $ sct_deepseg_sc -i t2.nii.gz -c t2
+    $ sct_deepseg spinalcord -i t2.nii.gz
 
-  Cropping the image around the spinal cord...
-  Normalizing the intensity...
-  Segmenting the spinal cord using deep learning on 2D patches...
-  Reassembling the image...
-  Resampling the segmentation to the native image resolution using linear interpolation...
-  Binarizing the resampled segmentation...
-  Compute shape analysis: 100%|################| 55/55 [00:00<00:00, 106.05iter/s]
-
-  Done! To view results, type:
-  fsleyes t2.nii.gz -cm greyscale t2_seg.nii.gz -cm red -a 70.0 &
+    Model loaded successfully.
+    Changing orientation of the input to the model orientation (RPI)...
+    Starting inference...
+    100%|████████████████████████████████████| 54/54 [00:00<00:00,  6.83s/it]
+    Inference done.
+    Total inference time: 6 minute(s) 27 seconds
+    Reorienting the prediction back to original orientation...
+    Reorientation to original orientation LPI done.
 
 For a full overview of the available commands, see the `Command-Line Tools <https://spinalcordtoolbox.com/user_section/command-line.html>`_ page.
 
