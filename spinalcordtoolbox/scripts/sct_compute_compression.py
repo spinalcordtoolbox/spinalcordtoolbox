@@ -41,7 +41,7 @@ def get_parser():
               - spinal cord compression using MSCC (maximum spinal cord compression)
               - spinal canal stenosis using MCC (maximum canal compromise)
 
-            Metrics are normalized using the non-compressed levels above and below the compression site using the following equation:
+            Metrics are normalized using the non-compressed levels above and below the compression site (or injury site with lesion) using the following equation:
 
               ```
               ratio = (1 - mi/((ma+mb)/2))
