@@ -552,6 +552,8 @@ TASKS = {
          'url': 'https://github.com/ivadomed/model-gm-contrast-region-agnostic',
          'models': ['model_seg_gm_contrast_region_agnostic'],
          'citation': None,
+         'group': 'gray_matter',
+         'priority': 1  # Push gray matter to the top of its eponymous category
          },
 }
 
