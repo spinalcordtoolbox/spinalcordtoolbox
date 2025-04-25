@@ -21,6 +21,18 @@ def dummy_3d_compression_label():
     nibabel.save(nii, filename)
     return filename
 
+@pytest.fixture(scope="session")
+def dummy_3d_lesion_label():
+    data = np.zeros([32, 32, 81], dtype=np.uint8)
+    # Create a binary mask with a lesion
+    data[13:17, 13:17, 43:46] = 1
+    data[14:16, 14:16, 46:50] = 1
+    data[13:17, 13:17, 50:55] = 1
+    nii = nibabel.Nifti1Image(data, np.eye(4))
+    filename = tempfile.NamedTemporaryFile(prefix='lesion', suffix='.nii.gz', delete=False).name
+    nibabel.save(nii, filename)
+    return filename
+
 
 @pytest.fixture(scope="session")
 def dummy_3d_vert_label():
@@ -161,3 +173,21 @@ def test_sct_compute_compression_sex_F(tmp_path, dummy_3d_mask_nib, dummy_3d_com
         assert float(row['diameter_AP_ratio']) == pytest.approx(20.040803711692355)
         assert float(row['diameter_AP_ratio_PAM50']) == pytest.approx(12.525502319807725)
         assert float(row['diameter_AP_ratio_PAM50_normalized']) == pytest.approx(16.259778925320834)
+
+
+def test_sct_compute_compression_lesion(tmp_path, dummy_3d_mask_nib, dummy_3d_lesion_label):
+    """ Run sct_compute_compression for a lesion"""
+    filename = str(tmp_path / 'tmp_file_out.csv')
+    sct_compute_compression.main(argv=['-i', dummy_3d_mask_nib, '-l', dummy_3d_lesion_label,
+                                       '-metric', 'diameter_AP', '-o', filename])
+    with open(filename, "r") as csvfile:
+        reader = csv.DictReader(csvfile, delimiter=',')
+        row = next(reader)
+        assert row['compression_level'] == 'n/a'     # 'n/a' because we do not provide a vertfile
+        assert float(row['Slice (I->S)']) == 48
+        assert float(row['diameter_AP_ratio']) == pytest.approx(20.040803711692355)
+        assert row['diameter_AP_ratio_PAM50'] == 'n/a'   # 'n/a' because we do not do normalization
+        assert row['diameter_AP_ratio_PAM50_normalized'] == 'n/a'    # 'n/a' because we do not do normalization
+        # Ensure that there isn't a duplicate appended row from running sct_compute_compression twice
+        with pytest.raises(StopIteration):
+            next(reader)
