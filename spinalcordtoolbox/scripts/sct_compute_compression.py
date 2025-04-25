@@ -566,6 +566,9 @@ def main(argv: Sequence[str]):
     if arguments.normalize_hc and not path_ref_hc:
         raise FileNotFoundError(f"Directory with normalized PAM50 metrics {path_ref} does not contain any CSV files.\n"
                                 f"You can try re-downloading it using 'sct_download_data -d PAM50_normalized_metrics'.")
+    if arguments.normalize_hc and not arguments.vertfile:
+        raise ValueError(f"Vertebral labeling file is required for the '-normalize-hc' flag. "
+                         f"Please provide it using the '-vertfile' argument.")
 
     # Print warning if sex or age are specified without normalized-hc
     if sex and not arguments.normalize_hc:
