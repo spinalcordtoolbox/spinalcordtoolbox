@@ -675,11 +675,7 @@ def main(argv: Sequence[str]):
         compressed_levels_dict_PAM50 = get_slices_in_PAM50(compressed_levels_dict, df_metrics, df_metrics_PAM50)
         z_range_PAM50_below, z_range_PAM50_above = get_slices_upper_lower_level_from_PAM50(compressed_levels_dict_PAM50, df_metrics_PAM50, distance, extent, slice_thickness_PAM50)
 
-    # Step 3a. Compute MSCC metrics for each compressed level
-    # NOTE: the `if` logic to determine whether we are computing MSCC for the compression or the lesion is not based
-    #  on the check of `compressed_levels_dict`. I chose to do this because we expect that we assume that the vertebral
-    #  labeling file (`-vertfile`) is provided for the compression, and not for the lesion. However, in theory, we might
-    #  not require the vertebral labeling file for the compression either, so this logic could be improved.
+    # Step 3a. Compute MSCC metrics for each compressed level (vertebral labeling available)
     # ------------------------------------------------------
     if compressed_levels_dict:
         # Loop through all compressed levels (compute one MSCC per compressed level)
@@ -733,39 +729,29 @@ def main(argv: Sequence[str]):
         save_df_to_csv(df_metric_ratios, fname_out)
         printv(f'\nSaved: {os.path.abspath(fname_out)}')
 
-    # Step 3b. Compute MSCC metrics for the lesion
+    # Step 3b. Compute MSCC metrics for each compressed level (vertebral labeling not available)
     # ------------------------------------------------------
     if not compressed_levels_dict:
-        # Identify the level of maximum injury, defined as the axial slice within the lesion (`slices_compressed`) that
-        # has the minimum 'MEAN(diameter_AP)' value in `df_metrics`.
-        # This metric is computed from either the spinal cord or spinal canal segmentation (`arguments.i`).
-        df_filtered = df_metrics[df_metrics['Slice (I->S)'].isin(slices_compressed)]
-        # NOTE: we use 'MEAN(diameter_AP)' for all metrics here as this definition was used in the original publication:
-        #  https://pubmed.ncbi.nlm.nih.gov/10101829/
-        min_idx = df_filtered['MEAN(diameter_AP)'].idxmin()
-        slice_num = df_filtered.loc[min_idx, 'Slice (I->S)']    # this might not be necessary as the index is already the slice
-        logger.debug(f'\nmaximum injury z slice = {slice_num}')
-        slice_list = [slice_num]     # int --> list to make it compatible with the 'average_metric' function below
+        # Loop through all compressed levels (compute one MSCC per compressed level)
+        rows = []
+        for slice_num in slices_compressed:
+            slice_list = [slice_num]     # int --> list to make it compatible with the 'average_metric' function below
 
-        # Compute metric ratio (non-normalized)
-        ma, mb, mi = average_metric(df_metrics, metric, z_range_centerline_above, z_range_centerline_below, slice_list)
-        metric_ratio_result = metric_ratio(ma, mb, mi)
+            # Compute metric ratio (non-normalized)
+            ma, mb, mi = average_metric(df_metrics, metric, z_range_centerline_above, z_range_centerline_below, slice_list)
+            metric_ratio_result = metric_ratio(ma, mb, mi)
 
-        # Display results
-        pixdim2 = img_seg.dim[5]
-        logger.debug(f'\nmetric_a = {ma}, metric_b = {mb}, metric_i = {mi}')
-        logger.debug(f'metric_a = {ma*pixdim2:.2f}mm, metric_b = {mb*pixdim2:.2f}mm, metric_i = {mi*pixdim2:.2f}mm')
-        printv(f'{arguments.metric}_ratio = {metric_ratio_result}', verbose=verbose, type='info')
-
-        row = [[arguments.i, None, slice_num, metric_ratio_result, None, None]]  # nested list to be compatible with the 'DataFrame.from_records' function
-        metric_columns = [
-            f'{arguments.metric}_ratio',
-            f'{arguments.metric}_ratio_PAM50',
-            f'{arguments.metric}_ratio_PAM50_normalized',
-        ]
-        df_metric_ratios = pd.DataFrame.from_records(row, index=INDEX_COLUMNS, columns=INDEX_COLUMNS + metric_columns)
-        save_df_to_csv(df_metric_ratios, fname_out)
-        printv(f'\nSaved: {os.path.abspath(fname_out)}')
+            # The two last None values are placeholders for the PAM50 and normalized metrics (as we cannot compute them
+            # without vertebral labeling)
+            rows.append([arguments.i, None, slice_num, metric_ratio_result, None, None])
+            metric_columns = [
+                f'{arguments.metric}_ratio',
+                f'{arguments.metric}_ratio_PAM50',
+                f'{arguments.metric}_ratio_PAM50_normalized',
+            ]
+            df_metric_ratios = pd.DataFrame.from_records(rows, index=INDEX_COLUMNS, columns=INDEX_COLUMNS + metric_columns)
+            save_df_to_csv(df_metric_ratios, fname_out)
+            printv(f'\nSaved: {os.path.abspath(fname_out)}')
 
 
 if __name__ == "__main__":
