@@ -103,7 +103,7 @@ def get_parser():
             Choose between:
               - compression: use compression labels (provided by the '-l' arg).
               - lesion: use lesion mask (provided by the '-l' arg). In this case, the level of maximum injury is automatically determined as the axial slice within the lesion mask that has the minimum spinal cord AP diameter.
-        """),
+        """),   # noqa: E501 (line too long)
     )
     optional.add_argument(
         '-extent',
@@ -600,8 +600,8 @@ def main(argv: Sequence[str]):
         raise FileNotFoundError(f"Directory with normalized PAM50 metrics {path_ref} does not contain any CSV files.\n"
                                 f"You can try re-downloading it using 'sct_download_data -d PAM50_normalized_metrics'.")
     if arguments.normalize_hc and not arguments.vertfile:
-        raise ValueError(f"Vertebral labeling file is required for the '-normalize-hc' flag. "
-                         f"Please provide it using the '-vertfile' argument.")
+        raise ValueError("Vertebral labeling file is required for the '-normalize-hc' flag. "
+                         "Please provide it using the '-vertfile' argument.")
 
     # Print warning if sex or age are specified without normalized-hc
     if sex and not arguments.normalize_hc:
