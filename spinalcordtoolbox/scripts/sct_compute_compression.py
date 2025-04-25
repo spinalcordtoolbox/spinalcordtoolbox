@@ -639,6 +639,10 @@ def main(argv: Sequence[str]):
         z_range_PAM50_below, z_range_PAM50_above = get_slices_upper_lower_level_from_PAM50(compressed_levels_dict_PAM50, df_metrics_PAM50, distance, extent, slice_thickness_PAM50)
 
     # Step 3a. Compute MSCC metrics for each compressed level
+    # NOTE: the `if` logic to determine whether we are computing MSCC for the compression or the lesion is not based
+    #  on the check of `compressed_levels_dict`. I chose to do this because we expect that we assume that the vertebral
+    #  labeling file (`-vertfile`) is provided for the compression, and not for the lesion. However, in theory, we might
+    #  not require the vertebral labeling file for the compression either, so this logic could be improved.
     # ------------------------------------------------------
     if compressed_levels_dict:
         # Loop through all compressed levels (compute one MSCC per compressed level)
