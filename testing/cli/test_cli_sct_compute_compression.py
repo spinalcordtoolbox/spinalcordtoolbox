@@ -25,8 +25,8 @@ def dummy_3d_compression_label():
 @pytest.fixture(scope="session")
 def dummy_3d_multiple_compression_label():
     data = np.zeros([32, 32, 81], dtype=np.uint8)
-    data[15, 15, 48] = 1
-    data[15, 15, 60] = 1
+    data[15, 15, 48] = 1    # Compression #1
+    data[15, 15, 60] = 1    # Compression #2
     nii = nibabel.nifti1.Nifti1Image(data, np.eye(4))
     filename = tempfile.NamedTemporaryFile(prefix='multiple_compression', suffix='.nii.gz', delete=False).name
     nibabel.save(nii, filename)
@@ -36,7 +36,7 @@ def dummy_3d_multiple_compression_label():
 @pytest.fixture(scope="session")
 def dummy_3d_lesion_label():
     data = np.zeros([32, 32, 81], dtype=np.uint8)
-    # Create a binary mask with a lesion
+    # Create a binary mask with a 3D lesion
     data[13:17, 13:17, 43:46] = 1
     data[14:16, 14:16, 46:50] = 1
     data[13:17, 13:17, 50:55] = 1
