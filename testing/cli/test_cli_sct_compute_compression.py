@@ -21,6 +21,16 @@ def dummy_3d_compression_label():
     nibabel.save(nii, filename)
     return filename
 
+@pytest.fixture(scope="session")
+def dummy_3d_multiple_compression_label():
+    data = np.zeros([32, 32, 81], dtype=np.uint8)
+    data[15, 15, 48] = 1
+    data[15, 15, 60] = 1
+    nii = nibabel.nifti1.Nifti1Image(data, np.eye(4))
+    filename = tempfile.NamedTemporaryFile(prefix='multiple_compression', suffix='.nii.gz', delete=False).name
+    nibabel.save(nii, filename)
+    return filename
+
 
 @pytest.fixture(scope="session")
 def dummy_3d_lesion_label():
@@ -133,6 +143,29 @@ def test_sct_compute_compression_no_normalization(tmp_path, dummy_3d_mask_nib, d
         row = next(reader)
         assert float(row['compression_level']) == 5.0
         assert float(row['diameter_AP_ratio']) == pytest.approx(20.040803711692355)
+        assert row['diameter_AP_ratio_PAM50'] == 'n/a'
+        assert row['diameter_AP_ratio_PAM50_normalized'] == 'n/a'
+
+
+def test_sct_compute_compression_no_normalization_multiple_compressions(tmp_path, dummy_3d_mask_nib, dummy_3d_multiple_compression_label, dummy_3d_vert_label):
+    """ Run sct_compute_compression on label file with multiple compression labels without normalization to a database of healthy controls"""
+    filename = str(tmp_path / 'tmp_file_out.csv')
+    sct_compute_compression.main(argv=['-i', dummy_3d_mask_nib, '-l', dummy_3d_multiple_compression_label, '-vertfile', dummy_3d_vert_label,
+                                       '-normalize-hc',  '0', '-o', filename])
+    with open(filename, "r") as csvfile:
+        reader = csv.DictReader(csvfile, delimiter=',')
+        # First compression
+        row = next(reader)
+        assert float(row['Slice (I->S)']) == 48
+        assert float(row['compression_level']) == 5.0
+        assert float(row['diameter_AP_ratio']) == pytest.approx(20.040803711692355)
+        assert row['diameter_AP_ratio_PAM50'] == 'n/a'
+        assert row['diameter_AP_ratio_PAM50_normalized'] == 'n/a'
+        # Second compression
+        row = next(reader)
+        assert float(row['Slice (I->S)']) == 60
+        assert float(row['compression_level']) == 6.0
+        assert float(row['diameter_AP_ratio']) == pytest.approx(2.220446049250313e-14)
         assert row['diameter_AP_ratio_PAM50'] == 'n/a'
         assert row['diameter_AP_ratio_PAM50_normalized'] == 'n/a'
 
