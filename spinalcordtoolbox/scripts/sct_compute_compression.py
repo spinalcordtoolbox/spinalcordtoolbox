@@ -95,6 +95,17 @@ def get_parser():
         """),
     )
     optional.add_argument(
+        '-mode',
+        type=str,
+        choices=['compression', 'lesion'],
+        default='compression',
+        help=textwrap.dedent("""
+            Choose between:
+              - compression: use compression labels (provided by the '-l' arg).
+              - lesion: use lesion mask (provided by the '-l' arg). In this case, the level of maximum injury is automatically determined as the axial slice within the lesion mask that has the minimum spinal cord AP diameter.
+        """),
+    )
+    optional.add_argument(
         '-extent',
         type=float,
         metavar=Metavar.float,
@@ -171,21 +182,42 @@ def get_slice_thickness(img):
     return img.dim[6]
 
 
-def get_compressed_slice(img):
+def get_compressed_slice(img, df_metrics, mode):
     """
     Get all the compression labels (voxels of value: '1') that are contained in the input image.
     :param img: Image: RPI-oriented source image
+    :param df_metrics: pandas.DataFrame: dataframe with spinal cord shape metrics (output of sct_process_segmentation)
+    :param mode: str: either 'compression' or 'lesion'
     :return list: list of slices number
     """
     # Get all coordinates
     coordinates = img.getNonZeroCoordinates(sorting='z')
-    logger.debug(f'Compression labels coordinates: {coordinates}')
     # Check it coordinates is empty
     if not coordinates:
         raise ValueError('No compression labels found.')
-    # Return only unique axial slice numbers (z coordinate in RPI orientation)
+
+    # Get only unique axial slice numbers (z coordinate in RPI orientation)
     # 'set' is used to get unique z coordinates (as lesion can have multiple pixels within a single slice)
-    return list(set([int(coordinate.z) for coordinate in coordinates]))
+    slices_compressed = list(set([int(coordinate.z) for coordinate in coordinates]))
+
+    # For compression labels, return the slices with compression labels
+    if mode == 'compression':
+        logger.debug(f'Compression labels coordinates: {coordinates}')
+        return slices_compressed
+
+    # For lesion mask, return the slice with the maximum injury
+    if mode == 'lesion':
+        # Identify the level of maximum injury, defined as the axial slice within the lesion (`slices_compressed`) that
+        # has the minimum 'MEAN(diameter_AP)' value in `df_metrics`.
+        # This metric is computed from either the spinal cord or spinal canal segmentation (`arguments.i`).
+        df_filtered = df_metrics[df_metrics['Slice (I->S)'].isin(slices_compressed)]
+        # NOTE: we use 'MEAN(diameter_AP)' for all metrics here as this definition was used in the original publication:
+        #  https://pubmed.ncbi.nlm.nih.gov/10101829/
+        min_idx = df_filtered['MEAN(diameter_AP)'].idxmin()
+        slice_num = df_filtered.loc[min_idx, 'Slice (I->S)']  # this might not be necessary as the index is already the slice
+        return [slice_num]
+
+    raise ValueError(f"Invalid mode '{mode}'. Expected 'compression' or 'lesion'.")
 
 
 def get_verterbral_level_from_slice(slices, df_metrics):
@@ -540,6 +572,7 @@ def main(argv: Sequence[str]):
     extent = arguments.extent
     sex = arguments.sex
     age = arguments.age
+    mode = arguments.mode
     metric = 'MEAN(' + arguments.metric + ')'  # Adjust for csv file columns name
     if arguments.o is not None:
         fname_out = arguments.o
@@ -596,8 +629,9 @@ def main(argv: Sequence[str]):
         sct_process_segmentation.main(argv=['-i', fname_segmentation, '-perslice', '1', '-o', fname_metrics])
     # Fetch metrics of subject
     df_metrics = pd.read_csv(fname_metrics).astype({metric: float})
+    # Get compressed slices
+    slices_compressed = get_compressed_slice(img_labels, df_metrics, mode)
     # Get vertebral level corresponding to the slice with the compression
-    slices_compressed = get_compressed_slice(img_labels)
     compressed_levels_dict = {}
     if arguments.vertfile:
         compressed_levels_dict = get_verterbral_level_from_slice(slices_compressed, df_metrics)
