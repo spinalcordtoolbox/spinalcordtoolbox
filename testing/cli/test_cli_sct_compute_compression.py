@@ -21,6 +21,7 @@ def dummy_3d_compression_label():
     nibabel.save(nii, filename)
     return filename
 
+
 @pytest.fixture(scope="session")
 def dummy_3d_lesion_label():
     data = np.zeros([32, 32, 81], dtype=np.uint8)
