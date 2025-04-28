@@ -23,7 +23,7 @@ Spinal Cord Toolbox
     :alt: GitHub Actions CI
     :target: https://github.com/spinalcordtoolbox/spinalcordtoolbox/actions/workflows/tests.yml?query=branch%3Amaster
 
-.. |badge-doc| image:: https://readthedocs.org/projects/spinalcordtoolbox/badge/
+.. |badge-doc| image:: https://app.readthedocs.org/projects/spinalcordtoolbox/badge/
     :alt: Documentation Status
     :target: https://spinalcordtoolbox.com
 
