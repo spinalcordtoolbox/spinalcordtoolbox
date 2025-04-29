@@ -38,7 +38,8 @@ numpy<2
 # 1.7.0>onnxruntime>=1.5.1 required `brew install libomp` on macOS.
 # So, pin to >=1.7.0 to avoid having to ask users to install libomp.
 # Avoid version 1.16.0 due to: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4225
-onnxruntime>=1.7.0,!=1.16.0
+# 1.15.1 seems to include a special fix related to Windows DLL loading.
+onnxruntime>=1.7.0,!=1.16.0,==1.15.1
 pandas
 portalocker
 psutil
