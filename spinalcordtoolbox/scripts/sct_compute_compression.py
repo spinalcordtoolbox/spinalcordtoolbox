@@ -673,7 +673,8 @@ def main(argv: Sequence[str]):
             df_avg_HC = average_hc(path_ref_hc, metric, list_HC)
             # Get slices correspondence in PAM50 space
             compressed_levels_dict_PAM50 = get_slices_in_PAM50(compressed_levels_dict, df_metrics, df_metrics_PAM50)
-            z_range_PAM50_below, z_range_PAM50_above = get_slices_upper_lower_level_from_PAM50(compressed_levels_dict_PAM50, df_metrics_PAM50, distance, extent, slice_thickness_PAM50)
+            z_range_PAM50_below, z_range_PAM50_above = get_slices_upper_lower_level_from_PAM50(
+                compressed_levels_dict_PAM50, df_metrics_PAM50, distance, extent, slice_thickness_PAM50)
 
         # Step 3a. Compute MSCC metrics for each compressed level (vertebral labeling available)
         # ------------------------------------------------------
