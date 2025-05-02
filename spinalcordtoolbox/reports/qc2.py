@@ -430,7 +430,7 @@ def sct_deepseg_spinal_rootlets_t2w(
     radius = tuple(int(r * p) for r, p in zip(radius, p_ratio))
     # - One problem with this, however, is that if the crop radius ends up being smaller than the default, the QC will in turn be smaller as well.
     #   So, to ensure that the QC is still readable, we scale up whenever the p_ratio is < 1
-    scale = 1 / max(p_ratio)  # e.g. 0.8mm human => p_ratio == 0.6/0.8 == 0.75; scale == 1/p_ratio == 1/0.75 == 1.33
+    scale = max((1 / ratio) for ratio in p_ratio)  # e.g. 0.8mm human => p_ratio == 0.6/0.8 == 0.75; scale == 1/p_ratio == 1/0.75 == 1.33
     # - Note: `mosaic()` already has a default scaling factor of 2.5 (to help make the QC readable). So, we preserve it here.
     scale *= 2.5
     # - One other problem is that for anisotropic images, the aspect ratio won't be 1:1 between width/height.
