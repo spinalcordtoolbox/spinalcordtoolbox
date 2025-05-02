@@ -44,6 +44,20 @@ mpl_collections = LazyLoader("mpl_collections", globals(), "matplotlib.collectio
 
 logger = logging.getLogger(__name__)
 
+# Clarify some constants that will control the width of the output images
+# (the height is automatically adjusted based on the aspect ratio of the image)
+# Notes:
+#   - This shouldn't ever need to be changed, since "target width" is related
+#     to the design of the QC report interface. If things need to be scaled,
+#     it should be done to the array itself before it is written to the .
+#   - `matplotlib` uses inches/DPI to define the canvas. But, given we want
+#     a fixed output size, we can choose some arbitrary values for both.
+#     Presumably, choosing a different DPI value (and thus a different canvas
+#     size in inches) wouldn't change the output image at all. (Is this true?)
+TARGET_WIDTH_PIXL = 1500
+DPI = 300
+TARGET_WIDTH_INCH = TARGET_WIDTH_PIXL / DPI
+
 
 @contextmanager
 def create_qc_entry(
@@ -191,10 +205,8 @@ def sct_register_multimodal(
         # Generate the first QC report image
         img = equalize_histogram(mosaic(img_input, centers))
 
-        # For QC reports, axial mosaics will often have smaller height than width
-        # (e.g. WxH = 20x3 slice images). So, we want to reduce the fig height to match this.
-        # `size_fig` is in inches. So, dpi=300 --> 1500px, dpi=100 --> 500px, etc.
-        size_fig = [5, 5 * img.shape[0] / img.shape[1]]
+        # Fix the width to a specific size, and vary the height based on how many rows there are.
+        size_fig = [TARGET_WIDTH_INCH, TARGET_WIDTH_INCH * img.shape[0] / img.shape[1]]
 
         fig = mpl_figure.Figure()
         fig.set_size_inches(*size_fig, forward=True)
@@ -206,7 +218,7 @@ def sct_register_multimodal(
         ax.get_yaxis().set_visible(False)
         img_path = str(imgs_to_generate['path_background_img'])
         logger.debug('Save image %s', img_path)
-        fig.savefig(img_path, format='png', transparent=True, dpi=300)
+        fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
 
         # Generate the second QC report image
         img = equalize_histogram(mosaic(img_output, centers))
@@ -220,7 +232,7 @@ def sct_register_multimodal(
         ax.get_yaxis().set_visible(False)
         img_path = str(imgs_to_generate['path_overlay_img'])
         logger.debug('Save image %s', img_path)
-        fig.savefig(img_path, format='png', transparent=True, dpi=300)
+        fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
 
 
 def sct_deepseg(
@@ -340,10 +352,8 @@ def sct_deepseg_axial(
     # Generate the first QC report image
     img = equalize_histogram(mosaic(img_input, centers, radius))
 
-    # For QC reports, axial mosaics will often have smaller height than width
-    # (e.g. WxH = 20x3 slice images). So, we want to reduce the fig height to match this.
-    # `size_fig` is in inches. So, dpi=300 --> 1500px, dpi=100 --> 500px, etc.
-    size_fig = [5, 5 * img.shape[0] / img.shape[1]]
+    # Fix the width to a specific size, and vary the height based on how many rows there are.
+    size_fig = [TARGET_WIDTH_INCH, TARGET_WIDTH_INCH * img.shape[0] / img.shape[1]]
 
     fig = mpl_figure.Figure()
     fig.set_size_inches(*size_fig, forward=True)
@@ -355,7 +365,7 @@ def sct_deepseg_axial(
     ax.get_yaxis().set_visible(False)
     img_path = str(imgs_to_generate['path_background_img'])
     logger.debug('Save image %s', img_path)
-    fig.savefig(img_path, format='png', transparent=True, dpi=300)
+    fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
 
     # Generate the second QC report image
     fig = mpl_figure.Figure()
@@ -382,7 +392,7 @@ def sct_deepseg_axial(
     ax.get_yaxis().set_visible(False)
     img_path = str(imgs_to_generate['path_overlay_img'])
     logger.debug('Save image %s', img_path)
-    fig.savefig(img_path, format='png', transparent=True, dpi=300)
+    fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
 
 
 def sct_deepseg_spinal_rootlets_t2w(
@@ -436,10 +446,8 @@ def sct_deepseg_spinal_rootlets_t2w(
     # Generate the first QC report image
     img = equalize_histogram(mosaic(img_input, centers, radius, scale))
 
-    # For QC reports, axial mosaics will often have smaller height than width
-    # (e.g. WxH = 20x3 slice images). So, we want to reduce the fig height to match this.
-    # `size_fig` is in inches. So, dpi=300 --> 1500px, dpi=100 --> 500px, etc.
-    size_fig = [5, 5 * (img.shape[0] / img.shape[1]) * aspect]
+    # Fix the width to a specific size, and vary the height based on how many rows there are.
+    size_fig = [TARGET_WIDTH_INCH, TARGET_WIDTH_INCH * (img.shape[0] / img.shape[1]) * aspect]
 
     fig = mpl_figure.Figure()
     fig.set_size_inches(*size_fig, forward=True)
@@ -451,7 +459,7 @@ def sct_deepseg_spinal_rootlets_t2w(
     ax.get_yaxis().set_visible(False)
     img_path = str(imgs_to_generate['path_background_img'])
     logger.debug('Save image %s', img_path)
-    fig.savefig(img_path, format='png', transparent=True, dpi=300)
+    fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
 
     # Generate the second QC report image
     fig = mpl_figure.Figure()
@@ -483,7 +491,7 @@ def sct_deepseg_spinal_rootlets_t2w(
     ax.get_yaxis().set_visible(False)
     img_path = str(imgs_to_generate['path_overlay_img'])
     logger.debug('Save image %s', img_path)
-    fig.savefig(img_path, format='png', transparent=True, dpi=300)
+    fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
 
 
 def sct_deepseg_sagittal(
@@ -566,10 +574,8 @@ def sct_deepseg_sagittal(
     # Generate the first QC report image
     img = equalize_histogram(mosaic(img_input, centers, radius=radius))
 
-    # For QC reports, axial mosaics will often have smaller height than width
-    # (e.g. WxH = 20x3 slice images). So, we want to reduce the fig height to match this.
-    # `size_fig` is in inches. So, dpi=300 --> 1500px, dpi=100 --> 500px, etc.
-    size_fig = [5, 5 * img.shape[0] / img.shape[1]]
+    # Fix the width to a specific size, and vary the height based on how many rows there are.
+    size_fig = [TARGET_WIDTH_INCH, TARGET_WIDTH_INCH * img.shape[0] / img.shape[1]]
 
     fig = mpl_figure.Figure()
     fig.set_size_inches(*size_fig, forward=True)
@@ -581,7 +587,7 @@ def sct_deepseg_sagittal(
     ax.get_yaxis().set_visible(False)
     img_path = str(imgs_to_generate['path_background_img'])
     logger.debug('Save image %s', img_path)
-    fig.savefig(img_path, format='png', transparent=True, dpi=300)
+    fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
 
     # Generate the second QC report image
     fig = mpl_figure.Figure()
@@ -608,7 +614,7 @@ def sct_deepseg_sagittal(
     ax.get_yaxis().set_visible(False)
     img_path = str(imgs_to_generate['path_overlay_img'])
     logger.debug('Save image %s', img_path)
-    fig.savefig(img_path, format='png', transparent=True, dpi=300)
+    fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
 
 
 def sct_analyze_lesion(
