@@ -432,6 +432,7 @@ def sct_deepseg_spinal_rootlets_t2w(
     #   So, to ensure that the QC is still readable, we scale up by an integer factor whenever the p_ratio is < 1
     #   TODO: Integer scaling is no longer necessary, since `scale` is handled by matplotlib now
     scale = int(math.ceil(1 / max(p_ratio)))  # e.g. 0.8mm human => p_ratio == 0.6/0.8 == 0.75; scale == 1/p_ratio == 1/0.75 == 1.33 => 2x scale
+    scale *= 2.5  # this scale factor used to be implicit inside `mosaic()`, but is now explicit
     # - One other problem is that for anisotropic images, the aspect ratio won't be 1:1 between width/height.
     #   So, we use `aspect` to adjust the image via imshow, and `radius` to know where to place the text in x/y coords
     aspect = p_ratio[1] / p_ratio[0]
@@ -780,7 +781,7 @@ def inf_nan_fill(A: np.ndarray):
             A[valid])
 
 
-def mosaic(img: Image, centers: np.ndarray, radius: tuple[int, int] = (15, 15), scale: float = 1.0):
+def mosaic(img: Image, centers: np.ndarray, radius: tuple[int, int] = (15, 15), scale: float = 2.5):
     """
     Arrange the slices of `img` into a grid of images.
 
@@ -792,9 +793,7 @@ def mosaic(img: Image, centers: np.ndarray, radius: tuple[int, int] = (15, 15), 
     # Note: This function used to hardcode a max row width of 600 pixels
     #       In practice, because the canvas size is fixed to 1500 pixels, this
     #       resulted in a permanent upscaling by 2.5x when saving the image.
-    #       To make things clearer, we use a variable to define the amount of
-    #       *additional* scaling we want to add on top of the `scale` parameter.
-    scale = 2.5 * scale
+    #       To make things clearer, we now use a variable.
     max_row_width = TARGET_WIDTH_PIXL / scale
 
     # Fit as many slices as possible in each row
