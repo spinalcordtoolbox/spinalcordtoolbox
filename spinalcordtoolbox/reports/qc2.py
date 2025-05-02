@@ -788,8 +788,16 @@ def mosaic(img: Image, centers: np.ndarray, radius: tuple[int, int] = (15, 15), 
 
     If `img` has N slices, then `centers` should have shape (N, 2).
     """
-    # Fit as many slices as possible in each row of 600 pixels
-    num_col = math.floor(600 / (2*radius[0]*scale))
+    # Note: This function used to hardcode a max row width of 600 pixels
+    #       In practice, because the canvas size is fixed to 1500 pixels, this
+    #       resulted in a permanent upscaling by 2.5x when saving the image.
+    #       To make things clearer, we use a variable to define the amount of
+    #       *additional* scaling we want to add on top of the `scale` parameter.
+    scale_array = 2.5
+    max_row_width = TARGET_WIDTH_PIXL / scale_array
+
+    # Fit as many slices as possible in each row
+    num_col = math.floor(max_row_width / (2*radius[0]*scale))
 
     # Center and crop each axial slice
     cropped = []
