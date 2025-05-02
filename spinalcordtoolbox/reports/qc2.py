@@ -430,6 +430,7 @@ def sct_deepseg_spinal_rootlets_t2w(
     radius = tuple(int(r * p) for r, p in zip(radius, p_ratio))
     # - One problem with this, however, is that if the crop radius ends up being smaller than the default, the QC will in turn be smaller as well.
     #   So, to ensure that the QC is still readable, we scale up by an integer factor whenever the p_ratio is < 1
+    #   TODO: Integer scaling is no longer necessary, since `scale` is handled by matplotlib now
     scale = int(math.ceil(1 / max(p_ratio)))  # e.g. 0.8mm human => p_ratio == 0.6/0.8 == 0.75; scale == 1/p_ratio == 1/0.75 == 1.33 => 2x scale
     # - One other problem is that for anisotropic images, the aspect ratio won't be 1:1 between width/height.
     #   So, we use `aspect` to adjust the image via imshow, and `radius` to know where to place the text in x/y coords
@@ -454,7 +455,7 @@ def sct_deepseg_spinal_rootlets_t2w(
     mpl_backend_agg.FigureCanvasAgg(fig)
     ax = fig.add_axes((0, 0, 1, 1))
     ax.imshow(img, cmap='gray', interpolation='none', aspect=aspect)
-    add_orientation_labels(ax, radius=tuple(r*scale for r in radius))
+    add_orientation_labels(ax, radius=tuple(r for r in radius))
     ax.get_xaxis().set_visible(False)
     ax.get_yaxis().set_visible(False)
     img_path = str(imgs_to_generate['path_background_img'])
@@ -485,7 +486,7 @@ def sct_deepseg_spinal_rootlets_t2w(
         if outline:
             # linewidth 0.5 is too thick, 0.25 is too thin
             plot_outlines(img, ax=ax, facecolor='none', edgecolor='black', linewidth=0.3)
-        add_segmentation_labels(ax, img, colors=colormaps[i].colors, radius=tuple(r*scale for r in radius))
+        add_segmentation_labels(ax, img, colors=colormaps[i].colors, radius=tuple(r for r in radius))
 
     ax.get_xaxis().set_visible(False)
     ax.get_yaxis().set_visible(False)
@@ -779,7 +780,7 @@ def inf_nan_fill(A: np.ndarray):
             A[valid])
 
 
-def mosaic(img: Image, centers: np.ndarray, radius: tuple[int, int] = (15, 15), scale: int = 1):
+def mosaic(img: Image, centers: np.ndarray, radius: tuple[int, int] = (15, 15), scale: float = 1.0):
     """
     Arrange the slices of `img` into a grid of images.
 
@@ -793,11 +794,11 @@ def mosaic(img: Image, centers: np.ndarray, radius: tuple[int, int] = (15, 15), 
     #       resulted in a permanent upscaling by 2.5x when saving the image.
     #       To make things clearer, we use a variable to define the amount of
     #       *additional* scaling we want to add on top of the `scale` parameter.
-    scale_array = 2.5
-    max_row_width = TARGET_WIDTH_PIXL / scale_array
+    scale = 2.5 * scale
+    max_row_width = TARGET_WIDTH_PIXL / scale
 
     # Fit as many slices as possible in each row
-    num_col = math.floor(max_row_width / (2*radius[0]*scale))
+    num_col = math.floor(max_row_width / (2*radius[0]))
 
     # Center and crop each axial slice
     cropped = []
@@ -808,14 +809,13 @@ def mosaic(img: Image, centers: np.ndarray, radius: tuple[int, int] = (15, 15), 
             center[i] = min(slice.shape[i] - radius[i], center[i])  # Check far edge first
             center[i] = max(radius[i],                  center[i])  # Then check 0 edge last
         # Add a margin before cropping, in case the center is still too close to one of the edges
-        # Also, use Kronecker product to scale each block in multiples
-        cropped.append(np.kron(np.pad(slice, [[r] for r in radius])[
+        cropped.append(np.pad(slice, [[r] for r in radius])[
             center[0]:center[0] + 2*radius[0],
             center[1]:center[1] + 2*radius[1],
-        ], np.ones((scale, scale))))
+        ])
 
     # Pad the list with empty arrays, to get complete rows of num_col
-    empty = np.zeros((2*radius[0]*scale, 2*radius[1]*scale))
+    empty = np.zeros((2*radius[0], 2*radius[1]))
     cropped.extend([empty] * (-len(cropped) % num_col))
 
     # Arrange the images into a grid
