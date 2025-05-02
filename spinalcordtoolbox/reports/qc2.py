@@ -671,6 +671,9 @@ def sct_analyze_lesion(
 
         #  Create a figure
         #  The figure has one row per lesion and one column per sagittal slice containing the lesion
+        # TODO: This report breaks the assumption that the width is fixed in pixel size
+        #       The figure could be very wide horizontally, which wouldn't work with the "new QC"
+        #       See: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4887
         fig, axes = mpl_plt.subplots(num_of_lesions,
                                      num_of_sag_slices,
                                      figsize=(num_of_sag_slices * 5, num_of_lesions * 5))
