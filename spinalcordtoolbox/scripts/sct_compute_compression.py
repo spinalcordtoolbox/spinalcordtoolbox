@@ -631,10 +631,6 @@ def main(argv: Sequence[str]):
     df_metrics = pd.read_csv(fname_metrics).astype({metric: float})
     # Get compressed slices
     slices_compressed = get_compressed_slice(img_labels, df_metrics, mode)
-    # Get vertebral level corresponding to the slice with the compression
-    compressed_levels_dict = {}
-    if arguments.vertfile:
-        compressed_levels_dict = get_verterbral_level_from_slice(slices_compressed, df_metrics)
 
     # Step 2: Get normalization metrics and slices (using non-compressed subject slices)
     # -----------------------------------------------------------
@@ -651,33 +647,36 @@ def main(argv: Sequence[str]):
     logger.debug(f'Slice range above: {z_range_centerline_above}')
     logger.debug(f'Slice range below: {z_range_centerline_below}')
 
-    # Step 2: Get normalization metrics and slices (using PAM50 and reference dataset)
-    # -----------------------------------------------------------
-    if arguments.normalize_hc:
-        # Select healthy controls based on sex and/or age range
-        if sex or age:
-            list_HC = select_HC(fname_partcipants, sex, age)
-        else:
-            list_HC = None
-        # Call sct_process_segmentation to get morphometrics perslice in PAM50 space
-        fname_metrics_PAM50 = os.path.join(path, file_name + '_metrics_PAM50' + '.csv')
-        sct_process_segmentation.main(argv=['-i', fname_segmentation, '-vertfile', fname_vertfile, '-normalize-PAM50', '1',
-                                      '-perslice', '1', '-o', fname_metrics_PAM50])
-        # Get PAM50 slice thickness
-        fname_PAM50 = os.path.join(__data_dir__, 'PAM50', 'template', 'PAM50_t2.nii.gz')
-        img_pam50 = Image(fname_PAM50).change_orientation('RPI')
-        slice_thickness_PAM50 = get_slice_thickness(img_pam50)
-        # Fetch metrics of PAM50 template
-        df_metrics_PAM50 = pd.read_csv(fname_metrics_PAM50).astype({metric: float})
-        # Average metrics of healthy controls
-        df_avg_HC = average_hc(path_ref_hc, metric, list_HC)
-        # Get slices correspondence in PAM50 space
-        compressed_levels_dict_PAM50 = get_slices_in_PAM50(compressed_levels_dict, df_metrics, df_metrics_PAM50)
-        z_range_PAM50_below, z_range_PAM50_above = get_slices_upper_lower_level_from_PAM50(compressed_levels_dict_PAM50, df_metrics_PAM50, distance, extent, slice_thickness_PAM50)
+    if arguments.vertfile:
+        # Get vertebral level corresponding to the slice with the compression
+        compressed_levels_dict = get_verterbral_level_from_slice(slices_compressed, df_metrics)
 
-    # Step 3a. Compute MSCC metrics for each compressed level (vertebral labeling available)
-    # ------------------------------------------------------
-    if compressed_levels_dict:
+        # Step 2: Get normalization metrics and slices (using PAM50 and reference dataset)
+        # -----------------------------------------------------------
+        if arguments.normalize_hc:
+            # Select healthy controls based on sex and/or age range
+            if sex or age:
+                list_HC = select_HC(fname_partcipants, sex, age)
+            else:
+                list_HC = None
+            # Call sct_process_segmentation to get morphometrics perslice in PAM50 space
+            fname_metrics_PAM50 = os.path.join(path, file_name + '_metrics_PAM50' + '.csv')
+            sct_process_segmentation.main(argv=['-i', fname_segmentation, '-vertfile', fname_vertfile, '-normalize-PAM50', '1',
+                                          '-perslice', '1', '-o', fname_metrics_PAM50])
+            # Get PAM50 slice thickness
+            fname_PAM50 = os.path.join(__data_dir__, 'PAM50', 'template', 'PAM50_t2.nii.gz')
+            img_pam50 = Image(fname_PAM50).change_orientation('RPI')
+            slice_thickness_PAM50 = get_slice_thickness(img_pam50)
+            # Fetch metrics of PAM50 template
+            df_metrics_PAM50 = pd.read_csv(fname_metrics_PAM50).astype({metric: float})
+            # Average metrics of healthy controls
+            df_avg_HC = average_hc(path_ref_hc, metric, list_HC)
+            # Get slices correspondence in PAM50 space
+            compressed_levels_dict_PAM50 = get_slices_in_PAM50(compressed_levels_dict, df_metrics, df_metrics_PAM50)
+            z_range_PAM50_below, z_range_PAM50_above = get_slices_upper_lower_level_from_PAM50(compressed_levels_dict_PAM50, df_metrics_PAM50, distance, extent, slice_thickness_PAM50)
+
+        # Step 3a. Compute MSCC metrics for each compressed level (vertebral labeling available)
+        # ------------------------------------------------------
         # Loop through all compressed levels (compute one MSCC per compressed level)
         rows = []
         for idx in compressed_levels_dict.keys():
@@ -731,7 +730,7 @@ def main(argv: Sequence[str]):
 
     # Step 3b. Compute MSCC metrics for each compressed level (vertebral labeling not available)
     # ------------------------------------------------------
-    if not compressed_levels_dict:
+    if not arguments.vertfile:
         # Loop through all compressed levels (compute one MSCC per compressed level)
         rows = []
         for slice_num in slices_compressed:
