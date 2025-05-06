@@ -16,8 +16,8 @@ import numpy as np
 from spinalcordtoolbox.image import Image, generate_output_file
 from spinalcordtoolbox.vertebrae.core import (
     get_z_and_disc_values_from_label, vertebral_detection, expand_labels,
-    crop_labels, label_vert)
-from spinalcordtoolbox.types import EmptyArrayError, MissingDiscsError
+    crop_labels)
+from spinalcordtoolbox.types import EmptyArrayError
 from spinalcordtoolbox.vertebrae.detect_c2c3 import detect_c2c3
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.math import dilate
@@ -287,7 +287,7 @@ def main(argv: Sequence[str]):
     curdir = os.getcwd()
     os.chdir(path_tmp)
 
-    # Differentiate two use cases of the script: 
+    # Differentiate two use cases of the script:
     #   1: Use input discs and label the spinal cord without straightening, see https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4476
     #   2: Detect discs automatically and label the spinal cord using straightening steps, based on DOI:10.1155/2014/719520
     if fname_disc:
@@ -301,8 +301,7 @@ def main(argv: Sequence[str]):
 
         # Generate a labeled segmentation
         labeled_seg = sct_labels.labelize_from_discs(seg, discs_proj)
-        labeled_seg.save("segmentation_labeled.nii")        
-        
+        labeled_seg.save("segmentation_labeled.nii")
     else:
 
         # Straighten spinal cord
