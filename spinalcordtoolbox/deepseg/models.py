@@ -400,7 +400,7 @@ TASKS = {
              ```"""),  # noqa E501 (line too long)
          'group': 'pathology'
          },
-    'rootlets_t2':
+    'rootlets':
         {'description': 'Segmentation of spinal nerve rootlets for T2w contrast',
          'long_description': 'This segmentation model for spinal nerve rootlets segmentation uses a 3D U-Net '
                              'architecture, and was trained with the nnUNetV2 framework. It is a multiclass model, '
