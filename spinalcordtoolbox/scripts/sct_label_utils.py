@@ -111,7 +111,7 @@ def get_parser():
     func_group.add_argument(
         '-project-centerline',
         metavar=Metavar.file,
-        help="Project disc labels onto the spinal cord centerline."
+        help="Project disc labels (`-project-centerline`) onto the spinal cord centerline using the spinal cord segmentation (`-i`)."
     )
     func_group.add_argument(
         '-display',
