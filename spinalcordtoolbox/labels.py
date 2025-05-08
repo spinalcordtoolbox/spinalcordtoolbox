@@ -224,11 +224,12 @@ def labelize_from_discs(img: Image, ref: Image) -> Image:
     :returns: segmentation image with vertebral levels labelized
     """
 
-    img_orientation = img.orientation
-    if img_orientation != "RPI":
+    og_img_orientation = img.orientation
+    if og_img_orientation != "RPI":
         img.change_orientation("RPI")
 
-    if ref.orientation != "RPI":
+    og_ref_orientation = ref.orientation
+    if og_ref_orientation != "RPI":
         ref.change_orientation("RPI")
 
     out = zeros_like(img)
@@ -253,7 +254,12 @@ def labelize_from_discs(img: Image, ref: Image) -> Image:
                     out.data[int(x), int(y), int(z)] = coordinates_ref[j].value
 
     # Set back the original orientation
-    out.change_orientation(img_orientation)
+    if img.orientation != og_img_orientation:
+        img.change_orientation(og_img_orientation)
+        out.change_orientation(og_img_orientation)
+
+    if ref.orientation != og_ref_orientation:
+        ref.change_orientation(og_ref_orientation)
 
     return out
 
