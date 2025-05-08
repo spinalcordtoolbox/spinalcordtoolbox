@@ -28,7 +28,7 @@ From: ubuntu:22.04
         export PATH=$PATH:/sct/bin
         # Install each task requested by the user, one by one
         for task in {{ task_installs }}; do
-            sct_deepseg "$task" -install
+            sct_deepseg "$task" -install || echo "Failed to install task $task"
         done
     fi
 
