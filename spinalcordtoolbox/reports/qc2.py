@@ -44,6 +44,20 @@ mpl_collections = LazyLoader("mpl_collections", globals(), "matplotlib.collectio
 
 logger = logging.getLogger(__name__)
 
+# Clarify some constants that will control the width of the output images
+# (the height is automatically adjusted based on the aspect ratio of the image)
+# Notes:
+#   - This shouldn't ever need to be changed, since "target width" is related
+#     to the design of the QC report interface. If things need to be scaled,
+#     it should be done to the array itself before it is written to the .
+#   - `matplotlib` uses inches/DPI to define the canvas. But, given we want
+#     a fixed output size, we can choose some arbitrary values for both.
+#     Presumably, choosing a different DPI value (and thus a different canvas
+#     size in inches) wouldn't change the output image at all. (Is this true?)
+TARGET_WIDTH_PIXL = 1500
+DPI = 300
+TARGET_WIDTH_INCH = TARGET_WIDTH_PIXL / DPI
+
 
 @contextmanager
 def create_qc_entry(
@@ -191,10 +205,8 @@ def sct_register_multimodal(
         # Generate the first QC report image
         img = equalize_histogram(mosaic(img_input, centers))
 
-        # For QC reports, axial mosaics will often have smaller height than width
-        # (e.g. WxH = 20x3 slice images). So, we want to reduce the fig height to match this.
-        # `size_fig` is in inches. So, dpi=300 --> 1500px, dpi=100 --> 500px, etc.
-        size_fig = [5, 5 * img.shape[0] / img.shape[1]]
+        # Fix the width to a specific size, and vary the height based on how many rows there are.
+        size_fig = [TARGET_WIDTH_INCH, TARGET_WIDTH_INCH * img.shape[0] / img.shape[1]]
 
         fig = mpl_figure.Figure()
         fig.set_size_inches(*size_fig, forward=True)
@@ -206,7 +218,7 @@ def sct_register_multimodal(
         ax.get_yaxis().set_visible(False)
         img_path = str(imgs_to_generate['path_background_img'])
         logger.debug('Save image %s', img_path)
-        fig.savefig(img_path, format='png', transparent=True, dpi=300)
+        fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
 
         # Generate the second QC report image
         img = equalize_histogram(mosaic(img_output, centers))
@@ -220,7 +232,7 @@ def sct_register_multimodal(
         ax.get_yaxis().set_visible(False)
         img_path = str(imgs_to_generate['path_overlay_img'])
         logger.debug('Save image %s', img_path)
-        fig.savefig(img_path, format='png', transparent=True, dpi=300)
+        fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
 
 
 def sct_deepseg(
@@ -255,11 +267,11 @@ def sct_deepseg(
         if "rootlets" in argv:
             sct_deepseg_spinal_rootlets(
                 imgs_to_generate, fname_input, fname_seg, fname_seg2, species,
-                radius=(23, 23))
+                radius=(23, 23), base_scaling=2.5)  # standard upscale to see rootlets detail
         elif "totalspineseg" in argv:
             sct_deepseg_spinal_rootlets(
                 imgs_to_generate, fname_input, fname_seg, fname_seg2, species,
-                radius=(40, 40))
+                radius=(40, 40), base_scaling=0.5)  # downscale to get "big picture" view of all slices
         # Non-rootlets, axial/sagittal DeepSeg QC report
         elif plane == 'Axial':
             sct_deepseg_axial(
@@ -340,10 +352,8 @@ def sct_deepseg_axial(
     # Generate the first QC report image
     img = equalize_histogram(mosaic(img_input, centers, radius))
 
-    # For QC reports, axial mosaics will often have smaller height than width
-    # (e.g. WxH = 20x3 slice images). So, we want to reduce the fig height to match this.
-    # `size_fig` is in inches. So, dpi=300 --> 1500px, dpi=100 --> 500px, etc.
-    size_fig = [5, 5 * img.shape[0] / img.shape[1]]
+    # Fix the width to a specific size, and vary the height based on how many rows there are.
+    size_fig = [TARGET_WIDTH_INCH, TARGET_WIDTH_INCH * img.shape[0] / img.shape[1]]
 
     fig = mpl_figure.Figure()
     fig.set_size_inches(*size_fig, forward=True)
@@ -355,7 +365,7 @@ def sct_deepseg_axial(
     ax.get_yaxis().set_visible(False)
     img_path = str(imgs_to_generate['path_background_img'])
     logger.debug('Save image %s', img_path)
-    fig.savefig(img_path, format='png', transparent=True, dpi=300)
+    fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
 
     # Generate the second QC report image
     fig = mpl_figure.Figure()
@@ -382,7 +392,7 @@ def sct_deepseg_axial(
     ax.get_yaxis().set_visible(False)
     img_path = str(imgs_to_generate['path_overlay_img'])
     logger.debug('Save image %s', img_path)
-    fig.savefig(img_path, format='png', transparent=True, dpi=300)
+    fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
 
 
 def sct_deepseg_spinal_rootlets(
@@ -392,6 +402,7 @@ def sct_deepseg_spinal_rootlets(
     fname_seg_lesion: Optional[str],
     species: str,
     radius: Sequence[int],
+    base_scaling: float = 2.5,  # scale up mosaic slices to make them more readable by default
     outline: bool = True
 ):
     """
@@ -419,8 +430,13 @@ def sct_deepseg_spinal_rootlets(
     p_ratio = tuple(p_resample / p for p in p_original)
     radius = tuple(int(r * p) for r, p in zip(radius, p_ratio))
     # - One problem with this, however, is that if the crop radius ends up being smaller than the default, the QC will in turn be smaller as well.
-    #   So, to ensure that the QC is still readable, we scale up by an integer factor whenever the p_ratio is < 1
-    scale = int(math.ceil(1 / max(p_ratio)))  # e.g. 0.8mm human => p_ratio == 0.6/0.8 == 0.75; scale == 1/p_ratio == 1/0.75 == 1.33 => 2x scale
+    #   So, to ensure that the QC is still readable, we scale up whenever the p_ratio is < 1
+    scale = max((1 / ratio) for ratio in p_ratio)  # e.g. 0.8mm human => p_ratio == 0.6/0.8 == 0.75; scale == 1/p_ratio == 1/0.75 == 1.33
+    # - Note: `mosaic()` already has a base scaling factor of 2.5 (to help make the QC readable).
+    #          Since resolution-based scaling would overwrite this, we need to preserve the base scaling factor.
+    # - Note2: For `totalspineseg`, we actually _don't_ want to upscale by 2.5, so that's why `base_scaling` has
+    #          been parametrized, allowing per-QC customization.
+    scale *= base_scaling
     # - One other problem is that for anisotropic images, the aspect ratio won't be 1:1 between width/height.
     #   So, we use `aspect` to adjust the image via imshow, and `radius` to know where to place the text in x/y coords
     aspect = p_ratio[1] / p_ratio[0]
@@ -436,22 +452,20 @@ def sct_deepseg_spinal_rootlets(
     # Generate the first QC report image
     img = equalize_histogram(mosaic(img_input, centers, radius, scale))
 
-    # For QC reports, axial mosaics will often have smaller height than width
-    # (e.g. WxH = 20x3 slice images). So, we want to reduce the fig height to match this.
-    # `size_fig` is in inches. So, dpi=300 --> 1500px, dpi=100 --> 500px, etc.
-    size_fig = [5, 5 * (img.shape[0] / img.shape[1]) * aspect]
+    # Fix the width to a specific size, and vary the height based on how many rows there are.
+    size_fig = [TARGET_WIDTH_INCH, TARGET_WIDTH_INCH * (img.shape[0] / img.shape[1]) * aspect]
 
     fig = mpl_figure.Figure()
     fig.set_size_inches(*size_fig, forward=True)
     mpl_backend_agg.FigureCanvasAgg(fig)
     ax = fig.add_axes((0, 0, 1, 1))
     ax.imshow(img, cmap='gray', interpolation='none', aspect=aspect)
-    add_orientation_labels(ax, radius=tuple(r*scale for r in radius))
+    add_orientation_labels(ax, radius=tuple(r for r in radius))
     ax.get_xaxis().set_visible(False)
     ax.get_yaxis().set_visible(False)
     img_path = str(imgs_to_generate['path_background_img'])
     logger.debug('Save image %s', img_path)
-    fig.savefig(img_path, format='png', transparent=True, dpi=300)
+    fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
 
     # Generate the second QC report image
     fig = mpl_figure.Figure()
@@ -474,16 +488,20 @@ def sct_deepseg_spinal_rootlets(
                   alpha=1.0,
                   interpolation='none',
                   aspect=aspect)
-        if outline:
-            # linewidth 0.5 is too thick, 0.25 is too thin
-            plot_outlines(img, ax=ax, facecolor='none', edgecolor='black', linewidth=0.3)
-        add_segmentation_labels(ax, img, colors=colormaps[i].colors, radius=tuple(r*scale for r in radius))
+
+        # only display outlines and segmentation labels if scale is large enough to accommodate
+        # (in practice, this saves them from being added to the tiny totalspineseg QC)
+        if scale >= 1.0:
+            add_segmentation_labels(ax, img, colors=colormaps[i].colors, radius=tuple(r for r in radius))
+            if outline:
+                # linewidth 0.5 is too thick, 0.25 is too thin
+                plot_outlines(img, ax=ax, facecolor='none', edgecolor='black', linewidth=0.3)
 
     ax.get_xaxis().set_visible(False)
     ax.get_yaxis().set_visible(False)
     img_path = str(imgs_to_generate['path_overlay_img'])
     logger.debug('Save image %s', img_path)
-    fig.savefig(img_path, format='png', transparent=True, dpi=300)
+    fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
 
 
 def sct_deepseg_sagittal(
@@ -566,10 +584,8 @@ def sct_deepseg_sagittal(
     # Generate the first QC report image
     img = equalize_histogram(mosaic(img_input, centers, radius=radius))
 
-    # For QC reports, axial mosaics will often have smaller height than width
-    # (e.g. WxH = 20x3 slice images). So, we want to reduce the fig height to match this.
-    # `size_fig` is in inches. So, dpi=300 --> 1500px, dpi=100 --> 500px, etc.
-    size_fig = [5, 5 * img.shape[0] / img.shape[1]]
+    # Fix the width to a specific size, and vary the height based on how many rows there are.
+    size_fig = [TARGET_WIDTH_INCH, TARGET_WIDTH_INCH * img.shape[0] / img.shape[1]]
 
     fig = mpl_figure.Figure()
     fig.set_size_inches(*size_fig, forward=True)
@@ -581,7 +597,7 @@ def sct_deepseg_sagittal(
     ax.get_yaxis().set_visible(False)
     img_path = str(imgs_to_generate['path_background_img'])
     logger.debug('Save image %s', img_path)
-    fig.savefig(img_path, format='png', transparent=True, dpi=300)
+    fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
 
     # Generate the second QC report image
     fig = mpl_figure.Figure()
@@ -608,7 +624,7 @@ def sct_deepseg_sagittal(
     ax.get_yaxis().set_visible(False)
     img_path = str(imgs_to_generate['path_overlay_img'])
     logger.debug('Save image %s', img_path)
-    fig.savefig(img_path, format='png', transparent=True, dpi=300)
+    fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
 
 
 def sct_analyze_lesion(
@@ -665,6 +681,9 @@ def sct_analyze_lesion(
 
         #  Create a figure
         #  The figure has one row per lesion and one column per sagittal slice containing the lesion
+        # TODO: This report breaks the assumption that the width is fixed in pixel size
+        #       The figure could be very wide horizontally, which wouldn't work with the "new QC"
+        #       See: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4887
         fig, axes = mpl_plt.subplots(num_of_lesions,
                                      num_of_sag_slices,
                                      figsize=(num_of_sag_slices * 5, num_of_lesions * 5))
@@ -770,7 +789,7 @@ def inf_nan_fill(A: np.ndarray):
             A[valid])
 
 
-def mosaic(img: Image, centers: np.ndarray, radius: tuple[int, int] = (15, 15), scale: int = 1):
+def mosaic(img: Image, centers: np.ndarray, radius: tuple[int, int] = (15, 15), scale: float = 2.5):
     """
     Arrange the slices of `img` into a grid of images.
 
@@ -779,8 +798,14 @@ def mosaic(img: Image, centers: np.ndarray, radius: tuple[int, int] = (15, 15), 
 
     If `img` has N slices, then `centers` should have shape (N, 2).
     """
-    # Fit as many slices as possible in each row of 600 pixels
-    num_col = math.floor(600 / (2*radius[0]*scale))
+    # Note: This function used to hardcode a max row width of 600 pixels
+    #       In practice, because the canvas size is fixed to 1500 pixels, this
+    #       resulted in a permanent upscaling by 2.5x when saving the image.
+    #       To make things clearer, we now use a variable.
+    max_row_width = TARGET_WIDTH_PIXL / scale
+
+    # Fit as many slices as possible in each row
+    num_col = math.floor(max_row_width / (2*radius[0]))
 
     # Center and crop each axial slice
     cropped = []
@@ -791,14 +816,13 @@ def mosaic(img: Image, centers: np.ndarray, radius: tuple[int, int] = (15, 15), 
             center[i] = min(slice.shape[i] - radius[i], center[i])  # Check far edge first
             center[i] = max(radius[i],                  center[i])  # Then check 0 edge last
         # Add a margin before cropping, in case the center is still too close to one of the edges
-        # Also, use Kronecker product to scale each block in multiples
-        cropped.append(np.kron(np.pad(slice, [[r] for r in radius])[
+        cropped.append(np.pad(slice, [[r] for r in radius])[
             center[0]:center[0] + 2*radius[0],
             center[1]:center[1] + 2*radius[1],
-        ], np.ones((scale, scale))))
+        ])
 
     # Pad the list with empty arrays, to get complete rows of num_col
-    empty = np.zeros((2*radius[0]*scale, 2*radius[1]*scale))
+    empty = np.zeros((2*radius[0], 2*radius[1]))
     cropped.extend([empty] * (-len(cropped) % num_col))
 
     # Arrange the images into a grid
