@@ -267,11 +267,11 @@ def sct_deepseg(
         if "rootlets_t2" in argv:
             sct_deepseg_spinal_rootlets_t2w(
                 imgs_to_generate, fname_input, fname_seg, fname_seg2, species,
-                radius=(23, 23))
+                radius=(23, 23), base_scaling=2.5)  # standard upscale to see rootlets detail
         elif "totalspineseg" in argv:
             sct_deepseg_spinal_rootlets_t2w(
                 imgs_to_generate, fname_input, fname_seg, fname_seg2, species,
-                radius=(40, 40))
+                radius=(40, 40), base_scaling=0.5)  # downscale to get "big picture" view of all slices
         # Non-rootlets, axial/sagittal DeepSeg QC report
         elif plane == 'Axial':
             sct_deepseg_axial(
@@ -402,6 +402,7 @@ def sct_deepseg_spinal_rootlets_t2w(
     fname_seg_lesion: Optional[str],
     species: str,
     radius: Sequence[int],
+    base_scaling: float = 2.5,  # scale up mosaic slices to make them more readable by default
     outline: bool = True
 ):
     """
@@ -431,8 +432,11 @@ def sct_deepseg_spinal_rootlets_t2w(
     # - One problem with this, however, is that if the crop radius ends up being smaller than the default, the QC will in turn be smaller as well.
     #   So, to ensure that the QC is still readable, we scale up whenever the p_ratio is < 1
     scale = max((1 / ratio) for ratio in p_ratio)  # e.g. 0.8mm human => p_ratio == 0.6/0.8 == 0.75; scale == 1/p_ratio == 1/0.75 == 1.33
-    # - Note: `mosaic()` already has a default scaling factor of 2.5 (to help make the QC readable). So, we preserve it here.
-    scale *= 2.5
+    # - Note: `mosaic()` already has a base scaling factor of 2.5 (to help make the QC readable).
+    #          Since resolution-based scaling would overwrite this, we need to preserve the base scaling factor.
+    # - Note2: For `totalspineseg`, we actually _don't_ want to upscale by 2.5, so that's why `base_scaling` has
+    #          been parametrized, allowing per-QC customization.
+    scale *= base_scaling
     # - One other problem is that for anisotropic images, the aspect ratio won't be 1:1 between width/height.
     #   So, we use `aspect` to adjust the image via imshow, and `radius` to know where to place the text in x/y coords
     aspect = p_ratio[1] / p_ratio[0]
