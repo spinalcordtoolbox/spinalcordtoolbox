@@ -216,7 +216,7 @@ def labelize_from_discs(img: Image, ref: Image) -> Image:
     Create an image with regions labelized depending on values from reference.
     Typically, user inputs a segmentation image, and labels with discs position, and this function produces
     a segmentation image with vertebral levels labelized.
-    Note that no straightening is done. The labelization is only done based on the z coordinates.
+    Note that no straightening is done. The labelization is only done based on the z coordinates of each projected voxel of the segmentation.
     Input images do **not** need to be RPI (re-orientation is done within this function).
 
     :param img: segmentation
@@ -236,18 +236,20 @@ def labelize_from_discs(img: Image, ref: Image) -> Image:
     coordinates_input = img.getNonZeroCoordinates()
     coordinates_ref = ref.getNonZeroCoordinates(sorting='value')
 
-    # for all points in input, match the `z` coordinate to the appropriate vertebral level
+    # for all points in the segmentation project on the centerline and compare the `z` coordinate to the appropriate vertebral level
     for x, y, z, _ in coordinates_input:
+        projection = project_point_on_line(point=np.array([x, y, z]), line=centerline_arr)
+        _, _, z_proj = np.rint(projection).astype(int)
         # case 1: `z` is above the top-most disc label
-        if z > coordinates_ref[0].z:
+        if z_proj > coordinates_ref[0].z:
             out.data[int(x), int(y), int(z)] = coordinates_ref[0].value - 1
         # case 2: `z` is at or below the bottom-most disc label
-        elif z <= coordinates_ref[-1].z:
+        elif z_proj <= coordinates_ref[-1].z:
             out.data[int(x), int(y), int(z)] = coordinates_ref[-1].value
         # case 3: `z` is between two disc labels, so find the correct vertebral level
         else:
             for j in range(len(coordinates_ref) - 1):
-                if coordinates_ref[j + 1].z < z <= coordinates_ref[j].z:
+                if coordinates_ref[j + 1].z < z_proj <= coordinates_ref[j].z:
                     out.data[int(x), int(y), int(z)] = coordinates_ref[j].value
 
     # Set back the original orientation
