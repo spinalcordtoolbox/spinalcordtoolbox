@@ -53,7 +53,7 @@ def test_model_dict():
     (sct_test_path('t2', 't2.nii.gz'),
      sct_test_path('t2', 't2_seg-deepseg_rootlets.nii.gz'),
      't2_seg_deepseg.nii.gz',
-     'rootlets_t2',
+     'rootlets',
      None,
      None),  # no Dice score for rootlets model (we just make sure all the labels are present)
     (sct_test_path('t2', 't2.nii.gz'),  # dummy image since no EPI test data

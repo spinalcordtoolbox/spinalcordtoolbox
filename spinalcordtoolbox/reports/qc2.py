@@ -252,12 +252,12 @@ def sct_deepseg(
         subject=subject,
     ) as imgs_to_generate:
         # Custom QC to handle multiclass segmentation outside the spinal cord
-        if "rootlets_t2" in argv:
-            sct_deepseg_spinal_rootlets_t2w(
+        if "rootlets" in argv:
+            sct_deepseg_spinal_rootlets(
                 imgs_to_generate, fname_input, fname_seg, fname_seg2, species,
                 radius=(23, 23))
         elif "totalspineseg" in argv:
-            sct_deepseg_spinal_rootlets_t2w(
+            sct_deepseg_spinal_rootlets(
                 imgs_to_generate, fname_input, fname_seg, fname_seg2, species,
                 radius=(40, 40))
         # Non-rootlets, axial/sagittal DeepSeg QC report
@@ -385,7 +385,7 @@ def sct_deepseg_axial(
     fig.savefig(img_path, format='png', transparent=True, dpi=300)
 
 
-def sct_deepseg_spinal_rootlets_t2w(
+def sct_deepseg_spinal_rootlets(
     imgs_to_generate: dict[str, Path],
     fname_input: str,
     fname_seg_sc: str,
@@ -395,7 +395,7 @@ def sct_deepseg_spinal_rootlets_t2w(
     outline: bool = True
 ):
     """
-    Generate a QC report for `sct_deepseg rootlets_t2`.
+    Generate a QC report for `sct_deepseg rootlets`.
 
     This refactor is based off of the `listed_seg` method in qc.py, adapted to support multiple images.
     """
