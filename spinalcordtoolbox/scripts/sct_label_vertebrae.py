@@ -441,7 +441,7 @@ def main(argv: Sequence[str]):
                                 '-o', 'segmentation_labeled_disc.nii',
                                 '-x', 'label',
                                 '-v', '0'])
-        
+
         # Generate labeled centerline
         seg = Image("segmentation.nii")
         discs_proj = Image("segmentation_labeled_disc.nii")
