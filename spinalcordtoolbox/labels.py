@@ -211,7 +211,7 @@ def increment_z_inverse(img: Image) -> Image:
     return out
 
 
-def labelize_from_discs(img: Image, ref: Image) -> Image:
+def label_regions_from_reference(img: Image, ref: Image, centerline: bool = False) -> Image:
     """
     Create an image with regions labelized depending on values from reference.
     Typically, user inputs a segmentation image, and labels with discs position, and this function produces
@@ -221,6 +221,7 @@ def labelize_from_discs(img: Image, ref: Image) -> Image:
 
     :param img: segmentation
     :param ref: reference labels
+    :param centerline: boolean, if True the centerline is returned instead of the segmentation (default to false)
     :returns: segmentation image with vertebral levels labelized
     """
 
@@ -234,7 +235,16 @@ def labelize_from_discs(img: Image, ref: Image) -> Image:
 
     out = zeros_like(img)
 
-    coordinates_input = img.getNonZeroCoordinates()
+    # Extract centerline from segmentation
+    _, arr_ctl, _, _ = get_centerline(img)
+    centerline_arr = arr_ctl.T
+
+    if centerline:
+        coordinates_input = np.concatenate((centerline_arr, np.ones((centerline_arr.shape[0], 1))), axis=1)
+    else:
+        coordinates_input = img.getNonZeroCoordinates()
+
+    # Extract reference coordinates
     coordinates_ref = ref.getNonZeroCoordinates(sorting='value')
 
     # for all points in the segmentation project on the centerline and compare the `z` coordinate to the appropriate vertebral level
@@ -569,3 +579,16 @@ def project_point_on_line(point, line):
     dist = np.sum((line - point) ** 2, axis=1)
 
     return line[np.argmin(dist)]
+
+if __name__=='__main__':
+    seg_path = "/Users/nathan/Desktop/sct-proj/sub-unf03_T2w_label-SC_seg.nii.gz"
+    discs_path = "/Users/nathan/Desktop/sct-proj/sub-unf03_T2w_label-discs_dlabel.nii.gz"
+
+    seg = Image(seg_path)
+    discs = Image(discs_path)
+
+    # Project discs orthogonally onto the centerline
+    discs_proj = project_centerline(seg, discs)
+
+    # Generate a labeled segmentation
+    labeled_seg, labeled_centerline = label_cord_from_discs(seg, discs_proj)
