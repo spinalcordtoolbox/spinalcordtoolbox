@@ -488,10 +488,14 @@ def sct_deepseg_spinal_rootlets_t2w(
                   alpha=1.0,
                   interpolation='none',
                   aspect=aspect)
-        if outline:
-            # linewidth 0.5 is too thick, 0.25 is too thin
-            plot_outlines(img, ax=ax, facecolor='none', edgecolor='black', linewidth=0.3)
-        add_segmentation_labels(ax, img, colors=colormaps[i].colors, radius=tuple(r for r in radius))
+
+        # only display outlines and segmentation labels if scale is large enough to accommodate
+        # (in practice, this saves them from being added to the tiny totalspineseg QC)
+        if scale >= 1.0:
+            add_segmentation_labels(ax, img, colors=colormaps[i].colors, radius=tuple(r for r in radius))
+            if outline:
+                # linewidth 0.5 is too thick, 0.25 is too thin
+                plot_outlines(img, ax=ax, facecolor='none', edgecolor='black', linewidth=0.3)
 
     ax.get_xaxis().set_visible(False)
     ax.get_yaxis().set_visible(False)
