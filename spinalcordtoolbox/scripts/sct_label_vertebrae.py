@@ -300,8 +300,10 @@ def main(argv: Sequence[str]):
         discs_proj.save("segmentation_labeled_disc.nii")
 
         # Generate a labeled segmentation
-        labeled_seg = sct_labels.labelize_from_discs(seg, discs_proj)
+        labeled_seg = sct_labels.label_regions_from_reference(seg, discs_proj)
+        labeled_centerline = sct_labels.label_regions_from_reference(seg, discs_proj, centerline=True)
         labeled_seg.save("segmentation_labeled.nii")
+        labeled_centerline.save("centerline_labeled.nii")
     else:
 
         # Straighten spinal cord
@@ -439,6 +441,12 @@ def main(argv: Sequence[str]):
                                 '-o', 'segmentation_labeled_disc.nii',
                                 '-x', 'label',
                                 '-v', '0'])
+        
+        # Generate labeled centerline
+        seg = Image("segmentation.nii")
+        discs_proj = Image("segmentation_labeled_disc.nii")
+        labeled_centerline = sct_labels.label_regions_from_reference(seg, discs_proj, centerline=True)
+        labeled_centerline.save("centerline_labeled.nii")
 
     if clean_labels >= 1:
         printv('\nCleaning labeled segmentation:', verbose)
@@ -458,8 +466,10 @@ def main(argv: Sequence[str]):
     # Generate output files
     path_seg, file_seg, ext_seg = extract_fname(fname_seg)
     fname_seg_labeled = os.path.join(path_output, file_seg + '_labeled' + ext_seg)
+    fname_centerline_labeled = os.path.join(path_output, file_seg + '_labeled_centerline' + ext_seg)
     printv('\nGenerate output files...', verbose)
     generate_output_file(os.path.join(path_tmp, "segmentation_labeled.nii"), fname_seg_labeled)
+    generate_output_file(os.path.join(path_tmp, "centerline_labeled.nii"), fname_centerline_labeled)
     generate_output_file(os.path.join(path_tmp, "segmentation_labeled_disc.nii"), os.path.join(path_output, file_seg + '_labeled_discs' + ext_seg))
     # copy straightening files in case subsequent SCT functions need them
     if not fname_disc:
@@ -478,8 +488,7 @@ def main(argv: Sequence[str]):
         path_qc = os.path.abspath(arguments.qc)
         qc_dataset = arguments.qc_dataset
         qc_subject = arguments.qc_subject
-        labeled_seg_file = os.path.join(path_output, file_seg + '_labeled' + ext_seg)
-        generate_qc(fname_in, fname_seg=labeled_seg_file, args=argv, path_qc=os.path.abspath(path_qc),
+        generate_qc(fname_in, fname_seg=fname_seg_labeled, args=argv, path_qc=os.path.abspath(path_qc),
                     dataset=qc_dataset, subject=qc_subject, process='sct_label_vertebrae')
 
     display_viewer_syntax([fname_in, fname_seg_labeled], im_types=['anat', 'seg-labeled'], opacities=['1', '0.5'],
