@@ -125,10 +125,10 @@ MODELS = {
     },
     "model_seg_spinal_rootlets_nnunet": {
         "url": [
-            "https://github.com/ivadomed/model-spinal-rootlets/releases/download/r20240730/model-spinal-rootlets_M5_r20240129-2.zip"
+            "https://github.com/ivadomed/model-spinal-rootlets/releases/download/r20250318/model-spinal-rootlets-multicon-r20250318.zip"
         ],
-        "description": "Segmentation of spinal nerve rootlets for T2w images using nnUNet",
-        "contrasts": ["t2"],
+        "description": "Segmentation of spinal nerve rootlets for T2w and MP2RAGE (UNIT1, INV1, INV2) images using nnUNet",
+        "contrasts": ["t2", "UNIT1", "INV1", "INV2"],
         "thr": None,  # Multiclass rootlets model (1.0, 2.0, 3.0...) -> no thresholding
         "default": False,
     },
@@ -400,13 +400,14 @@ TASKS = {
              ```"""),  # noqa E501 (line too long)
          'group': 'pathology'
          },
-    'rootlets_t2':
-        {'description': 'Segmentation of spinal nerve rootlets for T2w contrast',
+    'rootlets':
+        {'description': 'Segmentation of spinal nerve rootlets for T2w and MP2RAGE (UNIT1, INV1, INV2) images',
          'long_description': 'This segmentation model for spinal nerve rootlets segmentation uses a 3D U-Net '
                              'architecture, and was trained with the nnUNetV2 framework. It is a multiclass model, '
-                             'outputting a single segmentation image containing 8 classes representing the C2-C8 '
-                             'dorsal spinal cord nerve rootlets. Training data consisted of 31 isotropic T2w images '
-                             'from healthy subjects from two different open-access datasets.',
+                             'outputting a single segmentation image containing 8 classes representing the C2-T1 '
+                             'dorsal and ventral spinal cord nerve rootlets. Training data consisted of 76 isotropic '
+                             'T2w and MP2RAGE images from healthy subjects from three datasets (spine-generic '
+                             'multi-subject, OpenNeuro ds004507, 7T MP2RAGE (private)).',
          'url': 'https://github.com/ivadomed/model-spinal-rootlets',
          'models': ['model_seg_spinal_rootlets_nnunet'],
          'citation': None
