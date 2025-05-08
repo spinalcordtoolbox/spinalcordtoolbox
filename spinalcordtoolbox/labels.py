@@ -579,16 +579,3 @@ def project_point_on_line(point, line):
     dist = np.sum((line - point) ** 2, axis=1)
 
     return line[np.argmin(dist)]
-
-if __name__=='__main__':
-    seg_path = "/Users/nathan/Desktop/sct-proj/sub-unf03_T2w_label-SC_seg.nii.gz"
-    discs_path = "/Users/nathan/Desktop/sct-proj/sub-unf03_T2w_label-discs_dlabel.nii.gz"
-
-    seg = Image(seg_path)
-    discs = Image(discs_path)
-
-    # Project discs orthogonally onto the centerline
-    discs_proj = project_centerline(seg, discs)
-
-    # Generate a labeled segmentation
-    labeled_seg, labeled_centerline = label_cord_from_discs(seg, discs_proj)
