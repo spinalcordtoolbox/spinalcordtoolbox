@@ -44,7 +44,7 @@ If you need to install a `sct_deepseg` model after the initial `sct` container i
 
     ./install_deepseg_task.sh task1 task2 task3
 
-Note that this can take a substantial amount of time, as to do this the `.sif` file must be packed and unpacked each time `install_deepseg_task.sh` is called. You should really try to avoid using as much as possible. 
+Note that this can take a substantial amount of time, as to do this the `.sif` file must be packed and unpacked each time `install_deepseg_task.sh` is called. You should really try to avoid using this as much as possible. 
 
 ## Running the Container
 
