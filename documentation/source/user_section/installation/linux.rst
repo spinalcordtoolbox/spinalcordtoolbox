@@ -214,19 +214,16 @@ TODO
 **[EXPERIMENTAL]** Install as a ``pip`` Package
 -----------------------------------------------
 
-SCT can be installed using pip, with some caveats:
+You should only install SCT this way if you need to access the internal functions of the package for use in a Python environment. As well, doing so comes with some caveats:
 
 - The installation is done in-place, so the folder containing SCT must be kept around and in the same place it was originally.
+- In order to ensure coexistence with other packages, the dependency specifications are loosened. As a result, it is much more likely that you will be running a combination that has not been tested, which may introduce unpredicable bugs or crashing.
 
-- In order to ensure coexistence with other packages, the dependency specifications are loosened, and it is possible that your package combination has not been tested with SCT.
+If the installation fails, or you run into errors, please report a bug indicating the dependency versions retrieved using "sct_check_dependencies", and try again with a clean ``pip`` installation/environment.
 
-So in case of problems, try again with the reference installation, and report a bug indicating the dependency versions retrieved using `sct_check_dependencies`.
+#. [Optional] `Activate <https://packaging.python.org/en/latest/guides/installing-using-pip-and-virtual-environments/#activate-a-virtual-environment>`_ the ``virtualenv`` environment you want to install SCT within.
 
-Procedure:
-
-#. Retrieve the SCT code to a safe place
-
-   Clone the repository and hop inside:
+#. Clone the current SCT repository and enter it.
 
     .. code:: sh
 
@@ -234,23 +231,27 @@ Procedure:
 
         cd spinalcordtoolbox
 
-#. Checkout the revision of interest, if different from `master`:
+#. Checkout the revision of interest, if different from ``master``:
 
     .. code:: sh
 
-        git checkout ${revision_of_interest}
+        git checkout <revision_of_interest>
 
-#. If numpy is not already on the system, install it, either using your distribution package manager or pip.
+#. Install ``numpy``:
 
-#. Install sct using pip
+    .. code:: sh
 
-    If running in a virtualenv:
+        pip install numpy
+
+#. Install SCT using ``pip``:
+
+    If you're installing within a ``virtualenv``:
 
     .. code:: sh
 
         pip install -e .
 
-    else:
+    Otherwise (you want SCT available in your base environment):
 
     .. code:: sh
 
