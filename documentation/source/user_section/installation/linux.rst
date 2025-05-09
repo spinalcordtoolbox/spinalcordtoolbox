@@ -207,7 +207,65 @@ You should see two green ``[OK]`` symbols at the bottom of the report for "PyQT"
 **[EXPERIMENTAL]** Install within Apptainer
 -------------------------------------------
 
-TODO
+Like Docker, `Apptainer <https://apptainer.org/docs/user/main/introduction.html>`_ is a portable container platform. It was designed with a focus on being used in "shared system" contexts, where multiple users with different needs require access to the same hardware. If you need to run SCT in this context (and a native install is not possible, as is often the case inHigh Performance Computer (HPC) clusters), you should install SCT in this way.
+
+Using Apptainer introduces a few caveats to using SCT, however:
+
+- Apptainer containers will only work on Linux-based systems, and cannot be ran on Windows or MacOS.
+- Due to containers being static post-creation, functions which install or modifying SCT (such as ``deepseg -install``) will not work. See `here <apptainer-task-install>`_ for a workaround.
+
+Basic Installation
+******************
+
+This installation will install the latest SCT version available on the master branch.
+
+#. Install Apptainer if you have not done so already (or activate the module which contains it, if on an shared resource system)
+
+#. Download the requisite files from GitHub:
+
+    .. code:: sh
+
+        curl "raw.githubusercontent.com/spinalcordtoolbox/spinalcordtoolbox/refs/heads/master/contrib/apptainer/sct.def" -o "sct.def"
+        curl "raw.githubusercontent.com/spinalcordtoolbox/spinalcordtoolbox/refs/heads/master/contrib/apptainer/install_sct_containered.sh" -o "install_sct_containered.sh"
+
+#. Run the installation script. You may also provide provide a list of ``deepseg`` tasks you want installed as well:
+
+    Basic installation (without any ``deepseg`` tasks)
+
+    .. code:: sh
+        ./install_sct_containered.sh
+
+    Installing the ``spinalcord`` and ``tumor_t2`` tasks as well:
+
+    .. code:: sh
+        ./install_sct_containered.sh spinalcord tumor_t2
+
+If installation ran to completion, without error, a ``sct.sif`` file should now be present in the directory. This can be used to run any SCT command as if SCT were installed locally; just prepend ``apptainer exec sct.sif`` before it. For example, to run a spinal cord segmentation using DeepSeg:
+
+.. code:: sh
+    apptainer exec sct.sif sct_deepseg spinalcord -i example_T2w.nii.gz
+
+.. _apptainer-task-install:
+
+Installing DeepSeg Tasks Post-Install
+*************************************
+
+If you need to install a task after the initial ``sct.sif`` file was created, you can use the following instructions. Note, however, that each time you do this, the ``.sif`` file is rebuilt, which can take quite a while to do; try to determine which ``deepseg`` models you'll need as early as possible to avoid this!
+
+#. Download the requisite files from GitHub:
+
+    .. code:: sh
+
+        curl "raw.githubusercontent.com/spinalcordtoolbox/spinalcordtoolbox/refs/heads/master/contrib/apptainer/sct_model_install.def" -o "sct_model_install.def"
+        curl "raw.githubusercontent.com/spinalcordtoolbox/spinalcordtoolbox/refs/heads/master/contrib/apptainer/install_deepseg_task.sh" -o "install_deepseg_task.sh"
+
+#. Run the following command, replacing ``<task1> <task2>`` with the list of ``deepseg`` task(s) you want to install (i.e. ``spinalcord t2_tumor``):
+
+.. code:: sh
+
+        ./install_deepseg_task.sh spinalcord t2_tumor
+
+This will update the existing ``sct.sif`` file to one containing SCT with the requested models.
 
 .. _pip-install:
 
