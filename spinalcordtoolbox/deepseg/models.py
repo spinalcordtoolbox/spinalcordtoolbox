@@ -407,7 +407,7 @@ TASKS = {
                              'outputting a single segmentation image containing 8 classes representing the C2-T1 '
                              'dorsal and ventral spinal cord nerve rootlets. Training data consisted of images from '
                              'healthy subjects from three datasets: spine-generic multi-subject (3T T2w: n=21), '
-                             'OpenNeuro ds004507 (3T T2w, n=10), private data (7T MP2RAGE: n=15 (3 contrasts per '
+                             'OpenNeuro ds004507 (3T T2w, 7 subjects, 10 images), private data (7T MP2RAGE: n=15 (3 contrasts per '
                              'subject --> 45 images)).',
          'url': 'https://github.com/ivadomed/model-spinal-rootlets',
          'models': ['model_seg_spinal_rootlets_nnunet'],
