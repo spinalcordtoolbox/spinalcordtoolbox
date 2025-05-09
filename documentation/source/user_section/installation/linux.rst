@@ -233,16 +233,20 @@ This installation will install the latest SCT version available on the master br
     Basic installation (without any ``deepseg`` tasks)
 
     .. code:: sh
+
         ./install_sct_containered.sh
 
     Installing the ``spinalcord`` and ``tumor_t2`` tasks as well:
 
     .. code:: sh
+
         ./install_sct_containered.sh spinalcord tumor_t2
+
 
 If installation ran to completion, without error, a ``sct.sif`` file should now be present in the directory. This can be used to run any SCT command as if SCT were installed locally; just prepend ``apptainer exec sct.sif`` before it. For example, to run a spinal cord segmentation using DeepSeg:
 
 .. code:: sh
+
     apptainer exec sct.sif sct_deepseg spinalcord -i example_T2w.nii.gz
 
 .. _apptainer-task-install:
