@@ -55,7 +55,7 @@ Depending on your use case, there are a number of different installation methods
 Install from Package
 --------------------
 
-The simplest way to install SCT, installing an in-place, static version of a tested package release. If you do not have any special circumstances, we recommend using this installation method.
+The simplest way to install SCT is to use an in-place, static version of a tested package release. If you do not have any special circumstances, we recommend using this installation method.
 
 First, navigate to the `latest release <https://github.com/spinalcordtoolbox/spinalcordtoolbox/releases>`_, then download the install script for SCT (``install_sct-<version>_linux.sh``). Major changes to each release are listed in the :doc:`/dev_section/CHANGES`.
 
