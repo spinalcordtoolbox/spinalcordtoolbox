@@ -214,7 +214,7 @@ Like Docker, `Apptainer <https://apptainer.org/docs/user/main/introduction.html>
 Using Apptainer introduces a few caveats to using SCT, however:
 
 - Apptainer containers will only work on Linux-based systems, and cannot be ran on Windows or MacOS.
-- Due to containers being static post-creation, functions which install or modify SCT (such as ``sct_deepseg -install``) will not work. See `here <apptainer-task-install>`_ for a workaround.
+- Due to containers being static post-creation, functions which install or modify SCT (such as ``sct_deepseg -install``) will not work. See :ref:`here <apptainer-task-install>` for a workaround.
 
 Basic Installation
 ******************
