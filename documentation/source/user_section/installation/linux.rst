@@ -8,6 +8,19 @@ Installation for Linux
 
     If you use Windows Subsystem for Linux (WSL), please refer to the :ref:`Windows installation section <wsl-installation>`.
 
+
+Installation Options
+====================
+
+Depending on your use case, there are a number of different installation methods available:
+
+- :ref:`Packaged Installation <native-install>`: For general use.
+- :ref:`GitHub Installation <github-install>`: For developers.
+- :ref:`Docker Installation <docker-install>`: For Cross-Platform Use/Testing.
+- **[Experimental]** :ref:`Apptainer Installation <apptainer-install>`: For HPC use and other restricted permission applications.
+- **[Experimental]** :ref:`PIP Installation <pip-install>` Installation ``pip`` for use as a Python package.
+
+
 Requirements
 ============
 
@@ -38,17 +51,6 @@ On CentOS/RedHat:
 
     yum -y install gcc
 
-
-Installation Options
-====================
-
-Depending on your use case, there are a number of different installation methods available:
-
-- :ref:`Packaged Installation <native-install>`: For general use.
-- :ref:`GitHub Installation <github-install>`: For developers.
-- :ref:`Docker Installation <docker-install>`: For Cross-Platform Use/Testing.
-- **[Experimental]** :ref:`Apptainer Installation <apptainer-install>`: For HPC use and other restricted permission applications.
-- **[Experimental]** :ref:`PIP Installation <pip-install>` Installation ``pip`` for use as a Python package.
 
 .. _native-install:
 
