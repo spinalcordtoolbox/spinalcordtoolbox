@@ -209,7 +209,7 @@ You should see two green ``[OK]`` symbols at the bottom of the report for "PyQT"
 **[EXPERIMENTAL]** Install within Apptainer
 -------------------------------------------
 
-Like Docker, `Apptainer <https://apptainer.org/docs/user/main/introduction.html>`_ is a portable container platform. It was designed with a focus on being used in "shared system" contexts, where multiple users with different needs require access to the same hardware. If you need to run SCT in this context (and a native install is not possible, as is often the case inHigh Performance Computer (HPC) clusters), you should install SCT in this way.
+Like Docker, `Apptainer <https://apptainer.org/docs/user/main/introduction.html>`_ (formerly Singularity) is a portable container platform. It was designed with a focus on being used in "shared system" contexts, where multiple users with different needs require access to the same hardware. If you need to run SCT in this context (and a native install is not possible, as is often the case in High Performance Computer (HPC) clusters), you should install SCT in this way.
 
 Using Apptainer introduces a few caveats to using SCT, however:
 
