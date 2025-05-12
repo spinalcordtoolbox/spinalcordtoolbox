@@ -53,7 +53,7 @@ Depending on your use case, there are a number of different installation methods
 .. _native-install:
 
 Install from Package
-------------------------------
+--------------------
 
 The simplest way to install SCT, installing an in-place, static version of a tested package release. If you do not have any special circumstances, we recommend using this installation method.
 
