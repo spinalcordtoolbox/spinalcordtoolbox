@@ -256,7 +256,7 @@ If installation ran to completion, without error, a ``sct.sif`` file should now 
 Installing DeepSeg Tasks Post-Install
 *************************************
 
-If you need to install a task after the initial ``sct.sif`` file was created, you can use the following instructions. Note, however, that each time you do this, the ``.sif`` file is rebuilt, which can take quite a while to do; try to determine which ``deepseg`` models you'll need as early as possible to avoid this!
+If you need to install a task after the initial ``sct.sif`` file was created, you can use the following instructions. Note, however, that each time you do this, the ``.sif`` file is rebuilt, which can take quite a while to do. To avoid this, try to determine which ``sct_deepseg`` models you'll need as early as possible!
 
 #. Download the requisite files from GitHub:
 
@@ -265,7 +265,7 @@ If you need to install a task after the initial ``sct.sif`` file was created, yo
         curl "raw.githubusercontent.com/spinalcordtoolbox/spinalcordtoolbox/refs/heads/master/contrib/apptainer/sct_model_install.def" -o "sct_model_install.def"
         curl "raw.githubusercontent.com/spinalcordtoolbox/spinalcordtoolbox/refs/heads/master/contrib/apptainer/install_deepseg_task.sh" -o "install_deepseg_task.sh"
 
-#. Run the following command, replacing ``<task1> <task2>`` with the list of ``deepseg`` task(s) you want to install (i.e. ``spinalcord t2_tumor``):
+#. Run the following command, replacing ``<task1> <task2>`` with the list of ``sct_deepseg`` task(s) you want to install (i.e. ``spinalcord t2_tumor``):
 
 .. code:: sh
 
