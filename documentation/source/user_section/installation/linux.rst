@@ -16,7 +16,7 @@ Depending on your use case, there are a number of different installation methods
 
 - :ref:`Packaged Installation <native-install>`: For general use.
 - :ref:`GitHub Installation <github-install>`: For developers.
-- :ref:`Docker Installation <docker-install>`: For Cross-Platform Use/Testing.
+- :ref:`Docker Installation <docker-install>`: For cross-platform use/testing.
 - **[Experimental]** :ref:`Apptainer Installation <apptainer-install>`: For HPC use and other restricted permission applications.
 - **[Experimental]** :ref:`PIP Installation <pip-install>` Installation ``pip`` for use as a Python package.
 
