@@ -11,6 +11,7 @@ import subprocess
 import multiprocessing
 
 from spinalcordtoolbox import __file__ as package_init_file
+from spinalcordtoolbox.utils.sys import __sct_dir__
 
 
 def main():
@@ -29,6 +30,13 @@ def main():
     # failing due to a missing `tensorflow` dependency (since the backend defaults to TF)
     env['VXM_BACKEND'] = 'pytorch'
     env['NEURITE_BACKEND'] = 'pytorch'
+
+    # Override LD_LIBRARY_PATH to prevent a dependency on system libs from PyQt5.
+    # This may be brittle, and requires us to install certain packages ourselves
+    # into the conda environment.
+    # Alternatively, we could specify the need for certainly libraries in our installation docs.
+    # See: https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4869#discussion_r2066701055
+    env['LD_LIBRARY_PATH'] = os.path.join(__sct_dir__, 'python', 'envs', 'venv_sct', 'lib')
 
     command = os.path.basename(sys.argv[0])
     pkg_dir = os.path.dirname(package_init_file)
