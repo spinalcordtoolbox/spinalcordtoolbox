@@ -6,11 +6,16 @@
 # See: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4679
 acvl_utils!=0.2.1
 # Avoid 1.6 and 1.7 due to method=restore bug: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4209#issuecomment-1739644328
-dipy!=1.6.*,!=1.7.*,<1.9.0
+dipy!=1.6.*,!=1.7.*
 # PyTorch's Linux distribution is very large due to its GPU support,
 # but we only need that for training models. Our users only need CPU.
 --extra-index-url https://download.pytorch.org/whl/cpu # append_to_freeze
 ivadomed
+# temporary hotfix for SCT's usage of cgi:
+#   > _, content = cgi.parse_header(response.headers['Content-Disposition'])
+# ideally we would rewrite our code to not need `parse_header`
+# see: https://github.com/python-babel/babel/issues/873
+legacy-cgi; python_version >= '3.13'
 matplotlib
 # `matplotlib-inline` is an optional package that comes with `jupyter` for use with the '%matplotlib inline' directive.
 # However, if the user runs `jupyter` from a separate environment and sets '%matplotlib inline', then SCT's
@@ -38,8 +43,8 @@ numpy<2
 # 1.7.0>onnxruntime>=1.5.1 required `brew install libomp` on macOS.
 # So, pin to >=1.7.0 to avoid having to ask users to install libomp.
 # Avoid version 1.16.0 due to: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4225
-# 1.15.1 seems to include a special fix related to Windows DLL loading.
-onnxruntime>=1.7.0,!=1.16.0,==1.15.1
+# If running Python 3.10, 1.15.1 seems to include a special fix related to Windows DLL loading
+onnxruntime>=1.7.0,!=1.16.0,==1.15.1; python_version == "3.10"
 pandas
 portalocker
 psutil
@@ -71,7 +76,10 @@ xlwt
 #              -> https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4781
 # - NOTE: nnunetv2 currently requries `torch>=2.1.2`, meaning that the above restriction results in a range of
 #         `2.1.2 <= torch < 2.3`, i.e. most likely version `2.2.2` will be installed.
-torch<2.3 # append_to_freeze
+# - NOTE: If unpinning `torch` (to support Python 3.13), then further code changes will likely be necessary.
+#         For example, `ivadomed` currently relies on an internal `torch` API (._six) that is changed in future
+#         versions.
+torch
 tqdm
 transforms3d
 urllib3
