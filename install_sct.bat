@@ -182,8 +182,8 @@ echo:
 echo ### Installing SCT and its dependencies from %requirements_file%...
 rem Skip pip==21.2 to avoid dependency resolver issue (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3593)
 python\envs\venv_sct\python -m pip install -U "pip^!=21.2.*" || goto error
-python\envs\venv_sct\Scripts\pip install -r %requirements_file% || goto error
-python\envs\venv_sct\Scripts\pip install -e . --use-pep517 || goto error
+python\envs\venv_sct\Scripts\pip install -v -r %requirements_file% || goto error
+python\envs\venv_sct\Scripts\pip install -v -e . --use-pep517 || goto error
 
 rem Install external dependencies
 echo:
