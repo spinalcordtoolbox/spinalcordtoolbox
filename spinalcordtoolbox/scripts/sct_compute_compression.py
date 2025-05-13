@@ -77,8 +77,8 @@ def get_parser():
         metavar=Metavar.file,
         help=textwrap.dedent("""
             A NIfTI file that includes either i) compression labels or ii) lesion mask.
-              i) compression labels = labels at the compression sites. Each compression site is denoted by a single voxel of value `1`. Example: `sub-001_T2w_compression_labels.nii.gz`
-              ii) lesion mask = binary mask of the lesion. Currently only a single lesion is supported. Example: `sub-001_T2w_lesion.nii.gz`
+              i) compression labels = labels at the compression sites. Each compression site is denoted by a single voxel of value `1`. Example: `sub-001_T2w_compression_labels.nii.gz`. Use the `-mode compression` flag when providing this input.
+              ii) lesion mask = binary mask of the lesion. Currently only a single lesion is supported. Example: `sub-001_T2w_lesion.nii.gz`. Use the `-mode lesion` flag when providing this input.
 
             Note: The '-i' and '-l' files must be in the same voxel coordinate system and must match the dimensions between each other.
         """),  # noqa: E501 (line too long)
