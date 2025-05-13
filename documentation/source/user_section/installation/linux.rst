@@ -229,6 +229,8 @@ This installation will install the latest SCT version available on the master br
 
         curl "raw.githubusercontent.com/spinalcordtoolbox/spinalcordtoolbox/refs/heads/master/contrib/apptainer/sct.def" -o "sct.def"
         curl "raw.githubusercontent.com/spinalcordtoolbox/spinalcordtoolbox/refs/heads/master/contrib/apptainer/install_sct_containered.sh" -o "install_sct_containered.sh"
+        # The following may not be required; it enables execution permissions for the file if it doesn't already have it.
+        chmod +x "install_sct_containered.sh"
 
 #. Run the installation script. You may also provide provide a list of :ref:`sct_deepseg` tasks you want installed as well:
 
@@ -264,6 +266,8 @@ If you need to install a task after the initial ``sct.sif`` file was created, yo
 
         curl "raw.githubusercontent.com/spinalcordtoolbox/spinalcordtoolbox/refs/heads/master/contrib/apptainer/sct_model_install.def" -o "sct_model_install.def"
         curl "raw.githubusercontent.com/spinalcordtoolbox/spinalcordtoolbox/refs/heads/master/contrib/apptainer/install_deepseg_task.sh" -o "install_deepseg_task.sh"
+        # The following may not be required; it enables execution permissions for the file if it doesn't already have it.
+        chmod +x "install_deepseg_task.sh"
 
 #. Run the following command, replacing ``<task1> <task2>`` with the list of ``sct_deepseg`` task(s) you want to install (i.e. ``spinalcord t2_tumor``):
 
