@@ -442,7 +442,7 @@ jobs:
       run:
         shell: cmd
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v4
     - name: Install SCT
       # NB: In real-world usage, it's assumed that the user would download the
       # install_sct.bat file from the Downloads page, and _not_ the full repo.
