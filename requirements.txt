@@ -43,8 +43,10 @@ numpy<2
 # 1.7.0>onnxruntime>=1.5.1 required `brew install libomp` on macOS.
 # So, pin to >=1.7.0 to avoid having to ask users to install libomp.
 # Avoid version 1.16.0 due to: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4225
+onnxruntime>=1.7.0,!=1.16.0
 # If running Python 3.10, 1.15.1 seems to include a special fix related to Windows DLL loading
-onnxruntime>=1.7.0,!=1.16.0,==1.15.1; python_version == "3.10"
+# See: https://github.com/microsoft/onnxruntime/issues/16116
+onnxruntime==1.15.1; python_version == "3.10"
 pandas
 portalocker
 psutil
@@ -79,12 +81,15 @@ xlwt
 # - NOTE: If unpinning `torch` (to support Python 3.13), then further code changes will likely be necessary.
 #         For example, `ivadomed` currently relies on an internal `torch` API (._six) that is changed in future
 #         versions.
-torch
+torch<2.3
 tqdm
 transforms3d
 urllib3
 pytest_console_scripts
 pyyaml
+# Note: `voxelmorph` has not been updated since 2022 (v0.2)
+#       This means that it contains some outdated code (`inspect.getargspec`) that is incompatible with
+#       Python 3.11+.
 voxelmorph
 wquantiles
 # XlxsWriter is needed to write `.xlsx` files, since pandas removed support for the `xlwt` engine
