@@ -74,8 +74,6 @@ def resolve_module(framework_name):
         # `matplotlib_inline` is only needed to run SCT scripts in Jupyter notebooks, and IPython would already be
         # installed in the parent context. So, we map `matplotlib-inline` to None to skip import (which would fail).
         'matplotlib-inline': (None, False),
-        # We specify the version of `onnx` on behalf of ivadomed -- we don't import it directly. So, skip checking its version.
-        'onnx': (None, False),
     }
 
     try:
