@@ -31,11 +31,10 @@ def main():
     env['VXM_BACKEND'] = 'pytorch'
     env['NEURITE_BACKEND'] = 'pytorch'
 
-    # Override LD_LIBRARY_PATH to prevent a dependency on system libs from PyQt5.
-    # This may be brittle, and requires us to install certain packages ourselves
-    # into the conda environment.
-    # Alternatively, we could specify the need for certainly libraries in our installation docs.
-    # See: https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4869#discussion_r2066701055
+    # Override the LD_LIBRARY_PATH environment variable. This does two things:
+    #   1. Clears any user-defined paths in LD_LIBRARY_PATH, preventing conflicts with system libraries (#4903).
+    #   2. Adds SCT's `venv_sct/lib` folder to the `LD_LIBRARY_PATH`, allowing us to supply libraries
+    #      that may be missing from the user's system, such as `libxcb-xinerama.so.0` on Ubuntu (#3925).
     env['LD_LIBRARY_PATH'] = os.path.join(__sct_dir__, 'python', 'envs', 'venv_sct', 'lib')
 
     command = os.path.basename(sys.argv[0])
