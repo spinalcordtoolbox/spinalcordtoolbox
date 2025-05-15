@@ -122,8 +122,8 @@ You can replace "``lesion_sci_t2``" with any of the task names in the table belo
 Other structures
 ----------------
 
-.. |rootlets_t2| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/spinal_rootlets_t2.png
-   :target: deepseg/rootlets_t2.html
+.. |rootlets| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/spinal_rootlets_t2.png
+   :target: deepseg/rootlets.html
 
 .. |totalspineseg| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/totalspineseg.png
    :target: deepseg/totalspineseg.html
@@ -132,36 +132,21 @@ Multiple structures may be segmented by running the following sample command:
 
 .. code::
 
-   sct_deepseg rootlets_t2 -i input.nii.gz
+   sct_deepseg rootlets -i input.nii.gz
 
-You can replace "``rootlets_t2``" with any of the task names in the table below to perform different tasks. Click on a task below for more information.
+You can replace "``rootlets``" with any of the task names in the table below to perform different tasks. Click on a task below for more information.
 
 
 .. list-table::
    :align: center
    :widths: 25 25 25
 
-   * - |rootlets_t2| ``rootlets_t2``
+   * - |rootlets| ``rootlets``
      - |totalspineseg| ``totalspineseg``
-     -
+     - |sc_canal_t2| ``sc_canal_t2``
 
 .. |sc_canal_t2| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/spinal_canal_t2.png
    :target: deepseg/sc_canal_t2.html
-
-Spinal Canal segmentation can be performed by running the following sample command:
-
-.. code::
-
-   sct_deepseg sc_canal_t2 -i input.nii.gz
-
-
-.. list-table::
-   :align: center
-   :widths: 25 25 25
-
-   * - |sc_canal_t2| ``sc_canal_t2``
-     - 
-     -
 
 
 Retired models
@@ -202,6 +187,7 @@ If you absolutely require these models, you can downgrade to version of SCT list
    :maxdepth: 2
 
    deepseg/spinalcord
+   deepseg/sc_t2star
    deepseg/seg_ms_sc_mp2rage
    deepseg/sc_epi
    deepseg/sc_mouse_t1
@@ -218,6 +204,6 @@ If you absolutely require these models, you can downgrade to version of SCT list
    deepseg/lesion_ms
    deepseg/tumor_edema_cavity_t1_t2
    deepseg/tumor_t2
-   deepseg/rootlets_t2
+   deepseg/rootlets
    deepseg/sc_canal_t2
    deepseg/totalspineseg

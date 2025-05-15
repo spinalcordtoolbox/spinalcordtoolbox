@@ -89,18 +89,6 @@ sct_deepseg_gm
 .. program-output:: sct_deepseg_gm -h
 
 
-sct_deepseg_lesion
-==================
-
-.. program-output:: sct_deepseg_lesion -h
-
-
-sct_deepseg_sc
-==============
-
-.. program-output:: sct_deepseg_sc -h
-
-
 sct_denoising_onlm
 ==================
 
@@ -325,3 +313,15 @@ sct_version
 ===========
 
 .. program-output:: sct_version
+
+
+sct_deepseg_lesion [DEPRECATED]
+===============================
+
+.. program-output:: sct_deepseg_lesion -h
+
+
+sct_deepseg_sc [DEPRECATED]
+===========================
+
+.. program-output:: sct_deepseg_sc -h
