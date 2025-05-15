@@ -168,7 +168,7 @@ start /wait "" %TMP_DIR%\miniconda.exe /InstallationType=JustMe /AddToPath=0 /Re
 rem Create and activate miniforge environment to install SCT into
 echo:
 echo ### Using Conda to create virtual environment...
-python\Scripts\conda create -y -p python\envs\venv_sct python=3.9 || goto error
+python\Scripts\conda create -y -p python\envs\venv_sct python=3.10 || goto error
 CALL python\Scripts\activate.bat python\envs\venv_sct || goto error
 echo Virtual environment created and activated successfully!
 
