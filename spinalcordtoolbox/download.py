@@ -41,8 +41,8 @@ DATASET_DICT = {
     },
     "sct_testing_data": {
         "mirrors": [
-            "https://github.com/spinalcordtoolbox/sct_testing_data/releases/download/r20250109/sct_testing_data-r20250109.zip",
-            "https://osf.io/eqp8y/?action=download",
+            "https://github.com/spinalcordtoolbox/sct_testing_data/releases/download/r20250506/sct_testing_data-r20250506.zip",
+            "https://osf.io/verw8/?action=download",
         ],
         "default_location": os.path.join(__sct_dir__, "data", "sct_testing_data"),
         "download_type": "Datasets",
@@ -66,8 +66,8 @@ DATASET_DICT = {
     },
     "PAM50": {
         "mirrors": [
-            "https://github.com/spinalcordtoolbox/PAM50/releases/download/r20250109/PAM50-r20250109.zip",
-            "https://osf.io/nkqtx/?action=download",
+            "https://github.com/spinalcordtoolbox/PAM50/releases/download/r20250422/PAM50-r20250422.zip",
+            "https://osf.io/q3m4t/?action=download",
         ],
         "default_location": os.path.join(__sct_dir__, "data", "PAM50"),
         "download_type": "Templates",

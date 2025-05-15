@@ -13,5 +13,5 @@ The :ref:`sct_deepseg` script also provides access to specialized models that fo
 You can learn more about all of the available models by:
 
 * Running :ref:`sct_deepseg` ``-h`` to view a basic summary
-* Running :ref:`sct_deepseg` ``-list-tasks`` to view detailed descriptions of each model.
+* Running :ref:`sct_deepseg` ``-task-details`` to view detailed descriptions of each model.
 * Visiting the visual gallery of models by going to the :ref:`sct_deepseg` page.

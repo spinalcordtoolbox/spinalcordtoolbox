@@ -3,7 +3,7 @@
 import pytest
 import logging
 
-from spinalcordtoolbox.scripts import sct_fmri_compute_tsnr, sct_maths, sct_deepseg_sc
+from spinalcordtoolbox.scripts import sct_fmri_compute_tsnr, sct_maths, sct_deepseg
 from spinalcordtoolbox.utils.sys import sct_test_path
 
 logger = logging.getLogger(__name__)
@@ -27,7 +27,7 @@ def img_mask(tmp_path):
     # segment the spinal cord
     # nb: normally we would segment another contrast then bring it to the fmri space, but direct seg is "good enough"
     fname_out = str(tmp_path / "fmri_seg.nii.gz")
-    sct_deepseg_sc.main(argv=["-i", fname_mean, "-c", "t2s", "-o", fname_out])  # t2s is closest (grey sc, white CSF)
+    sct_deepseg.main(argv=["spinalcord", "-i", fname_mean, "-o", fname_out])
     return fname_out
 
 

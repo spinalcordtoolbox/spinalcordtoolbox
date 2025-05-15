@@ -1,4 +1,4 @@
-
+.. _sct_deepseg_ms_lesion_stir_psir:
                 
 seg_sc_ms_lesion_stir_psir
 ==========================

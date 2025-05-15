@@ -1,13 +1,13 @@
 # pytest unit tests to validate the results of the batch_processing.sh script
 
-import pathlib
 import csv
+from pathlib import Path
 
 import pytest
 
 from spinalcordtoolbox.utils.sys import sct_dir_local_path
 
-SCT_DIR = pathlib.Path(sct_dir_local_path())
+SCT_DIR = Path(sct_dir_local_path())
 CACHE_DIR = SCT_DIR / "testing" / "batch_processing" / "cached_results"
 OUTPUT_DIR = SCT_DIR / "data" / "sct_example_data"
 
@@ -30,13 +30,14 @@ def get_csv_float_value(csv_filepath, row, column):
 
 
 # macOS currently fails due to https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3194
-@pytest.mark.skipif(not all([(OUTPUT_DIR / fname[0]).is_file() for fname in TESTED_VALUES]),
-                    reason="Not all output csv files exist; can't check values.")
 @pytest.mark.parametrize("csv_filepath,row,column", TESTED_VALUES)
 def test_batch_processing_results(csv_filepath, row, column):
     """Ensure that new batch_processing.sh results are approximately equal to the cached baseline results."""
+    # Skip the test if we're missing the corresponding CSV
     csv_output = OUTPUT_DIR / csv_filepath
     csv_cached = CACHE_DIR / csv_filepath
+    if not csv_output.exists():
+        pytest.skip(f"Batch output file '{OUTPUT_DIR / csv_filepath}' could not be found to test against.")
     assert csv_cached.is_file(), f"{csv_cached} not present. Please check the SCT installation."
     assert csv_output.is_file(), f"{csv_output} not present. Was batch_processing.sh run beforehand?"
     expected_value = get_csv_float_value(csv_cached, row, column)

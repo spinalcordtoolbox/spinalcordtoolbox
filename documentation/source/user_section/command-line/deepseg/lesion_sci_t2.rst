@@ -1,4 +1,4 @@
-
+.. _sct_deepseg_lesion_sci_t2:
                 
 lesion_sci_t2
 =============

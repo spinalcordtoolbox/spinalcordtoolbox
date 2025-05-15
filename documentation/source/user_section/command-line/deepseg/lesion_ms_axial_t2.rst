@@ -1,4 +1,4 @@
-
+.. _sct_deepseg_lesion_ms_axial_t2:
 
 lesion_ms_axial_t2
 ==================

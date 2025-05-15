@@ -48,12 +48,12 @@ Finally, the surface of the mesh is refined using small adjustments.
 When to use ``sct_propseg``
 ---------------------------
 
-When choosing between ``sct_propseg``, :ref:`sct_deepseg_sc`, and :ref:`sct_deepseg`, it is important to know that no one algorithm is strictly superior in all cases; whether one works better than the other is data-dependent.
+When choosing between ``sct_propseg`` and ``sct_deepseg spinalcord``, it is important to know that no one algorithm is strictly superior in all cases; whether one works better than the other is data-dependent.
 
 As a rule of thumb:
 
-- :ref:`sct_deepseg` (and to a lesser extent, :ref:`sct_deepseg_sc`) will generally perform better on "real world" scans of adult humans, including both healthy controls and subjects with conditions such as multiple sclerosis (MS), degenerative cervical myelopathy (DCM), and others. (This is because these kinds of subjects make up the majority of the data used to train :ref:`sct_deepseg_sc`'s underlying model.)
-- :ref:`sct_propseg`, on the other hand, will generally perform better on non-standard scans, including exvivo spinal cords, pediatric subjects, and non-human species. (This is because :ref:`sct_propseg` uses a mesh propagation-based approach that is more agnostic to details such as the shape and size of the spinal cord, the presence of surrounding tissue, etc.)
+- :ref:`sct_deepseg` will generally perform better on "real world" scans of adult humans, including both healthy controls and subjects with conditions such as multiple sclerosis (MS), degenerative cervical myelopathy (DCM), and others. This is because :ref:`sct_deepseg` was trained on human subjects, including those with a range of common and representative spinal cord pathologies.
+- :ref:`sct_propseg`, on the other hand, will generally perform better on non-standard scans, including exvivo spinal cords, pediatric subjects, and non-human species. This is because :ref:`sct_propseg` uses a mesh propagation-based approach that is more agnostic to details such as the shape and size of the spinal cord, the presence of surrounding tissue, etc.
 
 That said, given the variation in imaging data (imaging centers, sizes, ages, coil strengths, contrasts, scanner vendors, etc.), SCT recommends to try both algorithms with your pilot scans to evaluate the merit of each on your specific dataset, then stick with a single method throughout your study.
 

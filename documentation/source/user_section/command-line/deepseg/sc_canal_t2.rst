@@ -1,4 +1,4 @@
-
+.. _sct_deepseg_sc_canal_t2:
                 
 sc_canal_t2
 ===========

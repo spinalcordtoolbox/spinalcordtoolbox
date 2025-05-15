@@ -40,6 +40,7 @@ spinalcordtoolbox/sentry_dsn.py
 unit_testing/*.csv
 unit_testing/*.nii.gz
 unit_testing/*.roi
+testing/*.json
 
 .vscode/settings.json
 test.sh

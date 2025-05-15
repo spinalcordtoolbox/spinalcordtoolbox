@@ -1,4 +1,4 @@
-
+.. _sct_deepseg_tumor_t2:
                 
 tumor_t2
 ========

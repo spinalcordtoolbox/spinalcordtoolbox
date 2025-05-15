@@ -26,6 +26,13 @@ The following studies have used SCT:
 2025 
 ----
 
+-  Jin *et al.* `Quantitative Study on Morphological Parameters of Healthy Cervical Spinal Cord Based on SCT <https://doi.org/10.12455/j.issn.1671-7104.240337>`_, **Chinese Journal of Medical Instrumentation** 2025
+-  Labounek *et al.* `Body size and intracranial volume interact with the structure of the central nervous system: A multi-center in vivo neuroimaging study <https://doi.org/10.1162/imag_a_00559>`_, **Imaging Neuroscience** 2025
+-  Bozhko *et al.* `Diffusion tensor imaging in the study of spinal tract degeneration after spinal cord injury: a prospective study <https://doi.org/10.22328/2079-5343-2025-16-1-66-73>`_, **Diagn. Radiol. Radiother.** 2025
+-  Wolmer *et al.* `Distinct patterns of cerebral and spinal pathology along the spectrum of ATXN2-related disorders <https://doi.org/10.1007/s00415-025-13037-9>`_, **J. Neurol.** 2025
+-  Ojha *et al.* `Clinical and MRI features contributing to the clinico-radiological dissociation in a large cohort of people with multiple sclerosis <https://doi.org/10.1007/s00415-025-12977-6>`_, **J. Neurol.** 2025
+-  Sadeghi-Adl *et al.* `Severity Classification of Pediatric Spinal Cord Injuries Using Structural MRI Measures and Deep Learning: A Comprehensive Analysis Across All Vertebral Levels <https://doi.org/10.3174/ajnr.A8770>`_, **AJNR Am. J. Neuroradiol.** 2025
+-  Bedard *et al.* `Normalizing spinal cord compression measures in degenerative cervical myelopathy <https://doi.org/10.1016/j.spinee.2025.03.012>`_, **Spine J.** 2025
 -  Solanky *et al.* `Evaluation of magnetic resonance spectroscopy total sodium concentration measures, and associations with microstructure and physical impairment in cervical myelopathy <https://doi.org/10.1038/s41598-025-91658-w>`_, **Sci. Rep.** 2025
 -  Azzimonti *et al.* `Cervical spinal cord gray matter damage predicts disability worsening in multiple sclerosis: a longitudinal study <https://doi.org/10.1007/s00415-025-12979-4>`_, **J. Neurol.** 2025
 -  Stroman *et al.* `Evidence of a persistent altered neural state in people with fibromyalgia syndrome during functional MRI studies and its relationship with pain and anxiety <https://doi.org/10.1371/journal.pone.0316672>`_, **PLoS One** 2025

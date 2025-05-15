@@ -44,21 +44,23 @@ Next, open up your terminal and run the following command:
    - ``straight_ref.nii.gz`` : The straightened input image produced by the intermediate straightening step. Can be re-used by other SCT functions that need a straight reference space.
    - ``straightening.cache`` : SCT functions that require straightening will check for this file. If it is present in the working directory, ``straight_ref.nii.gz`` and the two warping fields will be re-used, saving processing time.
 
-After smoothing, the apparent noise is reduced, while the cord edges are preserved, allowing a more reliable segmentation on a second pass.
+After smoothing, the apparent noise is reduced, while the cord edges are preserved. This may allow for the spinal cord to be segmented in cases where segmentation tools initially produce poor results.
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/spinalcord-smoothing/io-sct_smooth_spinalcord.png
    :align: center
 
-You can compare the quality of the segmentation produced on the smoothed image by running the following commands:
+However, you should always inspect the output and perform manual correction as necessary. This is especially critical when performing quantitative analyses (i.e. CSA calculation) across multiple subjects. If you perform smoothing on only some images in the dataset, you may introduce bias via over/under-segmenting that subset of images relative to the rest.
+
+You can always compare the quality of the segmentation produced on the smoothed image by running the following commands:
 
 .. code:: sh
 
    # Second-pass segmentation using the smoothed anatomical image
-   sct_deepseg_sc -i t1_smooth.nii.gz -c t1 -qc ~/qc_singleSubj
+   sct_deepseg spinalcord -i t1_smooth.nii.gz -qc ~/qc_singleSubj
 
 ..
    comment:: Is this really necessary anymore? We have the contrast-agnostic
              segmentation, which should provide a more accurate segmentation
              with CSA that is consistent between contrasts. I am wondering
-             how trustworthy the results of ``sct_deepseg_sc`` are on a smoothed
+             how trustworthy the results of ``sct_deepseg`` are on a smoothed
              spinal cord now that we have a new gold-standard for segmentation.

@@ -1,4 +1,4 @@
-
+.. _sct_deepseg_sc_mouse_t1:
                 
 sc_mouse_t1
 ===========
