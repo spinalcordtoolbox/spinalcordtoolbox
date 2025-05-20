@@ -16,7 +16,7 @@ from spinalcordtoolbox.straightening import SpinalCordStraightener
 from spinalcordtoolbox.centerline.core import ParamCenterline
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel, removesuffix
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 
 
 def get_parser():
@@ -243,7 +243,7 @@ def main(argv: Sequence[str]):
         qc_dataset = arguments.qc_dataset
         qc_subject = arguments.qc_subject
         generate_qc(fname_straight, args=argv, path_qc=os.path.abspath(path_qc),
-                    dataset=qc_dataset, subject=qc_subject, process=removesuffix(os.path.basename(__file__), ".py"))
+                    dataset=qc_dataset, subject=qc_subject, process=os.path.basename(__file__).removesuffix(".py"))
 
     display_viewer_syntax([fname_straight], verbose=verbose)
 
