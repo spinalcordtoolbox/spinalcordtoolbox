@@ -49,8 +49,6 @@ psutil
 # pyqt5=5.15.X causes https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3925, however
 # to support Python 3.10 and above, there is no other option, so we will need to bite the bullet here.
 pyqt5>=5.15.0
-# PyQt5-sip should be updated when PyQt5 is updated: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4354
-pyqt5-sip<12.13.0
 # pystrum==0.2 is incompatible with newer versions of numpy (installed via voxelmorph -> neurite -> pystrum)
 # See also: https://github.com/adalca/pystrum/issues/9
 pystrum>=0.3
