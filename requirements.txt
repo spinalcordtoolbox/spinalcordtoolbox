@@ -35,11 +35,13 @@ nilearn
 nnunetv2>2.3.0,!=2.4.*,<=2.5.1
 # SCT is compatible, however the upgrade to numpy==2.0.0 broke *many* upstream packages. Let's try again later. See https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4535
 numpy<2
-# 1.7.0>onnxruntime>=1.5.1 required `brew install libomp` on macOS.
-# So, pin to >=1.7.0 to avoid having to ask users to install libomp.
-# Avoid version 1.16.0 due to: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4225
-# 1.15.1 seems to include a special fix related to Windows DLL loading.
-onnxruntime>=1.7.0,!=1.16.0,==1.15.1
+# - 1.7.0>onnxruntime>=1.5.1 required `brew install libomp` on macOS.
+#   So, pin to >=1.7.0 to avoid having to ask users to install libomp.
+# - Avoid version 1.16.0 due to: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4225
+# - 1.15.1 seems to include a special fix related to Windows DLL loading.
+#   However, this version also seems to fail when installed on Arch and Debian...
+#   So, temporarily unpin just to see if we can find a version that works for all 3 platforms...
+onnxruntime>=1.7.0,!=1.16.0
 # onnx==[1.16.2,1.17.0,1.18.0] all cause errors for Python 3.9 + Windows (https://github.com/onnx/onnx/issues/6267#issuecomment-2877327002)
 # 1.17.0 can partially work as long as SCT doesn't import it, but this is flaky.
 onnx<1.16.2
