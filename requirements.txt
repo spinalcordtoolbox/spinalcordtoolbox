@@ -49,6 +49,11 @@ psutil
 # pyqt5=5.15.X causes https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3925, however
 # to support Python 3.10 and above, there is no other option, so we will need to bite the bullet here.
 pyqt5>=5.15.0
+# pyqt5>=5.15.0 comes with a separate package, `pyqt5-qt5`. This package is odd, and its only release
+# that supports Windows is `5.15.2`. If we _don't_ specify this version, then running `pip freeze` from
+# an Ubuntu machine will result in a set of dependencies incompatible with Windows, and we don't want that!
+# See also: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4905#issuecomment-2902112975
+PyQt5-Qt5==5.15.2
 # pystrum==0.2 is incompatible with newer versions of numpy (installed via voxelmorph -> neurite -> pystrum)
 # See also: https://github.com/adalca/pystrum/issues/9
 pystrum>=0.3
