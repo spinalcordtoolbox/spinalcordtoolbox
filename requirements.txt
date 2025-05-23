@@ -40,8 +40,10 @@ numpy<2
 # - Avoid version 1.16.0 due to: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4225
 # - 1.15.1 seems to include a special fix related to Windows DLL loading.
 #   However, this version also seems to fail when installed on Arch and Debian...
-#   So, temporarily unpin just to see if we can find a version that works for all 3 platforms...
-onnxruntime>=1.7.0,!=1.16.0
+#   So, right now, we're temporarily disabling Arch/Debian CI runners until we can find a path to unpinning 1.15.1:
+#      * The following issue is addressed: https://github.com/microsoft/onnxruntime/issues/24843#issuecomment-2904854046
+#      * We upgrade to Python 3.11 (doable, once we handle `voxelmorph`)
+onnxruntime>=1.7.0,!=1.16.0==1.15.1
 # onnx==[1.16.2,1.17.0,1.18.0] all cause errors for Python 3.9 + Windows (https://github.com/onnx/onnx/issues/6267#issuecomment-2877327002)
 # 1.17.0 can partially work as long as SCT doesn't import it, but this is flaky.
 onnx<1.16.2

@@ -49,7 +49,9 @@ jobs:
     # TODO: when actions supports using ${{env}} in job.*.if and not just job.*.steps.*.if, use this:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
-    if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
+    if: false  # ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
+    # FIXME: Temporarily disabled due to issues with `onnxruntime==1.15.1`
+    #        See: https://github.com/microsoft/onnxruntime/issues/24843#issuecomment-2904854046
     runs-on: ubuntu-22.04
     container: archlinux
     steps:
@@ -72,7 +74,9 @@ jobs:
     # TODO: when actions supports using ${{env}} in job.*.if and not just job.*.steps.*.if, use this:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
-    if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
+    if: false  # ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
+    # FIXME: Temporarily disabled due to issues with `onnxruntime==1.15.1`
+    #        See: https://github.com/microsoft/onnxruntime/issues/24843#issuecomment-2904854046
     runs-on: ubuntu-22.04
     container: debian:sid
     steps:
@@ -95,7 +99,9 @@ jobs:
     # TODO: when actions supports using ${{env}} in job.*.if and not just job.*.steps.*.if, use this:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
-    if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
+    if: false  # ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
+    # FIXME: Temporarily disabled due to issues with `onnxruntime==1.15.1`
+    #        See: https://github.com/microsoft/onnxruntime/issues/24843#issuecomment-2904854046
     runs-on: ubuntu-22.04
     container: debian:testing
     steps:
