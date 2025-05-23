@@ -3,6 +3,8 @@
 Installation with Apptainer
 ---------------------------
 
+.. versionadded:: 7.1
+
 .. warning::
     This is currently experimental; while we have done our best to test and confirm all functions of SCT run as would be expected, we cannot guarantee that all functionalities of SCT function identically to a non-containerized installation.
 
@@ -22,7 +24,7 @@ This method will install the latest SCT version available on the master branch.
 
 #. Install Apptainer if you have not done so already (or activate the module which contains it, if on an shared resource system)
 
-#. Download the requisite files from GitHub:
+#. Download the `apptainer_scripts.tar.gz` bundle for your desired release and  requisite files from GitHub:
 
     .. code:: sh
 
