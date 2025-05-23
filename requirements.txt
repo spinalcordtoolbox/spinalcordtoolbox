@@ -18,13 +18,12 @@ matplotlib
 # `matplotlib-inline` in our env by default to ensure that SCT scripts can be run in Jupyter notebooks without error.
 matplotlib-inline
 monai[nibabel]
-# Fresh Windows installations may be missing the C++ runtime library required by scikit-image.
+# Fresh Windows installations may be missing the C++ runtime library required by onnxruntime, scikit-image, etc.
 # Installing "Microsoft Visual C++ Redistributable for Visual Studio" will fix this too, but
-# we'd prefer not to burden users with another prerequisite. 
-# NB: It's possible this fix gets included upstream in a future skimage release, see:
-#     https://github.com/scikit-image/scikit-image/issues/4780#issuecomment-824678872
-# (The version is pinned because this line gets copied to requirements-freeze.txt when preparing a release, not because we're avoiding bugs with a specific version. Feel free to update it to the latest version.)
-msvc-runtime==14.29.30133; sys.platform == 'win32' # append_to_freeze
+# we'd prefer not to burden users with another prerequisite.
+# (The version is pinned because this line gets copied to requirements-freeze.txt when preparing a release, not because we're avoiding bugs  with a specific version. It should be actively upgraded, or else it may cause issues when upgrading other packages. See:
+#  https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4906/files#r2105230162)
+msvc-runtime==14.42.34433; sys.platform == 'win32' # append_to_freeze
 nibabel
 nilearn
 # Only allow nnunetv2==2.3.1 or 2.5.1 (NB: there is no 2.5.0)
@@ -38,12 +37,7 @@ numpy<2
 # - 1.7.0>onnxruntime>=1.5.1 required `brew install libomp` on macOS.
 #   So, pin to >=1.7.0 to avoid having to ask users to install libomp.
 # - Avoid version 1.16.0 due to: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4225
-# - 1.15.1 seems to include a special fix related to Windows DLL loading.
-#   However, this version also seems to fail when installed on Arch and Debian...
-#   So, right now, we're temporarily disabling Arch/Debian CI runners until we can find a path to unpinning 1.15.1:
-#      * The following issue is addressed: https://github.com/microsoft/onnxruntime/issues/24843#issuecomment-2904854046
-#      * We upgrade to Python 3.11 (doable, once we handle `voxelmorph`)
-onnxruntime>=1.7.0,!=1.16.0,==1.15.1
+onnxruntime>=1.7.0,!=1.16.0
 # onnx==[1.16.2,1.17.0,1.18.0] all cause errors for Python 3.9 + Windows (https://github.com/onnx/onnx/issues/6267#issuecomment-2877327002)
 # 1.17.0 can partially work as long as SCT doesn't import it, but this is flaky.
 onnx<1.16.2
