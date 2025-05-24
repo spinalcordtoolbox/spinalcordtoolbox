@@ -4,10 +4,12 @@ From: ubuntu:22.04
 %arguments
     # A list of sct_deepseg tasks you want installed immediately, w/o needing to repack the container later
     task_installs=''
+    # SCT version to install
+    sct_version="X.Y"
 
 %environment
     # Update the PATH so that SCT commands are always available
-    export PATH=$PATH:/sct/bin
+    export PATH="$PATH:/root/sct/bin"
 
 %post
     # Install our non-Python dependencies
@@ -15,17 +17,27 @@ From: ubuntu:22.04
     apt-mark hold openssh-client dbus  # Pinning these so that it doesn't crash due to this: https://github.com/apptainer/apptainer/issues/1822#issuecomment-2051581258
     apt-get install -y git wget bzip2 libglib2.0-0 libgl1-mesa-glx libxrender1 libxkbcommon-x11-0 libdbus-1-3 gcc
 
-    # Clone the master branch of the SCT repository
-    git clone https://github.com/spinalcordtoolbox/spinalcordtoolbox.git sct
-    cd sct
+    # Grab the desired SCT release's installation script
+    install_sh="install_sct-{{ sct_version }}_linux.sh"
+    wget "https://github.com/spinalcordtoolbox/spinalcordtoolbox/releases/download/{{ sct_version }}/$install_sh"
 
-    # Install it into this container
-    ./install_sct -y
+    # Mark it as executable
+    chmod +x "$install_sh"
+
+    # Install SCT within the container
+    ./"$install_sh" -y
+
+    # Link the SCT path to a standard location so later scripts don't need to be re-written for every SCT version
+    ln -s /root/sct_7.0/ /root/sct
+
+    # Update the PATH so that SCT commands are always available
+    export PATH="$PATH:/root/sct/bin"
+
+    # Confirm everything is correct by validating the SCT version
+    sct_version
 
     # If any tasks were designated by the user, install their corresponding models
-    if [ "{{ task_installs }}" != '' ]; then
-        # Add SCT's bin to PATH for easy access
-        export PATH=$PATH:/sct/bin
+    if [ -n "{{ task_installs }}" ] && [ "{{ task_installs }}" != '' ]; then
         # Install each task requested by the user, one by one
         for task in {{ task_installs }}; do
             sct_deepseg "$task" -install || echo "Failed to install task $task"
@@ -34,6 +46,4 @@ From: ubuntu:22.04
 
 
 %help
-    This container has the barebones, default installation of the latest master branch of the Spinal Cord Toolbox.
-    It contains only the default models unless you specify others with the `--build-arg task_installs="{task_list}"`
-    argument; `sct_deepsge -install` will NOT work due to the network isolation of apptainer containers post-install.
+    This container has default installation of version {{ sct_version }} of the Spinal Cord Toolbox.

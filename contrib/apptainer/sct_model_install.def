@@ -7,11 +7,11 @@ From: sct.sif
 
 %environment
     # Update the PATH so that SCT commands are always available
-    export PATH=$PATH:/sct/bin
+    export PATH="$PATH:/root/sct/bin"
 
 %post
     # Ubuntu 24.04 AppArmour strips the path, but doesn't run %environment to restore it for god knows why
-    export PATH=$PATH:/sct/bin
+    export PATH="$PATH:/root/sct/bin"
 
     # If no tasks were designated, tell the user how to use this definition
     if [ -z "{{ task_installs }}" ]; then

@@ -10,6 +10,3 @@ else
   # The leading APPTAINER_BIND declaration forces Apptainer to not use any existing Conda installs, helping w/ portability
   APPTAINER_BIND=' ' apptainer build sct.sif sct.def
 fi
-
-# Literally just the list of position arguments, for ease of use. Will need to be updated for future SCT versions.
-TASK_LIST="$*"
