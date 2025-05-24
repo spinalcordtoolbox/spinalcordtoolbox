@@ -6,7 +6,7 @@ if [ "$#" == "0" ]; then
   exit 1
 fi
 
-# Just passes the arguments through
+# Just passes the arguments through, saving the results to a temporary file so the original isn't deleted if it fails
 APPTAINER_BIND=' ' apptainer build --build-arg task_installs="$*" sct_tmp.sif sct_model_install.def
 
 # Removes the old .sif and replaced it with the new one, given the prior command ran correctly
