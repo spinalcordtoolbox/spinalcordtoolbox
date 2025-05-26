@@ -49,6 +49,29 @@ jobs:
         name: requirements-freeze
         path: requirements-freeze.txt
 
+  build-apptainer-tarball:
+    # Generates a tarball, containing Apptainer generating scripts which are pinned to this release. Should make
+    #  it so any code run in an Apptainer is 100% reproducible in HPC contexts from SCT 7.1 on!
+    # However, doing it this was is less efficient than doing it as part of the "create-release", as we end up needing
+    #  to clone SCT twice (thrice actually, due to the requirements-freeze step prior). We do it this way to allow for
+    #  tests to be run without creating a new "official" release of SCT.
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Checkout spinalcordtoolbox
+      uses: actions/checkout@v4
+
+    - name: Generate Apptainer Tarball
+      run: |
+        cd ./contrib/apptainer
+        ./bundle_for_release.sh
+
+    - name: Upload Apptainer Tarball
+      uses: actions/upload-artifact@v4
+      with:
+        name: sct_apptainer_${{ github.event.inputs.milestone_title }}.tar.gz
+        path: sct-apptainer
+
   test-release:
     # The purpose of this step is to run tests using the requirements-freeze file
     # In 99% of cases, this will be identical to running tests using `requirements.txt`. But, sometimes
@@ -112,7 +135,7 @@ jobs:
         sct_testing
 
   create-release:
-    needs: test-release
+    needs: [test-release, build-apptainer-tarball]
     runs-on: ubuntu-latest
     # Only create the release if workflow is run manually. (This allows the other steps in the workflow to test PRs.)
     if: github.event_name == 'workflow_dispatch'
@@ -133,6 +156,11 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: requirements-freeze
+
+    - name: Download Apptainer tarball (for release)
+      uses: actions/download-artifact@v4
+      with:
+        name: sct-apptainer
 
     - name: Commit requirements-freeze.txt (for release)
       run: |
@@ -163,16 +191,6 @@ jobs:
         cp install_sct install_sct-${{ github.event.inputs.milestone_title }}_linux.sh
         perl -pi -e 's/SCT_GIT_REF="master"/SCT_GIT_REF="${{ github.event.inputs.milestone_title }}"/' install_sct-${{ github.event.inputs.milestone_title }}_linux.sh
         cp install_sct-${{ github.event.inputs.milestone_title }}_linux.sh install_sct-${{ github.event.inputs.milestone_title }}_macos.sh
-
-    - name: Create ${{ github.event.inputs.milestone_title }} Apptainer Bundle
-      # KO: Generates a tarball gzip archive with pre-defined SCT version variables, for ease of use and installation.
-      #  This also effectively "pins" the version of SCT, for reproducibility’s sake.
-      run: |
-        old_pwd="$PWD"
-        cd contrib/apptainer/
-        ./bundle_for_release.sh ${{ github.event.inputs.milestone_title }}
-        mv "sct_apptainer_${{ github.event.inputs.milestone_title }}.tar.gz" "$old_pwd"
-        cd "$old_pwd"
 
     - name: Create release
       uses: ncipollo/release-action@v1
