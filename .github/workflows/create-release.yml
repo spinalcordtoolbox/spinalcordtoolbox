@@ -27,8 +27,6 @@ env:
   # Disable progress bars for less verbose output
   PIP_PROGRESS_BAR: "off"
   SCT_PROGRESS_BAR: "off"
-  # Whether this is a dry-run (if not, a real release is made to the repo!)
-  DRY_RUN: "True"
 
 
 jobs:
@@ -61,8 +59,8 @@ jobs:
   build-apptainer-tarball:
     # Generates a tarball, containing Apptainer generating scripts which are pinned to this release. Should make
     #  it so any code run in an Apptainer is 100% reproducible in HPC contexts from SCT 7.1 on!
-    # However, doing it this was is less efficient than doing it as part of the "create-release", as we end up needing
-    #  to clone SCT twice (thrice actually, due to the requirements-freeze step prior). We do it this way to allow for
+    # However, doing it this way is less efficient than doing it as part of the "create-release", as we end up needing
+    #  to clone SCT thrice (due to the requirements-freeze step prior). We do it this way to allow for
     #  tests to be run without creating a new "official" release of SCT.
     runs-on: ubuntu-latest
     steps:
