@@ -73,13 +73,13 @@ jobs:
     - name: Generate Apptainer Tarball
       run: |
         cd ./contrib/apptainer
-        ./bundle_for_release.sh
+        ./bundle_for_release.sh ${{ github.event.inputs.milestone_title }}
 
     - name: Upload Apptainer Tarball
       uses: actions/upload-artifact@v4
       with:
-        name: sct_apptainer_${{ github.event.inputs.milestone_title }}.tar.gz
-        path: sct-apptainer
+        name: sct-apptainer
+        path: sct_apptainer_${{ github.event.inputs.milestone_title }}.tar.gz
 
   test-release:
     # The purpose of this step is to run tests using the requirements-freeze file
