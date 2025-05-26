@@ -79,23 +79,6 @@ jobs:
         name: apptainer-bundle
         path: ./contrib/apptainer/sct_apptainer_${{ github.event.inputs.milestone_title }}.tar.gz
 
-  generate-windows-install-script:
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout spinalcordtoolbox
-      uses: actions/checkout@v4
-
-    - name: Create ${{ github.event.inputs.milestone_title }} Native Windows install script
-      run: |
-        cp install_sct.bat install_sct-${{ github.event.inputs.milestone_title }}_win.bat
-        perl -pi -e 's/set git_ref=master/set git_ref=${{ github.event.inputs.milestone_title }}/' install_sct-${{ github.event.inputs.milestone_title }}_win.bat
-
-    - name: Upload Windows Install Script
-      uses: actions/upload-artifact@v4
-      with:
-        name: windows-install-script
-        path: install_sct-${{ github.event.inputs.milestone_title }}_win.bat
-
   generate-install-scripts:
     runs-on: ubuntu-latest
     steps:
