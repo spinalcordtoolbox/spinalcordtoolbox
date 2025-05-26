@@ -164,8 +164,18 @@ jobs:
         perl -pi -e 's/SCT_GIT_REF="master"/SCT_GIT_REF="${{ github.event.inputs.milestone_title }}"/' install_sct-${{ github.event.inputs.milestone_title }}_linux.sh
         cp install_sct-${{ github.event.inputs.milestone_title }}_linux.sh install_sct-${{ github.event.inputs.milestone_title }}_macos.sh
 
-    - uses: ncipollo/release-action@v1
-      name: Create release
+    - name: Create ${{ github.event.inputs.milestone_title }} Apptainer Bundle
+      # KO: Generates a tarball gzip archive with pre-defined SCT version variables, for ease of use and installation.
+      #  This also effectively "pins" the version of SCT, for reproducibility’s sake.
+      run: |
+        old_pwd="$PWD"
+        cd contrib/apptainer/
+        ./bundle_for_release.sh ${{ github.event.inputs.milestone_title }}
+        mv "sct_apptainer_${{ github.event.inputs.milestone_title }}.tar.gz" "$old_pwd"
+        cd "$old_pwd"
+
+    - name: Create release
+      uses: ncipollo/release-action@v1
       id: create_release
       with:
         tag: ${{ github.event.inputs.milestone_title }}
@@ -173,5 +183,6 @@ jobs:
         bodyFile: ".github/workflows/release-body.md"
         artifacts: "install_sct-${{ github.event.inputs.milestone_title }}_win.bat,\
                     install_sct-${{ github.event.inputs.milestone_title }}_linux.sh,\
-                    install_sct-${{ github.event.inputs.milestone_title }}_macos.sh"
+                    install_sct-${{ github.event.inputs.milestone_title }}_macos.sh,\
+                    sct_apptainer_${{ github.event.inputs.milestone_title }}.tar.gz"
         draft: true
