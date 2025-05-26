@@ -5,7 +5,14 @@ on:
     inputs:
       milestone_title:
         description: 'Milestone title (this release)'
-        required: true
+        required: true  # This does nothing! https://github.com/actions/runner/issues/1070
+      dry_run:
+        description: "Dry Run; if True, no release is made on the repo (though everything else is run!)"
+        type: choice
+        options:
+          - 'True'
+          - 'False'
+        default: 'True'
   schedule:
     # https://docs.github.com/en/free-pro-team@latest/actions/reference/workflow-syntax-for-github-actions#onschedule
     # > Scheduled workflows run on the latest commit on the default or base branch
@@ -20,6 +27,8 @@ env:
   # Disable progress bars for less verbose output
   PIP_PROGRESS_BAR: "off"
   SCT_PROGRESS_BAR: "off"
+  # Whether this is a dry-run (if not, a real release is made to the repo!)
+  DRY_RUN: "True"
 
 
 jobs:
@@ -138,7 +147,8 @@ jobs:
     needs: [test-release, build-apptainer-tarball]
     runs-on: ubuntu-latest
     # Only create the release if workflow is run manually. (This allows the other steps in the workflow to test PRs.)
-    if: github.event_name == 'workflow_dispatch'
+    # KO: The order of this evaluation is important as well; the latter is only "real" in the context of workflow_dispatch
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run == 'False'
     steps:
     # The GitHub Actions bot email was taken from: https://github.community/t/github-actions-bot-email-address/17204/6
     - name: Set bot user data for commits
