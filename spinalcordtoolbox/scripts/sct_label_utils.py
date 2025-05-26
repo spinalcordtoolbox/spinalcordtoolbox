@@ -111,7 +111,8 @@ def get_parser():
     func_group.add_argument(
         '-project-centerline',
         metavar=Metavar.file,
-        help="Project labels (e.g., disc labels) provided by this argument (`-project-centerline`) onto the spinal cord centerline using the spinal cord segmentation (provided by the `-i` argument)."
+        help="Project labels (e.g. disc labels) onto a spinal cord segmentation or centerline. "
+             "Example: sct_label_utils -i spinalcord.nii.gz -project-centerline labels.nii.gz "
     )
     func_group.add_argument(
         '-display',
