@@ -56,7 +56,7 @@ jobs:
         name: requirements-freeze
         path: requirements-freeze.txt
 
-  build-apptainer-tarball:
+  generate-apptainer-tarball:
     # Generates a tarball, containing Apptainer generating scripts which are pinned to this release. Should make
     #  it so any code run in an Apptainer is 100% reproducible in HPC contexts from SCT 7.1 on!
     # However, doing it this way is less efficient than doing it as part of the "create-release", as we end up needing
@@ -76,8 +76,58 @@ jobs:
     - name: Upload Apptainer Tarball
       uses: actions/upload-artifact@v4
       with:
-        name: sct-apptainer
+        name: apptainer-bundle
         path: ./contrib/apptainer/sct_apptainer_${{ github.event.inputs.milestone_title }}.tar.gz
+
+  generate-windows-install-script:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout spinalcordtoolbox
+      uses: actions/checkout@v4
+
+    - name: Create ${{ github.event.inputs.milestone_title }} Native Windows install script
+      run: |
+        cp install_sct.bat install_sct-${{ github.event.inputs.milestone_title }}_win.bat
+        perl -pi -e 's/set git_ref=master/set git_ref=${{ github.event.inputs.milestone_title }}/' install_sct-${{ github.event.inputs.milestone_title }}_win.bat
+
+    - name: Upload Windows Install Script
+      uses: actions/upload-artifact@v4
+      with:
+        name: windows-install-script
+        path: install_sct-${{ github.event.inputs.milestone_title }}_win.bat
+
+  generate-install-scripts:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout spinalcordtoolbox
+        uses: actions/checkout@v4
+
+      - name: Create Installation Script Directory
+        # KO: This directory makes artifacting them together much easier later
+        run: |
+          mkdir install_scripts
+
+      - name: Create ${{ github.event.inputs.milestone_title }} Native Windows install script
+        run: |
+          cp install_sct.bat install_sct-${{ github.event.inputs.milestone_title }}_win.bat
+          perl -pi -e 's/set git_ref=master/set git_ref=${{ github.event.inputs.milestone_title }}/' install_sct-${{ github.event.inputs.milestone_title }}_win.bat
+          mv install_sct-${{ github.event.inputs.milestone_title }}_win.bat install_scripts/
+
+
+      - name: Create ${{ github.event.inputs.milestone_title }} Linux/macOS install scripts
+        # NB: `install_sct` works for both Linux and macOS platforms. So, here, we simply duplicate the script for both
+        # platforms (which will allow us to collect some rudimentary statistics + make our installation steps clearer).
+        run: |
+          cp install_sct install_sct-${{ github.event.inputs.milestone_title }}_linux.sh
+          perl -pi -e 's/SCT_GIT_REF="master"/SCT_GIT_REF="${{ github.event.inputs.milestone_title }}"/' install_sct-${{ github.event.inputs.milestone_title }}_linux.sh
+          mv install_sct-${{ github.event.inputs.milestone_title }}_linux.sh install_scripts/
+          cp install_scripts/install_sct-${{ github.event.inputs.milestone_title }}_linux.sh install_scripts/install_sct-${{ github.event.inputs.milestone_title }}_macos.sh
+
+      - name: Upload Install Scripts
+        uses: actions/upload-artifact@v4
+        with:
+          name: install-scripts
+          path: install_scripts/*
 
   test-release:
     # The purpose of this step is to run tests using the requirements-freeze file
@@ -142,10 +192,12 @@ jobs:
         sct_testing
 
   create-release:
-    needs: [test-release, build-apptainer-tarball]
+    needs: [test-release, generate-apptainer-tarball, generate-install-scripts]
     runs-on: ubuntu-latest
-    # Only create the release if workflow is run manually. (This allows the other steps in the workflow to test PRs.)
-    # KO: The order of this evaluation is important as well; the latter is only "real" in the context of workflow_dispatch
+    # Only create a release on GitHub if workflow is run manually. (This allows the other steps in the workflow to test PRs.)
+    # We also only make a "real" release if the user explicitly requested it (`dry_run == False`); this allows us to
+    #  test changes to this script (and other release-affecting scripts) without cluttering the GitHub repo!
+    # KO: The order of this evaluation is important; the latter is only "real" in the context of workflow_dispatch
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run == 'False'
     steps:
     # The GitHub Actions bot email was taken from: https://github.community/t/github-actions-bot-email-address/17204/6
@@ -165,10 +217,15 @@ jobs:
       with:
         name: requirements-freeze
 
-    - name: Download Apptainer tarball (for release)
+    - name: Download Apptainer Tarball
       uses: actions/download-artifact@v4
       with:
         name: sct-apptainer
+
+    - name: Download Install Scripts
+      uses: actions/download-artifact@v4
+      with:
+        name: install-scripts
 
     - name: Commit requirements-freeze.txt (for release)
       run: |
@@ -186,19 +243,6 @@ jobs:
       run: |
         git tag ${{ github.event.inputs.milestone_title }}
         git push --tags
-
-    - name: Create ${{ github.event.inputs.milestone_title }} Native Windows install script
-      run: |
-        cp install_sct.bat install_sct-${{ github.event.inputs.milestone_title }}_win.bat
-        perl -pi -e 's/set git_ref=master/set git_ref=${{ github.event.inputs.milestone_title }}/' install_sct-${{ github.event.inputs.milestone_title }}_win.bat
-
-    - name: Create ${{ github.event.inputs.milestone_title }} Linux/macOS install scripts
-      # NB: `install_sct` works for both Linux and macOS platforms. So, here, we simply duplicate the script for both
-      # platforms (which will allow us to collect some rudimentary statistics + make our installation steps clearer).
-      run: |
-        cp install_sct install_sct-${{ github.event.inputs.milestone_title }}_linux.sh
-        perl -pi -e 's/SCT_GIT_REF="master"/SCT_GIT_REF="${{ github.event.inputs.milestone_title }}"/' install_sct-${{ github.event.inputs.milestone_title }}_linux.sh
-        cp install_sct-${{ github.event.inputs.milestone_title }}_linux.sh install_sct-${{ github.event.inputs.milestone_title }}_macos.sh
 
     - name: Create release
       uses: ncipollo/release-action@v1
