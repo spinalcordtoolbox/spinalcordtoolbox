@@ -68,25 +68,14 @@ jobs:
     - name: Checkout spinalcordtoolbox
       uses: actions/checkout@v4
 
-    - name: Generate Apptainer Tarball
-      run: |
-        cd ./contrib/apptainer
-        ./bundle_for_release.sh ${{ github.event.inputs.milestone_title }}
-
-    - name: Upload Apptainer Tarball
-      uses: actions/upload-artifact@v4
-      with:
-        name: apptainer-bundle
-        path: ./contrib/apptainer/sct_apptainer_${{ github.event.inputs.milestone_title }}.tar.gz
-
-  generate-install-scripts:
+  generate-install-methods:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout spinalcordtoolbox
         uses: actions/checkout@v4
 
       - name: Create Installation Script Directory
-        # KO: This directory makes artifacting them together much easier later
+        # KO: This directory makes artifacting everything together much easier later
         run: |
           mkdir install_scripts
 
@@ -96,7 +85,6 @@ jobs:
           perl -pi -e 's/set git_ref=master/set git_ref=${{ github.event.inputs.milestone_title }}/' install_sct-${{ github.event.inputs.milestone_title }}_win.bat
           mv install_sct-${{ github.event.inputs.milestone_title }}_win.bat install_scripts/
 
-
       - name: Create ${{ github.event.inputs.milestone_title }} Linux/macOS install scripts
         # NB: `install_sct` works for both Linux and macOS platforms. So, here, we simply duplicate the script for both
         # platforms (which will allow us to collect some rudimentary statistics + make our installation steps clearer).
@@ -105,6 +93,12 @@ jobs:
           perl -pi -e 's/SCT_GIT_REF="master"/SCT_GIT_REF="${{ github.event.inputs.milestone_title }}"/' install_sct-${{ github.event.inputs.milestone_title }}_linux.sh
           mv install_sct-${{ github.event.inputs.milestone_title }}_linux.sh install_scripts/
           cp install_scripts/install_sct-${{ github.event.inputs.milestone_title }}_linux.sh install_scripts/install_sct-${{ github.event.inputs.milestone_title }}_macos.sh
+
+      - name: Generate Apptainer Tarball
+        run: |
+          cd ./contrib/apptainer
+          ./bundle_for_release.sh ${{ github.event.inputs.milestone_title }}
+          mv sct_apptainer_${{ github.event.inputs.milestone_title }}.tar.gz ../../install_scripts
 
       - name: Upload Install Scripts
         uses: actions/upload-artifact@v4
@@ -175,7 +169,7 @@ jobs:
         sct_testing
 
   create-release:
-    needs: [test-release, generate-apptainer-tarball, generate-install-scripts]
+    needs: [test-release, generate-install-methods]
     runs-on: ubuntu-latest
     # Only create a release on GitHub if workflow is run manually. (This allows the other steps in the workflow to test PRs.)
     # We also only make a "real" release if the user explicitly requested it (`dry_run == False`); this allows us to
