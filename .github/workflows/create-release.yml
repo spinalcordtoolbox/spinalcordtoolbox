@@ -79,7 +79,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: sct-apptainer
-        path: sct_apptainer_${{ github.event.inputs.milestone_title }}.tar.gz
+        path: ./contrib/apptainer/sct_apptainer_${{ github.event.inputs.milestone_title }}.tar.gz
 
   test-release:
     # The purpose of this step is to run tests using the requirements-freeze file
