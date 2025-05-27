@@ -4,6 +4,8 @@ if [ $# -ne 1 ]; then
     exit 1;
 fi
 
+echo "GITHUB CI TEST"
+
 filename=$(cut -d ";" -f 1 <<< "$1")
 URL=$(cut -d ";" -f 2 <<< "$1")
 # --head: Sends a HEAD request. We use this to be good netizens, since we only need the header to check the response code.
