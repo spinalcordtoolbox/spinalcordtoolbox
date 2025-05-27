@@ -48,7 +48,7 @@ jobs:
                 
         # Filter out files which are in the blacklist
         while read l; do
-          git_diff_urls=$(grep -v "$l" <<< $git_diff_urls)
+          git_diff_urls=$(grep -v "$l" <<< "$git_diff_urls")
         # This `cat` call MUST be here; otherwise a subshell is created, and recursive variable updating is not possible
         #   Thank you to JN for figuring this out: https://stackoverflow.com/a/16854326
         done <<< $(cat ".github/workflows/check_url_blacklist.txt")
