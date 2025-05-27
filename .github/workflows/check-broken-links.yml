@@ -18,7 +18,7 @@ jobs:
         
         # Get the list of URLs within the project
         git_diff_urls=$(find . -type f \( -name "*.txt" -o -name "*.md" -o -name "*.py" -o -name "*.rst" \) |
-          xargs grep -Eio "\b(https?)://[-a-z0-9+&@#/%?=~_|$!:,.;]*[a-z0-9+&@#/%=~_|$]" |
+          xargs grep -Eio '\b(https?)://[-a-z0-9+&@#/%?=~_|$!:,.;]*[a-z0-9+&@#/%=~_|$]' |
           sed 's/:/;/'
         )
         
