@@ -37,7 +37,9 @@ numpy<2
 # - 1.7.0>onnxruntime>=1.5.1 required `brew install libomp` on macOS.
 #   So, pin to >=1.7.0 to avoid having to ask users to install libomp.
 # - Avoid version 1.16.0 due to: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4225
-onnxruntime>=1.7.0,!=1.16.0
+# - Avoid version 1.22.0 due to DLL error on `windows-2019` runner.
+#   Note: Upgrading `msvc-runtime` *doesn't* fix this error on `windows-2019`.
+onnxruntime>=1.7.0,!=1.16.0,<1.22.0
 # onnx==[1.16.2,1.17.0,1.18.0] all cause errors for Python 3.9 + Windows (https://github.com/onnx/onnx/issues/6267#issuecomment-2877327002)
 # 1.17.0 can partially work as long as SCT doesn't import it, but this is flaky.
 onnx<1.16.2
