@@ -28,7 +28,7 @@ From: ubuntu:22.04
     ./"$install_sh" -y
 
     # Link the SCT path to a standard location so later scripts don't need to be re-written for every SCT version
-    ln -s /root/sct_7.0/ /root/sct
+    ln -s "/root/sct_{{ sct_version }}/" "/root/sct"
 
     # Update the PATH so that SCT commands are always available
     export PATH="$PATH:/root/sct/bin"
