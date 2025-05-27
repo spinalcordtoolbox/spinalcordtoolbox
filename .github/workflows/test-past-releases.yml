@@ -135,7 +135,4 @@ jobs:
       # was available. So, we can just skip the test when running tests on Windows 2025.
       - name: Run tests (non-v5.4, Windows 2025)
         if: matrix.sct_version != '5.4' && matrix.os == 'windows-2025'
-        run: |
-          curl -LO https://github.com/user-attachments/files/20463467/seg_sc_t2star.zip
-          unzip -o seg_sc_t2star.zip  # This script fetches the test name to skip
-          sct_testing -k "not $(./seg_sc_t2star.py {{ matrix.sct_version }})"
+        run: sct_testing -k 'not (test_segment_nifti and seg_sc_t2star)'
