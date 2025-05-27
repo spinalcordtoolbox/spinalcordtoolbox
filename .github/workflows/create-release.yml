@@ -182,11 +182,6 @@ jobs:
       with:
         name: requirements-freeze
 
-    - name: Download Apptainer Tarball
-      uses: actions/download-artifact@v4
-      with:
-        name: sct-apptainer
-
     - name: Download Install Scripts
       uses: actions/download-artifact@v4
       with:
