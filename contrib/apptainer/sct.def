@@ -3,7 +3,7 @@ From: ubuntu:22.04
 
 %arguments
     # A list of sct_deepseg tasks you want installed immediately, w/o needing to repack the container later
-    task_installs=''
+    task_installs=""
     # SCT version to install
     sct_version="X.Y"
 
@@ -37,7 +37,7 @@ From: ubuntu:22.04
     sct_version
 
     # If any tasks were designated by the user, install their corresponding models
-    if [ -n "{{ task_installs }}" ] && [ "{{ task_installs }}" != '' ]; then
+    if [ ! "{{ task_installs }}" == "" ]; then
         # Install each task requested by the user, one by one
         for task in {{ task_installs }}; do
             sct_deepseg "$task" -install || echo "Failed to install task $task"
