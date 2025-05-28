@@ -638,7 +638,7 @@ find "$SCT_DIR/$PYTHON_DIR" -type f -exec touch {} +
 # create conda environment
 print info "Creating conda environment..."
 # NB: We use an absolute path (-p) rather than a relative name (-n) to better isolate the conda environment
-python/bin/conda create -y -p "$SCT_DIR/$PYTHON_DIR/envs/venv_sct" python=3.9
+python/bin/conda create -y -p "$SCT_DIR/$PYTHON_DIR/envs/venv_sct" python=3.10
 
 # Reapply the touch fix to avoid `pip` connection issues on WSL
 find "$SCT_DIR/$PYTHON_DIR" -type f -exec touch {} +
@@ -661,6 +661,8 @@ if [[ $OS == linux ]]; then
   conda install -y -c conda-forge libstdcxx-ng
   # Ensure that libffi isn't linked incorrectly (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3927#issuecomment-1573896770)
   conda install -y -c conda-forge libffi
+  # Ensure that PyQt5 has the correct dependencies on Ubuntu
+  conda install -y -c conda-forge xorg-libxinerama
 fi
 
 # Skip pip==21.2 to avoid dependency resolver issue (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3593)

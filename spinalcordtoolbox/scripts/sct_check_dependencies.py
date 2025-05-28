@@ -59,7 +59,8 @@ def resolve_module(framework_name):
         'requirements-parser': ('requirements', False),
         'scikit-image': ('skimage', False),
         'scikit-learn': ('sklearn', False),
-        'pyqt5': ('PyQt5.QtCore', False),  # Importing Qt instead PyQt5 to be able to catch this issue #2523
+        'pyqt5': ('PyQt5', False),
+        'pyqt5-qt5': ('PyQt5.QtCore', False),  # Importing Qt may catch issue #2523
         'pyqt5-sip': ('PyQt5.sip', False),
         'pyyaml': ('yaml', False),
         'futures': ("concurrent.futures", False),
@@ -77,7 +78,7 @@ def resolve_module(framework_name):
     }
 
     try:
-        return modules_map[framework_name]
+        return modules_map[framework_name.lower()]
     except KeyError:
         return (framework_name, False)
 
@@ -114,15 +115,17 @@ def get_version(module):
     :param module: the module to get version from
     :return: string: the version of the module
     """
-    if module.__name__ == 'PyQt5.QtCore':
-        # Unfortunately importing PyQt5.Qt makes sklearn import crash on Ubuntu 14.04 (corresponding to Debian's jessie)
-        # so we don't display the version for this distros.
-        # See: https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/2522#issuecomment-559310454
-        if 'jessie' in platform.platform():
-            version = None
-        else:
-            from PyQt5.Qt import PYQT_VERSION_STR
-            version = PYQT_VERSION_STR
+    # Unfortunately importing PyQt5.Qt makes sklearn import crash on Ubuntu 14.04 (corresponding to Debian's jessie)
+    # so we don't display the version for this distros.
+    # See: https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/2522#issuecomment-559310454
+    if 'PyQt5' in module.__name__ and 'jessie' in platform.platform():
+        version = None
+    elif module.__name__ == 'PyQt5.QtCore':
+        from PyQt5.Qt import QT_VERSION_STR
+        version = QT_VERSION_STR
+    elif module.__name__ == 'PyQt5':
+        from PyQt5.Qt import PYQT_VERSION_STR
+        version = PYQT_VERSION_STR
     else:
         version = getattr(module, "__version__", getattr(module, "__VERSION__", None))
     return version
