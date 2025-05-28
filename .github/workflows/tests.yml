@@ -284,6 +284,28 @@ jobs:
         run: |
           ./.ci.sh -t
 
+  macos-15:
+    name: macOS 15.0 (Sequoia)
+    # TODO: when actions supports using ${{env}} in job.*.if and not just job.*.steps.*.if, use this:
+    #if: ${{ env.NIGHTLY }}
+    # in the meantime, copy-paste this:
+    if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
+    runs-on: macos-15
+    steps:
+      - name: Dependencies
+        run: |
+          # github runners come with dev-tools pre-installed
+      - uses: actions/checkout@v4
+      - name: Install SCT
+        run: |
+          ./.ci.sh -i
+      - name: Check dependencies
+        run: |
+          ./.ci.sh -c
+      - name: Run pytest test suite
+        run: |
+          ./.ci.sh -t
+
   windows-wsl-ubuntu-24_04:
     # with the help of https://github.com/marketplace/actions/setup-wsl
     name: WSL [Ubuntu 24.04]
@@ -391,6 +413,46 @@ jobs:
         export GITHUB_REF_NAME="${{ github.ref_name }}"
         cd ~/spinalcordtoolbox
         ./.ci.sh -t
+
+
+  windows-native-2025:
+    name: Windows (Native) 2025
+    runs-on: windows-2025
+    defaults:
+      run:
+        shell: cmd
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install SCT
+      # NB: In real-world usage, it's assumed that the user would download the
+      # install_sct.bat file from the Downloads page, and _not_ the full repo.
+      # Then, the repo would be cloned to a tmpdir, then copied to the destination folder.
+      # However, this only really works on `master`, since for PRs, there is a chance
+      # that the PR is coming from a fork. And, in that case, we won't be able to clone
+      # the proper branch, as it exists only on the fork.
+      run: |
+        if "%GITHUB_REF_NAME%"=="master" (
+          if not exist %USERPROFILE%\Downloads mkdir %USERPROFILE%\Downloads
+          cp install_sct.bat %USERPROFILE%\Downloads
+          cd /d %USERPROFILE%\Downloads
+        )
+        install_sct.bat
+    - name: Add SCT to path
+      # NB: I'm not sure what GHA's syntax is for cmd.exe, so we use bash just for this one change
+      # In a user install, the user would perform this step using the Windows PATH-changing GUI.
+      shell: bash
+      run: |
+        if [ "$GITHUB_REF_NAME" = "master" ]; then
+          export SCT_VERSION=$(cat spinalcordtoolbox/version.txt)
+          echo "$USERPROFILE\sct_$SCT_VERSION\bin" >> $GITHUB_PATH
+        else
+          echo "$GITHUB_WORKSPACE\bin" >> $GITHUB_PATH
+        fi
+    - name: Check dependencies
+      run: sct_check_dependencies
+    - name: Run pytest test suite
+      run: sct_testing
+
 
   windows-native-2022:
     name: Windows (Native) 2022
