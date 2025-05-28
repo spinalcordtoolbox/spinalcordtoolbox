@@ -18,13 +18,12 @@ matplotlib
 # `matplotlib-inline` in our env by default to ensure that SCT scripts can be run in Jupyter notebooks without error.
 matplotlib-inline
 monai[nibabel]
-# Fresh Windows installations may be missing the C++ runtime library required by scikit-image.
+# Fresh Windows installations may be missing the C++ runtime library required by onnxruntime, scikit-image, etc.
 # Installing "Microsoft Visual C++ Redistributable for Visual Studio" will fix this too, but
-# we'd prefer not to burden users with another prerequisite. 
-# NB: It's possible this fix gets included upstream in a future skimage release, see:
-#     https://github.com/scikit-image/scikit-image/issues/4780#issuecomment-824678872
-# (The version is pinned because this line gets copied to requirements-freeze.txt when preparing a release, not because we're avoiding bugs with a specific version. Feel free to update it to the latest version.)
-msvc-runtime==14.29.30133; sys.platform == 'win32' # append_to_freeze
+# we'd prefer not to burden users with another prerequisite.
+# (The version is pinned because this line gets copied to requirements-freeze.txt when preparing a release, not because we're avoiding bugs  with a specific version. It should be actively upgraded, or else it may cause issues when upgrading other packages. See:
+#  https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4906/files#r2105230162)
+msvc-runtime==14.42.34433; sys.platform == 'win32' # append_to_freeze
 nibabel
 nilearn
 # Only allow nnunetv2==2.3.1 or 2.5.1 (NB: there is no 2.5.0)
@@ -35,11 +34,10 @@ nilearn
 nnunetv2>2.3.0,!=2.4.*,<=2.5.1
 # SCT is compatible, however the upgrade to numpy==2.0.0 broke *many* upstream packages. Let's try again later. See https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4535
 numpy<2
-# 1.7.0>onnxruntime>=1.5.1 required `brew install libomp` on macOS.
-# So, pin to >=1.7.0 to avoid having to ask users to install libomp.
-# Avoid version 1.16.0 due to: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4225
-# 1.15.1 seems to include a special fix related to Windows DLL loading.
-onnxruntime>=1.7.0,!=1.16.0,==1.15.1
+# - 1.7.0>onnxruntime>=1.5.1 required `brew install libomp` on macOS.
+#   So, pin to >=1.7.0 to avoid having to ask users to install libomp.
+# - Avoid version 1.16.0 due to: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4225
+onnxruntime>=1.7.0,!=1.16.0
 # onnx==[1.16.2,1.17.0,1.18.0] all cause errors for Python 3.9 + Windows (https://github.com/onnx/onnx/issues/6267#issuecomment-2877327002)
 # 1.17.0 can partially work as long as SCT doesn't import it, but this is flaky.
 onnx<1.16.2
@@ -49,8 +47,11 @@ psutil
 # pyqt5=5.15.X causes https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3925, however
 # to support Python 3.10 and above, there is no other option, so we will need to bite the bullet here.
 pyqt5>=5.15.0
-# PyQt5-sip should be updated when PyQt5 is updated: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4354
-pyqt5-sip<12.13.0
+# pyqt5>=5.15.0 comes with a separate package, `pyqt5-qt5`. This package is odd, and its only release
+# that supports Windows is `5.15.2`. If we _don't_ specify this version, then running `pip freeze` from
+# an Ubuntu machine will result in a set of dependencies incompatible with Windows, and we don't want that!
+# See also: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4905#issuecomment-2902112975
+PyQt5-Qt5==5.15.2
 # pystrum==0.2 is incompatible with newer versions of numpy (installed via voxelmorph -> neurite -> pystrum)
 # See also: https://github.com/adalca/pystrum/issues/9
 pystrum>=0.3
