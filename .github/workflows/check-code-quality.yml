@@ -33,14 +33,25 @@ jobs:
         severity: style
 
     # There's a daily check for _all_ links in check-broken-links.yml,
-    # so this only checks for new/changed links in the PR
+    #   so this only checks for links within changed files.
+    # Add any file patterns you want ignored to 'check_url_blacklist.txt'
     - name: Check for broken links
       run: |
+        # Fail outright if any failure occurs, rather than attempting to proceed
         set -eu -o pipefail
-        git diff origin/master... |
-          sed '/^diff.*CHANGES.md/,/^diff/ d' |
-          (grep '^+' || (($? == 1)) ) |
-          (grep -Eio '\b(https?)://[-a-z0-9+&@#/%?=~_|$!:,.;]*[a-z0-9+&@#/%=~_|$]' || (($? == 1)) ) |
-          sed 's/^/diff;/' |
-          xargs -rn 1 .github/workflows/check-url.sh
-        test ! -s invalid_urls.txt
+
+        # Generate list of URLs which exist within files which have changed
+        git_diff_urls=$(git diff origin/master... --name-only | 
+          xargs grep -Eio '\b(https?)://[-a-z0-9+&@#/%?=~_|$!:,.;]*[a-z0-9+&@#/%=~_|$]' |
+          sed 's/:/;/'
+        )
+                
+        # Filter out files which are in the blacklist
+        while read l; do
+          git_diff_urls=$(grep -v "$l" <<< "$git_diff_urls")
+        # This `cat` call MUST be here; otherwise a subshell is created, and recursive variable updating is not possible
+        #   Thank you to JN for figuring this out: https://stackoverflow.com/a/16854326
+        done <<< $(cat ".github/workflows/check_url_blacklist.txt")
+        
+        # Check each remaining file in the URL for validity
+        xargs -rn 1 ".github/workflows/check-url.sh" <<< "$git_diff_urls"
