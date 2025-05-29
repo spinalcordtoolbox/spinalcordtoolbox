@@ -52,7 +52,7 @@ fi
 #   out any sites that raise 403 with just a warning instead of an error.
 if [[ $status_code -eq 403 ]];then
     echo "($status_code) $URL ($filename)" >> valid_urls.txt
-    echo -e "$filename: \x1B[32m⚠️  Warning - Forbidden - status code: $status_code for domain $URL  \x1B[0m"
+    echo -e "$filename: \x1B[33m⚠️  Warning - Forbidden - status code: $status_code for domain $URL  \x1B[0m"
     exit 0
 fi
 
@@ -69,7 +69,7 @@ fi
 # So, for now, we just filter out this response, as there's a good chance that this is still accessible via browsers.
 if [[ $status_code -eq 406 ]];then
     echo "($status_code) $URL ($filename)" >> valid_urls.txt
-    echo -e "$filename: \x1B[32m⚠️  Warning - Not Acceptable - status code: $status_code for domain $URL  \x1B[0m"
+    echo -e "$filename: \x1B[33m⚠️  Warning - Not Acceptable - status code: $status_code for domain $URL  \x1B[0m"
     exit 0
 fi
 
