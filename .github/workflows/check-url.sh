@@ -16,10 +16,12 @@ HTTP_CODE_ONLY=(--write-out '%{http_code}' --output /dev/null)
 # We still keep a 5m limit, though, because --retry respects the Retry-After field, which may be greater than 30s.
 RETRY_ARGS=(--retry 2 --retry-delay 30 --retry-max-time 300 --retry-all-errors)
 
-# Make sure to check both URL *and* redirections (--location) for excluded domains
+# Make sure to check both URL *and* redirections (--location) for excluded patterns
+# FIXME: Exclusion list temporarily disabled to test how many exclusions were due entirely to 403.
+#        See: 'twitter.com'|'spiedigitallibrary.org'|'pipeline-hemis'|'sciencedirect.com'|'wiley.com'|'sagepub.com'|'ncbi.nlm.nih.gov'|'oxfordjournals.org'|'docker.com'|'ieeexplore.ieee.org'|'liebertpub.com'|'tandfonline.com'|'pnas.org'|'neurology.org'|'academic.oup.com'|'science.org'|'pubs.rsna.org'|'direct.mit.edu'|'thejns.org'|'rosped.ru'|'ajnr.org'|'bmj.com'|'biorxiv.org'|
 full_info=$(curl "${CURL_ARGS[@]}" --location -- "$URL")
 LOCATION=$(curl "${CURL_ARGS[@]}" -- "$URL" | perl -n -e '/^[Ll]ocation: (.*)$/ && print "$1\n"')
-if [[ "$full_info + $URL" =~ 'twitter.com'|'spiedigitallibrary.org'|'pipeline-hemis'|'sciencedirect.com'|'wiley.com'|'sagepub.com'|'ncbi.nlm.nih.gov'|'oxfordjournals.org'|'docker.com'|'ieeexplore.ieee.org'|'liebertpub.com'|'tandfonline.com'|'pnas.org'|'neurology.org'|'academic.oup.com'|'science.org'|'pubs.rsna.org'|'direct.mit.edu'|'thejns.org'|'rosped.ru'|'ajnr.org'|'bmj.com'|'biorxiv.org'|'%s' ]]; then
+if [[ "$full_info + $URL" =~ '%s' ]]; then
     echo -e "$filename: \x1B[33m⚠️  Warning - Skipping: $URL --> $LOCATION\x1B[0m"
     exit 0
 fi
