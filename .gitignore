@@ -56,3 +56,7 @@ sct_example_data/
 # Documentation
 documentation/build
 
+# Apptainer generated files
+/contrib/apptainer/*.sif
+/contrib/apptainer/*.tar.gz
+/contrib/apptainer/sct_apptainer_*/

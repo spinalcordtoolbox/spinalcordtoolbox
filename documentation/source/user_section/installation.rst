@@ -14,3 +14,4 @@ Supported Operating Systems
   installation/mac
   installation/linux
   installation/windows
+  installation/apptainer

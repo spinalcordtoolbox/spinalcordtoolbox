@@ -6,7 +6,19 @@ Installation for Linux
 
 .. warning::
 
-   If you use Windows Subsystem for Linux (WSL), please refer to the :ref:`Windows installation section <wsl-installation>`.
+    If you use Windows Subsystem for Linux (WSL), please refer to the :ref:`Windows installation section <wsl-installation>`.
+
+
+Installation Options
+====================
+
+Depending on your use case, there are a number of different installation methods available:
+
+- :ref:`Packaged Installation <native-install>`: For general use.
+- :ref:`GitHub Installation <github-install>`: For developers.
+- :ref:`Docker Installation <docker-install>`: For cross-platform use/testing.
+- **[Experimental]** :ref:`PIP Installation <pip-install>` Installation ``pip`` for use as a Python package.
+
 
 Requirements
 ============
@@ -20,7 +32,7 @@ Supported Operating Systems
 * RedHat/CentOS >= 7
 
 
-Gnu Compiler Collection (gcc)
+GNU Compiler Collection (gcc)
 -----------------------------
 
 You need to have ``gcc`` installed. We recommend installing it via your package manager.
@@ -29,118 +41,72 @@ For example on Debian/Ubuntu:
 
 .. code:: sh
 
-  apt install gcc
+    apt install gcc
 
 
 On CentOS/RedHat:
 
 .. code:: sh
 
-  yum -y install gcc
+    yum -y install gcc
 
 
-Installation Options
-====================
+.. _native-install:
 
+Install from Package
+--------------------
 
-Option 1: Install from Package (recommended)
---------------------------------------------
+The simplest way to install SCT is to use an in-place, static version of a tested package release. If you do not have any special circumstances, we recommend using this installation method.
 
-The simplest way to install SCT is to do it via a stable release. First, navigate to the `latest release <https://github.com/spinalcordtoolbox/spinalcordtoolbox/releases>`_, then download the install script for SCT (``install_sct-<version>_linux.sh``). Major changes to each release are listed in the :doc:`/dev_section/CHANGES`.
+First, navigate to the `latest release <https://github.com/spinalcordtoolbox/spinalcordtoolbox/releases>`_, then download the install script for SCT (``install_sct-<version>_linux.sh``). Major changes to each release are listed in the :doc:`/dev_section/CHANGES`.
 
 Once you have downloaded SCT, open a new Terminal in the location of the downloaded script, then launch the installer using the ``bash`` command. For example, if the script was downloaded to `Downloads/`, then you would run:
 
 .. code:: sh
 
-  cd ~/Downloads
-  bash install_sct-<version>_linux.sh
+    cd ~/Downloads
+    bash install_sct-<version>_linux.sh
 
 
-Option 2: Install from GitHub (development)
--------------------------------------------
+.. _github-install:
 
-If you wish to benefit from the cutting-edge version of SCT, or if you wish to contribute to the code, we recommend you download the GitHub version.
+Install from GitHub
+-------------------
+
+If you wish to benefit from the cutting-edge version of SCT, or if you wish to contribute to or test changes to the code, we recommend you install SCT using this method.
 
 #. Retrieve the SCT code
 
-   Clone the repository and hop inside:
+    Clone the repository and hop inside:
 
-   .. code:: sh
+    .. code:: sh
 
-      git clone https://github.com/spinalcordtoolbox/spinalcordtoolbox
+        git clone https://github.com/spinalcordtoolbox/spinalcordtoolbox
 
-      cd spinalcordtoolbox
+        cd spinalcordtoolbox
 
 #. (Optional) Checkout the revision of interest, if different from `master`:
 
-   .. code:: sh
+    .. code:: sh
 
-      git checkout ${revision_of_interest}
+      git checkout <revision_of_interest>
 
 #. Run the installer and follow the instructions
 
-   .. code:: sh
+    .. code:: sh
 
-      ./install_sct
+        ./install_sct
 
-Option 3: Install with pip (experimental)
------------------------------------------
+.. _docker-install:
 
-SCT can be installed using pip, with some caveats:
+Install within Docker
+---------------------
 
-- The installation is done in-place, so the folder containing SCT must be kept around
+`Docker <https://www.docker.com/what-container/>`_ is a portable container platform. This is useful in some niche cases, such as:
 
-- In order to ensure coexistence with other packages, the dependency specifications are loosened, and it is possible that your package combination has not been tested with SCT.
+- When you want to test SCT in a specific OS environment; this is much faster than running a full-fledged virtual machine.
+- For cross-platform use; Docker ensure's reproducibility while providing accessibility across operating systems.
 
-  So in case of problems, try again with the reference installation, and report a bug indicating the dependency versions retrieved using `sct_check_dependencies`.
-
-
-Procedure:
-
-#. Retrieve the SCT code to a safe place
-
-   Clone the repository and hop inside:
-
-   .. code:: sh
-
-      git clone https://github.com/spinalcordtoolbox/spinalcordtoolbox
-
-      cd spinalcordtoolbox
-
-#. Checkout the revision of interest, if different from `master`:
-
-   .. code:: sh
-
-      git checkout ${revision_of_interest}
-
-#. If numpy is not already on the system, install it, either using your distribution package manager or pip.
-
-#. Install sct using pip
-
-   If running in a virtualenv:
-
-   .. code:: sh
-
-      pip install -e .
-
-   else:
-
-   .. code:: sh
-
-      pip install --user -e .
-
-
-Option 4: Install with Docker
------------------------------
-
-`Docker <https://www.docker.com/what-container/>`_ is a portable (Linux, macOS, Windows) container platform.
-
-In the context of SCT, it can be used:
-
-- To run SCT on Windows, until SCT can run natively there
-- For development testing of SCT, faster than running a full-fledged
-  virtual machine
-- <your reason here>
 
 Basic Installation (No GUI)
 ***************************
@@ -148,151 +114,139 @@ Basic Installation (No GUI)
 First, `install Docker <https://docs.docker.com/engine/install/#server>`_. Be sure to install from your distribution's repository.
 
 .. note::
-   Docker Desktop for Linux is not recommended if you intend to use the GUI.
-   Instead install the `Docker Server Engine <https://docs.docker.com/engine/install/#server>`_, which is separate to the Docker Desktop Engine.
-   For example on Ubuntu/Debian, follow the instructions for installing Docker from the `apt repository <https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository>`_.
+    Docker Desktop for Linux is not recommended if you intend to use the GUI.
+    Instead install the `Docker Server Engine <https://docs.docker.com/engine/install/#server>`_, which is separate to the Docker Desktop Engine.
+    For example on Ubuntu/Debian, follow the instructions for installing Docker from the `apt repository <https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository>`_.
    
 By default, Docker commands require the use of ``sudo`` for additional permissions. If you want to run Docker commands without needing to add ``sudo``, please follow `these instructions <https://docs.docker.com/engine/install/linux-postinstall/#manage-docker-as-a-non-root-user>`_ to create a Unix group called ``docker``, then add users your user account to it.
 
-Then, follow the example below to create an OS-specific SCT installation.
-
-
-Docker Image: Ubuntu
-^^^^^^^^^^^^^^^^^^^^
+Then, follow the example below to create an OS-specific SCT installation (in this case, for Ubuntu 22.04).
 
 .. code:: bash
 
-   # Start from the Terminal
-   sudo docker pull ubuntu:22.04
-   # Launch interactive mode (command-line inside container)
-   sudo docker run -it ubuntu:22.04
-   # Now, inside Docker container, install dependencies
-   apt-get update
-   apt install -y git curl bzip2 libglib2.0-0 libgl1-mesa-glx libxrender1 libxkbcommon-x11-0 libdbus-1-3 gcc
-   # Note for above: libglib2.0-0, libgl1-mesa-glx, libxrender1, libxkbcommon-x11-0, libdbus-1-3 are required by PyQt
-   # Install SCT
-   git clone https://github.com/spinalcordtoolbox/spinalcordtoolbox.git sct
-   cd sct
-   ./install_sct -y
-   source /root/.bashrc
-   # Test SCT
-   sct_testing
-   # Save the state of the container as a docker image. 
-   # Back on the Host machine, open a new terminal and run:
-   sudo docker ps -a  # list all containers (to find out the container ID)
-   # specify the ID, and also choose a name to use for the docker image, such as "sct_v6.0"
-   sudo docker commit <CONTAINER_ID> <IMAGE_NAME>/ubuntu:ubuntu22.04
+    # Pull the Docker image for Ubuntu 22.04
+    sudo docker pull ubuntu:22.04
+    # Launch interactive mode (command-line inside container)
+    sudo docker run -it ubuntu:22.04
+    # Now inside Docker container, install SCT dependencies
+    apt-get update
+    apt install -y git curl bzip2 libglib2.0-0 libgl1-mesa-glx libxrender1 libxkbcommon-x11-0 libdbus-1-3 gcc
+    # Note for above: libglib2.0-0, libgl1-mesa-glx, libxrender1, libxkbcommon-x11-0, libdbus-1-3 are required by PyQt
+    # Install SCT
+    git clone https://github.com/spinalcordtoolbox/spinalcordtoolbox.git sct
+    cd sct
+    ./install_sct -y
+    source /root/.bashrc
+    # Test SCT
+    sct_testing
+    # Save the state of the container as a docker image.
+    # Back on the Host machine, open a new terminal and run:
+    sudo docker ps -a  # list all containers (to find out the container ID)
+    # specify the ID, and also choose a name to use for the docker image, such as "sct_v6.0"
+    sudo docker commit <CONTAINER_ID> <IMAGE_NAME>/ubuntu:ubuntu22.04
 
 
-Enable GUI Scripts (Optional)
-*****************************
+Enabling GUI Scripts
+********************
 
 In order to run scripts with GUI you need to allow X11 redirection.
 First, save your Docker image if you haven't already done so:
 
-1. Open another Terminal
-2. List current docker images
+#. Open another Terminal
+#. List current docker images
 
-   .. code:: bash
+    .. code:: bash
 
-      sudo docker ps -a
+        sudo docker ps -a
 
-3. If you haven't already, save the container as a new image
+#. If you haven't already, save the container as a new image
 
-   .. code:: bash
+    .. code:: bash
 
-      sudo docker commit <CONTAINER_ID> <IMAGE_NAME>/ubuntu:ubuntu22.04
+        sudo docker commit <CONTAINER_ID> <IMAGE_NAME>/ubuntu:ubuntu22.04
 
-Forward X11 server:
+Then, to forward the X11 server:
 
 .. note::
 
-   The following instructions have been tested with Xorg and xWayland.
+    The following instructions have been tested with Xorg and xWayland.
 
-   Set up may vary if you are using a different X11 server.
+    Set up may vary if you are using a different X11 server.
 
-1. Install ``xauth`` and ``xhost`` on the host machine, if not already installed:
+#. Install ``xauth`` and ``xhost`` on the host machine, if not already installed:
 
-   For example on Debian/Ubuntu:
+    For example on Debian/Ubuntu:
 
-   .. code:: bash
+    .. code:: bash
 
-      sudo apt install xauth x11-xserver-utils
+        sudo apt install xauth x11-xserver-utils
 
-2. Permit docker access to the X11 Server
+#. Permit docker access to the X11 Server
 
    If hosting container from the local machine:
 
-   .. code:: bash
+    .. code:: bash
 
-      xhost +local:docker
+        xhost +local:docker
 
-3. In your Terminal window, run:
+#. In your Terminal window, run:
    
-   .. code:: bash 
+    .. code:: bash
 
-      sudo docker run -it --rm --privileged -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix <IMAGE_NAME>/ubuntu:ubuntu22.04``
+        sudo docker run -it --rm --privileged -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix <IMAGE_NAME>/ubuntu:ubuntu22.04``
 
-4. You can test whether GUI scripts are available by running the following command in your Docker container:
+You can test whether GUI scripts are available by running the following command in your Docker container:
  
-   .. code:: bash
+    .. code:: bash
    
-      sct_check_dependencies
+        sct_check_dependencies
       
-   You should see two green ``[OK]`` symbols at the bottom of the report for "PyQT" and "matplotlib" checks, which represent the GUI features provided by SCT. 
-   
-Option 5: Hard-core Installation-less SCT usage
+You should see two green ``[OK]`` symbols at the bottom of the report for "PyQT" and "matplotlib" checks, which represent the GUI features provided by SCT are now available.
+
+.. _pip-install:
+
+**[EXPERIMENTAL]** Install as a ``pip`` Package
 -----------------------------------------------
 
-This is completely unsupported.
+You should only install SCT this way if you need to access the internal functions of the package for use in a Python environment. As well, doing so comes with some caveats:
 
+- The installation is done in-place, so the folder containing SCT must be kept around and in the same place it was originally.
+- In order to ensure coexistence with other packages, the dependency specifications are loosened. As a result, it is much more likely that you will be running a combination that has not been tested, which may introduce unpredicable bugs or crashing.
 
-Procedure:
+If the installation fails, or you run into errors, please report a bug indicating the dependency versions retrieved using "sct_check_dependencies", and try again with a clean ``pip`` installation/environment.
 
-#. Retrieve the SCT code
+#. [Optional] `Activate <https://packaging.python.org/en/latest/guides/installing-using-pip-and-virtual-environments/#activate-a-virtual-environment>`_ the ``virtualenv`` environment you want to install SCT within.
 
+#. Clone the current SCT repository and enter it.
 
-#. Install dependencies
+    .. code:: sh
 
-   Example for Ubuntu 18.04:
+        git clone https://github.com/spinalcordtoolbox/spinalcordtoolbox
 
-   .. code:: sh
+        cd spinalcordtoolbox
 
-      # The less obscure ones may be packaged in the distribution
-      sudo apt install python3-{numpy,scipy,nibabel,matplotlib,h5py,mpi4py,keras,tqdm,sympy,requests,sklearn,skimage}
-      # The more obscure ones would be on pip
-      sudo apt install libmpich-dev
-      pip3 install --user distribute2mpi nipy dipy
+#. Checkout the revision of interest, if different from ``master``:
 
-   Example for Debian 8 Jessie:
+    .. code:: sh
 
-   .. code:: sh
+        git checkout <revision_of_interest>
 
-      # The less obscure ones may be packaged in the distribution
-      sudo apt install python3-{numpy,scipy,matplotlib,h5py,mpi4py,requests}
-      # The more obscure ones would be on pip
-      sudo apt install libmpich-dev
-      pip3 install --user distribute2mpi sympy tqdm Keras nibabel nipy dipy scikit-image sklearn
+#. Install ``numpy``:
 
+    .. code:: sh
 
-#. Prepare the runtime environment
+        pip install numpy
 
-   .. code:: sh
+#. Install SCT using ``pip``:
 
-      # Create launcher-less scripts
-      mkdir -p bin
-      find scripts/ -executable | while read file; do ln -sf "../${file}" "bin/$(basename ${file//.py/})"; done
-      PATH+=":$PWD/bin"
+    If you're installing within a ``virtualenv``:
 
-      # Download binary programs
-      mkdir bins
-      pushd bins
-      sct_download_data -d binaries_linux
-      popd
-      PATH+=":$PWD/bins"
+    .. code:: sh
 
-      # Download models & cie
-      mkdir data; pushd data; for x in PAM50 optic_models pmj_models deepseg_sc_models deepseg_gm_models deepseg_lesion_models c2c3_disc_models deepreg_models ; do sct_download_data -d $x; done; popd
+        pip install -e .
 
-      # Add path to spinalcordtoolbox to PYTHONPATH
-      export PYTHONPATH="$PWD:$PWD/scripts"
+    Otherwise (you want SCT available in your base environment):
+
+    .. code:: sh
+
+        pip install --user -e .
