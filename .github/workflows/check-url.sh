@@ -42,6 +42,18 @@ if [[ $status_code -ge 200 && $status_code -le 299 ]];then
     exit 0
 fi
 
+# Check for "403 Forbidden" error code (https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/403)
+# From https://http.dev/403: "The client does not have access to the requested resource."
+# - Due to the rise of AI and LLMs, many sites are now blocking automated access to their content.
+# - Often there is no way to bypass this, so in the past we hardcoded the domains to an exclusion list.
+#   However, manually editing the blacklist is not a sustainable solution, so we now automatically filter
+#   out any sites that raise 403 with just a warning instead of an error.
+if [[ $status_code -eq 403 ]];then
+    echo "($status_code) $URL ($filename)" >> valid_urls.txt
+    echo -e "$filename: \x1B[32m⚠️  Warning - Forbidden - status code: $status_code for domain $URL  \x1B[0m"
+    exit 0
+fi
+
 # Check for "406 Not Acceptable" error code (https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/406)
 # From https://http.dev/406: "In practice, this error is rarely used because the server supplies a default
 #                             representation instead."
