@@ -3,11 +3,6 @@
 
 SCT_VERSION="$1"
 
-if [[ -z "$SCT_VERSION" ]]; then
-  echo "WARNING: No SCT version specified, defaulting to v7.0"
-  SCT_VERSION="7.0"
-fi
-
 # Change the version of SCT the installation task to be the requested version
 sed_str='s|sct_version="X.Y"|sct_version='"$SCT_VERSION"'|g'
 sed -e "$sed_str" "sct.def" > "sct_$SCT_VERSION.def"
