@@ -18,9 +18,6 @@ on:
     # > Scheduled workflows run on the latest commit on the default or base branch
     # i.e. this can only run on master
     - cron: '0 11 * * *'
-  pull_request:
-    branches:
-      - master
 
 env:
   MAIN_BRANCH: "master"
