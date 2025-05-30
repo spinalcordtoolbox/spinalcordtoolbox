@@ -72,6 +72,8 @@ def summarize_files_in_folder(folder, exclude=None):
             fpath = os.path.join(root, fname)
             if fname.endswith(".csv"):
                 fpath = filter_csv_columns(fpath, columns=["Timestamp", "SCT Version"])
+            elif fname.endswith(".json"):
+                fpath = filter_json_sidecars(fpath, fields=["Version", "CodeURL"])
             root_short = root.replace(folder, os.path.basename(folder))
             file_dict = {
                 # Use consistent characters to make cross-platform diffing work
@@ -125,6 +127,41 @@ def filter_csv_columns(fpath, columns):
     # write and return filtered CSV
     fpath_tmp = os.path.join(tempfile.mkdtemp(), os.path.basename(fpath))
     write_csv(csv_contents_filtered, fpath_tmp)
+
+    return fpath_tmp
+
+
+def filter_json_sidecars(fpath, fields):
+    """
+    Filter out fields from JSON sidecar files.
+
+    This helps when checking the filesize and md5 of JSON files, which can contain differing branches, timestamps, etc.
+    """
+    def read_json(file_path):
+        """Read JSON file into a dictionary."""
+        with open(file_path, 'r', encoding='utf-8') as fp:
+            return json.load(fp)
+
+    def write_json(data, file_path):
+        """Write a list of dictionary to a JSON file."""
+        with open(file_path, 'w', encoding='utf-8') as fp:
+            json.dump(data, fp, indent=4)
+
+    # return early if json contents don't match the expected format of our JSON sidecar files
+    # dict[list[dict]] (e.g. {'GeneratedBy': [{'Name': ..., 'Version': ... 'CodeUrl': ...}, ...]})
+    json_contents = read_json(fpath)
+    if not (isinstance(json_contents, dict) and
+            all(isinstance(v, list) for v in json_contents.values()) and
+            all(isinstance(item, dict) for v in json_contents.values() for item in v)):
+        return fpath
+
+    # filter JSON contents
+    json_contents_filtered = {item_name: [{k: v for k, v in d.items() if k not in fields}
+                                          for d in list_of_dicts]
+                              for item_name, list_of_dicts in json_contents.items()}
+    # write and return filtered JSON
+    fpath_tmp = os.path.join(tempfile.mkdtemp(), os.path.basename(fpath))
+    write_json(json_contents_filtered, fpath_tmp)
 
     return fpath_tmp
 
