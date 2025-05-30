@@ -37,9 +37,6 @@ jobs:
     # Add any file patterns you want ignored to 'check_url_blacklist.txt'
     - name: Check for broken links
       run: |
-        # Fail outright if any failure occurs, rather than attempting to proceed
-        set -eu -o pipefail
-        
         # Get a list of files which have been changed from master on this branch
         git_diff_files=$(git diff origin/master... --name-only)
         
@@ -56,17 +53,18 @@ jobs:
           exit 0
         fi
         
-        # Find any and all URLs contained within the remaining files
-        git_diff_urls=$(
-          grep -Eio '\b(https?)://[-a-z0-9+&@#/%?=~_|$!:,.;]*[a-z0-9+&@#/%=~_|$]' "$git_diff_files" |
-          sed 's/:/;/'
-        )
+        git_diff_urls=$(grep -HEio '\b(https?)://[-a-z0-9+&@#/%?=~_|$!:,.;]*[a-z0-9+&@#/%=~_|$]' "$git_diff_files")
         
         # If no URLs were found within, end early to avoid an error
-        if [[ "$git_diff_urls" == "" ]]; then
+        if [[ "$?" == "1" ]]; then
           echo "No URLs found in changed files, ending URL checks."
           exit 0
         fi
+
+        # Replace all colons with semi-colons...
+        git_diff_urls=${git_diff_urls//":"/";"}
+        # ... then replace the https signatures to use colons again. Jank, but fast.
+        git_diff_urls=${git_diff_urls//"https;//"/"https://"}
         
         # Check each remaining file in the URL for validity
         xargs -rn 1 ".github/workflows/check-url.sh" <<< "$git_diff_urls"
