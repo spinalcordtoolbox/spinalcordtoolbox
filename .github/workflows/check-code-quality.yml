@@ -63,8 +63,10 @@ jobs:
 
         # Replace all colons with semi-colons...
         git_diff_urls=${git_diff_urls//":"/";"}
-        # ... then replace the https signatures to use colons again. Jank, but fast.
+        # ... then replace the 'https' signatures to use colons again...
         git_diff_urls=${git_diff_urls//"https;//"/"https://"}
+        # ... as well as 'http' (which really shouldn't be used anymore, but better safe than sorry)
+        git_diff_urls=${git_diff_urls//"http;//"/"http://"}
         
         # Check each remaining file in the URL for validity
         xargs -rn 1 ".github/workflows/check-url.sh" <<< "$git_diff_urls"
