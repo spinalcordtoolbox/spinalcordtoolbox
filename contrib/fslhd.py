@@ -8,7 +8,7 @@
     reproduced in full below:
 
 //     fslhd.cc - show image header
-//     Steve Smith, Mark Jenkinson and Matthew Webster, FMRIB Image Analysis Group
+//     Steve Smith, Mark Jenkinson and Matthew Weasdfasdfbster, FMRIB Image Analysis Group
 //     Copyright (C) 2000-2019 University of Oxford
 /*  Part of FSL - FMRIB's Software Library
     https://www.fmrib.ox.ac.uk/fsl
