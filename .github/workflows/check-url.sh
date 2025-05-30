@@ -16,10 +16,14 @@ HTTP_CODE_ONLY=(--write-out '%{http_code}' --output /dev/null)
 # We still keep a 5m limit, though, because --retry respects the Retry-After field, which may be greater than 30s.
 RETRY_ARGS=(--retry 2 --retry-delay 30 --retry-max-time 300 --retry-all-errors)
 
-# Make sure to check both URL *and* redirections (--location) for excluded domains
+# Make sure to check both URL *and* redirections (--location) for excluded patterns
 full_info=$(curl "${CURL_ARGS[@]}" --location -- "$URL")
 LOCATION=$(curl "${CURL_ARGS[@]}" -- "$URL" | perl -n -e '/^[Ll]ocation: (.*)$/ && print "$1\n"')
-if [[ "$full_info + $URL" =~ 'twitter.com'|'spiedigitallibrary.org'|'pipeline-hemis'|'sciencedirect.com'|'wiley.com'|'sagepub.com'|'ncbi.nlm.nih.gov'|'oxfordjournals.org'|'docker.com'|'ieeexplore.ieee.org'|'liebertpub.com'|'tandfonline.com'|'pnas.org'|'neurology.org'|'academic.oup.com'|'science.org'|'pubs.rsna.org'|'direct.mit.edu'|'thejns.org'|'rosped.ru'|'ajnr.org'|'bmj.com'|'biorxiv.org'|'%s' ]]; then
+# `pipeline-hemis` -> private repository, will 404 (expected)
+# `.ru` -> Russian domains, which don't play nicely with curl'ing from GitHub's servers
+# `ieeexplore.ieee.org` -> oddly returns a "418 - I'm a teapot" error code instead of 403
+# `%s` -> placeholder for a URL, which is used in our documentation's `conf.py` file
+if [[ "$full_info + $URL" =~ 'pipeline-hemis'|'.ru'|'ieeexplore.ieee.org'|'%s' ]]; then
     echo -e "$filename: \x1B[33m⚠️  Warning - Skipping: $URL --> $LOCATION\x1B[0m"
     exit 0
 fi
@@ -42,6 +46,23 @@ if [[ $status_code -ge 200 && $status_code -le 299 ]];then
     exit 0
 fi
 
+# Check for "403 Forbidden" error code (https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/403)
+# From https://http.dev/403: "The client does not have access to the requested resource."
+# - Due to the rise of AI and LLMs, many sites are now blocking automated access to their content.
+# - Often there is no way to bypass this, so in the past we hardcoded the domains to an exclusion list.
+#   However, manually editing the blacklist is not a sustainable solution, so we now automatically filter
+#   out any sites that raise 403 with just a warning instead of an error.
+# - Note: Allowing 403 responses covers the following domains:
+#         'twitter.com', 'spiedigitallibrary.org', 'sciencedirect.com', 'wiley.com', 'sagepub.com',
+#         'ncbi.nlm.nih.gov', 'oxfordjournals.org', 'docker.com', 'liebertpub.com', 'tandfonline.com',
+#         'pnas.org', 'neurology.org', 'academic.oup.com', 'science.org', 'pubs.rsna.org', 'direct.mit.edu',
+#         'thejns.org', 'ajnr.org', 'bmj.com', and 'biorxiv.org'
+if [[ $status_code -eq 403 ]];then
+    echo "($status_code) $URL ($filename)" >> valid_urls.txt
+    echo -e "$filename: \x1B[33m⚠️  Warning - Forbidden - status code: $status_code for domain $URL  \x1B[0m"
+    exit 0
+fi
+
 # Check for "406 Not Acceptable" error code (https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/406)
 # From https://http.dev/406: "In practice, this error is rarely used because the server supplies a default
 #                             representation instead."
@@ -55,7 +76,7 @@ fi
 # So, for now, we just filter out this response, as there's a good chance that this is still accessible via browsers.
 if [[ $status_code -eq 406 ]];then
     echo "($status_code) $URL ($filename)" >> valid_urls.txt
-    echo -e "$filename: \x1B[32m⚠️  Warning - Not Acceptable - status code: $status_code for domain $URL  \x1B[0m"
+    echo -e "$filename: \x1B[33m⚠️  Warning - Not Acceptable - status code: $status_code for domain $URL  \x1B[0m"
     exit 0
 fi
 
