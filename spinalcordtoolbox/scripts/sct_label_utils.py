@@ -109,21 +109,10 @@ def get_parser():
         help="Compute the center-of-mass for each label value."
     )
     func_group.add_argument(
-        '-disc',
-        metavar=Metavar.file,
-        help=textwrap.dedent("""
-            Project disc labels (`-disc`) onto a spinal cord segmentation (`-i`) within the axial plane to create a labeled segmentation.
-
-            - Note: Unlike `sct_label_vertebrae -discfile`, this function does NOT involve cord straightening.
-            - Note: This method does NOT involve orthogonal projection onto the cord centerline. Details: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3395#issuecomment-1478435265
-
-            The disc labeling follows the convention: https://spinalcordtoolbox.com/user_section/tutorials/vertebral-labeling/labeling-conventions.html
-        """),  # noqa: E501 (line too long)
-    )
-    func_group.add_argument(
         '-project-centerline',
         metavar=Metavar.file,
-        help="Project disc labels onto the spinal cord centerline."
+        help="Project labels (e.g. disc labels) onto a spinal cord segmentation or centerline. "
+             "Example: sct_label_utils -i spinalcord.nii.gz -project-centerline labels.nii.gz "
     )
     func_group.add_argument(
         '-display',
@@ -250,9 +239,6 @@ def main(argv: Sequence[str]):
         return
     elif arguments.increment:
         out = sct_labels.increment_z_inverse(img)
-    elif arguments.disc is not None:
-        ref = Image(arguments.disc)
-        out = sct_labels.labelize_from_discs(img, ref)
     elif arguments.project_centerline is not None:
         ref = Image(arguments.project_centerline)
         try:
