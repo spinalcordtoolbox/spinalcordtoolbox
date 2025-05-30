@@ -5,7 +5,7 @@ on:
     inputs:
       milestone_title:
         description: 'Milestone title (this release)'
-        required: true  # This does nothing! https://github.com/actions/runner/issues/1070
+        required: true
       dry_run:
         description: "Dry Run; if True, no changes are made on the repo and no release is made (but everything else is run!)"
         type: choice
