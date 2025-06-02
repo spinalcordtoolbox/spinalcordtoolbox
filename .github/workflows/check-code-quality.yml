@@ -40,18 +40,37 @@ jobs:
         # Fail outright if any failure occurs, rather than attempting to proceed
         set -eu -o pipefail
 
-        # Generate list of URLs which exist within files which have changed
-        git_diff_urls=$(git diff origin/master... --name-only | 
-          xargs grep -Eio '\b(https?)://[-a-z0-9+&@#/%?=~_|$!:,.;]*[a-z0-9+&@#/%=~_|$]' |
-          sed 's/:/;/'
-        )
-                
-        # Filter out files which are in the blacklist
+        # Get a list of files which have been changed from master on this branch
+        git_diff_files=$(git diff origin/master... --name-only)
+        
+        # Filter out any which are in the blacklist
         while read l; do
-          git_diff_urls=$(grep -v "$l" <<< "$git_diff_urls")
+          git_diff_files=$(grep -v "$l" <<< "$git_diff_files")
         # This `cat` call MUST be here; otherwise a subshell is created, and recursive variable updating is not possible
         #   Thank you to JN for figuring this out: https://stackoverflow.com/a/16854326
         done <<< $(cat ".github/workflows/check_url_blacklist.txt")
+        
+        # If no files remain, end here to avoid an error
+        if [[ "$git_diff_files" == "" ]]; then
+          echo "No files outside the blacklist were changed, ending URL checks."
+          exit 0
+        fi
+        
+        # Get all urls within the changed files; the '||' is to prevent grep from crashing the entire script if it finds nothing
+        git_diff_urls=$(grep -HEio '\b(https?)://[-a-z0-9+&@#/%?=~_|$!:,.;]*[a-z0-9+&@#/%=~_|$]' "$git_diff_files" || echo "")
+        
+        # If no URLs were found within, end early to avoid an error
+        if [[ "$git_diff_urls" == "" ]]; then
+          echo "No URLs found in changed files, ending URL checks."
+          exit 0
+        fi
+
+        # Replace all colons with semi-colons...
+        git_diff_urls=${git_diff_urls//":"/";"}
+        # ... then replace the 'https' signatures to use colons again...
+        git_diff_urls=${git_diff_urls//"https;//"/"https://"}
+        # ... as well as 'http' (which really shouldn't be used anymore, but better safe than sorry)
+        git_diff_urls=${git_diff_urls//"http;//"/"http://"}
         
         # Check each remaining file in the URL for validity
         xargs -rn 1 ".github/workflows/check-url.sh" <<< "$git_diff_urls"
