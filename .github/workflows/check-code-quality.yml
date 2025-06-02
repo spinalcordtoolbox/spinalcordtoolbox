@@ -37,6 +37,9 @@ jobs:
     # Add any file patterns you want ignored to 'check_url_blacklist.txt'
     - name: Check for broken links
       run: |
+        # Fail outright if any failure occurs, rather than attempting to proceed
+        set -eu -o pipefail
+
         # Get a list of files which have been changed from master on this branch
         git_diff_files=$(git diff origin/master... --name-only)
         
@@ -53,10 +56,11 @@ jobs:
           exit 0
         fi
         
-        git_diff_urls=$(grep -HEio '\b(https?)://[-a-z0-9+&@#/%?=~_|$!:,.;]*[a-z0-9+&@#/%=~_|$]' "$git_diff_files")
+        # Get all urls within the changed files; the '||' is to prevent grep from crashing the entire script if it finds nothing
+        git_diff_urls=$(grep -HEio '\b(https?)://[-a-z0-9+&@#/%?=~_|$!:,.;]*[a-z0-9+&@#/%=~_|$]' "$git_diff_files" || echo "")
         
         # If no URLs were found within, end early to avoid an error
-        if [[ "$?" == "1" ]]; then
+        if [[ "$git_diff_urls" == "" ]]; then
           echo "No URLs found in changed files, ending URL checks."
           exit 0
         fi
