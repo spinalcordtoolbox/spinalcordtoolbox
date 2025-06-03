@@ -318,7 +318,7 @@ jobs:
       run:
         shell: wsl-bash {0} # https://github.com/marketplace/actions/setup-wsl#default-shell
     steps:
-    - uses: Vampire/setup-wsl@v3
+    - uses: Vampire/setup-wsl@v5
       with:
         # other WSL container choices at: https://github.com/marketplace/actions/setup-wsl#distribution
         distribution: Ubuntu-24.04
@@ -372,7 +372,7 @@ jobs:
       run:
         shell: wsl-bash {0} # https://github.com/marketplace/actions/setup-wsl#default-shell
     steps:
-    - uses: Vampire/setup-wsl@v3
+    - uses: Vampire/setup-wsl@v5
       with:
         # other WSL container choices at: https://github.com/marketplace/actions/setup-wsl#distribution
         distribution: Ubuntu-22.04
