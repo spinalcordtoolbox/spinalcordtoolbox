@@ -5,6 +5,7 @@ Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
 License: see the file LICENSE
 """
 
+import json
 import logging
 from pathlib import Path
 from typing import Callable, List, Tuple, Union
@@ -74,7 +75,7 @@ class QcImage:
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
 
-    def no_seg_seg(self, mask, ax, cmap='gray', norm=None, colorbar=False, text=None):
+    def no_seg_seg(self, mask, ax, cmap='gray', norm=None, colorbar=False, text=None, map_dict=False):
         """Create figure with image overlay. Notably used by sct_registration_to_template"""
         img = ax.imshow(mask, cmap=cmap, norm=norm, interpolation=self.interpolation, aspect=self.aspect_mask)
         if colorbar:
@@ -107,7 +108,7 @@ class QcImage:
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
 
-    def label_vertebrae(self, mask, ax):
+    def label_vertebrae(self, mask, ax, map_dict=None):
         """Draw vertebrae areas, then add text showing the vertebrae names"""
         img = np.rint(np.ma.masked_where(mask < 1, mask))
         labels = np.unique(img[np.where(~img.mask)]).astype(int)  # get available labels
@@ -120,7 +121,10 @@ class QcImage:
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
 
-        # Use the existing colormap to draw colored text for any vertebral labels belonging to `self._labels_regions`
+        # Use the existing colormap to draw colored text for any vertebral labels belonging to map_dict
+        if map_dict is None:
+            map_dict = self._labels_regions
+        
         if self._draw_text:
             a = [0.0]
             data = mask
@@ -128,13 +132,13 @@ class QcImage:
                 if val not in a:
                     a.append(val)
                     index = int(val)
-                    if index in self._labels_regions.values():
+                    if index in map_dict.values():
                         # NB: We need to subtract `min` to convert the label value into an index for the color list
                         label_color = color_list[index - labels.min()]
                         y, x = center_of_mass(np.where(data == val, data, 0))
                         # Draw text with a shadow
                         x += data.shape[1] / 25
-                        label = list(self._labels_regions.keys())[list(self._labels_regions.values()).index(index)]
+                        label = list(map_dict.keys())[list(map_dict.values()).index(index)]
                         label_text = ax.text(x, y, label, color=label_color, clip_on=True)
                         label_text.set_path_effects([mpl_patheffects.Stroke(linewidth=2, foreground='black'),
                                                      mpl_patheffects.Normal()])
@@ -240,6 +244,12 @@ class QcImage:
             kwargs['colorbar'] = True
             kwargs['text'] = 1
             ax_dim = (0, 0, 0.93, 1)
+        elif self.process == 'sct_label_vertebrae':
+            # Load mapping
+            with open("/Users/nathan/data/whole-spine/derivatives/mapping_tss.json", "r") as file:
+                map_dict = json.load(file)
+            
+            kwargs['map_dict'] = map_dict
         ax = fig.add_axes(ax_dim)
         QcImage.no_seg_seg(self, img, ax, **kwargs)
 
