@@ -313,15 +313,19 @@ jobs:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
     if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
-    runs-on: windows-2022
+    runs-on: windows-2025
     defaults:
       run:
         shell: wsl-bash {0} # https://github.com/marketplace/actions/setup-wsl#default-shell
     steps:
-    - uses: Vampire/setup-wsl@v3
+    - uses: Vampire/setup-wsl@v5
       with:
         # other WSL container choices at: https://github.com/marketplace/actions/setup-wsl#distribution
         distribution: Ubuntu-24.04
+        # SCT currently recommends using a WSL1 environment. (https://spinalcordtoolbox.com/stable/user_section/installation/windows.html#basic-installation-no-gui)
+        # However, this is only because GitHub Actions didn't support WSL2 at the time of writing. In theory, WSL2
+        # could be adopted with some trial and error: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4914
+        wsl-version: 1
     - name: Use unix line endings
       shell: bash
       run: |
@@ -367,15 +371,19 @@ jobs:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
     if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
-    runs-on: windows-2022
+    runs-on: windows-2025
     defaults:
       run:
         shell: wsl-bash {0} # https://github.com/marketplace/actions/setup-wsl#default-shell
     steps:
-    - uses: Vampire/setup-wsl@v3
+    - uses: Vampire/setup-wsl@v5
       with:
         # other WSL container choices at: https://github.com/marketplace/actions/setup-wsl#distribution
         distribution: Ubuntu-22.04
+        # SCT currently recommends using a WSL1 environment. (https://spinalcordtoolbox.com/stable/user_section/installation/windows.html#basic-installation-no-gui)
+        # However, this is only because GitHub Actions didn't support WSL2 at the time of writing. In theory, WSL2
+        # could be adopted with some trial and error: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4914
+        wsl-version: 1
     - name: Use unix line endings
       shell: bash
       run: |
