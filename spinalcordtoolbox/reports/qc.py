@@ -603,7 +603,7 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
     # Get the aspect ratio (height/width) based on pixel size. Consider only the first 2 slices.
     qc_image.aspect_img, qc_image.aspect_mask = qcslice.aspect()[:2]
 
-    path_input = Path(fname_in1).absolute()
+    path_input = Path(fname_in1).resolve()
     path_qc = Path(path_qc)
     command = process
     cmdline = [command]
