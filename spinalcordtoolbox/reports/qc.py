@@ -499,7 +499,7 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
         p_resample_default = None
         dpi = 100  # bigger picture is needed for this special case, hence reduce dpi
         im_list = [Image(fname_in1), Image(fname_seg)]
-        action_list = [QcImage.label_utils]
+        action_list = [QcImage.label_vertebrae]
         def qcslice_layout(x): return x.single()
     #  Sagittal orientation, display posterior labels
     elif process in ['sct_label_utils']:

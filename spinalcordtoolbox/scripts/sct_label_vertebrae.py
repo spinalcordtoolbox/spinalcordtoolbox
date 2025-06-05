@@ -462,10 +462,9 @@ def main(argv: Sequence[str]):
     # Generate output files
     path_seg, file_seg, ext_seg = extract_fname(fname_seg)
     fname_seg_labeled = os.path.join(path_output, file_seg + '_labeled' + ext_seg)
-    fname_discs = os.path.join(path_output, file_seg + '_labeled_discs' + ext_seg)
     printv('\nGenerate output files...', verbose)
     generate_output_file(os.path.join(path_tmp, "segmentation_labeled.nii"), fname_seg_labeled)
-    generate_output_file(os.path.join(path_tmp, "segmentation_labeled_disc.nii"), fname_discs)
+    generate_output_file(os.path.join(path_tmp, "segmentation_labeled_disc.nii"), os.path.join(path_output, file_seg + '_labeled_discs' + ext_seg))
     # copy straightening files in case subsequent SCT functions need them
     if not fname_disc:
         generate_output_file(os.path.join(path_tmp, "straightening.cache"), os.path.join(path_output, "straightening.cache"), verbose=verbose)
@@ -483,7 +482,7 @@ def main(argv: Sequence[str]):
         path_qc = os.path.abspath(arguments.qc)
         qc_dataset = arguments.qc_dataset
         qc_subject = arguments.qc_subject
-        generate_qc(fname_in, fname_seg=fname_discs, args=argv, path_qc=os.path.abspath(path_qc),
+        generate_qc(fname_in, fname_seg=fname_seg_labeled, args=argv, path_qc=os.path.abspath(path_qc),
                     dataset=qc_dataset, subject=qc_subject, process='sct_label_vertebrae')
 
     display_viewer_syntax([fname_in, fname_seg_labeled], im_types=['anat', 'seg-labeled'], opacities=['1', '0.5'],
