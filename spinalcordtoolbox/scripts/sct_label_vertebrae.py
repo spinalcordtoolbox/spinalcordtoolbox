@@ -484,7 +484,7 @@ def main(argv: Sequence[str]):
         qc_dataset = arguments.qc_dataset
         qc_subject = arguments.qc_subject
         generate_qc(fname_in, fname_seg=fname_discs, args=argv, path_qc=os.path.abspath(path_qc),
-                    dataset=qc_dataset, subject=qc_subject, process='sct_label_vertebrae')
+                    dataset=qc_dataset, subject=qc_subject, process='sct_label_utils')
 
     display_viewer_syntax([fname_in, fname_seg_labeled], im_types=['anat', 'seg-labeled'], opacities=['1', '0.5'],
                           verbose=verbose)
