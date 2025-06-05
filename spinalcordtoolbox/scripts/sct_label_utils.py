@@ -205,6 +205,8 @@ def main(argv: Sequence[str]):
         if arg == '-create-seg' and len(argv) > i+1 and '-1,' in argv[i+1]:
             raise DeprecationWarning("The use of '-1' for '-create-seg' has been deprecated. Please use "
                                      "'-create-seg-mid' instead.")
+        if arg == '-disc':
+            raise DeprecationWarning("The use of '-disc' has been deprecated. Please use `sct_label_vertebrae -discfile`.")
 
     parser = get_parser()
     arguments = parser.parse_args(argv)
