@@ -216,7 +216,7 @@ def label_regions_from_reference(img: Image, ref: Image, centerline: bool = Fals
     Create an image with regions labelized depending on values from reference.
     Typically, user inputs a segmentation image, and labels with discs position, and this function produces
     a segmentation image with vertebral levels labelized.
-    Note that no straightening is done. The labelization is only done based on the z coordinates of each projected voxel of the segmentation.
+    Note that no straightening is done. The labelization is done by projecting the labels onto the centerline (extracted from the segmentation).
     Input images do **not** need to be RPI (re-orientation is done within this function).
 
     :param img: segmentation
