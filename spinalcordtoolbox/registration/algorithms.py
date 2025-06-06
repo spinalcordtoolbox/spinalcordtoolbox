@@ -621,24 +621,34 @@ def register_slicewise(fname_src, fname_dest, paramreg=None, fname_mask='', warp
     # copy data to temp folder
     logger.info("\nCopy input data to temp folder...")
     if isinstance(fname_src, list):
+        fname_src_img, fname_src_seg = "src.nii", "src_seg.nii"
+        fname_dest_img, fname_dest_seg = "dest.nii", "dest_seg.nii"
         # TODO: swap 0 and 1 (to be consistent with the child function below)
         src_img = image.convert(image.Image(fname_src[0]))
-        src_img.save(os.path.join(path_tmp, "src.nii"), mutable=True, verbose=verbose)
+        src_img.save(os.path.join(path_tmp, fname_src_img), mutable=True, verbose=verbose)
 
         src_seg = image.convert(image.Image(fname_src[1]))
-        src_seg.save(os.path.join(path_tmp, "src_seg.nii"), mutable=True, verbose=verbose)
+        src_seg.save(os.path.join(path_tmp, fname_src_seg), mutable=True, verbose=verbose)
 
         dest_img = image.convert(image.Image(fname_dest[0]))
-        dest_img.save(os.path.join(path_tmp, "dest.nii"), mutable=True, verbose=verbose)
+        dest_img.save(os.path.join(path_tmp, fname_dest_img), mutable=True, verbose=verbose)
 
         dest_seg = image.convert(image.Image(fname_dest[1]))
-        dest_seg.save(os.path.join(path_tmp, "dest_seg.nii"), mutable=True, verbose=verbose)
+        dest_seg.save(os.path.join(path_tmp, fname_dest_seg), mutable=True, verbose=verbose)
     else:
+        # FIXME: - If we receive only one image, we have no way of knowing if that image is `type=im` or `type=seg`
+        #          because that context isn't provided to this function.
+        #        - In theory, we could parse the file name for "_seg" to determine if it's a segmentation or not,
+        #          but perhaps this would be brittle (e.g. if the caller changes its naming conventions).
+        #        - So, we are forced to use the same filename for both possibilities (and hope the correct image was passed).
+        fname_src_img = fname_src_seg = "src.nii"
+        fname_dest_img = fname_dest_seg = "dest.nii"
+
         src_img = image.convert(image.Image(fname_src))
-        src_img.save(os.path.join(path_tmp, "src.nii"), mutable=True, verbose=verbose)
+        src_img.save(os.path.join(path_tmp, fname_src_img), mutable=True, verbose=verbose)
 
         dest_image = image.convert(image.Image(fname_dest))
-        dest_image.save(os.path.join(path_tmp, "dest.nii"), mutable=True, verbose=verbose)
+        dest_image.save(os.path.join(path_tmp, fname_dest_img), mutable=True, verbose=verbose)
 
     if fname_mask != '':
         mask_img = image.convert(image.Image(fname_mask))
@@ -656,11 +666,11 @@ def register_slicewise(fname_src, fname_dest, paramreg=None, fname_mask='', warp
         else:
             rot_method = paramreg.rot_method
         if rot_method in ['hog', 'pcahog']:
-            src_input = ['src_seg.nii', 'src.nii']
-            dest_input = ['dest_seg.nii', 'dest.nii']
-        else:
-            src_input = ['src.nii']
-            dest_input = ['dest.nii']
+            src_input = [fname_src_seg, fname_src_img]
+            dest_input = [fname_dest_seg, fname_dest_img]
+        else:  # rot_method = pca --> use segmentation only
+            src_input = [fname_src_seg]
+            dest_input = [fname_dest_seg]
         register2d_centermassrot(
             src_input, dest_input, paramreg=paramreg, fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out,
             rot_method=rot_method, filter_size=paramreg.filter_size, path_qc=path_qc, verbose=verbose,
@@ -668,8 +678,8 @@ def register_slicewise(fname_src, fname_dest, paramreg=None, fname_mask='', warp
 
     elif paramreg.algo == 'columnwise':
         # scaling R-L, then column-wise center of mass alignment and scaling
-        register2d_columnwise('src.nii',
-                              'dest.nii',
+        register2d_columnwise(fname_src_img,
+                              fname_dest_img,
                               fname_warp=warp_forward_out,
                               fname_warp_inv=warp_inverse_out,
                               verbose=verbose,
@@ -683,8 +693,8 @@ def register_slicewise(fname_src, fname_dest, paramreg=None, fname_mask='', warp
         algo_dic = {'translation': 'Translation', 'rigid': 'Rigid', 'affine': 'Affine', 'syn': 'SyN', 'bsplinesyn': 'BSplineSyN', 'centermass': 'centermass'}
         paramreg.algo = algo_dic[paramreg.algo]
         # run slicewise registration
-        register2d('src.nii',
-                   'dest.nii',
+        register2d(fname_src_img,
+                   fname_dest_img,
                    fname_mask=fname_mask,
                    fname_warp=warp_forward_out,
                    fname_warp_inv=warp_inverse_out,

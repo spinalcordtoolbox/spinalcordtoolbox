@@ -213,9 +213,9 @@ def get_parser():
               f"  - rot_method {{pca, hog, pcahog}}: rotation method to be used with algo=centermassrot. If using hog "
               f"or pcahog, type should be set to imseg. Default={DEFAULT_PARAMREGMULTI.steps['1'].rot_method}\n"
               f"    * pca: approximate cord segmentation by an ellipse and finds it orientation using PCA's "
-              f"eigenvectors\n"
-              f"    * hog: finds the orientation using the symmetry of the image\n"
-              f"    * pcahog: tries method pca and if it fails, uses method hog.\n")
+              f"eigenvectors (use with `type=seg`)\n"
+              f"    * hog: finds the orientation using the symmetry of the image (use with `type=imseg`)\n"
+              f"    * pcahog: tries method pca and if it fails, uses method hog (use with `type=imseg`).\n")
     )
     optional.add_argument(
         '-identity',

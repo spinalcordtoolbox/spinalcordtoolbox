@@ -327,6 +327,13 @@ def register(src, dest, step, param):
     printv('  smoothWarpXY ... ' + step.smoothWarpXY, param.verbose)
     printv('  rot_method ..... ' + step.rot_method, param.verbose)
 
+    # validate `-param` here to fail early if invalid (but after displaying them to the user)
+    if step.algo == 'centermassrot':
+        valid_types = {'pca': 'seg', 'hog': 'imseg', 'pcahog': 'imseg'}
+        if step.type != valid_types[step.rot_method]:
+            raise ValueError(f"Parameter 'rot_method={step.rot_method}' is only valid for type={valid_types[step.rot_method]}', "
+                             f"not '{step.type}'. Please update your `-param` settings to use a valid combination.")
+
     # set metricSize
     if step.metric == 'MI':
         metricSize = '32'  # corresponds to number of bins
