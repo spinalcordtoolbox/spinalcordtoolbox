@@ -117,7 +117,7 @@ def test_labelize_from_discs(test_seg, test_labels):
     seg = test_seg.copy()
     ref = test_labels.copy()
 
-    sct_labels.labelize_from_discs(seg, ref)
+    sct_labels.label_regions_from_reference(seg, ref)
     # TODO [AJ] implement test
 
 

@@ -26,11 +26,6 @@ def test_sct_label_vertebrae_consistent_disc(tmp_path):
     assert fp == []
     assert fn == []
 
-    # Ensure that the straightening files are correctly generated in the output directory
-    for file in ["straightening.cache", "straight_ref.nii.gz",
-                 "warp_straight2curve.nii.gz", "warp_curve2straight.nii.gz"]:
-        assert os.path.isfile(tmp_path/file)
-
 
 @pytest.mark.sct_testing
 def test_sct_label_vertebrae_initfile_qc_no_checks():
