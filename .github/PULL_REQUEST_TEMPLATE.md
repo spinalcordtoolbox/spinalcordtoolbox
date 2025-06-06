@@ -1,30 +1,16 @@
-<!-- Hi, and thank you for submitting a Pull Request! The checklist below is a brief summary of steps found in the NeuroPoly Contributing Guidelines, which can be found here: https://intranet.neuro.polymtl.ca/onboarding/software-development.html#software-development. 
--->
-
 ## Checklist
 
-#### GitHub
+<!-- Hi, and thank you for submitting a Pull Request! Please make sure to check the boxes below before submitting. -->
 
-- [ ] I've given this PR a concise, self-descriptive, and meaningful title
-- [ ] I've linked relevant issues in the PR body
-- [ ] I've applied [the relevant labels](https://intranet.neuro.polymtl.ca/onboarding/software-development.html#pr-labels) to this PR
-- [ ] I've applied a [release milestone](https://github.com/spinalcordtoolbox/spinalcordtoolbox/milestones) (major, minor, patch) in line with [Semantic Versioning guidelines](https://github.com/spinalcordtoolbox/spinalcordtoolbox/wiki/Misc%3A-Creating-a-new-release#convention-for-naming-releases) 
-- [ ] I've assigned a reviewer
-
-<!-- For the title, please observe the following rules:
-	- Provide a concise and self-descriptive title
-	- Do not include the applicable issue number in the title, do it in the PR body
-	- If the PR is not ready for review, convert it to a draft.
--->
-
-#### PR contents
-
-- [ ] I've consulted [SCT's internal developer documentation](https://github.com/spinalcordtoolbox/spinalcordtoolbox/wiki) to ensure my contribution is in line with any relevant design decisions
-- [ ] I've added [relevant tests](https://github.com/spinalcordtoolbox/spinalcordtoolbox/wiki/Testing) for my contribution
-- [ ] I've updated the [relevant documentation](https://github.com/spinalcordtoolbox/spinalcordtoolbox/wiki/Documentation) for my changes, including argparse descriptions, docstrings, and ReadTheDocs tutorial pages
+- [ ] **PR Sidebar**: I've filled in each of the options within the PR sidebar. ([Reviewers](https://github.com/spinalcordtoolbox/spinalcordtoolbox/wiki/Contributing:-Submitting-changes-to-SCT-(Opening-a-Pull-Request)#231-reviewers), [Assignees](https://github.com/spinalcordtoolbox/spinalcordtoolbox/wiki/Contributing:-Submitting-changes-to-SCT-(Opening-a-Pull-Request)#232-assignees), [Labels](https://github.com/spinalcordtoolbox/spinalcordtoolbox/wiki/Contributing:-Submitting-changes-to-SCT-(Opening-a-Pull-Request)#233-labels) (**exactly one** dark purple label!), [Milestone](https://github.com/spinalcordtoolbox/spinalcordtoolbox/wiki/Contributing:-Submitting-changes-to-SCT-(Opening-a-Pull-Request)#234-milestone), [Development](https://github.com/spinalcordtoolbox/spinalcordtoolbox/wiki/Contributing:-Submitting-changes-to-SCT-(Opening-a-Pull-Request)#235-development).)
+- [ ] **Contributing Docs**: I've read the [Contributing guidelines](https://github.com/spinalcordtoolbox/spinalcordtoolbox/wiki/Contributing:-Submitting-changes-to-SCT-(Opening-a-Pull-Request)) to make sure my [branch](https://github.com/spinalcordtoolbox/spinalcordtoolbox/wiki/Contributing%3A-Submitting-changes-to-SCT-(Opening-a-Pull-Request)#part-1-branches) and [pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/wiki/Contributing%3A-Submitting-changes-to-SCT-(Opening-a-Pull-Request)#part-2-pull-requests) meet SCT's guidelines. (Feel free to stop and fixup your commits before submitting.)
+- [ ] **Tests**: I've added [relevant tests](https://github.com/spinalcordtoolbox/spinalcordtoolbox/wiki/Testing) for my contribution, if necessary. I've also made sure that my contribution passes [all of the automated tests](https://github.com/spinalcordtoolbox/spinalcordtoolbox/wiki/Contributing:-Submitting-changes-to-SCT-(Opening-a-Pull-Request)#24-checking-the-automated-tests) (which will be triggered after the PR is submitted).
+- [ ] **Documentation**: I've updated the [relevant documentation](https://github.com/spinalcordtoolbox/spinalcordtoolbox/wiki/Documentation) for my changes, including argparse descriptions, docstrings, and ReadTheDocs tutorial pages.
 
 ## Description
-<!-- describe what the PR is about. Explain the approach and possible drawbacks.It's ok to repeat some text from the related issue. -->
+
+<!-- Replace this comment with a description that follows https://github.com/spinalcordtoolbox/spinalcordtoolbox/wiki/Contributing:-Submitting-changes-to-SCT-(Opening-a-Pull-Request)#22-writing-a-good-description -->>
 
 ## Linked issues
-<!-- If the PR fixes any issues, indicate it here with issue-closing keywords: e.g. Resolves #XX, Fixes #XX, Addresses #XX. Note that if you want multiple issues to be autoclosed on PR merge, you must use the issue-closing verb before each relevant issue: e.g. Resolves #1, Resolves #2 -->
+
+Fixes #XXXX.  <!-- Replace #XXXX with the issue # that your PR will fix. -->

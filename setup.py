@@ -35,13 +35,13 @@ setup(
         'Operating System :: MacOS',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
     ],
     keywords='Magnetic Resonance Imaging MRI spinal cord analysis template',
     packages=find_packages(exclude=['.git', 'data', 'dev', 'dev.*',
                                     'install', 'testing']),
     include_package_data=True,
-    python_requires="==3.9.*",
+    python_requires="==3.10.*",
     extras_require={
         'docs': [
             'sphinxcontrib-programoutput',

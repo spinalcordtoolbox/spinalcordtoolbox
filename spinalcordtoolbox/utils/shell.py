@@ -16,7 +16,7 @@ import itertools
 from enum import Enum
 from functools import cached_property, partial
 
-from .sys import check_exe, printv, removesuffix, ANSIColors16
+from .sys import check_exe, printv, ANSIColors16
 from .fs import relpath_or_abspath
 from .profiling import TimeProfilingAction, MemoryTracingAction
 
@@ -218,7 +218,7 @@ class SCTArgumentParser(argparse.ArgumentParser):
         )
 
         # Update "usage:" message to match how SCT scripts are actually called (no '.py')
-        self.prog = removesuffix(self.prog, ".py")
+        self.prog = self.prog.removesuffix(".py")
 
     # == OVERRIDES == #
     def error(self, message):

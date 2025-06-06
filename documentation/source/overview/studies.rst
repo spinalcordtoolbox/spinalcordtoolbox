@@ -26,6 +26,7 @@ The following studies have used SCT:
 2025 
 ----
 
+-  Muhammad *et al.* `Semiautomated Pipeline Effectively Assesses Severity and Monitor Disease Progression in Compressed Spinal Cord of Degenerative Cervical Myelopathy Patients <https://doi.org/10.1227/neuprac.0000000000000138>`_, **Neurosurg. Pract.** 2025
 -  Jin *et al.* `Quantitative Study on Morphological Parameters of Healthy Cervical Spinal Cord Based on SCT <https://doi.org/10.12455/j.issn.1671-7104.240337>`_, **Chinese Journal of Medical Instrumentation** 2025
 -  Labounek *et al.* `Body size and intracranial volume interact with the structure of the central nervous system: A multi-center in vivo neuroimaging study <https://doi.org/10.1162/imag_a_00559>`_, **Imaging Neuroscience** 2025
 -  Bozhko *et al.* `Diffusion tensor imaging in the study of spinal tract degeneration after spinal cord injury: a prospective study <https://doi.org/10.22328/2079-5343-2025-16-1-66-73>`_, **Diagn. Radiol. Radiother.** 2025

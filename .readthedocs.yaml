@@ -9,7 +9,7 @@ build:
   os: "ubuntu-22.04"
   tools:
       # This python version needs to be compatible with SCT, see setup.py
-      python: "3.9"
+      python: "3.10"
 
 python:
   install:

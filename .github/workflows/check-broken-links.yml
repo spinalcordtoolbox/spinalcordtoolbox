@@ -13,12 +13,24 @@ jobs:
 
     - name: Check for broken links
       run: |
+        # Create URL files for later reference
         touch valid_urls.txt redirected_urls.txt invalid_urls.txt
-        find . -type f \( -name "*.txt" -o -name "*.md" -o -name "*.py" -o -name "*.rst" \) \
-          \( \! -name 'CHANGES.md' \) \( \! -name 'requirements.txt' \) \( \! -name 'requirements-freeze.txt' \) |
-          xargs grep -Eio "\b(https?)://[-a-z0-9+&@#/%?=~_|$!:,.;]*[a-z0-9+&@#/%=~_|$]" |
-          sed 's/:/;/' |
-          xargs -n 1 ./.github/workflows/check-url.sh
+        
+        # Get the list of URLs within the project
+        git_diff_urls=$(find . -type f \( -name "*.txt" -o -name "*.md" -o -name "*.py" -o -name "*.rst" \) |
+          xargs grep -Eio '\b(https?)://[-a-z0-9+&@#/%?=~_|$!:,.;]*[a-z0-9+&@#/%=~_|$]' |
+          sed 's/:/;/'
+        )
+        
+        # Filter out files which are in the blacklist
+        while read l; do
+          git_diff_urls=$(grep -v "$l" <<< "$git_diff_urls")
+        # This `cat` call MUST be here; otherwise a subshell is created, and recursive variable updating is not possible
+        #   Thank you to JN for figuring this out: https://stackoverflow.com/a/16854326
+        done <<< $(cat ".github/workflows/check_url_blacklist.txt")
+        
+        # Check each remaining file in the URL for validity
+        xargs -rn 1 ".github/workflows/check-url.sh" <<< "$git_diff_urls"
 
     - name: Summarize
       run: |
