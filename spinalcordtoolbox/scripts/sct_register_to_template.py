@@ -439,10 +439,12 @@ def main(argv: Sequence[str]):
     image_label_template = Image(ftmp_template_label)
 
     labels_template = image_label_template.getNonZeroCoordinates(sorting='value')
-    if labels[-1].value > labels_template[-1].value:
-        printv('ERROR: Wrong landmarks input. Labels must have correspondence in template space. \nLabel max '
-               'provided: ' + str(labels[-1].value) + '\nLabel max from template: ' +
-               str(labels_template[-1].value), verbose, 'error')
+    max_label = max(label.value for label in labels if label.value not in [60])  # exclude cauda equina (60) from check
+    max_label_template = max(label.value for label in labels_template if label.value not in [60])
+    if max_label > max_label_template:
+        printv(f'ERROR: Wrong landmarks input. Labels must have correspondence in template space.\n'
+               f'Label max provided: {max_label}\n'
+               f'Label max from template: {max_label_template}', verbose, 'error')
 
     # if only one label is present, force affine transformation to be Tx,Ty,Tz only (no scaling)
     if len(labels) == 1:
