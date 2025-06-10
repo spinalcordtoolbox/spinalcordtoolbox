@@ -32,7 +32,7 @@ from spinalcordtoolbox.math import binarize
 from spinalcordtoolbox.utils.fs import (copy, extract_fname, check_file_exist, rmtree,
                                         cache_save, cache_signature, cache_valid, tmp_create)
 from spinalcordtoolbox.utils.shell import (SCTArgumentParser, ActionCreateFolder, Metavar, list_type,
-                                           printv, display_viewer_syntax)
+                                           parse_num_list_inv, printv, display_viewer_syntax)
 from spinalcordtoolbox.utils.sys import set_loglevel, init_sct, run_proc, __data_dir__, __version__
 import spinalcordtoolbox.image as msct_image
 import spinalcordtoolbox.labels as sct_labels
@@ -438,13 +438,13 @@ def main(argv: Sequence[str]):
     printv('\nCheck if provided labels are available in the template', verbose)
     image_label_template = Image(ftmp_template_label)
 
-    labels_template = image_label_template.getNonZeroCoordinates(sorting='value')
-    max_label = max(label.value for label in labels if label.value not in [60])  # exclude cauda equina (60) from check
-    max_label_template = max(label.value for label in labels_template if label.value not in [60])
-    if max_label > max_label_template:
-        printv(f'ERROR: Wrong landmarks input. Labels must have correspondence in template space.\n'
-               f'Label max provided: {max_label}\n'
-               f'Label max from template: {max_label_template}', verbose, 'error')
+    labels_set = set(coord.value for coord in labels)
+    labels_template = set(coord.value for coord in image_label_template.getNonZeroCoordinates())
+    if not labels_set.issubset(labels_template):
+        printv(f"ERROR: Wrong landmarks input. Labels must have correspondence in template space.\n"
+               f"Wrong labels provided: {parse_num_list_inv(list(labels_set - labels_template))}\n"
+               f"Available labels from template: {parse_num_list_inv(list(labels_template))}",
+               verbose, 'error')
 
     # if only one label is present, force affine transformation to be Tx,Ty,Tz only (no scaling)
     if len(labels) == 1:
