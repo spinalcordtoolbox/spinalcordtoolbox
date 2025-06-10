@@ -65,7 +65,15 @@ def get_parser():
         default=[])
     optional.add_argument(
         "-crop",
-        help="Crop Reference. 0: no reference, 1: sets background to 0, 2: use normal background, 3: mask the image.",
+        help="Crop the output image using the extents of the warping field.\n"
+             " - 0: no cropping (WARNING: may result in duplicated output if the destination image's FOV is "
+             "      larger than the FOV of the warping field)\n"
+             " - 1: crop using a rectangular bounding box around the warping field (setting outside voxels to 0)\n"
+             " - 2: crop using a rectangular bounding box around the warping field (changing the size of the output "
+             "      image)\n"
+             " - 3: mask the output image (setting outside voxels to 0) using the warping field directly instead of "
+             "      using a rectangular bounding box around the warping field. Useful if Option 1 does not zero out "
+             "      enough voxels.",
         type=int,
         default=0,
         choices=(0, 1, 2, 3))
