@@ -14,6 +14,8 @@ import functools
 from typing import Sequence
 import textwrap
 
+import numpy as np
+
 from spinalcordtoolbox.image import Image, generate_output_file, add_suffix
 from spinalcordtoolbox.cropping import ImageCropper
 from spinalcordtoolbox.math import dilate
@@ -317,12 +319,10 @@ class Transform:
         if not isLastAffine and crop_reference in [1, 2]:
             printv('Last transformation is not affine.')
             if crop_reference in [1, 2]:
-                # Extract only the first ndim of the warping field
+                # Extract only the first n dims of the warping field by creating a dummy image with the correct shape
                 img_warp = Image(warping_field)
-                if dim == '2':
-                    img_warp_ndim = Image(img_src.data[:, :], hdr=img_warp.hdr)
-                elif dim in ['3', '4']:
-                    img_warp_ndim = Image(img_src.data[:, :, :], hdr=img_warp.hdr)
+                warp_shape = img_warp.data.shape[:int(dim)]  # dim = {'2', '3', '4'}
+                img_warp_ndim = Image(np.ones(warp_shape), hdr=img_warp.hdr)
                 # Set zero to everything outside the warping field
                 cropper = ImageCropper(Image(fname_out))
                 cropper.get_bbox_from_ref(img_warp_ndim)
