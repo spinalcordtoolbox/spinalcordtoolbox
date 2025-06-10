@@ -165,7 +165,7 @@ def sct_register_multimodal(
 
     # Axial orientation, switch between two input images
     with create_qc_entry(
-        path_input=Path(fname_input).absolute(),
+        path_input=Path(fname_input).resolve(),
         path_qc=Path(path_qc),
         command=command,
         cmdline=list2cmdline(cmdline),
@@ -255,7 +255,7 @@ def sct_deepseg(
     cmdline.extend(argv)
 
     with create_qc_entry(
-        path_input=Path(fname_input).absolute(),
+        path_input=Path(fname_input).resolve(),
         path_qc=Path(path_qc),
         command=command,
         cmdline=list2cmdline(cmdline),
@@ -646,7 +646,7 @@ def sct_analyze_lesion(
 
     # Axial orientation, switch between one anat image and 1-2 seg images
     with create_qc_entry(
-        path_input=Path(fname_input).absolute(),
+        path_input=Path(fname_input).resolve(),
         path_qc=Path(path_qc),
         command=command,
         cmdline=list2cmdline(cmdline),
