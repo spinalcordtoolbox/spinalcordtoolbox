@@ -335,7 +335,7 @@ class Transform:
                 # Set zero to everything outside the warping field
                 cropper = ImageCropper(img_out)
                 cropper.get_bbox_from_ref(img_warp_ndim)
-                if crop_reference in 1:
+                if crop_reference == 1:
                     printv('Cropping strategy is: keep same matrix size, put 0 everywhere around warping field')
                     img_out = cropper.crop(background=0)
                 elif crop_reference == 2:
