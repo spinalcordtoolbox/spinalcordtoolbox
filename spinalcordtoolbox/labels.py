@@ -211,47 +211,65 @@ def increment_z_inverse(img: Image) -> Image:
     return out
 
 
-def labelize_from_discs(img: Image, ref: Image) -> Image:
+def label_regions_from_reference(img: Image, ref: Image, centerline: bool = False) -> Image:
     """
     Create an image with regions labelized depending on values from reference.
     Typically, user inputs a segmentation image, and labels with discs position, and this function produces
     a segmentation image with vertebral levels labelized.
-    Note that no straightening is done. The labelization is only done based on the z coordinates.
+    Note that no straightening is done. The labelization is done by projecting the labels onto the centerline (extracted from the segmentation).
     Input images do **not** need to be RPI (re-orientation is done within this function).
 
     :param img: segmentation
     :param ref: reference labels
+    :param centerline: boolean, if True the centerline is returned instead of the segmentation (default to false)
     :returns: segmentation image with vertebral levels labelized
     """
 
-    img_orientation = img.orientation
-    if img_orientation != "RPI":
+    og_img_orientation = img.orientation
+    if og_img_orientation != "RPI":
         img.change_orientation("RPI")
 
-    if ref.orientation != "RPI":
+    og_ref_orientation = ref.orientation
+    if og_ref_orientation != "RPI":
         ref.change_orientation("RPI")
 
     out = zeros_like(img)
 
-    coordinates_input = img.getNonZeroCoordinates()
+    # Extract centerline from segmentation
+    _, arr_ctl, _, _ = get_centerline(img)
+    centerline_arr = arr_ctl.T
+
+    if centerline:
+        coordinates_input = np.concatenate((centerline_arr, np.ones((centerline_arr.shape[0], 1))), axis=1)
+    else:
+        coordinates_input = img.getNonZeroCoordinates()
+
+    # Extract reference coordinates
     coordinates_ref = ref.getNonZeroCoordinates(sorting='value')
 
-    # for all points in input, match the `z` coordinate to the appropriate vertebral level
+    # for all points in the segmentation project on the centerline and compare the `z` coordinate to the appropriate vertebral level
     for x, y, z, _ in coordinates_input:
+        projection = project_point_on_line(point=np.array([x, y, z]), line=centerline_arr)
+        _, _, z_proj = np.rint(projection).astype(int)
         # case 1: `z` is above the top-most disc label
-        if z > coordinates_ref[0].z:
+        if z_proj > coordinates_ref[0].z:
             out.data[int(x), int(y), int(z)] = coordinates_ref[0].value - 1
         # case 2: `z` is at or below the bottom-most disc label
-        elif z <= coordinates_ref[-1].z:
+        elif z_proj <= coordinates_ref[-1].z:
             out.data[int(x), int(y), int(z)] = coordinates_ref[-1].value
         # case 3: `z` is between two disc labels, so find the correct vertebral level
         else:
             for j in range(len(coordinates_ref) - 1):
-                if coordinates_ref[j + 1].z < z <= coordinates_ref[j].z:
+                if coordinates_ref[j + 1].z < z_proj <= coordinates_ref[j].z:
                     out.data[int(x), int(y), int(z)] = coordinates_ref[j].value
 
     # Set back the original orientation
-    out.change_orientation(img_orientation)
+    if img.orientation != og_img_orientation:
+        img.change_orientation(og_img_orientation)
+        out.change_orientation(og_img_orientation)
+
+    if ref.orientation != og_ref_orientation:
+        ref.change_orientation(og_ref_orientation)
 
     return out
 
