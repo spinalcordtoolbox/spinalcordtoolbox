@@ -25,6 +25,7 @@ The following studies have used SCT:
 
 2025 
 ----
+-  David *et al.* `Progressive Remote Axonal Degeneration Following Spinal Cord Injury: A Histological and MRI Study <https://doi.org/10.1089/neur.2025.0011>`_, **Neurotrauma Rep.** 2025
 -  Cronin *et al.* `Comparing single-shot EPI and 2D-navigated, multi-shot EPI diffusion tensor imaging acquisitions in the lumbar spinal cord at 3T <https://doi.org/10.1016/j.mri.2025.110445>`_, **Magn. Reson. Imaging** 2025
 -  Piervincenzi *et al.* `Structural brain changes contributing to motor signs in pure hereditary spastic paraplegia type 4 <https://doi.org/10.1007/s00415-025-13155-4>`_, **J. Neurol.** 2025
 -  Witt *et al.* `Changes in Functional Connectivity in Relapsing-Remitting Multiple Sclerosis Spinal Cord Measured via Region-Based and Data-Driven Analyses <https://doi.org/10.1162/IMAG.a.51>`_, **Imaging Neuroscience** 2025
