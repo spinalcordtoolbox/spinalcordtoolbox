@@ -183,9 +183,9 @@ class SpinalCordStraightener(object):
         length_safe_superior = radius_safe * np.sin(angle_superior)
 
         # remove points
-        inferior_bound = bisect.bisect(centerline.progressive_length, length_safe_inferior) - 1
-        superior_bound = centerline.number_of_points - bisect.bisect(centerline.progressive_length_inverse,
-                                                                     length_safe_superior)
+        bound_z_inferior = bisect.bisect(centerline.progressive_length, length_safe_inferior) - 1
+        bound_z_superior = centerline.number_of_points - bisect.bisect(centerline.progressive_length_inverse,
+                                                                       length_safe_superior)
 
         z_centerline = centerline.points[:, 2]
         length_centerline = centerline.length
@@ -195,9 +195,9 @@ class SpinalCordStraightener(object):
         factor_curved_straight = length_centerline / size_z_centerline
         middle_slice = (z_centerline[0] + z_centerline[-1]) / 2.0
 
-        bound_curved = [z_centerline[inferior_bound], z_centerline[superior_bound]]
-        bound_straight = [(z_centerline[inferior_bound] - middle_slice) * factor_curved_straight + middle_slice,
-                          (z_centerline[superior_bound] - middle_slice) * factor_curved_straight + middle_slice]
+        bound_curved = [z_centerline[bound_z_inferior], z_centerline[bound_z_superior]]
+        bound_straight = [(z_centerline[bound_z_inferior] - middle_slice) * factor_curved_straight + middle_slice,
+                          (z_centerline[bound_z_superior] - middle_slice) * factor_curved_straight + middle_slice]
 
         logger.info('Length of spinal cord: {}'.format(length_centerline))
         logger.info('Size of spinal cord in z direction: {}'.format(size_z_centerline))
