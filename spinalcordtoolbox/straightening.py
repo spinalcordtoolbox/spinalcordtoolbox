@@ -163,8 +163,9 @@ class SpinalCordStraightener(object):
 
         # Computation of the safe zone.
         # The safe zone is defined as the length of the spinal cord for which an axial segmentation will be complete
-        # The safe length (to remove) is computed using the safe radius (given as parameter) and the angle of the
-        # last centerline point with the inferior-superior direction. Formula: Ls = Rs * sin(angle)
+        # The safe length (to remove) is computed using the safe radius (given as parameter),
+        #     (FIXME: Where is the aforementioned parameter that allows this radius to be anything other than 0.0mm?)
+        # and the angle of the last centerline point with the inferior-superior direction. Formula: Ls = Rs * sin(angle)
         # Calculate Ls for both edges and remove appropriate number of centerline points
         radius_safe = 0.0  # mm
 
