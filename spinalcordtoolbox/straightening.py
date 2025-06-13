@@ -512,10 +512,11 @@ class SpinalCordStraightener(object):
 
         if self.safe_zone:
             logger.info('Applying safe zone to warping fields')
-            data_warp_curved2straight[:, :, 0:coord_bound_straight_inf[0][2], 0, :] = 100000.0
-            data_warp_curved2straight[:, :, coord_bound_straight_sup[0][2]:, 0, :] = 100000.0
-            data_warp_straight2curved[:, :, 0:coord_bound_curved_inf[0][2], 0, :] = 100000.0
-            data_warp_straight2curved[:, :, coord_bound_curved_sup[0][2]:, 0, :] = 100000.0
+            # use -100000 to match the value used by `self.threshold_distance` earlier (due to `-displacements_curved`)
+            data_warp_curved2straight[:, :, 0:coord_bound_straight_inf[0][2], 0, :] = -100000.0
+            data_warp_curved2straight[:, :, coord_bound_straight_sup[0][2]:, 0, :] = -100000.0
+            data_warp_straight2curved[:, :, 0:coord_bound_curved_inf[0][2], 0, :] = -100000.0
+            data_warp_straight2curved[:, :, coord_bound_curved_sup[0][2]:, 0, :] = -100000.0
 
         # Generate warp files as a warping fields
         hdr_warp_s.set_intent('vector', (), '')
