@@ -15,7 +15,8 @@ import textwrap
 from spinalcordtoolbox.straightening import SpinalCordStraightener
 from spinalcordtoolbox.centerline.core import ParamCenterline
 from spinalcordtoolbox.reports.qc import generate_qc
-from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
+from spinalcordtoolbox.utils.shell import (SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax,
+                                           list_type)
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 
 
@@ -124,6 +125,7 @@ def get_parser():
     optional.add_argument(
         "-param",
         metavar=Metavar.list,
+        type=list_type(",", str),
         help=textwrap.dedent("""
             Parameters for spinal cord straightening. Separate arguments with ','.
 
