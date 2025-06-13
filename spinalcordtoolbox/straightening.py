@@ -486,17 +486,18 @@ class SpinalCordStraightener(object):
 
                 data_warp_straight2curved[indexes[:, 0], indexes[:, 1], indexes[:, 2], 0, :] = -displacements_curved
 
-        # Creation of the safe zone based on pre-calculated safe boundaries
-        coord_bound_curved_inf, coord_bound_curved_sup = image_centerline_pad.transfo_phys2pix(
-            [[0, 0, bound_curved[0]]]), image_centerline_pad.transfo_phys2pix([[0, 0, bound_curved[1]]])
-        coord_bound_straight_inf, coord_bound_straight_sup = image_centerline_straight.transfo_phys2pix(
-            [[0, 0, bound_straight[0]]]), image_centerline_straight.transfo_phys2pix([[0, 0, bound_straight[1]]])
+        # Convert the physical safe zone boundaries into pixel z-slice indices (relative to the data array of the full images)
+        # Since we only care about the `z` index, we put dummy values for `x` and `y`, then discard them.
+        _, _, bound_z_img_curved_inferior = image_centerline_pad.transfo_phys2pix([[0, 0, bound_curved[0]]])[0]
+        _, _, bound_z_img_curved_superior = image_centerline_pad.transfo_phys2pix([[0, 0, bound_curved[1]]])[0]
+        _, _, bound_z_img_straight_inferior = image_centerline_straight.transfo_phys2pix([[0, 0, bound_straight[0]]])[0]
+        _, _, bound_z_img_straight_superior = image_centerline_straight.transfo_phys2pix([[0, 0, bound_straight[1]]])[0]
 
         if radius_safe > 0:
-            data_warp_curved2straight[:, :, 0:coord_bound_straight_inf[0][2], 0, :] = 100000.0
-            data_warp_curved2straight[:, :, coord_bound_straight_sup[0][2]:, 0, :] = 100000.0
-            data_warp_straight2curved[:, :, 0:coord_bound_curved_inf[0][2], 0, :] = 100000.0
-            data_warp_straight2curved[:, :, coord_bound_curved_sup[0][2]:, 0, :] = 100000.0
+            data_warp_curved2straight[:, :, 0:bound_z_img_straight_inferior, 0, :] = 100000.0
+            data_warp_curved2straight[:, :, bound_z_img_straight_superior:, 0, :] = 100000.0
+            data_warp_straight2curved[:, :, 0:bound_z_img_curved_inferior, 0, :] = 100000.0
+            data_warp_straight2curved[:, :, bound_z_img_curved_superior:, 0, :] = 100000.0
 
         # Generate warp files as a warping fields
         hdr_warp_s.set_intent('vector', (), '')
