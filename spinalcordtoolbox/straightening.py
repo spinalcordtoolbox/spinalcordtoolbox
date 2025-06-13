@@ -484,9 +484,20 @@ class SpinalCordStraightener(object):
 
                 data_warp_straight2curved[indexes[:, 0], indexes[:, 1], indexes[:, 2], 0, :] = -displacements_curved
 
-        # Clarify that the straight-space safe zone is based on the start and end points
-        # FIXME: This doesn't actually correspond to the straight-space safe zone!!!
-        bound_straight = [start_point, end_point]
+        # If we're generating a curved2straight warping field, we can update the boundaries of the straight-space safe
+        # zone by finding out which straight-space indices map to the "safe zone" curved-space indices.
+        # FIXME: This should be possible using `lookup_curved2straight` instead, but for some reason, half of that
+        #        lookup table is erroneously set to 0 instead
+        if self.curved2straight:
+            bound_z_straight_inferior = list(lookup_straight2curved).index(bound_z_inferior)
+            bound_z_straight_superior = list(lookup_straight2curved).index(bound_z_superior)
+            z_centerline_straight = centerline_straight.points[:, 2]
+            bound_straight = [z_centerline_straight[bound_z_straight_inferior],
+                              z_centerline_straight[bound_z_straight_superior]]
+            logger.info('Safe zone boundaries (straight space): {}'.format(bound_straight))
+        # If we're not generating a curved2straight warping field, the straight-space safe zone will have no purpose
+        else:
+            bound_straight = [0, 0]
 
         # Convert the physical safe zone boundaries into pixel z-slice indices (relative to the data array of the full images)
         # Since we only care about the `z` index, we put dummy values for `x` and `y`, then discard them.
@@ -494,6 +505,10 @@ class SpinalCordStraightener(object):
         _, _, bound_z_img_curved_superior = image_centerline_pad.transfo_phys2pix([[0, 0, bound_curved[1]]])[0]
         _, _, bound_z_img_straight_inferior = image_centerline_straight.transfo_phys2pix([[0, 0, bound_straight[0]]])[0]
         _, _, bound_z_img_straight_superior = image_centerline_straight.transfo_phys2pix([[0, 0, bound_straight[1]]])[0]
+        # note: we need to ensure that straight bounds don't go outside the warping field's z-dimension, since
+        #       `transfo_phys2pix` has no safeguards, and could return negative or too large indices.
+        bound_z_img_straight_inferior = max(0, bound_z_img_straight_inferior)
+        bound_z_img_straight_superior = min(nz_s, bound_z_img_straight_superior)
 
         if radius_safe > 0:
             data_warp_curved2straight[:, :, 0:bound_z_img_straight_inferior, 0, :] = 100000.0
