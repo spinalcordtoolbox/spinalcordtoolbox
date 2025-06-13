@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 class SpinalCordStraightener(object):
     def __init__(self, input_filename, centerline_filename, debug=0, param_centerline=ParamCenterline(),
                  interpolation_warp='spline', rm_tmp_files=1, verbose=1, precision=2.0, threshold_distance=10,
-                 output_filename='', path_output=''):
+                 safe_zone=0, output_filename='', path_output=''):
         self.input_filename = input_filename
         self.centerline_filename = centerline_filename
         self.output_filename = output_filename
@@ -38,6 +38,7 @@ class SpinalCordStraightener(object):
         self.verbose = verbose
         self.precision = precision
         self.threshold_distance = threshold_distance
+        self.safe_zone = safe_zone
         self.path_output = path_output
         self.use_straight_reference = False
         self.centerline_reference_filename = ""
@@ -163,7 +164,7 @@ class SpinalCordStraightener(object):
 
         # Computation of the safe zone.
         # The safe zone is defined as the length of the spinal cord for which an axial segmentation will be complete
-        # The safe length (to remove) is computed using the safe radius (given as parameter) and the angle of the
+        # The safe length (to remove) is computed using the safe radius and the angle of the
         # last centerline point with the inferior-superior direction. Formula: Ls = Rs * sin(angle)
         # Calculate Ls for both edges and remove appropriate number of centerline points
         radius_safe = 0.0  # mm
@@ -195,14 +196,13 @@ class SpinalCordStraightener(object):
         middle_slice = (z_centerline[0] + z_centerline[-1]) / 2.0
 
         bound_curved = [z_centerline[inferior_bound], z_centerline[superior_bound]]
-        bound_straight = [(z_centerline[inferior_bound] - middle_slice) * factor_curved_straight + middle_slice,
-                          (z_centerline[superior_bound] - middle_slice) * factor_curved_straight + middle_slice]
+        start_point = (z_centerline[inferior_bound] - middle_slice) * factor_curved_straight + middle_slice
+        end_point = (z_centerline[superior_bound] - middle_slice) * factor_curved_straight + middle_slice
 
         logger.info('Length of spinal cord: {}'.format(length_centerline))
         logger.info('Size of spinal cord in z direction: {}'.format(size_z_centerline))
         logger.info('Ratio length/size: {}'.format(factor_curved_straight))
         logger.info('Safe zone boundaries (curved space): {}'.format(bound_curved))
-        logger.info('Safe zone boundaries (straight space): {}'.format(bound_straight))
 
         # 4. compute and generate straight space
         # points along curved centerline are already regularly spaced.
@@ -252,9 +252,8 @@ class SpinalCordStraightener(object):
                 centerline_straight.save_centerline(image=discs_ref_image, fname_output='discs_ref_image.nii.gz')
 
         else:
+            logger.info('Start/end points (straight space): {}'.format([start_point, end_point]))
             logger.info('Pad input volume to account for spinal cord length...')
-
-            start_point, end_point = bound_straight[0], bound_straight[1]
             offset_z = 0
 
             # if the destination image is resampled, we still create the straight reference space with the native
@@ -485,17 +484,39 @@ class SpinalCordStraightener(object):
 
                 data_warp_straight2curved[indexes[:, 0], indexes[:, 1], indexes[:, 2], 0, :] = -displacements_curved
 
+        # If we're generating a curved2straight warping field, we can update the boundaries of the straight-space safe
+        # zone by finding out which straight-space indices map to the "safe zone" curved-space indices.
+        # FIXME: This should be possible using `lookup_curved2straight` instead, but for some reason, half of that
+        #        lookup table is erroneously set to 0 instead
+        if self.curved2straight:
+            coord_bound_straight_inferior = list(lookup_straight2curved).index(inferior_bound)
+            coord_bound_straight_superior = list(lookup_straight2curved).index(superior_bound)
+            z_centerline_straight = centerline_straight.points[:, 2]
+            bound_straight = [z_centerline_straight[coord_bound_straight_inferior],
+                              z_centerline_straight[coord_bound_straight_superior]]
+            logger.info('Safe zone boundaries (straight space): {}'.format(bound_straight))
+        # If we're not generating a curved2straight warping field, the straight-space safe zone will have no purpose
+        else:
+            bound_straight = [0, 0]
+
         # Creation of the safe zone based on pre-calculated safe boundaries
         coord_bound_curved_inf, coord_bound_curved_sup = image_centerline_pad.transfo_phys2pix(
             [[0, 0, bound_curved[0]]]), image_centerline_pad.transfo_phys2pix([[0, 0, bound_curved[1]]])
         coord_bound_straight_inf, coord_bound_straight_sup = image_centerline_straight.transfo_phys2pix(
             [[0, 0, bound_straight[0]]]), image_centerline_straight.transfo_phys2pix([[0, 0, bound_straight[1]]])
 
-        if radius_safe > 0:
-            data_warp_curved2straight[:, :, 0:coord_bound_straight_inf[0][2], 0, :] = 100000.0
-            data_warp_curved2straight[:, :, coord_bound_straight_sup[0][2]:, 0, :] = 100000.0
-            data_warp_straight2curved[:, :, 0:coord_bound_curved_inf[0][2], 0, :] = 100000.0
-            data_warp_straight2curved[:, :, coord_bound_curved_sup[0][2]:, 0, :] = 100000.0
+        # note: we need to ensure that straight bounds don't go outside the warping field's z-dimension, since
+        #       `transfo_phys2pix` has no safeguards, and could return negative or too large indices.
+        coord_bound_straight_inf[0][2] = max(0, coord_bound_straight_inf[0][2])
+        coord_bound_straight_sup[0][2] = min(nz_s, coord_bound_straight_sup[0][2])
+
+        if self.safe_zone:
+            logger.info('Applying safe zone to warping fields')
+            # use -100000 to match the value used by `self.threshold_distance` earlier (due to `-displacements_curved`)
+            data_warp_curved2straight[:, :, 0:coord_bound_straight_inf[0][2], 0, :] = -100000.0
+            data_warp_curved2straight[:, :, coord_bound_straight_sup[0][2]:, 0, :] = -100000.0
+            data_warp_straight2curved[:, :, 0:coord_bound_curved_inf[0][2], 0, :] = -100000.0
+            data_warp_straight2curved[:, :, coord_bound_curved_sup[0][2]:, 0, :] = -100000.0
 
         # Generate warp files as a warping fields
         hdr_warp_s.set_intent('vector', (), '')
