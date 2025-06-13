@@ -196,14 +196,13 @@ class SpinalCordStraightener(object):
         middle_slice = (z_centerline[0] + z_centerline[-1]) / 2.0
 
         bound_curved = [z_centerline[bound_z_inferior], z_centerline[bound_z_superior]]
-        bound_straight = [(z_centerline[bound_z_inferior] - middle_slice) * factor_curved_straight + middle_slice,
-                          (z_centerline[bound_z_superior] - middle_slice) * factor_curved_straight + middle_slice]
+        start_point = (z_centerline[bound_z_inferior] - middle_slice) * factor_curved_straight + middle_slice
+        end_point = (z_centerline[bound_z_superior] - middle_slice) * factor_curved_straight + middle_slice
 
         logger.info('Length of spinal cord: {}'.format(length_centerline))
         logger.info('Size of spinal cord in z direction: {}'.format(size_z_centerline))
         logger.info('Ratio length/size: {}'.format(factor_curved_straight))
         logger.info('Safe zone boundaries (curved space): {}'.format(bound_curved))
-        logger.info('Safe zone boundaries (straight space): {}'.format(bound_straight))
 
         # 4. compute and generate straight space
         # points along curved centerline are already regularly spaced.
@@ -253,9 +252,8 @@ class SpinalCordStraightener(object):
                 centerline_straight.save_centerline(image=discs_ref_image, fname_output='discs_ref_image.nii.gz')
 
         else:
+            logger.info('Start/end points (straight space): {}'.format([start_point, end_point]))
             logger.info('Pad input volume to account for spinal cord length...')
-
-            start_point, end_point = bound_straight[0], bound_straight[1]
             offset_z = 0
 
             # if the destination image is resampled, we still create the straight reference space with the native
@@ -485,6 +483,10 @@ class SpinalCordStraightener(object):
                 displacements_curved[indexes_out_distance_curved] = [100000.0, 100000.0, 100000.0]
 
                 data_warp_straight2curved[indexes[:, 0], indexes[:, 1], indexes[:, 2], 0, :] = -displacements_curved
+
+        # Clarify that the straight-space safe zone is based on the start and end points
+        # FIXME: This doesn't actually correspond to the straight-space safe zone!!!
+        bound_straight = [start_point, end_point]
 
         # Convert the physical safe zone boundaries into pixel z-slice indices (relative to the data array of the full images)
         # Since we only care about the `z` index, we put dummy values for `x` and `y`, then discard them.
