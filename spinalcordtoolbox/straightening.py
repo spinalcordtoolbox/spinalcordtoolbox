@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 class SpinalCordStraightener(object):
     def __init__(self, input_filename, centerline_filename, debug=0, param_centerline=ParamCenterline(),
                  interpolation_warp='spline', rm_tmp_files=1, verbose=1, precision=2.0, threshold_distance=10,
-                 output_filename='', path_output=''):
+                 safe_zone=0, output_filename='', path_output=''):
         self.input_filename = input_filename
         self.centerline_filename = centerline_filename
         self.output_filename = output_filename
@@ -38,6 +38,7 @@ class SpinalCordStraightener(object):
         self.verbose = verbose
         self.precision = precision
         self.threshold_distance = threshold_distance
+        self.safe_zone = safe_zone
         self.path_output = path_output
         self.use_straight_reference = False
         self.centerline_reference_filename = ""
@@ -163,9 +164,8 @@ class SpinalCordStraightener(object):
 
         # Computation of the safe zone.
         # The safe zone is defined as the length of the spinal cord for which an axial segmentation will be complete
-        # The safe length (to remove) is computed using the safe radius (given as parameter),
-        #     (FIXME: Where is the aforementioned parameter that allows this radius to be anything other than 0.0mm?)
-        # and the angle of the last centerline point with the inferior-superior direction. Formula: Ls = Rs * sin(angle)
+        # The safe length (to remove) is computed using the safe radius and the angle of the
+        # last centerline point with the inferior-superior direction. Formula: Ls = Rs * sin(angle)
         # Calculate Ls for both edges and remove appropriate number of centerline points
         radius_safe = 0.0  # mm
 
@@ -510,7 +510,8 @@ class SpinalCordStraightener(object):
         bound_z_img_straight_inferior = max(0, bound_z_img_straight_inferior)
         bound_z_img_straight_superior = min(nz_s, bound_z_img_straight_superior)
 
-        if radius_safe > 0:
+        if self.safe_zone:
+            logger.info('Applying safe zone to warping fields')
             data_warp_curved2straight[:, :, 0:bound_z_img_straight_inferior, 0, :] = 100000.0
             data_warp_curved2straight[:, :, bound_z_img_straight_superior:, 0, :] = 100000.0
             data_warp_straight2curved[:, :, 0:bound_z_img_curved_inferior, 0, :] = 100000.0
