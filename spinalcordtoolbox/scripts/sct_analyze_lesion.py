@@ -379,6 +379,12 @@ class AnalyzeLesion:
         # Save the minimum tissue bridges
         self.measure_pd.loc[idx, 'interpolated_dorsal_bridge_width [mm]'] = min_interpolated_dorsal_bridge_width_mm
         self.measure_pd.loc[idx, 'interpolated_ventral_bridge_width [mm]'] = min_interpolated_ventral_bridge_width_mm
+        printv(f'  Midsagittal dorsal tissue bridge width: '
+               f'{np.round(min_interpolated_dorsal_bridge_width_mm, 2)} mm',
+               self.verbose, type='info')
+        printv(f'  Midsagittal ventral tissue bridge width: '
+                f'{np.round(min_interpolated_ventral_bridge_width_mm, 2)} mm',
+                self.verbose, type='info')
 
     def _measure_tissue_bridges(self, im_lesion_data, p_lst, idx):
         """
