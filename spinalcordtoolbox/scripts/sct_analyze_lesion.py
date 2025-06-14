@@ -387,7 +387,7 @@ class AnalyzeLesion:
         (i.e., the spinal cord boundary) to the lesion boundary.
 
         NOTE: we compute the tissue bridges for all sagittal slices containing the lesion (i.e., including parasagittal
-        slices). Then, we compute also interpolated tissue bridges, see `_measure_interpolated_tissue_bridges`.
+         slices). Then, we compute also interpolated tissue bridges, see `_measure_interpolated_tissue_bridges`.
 
         Since we assume the input is in RPI orientation, then bridge widths are computed across the Y axis
         (AP axis), with dorsal == posterior (-Y) and ventral == anterior (+Y).
@@ -474,7 +474,7 @@ class AnalyzeLesion:
         # 3. Reset the index to make 'sagittal_slice' and 'axial_slice' as columns
         tissue_bridges_df.reset_index(inplace=True)
 
-        # Interpolated tissue bridges
+        # Compute interpolated tissue bridges
         self._measure_interpolated_tissue_bridges(tissue_bridges_df, p_lst, idx)
 
         # Get slices of minimum dorsal and ventral tissue bridges for each sagittal slice
