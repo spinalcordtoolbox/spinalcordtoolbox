@@ -355,7 +355,7 @@ class AnalyzeLesion:
         self.measure_pd['dorsal_bridge_ratio [%]'] = dorsal_bridge_ratio
         self.measure_pd['ventral_bridge_ratio [%]'] = ventral_bridge_ratio
         printv(f'  Midsagittal dorsal bridge ratio: {np.round(dorsal_bridge_ratio, 2)} %',
-                self.verbose, type='info')
+               self.verbose, type='info')
         printv(f'  Midsagittal ventral bridge ratio: {np.round(ventral_bridge_ratio, 2)} %',
                self.verbose, type='info')
 
@@ -410,8 +410,8 @@ class AnalyzeLesion:
                f'{np.round(min_interpolated_dorsal_bridge_width_mm, 2)} mm',
                self.verbose, type='info')
         printv(f'  Midsagittal ventral tissue bridge width: '
-                f'{np.round(min_interpolated_ventral_bridge_width_mm, 2)} mm',
-                self.verbose, type='info')
+               f'{np.round(min_interpolated_ventral_bridge_width_mm, 2)} mm',
+               self.verbose, type='info')
 
     def _measure_tissue_bridges(self, im_lesion_data, p_lst, idx):
         """
