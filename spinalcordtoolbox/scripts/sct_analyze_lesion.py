@@ -41,6 +41,8 @@ def get_parser():
               - width_interpolated_midsagittal_slice `[mm]`: width of the lesion along the Anterior-Posterior (AP) axis the **interpolated midsagittal slice**
               - interpolated_dorsal_bridge_width `[mm]`: width of spared tissue dorsal to the spinal cord lesion in the **interpolated midsagittal slice**
               - interpolated_ventral_bridge_width `[mm]`: width of spared tissue ventral to the spinal cord lesion in the **interpolated midsagittal slice**
+              - dorsal_bridge_ratio `[%]`: dorsal midsagittal tissue bridge width divided by total midsagittal tissue bridge width
+              - ventral_bridge_ratio `[%]`: ventral midsagittal tissue bridge width divided by total midsagittal tissue bridge width
               - dorsal_bridge_width `[mm]`: width of spared tissue dorsal to the spinal cord lesion (i.e. towards the posterior direction of the AP axis) for each sagittal slice containing the lesion
               - ventral_bridge_width `[mm]`: width of spared tissue ventral to the spinal cord lesion (i.e. towards the anterior direction of the AP axis) for each sagittal slice containing the lesion
 
@@ -332,6 +334,31 @@ class AnalyzeLesion:
         printv('  Maximum axial damage ratio: ' + str(np.round(maximum_axial_damage_ratio, 2)),
                self.verbose, type='info')
 
+    def _compute_issue_bridge_ratio(self):
+        """
+        Compute tissue bridge ratios:
+        - ventral_bridge_ratio: ventral midsagittal tissue bridge width divided by total midsagittal tissue bridge width
+        - dorsal_bridge_ratio: dorsal midsagittal tissue bridge width divided by total midsagittal tissue bridge width
+        """
+        # Get the dorsal and ventral tissue bridges
+        dorsal_bridge_width = self.measure_pd['interpolated_dorsal_bridge_width [mm]'][0]
+        ventral_bridge_width = self.measure_pd['interpolated_ventral_bridge_width [mm]'][0]
+
+        # Compute the total tissue bridge width
+        total_bridge_width = dorsal_bridge_width + ventral_bridge_width
+
+        # Compute the dorsal and ventral bridge ratios
+        dorsal_bridge_ratio = dorsal_bridge_width / total_bridge_width * 100 if total_bridge_width > 0 else 0
+        ventral_bridge_ratio = ventral_bridge_width / total_bridge_width * 100 if total_bridge_width > 0 else 0
+
+        # Save the ratios to the measure DataFrame
+        self.measure_pd['dorsal_bridge_ratio [%]'] = dorsal_bridge_ratio
+        self.measure_pd['ventral_bridge_ratio [%]'] = ventral_bridge_ratio
+        printv(f'  Midsagittal dorsal bridge ratio: {np.round(dorsal_bridge_ratio, 2)} %',
+                self.verbose, type='info')
+        printv(f'  Midsagittal ventral bridge ratio: {np.round(ventral_bridge_ratio, 2)} %',
+               self.verbose, type='info')
+
     def _measure_interpolated_tissue_bridges(self, tissue_bridges_df, p_lst, idx):
         """
         Compute the interpolated tissue bridges. These bridges are computed from two sagittal slices, which are
@@ -482,6 +509,8 @@ class AnalyzeLesion:
 
         # Compute interpolated tissue bridges
         self._measure_interpolated_tissue_bridges(tissue_bridges_df, p_lst, idx)
+        # Compute tissue bridge ratios
+        self._compute_issue_bridge_ratio()
 
         # Get slices of minimum dorsal and ventral tissue bridges for each sagittal slice
         # NOTE: we get minimum because tissue bridges are quantified as the width of spared tissue at the minimum
