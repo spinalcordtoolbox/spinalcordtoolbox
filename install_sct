@@ -361,6 +361,32 @@ function usage() {
   ' "$0"
 }
 
+function validate_install_dir() {
+  PATH_TO_CHECK="$1"
+  # Check user-selected path for spaces
+  space_regex="[[:space:]]+"
+  if [[ $PATH_TO_CHECK =~ $space_regex ]]; then
+    print info "ERROR: Install directory $PATH_TO_CHECK contains spaces.\n\
+                SCT uses conda, which does not permit spaces in installation paths.\n\
+                More details can be found here: https://github.com/ContinuumIO/anaconda-issues/issues/716"
+    return 1
+  # Avoid horrible bug, like removing /bin if SCT_DIR "/" or $HOME/bin
+  elif [[ "$PATH_TO_CHECK" == "/" ]] || [[ "$HOME" == "${PATH_TO_CHECK%/}" ]]; then
+    print info "Cannot be installed directly in $PATH_TO_CHECK"
+    print info "Please pick a full path"
+    return 1
+  elif [[ -d "$PATH_TO_CHECK" ]]; then
+    # directory exists --> update SCT_DIR and exit loop
+    print warning "WARNING: Directory already exists. Files will be overwritten."
+    return 0
+  elif [[ ! "$PATH_TO_CHECK" ]]; then
+    # If no input, asking again, and again, and again
+    return 1
+  else
+    return 0
+  fi
+}
+
 # ======================================================================================================================
 # SCRIPT STARTS HERE
 # ======================================================================================================================
@@ -512,29 +538,14 @@ Do you agree? [y]es/[n]o: "
   # Remove trailing /
   new_install="${new_install%/}"
 
-  # Check user-selected path for spaces
-  space_regex="[[:space:]]+"
-  if [[ $SCT_DIR =~ $space_regex ]]; then
-    print info "ERROR: Install directory $SCT_DIR contains spaces.\n\
-                SCT uses conda, which does not permit spaces in installation paths.\n\
-                More details can be found here: https://github.com/ContinuumIO/anaconda-issues/issues/716"
-    continue
-  # Avoid horrible bug, like removing /bin if SCT_DIR "/" or $HOME/bin
-  elif [[ "$new_install" == "/" ]] || [[ "$HOME" == "${new_install%/}" ]]; then
-    print info "Cannot be installed directly in $new_install"
-    print info "Please pick a full path"
-    continue
-  elif [[ -d "$new_install" ]]; then
-    # directory exists --> update SCT_DIR and exit loop
-    print warning "WARNING: Directory already exists. Files will be overwritten."
+  # Check user-selected path for issues (spaces, path length, clash with $HOME, etc.)
+  if validate_install_dir "$new_install"; then
+    # If the path is valid, then we can exit the loop
     SCT_DIR="$new_install"
     break
-  elif [[ ! "$new_install" ]]; then
-    # If no input, asking again, and again, and again
-    continue
   else
-    SCT_DIR="$new_install"
-    break
+    # if the path is invalid, then repeat
+    continue
   fi
 done
 
