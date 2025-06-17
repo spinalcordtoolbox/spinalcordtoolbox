@@ -508,15 +508,18 @@ class SpinalCordStraightener(object):
         # note: we need to ensure that straight bounds don't go outside the warping field's z-dimension, since
         #       `transfo_phys2pix` has no safeguards, and could return negative or too large indices.
         coord_bound_straight_inf[0][2] = max(0, coord_bound_straight_inf[0][2])
-        coord_bound_straight_sup[0][2] = min(nz_s, coord_bound_straight_sup[0][2])
+        coord_bound_straight_sup[0][2] = min(nz_s - 1, coord_bound_straight_sup[0][2])
 
         if self.safe_zone:
             logger.info('Applying safe zone to warping fields')
             # use -100000 to match the value used by `self.threshold_distance` earlier (due to `-displacements_curved`)
-            data_warp_curved2straight[:, :, 0:coord_bound_straight_inf[0][2], 0, :] = -100000.0
-            data_warp_curved2straight[:, :, coord_bound_straight_sup[0][2]:, 0, :] = -100000.0
-            data_warp_straight2curved[:, :, 0:coord_bound_curved_inf[0][2], 0, :] = -100000.0
-            data_warp_straight2curved[:, :, coord_bound_curved_sup[0][2]:, 0, :] = -100000.0
+            # NB: make sure to _not_ include the safe zone slices themselves when applying the safe zone
+            #     e.g. if the image has z dimension [160] and the safe zone is [0, 159] (i.e. the full image is safe),
+            #     then nothing should be overwritten here (and it won't, since `:0` and `160:` both return empty arrays)
+            data_warp_curved2straight[:, :, :coord_bound_straight_inf[0][2], 0, :] = -100000.0
+            data_warp_curved2straight[:, :, (coord_bound_straight_sup[0][2]+1):, 0, :] = -100000.0
+            data_warp_straight2curved[:, :, :coord_bound_curved_inf[0][2], 0, :] = -100000.0
+            data_warp_straight2curved[:, :, (coord_bound_curved_sup[0][2]+1):, 0, :] = -100000.0
 
         # Generate warp files as a warping fields
         hdr_warp_s.set_intent('vector', (), '')
