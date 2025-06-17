@@ -366,19 +366,19 @@ function validate_install_dir() {
   # Check user-selected path for spaces
   space_regex="[[:space:]]+"
   if [[ $PATH_TO_CHECK =~ $space_regex ]]; then
-    print info "ERROR: Install directory $PATH_TO_CHECK contains spaces.\n\
-                SCT uses conda, which does not permit spaces in installation paths.\n\
-                More details can be found here: https://github.com/ContinuumIO/anaconda-issues/issues/716"
+    print warning "WARNING: Install directory $PATH_TO_CHECK contains spaces.\n\
+         SCT uses conda, which does not permit spaces in installation paths.\n\
+         More details can be found here: https://github.com/ContinuumIO/anaconda-issues/issues/716"
     return 1
   elif (( ${#PATH_TO_CHECK} > 107 )); then
-    print warning "ERROR: Install directory $PATH_TO_CHECK exceeds path limit of 107 characters (${#PATH_TO_CHECK}).\n\
+    print warning "WARNING: Install directory $PATH_TO_CHECK exceeds path limit of 107 characters (${#PATH_TO_CHECK}).\n\
        SCT uses conda, which may encounter strange issues with long paths.\n\
        More details can be found here: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4813#issuecomment-2741165452"
     return 1
   # Avoid horrible bug, like removing /bin if SCT_DIR "/" or $HOME/bin
   elif [[ "$PATH_TO_CHECK" == "/" ]] || [[ "$HOME" == "${PATH_TO_CHECK%/}" ]]; then
-    print info "Cannot be installed directly in $PATH_TO_CHECK"
-    print info "Please pick a full path"
+    print warning "WARNING: Cannot be installed directly in $PATH_TO_CHECK"
+    print warning "Please pick a full path"
     return 1
   elif [[ -d "$PATH_TO_CHECK" ]]; then
     # directory exists --> update SCT_DIR and exit loop
@@ -386,6 +386,7 @@ function validate_install_dir() {
     return 0
   elif [[ ! "$PATH_TO_CHECK" ]]; then
     # If no input, asking again, and again, and again
+    print warning "WARNING: Empty input. Please enter a valid path."
     return 1
   else
     return 0
