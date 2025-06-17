@@ -517,32 +517,36 @@ else
 fi
 
 # Set install dir
+keep_default_path=""
 while true; do
-  # Check if the default install directory is valid. If it is, then we can prompt users whether they want to keep it.
-  if validate_install_dir "$SCT_DIR"; then
-    keep_default_path=""
-    while [[ ! "$keep_default_path" =~ ^([Yy](es)?|[Nn]o?)$ ]]; do
-      print info "SCT will be installed here: [$SCT_DIR]"
-      keep_default_path="yes"
-      if [ -z "$NONINTERACTIVE" ]; then
-        print question "
+  # If we're on the first iteration of the loop...
+  if [ -z "${keep_default_path}" ]; then
+    # Then check if the default install directory is valid. If it is, then we can prompt users whether they want to keep it.
+    if validate_install_dir "$SCT_DIR"; then
+      while [[ ! "$keep_default_path" =~ ^([Yy](es)?|[Nn]o?)$ ]]; do
+        print info "SCT will be installed here: [$SCT_DIR]"
+        keep_default_path="yes"
+        if [ -z "$NONINTERACTIVE" ]; then
+          print question "
 Do you agree? [y]es/[n]o: "
-        read -r keep_default_path
+          read -r keep_default_path
+        fi
+      done
+      if [[ "$keep_default_path" =~ ^[Yy] ]]; then
+        # user accepts default path --> exit loop
+        break
       fi
-    done
-    if [[ "$keep_default_path" =~ ^[Yy] ]]; then
-      # user accepts default path --> exit loop
-      break
-    fi
 
-  # If the default install directory is not valid, then we shouldn't even present the option to keep it.
-  # Instead, we should proceed to the next step (which is to prompt the user for a new path).
-  else
-    # However, if the user cannot enter input (non-interactive mode), then we must halt the installation.
-    if [ "$NONINTERACTIVE" ]; then
-      error_msg="ERROR: Default installation directory must be valid when running in non-interactive mode (-y)."
-      error_msg="${error_msg} Please fix the issues reported above, or run the installer in interactive mode instead."
-      die "$error_msg"
+    # If the default install directory is not valid, then we shouldn't even present the option to keep it.
+    # Instead, we should proceed to the next step (which is to prompt the user for a new path).
+    else
+      keep_default_path="no"
+      # However, if the user cannot enter input (non-interactive mode), then we must halt the installation.
+      if [ "$NONINTERACTIVE" ]; then
+        error_msg="ERROR: Default installation directory must be valid when running in non-interactive mode (-y)."
+        error_msg="${error_msg} Please fix the issues reported above, or run the installer in interactive mode instead."
+        die "$error_msg"
+      fi
     fi
   fi
 
