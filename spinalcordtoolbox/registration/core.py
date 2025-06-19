@@ -177,6 +177,7 @@ def register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg=
                     '-d', dest[ifile],
                     '-o', add_suffix(src[ifile], '_reg'),
                     '-x', interp_step[ifile],
+                    '-crop', '3' if (i_step == 1 and fname_initwarp) else '0',
                     '-v', '0',
                     '-w'] + warp_forward
                 )

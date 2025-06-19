@@ -167,9 +167,11 @@ def get_parser():
         '-lrootlet',
         metavar=Metavar.file,
         help=textwrap.dedent("""
-            Dorsal nerve rootlets segmentation. Example: `anat_rootlets.nii.gz`
-            Only labels within the range C2-C8 are supported. If labels outside this range are provided, they will be ignored.
-            Each value corresponds to the spinal level (e.g.: 2 for spinal level 2). If you are using more than 2 labels, all spinal levels covering the region of interest should be provided (e.g., if you are interested in levels C2 to C7, then you should provide spinal level labels 2,3,4,5,6,7).
+            Dorsal and ventral nerve rootlets segmentation. Example: `anat_rootlets.nii.gz`
+
+            Only labels within the range C2-Th1 (i.e., 2 to 9) are supported. If labels outside this range are provided, they will be ignored.
+            Each value corresponds to the spinal level (e.g.: 2 for spinal level C2, 8 for spinal level C8, 9 for spinal level Th1).
+            If you are using more than 2 labels, all spinal levels covering the region of interest should be provided (e.g., if you are interested in levels C2 to C7, then you should provide spinal level labels 2,3,4,5,6,7).
             By default, the rootlets labels will be used in 2 places:
 
               - step=0: The center of mass of each label will be used as landmarks for SI-axis slice alignment with the rootlets of the template.
