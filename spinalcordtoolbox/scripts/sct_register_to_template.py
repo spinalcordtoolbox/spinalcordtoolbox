@@ -576,11 +576,6 @@ def main(argv: Sequence[str]):
             sc_straight.remove_temp_files = param.remove_temp_files
             sc_straight.verbose = verbose
 
-            # Apply the safe zone by default
-            # This will limit the curved2straight and straight2curved warping fields to only the area defined by the SC segmentation
-            # WARNING: This is highly experimental, and may have unexpected consequences
-            sc_straight.safe_zone = 1
-
             if level_alignment:
                 sc_straight.centerline_reference_filename = ftmp_template_seg
                 sc_straight.use_straight_reference = True
