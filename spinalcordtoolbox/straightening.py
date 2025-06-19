@@ -388,12 +388,15 @@ class SpinalCordStraightener(object):
                     lookup_curved2straight[index] = idx_closest
                 else:
                     lookup_curved2straight[index] = 0
-        for p in range(0, len(lookup_curved2straight) // 2):
+        # Remove duplicates from the start and end of the lookup table
+        # This is necessary because `get_closest_index` will repeat itself once the first/last indexes are reached
+        # NB: Any slice index set to `0` will have its warping field value set to `-100000` (i.e. no warping)
+        for p in range(0, len(lookup_curved2straight) - 1):
             if lookup_curved2straight[p] == lookup_curved2straight[p + 1]:
                 lookup_curved2straight[p] = 0
             else:
                 break
-        for p in range(len(lookup_curved2straight) - 1, len(lookup_curved2straight) // 2, -1):
+        for p in range(len(lookup_curved2straight) - 1, 0, -1):
             if lookup_curved2straight[p] == lookup_curved2straight[p - 1]:
                 lookup_curved2straight[p] = 0
             else:
@@ -410,12 +413,15 @@ class SpinalCordStraightener(object):
                                                            backup_centerline=centerline_straight)
                 if idx_closest is not None:
                     lookup_straight2curved[index] = idx_closest
-        for p in range(0, len(lookup_straight2curved) // 2):
+        # Remove duplicates from the start and end of the lookup table
+        # This is necessary because `get_closest_index` will repeat itself once the first/last indexes are reached
+        # NB: Any slice index set to `0` will have its warping field value set to `-100000` (i.e. no warping)
+        for p in range(0, len(lookup_straight2curved) - 1):
             if lookup_straight2curved[p] == lookup_straight2curved[p + 1]:
                 lookup_straight2curved[p] = 0
             else:
                 break
-        for p in range(len(lookup_straight2curved) - 1, len(lookup_straight2curved) // 2, -1):
+        for p in range(len(lookup_straight2curved) - 1, 0, -1):
             if lookup_straight2curved[p] == lookup_straight2curved[p - 1]:
                 lookup_straight2curved[p] = 0
             else:
