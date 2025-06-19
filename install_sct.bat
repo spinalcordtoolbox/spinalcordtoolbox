@@ -107,25 +107,20 @@ rem Allow user to set a custom installation directory
   )
 
   rem Validate the user's choice of path
-  if exist %new_install% (
-    rem directory exists, so update SCT_DIR and exit loop
-    echo ### WARNING: '%new_install%' already exists. Files will be overwritten.
+  if [%new_install%]==[]  (
+    rem If no input, asking again, and again, and again
+    goto :while_loop_sct_dir
+  ) else (
     set SCT_DIR=%new_install%
     goto :done_while_loop_sct_dir
-  ) else (
-    if [%new_install%]==[]  (
-      rem If no input, asking again, and again, and again
-      goto :while_loop_sct_dir
-    ) else (
-      set SCT_DIR=%new_install%
-      goto :done_while_loop_sct_dir
-    )
   )
 :done_while_loop_sct_dir
 
 rem Create directory
 if not exist %SCT_DIR% (
   mkdir %SCT_DIR% || goto error
+) else (
+  echo ### WARNING: '%new_install%' already exists. Files will be overwritten.
 )
 
 rem Copy files to destination directory
