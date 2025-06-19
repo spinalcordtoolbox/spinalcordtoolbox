@@ -445,6 +445,8 @@ class SpinalCordStraightener(object):
                 distances_straight = centerline_straight.get_distances_from_planes(physical_coordinates_straight,
                                                                                    nearest_indexes_straight)
                 lookup = lookup_straight2curved[nearest_indexes_straight]
+                # NB: Any indexes that were mapped to `0` will have their warping field value set to `-100000` (i.e. no warping),
+                #     regardless of the value of `self.threshold_distance`.
                 indexes_out_distance_straight = np.logical_or(
                     np.logical_or(distances_straight > self.threshold_distance,
                                   distances_straight < -self.threshold_distance), lookup == 0)
@@ -474,6 +476,8 @@ class SpinalCordStraightener(object):
                 distances_curved = centerline.get_distances_from_planes(physical_coordinates,
                                                                         nearest_indexes_curved)
                 lookup = lookup_curved2straight[nearest_indexes_curved]
+                # NB: Any indexes that were mapped to `0` will have their warping field value set to `-100000` (i.e. no warping),
+                #     regardless of the value of `self.threshold_distance`.
                 indexes_out_distance_curved = np.logical_or(
                     np.logical_or(distances_curved > self.threshold_distance,
                                   distances_curved < -self.threshold_distance), lookup == 0)
