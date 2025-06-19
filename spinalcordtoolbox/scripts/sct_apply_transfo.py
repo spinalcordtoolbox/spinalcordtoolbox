@@ -20,6 +20,7 @@ from spinalcordtoolbox.image import Image, generate_output_file, add_suffix
 from spinalcordtoolbox.cropping import ImageCropper
 from spinalcordtoolbox.math import dilate
 from spinalcordtoolbox.labels import cubic_to_point
+from spinalcordtoolbox.resampling import resample_nib
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, get_interpolation, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, set_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, rmtree, extract_fname, copy
@@ -344,7 +345,6 @@ class Transform:
                     img_out = cropper.crop()
             elif crop_reference == 3:
                 # Resample the warping field mask (in reference coordinates) into the space of the image to be cropped
-                from spinalcordtoolbox.resampling import resample_nib
                 img_ref_r = resample_nib(img_warp_ndim, image_dest=img_out, interpolation='nn', mode='constant')
                 # Simply mask the output image instead of doing a bounding-box-based crop
                 img_out.data = img_out.data * img_ref_r.data
