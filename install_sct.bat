@@ -79,7 +79,9 @@ rem Allow user to set a custom installation directory
 :while_loop_sct_dir
   echo:
   echo ### SCT will be installed here: [%SCT_DIR%]
-  set keep_default_path=yes
+  set keep_default_path=unchosen
+  set new_install=%SCT_DIR%
+  goto :validate_path
   :while_loop_path_agreement
     set /p keep_default_path="### Do you agree? [y]es/[n]o: "
     echo %keep_default_path% | findstr /b [YyNn] >nul 2>&1 || goto :while_loop_path_agreement
@@ -91,29 +93,13 @@ rem Allow user to set a custom installation directory
     goto :done_while_loop_sct_dir
   )
 
+  :prompt_new_path
   rem user enters new path
   echo:
   echo ### Choose install directory.
   set /p new_install="### Warning^! Give full path ^(e.g. C:\Users\username\sct_v3.0^): "
+  goto :validate_path
 
-  rem Check user-selected path for spaces
-  rem TODO: This may no longer be true as of a patch made to Mamba in Dec. 2024!
-  if not "%new_install%"=="%new_install: =%" (
-       echo ### WARNING: Install directory %new_install% contains spaces.
-       echo ### SCT uses conda, which does not permit spaces in installation paths.
-       echo ### More details can be found here: https://github.com/ContinuumIO/anaconda-issues/issues/716
-       echo:
-       goto :while_loop_sct_dir
-  )
-
-  rem Validate the user's choice of path
-  if [%new_install%]==[]  (
-    rem If no input, asking again, and again, and again
-    goto :while_loop_sct_dir
-  ) else (
-    set SCT_DIR=%new_install%
-    goto :done_while_loop_sct_dir
-  )
 :done_while_loop_sct_dir
 
 rem Create directory
@@ -218,6 +204,31 @@ echo   --^> https://forum.spinalcordmri.org/c/sct
 
 rem Return to initial directory and deactivate the virtual environment
 goto exit
+
+:validate_path
+rem Validate the user's choice of path
+rem If no input, asking again, and again, and again
+if [%new_install%]==[] (
+  set keep_default_path=no
+  goto :prompt_new_path
+)
+rem Check user-selected path for spaces
+rem TODO: This may no longer be true as of a patch made to Mamba in Dec. 2024!
+if not "%new_install%"=="%new_install: =%" (
+  echo ### WARNING: Install directory %new_install% contains spaces.
+  echo ### SCT uses conda, which does not permit spaces in installation paths.
+  echo ### More details can be found here: https://github.com/ContinuumIO/anaconda-issues/issues/716
+  echo:
+  set keep_default_path=no
+  goto :prompt_new_path
+)
+if "%keep_default_path%" == "unchosen" (
+  rem First time validating path so jump to user prompt
+  goto :while_loop_path_agreement
+) else (
+  set SCT_DIR=%new_install%
+  goto :done_while_loop_sct_dir
+)
 
 :error
 set cached_errorlevel=%errorlevel%
