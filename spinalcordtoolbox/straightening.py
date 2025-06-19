@@ -388,6 +388,14 @@ class SpinalCordStraightener(object):
                     lookup_curved2straight[index] = idx_closest
                 else:
                     lookup_curved2straight[index] = 0
+        # If we're generating a curved2straight warping field, we can update the boundaries of the straight-space safe
+        # zone by finding out the straight-space indices that the "safe zone" curved-space indices get mapped to.
+        coord_bound_straight_inferior = lookup_curved2straight[inferior_bound]
+        coord_bound_straight_superior = lookup_curved2straight[superior_bound]
+        z_centerline_straight = centerline_straight.points[:, 2]
+        bound_straight = [z_centerline_straight[coord_bound_straight_inferior],
+                          z_centerline_straight[coord_bound_straight_superior]]
+        logger.info('Safe zone boundaries (straight space): {}'.format(bound_straight))
         # Remove duplicates from the start and end of the lookup table
         # This is necessary because `get_closest_index` will repeat itself once the first/last indexes are reached
         # NB: Any slice index set to `0` will have its warping field value set to `-100000` (i.e. no warping)
@@ -493,21 +501,6 @@ class SpinalCordStraightener(object):
                 displacements_curved[indexes_out_distance_curved] = [100000.0, 100000.0, 100000.0]
 
                 data_warp_straight2curved[indexes[:, 0], indexes[:, 1], indexes[:, 2], 0, :] = -displacements_curved
-
-        # If we're generating a curved2straight warping field, we can update the boundaries of the straight-space safe
-        # zone by finding out which straight-space indices map to the "safe zone" curved-space indices.
-        # FIXME: This should be possible using `lookup_curved2straight` instead, but for some reason, half of that
-        #        lookup table is erroneously set to 0 instead
-        if self.curved2straight:
-            coord_bound_straight_inferior = list(lookup_straight2curved).index(inferior_bound)
-            coord_bound_straight_superior = list(lookup_straight2curved).index(superior_bound)
-            z_centerline_straight = centerline_straight.points[:, 2]
-            bound_straight = [z_centerline_straight[coord_bound_straight_inferior],
-                              z_centerline_straight[coord_bound_straight_superior]]
-            logger.info('Safe zone boundaries (straight space): {}'.format(bound_straight))
-        # If we're not generating a curved2straight warping field, the straight-space safe zone will have no purpose
-        else:
-            bound_straight = [0, 0]
 
         # Creation of the safe zone based on pre-calculated safe boundaries
         coord_bound_curved_inf, coord_bound_curved_sup = image_centerline_pad.transfo_phys2pix(
