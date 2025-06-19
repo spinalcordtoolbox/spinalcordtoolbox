@@ -111,9 +111,13 @@ if not exist %SCT_DIR% (
 
 rem Copy files to destination directory
 echo:
+set tmpfile_exclude=%TMP_DIR%\exclusion.txt
+echo %SCT_SOURCE%\bin> %tmpfile_exclude%
+echo %SCT_SOURCE%\python>> %tmpfile_exclude%
+echo %SCT_SOURCE%\spinalcordtoolbox.egg-info\>> %tmpfile_exclude%
 if not %SCT_DIR%==%SCT_SOURCE% (
   echo ### Copying source files from %SCT_SOURCE% to %SCT_DIR%
-  xcopy /s /e /q /y %SCT_SOURCE% %SCT_DIR% || goto error
+  xcopy /s /e /q /y %SCT_SOURCE% %SCT_DIR% /EXCLUDE:%tmpfile_exclude% || goto error
 ) else (
   echo ### Skipping copy of source files ^(source and destination folders are the same^)
 )
