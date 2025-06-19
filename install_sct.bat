@@ -208,7 +208,7 @@ goto exit
 :validate_path
 rem Validate the user's choice of path
 rem If no input, asking again, and again, and again
-if [%new_install%]==[] (
+if ["%new_install%"]==[] (
   set keep_default_path=no
   goto :prompt_new_path
 )
