@@ -222,6 +222,15 @@ if not "%new_install%"=="%new_install: =%" (
   set keep_default_path=no
   goto :prompt_new_path
 )
+rem check number of characters in path
+set tmpfile_len=%TMP_DIR%\tmpfile_len.txt
+echo %new_install%> !tmpfile_len!
+for /F "usebackq" %%a in ('!tmpfile_len!') do set /a size=%%~za - 2
+if !size! GTR 113 (
+  echo ### WARNING: '%new_install%' exceeds path length limit ^(!size! ^> 113^). Please choose a shorter path.
+  set keep_default_path=no
+  goto :prompt_new_path
+)
 if "%keep_default_path%" == "unchosen" (
   rem First time validating path so jump to user prompt
   goto :while_loop_path_agreement
