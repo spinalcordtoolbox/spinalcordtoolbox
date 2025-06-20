@@ -84,6 +84,21 @@ rem Allow user to set a custom installation directory
   goto :validate_path
   :while_loop_path_agreement
     set /p keep_default_path="### Do you agree? [y]es/[n]o: "
+    rem If the value is empty, assume non-interactive shell and avoid infinite loop
+    rem TODO: Remove all of these options once I confirm the behavior of non-interactive cmd shells
+    rem This is hard to test, quickest to just run the GHA workflow and see if it works.
+    if ["%keep_default_path%"]==["unchosen"] (
+      echo "### Non-interactive shell detected. Assuming 'yes' to keep default path."
+      set keep_default_path=yes
+    )
+    if ["%keep_default_path%"]==[""] (
+      echo "### Empty string detected. Assuming 'yes' to keep default path."
+      set keep_default_path=yes
+    )
+    if ["%keep_default_path%"]==[] (
+      echo "### No input detected. Assuming 'yes' to keep default path."
+      set keep_default_path=yes
+    )
     echo %keep_default_path% | findstr /b [YyNn] >nul 2>&1 || goto :while_loop_path_agreement
   :done_while_loop_path_agreement
 
