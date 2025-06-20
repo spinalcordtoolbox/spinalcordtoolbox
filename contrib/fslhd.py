@@ -74,7 +74,7 @@
 """
 
 import numpy as np
-from scipy.stats import mode
+import scipy
 
 from spinalcordtoolbox.utils.sys import LazyLoader
 
@@ -287,7 +287,7 @@ def generate_numpy_fields(arr):
         'arr_min': arr.min(),
         'arr_max': arr.max(),
         'arr_median': np.median(arr),
-        'arr_mode': mode(arr, axis=None, keepdims=False).mode,
+        'arr_mode': scipy.stats.mode(arr, axis=None, keepdims=False).mode,
         'arr_mean': arr.mean(),
         'arr_std': arr.std(),
         'arr_sum': arr.sum(),
