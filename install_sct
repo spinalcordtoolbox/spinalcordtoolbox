@@ -361,6 +361,38 @@ function usage() {
   ' "$0"
 }
 
+function validate_install_dir() {
+  PATH_TO_CHECK="$1"
+  # Check user-selected path for spaces
+  space_regex="[[:space:]]+"
+  if [[ $PATH_TO_CHECK =~ $space_regex ]]; then
+    print warning "WARNING: Install directory $PATH_TO_CHECK contains spaces.\n\
+         SCT uses conda, which does not permit spaces in installation paths.\n\
+         More details can be found here: https://github.com/ContinuumIO/anaconda-issues/issues/716"
+    return 1
+  elif (( ${#PATH_TO_CHECK} > 107 )); then
+    print warning "WARNING: Install directory $PATH_TO_CHECK exceeds path limit of 107 characters (${#PATH_TO_CHECK}).\n\
+       SCT uses conda, which may encounter strange issues with long paths.\n\
+       More details can be found here: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4813#issuecomment-2741165452"
+    return 1
+  # Avoid horrible bug, like removing /bin if SCT_DIR "/" or $HOME/bin
+  elif [[ "$PATH_TO_CHECK" == "/" ]] || [[ "$HOME" == "${PATH_TO_CHECK%/}" ]]; then
+    print warning "WARNING: Cannot be installed directly in $PATH_TO_CHECK"
+    print warning "Please pick a full path"
+    return 1
+  elif [[ -d "$PATH_TO_CHECK" ]]; then
+    # directory exists --> update SCT_DIR and exit loop
+    print warning "WARNING: Directory already exists. Files will be overwritten."
+    return 0
+  elif [[ ! "$PATH_TO_CHECK" ]]; then
+    # If no input, asking again, and again, and again
+    print warning "WARNING: Empty input. Please enter a valid path."
+    return 1
+  else
+    return 0
+  fi
+}
+
 # ======================================================================================================================
 # SCRIPT STARTS HERE
 # ======================================================================================================================
@@ -485,23 +517,38 @@ else
 fi
 
 # Set install dir
+keep_default_path=""
 while true; do
-  keep_default_path=""
-  while [[ ! "$keep_default_path" =~ ^([Yy](es)?|[Nn]o?)$ ]]; do
-    print info "SCT will be installed here: [$SCT_DIR]"
-    keep_default_path="yes"
-    if [ -z "$NONINTERACTIVE" ]; then
-      print question "
+  # If we're on the first iteration of the loop...
+  if [ -z "${keep_default_path}" ]; then
+    # Then check if the default install directory is valid. If it is, then we can prompt users whether they want to keep it.
+    if validate_install_dir "$SCT_DIR"; then
+      while [[ ! "$keep_default_path" =~ ^([Yy](es)?|[Nn]o?)$ ]]; do
+        print info "SCT will be installed here: [$SCT_DIR]"
+        keep_default_path="yes"
+        if [ -z "$NONINTERACTIVE" ]; then
+          print question "
 Do you agree? [y]es/[n]o: "
-      read -r keep_default_path
-    fi
-  done
-  if [[ "$keep_default_path" =~ ^[Yy] ]]; then
-    # user accepts default path --> exit loop
-    break
-  fi
+          read -r keep_default_path
+        fi
+      done
+      if [[ "$keep_default_path" =~ ^[Yy] ]]; then
+        # user accepts default path --> exit loop
+        break
+      fi
 
-  # ASSUMPTION: the rest of these are not guarded by $NONINTERACTIVE because this loop should have been broken already in that case.
+    # If the default install directory is not valid, then we shouldn't even present the option to keep it.
+    # Instead, we should proceed to the next step (which is to prompt the user for a new path).
+    else
+      keep_default_path="no"
+      # However, if the user cannot enter input (non-interactive mode), then we must halt the installation.
+      if [ "$NONINTERACTIVE" ]; then
+        error_msg="ERROR: Default installation directory must be valid when running in non-interactive mode (-y)."
+        error_msg="${error_msg} Please fix the issues reported above, or run the installer in interactive mode instead."
+        die "$error_msg"
+      fi
+    fi
+  fi
 
   print question "Choose install directory. Warning! Give full path (e.g. /usr/django/sct_v3.0): \n"
   # user enters new path
@@ -512,29 +559,14 @@ Do you agree? [y]es/[n]o: "
   # Remove trailing /
   new_install="${new_install%/}"
 
-  # Check user-selected path for spaces
-  space_regex="[[:space:]]+"
-  if [[ $SCT_DIR =~ $space_regex ]]; then
-    print info "ERROR: Install directory $SCT_DIR contains spaces.\n\
-                SCT uses conda, which does not permit spaces in installation paths.\n\
-                More details can be found here: https://github.com/ContinuumIO/anaconda-issues/issues/716"
-    continue
-  # Avoid horrible bug, like removing /bin if SCT_DIR "/" or $HOME/bin
-  elif [[ "$new_install" == "/" ]] || [[ "$HOME" == "${new_install%/}" ]]; then
-    print info "Cannot be installed directly in $new_install"
-    print info "Please pick a full path"
-    continue
-  elif [[ -d "$new_install" ]]; then
-    # directory exists --> update SCT_DIR and exit loop
-    print warning "WARNING: Directory already exists. Files will be overwritten."
+  # Check user-selected path for issues (spaces, path length, clash with $HOME, etc.)
+  if validate_install_dir "$new_install"; then
+    # If the path is valid, then we can exit the loop
     SCT_DIR="$new_install"
     break
-  elif [[ ! "$new_install" ]]; then
-    # If no input, asking again, and again, and again
-    continue
   else
-    SCT_DIR="$new_install"
-    break
+    # if the path is invalid, then repeat
+    continue
   fi
 done
 
