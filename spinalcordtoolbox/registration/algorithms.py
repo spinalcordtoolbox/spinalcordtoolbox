@@ -12,7 +12,6 @@ import psutil
 from math import asin, cos, sin, acos
 
 import numpy as np
-from nibabel import load, Nifti1Image, aff2axcodes
 from scipy.ndimage import gaussian_filter, gaussian_filter1d, convolve
 from scipy.io import loadmat
 
@@ -30,6 +29,7 @@ from spinalcordtoolbox.scripts import sct_image
 os.environ['VXM_BACKEND'] = 'pytorch'
 os.environ['NEURITE_BACKEND'] = 'pytorch'
 
+nib = LazyLoader("nib", globals(), "nibabel")
 vxm = LazyLoader("vxm", globals(), "voxelmorph")
 torch = LazyLoader("torch", globals(), "torch")
 nil_image = LazyLoader("nil_image", globals(), "nilearn.image")
@@ -442,17 +442,17 @@ def register_dl_multimodal_cascaded_reg(fname_src, fname_dest, fname_warp_forwar
 
     # Load data
     logger.info("\nLoad data to register...")
-    src_img = load(fname_src)
-    dest_img = load(fname_dest)
+    src_img = nib.load(fname_src)
+    dest_img = nib.load(fname_dest)
 
     # ---- Additional preprocessing steps ---- #
     # Scale the data between 0 and 1
     fx_img = dest_img.get_fdata()
     scaled_fx_img = (fx_img - np.min(fx_img)) / (np.max(fx_img) - np.min(fx_img))
-    scaled_fx_nii = Nifti1Image(scaled_fx_img, dest_img.affine)  # Can't be int64 (#4408)
+    scaled_fx_nii = nib.Nifti1Image(scaled_fx_img, dest_img.affine)  # Can't be int64 (#4408)
     mov_img = src_img.get_fdata()
     scaled_mov_img = (mov_img - np.min(mov_img)) / (np.max(mov_img) - np.min(mov_img))
-    scaled_mov_nii = Nifti1Image(scaled_mov_img, src_img.affine)  # Can't be int64 (#4408)
+    scaled_mov_nii = nib.Nifti1Image(scaled_mov_img, src_img.affine)  # Can't be int64 (#4408)
     # Ensure that the volumes can be used in the registration model
     # (size multiple of 16 because 4 encoder reducing the size by 2)
     fx_img_shape = scaled_fx_img.shape
@@ -518,7 +518,7 @@ def register_dl_multimodal_cascaded_reg(fname_src, fname_dest, fname_warp_forwar
     # Modify the warp data so it can be used with sct_apply_transfo()
     # (add a time dimension, change the sign of some axes and set the intent code to vector)
     orientation_conv = "LPS"
-    fx_im_orientation = list(aff2axcodes(fx_preproc_nii.affine))
+    fx_im_orientation = list(nib.aff2axcodes(fx_preproc_nii.affine))
     opposite_character = {'L': 'R', 'R': 'L',
                           'A': 'P', 'P': 'A',
                           'I': 'S', 'S': 'I'}
@@ -1454,7 +1454,7 @@ def generate_warping_field(fname_dest, warp_x, warp_y, fname_warp='warping_field
     data_warp[:, :, :, 0, 1] = -warp_y  # need to invert due to ITK conventions
 
     # save warping field
-    im_dest = load(fname_dest)
+    im_dest = nib.load(fname_dest)
     hdr_dest = im_dest.header
     hdr_warp = hdr_dest.copy()
     hdr_warp.set_intent('vector', (), '')

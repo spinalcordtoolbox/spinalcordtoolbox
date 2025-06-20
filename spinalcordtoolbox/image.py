@@ -17,7 +17,6 @@ import math
 from typing import Sequence, Tuple
 from copy import deepcopy
 
-import nibabel as nib
 import numpy as np
 import pathlib
 from contrib import fslhd
@@ -29,6 +28,7 @@ from spinalcordtoolbox.utils.fs import extract_fname, mv, tmp_create
 from spinalcordtoolbox.utils.sys import run_proc, LazyLoader
 
 ndimage = LazyLoader("ndimage", globals(), "scipy.ndimage")
+nib = LazyLoader("nib", globals(), "nibabel")
 
 logger = logging.getLogger(__name__)
 
@@ -588,7 +588,7 @@ class Image(object):
             dataobj = self.data.copy()
             affine = None
             header = self.hdr.copy() if self.hdr is not None else None
-            nib.save(nib.nifti1.Nifti1Image(dataobj, affine, header), self.absolutepath)
+            nib.save(nib.Nifti1Image(dataobj, affine, header), self.absolutepath)
             if not os.path.isfile(self.absolutepath):
                 raise RuntimeError(f"Couldn't save image to {self.absolutepath}")
         else:
@@ -1033,7 +1033,7 @@ def get_dimension(im_file, verbose=1):
     :param: im_file: Image or nibabel object
     :return: nx, ny, nz, nt, px, py, pz, pt
     """
-    if not isinstance(im_file, (nib.nifti1.Nifti1Image, Image)):
+    if not isinstance(im_file, (nib.Nifti1Image, Image)):
         raise TypeError("The provided image file is neither a nibabel.nifti1.Nifti1Image instance nor an Image instance")
     # initializating ndims [nx, ny, nz, nt] and pdims [px, py, pz, pt]
     ndims = [1, 1, 1, 1]
@@ -1385,7 +1385,7 @@ def spatial_crop(im_src, spec, im_dst=None):
     new_aff = aff.copy()
     new_aff[:, [3]] = aff.dot(np.vstack((bounds[:, [0]], [1])))
 
-    new_img = nib.nifti1.Nifti1Image(new_data, new_aff, im_src.header)
+    new_img = nib.Nifti1Image(new_data, new_aff, im_src.header)
 
     if im_dst is None:
         im_dst = im_src.copy()

@@ -10,11 +10,14 @@ License: see the file LICENSE
 import logging
 
 import numpy as np
-import nibabel as nib
-from nibabel.processing import resample_from_to
 
 from spinalcordtoolbox.image import Image, add_suffix
 from spinalcordtoolbox.utils.shell import display_viewer_syntax
+
+from spinalcordtoolbox.utils.sys import LazyLoader
+
+nib = LazyLoader("nib", globals(), "nibabel")
+nib_processing = LazyLoader("nib_processing", globals(), "nibabel.processing")
 
 logger = logging.getLogger(__name__)
 
@@ -49,17 +52,17 @@ def resample_nib(image, new_size=None, new_size_type=None, image_dest=None, inte
     dict_interp = {'nn': 0, 'linear': 1, 'spline': 2}
 
     # If input is an Image object, create nibabel object from it
-    if isinstance(image, nib.nifti1.Nifti1Image):
+    if isinstance(image, nib.Nifti1Image):
         img = image
     elif isinstance(image, Image):
-        img = nib.nifti1.Nifti1Image(image.data, image.hdr.get_best_affine(), image.hdr)
+        img = nib.Nifti1Image(image.data, image.hdr.get_best_affine(), image.hdr)
     else:
         raise TypeError(f'Invalid image type: {type(image)}')
 
     # convert to floating point if we're doing arithmetic interpolation
     if interpolation != 'nn' and img.get_data_dtype().kind in 'biu':
         original_dtype = img.get_data_dtype()
-        img = nib.nifti1.Nifti1Image(img.get_fdata(), img.header.get_best_affine(), img.header)
+        img = nib.Nifti1Image(img.get_fdata(), img.header.get_best_affine(), img.header)
         img.set_data_dtype(img.dataobj.dtype)
         logger.warning("Converting image from type '%s' to type '%s' for %s interpolation",
                        original_dtype, img.get_data_dtype(), interpolation)
@@ -117,16 +120,16 @@ def resample_nib(image, new_size=None, new_size_type=None, image_dest=None, inte
 
     # If reference is provided
     else:
-        if isinstance(image_dest, nib.nifti1.Nifti1Image):
+        if isinstance(image_dest, nib.Nifti1Image):
             reference = image_dest
         elif isinstance(image_dest, Image):
-            reference = nib.nifti1.Nifti1Image(image_dest.data, affine=image_dest.hdr.get_best_affine(), header=image_dest.hdr)
+            reference = nib.Nifti1Image(image_dest.data, affine=image_dest.hdr.get_best_affine(), header=image_dest.hdr)
         else:
             raise TypeError(f'Invalid image type: {type(image_dest)}')
 
     if img.ndim == 3:
         # we use mode 'nearest' to overcome issue #2453
-        img_r = resample_from_to(
+        img_r = nib_processing.resample_from_to(
             img, to_vox_map=reference, order=dict_interp[interpolation], mode=mode, cval=0.0, out_class=None)
 
     elif img.ndim == 4:
@@ -137,13 +140,13 @@ def resample_nib(image, new_size=None, new_size_type=None, image_dest=None, inte
         for it in range(img.shape[3]):
             # Create dummy 3d nibabel image
             data3d = np.asanyarray(img.dataobj)[..., it]
-            nii_tmp = nib.nifti1.Nifti1Image(data3d, affine, dtype=data3d.dtype)
-            img3d_r = resample_from_to(
+            nii_tmp = nib.Nifti1Image(data3d, affine, dtype=data3d.dtype)
+            img3d_r = nib_processing.resample_from_to(
                 nii_tmp, to_vox_map=(shape_r[:-1], affine_r), order=dict_interp[interpolation], mode=mode,
                 cval=0.0, out_class=None)
             data4d[..., it] = np.asanyarray(img3d_r.dataobj)
         # Create 4d nibabel Image
-        img_r = nib.nifti1.Nifti1Image(data4d, affine_r)  # Can't be int64 (#4408)
+        img_r = nib.Nifti1Image(data4d, affine_r)  # Can't be int64 (#4408)
         # Copy over the TR parameter from original 4D image (otherwise it will be incorrectly set to 1)
         img_r.header.set_zooms(list(img_r.header.get_zooms()[0:3]) + [img.header.get_zooms()[3]])
 
@@ -153,7 +156,7 @@ def resample_nib(image, new_size=None, new_size_type=None, image_dest=None, inte
         img_r.header['sform_code'] = img.header['sform_code']
 
     # Convert back to proper type
-    if isinstance(image, nib.nifti1.Nifti1Image):
+    if isinstance(image, nib.Nifti1Image):
         return img_r
     else:
         assert isinstance(image, Image)  # already checked at the start of the function

@@ -12,13 +12,16 @@ License: see the file LICENSE
 
 import os
 
-import nibabel as nib
+
 import numpy as np
 
 from spinalcordtoolbox import resampling
 from spinalcordtoolbox.utils.sys import __data_dir__
 from spinalcordtoolbox.deepseg_.onnx import onnx_inference
 from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.utils.sys import LazyLoader
+
+nib = LazyLoader("nib", globals(), "nibabel")
 
 # Models
 # Tuple of (model, metadata)

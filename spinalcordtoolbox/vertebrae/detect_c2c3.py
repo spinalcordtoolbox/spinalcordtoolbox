@@ -24,13 +24,15 @@ import os
 import logging
 
 import numpy as np
-import nibabel as nib
 from scipy.ndimage import center_of_mass
 
 from spinalcordtoolbox.image import Image, zeros_like
 from spinalcordtoolbox.utils.fs import TempFolder
 from spinalcordtoolbox.utils.sys import __data_dir__, run_proc
 from spinalcordtoolbox.flattening import flatten_sagittal
+from spinalcordtoolbox.utils.sys import LazyLoader
+
+nib = LazyLoader("nib", globals(), "nibabel")
 
 logger = logging.getLogger(__name__)
 

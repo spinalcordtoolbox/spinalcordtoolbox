@@ -15,7 +15,6 @@ import multiprocessing as mp
 
 from ivadomed import inference as imed_inference
 from totalspineseg.inference import inference as tss_inference
-import nibabel as nib
 import numpy as np
 import torch
 from monai.transforms import SaveImage
@@ -28,6 +27,10 @@ from spinalcordtoolbox.deepseg_.postprocessing import keep_largest_object, fill_
 
 import spinalcordtoolbox.deepseg.monai as ds_monai
 import spinalcordtoolbox.deepseg.nnunet as ds_nnunet
+
+from spinalcordtoolbox.utils.sys import LazyLoader
+
+nib = LazyLoader("nib", globals(), "nibabel")
 
 logger = logging.getLogger(__name__)
 
