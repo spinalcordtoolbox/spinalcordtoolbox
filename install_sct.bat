@@ -102,6 +102,11 @@ rem Allow user to set a custom installation directory
   echo:
   echo ### Choose install directory.
   set /p new_install="### Warning^! Give full path ^(e.g. C:\Users\username\sct_v3.0^): "
+  if ["%new_install%"]==["%SCT_DIR%"] (
+    rem If no new input, then we're in a non-interactive shell with an invalid default path, so we must halt
+    echo ### No new path provided. Exiting installation.
+    goto error
+  )
   goto :validate_path
 
 :done_while_loop_sct_dir
