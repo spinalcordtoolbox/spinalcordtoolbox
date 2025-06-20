@@ -73,10 +73,12 @@
     fsl@innovation.ox.ac.uk quoting Reference Project 9564, FSL.*/
 """
 
-import nibabel as nib
 import numpy as np
 from scipy.stats import mode
 
+from spinalcordtoolbox.utils.sys import LazyLoader
+
+nib = LazyLoader("nib", globals(), "nibabel")
 
 INTENT_STRINGS = {
     0: "Unknown",
