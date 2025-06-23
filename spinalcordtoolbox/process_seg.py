@@ -121,7 +121,7 @@ def compute_shape(segmentation, angle_correction=True, centerline_path=None, par
             current_patch_scaled = current_patch
             angle_AP_rad, angle_RL_rad = 0.0, 0.0
         # compute shape properties on 2D patch
-        shape_property = _properties2d(current_patch_scaled, [px, py])
+        shape_property = _properties2d(current_patch_scaled, [px, py], iz)
         if shape_property is not None:
             # Add custom fields
             shape_property['angle_AP'] = angle_AP_rad * 180.0 / math.pi
@@ -155,11 +155,12 @@ def compute_shape(segmentation, angle_correction=True, centerline_path=None, par
     return metrics, fit_results
 
 
-def _properties2d(image, dim):
+def _properties2d(image, dim, iz):
     """
     Compute shape property of the input 2D image. Accounts for partial volume information.
     :param image: 2D input image in uint8 or float (weighted for partial volume) that has a single object.
     :param dim: [px, py]: Physical dimension of the image (in mm). X,Y respectively correspond to AP,RL.
+    :param iz: int: index of the slice in the 3D image. Used for debugging.
     :return:
     """
     upscale = 5  # upscale factor for resampling the input image (for better precision)
@@ -217,6 +218,50 @@ def _properties2d(image, dim):
         'orientation': orientation,
         'solidity': solidity,  # convexity measure
     }
+
+    #""" DEBUG
+    from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+    from matplotlib.figure import Figure
+    from matplotlib.patches import Ellipse
+    fig = Figure()
+    FigureCanvas(fig)
+    ax = fig.add_subplot(111)
+    ax.imshow(image_crop_r_bin)
+    y0, x0 = region.centroid
+    orientation_rad = math.radians(orientation)     # convert back to radians
+    # AP direction
+    dx_major = (diameter_AP * upscale / dim[0]) * math.cos(orientation_rad) * 0.5
+    dy_major = (diameter_AP * upscale / dim[0]) * math.sin(orientation_rad) * 0.5
+    x_major_1, y_major_1 = x0 - dx_major, y0 - dy_major
+    x_major_2, y_major_2 = x0 + dx_major, y0 + dy_major
+    # RL direction
+    dx_minor = (diameter_RL * upscale / dim[1]) * math.sin(orientation_rad) * 0.5
+    dy_minor = (diameter_RL * upscale / dim[1]) * math.cos(orientation_rad) * 0.5
+    x_minor_1, y_minor_1 = x0 - dx_minor, y0 + dy_minor
+    x_minor_2, y_minor_2 = x0 + dx_minor, y0 - dy_minor
+    # Plot
+    ax.plot((x_major_1, x_major_2), (y_major_1, y_major_2), '-r', linewidth=2.5, label="AP axis")
+    ax.plot((x_minor_1, x_minor_2), (y_minor_1, y_minor_2), '-b', linewidth=2.5, label="RL axis")
+    ax.plot(x0, y0, '.g', markersize=15)
+
+    # Add equivalent ellipse (width = minor, height = major), orientation in degrees
+    ellipse = Ellipse(
+        (x0, y0),
+        width=diameter_AP * upscale / dim[0],
+        height=diameter_RL * upscale / dim[1],
+        angle=math.degrees(orientation_rad),
+        edgecolor='orange',
+        facecolor='none',
+        linewidth=2.0,
+        label="Equivalent Ellipse"
+    )
+    ax.add_patch(ellipse)
+
+    ax.grid()
+    ax.set_xlabel('y')
+    ax.set_ylabel('x')
+    fig.savefig(f'diameter_AP_RL_tmp_fig_{iz}.png')
+    #"""
 
     return properties
 
