@@ -220,28 +220,25 @@ def _properties2d(image, dim, iz):
     }
 
     #""" DEBUG
+    # Inspired by https://scikit-image.org/docs/0.25.x/auto_examples/segmentation/plot_regionprops.html
     from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
     from matplotlib.figure import Figure
     from matplotlib.patches import Ellipse
     fig = Figure()
     FigureCanvas(fig)
     ax = fig.add_subplot(111)
-    ax.imshow(image_crop_r_bin)
+    ax.imshow(image_crop_r_bin, cmap='gray')
     y0, x0 = region.centroid
     orientation_rad = math.radians(orientation)     # convert back to radians
-    # AP direction
-    dx_major = (diameter_AP * upscale / dim[0]) * math.cos(orientation_rad) * 0.5
-    dy_major = (diameter_AP * upscale / dim[0]) * math.sin(orientation_rad) * 0.5
-    x_major_1, y_major_1 = x0 - dx_major, y0 - dy_major
-    x_major_2, y_major_2 = x0 + dx_major, y0 + dy_major
-    # RL direction
-    dx_minor = (diameter_RL * upscale / dim[1]) * math.sin(orientation_rad) * 0.5
-    dy_minor = (diameter_RL * upscale / dim[1]) * math.cos(orientation_rad) * 0.5
-    x_minor_1, y_minor_1 = x0 - dx_minor, y0 + dy_minor
-    x_minor_2, y_minor_2 = x0 + dx_minor, y0 - dy_minor
-    # Plot
-    ax.plot((x_major_1, x_major_2), (y_major_1, y_major_2), '-r', linewidth=2.5, label="AP axis")
-    ax.plot((x_minor_1, x_minor_2), (y_minor_1, y_minor_2), '-b', linewidth=2.5, label="RL axis")
+    radius_ap = (diameter_AP / dim[0]) * 0.5 * upscale
+    radius_rl = (diameter_RL / dim[1]) * 0.5 * upscale
+    dx_ap = radius_ap * np.cos(orientation_rad)
+    dy_ap = radius_ap * np.sin(orientation_rad)
+    dx_rl = radius_rl * -np.sin(orientation_rad)
+    dy_rl = radius_rl * np.cos(orientation_rad)
+    ax.plot([x0 - dx_ap, x0 + dx_ap], [y0 - dy_ap, y0 + dy_ap], 'r-', linewidth=3, label='AP axis')
+    ax.plot([x0 - dx_rl, x0 + dx_rl], [y0 - dy_rl, y0 + dy_rl], 'b-', linewidth=3, label='RL axis')
+    # Add centroid
     ax.plot(x0, y0, '.g', markersize=15)
 
     # Add equivalent ellipse (width = minor, height = major), orientation in degrees
@@ -253,14 +250,15 @@ def _properties2d(image, dim, iz):
         edgecolor='orange',
         facecolor='none',
         linewidth=2.0,
-        label="Equivalent Ellipse"
+        label=""
     )
     ax.add_patch(ellipse)
 
     ax.grid()
     ax.set_xlabel('y')
     ax.set_ylabel('x')
-    fig.savefig(f'diameter_AP_RL_tmp_fig_{iz}.png')
+    ax.legend(loc='upper right')
+    fig.savefig(f'diameter_AP_RL_tmp_fig_slice_{iz:03d}.png')
     #"""
 
     return properties
