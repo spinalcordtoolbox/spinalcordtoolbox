@@ -121,7 +121,7 @@ def compute_shape(segmentation, angle_correction=True, centerline_path=None, par
             current_patch_scaled = current_patch
             angle_AP_rad, angle_RL_rad = 0.0, 0.0
         # compute shape properties on 2D patch
-        shape_property = _properties2d(current_patch_scaled, [px, py])
+        shape_property = _properties2d(current_patch_scaled, [px, py], iz)
         if shape_property is not None:
             # Add custom fields
             shape_property['angle_AP'] = angle_AP_rad * 180.0 / math.pi
@@ -155,11 +155,12 @@ def compute_shape(segmentation, angle_correction=True, centerline_path=None, par
     return metrics, fit_results
 
 
-def _properties2d(image, dim):
+def _properties2d(image, dim, iz):
     """
     Compute shape property of the input 2D image. Accounts for partial volume information.
     :param image: 2D input image in uint8 or float (weighted for partial volume) that has a single object.
     :param dim: [px, py]: Physical dimension of the image (in mm). X,Y respectively correspond to AP,RL.
+    :param iz: int: index of the slice in the 3D image. Used for debugging.
     :return:
     """
     upscale = 5  # upscale factor for resampling the input image (for better precision)
@@ -218,6 +219,9 @@ def _properties2d(image, dim):
         'solidity': solidity,  # convexity measure
     }
 
+    # Compute quadrant areas
+    quadrant_areas = compute_quadrant_areas(image_crop_r_bin, region.centroid, orientation, diameter_AP, diameter_RL,
+        dim, upscale=upscale, iz=iz)
     return properties
 
 
@@ -254,3 +258,122 @@ def _find_AP_and_RL_diameter(major_axis, minor_axis, orientation, dim):
     diameter_AP *= dim[0]
     diameter_RL *= dim[1]
     return diameter_AP, diameter_RL
+
+
+def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, float], orientation_deg: float,
+                           diameter_AP: float, diameter_RL: float, dim: list[float], upscale: int = 5,
+                           iz: int = 0) -> dict:
+    """
+    Compute the cross-sectional area of the four spinal cord quadrants in the axial plane.
+
+    The function rotates the coordinate system based on the spinal cord orientation and
+    partitions the segmentation into four quadrants: posterior right, anterior right,
+    posterior left, and anterior left. It then calculates the area of each quadrant in mm².
+
+    :param image_crop_r: 2D upsampled binary segmentation mask of the spinal cord.
+    :param centroid: (y, x) coordinates of the centroid in the upsampled image space.
+    :param orientation_deg: Orientation angle of the spinal cord in degrees (from regionprops).
+    :param diameter_AP: AP diameter of the spinal cord in mm.
+    :param diameter_RL: RL diameter of the spinal cord in mm.
+    :param dim: [px, py] pixel dimensions in mm. X,Y respectively correspond to AP, RL.
+    :param upscale: Upsampling factor used during resampling (default = 5).
+    :param iz: Slice index used for filename in debug plot (default = 0).
+
+    :return: Dictionary with area in mm² for each quadrant:
+             {
+                'Posterior_Right': float,
+                'Anterior_Right': float,
+                'Posterior_Left': float,
+                'Anterior_Left': float
+             }
+    """
+    y0, x0 = centroid
+    orientation_rad = np.radians(orientation_deg)
+    rows, cols = image_crop_r.shape
+    Y, X = np.mgrid[0:rows, 0:cols]
+
+    # Translate coordinate grid to centroid
+    Xc = X - x0
+    Yc = Y - y0
+
+    # Rotate coordinates to align with AP/RL axes
+    Xr = Xc * np.cos(-orientation_rad) - Yc * np.sin(-orientation_rad)
+    Yr = Xc * np.sin(-orientation_rad) + Yc * np.cos(-orientation_rad)
+
+    # Apply quadrant masks
+    mask = image_crop_r > 0.5
+    post_r  = (Yr < 0) & (Xr < 0) & mask    # Posterior Right
+    ant_r = (Yr < 0) & (Xr >= 0) & mask     # Anterior Right
+    post_l = (Yr >= 0) & (Xr < 0) & mask    # Posterior Left
+    ant_l = (Yr >= 0) & (Xr >= 0) & mask    # Anterior Left
+
+    # Calculate physical area in mm²
+    pixel_area_mm2 = (dim[0] * dim[1]) / (upscale**2)
+
+    # Sum areas for each quadrant
+    quadrant_areas = {
+        'Posterior_Right': np.sum(post_r) * pixel_area_mm2,
+        'Anterior_Right': np.sum(ant_r) * pixel_area_mm2,
+        'Posterior_Left': np.sum(post_l) * pixel_area_mm2,
+        'Anterior_Left': np.sum(ant_l) * pixel_area_mm2
+    }
+
+    # """"DEBUG
+    # TODO: consider rotating the figure by 90 degrees to rotate the spinal cord (now R-L is vertical and
+    #  A-P is horizontal)
+    from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+    from matplotlib.figure import Figure
+    from matplotlib.patches import Ellipse
+    fig = Figure()
+    FigureCanvas(fig)
+    ax = fig.add_subplot(111)
+    ax.imshow(image_crop_r, cmap='gray')
+
+    # Plot each quadrant mask with a different color and label (use vmin/vmax for full color intensity)
+    ax.imshow(np.where(post_r, 1, np.nan), cmap='Reds', vmin=0, vmax=1, alpha=0.5)
+    ax.imshow(np.where(ant_r, 1, np.nan), cmap='Blues', vmin=0, vmax=1, alpha=0.5)
+    ax.imshow(np.where(post_l, 1, np.nan), cmap='Greens', vmin=0, vmax=1, alpha=0.5)
+    ax.imshow(np.where(ant_l, 1, np.nan), cmap='Purples', vmin=0, vmax=1, alpha=0.5)
+
+    # Draw axes
+    radius_ap = (diameter_AP / dim[0]) * 0.5 * upscale
+    radius_rl = (diameter_RL / dim[1]) * 0.5 * upscale
+    dx_ap = radius_ap * np.cos(orientation_rad)
+    dy_ap = radius_ap * np.sin(orientation_rad)
+    dx_rl = radius_rl * -np.sin(orientation_rad)
+    dy_rl = radius_rl * np.cos(orientation_rad)
+    ax.plot([x0 - dx_ap, x0 + dx_ap], [y0 - dy_ap, y0 + dy_ap], 'r-', linewidth=3, label='AP axis')
+    ax.plot([x0 - dx_rl, x0 + dx_rl], [y0 - dy_rl, y0 + dy_rl], 'b-', linewidth=3, label='RL axis')
+    # Add centroid
+    ax.plot(x0, y0, '.g', markersize=15)
+
+    # Add equivalent ellipse (width = minor, height = major), orientation in degrees
+    ellipse = Ellipse(
+        (x0, y0),
+        width=diameter_AP * upscale / dim[0],
+        height=diameter_RL * upscale / dim[1],
+        angle=math.degrees(orientation_rad),
+        edgecolor='orange',
+        facecolor='none',
+        linewidth=2.0,
+        label=""
+    )
+    ax.add_patch(ellipse)
+
+    # Add quadrant sizes as text annotations
+    offset = 20  # pixel offset from centroid for annotation placement
+    ax.text(x0 - offset, y0 - offset, f"PR:\n{quadrant_areas['Posterior_Right']:.2f} mm²", color='red', fontsize=10, ha='center', va='bottom', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
+    ax.text(x0 + offset, y0 - offset, f"AR:\n{quadrant_areas['Anterior_Right']:.2f} mm²", color='blue', fontsize=10, ha='center', va='bottom', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
+    ax.text(x0 - offset, y0 + offset, f"PL:\n{quadrant_areas['Posterior_Left']:.2f} mm²", color='green', fontsize=10, ha='center', va='top', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
+    ax.text(x0 + offset, y0 + offset, f"AL:\n{quadrant_areas['Anterior_Left']:.2f} mm²", color='purple', fontsize=10, ha='center', va='top', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
+
+    ax.grid()
+    ax.set_xlabel('y')
+    ax.set_ylabel('x')
+    ax.legend(loc='upper right')
+    fig.savefig(f'cord_quadrant_tmp_fig_slice_{iz:03d}.png')
+    # """
+
+
+    return quadrant_areas
+
