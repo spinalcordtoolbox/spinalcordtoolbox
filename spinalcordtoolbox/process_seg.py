@@ -100,12 +100,12 @@ def compute_shape(segmentation, angle_correction=True, centerline_path=None, par
                                ncols=80):
         # Extract 2D patch
         current_patch = im_segr.data[:, :, iz]
-        # NOTE: `im_segr` is in the RPI orientation, so the first two dimensions are RL and AP.
-        #  But the `current_patch` axis order is (x, y) : (PA, LR); use debug plotting below to visualize the patch
         #"""DEBUG
         import matplotlib.pyplot as plt
         plt.figure()
-        # Ensure binary display by using binary colormap and fixed vmin/vmax
+        # NOTE: plt.imshow() displays arrays with shape (rows, columns) with rows along the y-axis (top to bottom)
+        #  and columns along the x-axis (left to right).
+        #  This is different from matrix notation where the first index would be x and second would be y.
         plt.imshow(current_patch, interpolation='nearest')  # nearest to avoid interpolation artifacts when displaying binary mask
         plt.xlabel('Posterior-Anterior (PA)')
         plt.ylabel('Left-Right (LR)')
