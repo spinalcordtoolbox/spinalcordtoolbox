@@ -347,6 +347,7 @@ def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, floa
     # """"DEBUG
     # TODO: consider rotating the figure by 90 degrees to rotate the spinal cord (now R-L is vertical and
     #  A-P is horizontal)
+    import os
     from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
     from matplotlib.figure import Figure
     from matplotlib.patches import Ellipse
@@ -398,7 +399,8 @@ def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, floa
     ax.set_xlabel('y')
     ax.set_ylabel('x')
     ax.legend(loc='upper right')
-    fig.savefig(f'figures/cord_quadrant_tmp_fig_slice_{iz:03d}.png')
+    os.makedirs('debug_figures', exist_ok=True)
+    fig.savefig(f'debug_figures/cord_quadrant_tmp_fig_slice_{iz:03d}.png')
     # """
 
     return quadrant_areas
