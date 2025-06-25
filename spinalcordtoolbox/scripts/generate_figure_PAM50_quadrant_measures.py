@@ -77,8 +77,7 @@ TICKS_FONT_SIZE = 12
 
 def get_parser():
     parser = argparse.ArgumentParser(
-        description="Plot single subject morphometric metrics (multiple sessions) together with normative values computed "
-                    "from normative database (spine-generic dataset in PAM50 space) per slice and vertebral levels")
+        description="Plot single subject morphometric metrics in the PAM50 space per slice and vertebral levels")
     parser.add_argument('-file', required=True, type=str,
                         help="Path to a CSV file with morphometric metrics in PAM50 space. ")
     parser.add_argument('-path-out', required=False, type=str, default='figures',
