@@ -236,7 +236,7 @@ def _properties2d(image, dim, iz):
     }
 
     # Compute quadrant areas
-    quadrant_areas = compute_quadrant_areas(image_crop_r_bin, region.centroid, orientation, diameter_AP, diameter_RL,
+    quadrant_areas = compute_quadrant_areas(image_crop_r, region.centroid, orientation, diameter_AP, diameter_RL,
         dim, upscale=upscale, iz=iz)
     properties['quadrant_areas'] = {
         'anterior_left': quadrant_areas.get('Anterior_Left', np.nan),
@@ -293,7 +293,7 @@ def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, floa
     partitions the segmentation into four quadrants: posterior right, anterior right,
     posterior left, and anterior left. It then calculates the area of each quadrant in mm².
 
-    :param image_crop_r: 2D upsampled binary segmentation mask of the spinal cord.
+    :param image_crop_r: 2D upsampled non-binary (due to the angle correction) segmentation mask of the spinal cord.
     :param centroid: (y, x) coordinates of the centroid in the upsampled image space.
     :param orientation_deg: Orientation angle of the spinal cord in degrees (from regionprops).
     :param diameter_AP: AP diameter of the spinal cord in mm.
@@ -327,22 +327,21 @@ def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, floa
     Xr = Xc * np.cos(-orientation_rad) - Yc * np.sin(-orientation_rad)
     Yr = Xc * np.sin(-orientation_rad) + Yc * np.cos(-orientation_rad)
 
-    # Apply quadrant masks
-    mask = image_crop_r > 0.5
-    post_r  = (Yr < 0) & (Xr < 0) & mask    # Posterior Right
-    ant_r = (Yr < 0) & (Xr >= 0) & mask     # Anterior Right
-    post_l = (Yr >= 0) & (Xr < 0) & mask    # Posterior Left
-    ant_l = (Yr >= 0) & (Xr >= 0) & mask    # Anterior Left
+    # Apply quadrant masks - use the intensity values directly to account for the mask softness
+    post_r_mask = (Yr < 0) & (Xr < 0)    # Posterior Right
+    ant_r_mask = (Yr < 0) & (Xr >= 0)    # Anterior Right
+    post_l_mask = (Yr >= 0) & (Xr < 0)   # Posterior Left
+    ant_l_mask = (Yr >= 0) & (Xr >= 0)   # Anterior Left
 
     # Calculate physical area in mm²
     pixel_area_mm2 = (dim[0] * dim[1]) / (upscale**2)
 
-    # Sum areas for each quadrant
+    # Sum areas for each quadrant - multiply by intensity values to account for the mask softness
     quadrant_areas = {
-        'Posterior_Right': np.sum(post_r) * pixel_area_mm2,
-        'Anterior_Right': np.sum(ant_r) * pixel_area_mm2,
-        'Posterior_Left': np.sum(post_l) * pixel_area_mm2,
-        'Anterior_Left': np.sum(ant_l) * pixel_area_mm2
+        'Posterior_Right': np.sum(image_crop_r[post_r_mask]) * pixel_area_mm2,
+        'Anterior_Right': np.sum(image_crop_r[ant_r_mask]) * pixel_area_mm2,
+        'Posterior_Left': np.sum(image_crop_r[post_l_mask]) * pixel_area_mm2,
+        'Anterior_Left': np.sum(image_crop_r[ant_l_mask]) * pixel_area_mm2
     }
 
     # """"DEBUG
@@ -354,13 +353,13 @@ def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, floa
     fig = Figure()
     FigureCanvas(fig)
     ax = fig.add_subplot(111)
-    ax.imshow(image_crop_r, cmap='gray')
+    #ax.imshow(image_crop_r, cmap='gray')
 
-    # Plot each quadrant mask with a different color and label (use vmin/vmax for full color intensity)
-    ax.imshow(np.where(post_r, 1, np.nan), cmap='Reds', vmin=0, vmax=1, alpha=0.5)
-    ax.imshow(np.where(ant_r, 1, np.nan), cmap='Blues', vmin=0, vmax=1, alpha=0.5)
-    ax.imshow(np.where(post_l, 1, np.nan), cmap='Greens', vmin=0, vmax=1, alpha=0.5)
-    ax.imshow(np.where(ant_l, 1, np.nan), cmap='Purples', vmin=0, vmax=1, alpha=0.5)
+    # Plot each quadrant mask with a different color
+    ax.imshow(np.where(post_r_mask, image_crop_r, np.nan), cmap='Reds', vmin=0, vmax=1, alpha=1)
+    ax.imshow(np.where(ant_r_mask, image_crop_r, np.nan), cmap='Blues', vmin=0, vmax=1, alpha=1)
+    ax.imshow(np.where(post_l_mask, image_crop_r, np.nan), cmap='Greens', vmin=0, vmax=1, alpha=1)
+    ax.imshow(np.where(ant_l_mask, image_crop_r, np.nan), cmap='Purples', vmin=0, vmax=1, alpha=1)
 
     # Draw axes
     radius_ap = (diameter_AP / dim[0]) * 0.5 * upscale
