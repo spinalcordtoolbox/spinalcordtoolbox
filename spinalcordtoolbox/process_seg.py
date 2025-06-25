@@ -400,6 +400,7 @@ def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, floa
     ax.set_ylabel('x\nLeft-Right (LR)')
     ax.legend(loc='upper right')
     os.makedirs('debug_figures', exist_ok=True)
+    fig.tight_layout()
     fig.savefig(f'debug_figures/cord_quadrant_tmp_fig_slice_{iz:03d}.png')
     # """
 
