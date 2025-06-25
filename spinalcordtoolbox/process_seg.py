@@ -396,8 +396,8 @@ def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, floa
     ax.text(x0 + offset, y0 + offset, f"AL:\n{quadrant_areas['Anterior_Left']:.2f} mm²", color='purple', fontsize=10, ha='center', va='top', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
 
     ax.grid()
-    ax.set_xlabel('y')
-    ax.set_ylabel('x')
+    ax.set_xlabel('y\nPosterior-Anterior (PA)')
+    ax.set_ylabel('x\nLeft-Right (LR)')
     ax.legend(loc='upper right')
     os.makedirs('debug_figures', exist_ok=True)
     fig.savefig(f'debug_figures/cord_quadrant_tmp_fig_slice_{iz:03d}.png')
