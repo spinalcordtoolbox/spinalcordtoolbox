@@ -292,9 +292,13 @@ def _properties2d(image, dim, iz):
     ax.add_patch(ellipse)
 
     ax.grid()
-    ax.set_xlabel('y')
-    ax.set_ylabel('x')
+    ax.set_xlabel('y\nPosterior-Anterior (PA)')
+    ax.set_ylabel('x\nLeft-Right (LR)')
     ax.legend(loc='upper right')
+    # Add title
+    ax.set_title(f"Image crop r bin {iz}")
+    # Tighten layout
+    fig.tight_layout()
     fig.savefig(f'diameter_AP_RL_tmp_fig_slice_{iz:03d}.png')
     #"""
 
