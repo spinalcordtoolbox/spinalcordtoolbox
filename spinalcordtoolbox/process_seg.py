@@ -370,8 +370,8 @@ def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, floa
     dy_ap = radius_ap * np.sin(orientation_rad)
     dx_rl = radius_rl * -np.sin(orientation_rad)
     dy_rl = radius_rl * np.cos(orientation_rad)
-    ax.plot([x0 - dx_ap, x0 + dx_ap], [y0 - dy_ap, y0 + dy_ap], 'r--', linewidth=2, label='AP axis')
-    ax.plot([x0 - dx_rl, x0 + dx_rl], [y0 - dy_rl, y0 + dy_rl], 'b--', linewidth=2, label='RL axis')
+    ax.plot([x0 - dx_ap, x0 + dx_ap], [y0 - dy_ap, y0 + dy_ap], 'r--', linewidth=2, label='AP diameter')
+    ax.plot([x0 - dx_rl, x0 + dx_rl], [y0 - dy_rl, y0 + dy_rl], 'b--', linewidth=2, label='RL diameter')
     # Add centroid
     ax.plot(x0, y0, '.g', markersize=15)
 
