@@ -67,6 +67,15 @@ def compute_shape(segmentation, angle_correction=True, centerline_path=None, par
 
     # Initialize dictionary of property_list, with 1d array of nan (default value if no property for a given slice).
     shape_properties = {key: np.full(nz, np.nan, dtype=np.double) for key in property_list}
+    # Add quadrant area properties
+    quadrant_keys = [
+        'area_quadrant_anterior_left',
+        'area_quadrant_anterior_right',
+        'area_quadrant_posterior_left',
+        'area_quadrant_posterior_right',
+    ]
+    for key in quadrant_keys:
+        shape_properties[key] = np.full(nz, np.nan, dtype=np.double)
 
     fit_results = None
 
@@ -127,6 +136,13 @@ def compute_shape(segmentation, angle_correction=True, centerline_path=None, par
             shape_property['angle_AP'] = angle_AP_rad * 180.0 / math.pi
             shape_property['angle_RL'] = angle_RL_rad * 180.0 / math.pi
             shape_property['length'] = pz / (np.cos(angle_AP_rad) * np.cos(angle_RL_rad))
+            # Assign quadrant areas if present
+            if 'quadrant_areas' in shape_property:
+                qa = shape_property['quadrant_areas']
+                shape_properties['area_quadrant_anterior_left'][iz] = qa.get('anterior_left', np.nan)
+                shape_properties['area_quadrant_anterior_right'][iz] = qa.get('anterior_right', np.nan)
+                shape_properties['area_quadrant_posterior_left'][iz] = qa.get('posterior_left', np.nan)
+                shape_properties['area_quadrant_posterior_right'][iz] = qa.get('posterior_right', np.nan)
             # Loop across properties and assign values for function output
             for property_name in property_list:
                 shape_properties[property_name][iz] = shape_property[property_name]
@@ -222,6 +238,13 @@ def _properties2d(image, dim, iz):
     # Compute quadrant areas
     quadrant_areas = compute_quadrant_areas(image_crop_r_bin, region.centroid, orientation, diameter_AP, diameter_RL,
         dim, upscale=upscale, iz=iz)
+    properties['quadrant_areas'] = {
+        'anterior_left': quadrant_areas.get('Anterior_Left', np.nan),
+        'anterior_right': quadrant_areas.get('Anterior_Right', np.nan),
+        'posterior_left': quadrant_areas.get('Posterior_Left', np.nan),
+        'posterior_right': quadrant_areas.get('Posterior_Right', np.nan),
+    }
+
     return properties
 
 
@@ -297,6 +320,10 @@ def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, floa
     Yc = Y - y0
 
     # Rotate coordinates to align with AP/RL axes
+    # This rotation is needed to accurately define anatomical quadrants.
+    # Without the rotation, quadrants would be based on image axes (top/bottom/left/right) rather than true anatomical
+    # orientation (posterior/anterior/left/right) resulting in unprecise area calculations whenever the spinal cord is
+    # not perfectly aligned with the image axes.
     Xr = Xc * np.cos(-orientation_rad) - Yc * np.sin(-orientation_rad)
     Yr = Xc * np.sin(-orientation_rad) + Yc * np.cos(-orientation_rad)
 
@@ -342,8 +369,8 @@ def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, floa
     dy_ap = radius_ap * np.sin(orientation_rad)
     dx_rl = radius_rl * -np.sin(orientation_rad)
     dy_rl = radius_rl * np.cos(orientation_rad)
-    ax.plot([x0 - dx_ap, x0 + dx_ap], [y0 - dy_ap, y0 + dy_ap], 'r-', linewidth=3, label='AP axis')
-    ax.plot([x0 - dx_rl, x0 + dx_rl], [y0 - dy_rl, y0 + dy_rl], 'b-', linewidth=3, label='RL axis')
+    ax.plot([x0 - dx_ap, x0 + dx_ap], [y0 - dy_ap, y0 + dy_ap], 'r--', linewidth=2, label='AP axis')
+    ax.plot([x0 - dx_rl, x0 + dx_rl], [y0 - dy_rl, y0 + dy_rl], 'b--', linewidth=2, label='RL axis')
     # Add centroid
     ax.plot(x0, y0, '.g', markersize=15)
 
@@ -371,9 +398,7 @@ def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, floa
     ax.set_xlabel('y')
     ax.set_ylabel('x')
     ax.legend(loc='upper right')
-    fig.savefig(f'cord_quadrant_tmp_fig_slice_{iz:03d}.png')
+    fig.savefig(f'figures/cord_quadrant_tmp_fig_slice_{iz:03d}.png')
     # """
 
-
     return quadrant_areas
-

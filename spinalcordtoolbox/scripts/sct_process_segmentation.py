@@ -458,6 +458,13 @@ def main(argv: Sequence[str]):
                                                             distance_pmj=distance_pmj, perslice=perslice,
                                                             perlevel=perlevel, fname_vert_level=fname_vert_level,
                                                             group_funcs=(('SUM', func_sum),), length_pmj=length_from_pmj)
+        elif key.startswith('area_quadrant_'):
+            # For quadrant areas, aggregate like area (mean/std)
+            metrics_agg[key] = aggregate_per_slice_or_level(metrics[key], slices=slices,
+                                                            levels=levels,
+                                                            distance_pmj=distance_pmj, perslice=perslice,
+                                                            perlevel=perlevel, fname_vert_level=fname_vert_level,
+                                                            group_funcs=group_funcs, length_pmj=length_from_pmj)
         else:
             # For other metrics, we compute the average and standard deviation across slices
             metrics_agg[key] = aggregate_per_slice_or_level(metrics[key], slices=slices,
