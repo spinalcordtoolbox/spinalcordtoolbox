@@ -214,6 +214,18 @@ def _properties2d(image, dim, iz):
                             np.clip(miny-pad, 0, image_bin.shape[1]): np.clip(maxy+pad, 0, image_bin.shape[1])]
     # Oversample image to reach sufficient precision when computing shape metrics on the binary mask
     image_crop_r = transform.pyramid_expand(image_crop, upscale=upscale, sigma=None, order=1)
+
+    # """DEBUG
+    import matplotlib.pyplot as plt
+    plt.figure()
+    plt.imshow(image_crop_r, interpolation='nearest')
+    plt.xlabel('Posterior-Anterior (PA)')
+    plt.ylabel('Left-Right (LR)')
+    plt.title(f"Image crop r {iz}")
+    plt.savefig(f'image_crop_r_{iz}.png', dpi=300)
+    plt.close()
+    # """
+
     # Binarize image using threshold at 0. Necessary input for measure.regionprops
     image_crop_r_bin = np.array(image_crop_r > 0.5, dtype='uint8')
     # Get all closed binary regions from the image (normally there is only one)
