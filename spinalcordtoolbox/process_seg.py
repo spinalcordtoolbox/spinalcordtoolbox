@@ -353,13 +353,14 @@ def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, floa
     fig = Figure()
     FigureCanvas(fig)
     ax = fig.add_subplot(111)
-    #ax.imshow(image_crop_r, cmap='gray')
 
     # Plot each quadrant mask with a different color
     ax.imshow(np.where(post_r_mask, image_crop_r, np.nan), cmap='Reds', vmin=0, vmax=1, alpha=1)
     ax.imshow(np.where(ant_r_mask, image_crop_r, np.nan), cmap='Blues', vmin=0, vmax=1, alpha=1)
     ax.imshow(np.where(post_l_mask, image_crop_r, np.nan), cmap='Greens', vmin=0, vmax=1, alpha=1)
     ax.imshow(np.where(ant_l_mask, image_crop_r, np.nan), cmap='Purples', vmin=0, vmax=1, alpha=1)
+
+    ax.imshow(image_crop_r > 0.5, cmap='gray', interpolation='nearest', vmin=0, vmax=1, alpha=.4)
 
     # Draw axes
     radius_ap = (diameter_AP / dim[0]) * 0.5 * upscale
