@@ -100,6 +100,20 @@ def compute_shape(segmentation, angle_correction=True, centerline_path=None, par
                                ncols=80):
         # Extract 2D patch
         current_patch = im_segr.data[:, :, iz]
+        # NOTE: `im_segr` is in the RPI orientation, so the first two dimensions are RL and AP.
+        #  But the `current_patch` axis order is (x, y) : (PA, LR); use debug plotting below to visualize the patch
+        #"""DEBUG
+        import matplotlib.pyplot as plt
+        plt.figure()
+        # Ensure binary display by using binary colormap and fixed vmin/vmax
+        plt.imshow(current_patch, interpolation='nearest')  # nearest to avoid interpolation artifacts when displaying binary mask
+        plt.xlabel('Posterior-Anterior (PA)')
+        plt.ylabel('Left-Right (LR)')
+        plt.title(f"Patch {iz}")
+        plt.savefig(f'patch_{iz}.png', dpi=300)
+        plt.close()
+        #"""
+
         if angle_correction:
             # Extract tangent vector to the centerline (i.e. its derivative)
             tangent_vect = np.array([deriv[iz][0] * px, deriv[iz][1] * py, pz])
@@ -112,11 +126,22 @@ def compute_shape(segmentation, angle_correction=True, centerline_path=None, par
             # Convert to float64, to avoid problems in image indexation causing issues when applying transform.warp
             current_patch = current_patch.astype(np.float64)
             # TODO: make sure pattern does not go extend outside of image border
+            # NOTE: due to transform.warp, current_patch_scaled is soft (i.e., non-binary)
             current_patch_scaled = transform.warp(current_patch,
                                                   tform.inverse,
                                                   output_shape=current_patch.shape,
                                                   order=1,
                                                   )
+            # """DEBUG
+            import matplotlib.pyplot as plt
+            plt.figure()
+            plt.imshow(current_patch_scaled, interpolation='nearest')
+            plt.xlabel('Posterior-Anterior (PA)')
+            plt.ylabel('Left-Right (LR)')
+            plt.title(f"Patch scaled {iz}")
+            plt.savefig(f'patch_scaled_{iz}.png', dpi=300)
+            plt.close()
+            # """
         else:
             current_patch_scaled = current_patch
             angle_AP_rad, angle_RL_rad = 0.0, 0.0
