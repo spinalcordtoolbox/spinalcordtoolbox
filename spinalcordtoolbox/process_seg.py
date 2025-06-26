@@ -173,21 +173,28 @@ def compute_shape(segmentation, angle_correction=True, centerline_path=None, par
     return metrics, fit_results
 
 
-def _calculate_symmetry(area1, area2, total_area):
+def _calculate_symmetry(area1, area2, total_area, signed=True):
     """
     Calculate the symmetry ratio of the spinal cord.
 
-    The symmetry is computed as:
-            symmetry = 1 - |area1 - area2| / (area1 + area2)
-    It ranges from 0 to 1, where:
-            1 indicates perfect symmetry (areas are equal)
-            0 indicates complete asymmetry
+    The symmetry can be computed in two ways:
+    1. Signed: (area1 - area2) / total_area
+       Returns values from -1 to 1, where:
+       - 0 indicates perfect symmetry
+       - Positive values indicate area1 dominance (typically left side)
+       - Negative values indicate area2 dominance (typically right side)
+       - The magnitude indicates the degree of asymmetry
+
+    2. Unsigned: 1 - |area1 - area2| / total_area
+       Returns values from 0 to 1, where:
+       - 1 indicates perfect symmetry
+       - 0 indicates complete asymmetry
 
     :param area1: Area of the first side (left or anterior)
     :param area2: Area of the second side (right or posterior)
     :param total_area: Total area of the spinal cord.
-    :param symmetry_type: Type of symmetry to calculate ('RL' for right-left or 'AP' for anterior-posterior)
-    :return: Symmetry value between 0 and 1
+    :param signed: Whether to return signed symmetry (-1 to 1) or unsigned (0 to 1).
+    :return: Symmetry value, either between -1 and 1 (signed) or between 0 and 1 (unsigned)
     """
     # Sanity checks
     if area1 <= NEAR_ZERO_THRESHOLD or area2 <= NEAR_ZERO_THRESHOLD:
@@ -195,8 +202,17 @@ def _calculate_symmetry(area1, area2, total_area):
     if total_area <= NEAR_ZERO_THRESHOLD:
         return np.nan
 
-    # Calculate symmetry as 1 - |area1 - area2| / (area1 + area2)
-    symmetry = 1.0 - abs(area1 - area2) / total_area
+    if signed:
+        # Calculate signed symmetry as (area1 - area2) / total_area
+        # This gives:
+        # - 0 for perfect symmetry
+        # - Positive values when area1 > area2 (e.g., left side dominance)
+        # - Negative values when area1 < area2 (e.g., right side dominance)
+        symmetry = (area1 - area2) / total_area
+    else:
+        # Calculate unsigned symmetry as 1 - |area1 - area2| / total_area
+        # This gives 1 for perfect symmetry and values closer to 0 for asymmetry
+        symmetry = 1.0 - abs(area1 - area2) / total_area
 
     return symmetry
 
