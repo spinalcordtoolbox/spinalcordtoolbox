@@ -406,6 +406,10 @@ def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, floa
     posterior_area = quadrant_areas.get('Posterior_Left', 0) + quadrant_areas.get('Posterior_Right', 0)
     symmetry_AP = _calculate_symmetry(anterior_area, posterior_area, area)
 
+    # Calculate anterior RL symmetry and posterior RL symmetry
+    symmetry_anterior_RL = _calculate_symmetry(quadrant_areas['Anterior_Right'], quadrant_areas['Anterior_Left'], anterior_area)
+    symmetry_posterior_RL = _calculate_symmetry(quadrant_areas['Posterior_Right'], quadrant_areas['Posterior_Left'], posterior_area)
+
     # """"DEBUG
     def _add_ellipse(ax, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale, edgecolor='orange',
                      linewidth=2.0):
@@ -498,6 +502,8 @@ def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, floa
     ax1.text(x0 + offset, y0 - offset, f"AR:\n{quadrant_areas['Anterior_Right']:.2f} mm²", color='blue', fontsize=10, ha='center', va='bottom', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
     ax1.text(x0 - offset, y0 + offset, f"PL:\n{quadrant_areas['Posterior_Left']:.2f} mm²", color='green', fontsize=10, ha='center', va='top', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
     ax1.text(x0 + offset, y0 + offset, f"AL:\n{quadrant_areas['Anterior_Left']:.2f} mm²", color='purple', fontsize=10, ha='center', va='top', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
+    ax1.text(0.25, 0.05, f"Ant. RL Symmetry: {symmetry_anterior_RL:.3f}", fontsize=10, ha='center', va='center', bbox=dict(facecolor='yellow', alpha=0.8, edgecolor='black'), transform=ax1.transAxes)
+    ax1.text(0.75, 0.05, f"Pos. RL Symmetry: {symmetry_posterior_RL:.3f}", fontsize=10, ha='center', va='center', bbox=dict(facecolor='yellow', alpha=0.8, edgecolor='black'), transform=ax1.transAxes)
 
     ax1.legend(loc='upper right')
 
