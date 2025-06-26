@@ -48,7 +48,7 @@ def compute_shape(segmentation, angle_correction=True, centerline_path=None, par
                      'orientation',
                      'solidity',
                      'symmetry_RL',
-                     'symmetry_AP'
+                     'symmetry_AP',
                      'length'
                      ]
 
