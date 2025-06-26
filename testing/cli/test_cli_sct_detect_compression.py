@@ -93,7 +93,7 @@ def test_sct_detect_compression_num_of_slices(tmp_path, num_of_slices):
                                       '-o', filename])
     # Test presence of output CSV file
     assert os.path.isfile(filename)
-    df = pd.read_csv(filename)
+    df = pd.read_csv(filename, index_col='Axial slice #')
     assert len(df) == len(slices_to_test)
     for slc in slices_to_test:
-        assert float(df[df['Axial slice #'] == slc]['Compression probability'].values) == pytest.approx(gt[slc])
+        assert df.loc[slc]['Compression probability'] == pytest.approx(gt[slc])
