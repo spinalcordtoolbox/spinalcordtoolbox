@@ -6,7 +6,7 @@
 # See: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4679
 acvl_utils!=0.2.1
 # Avoid 1.6 and 1.7 due to method=restore bug: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4209#issuecomment-1739644328
-dipy!=1.6.*,!=1.7.*,<1.9.0
+dipy==1.8.0
 # PyTorch's Linux distribution is very large due to its GPU support,
 # but we only need that for training models. Our users only need CPU.
 --extra-index-url https://download.pytorch.org/whl/cpu # append_to_freeze
@@ -31,7 +31,7 @@ nilearn
 # 2.4.0/2.4.1 fail during inference due to https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4444
 # 2.4.2 causes empty predictions (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4556)
 # 2.5.2 and above will be tested manually when they are released.
-nnunetv2>2.3.0,!=2.4.*,<=2.5.1
+nnunetv2==2.6.0
 # SCT is compatible, however the upgrade to numpy==2.0.0 broke *many* upstream packages. Let's try again later. See https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4535
 numpy<2
 # - 1.7.0>onnxruntime>=1.5.1 required `brew install libomp` on macOS.
@@ -64,7 +64,7 @@ requirements-parser
 scipy
 scikit-image
 scikit-learn
-totalspineseg
+# totalspineseg
 xlwt
 # - torch<2.6: In January 2025, PyTorch changed the default of `torch.load()` to `weights_only=True`, breaking the
 #              loading of some of our models. We can set `weights_only=False` to retain the old behavior, however
@@ -77,7 +77,7 @@ xlwt
 #              -> https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4781
 # - NOTE: nnunetv2 currently requries `torch>=2.1.2`, meaning that the above restriction results in a range of
 #         `2.1.2 <= torch < 2.3`, i.e. most likely version `2.2.2` will be installed.
-torch<2.3 # append_to_freeze
+torch # changed it because I got : ImportError: cannot import name 'GradScaler' from 'torch' (/home/plbenveniste/spinalcordtoolbox/python/envs/venv_sct/lib/python3.10/site-packages/torch/__init__.py)
 tqdm
 transforms3d
 urllib3
@@ -88,3 +88,4 @@ wquantiles
 # XlxsWriter is needed to write `.xlsx` files, since pandas removed support for the `xlwt` engine
 # Source: https://github.com/pandas-dev/pandas/pull/49296
 xlsxwriter
+wget

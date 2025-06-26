@@ -186,17 +186,17 @@ MODELS = {
         "thr": None,  # Images are already binarized
         "default": False,
     },
-    "totalspineseg": {
-         # NB: Rather than hardcoding the URLs ourselves, use the URLs from the totalspineseg package.
-         # This means that when the totalspineseg package is updated, the URLs will be too, thus triggering
-         # a re-installation of the model URLs
-         "url": dict([meta.split(', ') for meta in metadata('totalspineseg').get_all('Project-URL')
-                      if meta.startswith('Dataset')]),
-         "description": "Instance segmentation of vertebrae, intervertebral discs (IVDs), spinal cord, and spinal canal on multi-contrasts MRI scans.",
-         "contrasts": ["any"],
-         "thr": None,  # Images are already binarized
-         "default": False,
-     },
+    # "totalspineseg": {
+    #      # NB: Rather than hardcoding the URLs ourselves, use the URLs from the totalspineseg package.
+    #      # This means that when the totalspineseg package is updated, the URLs will be too, thus triggering
+    #      # a re-installation of the model URLs
+    #      "url": dict([meta.split(', ') for meta in metadata('totalspineseg').get_all('Project-URL')
+    #                   if meta.startswith('Dataset')]),
+    #      "description": "Instance segmentation of vertebrae, intervertebral discs (IVDs), spinal cord, and spinal canal on multi-contrasts MRI scans.",
+    #      "contrasts": ["any"],
+    #      "thr": None,  # Images are already binarized
+    #      "default": False,
+    #  },
     "model_seg_gm_contrast_region_agnostic": {
         "url": [
             "https://github.com/ivadomed/model-gm-contrast-region-agnostic/releases/download/r20250420/Dataset820_gm-seg.zip"
