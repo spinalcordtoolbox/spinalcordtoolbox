@@ -47,6 +47,8 @@ def compute_shape(segmentation, angle_correction=True, centerline_path=None, par
                      'eccentricity',
                      'orientation',
                      'solidity',
+                     'symmetry_RL',
+                     'symmetry_AP'
                      'length'
                      ]
 
@@ -171,6 +173,34 @@ def compute_shape(segmentation, angle_correction=True, centerline_path=None, par
     return metrics, fit_results
 
 
+def _calculate_symmetry(area1, area2, total_area):
+    """
+    Calculate the symmetry ratio of the spinal cord.
+
+    The symmetry is computed as:
+            symmetry = 1 - |area1 - area2| / (area1 + area2)
+    It ranges from 0 to 1, where:
+            1 indicates perfect symmetry (areas are equal)
+            0 indicates complete asymmetry
+
+    :param area1: Area of the first side (left or anterior)
+    :param area2: Area of the second side (right or posterior)
+    :param total_area: Total area of the spinal cord.
+    :param symmetry_type: Type of symmetry to calculate ('RL' for right-left or 'AP' for anterior-posterior)
+    :return: Symmetry value between 0 and 1
+    """
+    # Sanity checks
+    if area1 <= NEAR_ZERO_THRESHOLD or area2 <= NEAR_ZERO_THRESHOLD:
+        return np.nan
+    if total_area <= NEAR_ZERO_THRESHOLD:
+        return np.nan
+
+    # Calculate symmetry as 1 - |area1 - area2| / (area1 + area2)
+    symmetry = 1.0 - abs(area1 - area2) / total_area
+
+    return symmetry
+
+
 def _properties2d(image, dim, iz):
     """
     Compute shape property of the input 2D image. Accounts for partial volume information.
@@ -224,6 +254,12 @@ def _properties2d(image, dim, iz):
         solidity = np.nan
     else:
         solidity = region.solidity
+
+    # Compute quadrant areas and RL and AP symmetry
+    quadrant_areas, symmetry_RL, symmetry_AP = compute_quadrant_areas(image_crop_r, region.centroid, orientation,
+                                                                      area, diameter_AP, diameter_RL,
+                                                                      dim, upscale=upscale, iz=iz)
+
     # Fill up dictionary
     properties = {
         'area': area,
@@ -233,11 +269,10 @@ def _properties2d(image, dim, iz):
         'eccentricity': region.eccentricity,
         'orientation': orientation,
         'solidity': solidity,  # convexity measure
+        'symmetry_RL': symmetry_RL,  # right-left symmetry
+        'symmetry_AP': symmetry_AP,  # anterior-posterior symmetry
     }
 
-    # Compute quadrant areas
-    quadrant_areas = compute_quadrant_areas(image_crop_r, region.centroid, orientation, diameter_AP, diameter_RL,
-        dim, upscale=upscale, iz=iz)
     properties['quadrant_areas'] = {
         'anterior_left': quadrant_areas.get('Anterior_Left', np.nan),
         'anterior_right': quadrant_areas.get('Anterior_Right', np.nan),
@@ -284,10 +319,11 @@ def _find_AP_and_RL_diameter(major_axis, minor_axis, orientation, dim):
 
 
 def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, float], orientation_deg: float,
-                           diameter_AP: float, diameter_RL: float, dim: list[float], upscale: int = 5,
-                           iz: int = 0) -> dict:
+                           area: float, diameter_AP: float, diameter_RL: float,
+                           dim: list[float], upscale: int, iz: int) -> tuple[dict, float, float]:
     """
     Compute the cross-sectional area of the four spinal cord quadrants in the axial plane.
+    Also calculates the symmetry of the spinal cord in the right-left (RL) and anterior-posterior (AP) directions.
 
     The function rotates the coordinate system based on the spinal cord orientation and
     partitions the segmentation into four quadrants: posterior right, anterior right,
@@ -296,19 +332,21 @@ def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, floa
     :param image_crop_r: 2D upsampled non-binary (due to the angle correction) segmentation mask of the spinal cord.
     :param centroid: (y, x) coordinates of the centroid in the upsampled image space.
     :param orientation_deg: Orientation angle of the spinal cord in degrees (from regionprops).
-    :param diameter_AP: AP diameter of the spinal cord in mm.
-    :param diameter_RL: RL diameter of the spinal cord in mm.
+    :param area: Total area of the spinal cord in mm² (used for symmetry calculations).
+    :param diameter_AP: AP diameter of the spinal cord in mm (used for debug plots).
+    :param diameter_RL: RL diameter of the spinal cord in mm (used for debug plots).
     :param dim: [px, py] pixel dimensions in mm. X,Y respectively correspond to AP, RL.
-    :param upscale: Upsampling factor used during resampling (default = 5).
-    :param iz: Slice index used for filename in debug plot (default = 0).
+    :param upscale: Upsampling factor used during resampling.
+    :param iz: Slice index used for filename in debug plot.
 
-    :return: Dictionary with area in mm² for each quadrant:
-             {
-                'Posterior_Right': float,
-                'Anterior_Right': float,
-                'Posterior_Left': float,
-                'Anterior_Left': float
-             }
+    :return: quadrant_areas (dict), symmetry_RL (float), symmetry_AP (float)
+        quadrant_areas is a dictionary with the area in mm² for each quadrant:
+                 {
+                    'Posterior_Right': float,
+                    'Anterior_Right': float,
+                    'Posterior_Left': float,
+                    'Anterior_Left': float
+                 }
     """
     y0, x0 = centroid
     orientation_rad = np.radians(orientation_deg)
@@ -343,6 +381,14 @@ def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, floa
         'Posterior_Left': np.sum(image_crop_r[post_l_mask]) * pixel_area_mm2,
         'Anterior_Left': np.sum(image_crop_r[ant_l_mask]) * pixel_area_mm2
     }
+
+    # Calculate AP and RL symmetry
+    left_area = quadrant_areas.get('Anterior_Left', 0) + quadrant_areas.get('Posterior_Left', 0)
+    right_area = quadrant_areas.get('Anterior_Right', 0) + quadrant_areas.get('Posterior_Right', 0)
+    symmetry_RL = _calculate_symmetry(left_area, right_area, area)
+    anterior_area = quadrant_areas.get('Anterior_Left', 0) + quadrant_areas.get('Anterior_Right', 0)
+    posterior_area = quadrant_areas.get('Posterior_Left', 0) + quadrant_areas.get('Posterior_Right', 0)
+    symmetry_AP = _calculate_symmetry(anterior_area, posterior_area, area)
 
     # """"DEBUG
     # TODO: consider rotating the figure by 90 degrees to rotate the spinal cord (now R-L is vertical and
@@ -404,4 +450,4 @@ def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, floa
     fig.savefig(f'debug_figures/cord_quadrant_tmp_fig_slice_{iz:03d}.png')
     # """
 
-    return quadrant_areas
+    return quadrant_areas, symmetry_RL, symmetry_AP
