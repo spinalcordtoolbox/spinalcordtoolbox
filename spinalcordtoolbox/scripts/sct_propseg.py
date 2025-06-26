@@ -19,12 +19,14 @@ from scipy.ndimage import label, center_of_mass
 
 from spinalcordtoolbox.image import Image, add_suffix, zeros_like, convert
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, set_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, set_loglevel, LazyLoader
 from spinalcordtoolbox.utils.fs import tmp_create, rmtree, extract_fname, mv, copy
 from spinalcordtoolbox.centerline import optic
 from spinalcordtoolbox.reports.qc import generate_qc
 
 from spinalcordtoolbox.scripts import sct_image
+
+nib = LazyLoader("nib", globals(), "nibabel")
 
 logger = logging.getLogger(__name__)
 
@@ -383,7 +385,6 @@ def func_rescale_header(fname_data, rescale_factor, verbose=0):
     :param rescale_factor:
     :return: fname_data_rescaled
     """
-    import nibabel as nib
     img = nib.load(fname_data)
     # get qform
     qform = img.header.get_qform()

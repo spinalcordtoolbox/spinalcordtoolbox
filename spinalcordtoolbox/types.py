@@ -10,7 +10,7 @@ from operator import itemgetter
 from numpy import dot, cross, array, einsum, stack, zeros
 from numpy.linalg import norm, inv
 import numpy as np
-from scipy.spatial import cKDTree
+import scipy
 
 
 class Coordinate:
@@ -240,7 +240,7 @@ class Centerline:
         self.offset_plans = array([item[3] for item in self.plans_parameters])
 
         # initialization of KDTree for enabling computation of nearest points in centerline
-        self.tree_points = cKDTree(self.points)
+        self.tree_points = scipy.spatial.cKDTree(self.points)
 
         if self.compute_init_distribution:
             self.compute_vertebral_distribution(discs_levels=self.discs_levels, label_reference=self.label_reference)

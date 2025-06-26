@@ -24,14 +24,16 @@ import logging
 from typing import Sequence
 
 from scipy.ndimage import center_of_mass
-import nibabel as nib
+
 import numpy as np
 
 from spinalcordtoolbox.image import Image, zeros_like, compute_cross_corr_3d
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, __data_dir__, set_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, __data_dir__, set_loglevel, LazyLoader
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, copy, rmtree
 from spinalcordtoolbox.scripts import sct_crop_image
+
+nib = LazyLoader("nib", globals(), "nibabel")
 
 logger = logging.getLogger(__name__)
 

@@ -10,14 +10,15 @@ import logging
 import numpy as np
 
 from scipy.interpolate import interp1d
-import nibabel as nib
 
 from spinalcordtoolbox.image import Image, add_suffix, zeros_like, empty_like
 from spinalcordtoolbox.deepseg_.onnx import onnx_inference
 from spinalcordtoolbox.deepseg_.sc import find_centerline, crop_image_around_centerline, uncrop_image, _normalize_data
 from spinalcordtoolbox import resampling
 from spinalcordtoolbox.utils.fs import TempFolder
-from spinalcordtoolbox.utils.sys import sct_dir_local_path
+from spinalcordtoolbox.utils.sys import sct_dir_local_path, LazyLoader
+
+nib = LazyLoader("nib", globals(), "nibabel")
 
 logger = logging.getLogger(__name__)
 
@@ -231,7 +232,7 @@ def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file
     seg_initres_nii = Image(fname_seg_RPI)
 
     if ctr_algo == 'viewer':  # resample and reorient the viewer labels
-        im_labels_viewer_nib = nib.nifti1.Nifti1Image(im_labels_viewer.data, im_labels_viewer.hdr.get_best_affine())
+        im_labels_viewer_nib = nib.Nifti1Image(im_labels_viewer.data, im_labels_viewer.hdr.get_best_affine())
         im_viewer_r_nib = resampling.resample_nib(im_labels_viewer_nib, new_size=input_resolution, new_size_type='mm',
                                                   interpolation='linear')
         im_viewer = Image(np.asanyarray(im_viewer_r_nib.dataobj), hdr=im_viewer_r_nib.header, orientation='RPI',

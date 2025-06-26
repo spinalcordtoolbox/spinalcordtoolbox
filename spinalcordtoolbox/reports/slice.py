@@ -13,12 +13,14 @@ import math
 
 import numpy as np
 from scipy.ndimage import center_of_mass
-from nibabel.nifti1 import Nifti1Image
 
 from spinalcordtoolbox.image import Image, split_img_data
 from spinalcordtoolbox.resampling import resample_nib
 from spinalcordtoolbox.cropping import ImageCropper
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
+from spinalcordtoolbox.utils.sys import LazyLoader
+
+nib = LazyLoader("nib", globals(), "nibabel")
 
 logger = logging.getLogger(__name__)
 
@@ -154,7 +156,7 @@ class Slice(object):
         logger.info(f'Resampling image "{os.path.basename(image.absolutepath)}" to {p_resample}x{p_resample} mm')
         dict_interp = {'im': 'spline', 'seg': 'linear'}
         # Create nibabel object
-        nii = Nifti1Image(image.data, affine=image.hdr.get_best_affine(), header=image.hdr)
+        nii = nib.Nifti1Image(image.data, affine=image.hdr.get_best_affine(), header=image.hdr)
         # If no reference image is provided, resample to specified resolution
         if image_ref is None:
             # Resample each slice to p_resample x p_resample mm (orientation is SAL by convention in QC module)
@@ -169,7 +171,7 @@ class Slice(object):
         # Otherwise, resampling to the space of the reference image
         else:
             # Create nibabel object for reference image
-            nii_ref = Nifti1Image(image_ref.data, affine=image_ref.hdr.get_best_affine(), header=image_ref.hdr)
+            nii_ref = nib.Nifti1Image(image_ref.data, affine=image_ref.hdr.get_best_affine(), header=image_ref.hdr)
             nii_r = resample_nib(nii, image_dest=nii_ref, interpolation=dict_interp[type_img])
         # If resampled image is a segmentation, binarize using threshold at 0.5 for binary segmentation
         # Apply threshold at 0.5 for non-binary segmentation
