@@ -173,7 +173,7 @@ def get_parser():
             File with disc labels. Only use with flag `-vert`.
 
             The input and the discs labels file must in the same voxel coordinate system and must match the dimensions between each other.
-            Discs labels are used to project the vertebral levels to the centerline. 
+            Discs labels are used to project the vertebral levels to the centerline.
         """),
     )
     optional.add_argument(
