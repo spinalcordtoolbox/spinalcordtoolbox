@@ -27,6 +27,7 @@ from spinalcordtoolbox.csa_pmj import get_slices_for_pmj_distance
 from spinalcordtoolbox.metrics_to_PAM50 import interpolate_metrics
 from spinalcordtoolbox.centerline.core import ParamCenterline
 from spinalcordtoolbox.image import add_suffix, splitext, Image
+from spinalcordtoolbox.labels import project_centerline, label_regions_from_reference
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.utils.fs import get_absolute_path
 from spinalcordtoolbox.utils.sys import __sct_dir__, init_sct, sct_progress_bar, set_loglevel
@@ -425,6 +426,14 @@ def main(argv: Sequence[str]):
                                          param_centerline=param_centerline,
                                          verbose=verbose,
                                          remove_temp_files=arguments.r)
+    # Project discs labels to centerline for vertfile
+    if fname_vert_level is not None:
+        discs_projected = project_centerline(Image(fname_segmentation), Image(fname_vert_level))
+        if verbose == 2:
+            discs_projected.save(add_suffix(fname_vert_level, '_projected'))
+        ctl_projected = label_regions_from_reference(Image(fname_segmentation), discs_projected, centerline=True)
+        fname_vert_level = add_suffix(fname_vert_level, '_projected_centerline')
+        ctl_projected.save(fname_vert_level)
     if normalize_pam50:
         fname_vert_level_PAM50 = os.path.join(__data_dir__, 'PAM50', 'template', 'PAM50_levels.nii.gz')
         metrics_PAM50_space = interpolate_metrics(metrics, fname_vert_level_PAM50, fname_vert_level)
