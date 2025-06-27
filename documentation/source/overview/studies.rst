@@ -26,8 +26,8 @@ The following studies have used SCT:
 2025 
 ----
 
--  Zibadinov *et al.* `Neuroimaging phenotype characterization of early aggressive and late severe multiple sclerosis: a case-control study <https://doi.org/10.1093/braincomms/fcaf254>`_ **Brain Commun.** 2025
--  Witt *et al.* `Tract-Specific Analysis of Diffusion MRI at 3T Detects Cervical Spinal Cord Aberrations in Multiple Sclerosis <https://doi.org/10.1162/IMAG.a.72>`_ **Imaging Neurosci.** 2025
+-  Zibadinov *et al.* `Neuroimaging phenotype characterization of early aggressive and late severe multiple sclerosis: a case-control study <https://doi.org/10.1093/braincomms/fcaf254>`_, **Brain Commun.** 2025
+-  Witt *et al.* `Tract-Specific Analysis of Diffusion MRI at 3T Detects Cervical Spinal Cord Aberrations in Multiple Sclerosis <https://doi.org/10.1162/IMAG.a.72>`_, **Imaging Neurosci.** 2025
 -  Connor *et al.* `Reliability of SCIseg Automated Measurement of Midsagittal Tissue Bridges in Spinal Cord Injuries Using an External Dataset <https://doi.org/10.46292/sci25-00015>`_, **Top. Spinal Cord Inj. Rehabil.** 2025
 -  Schading-Sassenhausen *et al.* `Effect of corticospinal and reticulospinal tract damage on spastic muscle tone and mobility: a retrospective observational MRI study <https://doi.org/10.1016/j.ebiom.2025.105824>`_, **eBioMedicine** 2025
 -  Asteggiano *et al.* `Quantitative cervical cord MRI in spinal muscular atrophy: a sensitive imaging biomarker of disease evolution and treatment <https://doi.org/10.1007/s00415-025-13205-x>`_, **J. Neurol.** 2025
