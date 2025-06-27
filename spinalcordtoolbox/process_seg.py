@@ -47,8 +47,6 @@ def compute_shape(segmentation, angle_correction=True, centerline_path=None, par
                      'eccentricity',
                      'orientation',
                      'solidity',
-                     'symmetry_RL',
-                     'symmetry_AP',
                      'length'
                      ]
 
@@ -77,6 +75,15 @@ def compute_shape(segmentation, angle_correction=True, centerline_path=None, par
         'area_quadrant_posterior_right',
     ]
     for key in quadrant_keys:
+        shape_properties[key] = np.full(nz, np.nan, dtype=np.double)
+    # Add symmetry properties
+    symmetry_keys = [
+        'symmetry_RL',
+        'symmetry_AP',
+        'symmetry_anterior_RL',
+        'symmetry_posterior_RL',
+    ]
+    for key in symmetry_keys:
         shape_properties[key] = np.full(nz, np.nan, dtype=np.double)
 
     fit_results = None
@@ -145,6 +152,13 @@ def compute_shape(segmentation, angle_correction=True, centerline_path=None, par
                 shape_properties['area_quadrant_anterior_right'][iz] = qa.get('anterior_right', np.nan)
                 shape_properties['area_quadrant_posterior_left'][iz] = qa.get('posterior_left', np.nan)
                 shape_properties['area_quadrant_posterior_right'][iz] = qa.get('posterior_right', np.nan)
+            # Add symmetry measures if present
+            if 'symmetry_measures' in shape_property:
+                sm = shape_property['symmetry_measures']
+                shape_properties['symmetry_RL'][iz] = sm.get('symmetry_RL', np.nan)
+                shape_properties['symmetry_AP'][iz] = sm.get('symmetry_AP', np.nan)
+                shape_properties['symmetry_anterior_RL'][iz] = sm.get('symmetry_anterior_RL', np.nan)
+                shape_properties['symmetry_posterior_RL'][iz] = sm.get('symmetry_posterior_RL', np.nan)
             # Loop across properties and assign values for function output
             for property_name in property_list:
                 shape_properties[property_name][iz] = shape_property[property_name]
@@ -272,7 +286,7 @@ def _properties2d(image, dim, iz):
         solidity = region.solidity
 
     # Compute quadrant areas and RL and AP symmetry
-    quadrant_areas, symmetry_RL, symmetry_AP = compute_quadrant_areas(image_crop_r, region.centroid, orientation,
+    quadrant_areas, symmetry_measures = compute_quadrant_areas(image_crop_r, region.centroid, orientation,
                                                                       area, diameter_AP, diameter_RL,
                                                                       dim, upscale=upscale, iz=iz)
 
@@ -285,8 +299,13 @@ def _properties2d(image, dim, iz):
         'eccentricity': region.eccentricity,
         'orientation': orientation,
         'solidity': solidity,  # convexity measure
-        'symmetry_RL': symmetry_RL,  # right-left symmetry
-        'symmetry_AP': symmetry_AP,  # anterior-posterior symmetry
+    }
+
+    properties['symmetry_measures'] = {
+        'symmetry_RL': symmetry_measures.get('symmetry_RL', np.nan),    # right-left symmetry
+        'symmetry_AP': symmetry_measures.get('symmetry_AP', np.nan),    # anterior-posterior symmetry
+        'symmetry_anterior_RL': symmetry_measures.get('symmetry_anterior_RL', np.nan),      # anterior RL symmetry
+        'symmetry_posterior_RL': symmetry_measures.get('symmetry_posterior_RL', np.nan),    # posterior RL symmetry
     }
 
     properties['quadrant_areas'] = {
@@ -336,7 +355,7 @@ def _find_AP_and_RL_diameter(major_axis, minor_axis, orientation, dim):
 
 def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, float], orientation_deg: float,
                            area: float, diameter_AP: float, diameter_RL: float,
-                           dim: list[float], upscale: int, iz: int) -> tuple[dict, float, float]:
+                           dim: list[float], upscale: int, iz: int) -> tuple[dict, dict]:
     """
     Compute the cross-sectional area of the four spinal cord quadrants in the axial plane.
     Also calculates the symmetry of the spinal cord in the right-left (RL) and anterior-posterior (AP) directions.
@@ -355,7 +374,7 @@ def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, floa
     :param upscale: Upsampling factor used during resampling.
     :param iz: Slice index used for filename in debug plot.
 
-    :return: quadrant_areas (dict), symmetry_RL (float), symmetry_AP (float)
+    :return: quadrant_areas (dict), symmetry_measures (dict)
         quadrant_areas is a dictionary with the area in mm² for each quadrant:
                  {
                     'Posterior_Right': float,
@@ -363,6 +382,13 @@ def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, floa
                     'Posterior_Left': float,
                     'Anterior_Left': float
                  }
+        symmetry_measures is a dictionary with symmetry measures:
+                {
+                    'symmetry_RL': float,
+                    'symmetry_AP': float,
+                    'symmetry_anterior_RL': float,
+                    'symmetry_posterior_RL': float,
+                }
     """
     y0, x0 = centroid
     orientation_rad = np.radians(orientation_deg)
@@ -407,8 +433,15 @@ def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, floa
     symmetry_AP = _calculate_symmetry(anterior_area, posterior_area, area)
 
     # Calculate anterior RL symmetry and posterior RL symmetry
-    symmetry_anterior_RL = _calculate_symmetry(quadrant_areas['Anterior_Right'], quadrant_areas['Anterior_Left'], anterior_area)
-    symmetry_posterior_RL = _calculate_symmetry(quadrant_areas['Posterior_Right'], quadrant_areas['Posterior_Left'], posterior_area)
+    symmetry_anterior_RL = _calculate_symmetry(quadrant_areas['Anterior_Left'], quadrant_areas['Anterior_Right'], anterior_area)
+    symmetry_posterior_RL = _calculate_symmetry(quadrant_areas['Posterior_Left'], quadrant_areas['Posterior_Right'], posterior_area)
+
+    symmetry_measures = {
+        'symmetry_RL': symmetry_RL,  # right-left symmetry
+        'symmetry_AP': symmetry_AP,  # anterior-posterior symmetry
+        'symmetry_anterior_RL': symmetry_anterior_RL,  # anterior RL symmetry
+        'symmetry_posterior_RL': symmetry_posterior_RL,  # posterior RL symmetry
+    }
 
     # """"DEBUG
     def _add_ellipse(ax, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale, edgecolor='orange',
@@ -547,4 +580,4 @@ def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, floa
     fig.savefig(f'debug_figures/cord_quadrant_tmp_fig_slice_{iz:03d}.png', dpi=150)
     # """
 
-    return quadrant_areas, symmetry_RL, symmetry_AP
+    return quadrant_areas, symmetry_measures
