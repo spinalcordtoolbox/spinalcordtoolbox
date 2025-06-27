@@ -396,7 +396,7 @@ def main(argv: Sequence[str]):
     append = bool(arguments.append)
     levels = arguments.vert
     if '-vertfile' in sys.argv and '-discfile' in sys.argv:
-        logger.error("Both '-vertfile' and '-discfile' were specified. Please only specify one of these options. ")
+        parser.error("Both '-vertfile' and '-discfile' were specified. Please only specify one of these options.")
     if '-discfile' in sys.argv:
         fname_vert_level = arguments.discfile
         levels_disc = True
