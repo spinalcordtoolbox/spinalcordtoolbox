@@ -31,7 +31,7 @@ nilearn
 # 2.4.0/2.4.1 fail during inference due to https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4444
 # 2.4.2 causes empty predictions (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4556)
 # 2.5.2 and above will be tested manually when they are released.
-nnunetv2==2.6.0
+nnunetv2==2.5.2
 # SCT is compatible, however the upgrade to numpy==2.0.0 broke *many* upstream packages. Let's try again later. See https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4535
 numpy<2
 # - 1.7.0>onnxruntime>=1.5.1 required `brew install libomp` on macOS.
@@ -77,7 +77,7 @@ xlwt
 #              -> https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4781
 # - NOTE: nnunetv2 currently requries `torch>=2.1.2`, meaning that the above restriction results in a range of
 #         `2.1.2 <= torch < 2.3`, i.e. most likely version `2.2.2` will be installed.
-torch # changed it because I got : ImportError: cannot import name 'GradScaler' from 'torch' (/home/plbenveniste/spinalcordtoolbox/python/envs/venv_sct/lib/python3.10/site-packages/torch/__init__.py)
+torch<2.3 # changed it because I got : ImportError: cannot import name 'GradScaler' from 'torch' (/home/plbenveniste/spinalcordtoolbox/python/envs/venv_sct/lib/python3.10/site-packages/torch/__init__.py)
 tqdm
 transforms3d
 urllib3
