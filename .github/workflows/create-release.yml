@@ -216,3 +216,13 @@ jobs:
                     install_sct-${{ github.event.inputs.milestone_title }}_macos.sh,\
                     sct_apptainer_${{ github.event.inputs.milestone_title }}.tar.gz"
         draft: true
+
+    - name: Update `stable` docs branch to point to new release
+      # - We use a manual `stable` branch instead of ReadTheDocs' automated `stable` system.
+      # - This allows us to backport simple doc changes (e.g. typo fixes) to our `stable` branch
+      #   without having to create any new tags or releases.
+      # - When a new release is created, it becomes the new base of the `stable` branch.
+      # - NOTE: This will wipe out all the previous backported changes, so make sure to also update `master`
+      #   whenever we backport changes (so that they will be preserved when resetting the branch to the release).
+      run: |
+        git push --force origin refs/tags/"${{ github.event.inputs.milestone_title }}":refs/heads/stable
