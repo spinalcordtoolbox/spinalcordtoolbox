@@ -18,6 +18,7 @@ from typing import Sequence
 import textwrap
 
 import numpy as np
+from skimage.measure import label, regionprops
 
 import spinalcordtoolbox.labels as sct_labels
 from spinalcordtoolbox.image import Image, zeros_like
@@ -118,6 +119,12 @@ def get_parser():
         '-display',
         action="store_true",
         help="Display all labels (i.e. non-zero values)."
+    )
+    func_group.add_argument(
+        '-display-regions',
+        action="store_true",
+        help="Display all regions (i.e. adjacent groups of non-zero values). Good for when `-display` can't be used "
+             "(due to labels not being 'point labels')."
     )
     func_group.add_argument(
         '-increment',
@@ -239,6 +246,9 @@ def main(argv: Sequence[str]):
     elif arguments.display:
         display_voxel(img, verbose)
         return
+    elif arguments.display_regions:
+        display_regions(img, verbose)
+        return
     elif arguments.increment:
         out = sct_labels.increment_z_inverse(img)
     elif arguments.project_centerline is not None:
@@ -318,6 +328,19 @@ def display_voxel(img: Image, verbose: int = 1) -> Sequence[Coordinate]:
 
     printv('All labels (useful syntax):', verbose=verbose)
     printv(useful_notation, verbose=verbose)
+
+
+def display_regions(img: Image, verbose: int = 1):
+    """
+    Display all the regions (i.e. adjacent groups of non-zero values) in the input image.
+    This is useful for when `-display` can't be used (due to labels not being 'point labels').
+    """
+    label_img = label(img.data, connectivity=1, background=0)
+    regions = sorted(regionprops(label_img, intensity_image=img.data), key=lambda region: region.intensity_mean)
+    for region in regions:
+        printv(f'Centroid position=({", ".join("{0:.2f}".format(xyz).rjust(6) for xyz in region.centroid)}) -- '
+               f'Area={str(region.num_pixels).ljust(3)} -- '
+               f'Mean value={region.intensity_mean}', verbose=verbose)
 
 
 def launch_sagittal_viewer(img: Image, labels: Sequence[int], msg: str, previous_points: Sequence[Coordinate] = None, output_img: Image = None) -> Image:
