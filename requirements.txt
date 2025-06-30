@@ -77,7 +77,7 @@ xlwt
 #              -> https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4781
 # - NOTE: nnunetv2 currently requries `torch>=2.1.2`, meaning that the above restriction results in a range of
 #         `2.1.2 <= torch < 2.3`, i.e. most likely version `2.2.2` will be installed.
-torch<2.3
+torch<2.3 # append_to_freeze
 tqdm
 transforms3d
 urllib3
