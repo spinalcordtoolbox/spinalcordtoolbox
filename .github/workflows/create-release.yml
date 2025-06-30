@@ -225,6 +225,4 @@ jobs:
       # - NOTE: This will wipe out all the previous backported changes, so make sure to also update `master`
       #   whenever we backport changes (so that they will be preserved when resetting the branch to the release).
       run: |
-        git checkout stable
-        git reset --hard ${{ github.event.inputs.milestone_title }}
-        git push --force
+        git push --force origin refs/tags/"${{ github.event.inputs.milestone_title }}":refs/heads/stable
