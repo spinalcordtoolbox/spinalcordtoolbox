@@ -100,6 +100,20 @@ def compute_shape(segmentation, angle_correction=True, centerline_path=None, par
                                ncols=80):
         # Extract 2D patch
         current_patch = im_segr.data[:, :, iz]
+        #"""DEBUG
+        import matplotlib.pyplot as plt
+        plt.figure()
+        # NOTE: plt.imshow() displays arrays with shape (rows, columns) with rows along the y-axis (top to bottom)
+        #  and columns along the x-axis (left to right).
+        #  This is different from matrix notation where the first index would be x and second would be y.
+        plt.imshow(current_patch, interpolation='nearest')  # nearest to avoid interpolation artifacts when displaying binary mask
+        plt.xlabel('Posterior-Anterior (PA)')
+        plt.ylabel('Left-Right (LR)')
+        plt.title(f"Patch {iz}")
+        plt.savefig(f'patch_{iz}.png', dpi=300)
+        plt.close()
+        #"""
+
         if angle_correction:
             # Extract tangent vector to the centerline (i.e. its derivative)
             tangent_vect = np.array([deriv[iz][0] * px, deriv[iz][1] * py, pz])
@@ -112,16 +126,27 @@ def compute_shape(segmentation, angle_correction=True, centerline_path=None, par
             # Convert to float64, to avoid problems in image indexation causing issues when applying transform.warp
             current_patch = current_patch.astype(np.float64)
             # TODO: make sure pattern does not go extend outside of image border
+            # NOTE: due to transform.warp, current_patch_scaled is soft (i.e., non-binary)
             current_patch_scaled = transform.warp(current_patch,
                                                   tform.inverse,
                                                   output_shape=current_patch.shape,
                                                   order=1,
                                                   )
+            # """DEBUG
+            import matplotlib.pyplot as plt
+            plt.figure()
+            plt.imshow(current_patch_scaled, interpolation='nearest')
+            plt.xlabel('Posterior-Anterior (PA)')
+            plt.ylabel('Left-Right (LR)')
+            plt.title(f"Patch scaled {iz}")
+            plt.savefig(f'patch_scaled_{iz}.png', dpi=300)
+            plt.close()
+            # """
         else:
             current_patch_scaled = current_patch
             angle_AP_rad, angle_RL_rad = 0.0, 0.0
         # compute shape properties on 2D patch
-        shape_property = _properties2d(current_patch_scaled, [px, py])
+        shape_property = _properties2d(current_patch_scaled, [px, py], iz)
         if shape_property is not None:
             # Add custom fields
             shape_property['angle_AP'] = angle_AP_rad * 180.0 / math.pi
@@ -155,11 +180,12 @@ def compute_shape(segmentation, angle_correction=True, centerline_path=None, par
     return metrics, fit_results
 
 
-def _properties2d(image, dim):
+def _properties2d(image, dim, iz):
     """
     Compute shape property of the input 2D image. Accounts for partial volume information.
     :param image: 2D input image in uint8 or float (weighted for partial volume) that has a single object.
     :param dim: [px, py]: Physical dimension of the image (in mm). X,Y respectively correspond to AP,RL.
+    :param iz: int: index of the slice in the 3D image. Used for debugging.
     :return:
     """
     upscale = 5  # upscale factor for resampling the input image (for better precision)
@@ -188,6 +214,18 @@ def _properties2d(image, dim):
                             np.clip(miny-pad, 0, image_bin.shape[1]): np.clip(maxy+pad, 0, image_bin.shape[1])]
     # Oversample image to reach sufficient precision when computing shape metrics on the binary mask
     image_crop_r = transform.pyramid_expand(image_crop, upscale=upscale, sigma=None, order=1)
+
+    # """DEBUG
+    import matplotlib.pyplot as plt
+    plt.figure()
+    plt.imshow(image_crop_r, interpolation='nearest')
+    plt.xlabel('Posterior-Anterior (PA)')
+    plt.ylabel('Left-Right (LR)')
+    plt.title(f"Image crop r {iz}")
+    plt.savefig(f'image_crop_r_{iz}.png', dpi=300)
+    plt.close()
+    # """
+
     # Binarize image using threshold at 0. Necessary input for measure.regionprops
     image_crop_r_bin = np.array(image_crop_r > 0.5, dtype='uint8')
     # Get all closed binary regions from the image (normally there is only one)
@@ -217,6 +255,52 @@ def _properties2d(image, dim):
         'orientation': orientation,
         'solidity': solidity,  # convexity measure
     }
+
+    #""" DEBUG
+    # Inspired by https://scikit-image.org/docs/0.25.x/auto_examples/segmentation/plot_regionprops.html
+    from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+    from matplotlib.figure import Figure
+    from matplotlib.patches import Ellipse
+    fig = Figure()
+    FigureCanvas(fig)
+    ax = fig.add_subplot(111)
+    ax.imshow(image_crop_r_bin, cmap='gray')
+    y0, x0 = region.centroid
+    orientation_rad = math.radians(orientation)     # convert back to radians
+    radius_ap = (diameter_AP / dim[0]) * 0.5 * upscale
+    radius_rl = (diameter_RL / dim[1]) * 0.5 * upscale
+    dx_ap = radius_ap * np.cos(orientation_rad)
+    dy_ap = radius_ap * np.sin(orientation_rad)
+    dx_rl = radius_rl * -np.sin(orientation_rad)
+    dy_rl = radius_rl * np.cos(orientation_rad)
+    ax.plot([x0 - dx_ap, x0 + dx_ap], [y0 - dy_ap, y0 + dy_ap], 'r-', linewidth=3, label='AP axis')
+    ax.plot([x0 - dx_rl, x0 + dx_rl], [y0 - dy_rl, y0 + dy_rl], 'b-', linewidth=3, label='RL axis')
+    # Add centroid
+    ax.plot(x0, y0, '.g', markersize=15)
+
+    # Add equivalent ellipse (width = minor, height = major), orientation in degrees
+    ellipse = Ellipse(
+        (x0, y0),
+        width=diameter_AP * upscale / dim[0],
+        height=diameter_RL * upscale / dim[1],
+        angle=math.degrees(orientation_rad),
+        edgecolor='orange',
+        facecolor='none',
+        linewidth=2.0,
+        label=""
+    )
+    ax.add_patch(ellipse)
+
+    ax.grid()
+    ax.set_xlabel('y\nPosterior-Anterior (PA)')
+    ax.set_ylabel('x\nLeft-Right (LR)')
+    ax.legend(loc='upper right')
+    # Add title
+    ax.set_title(f"Image crop r bin {iz}")
+    # Tighten layout
+    fig.tight_layout()
+    fig.savefig(f'diameter_AP_RL_tmp_fig_slice_{iz:03d}.png')
+    #"""
 
     return properties
 
