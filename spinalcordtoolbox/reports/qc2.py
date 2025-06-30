@@ -631,7 +631,7 @@ def sct_analyze_lesion(
     fname_input: str,
     fname_label: str,
     fname_sc: str,
-    measure_pd: pd.DataFrame,
+    measure_pd: 'pd.DataFrame',
     argv: Sequence[str],
     path_qc: str,
     dataset: Optional[str],
@@ -829,7 +829,8 @@ def mosaic(img: Image, centers: np.ndarray, radius: tuple[int, int] = (15, 15), 
     return np.block([cropped[i:i+num_col] for i in range(0, len(cropped), num_col)])
 
 
-def add_orientation_labels(ax: mpl_axes.Axes, radius: tuple[int, int] = (15, 15), letters: tuple[str, str, str, str] = ('A', 'P', 'L', 'R')):
+def add_orientation_labels(ax: 'mpl_axes.Axes', radius: tuple[int, int] = (15, 15),
+                           letters: tuple[str, str, str, str] = ('A', 'P', 'L', 'R')):
     """
     Add orientation labels (A, P, L, R) to a figure, yellow with a black outline.
     """
@@ -849,7 +850,7 @@ def add_orientation_labels(ax: mpl_axes.Axes, radius: tuple[int, int] = (15, 15)
         ])
 
 
-def add_segmentation_labels(ax: mpl_axes.Axes, seg_mosaic: np.ndarray, colors: list[str],
+def add_segmentation_labels(ax: 'mpl_axes.Axes', seg_mosaic: np.ndarray, colors: list[str],
                             radius: tuple[int, int] = (15, 15)):
     """
     Add labels corresponding to the value of the segmentation for each slice in the mosaic.
@@ -907,7 +908,7 @@ def equalize_histogram(img: np.ndarray):
     return np.array(c * (max_ - min_) + min_, dtype=img.dtype)
 
 
-def plot_outlines(img: np.ndarray, ax: mpl_axes.Axes, **kwargs):
+def plot_outlines(img: np.ndarray, ax: 'mpl_axes.Axes', **kwargs):
     """
     Draw the outlines of every equal-value area of a 2D Numpy array with Matplotlib.
 
