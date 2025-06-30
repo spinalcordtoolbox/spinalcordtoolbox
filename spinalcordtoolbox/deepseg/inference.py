@@ -14,7 +14,7 @@ import glob
 import multiprocessing as mp
 
 from ivadomed import inference as imed_inference
-from totalspineseg.inference import inference as tss_inference
+# from totalspineseg.inference import inference as tss_inference
 import nibabel as nib
 import numpy as np
 import torch
