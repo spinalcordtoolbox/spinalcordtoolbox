@@ -8,7 +8,7 @@ License: see the file LICENSE
 import logging
 
 import numpy as np
-from skimage.morphology import erosion, dilation, disk, ball, square, cube
+from skimage.morphology import erosion, dilation, disk, ball, footprint_rectangle
 from skimage.filters import threshold_local, threshold_otsu, rank
 from scipy.ndimage import gaussian_filter, gaussian_laplace, label, generate_binary_structure
 
@@ -38,10 +38,9 @@ def _get_footprint(shape, size, dim):
     :return: numpy array: footprint
     """
     # TODO: enable custom footprint
-    if shape == 'square':
-        footprint = square(size)
-    elif shape == 'cube':
-        footprint = cube(size)
+    if shape in ['square', 'cube']:
+        n_dim = {'square': 2, 'cube': 3}[shape]
+        footprint = footprint_rectangle(shape=[size] * n_dim)
     elif shape == 'disk':
         footprint = disk(size)
     elif shape == 'ball':
