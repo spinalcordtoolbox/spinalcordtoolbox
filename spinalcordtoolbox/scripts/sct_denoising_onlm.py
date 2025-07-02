@@ -10,7 +10,6 @@ from time import time
 from typing import Sequence
 
 import numpy as np
-import nibabel as nib
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.utils.fs import extract_fname
@@ -18,6 +17,7 @@ from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel, LazyLoad
 from spinalcordtoolbox.utils.shell import Metavar, SCTArgumentParser, display_viewer_syntax
 
 nlmeans = LazyLoader("nlmeans", globals(), "dipy.denoise.nlmeans")
+nib = LazyLoader("nib", globals(), "nibabel")
 
 
 # DEFAULT PARAMETERS

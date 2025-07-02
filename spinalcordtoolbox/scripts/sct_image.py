@@ -11,9 +11,6 @@ from typing import Sequence
 import textwrap
 
 import numpy as np
-from nibabel import Nifti1Image
-from nibabel.processing import resample_from_to
-import nibabel as nib
 
 from spinalcordtoolbox.scripts import sct_apply_transfo, sct_resample
 from spinalcordtoolbox.image import (Image, concat_data, add_suffix, change_orientation, split_img_data, pad_image,
@@ -22,8 +19,11 @@ from spinalcordtoolbox.image import (Image, concat_data, add_suffix, change_orie
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.utils.shell import (SCTArgumentParser, Metavar, display_viewer_syntax, ActionCreateFolder,
                                            list_type)
-from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel, LazyLoader
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, rmtree
+
+nib = LazyLoader("nib", globals(), "nibabel")
+nib_processing = LazyLoader("nib_processing", globals(), "nibabel.processing")
 
 DIM_LIST = ['x', 'y', 'z', 't']
 
@@ -466,8 +466,8 @@ def displacement_to_abs_fsl(disp_im, src, tgt=None):
         hdr = disp_im.header.copy()
         shp = disp_im.data.shape
         hdr.set_data_shape(shp)
-        disp_nib = Nifti1Image(disp_im.data.copy(), aff(disp_im), hdr)
-        disp_resampled = resample_from_to(disp_nib, (shp, aff(tgt)), order=1)
+        disp_nib = nib.Nifti1Image(disp_im.data.copy(), aff(disp_im), hdr)
+        disp_resampled = nib_processing.resample_from_to(disp_nib, (shp, aff(tgt)), order=1)
         disp_im.data = disp_resampled.dataobj.copy()
         disp_im.header = disp_resampled.header.copy()
 

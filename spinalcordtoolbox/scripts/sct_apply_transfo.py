@@ -14,10 +14,13 @@ import functools
 from typing import Sequence
 import textwrap
 
+import numpy as np
+
 from spinalcordtoolbox.image import Image, generate_output_file, add_suffix
 from spinalcordtoolbox.cropping import ImageCropper
 from spinalcordtoolbox.math import dilate
 from spinalcordtoolbox.labels import cubic_to_point
+from spinalcordtoolbox.resampling import resample_nib
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, get_interpolation, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, set_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, rmtree, extract_fname, copy
@@ -63,10 +66,18 @@ def get_parser():
         default=[])
     optional.add_argument(
         "-crop",
-        help="Crop Reference. 0: no reference, 1: sets background to 0, 2: use normal background.",
+        help="Crop the output image using the extents of the warping field.\n"
+             " - 0: no cropping (WARNING: may result in duplicated output if the destination image's FOV is "
+             "      larger than the FOV of the warping field)\n"
+             " - 1: crop using a rectangular bounding box around the warping field (setting outside voxels to 0)\n"
+             " - 2: crop using a rectangular bounding box around the warping field (changing the size of the output "
+             "      image)\n"
+             " - 3: mask the output image (setting outside voxels to 0) using the warping field directly instead of "
+             "      using a rectangular bounding box around the warping field. Useful if Option 1 does not zero out "
+             "      enough voxels.",
         type=int,
         default=0,
-        choices=(0, 1, 2))
+        choices=(0, 1, 2, 3))
     optional.add_argument(
         "-o",
         help='Filename to use for the output image (i.e. the transformed image). Example: `out.nii.gz`',
@@ -314,17 +325,16 @@ class Transform:
         warping_field = fname_warp_list_invert[-1]
         # If the last transformation is not an affine transfo, we need to compute the matrix space of the concatenated
         # warping field
-        if not isLastAffine and crop_reference in [1, 2]:
+        if not isLastAffine and crop_reference in [1, 2, 3]:
             printv('Last transformation is not affine.')
+            img_out = Image(fname_out)
+            # Extract only the first n dims of the warping field by creating a dummy image with the correct shape
+            img_warp = Image(warping_field)
+            warp_shape = img_warp.data.shape[:int(dim)]  # dim = {'2', '3', '4'}
+            img_warp_ndim = Image(np.ones(warp_shape), hdr=img_warp.hdr)
             if crop_reference in [1, 2]:
-                # Extract only the first ndim of the warping field
-                img_warp = Image(warping_field)
-                if dim == '2':
-                    img_warp_ndim = Image(img_src.data[:, :], hdr=img_warp.hdr)
-                elif dim in ['3', '4']:
-                    img_warp_ndim = Image(img_src.data[:, :, :], hdr=img_warp.hdr)
                 # Set zero to everything outside the warping field
-                cropper = ImageCropper(Image(fname_out))
+                cropper = ImageCropper(img_out)
                 cropper.get_bbox_from_ref(img_warp_ndim)
                 if crop_reference == 1:
                     printv('Cropping strategy is: keep same matrix size, put 0 everywhere around warping field')
@@ -333,7 +343,12 @@ class Transform:
                     printv('Cropping strategy is: crop around warping field (the size of warping field will '
                            'change)')
                     img_out = cropper.crop()
-                img_out.save(fname_out)
+            elif crop_reference == 3:
+                # Resample the warping field mask (in reference coordinates) into the space of the image to be cropped
+                img_ref_r = resample_nib(img_warp_ndim, image_dest=img_out, interpolation='nn', mode='constant')
+                # Simply mask the output image instead of doing a bounding-box-based crop
+                img_out.data = img_out.data * img_ref_r.data
+            img_out.save(fname_out)
 
 
 # MAIN

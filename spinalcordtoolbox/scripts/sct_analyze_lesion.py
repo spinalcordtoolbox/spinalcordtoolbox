@@ -720,14 +720,13 @@ class AnalyzeLesion:
             self.distrib_matrix_dct[sheet_name][label_name] = \
                 self.distrib_matrix_dct[sheet_name][column_names_to_sum].sum(axis=1)
 
-        # Add the total row
-        self.distrib_matrix_dct[sheet_name] = self.distrib_matrix_dct[sheet_name].append(
-            self.distrib_matrix_dct[sheet_name].sum(numeric_only=True, axis=0),
-            ignore_index=True
-        )
-        self.distrib_matrix_dct[sheet_name].iloc[
-            -1, self.distrib_matrix_dct[sheet_name].columns.get_loc('row')
-        ] = f'total % (all {self.row_name})'
+        # Add the total row to the end
+        total_row = self.distrib_matrix_dct[sheet_name].sum(numeric_only=True)
+        total_row['row'] = f'total % (all {self.row_name})'
+        self.distrib_matrix_dct[sheet_name] = pd.concat([
+            self.distrib_matrix_dct[sheet_name],
+            total_row.to_frame().T
+        ])
 
     def __regroup_per_tracts(self, vol_dct, tracts):
         res_mask = [vol_dct[t][0] for t in vol_dct if t in tracts]
