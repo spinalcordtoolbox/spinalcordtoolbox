@@ -75,41 +75,71 @@ if %SCT_INSTALL_TYPE%==in-place (
   set SCT_DIR=%USERPROFILE%\sct_%SCT_VERSION%
 )
 
-rem Allow user to set a custom installation directory
-:while_loop_sct_dir
+rem Validate the default installation directory 
+rem If it's not valid, don't propose it to the user
+call :validate_sct_dir || goto :while_prompt_custom_path
+
+:while_prompt_default_path
   echo:
   echo ### SCT will be installed here: [%SCT_DIR%]
-  set keep_default_path=unchosen
-  set new_install=%SCT_DIR%
-  goto :validate_path
-  :while_loop_path_agreement
-    set /p keep_default_path="### Do you agree? [y]es/[n]o: "
-    rem If the value remains unchosen, assume non-interactive shell and avoid infinite loop
-    if ["%keep_default_path%"]==["unchosen"] (
-      set keep_default_path=yes
-    )
-    echo %keep_default_path% | findstr /b [YyNn] >nul 2>&1 || goto :while_loop_path_agreement
-  :done_while_loop_path_agreement
 
-  echo %keep_default_path% | findstr /b [Yy] >nul 2>&1
-  if %errorlevel% EQU 0 (
-    rem user accepts default path, so exit loop
-    goto :done_while_loop_sct_dir
-  )
+  rem The non-interactive default is to accept
+  set keep_default_path=y
+  set /p keep_default_path="### Do you agree? [y]es/[n]o: "
 
-  :prompt_new_path
-  rem user enters new path
+  rem Either the installation is non-interactive,
+  rem or the user accepts the default path
+  if /i ["%keep_default_path%"]==["y"] goto :done_sct_dir
+
+  rem The user wants a non-default path
+  if /i ["%keep_default_path%"]==["n"] goto :while_prompt_custom_path
+goto :while_prompt_default_path
+
+:while_prompt_custom_path
   echo:
   echo ### Choose install directory.
-  set /p new_install="### Warning^! Give full path ^(e.g. C:\Users\username\sct_v3.0^): "
-  if ["%new_install%"]==["%SCT_DIR%"] (
-    rem If no new input, then we're in a non-interactive shell with an invalid default path, so we must halt
-    echo ### No new path provided. Exiting installation.
+
+  rem The non-interactive default is to fail the installation
+  set SCT_DIR=non-interactive
+  set /p SCT_DIR="### Warning^! Give full path ^(e.g. C:\Users\username\sct_v3.0^): "
+
+  if ["%SCT_DIR%"]==["non-interactive"] (
+    rem The installation is non-interactive, and the default path is invalid
+    echo ### ERROR: The default installation directory is invalid.
+    echo            Please run the installer in interactive mode instead.
     goto error
   )
-  goto :validate_path
 
-:done_while_loop_sct_dir
+  rem Ask again if the given path is invalid
+  call :validate_sct_dir && goto :done_sct_dir
+goto :while_prompt_custom_path
+
+:validate_sct_dir
+rem Validate the user's choice of path in SCT_DIR
+rem Check for an empty path
+if ["%SCT_DIR%"]==[] exit /b 1
+rem Check for spaces
+rem TODO: This may no longer be necessary as of a patch made to Mamba in Dec. 2024!
+if not "%SCT_DIR%"=="%SCT_DIR: =%" (
+  echo ### WARNING: Install directory %SCT_DIR% contains spaces.
+  echo ### SCT uses conda, which does not permit spaces in installation paths.
+  echo ### More details can be found here: https://github.com/ContinuumIO/anaconda-issues/issues/716
+  echo:
+  exit /b 1
+)
+rem Check number of characters in path
+set tmpfile_len=%TMP_DIR%\tmpfile_len.txt
+echo %SCT_DIR%> !tmpfile_len!
+for /F "usebackq" %%a in ('!tmpfile_len!') do set /a size=%%~za - 2
+if !size! GTR 113 (
+  echo ### WARNING: '%SCT_DIR%' exceeds path length limit ^(!size! ^> 113^). Please choose a shorter path.
+  exit /b 1
+)
+rem We passed all the checks
+exit /b 0
+
+:done_sct_dir
+rem At this point, SCT_DIR is a valid path accepted by the user
 
 rem Create directory
 if not exist %SCT_DIR% (
@@ -217,40 +247,6 @@ echo   --^> https://forum.spinalcordmri.org/c/sct
 
 rem Return to initial directory and deactivate the virtual environment
 goto exit
-
-:validate_path
-rem Validate the user's choice of path
-rem If no input, asking again, and again, and again
-if ["%new_install%"]==[] (
-  set keep_default_path=no
-  goto :prompt_new_path
-)
-rem Check user-selected path for spaces
-rem TODO: This may no longer be true as of a patch made to Mamba in Dec. 2024!
-if not "%new_install%"=="%new_install: =%" (
-  echo ### WARNING: Install directory %new_install% contains spaces.
-  echo ### SCT uses conda, which does not permit spaces in installation paths.
-  echo ### More details can be found here: https://github.com/ContinuumIO/anaconda-issues/issues/716
-  echo:
-  set keep_default_path=no
-  goto :prompt_new_path
-)
-rem check number of characters in path
-set tmpfile_len=%TMP_DIR%\tmpfile_len.txt
-echo %new_install%> !tmpfile_len!
-for /F "usebackq" %%a in ('!tmpfile_len!') do set /a size=%%~za - 2
-if !size! GTR 113 (
-  echo ### WARNING: '%new_install%' exceeds path length limit ^(!size! ^> 113^). Please choose a shorter path.
-  set keep_default_path=no
-  goto :prompt_new_path
-)
-if "%keep_default_path%" == "unchosen" (
-  rem First time validating path so jump to user prompt
-  goto :while_loop_path_agreement
-) else (
-  set SCT_DIR=%new_install%
-  goto :done_while_loop_sct_dir
-)
 
 :error
 set cached_errorlevel=%errorlevel%
