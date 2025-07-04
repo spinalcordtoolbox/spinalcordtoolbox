@@ -395,22 +395,24 @@ def main(argv: Sequence[str]):
     file_out = os.path.abspath(arguments.o)
     append = bool(arguments.append)
     levels = arguments.vert
+    fname_vert_level = None
+    normalize_pam50 = arguments.normalize_PAM50
     if arguments.vertfile is not None and arguments.discfile is not None:
         parser.error("Both '-vertfile' and '-discfile' were specified. Please only specify one of these options.")
     if arguments.discfile is not None:
         fname_vert_level = arguments.discfile
-    else:
+    elif arguments.vertfile is not None:
         fname_vert_level = arguments.vertfile
-    normalize_pam50 = arguments.normalize_PAM50
-    if not os.path.isfile(fname_vert_level):
-        logger.warning(f"Vertebral level file {fname_vert_level} does not exist. Vert level information will "
-                       f"not be displayed. To use vertebral level information, you may need to run "
-                       f"`sct_warp_template` to generate the appropriate level file in your working directory.")
-        if normalize_pam50:
-            parser.error("Option '-normalize-PAM50' requires option '-vertfile'.")
-        fname_vert_level = None  # Discard the default '-vertfile', so that we don't attempt to find vertebral levels
-        if levels:
-            raise FileNotFoundError("The vertebral level file must exist to use `-vert` to group by vertebral level.")
+    elif normalize_pam50 and fname_vert_level is None:
+        parser.error("Option '-normalize-PAM50' requires option '-vertfile' or '-discfile'.")
+    elif levels:
+        parser.error("Option '-normalize-PAM50' requires option '-vertfile' or '-discfile'.")
+    if fname_vert_level is not None:
+        if not os.path.isfile(fname_vert_level):
+            raise FileNotFoundError(f"Vertebral level file {fname_vert_level} does not exist. Vert level information will "
+                                    f"not be displayed. To use vertebral level information, you may need to run "
+                                    f"`sct_warp_template` to generate the appropriate level file in your working directory.")
+            fname_vert_level = None  # Discard the default '-vertfile', so that we don't attempt to find vertebral levels
     perlevel = bool(arguments.perlevel)
     slices = arguments.z
     perslice = bool(arguments.perslice)
