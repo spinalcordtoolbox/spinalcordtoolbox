@@ -21,11 +21,13 @@ License: see the file LICENSE
 import os
 import logging
 
-from nibabel import load
 import numpy as np
 from scipy.optimize import minimize
 
 from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.utils.sys import LazyLoader
+
+nib = LazyLoader("nib", globals(), "nibabel")
 
 logger = logging.getLogger(__name__)
 
@@ -130,8 +132,8 @@ def real_optimization_parameters(param_from_optimizer, initial_param=0, initial_
 
 def Metric_Images(imageA, imageB, type=''):
 
-    data_A_list = np.asanyarray(load(imageA).dataobj).tolist()
-    data_B_list = np.asanyarray(load(imageA).dataobj).tolist()
+    data_A_list = np.asanyarray(nib.load(imageA).dataobj).tolist()
+    data_B_list = np.asanyarray(nib.load(imageA).dataobj).tolist()
 
     # Define both list of intensity
     list_A = []
