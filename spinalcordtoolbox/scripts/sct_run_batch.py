@@ -345,6 +345,8 @@ def run_single(subj_dir, script, script_args, path_segmanual, path_data, path_da
             print(f"An error occurred while processing subject '{subject_session}'. "
                   f"Renaming log file {log_file} to {err_file}.")
             os.rename(log_file, err_file)
+            with open(err_file, 'a') as err_log:
+                print(f"Error: {e}", file=err_log)
 
         if process_suceeded or continue_on_error:
             return res
