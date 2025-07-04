@@ -395,14 +395,12 @@ def main(argv: Sequence[str]):
     file_out = os.path.abspath(arguments.o)
     append = bool(arguments.append)
     levels = arguments.vert
-    if '-vertfile' in sys.argv and '-discfile' in sys.argv:
+    if arguments.vertfile is not None and arguments.discfile is not None:
         parser.error("Both '-vertfile' and '-discfile' were specified. Please only specify one of these options.")
-    if '-discfile' in sys.argv:
+    if arguments.discfile is not None:
         fname_vert_level = arguments.discfile
-        levels_disc = True
     else:
         fname_vert_level = arguments.vertfile
-        levels_disc = False
     normalize_pam50 = arguments.normalize_PAM50
     if not os.path.isfile(fname_vert_level):
         logger.warning(f"Vertebral level file {fname_vert_level} does not exist. Vert level information will "
@@ -446,7 +444,7 @@ def main(argv: Sequence[str]):
                                          verbose=verbose,
                                          remove_temp_files=arguments.r)
     # Project discs labels to centerline for discfile
-    if levels_disc:
+    if arguments.discfile is not None:
         discs_projected = project_centerline(Image(fname_segmentation), Image(fname_vert_level))
         if verbose == 2:
             discs_projected.save(add_suffix(fname_vert_level, '_projected'))
