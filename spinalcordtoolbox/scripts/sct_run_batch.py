@@ -31,7 +31,7 @@ import yaml
 import psutil
 
 from spinalcordtoolbox.utils import csi_filter
-from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_open
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_open, printv
 from spinalcordtoolbox.utils.sys import send_email, init_sct, __get_commit, __get_git_origin, __version__, __sct_dir__, set_loglevel
 from spinalcordtoolbox.utils.fs import Tee
 
@@ -579,11 +579,12 @@ def main(argv: Sequence[str]):
 
     if len(fails) == 0:
         status_message = '\nHooray! your batch completed successfully :-)\n'
+        printv(status_message, verbose=verbose, type='info')
     else:
         status_message = ('\nYour batch completed but some subjects may have not completed '
                           'successfully, please consult the logs for:\n'
                           '{}\n'.format('\n'.join(fails)))
-    print(status_message)
+        printv(status_message, verbose=verbose, type='error')
 
     # Display timing
     duration = end - start
