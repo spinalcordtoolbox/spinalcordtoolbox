@@ -27,6 +27,7 @@ from spinalcordtoolbox.csa_pmj import get_slices_for_pmj_distance
 from spinalcordtoolbox.metrics_to_PAM50 import interpolate_metrics
 from spinalcordtoolbox.centerline.core import ParamCenterline
 from spinalcordtoolbox.image import add_suffix, splitext, Image
+from spinalcordtoolbox.labels import project_centerline, label_regions_from_reference
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.utils.fs import get_absolute_path
 from spinalcordtoolbox.utils.sys import __sct_dir__, init_sct, sct_progress_bar, set_loglevel
@@ -156,11 +157,22 @@ def get_parser():
     optional.add_argument(
         '-vertfile',
         metavar=Metavar.str,
-        default=os.path.join('.', 'label', 'template', 'PAM50_levels.nii.gz'),
         help=textwrap.dedent("""
             Vertebral labeling file. Only use with flag `-vert`.
 
-            The input and the vertebral labelling file must in the same voxel coordinate system and must match the dimensions between each other.
+            The input and the vertebral labelling file must be in the same voxel coordinate system and must match the dimensions between each other.
+            Example: ./label/template/PAM50_levels.nii.gz
+            This flag will be deprecated in favor of -discfile in the future.
+        """),
+    )
+    optional.add_argument(
+        '-discfile',
+        metavar=Metavar.str,
+        help=textwrap.dedent("""
+            File with single-voxel labels identifying the intervertebral discs. Used with `-vert` to
+            aggregate metrics within vertebral levels. Disc labels will be projected onto the spinal
+            cord to identify vertebral levels.
+            Example: ./label/template/PAM50_label_disc.nii.gz
         """),
     )
     optional.add_argument(
@@ -382,17 +394,24 @@ def main(argv: Sequence[str]):
     file_out = os.path.abspath(arguments.o)
     append = bool(arguments.append)
     levels = arguments.vert
-    fname_vert_level = arguments.vertfile
+    fname_vert_level = None
     normalize_pam50 = arguments.normalize_PAM50
-    if not os.path.isfile(fname_vert_level):
-        logger.warning(f"Vertebral level file {fname_vert_level} does not exist. Vert level information will "
-                       f"not be displayed. To use vertebral level information, you may need to run "
-                       f"`sct_warp_template` to generate the appropriate level file in your working directory.")
-        if normalize_pam50:
-            parser.error("Option '-normalize-PAM50' requires option '-vertfile'.")
-        fname_vert_level = None  # Discard the default '-vertfile', so that we don't attempt to find vertebral levels
-        if levels:
-            raise FileNotFoundError("The vertebral level file must exist to use `-vert` to group by vertebral level.")
+    if arguments.vertfile is not None and arguments.discfile is not None:
+        parser.error("Both '-vertfile' and '-discfile' were specified. Please only specify one of these options.")
+    if arguments.discfile is not None:
+        fname_vert_level = arguments.discfile
+    elif arguments.vertfile is not None:
+        fname_vert_level = arguments.vertfile
+    elif normalize_pam50 and fname_vert_level is None:
+        parser.error("Option '-normalize-PAM50' requires option '-vertfile' or '-discfile'.")
+    elif levels:
+        parser.error("Option '-normalize-PAM50' requires option '-vertfile' or '-discfile'.")
+    if fname_vert_level is not None:
+        if not os.path.isfile(fname_vert_level):
+            raise FileNotFoundError(f"Vertebral level file {fname_vert_level} does not exist. Vert level information will "
+                                    f"not be displayed. To use vertebral level information, specify either -vertfile or -discfile."
+                                    f"For generating the required files, please review sct_process_segmentation -h for these arguments.")
+            fname_vert_level = None  # Discard the default '-vertfile', so that we don't attempt to find vertebral levels
     perlevel = bool(arguments.perlevel)
     slices = arguments.z
     perslice = bool(arguments.perslice)
@@ -425,6 +444,14 @@ def main(argv: Sequence[str]):
                                          param_centerline=param_centerline,
                                          verbose=verbose,
                                          remove_temp_files=arguments.r)
+    # Project discs labels to centerline for discfile
+    if arguments.discfile is not None:
+        discs_projected = project_centerline(Image(fname_segmentation), Image(fname_vert_level))
+        if verbose == 2:
+            discs_projected.save(add_suffix(fname_vert_level, '_projected'))
+        ctl_projected = label_regions_from_reference(Image(fname_segmentation), discs_projected, centerline=True)
+        fname_vert_level = add_suffix(fname_vert_level, '_projected_centerline')
+        ctl_projected.save(fname_vert_level)
     if normalize_pam50:
         fname_vert_level_PAM50 = os.path.join(__data_dir__, 'PAM50', 'template', 'PAM50_levels.nii.gz')
         metrics_PAM50_space = interpolate_metrics(metrics, fname_vert_level_PAM50, fname_vert_level)
