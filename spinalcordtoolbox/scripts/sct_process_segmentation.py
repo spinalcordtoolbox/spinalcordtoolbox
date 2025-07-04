@@ -161,8 +161,9 @@ def get_parser():
         help=textwrap.dedent("""
             Vertebral labeling file. Only use with flag `-vert`.
 
-            The input and the vertebral labelling file must in the same voxel coordinate system and must match the dimensions between each other.
-            This flag will be depreciated for -discfile in the future
+            The input and the vertebral labelling file must be in the same voxel coordinate system and must match the dimensions between each other.
+            Example: ./label/template/PAM50_levels.nii.gz
+            This flag will be deprecated in favor of -discfile in the future.
         """),
     )
     optional.add_argument(
@@ -172,7 +173,8 @@ def get_parser():
         help=textwrap.dedent("""
             File with disc labels. Only use with flag `-vert`.
 
-            The input and the discs labels file must in the same voxel coordinate system and must match the dimensions between each other.
+            The input and the discs labels file must be in the same voxel coordinate system and must match the dimensions between each other.
+            Example: ./label/template/PAM50_label_disc.nii.gz
             Discs labels are used to project the vertebral levels to the centerline.
         """),
     )
