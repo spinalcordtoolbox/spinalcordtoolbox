@@ -157,7 +157,6 @@ def get_parser():
     optional.add_argument(
         '-vertfile',
         metavar=Metavar.str,
-        default=os.path.join('.', 'label', 'template', 'PAM50_levels.nii.gz'),
         help=textwrap.dedent("""
             Vertebral labeling file. Only use with flag `-vert`.
 
@@ -169,7 +168,6 @@ def get_parser():
     optional.add_argument(
         '-discfile',
         metavar=Metavar.str,
-        default=os.path.join('.', 'label', 'template', 'PAM50_label_disc.nii.gz'),
         help=textwrap.dedent("""
             File with disc labels. Only use with flag `-vert`.
 
