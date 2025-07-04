@@ -169,11 +169,10 @@ def get_parser():
         '-discfile',
         metavar=Metavar.str,
         help=textwrap.dedent("""
-            File with disc labels. Only use with flag `-vert`.
-
-            The input and the discs labels file must be in the same voxel coordinate system and must match the dimensions between each other.
+            File with single-voxel labels identifying the intervertebral discs. Used with `-vert` to
+            aggregate metrics within vertebral levels. Disc labels will be projected onto the spinal
+            cord to identify vertebral levels.
             Example: ./label/template/PAM50_label_disc.nii.gz
-            Discs labels are used to project the vertebral levels to the centerline.
         """),
     )
     optional.add_argument(
