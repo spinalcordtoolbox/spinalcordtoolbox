@@ -1129,12 +1129,12 @@ def get_max_axial_radius(img):
     """
     # In Axial plane, the radius is the maximum width/height of the spinal cord mask dilated by 20% or 15, whichever is larger.
     dilation = 1.2
-    default = 15
-    heights = [np.max(np.where(slice)[0]) - np.min(np.where(slice)[0]) if np.sum(slice) > 0 else 0 for slice in img.data]
-    widths = [np.max(np.where(slice)[1]) - np.min(np.where(slice)[1]) if np.sum(slice) > 0 else 0 for slice in img.data]
-    heights = [int((h * dilation)//2) for h in heights]
-    widths = [int((w * dilation)//2) for w in widths]
-    return max(default, max(heights)), max(default, max(widths))
+    radius_default = 15
+    heights = [np.max(np.where(slc)[0]) - np.min(np.where(slc)[0]) if np.sum(slc) > 0 else 0 for slc in img.data]
+    widths = [np.max(np.where(slc)[1]) - np.min(np.where(slc)[1]) if np.sum(slc) > 0 else 0 for slc in img.data]
+    radii_h = [int((h * dilation)//2) for h in heights]
+    radii_w = [int((w * dilation)//2) for w in widths]
+    return max(radius_default, max(radii_h)), max(radius_default, max(radii_w))
 
 
 def get_max_sagittal_radius(img):
