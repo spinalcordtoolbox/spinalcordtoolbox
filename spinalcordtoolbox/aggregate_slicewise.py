@@ -561,7 +561,7 @@ def save_as_csv(agg_metric, fname_out, fname_in=None, append=False):
     #  without refactoring the code with OrderedDict.
     list_item = ['Label', 'Size [vox]', 'MEAN(area)', 'STD(area)', 'MEAN(angle_AP)', 'STD(angle_AP)', 'MEAN(angle_RL)',
                  'STD(angle_RL)', 'MEAN(diameter_AP)', 'STD(diameter_AP)', 'MEAN(diameter_RL)', 'STD(diameter_RL)',
-                 'MEAN(eccentricity)', 'STD(eccentricity)', 'MEAN(orientation)', 'STD(orientation)',
+                 'MEAN(eccentricity)', 'STD(eccentricity)', 'MEAN(angle_hog)', 'MEAN(orientation)', 'STD(orientation)',
                  'MEAN(solidity)', 'STD(solidity)', 'SUM(length)', 'WA()', 'BIN()', 'ML()', 'MAP()', 'MEDIAN()',
                  'STD()', 'MAX()']
     # TODO: if append=True but file does not exist yet, raise warning and set append=False

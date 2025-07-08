@@ -15,6 +15,7 @@ from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.aggregate_slicewise import Metric
 from spinalcordtoolbox.centerline.core import get_centerline
 from spinalcordtoolbox.resampling import resample_nib
+from spinalcordtoolbox.registration.algorithms import compute_pca, find_angle_hog
 from spinalcordtoolbox.utils.shell import parse_num_list_inv
 from spinalcordtoolbox.utils.sys import sct_progress_bar
 
@@ -41,6 +42,7 @@ def compute_shape(segmentation, image, angle_correction=True, centerline_path=No
     """
     # List of properties to output (in the right order)
     property_list = ['area',
+                     'angle_hog',
                      'angle_AP',
                      'angle_RL',
                      'diameter_AP',
@@ -140,6 +142,13 @@ def compute_shape(segmentation, image, angle_correction=True, centerline_path=No
             angle_AP_rad, angle_RL_rad = 0.0, 0.0
         # compute shape properties on 2D patch
         shape_property = _properties2d(current_patch_scaled, [px, py])
+        # compute PCA and get center or mass based on segmentation
+        coord_src, pca_src, centermass_src = compute_pca(current_patch_scaled)
+        # Finds the angle of the image
+        angle_hog, conf_src = find_angle_hog(current_patch_im_scaled, centermass_src,
+                                             px, py, angle_range=40)    # 40 is taken from registration.algorithms.register2d_centermassrot
+        shape_property['angle_hog'] = angle_hog * 180.0 / math.pi  # convert to degrees
+
         if shape_property is not None:
             # Add custom fields
             shape_property['angle_AP'] = angle_AP_rad * 180.0 / math.pi
