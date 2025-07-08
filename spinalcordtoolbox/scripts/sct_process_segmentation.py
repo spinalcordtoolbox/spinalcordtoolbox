@@ -409,8 +409,8 @@ def main(argv: Sequence[str]):
         fname_vert_level = os.path.join('.', 'label', 'template', 'PAM50_levels.nii.gz')
     if not os.path.isfile(fname_vert_level):
         logger.warning(f"Vertebral level file {fname_vert_level} does not exist. Vert level information will "
-                       f"not be displayed. To use vertebral level information, you may need to run "
-                       f"`sct_warp_template` to generate the appropriate level file in your working directory.")
+                       f"not be displayed. To use vertebral level information, specify either -vertfile or -discfile."
+                       f"For generating the required files, please review sct_process_segmentation -h for these arguments.")
         # Discard the default '-vertfile', so that we don't attempt to find vertebral levels
         fname_vert_level = None
         # If `fname_vert_level` is invalid but vert levels are required, raise an error.
