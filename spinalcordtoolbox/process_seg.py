@@ -174,7 +174,7 @@ def compute_shape(segmentation, image, angle_correction=True, centerline_path=No
         ax.arrow(center[0], center[1], -np.sin(angle) * scale, -np.cos(angle) * scale, color='blue', width=0.25,
                  head_width=2)
         # Plot orientation angle
-        angle_or = -shape_property['orientation'] * math.pi / 180.0  # convert to radians
+        angle_or = (shape_property['orientation_before_fix'])   # in radians
         ax.arrow(center[0], center[1], np.sin(angle_or) * scale, np.cos(angle_or) * scale,
                  color='orange', width=0.5, head_width=2, label=f'Ellipse Orientation = {shape_property["orientation"]:.1f}°')
         ax.arrow(center[0], center[1], -np.sin(angle_or) * scale, -np.cos(angle_or) * scale,
@@ -284,6 +284,7 @@ def _properties2d(seg, dim):
         'centroid': region.centroid,
         'eccentricity': region.eccentricity,
         'orientation': orientation,
+        'orientation_before_fix': region.orientation,    # keeping it in radians
         'solidity': solidity,  # convexity measure
     }
 
