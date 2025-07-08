@@ -155,27 +155,28 @@ def compute_shape(segmentation, angle_correction=True, centerline_path=None, par
     return metrics, fit_results
 
 
-def _properties2d(image, dim):
+def _properties2d(seg, dim):
     """
-    Compute shape property of the input 2D image. Accounts for partial volume information.
-    :param image: 2D input image in uint8 or float (weighted for partial volume) that has a single object.
-    :param dim: [px, py]: Physical dimension of the image (in mm). X,Y respectively correspond to AP,RL.
+    Compute shape property of the input 2D segmentation. Accounts for partial volume information.
+    :param seg: 2D input segmentation in uint8 or float (weighted for partial volume) that has a single object.
+    :param dim: [px, py]: Physical dimension of the segmentation (in mm). X,Y respectively correspond to AP,RL.
     :return:
     """
-    upscale = 5  # upscale factor for resampling the input image (for better precision)
+    upscale = 5  # upscale factor for resampling the input segmentation (for better precision)
     pad = 3  # padding used for cropping
     # Check if slice is empty
-    if np.all(image < NEAR_ZERO_THRESHOLD):
+    if np.all(seg < NEAR_ZERO_THRESHOLD):
         logging.debug('The slice is empty.')
         return None
     # Normalize between 0 and 1 (also check if slice is empty)
-    image_norm = (image - image.min()) / (image.max() - image.min())
+    seg_norm = (seg - seg.min()) / (seg.max() - seg.min())
     # Convert to float64
-    image_norm = image_norm.astype(np.float64)
-    # Binarize image using threshold at 0. Necessary input for measure.regionprops
-    image_bin = np.array(image_norm > 0.5, dtype='uint8')
-    # Get all closed binary regions from the image (normally there is only one)
-    regions = measure.regionprops(image_bin, intensity_image=image_norm)
+    seg_norm = seg_norm.astype(np.float64)
+    # Binarize segmentation using threshold at 0. Necessary input for measure.regionprops
+    # Note: even when the input segmentation is binary, it might be soft now due to the angle correction
+    seg_bin = np.array(seg_norm > 0.5, dtype='uint8')
+    # Get all closed binary regions from the segmentation (normally there is only one)
+    regions = measure.regionprops(seg_bin, intensity_image=seg_norm)
     # Check number of regions
     if len(regions) > 1:
         logging.debug('There is more than one object on this slice.')
@@ -183,18 +184,18 @@ def _properties2d(image, dim):
     region = regions[0]
     # Get bounding box of the object
     minx, miny, maxx, maxy = region.bbox
-    # Use those bounding box coordinates to crop the image (for faster processing)
-    image_crop = image_norm[np.clip(minx-pad, 0, image_bin.shape[0]): np.clip(maxx+pad, 0, image_bin.shape[0]),
-                            np.clip(miny-pad, 0, image_bin.shape[1]): np.clip(maxy+pad, 0, image_bin.shape[1])]
-    # Oversample image to reach sufficient precision when computing shape metrics on the binary mask
-    image_crop_r = transform.pyramid_expand(image_crop, upscale=upscale, sigma=None, order=1)
-    # Binarize image using threshold at 0. Necessary input for measure.regionprops
-    image_crop_r_bin = np.array(image_crop_r > 0.5, dtype='uint8')
-    # Get all closed binary regions from the image (normally there is only one)
-    regions = measure.regionprops(image_crop_r_bin, intensity_image=image_crop_r)
+    # Use those bounding box coordinates to crop the segmentation (for faster processing)
+    seg_crop = seg_norm[np.clip(minx-pad, 0, seg_bin.shape[0]): np.clip(maxx+pad, 0, seg_bin.shape[0]),
+                        np.clip(miny-pad, 0, seg_bin.shape[1]): np.clip(maxy+pad, 0, seg_bin.shape[1])]
+    # Oversample segmentation to reach sufficient precision when computing shape metrics on the binary mask
+    seg_crop_r = transform.pyramid_expand(seg_crop, upscale=upscale, sigma=None, order=1)
+    # Binarize segmentation using threshold at 0. Necessary input for measure.regionprops
+    seg_crop_r_bin = np.array(seg_crop_r > 0.5, dtype='uint8')
+    # Get all closed binary regions from the segmentation (normally there is only one)
+    regions = measure.regionprops(seg_crop_r_bin, intensity_image=seg_crop_r)
     region = regions[0]
     # Compute area with weighted segmentation and adjust area with physical pixel size
-    area = np.sum(image_crop_r) * dim[0] * dim[1] / upscale ** 2
+    area = np.sum(seg_crop_r) * dim[0] * dim[1] / upscale ** 2
     # Compute ellipse orientation, modulo pi, in deg, and between [0, 90]
     orientation = fix_orientation(region.orientation)
     # Find RL and AP diameter based on major/minor axes and cord orientation=
