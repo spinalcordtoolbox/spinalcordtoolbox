@@ -23,13 +23,14 @@ from spinalcordtoolbox.utils.sys import sct_progress_bar
 NEAR_ZERO_THRESHOLD = 1e-6
 
 
-def compute_shape(segmentation, angle_correction=True, centerline_path=None, param_centerline=None,
+def compute_shape(segmentation, image, angle_correction=True, centerline_path=None, param_centerline=None,
                   verbose=1, remove_temp_files=1):
     """
     Compute morphometric measures of the spinal cord in the transverse (axial) plane from the segmentation.
     The segmentation could be binary or weighted for partial volume [0,1].
 
     :param segmentation: input segmentation. Could be either an Image or a file name.
+    :param image: input image. Could be either an Image or a file name.
     :param angle_correction:
     :param centerline_path: path to image file to be used as a centerline for computing angle correction.
     :param param_centerline: see centerline.core.ParamCenterline()
@@ -51,11 +52,20 @@ def compute_shape(segmentation, angle_correction=True, centerline_path=None, par
                      ]
 
     im_seg = Image(segmentation).change_orientation('RPI')
+    im = Image(image).change_orientation('RPI')
+    # Make sure the input image and segmentation have the same dimensions
+    if im_seg.dim != im.dim:
+        raise ValueError(
+            f"The input segmentation image ({im_seg.path}) and the input image ({im.path}) do not have the same dimensions. "
+            "Please provide images with the same dimensions."
+        )
+
     # Getting image dimensions. x, y and z respectively correspond to RL, PA and IS.
     nx, ny, nz, nt, px, py, pz, pt = im_seg.dim
     pr = min([px, py])
     # Resample to isotropic resolution in the axial plane. Use the minimum pixel dimension as target dimension.
     im_segr = resample_nib(im_seg, new_size=[pr, pr, pz], new_size_type='mm', interpolation='linear')
+    im_r = resample_nib(im, new_size=[pr, pr, pz], new_size_type='mm', interpolation='linear')
 
     # Update dimensions from resampled image.
     nx, ny, nz, nt, px, py, pz, pt = im_segr.dim
@@ -100,6 +110,7 @@ def compute_shape(segmentation, angle_correction=True, centerline_path=None, par
                                ncols=80):
         # Extract 2D patch
         current_patch = im_segr.data[:, :, iz]
+        current_patch_im = im_r.data[:, :, iz]
         if angle_correction:
             # Extract tangent vector to the centerline (i.e. its derivative)
             tangent_vect = np.array([deriv[iz][0] * px, deriv[iz][1] * py, pz])
@@ -117,8 +128,15 @@ def compute_shape(segmentation, angle_correction=True, centerline_path=None, par
                                                   output_shape=current_patch.shape,
                                                   order=1,
                                                   )
+            current_patch_im = current_patch_im.astype(np.float64)
+            current_patch_im_scaled = transform.warp(current_patch_im,
+                                                     tform.inverse,
+                                                     output_shape=current_patch_im.shape,
+                                                     order=1,
+                                                     )
         else:
             current_patch_scaled = current_patch
+            current_patch_im_scaled = current_patch_im
             angle_AP_rad, angle_RL_rad = 0.0, 0.0
         # compute shape properties on 2D patch
         shape_property = _properties2d(current_patch_scaled, [px, py])
