@@ -396,22 +396,28 @@ def main(argv: Sequence[str]):
     levels = arguments.vert
     fname_vert_level = None
     normalize_pam50 = arguments.normalize_PAM50
+    # make sure we have a valid VertLevel file (used for aggregation + VertLevel column)
     if arguments.vertfile is not None and arguments.discfile is not None:
         parser.error("Both '-vertfile' and '-discfile' were specified. Please only specify one of these options.")
-    if arguments.discfile is not None:
+    elif arguments.discfile is not None:
         fname_vert_level = arguments.discfile
     elif arguments.vertfile is not None:
         fname_vert_level = arguments.vertfile
-    elif normalize_pam50 and fname_vert_level is None:
-        parser.error("Option '-normalize-PAM50' requires option '-vertfile' or '-discfile'.")
-    elif levels:
-        parser.error("Option '-normalize-PAM50' requires option '-vertfile' or '-discfile'.")
-    if fname_vert_level is not None:
-        if not os.path.isfile(fname_vert_level):
-            raise FileNotFoundError(f"Vertebral level file {fname_vert_level} does not exist. Vert level information will "
-                                    f"not be displayed. To use vertebral level information, specify either -vertfile or -discfile."
-                                    f"For generating the required files, please review sct_process_segmentation -h for these arguments.")
-            fname_vert_level = None  # Discard the default '-vertfile', so that we don't attempt to find vertebral levels
+    else:
+        logger.info("No -vertfile/-discfile argument provided. Attempting to get VertLevel "
+                    "information from local PAM50 warped template file (if it exists).")
+        fname_vert_level = os.path.join('.', 'label', 'template', 'PAM50_levels.nii.gz')
+    if not os.path.isfile(fname_vert_level):
+        logger.warning(f"Vertebral level file {fname_vert_level} does not exist. Vert level information will "
+                       f"not be displayed. To use vertebral level information, you may need to run "
+                       f"`sct_warp_template` to generate the appropriate level file in your working directory.")
+        # Discard the default '-vertfile', so that we don't attempt to find vertebral levels
+        fname_vert_level = None
+        # If `fname_vert_level` is invalid but vert levels are required, raise an error.
+        if normalize_pam50:
+            parser.error("Option '-normalize-PAM50' requires a valid vertebral level file ('-vertfile' or '-discfile').")
+        elif levels:
+            parser.error("Option '-vert' requires a valid vertebral level file ('-vertfile' or '-discfile').")
     perlevel = bool(arguments.perlevel)
     slices = arguments.z
     perslice = bool(arguments.perslice)
