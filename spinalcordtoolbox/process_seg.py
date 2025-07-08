@@ -140,7 +140,7 @@ def compute_shape(segmentation, image, angle_correction=True, centerline_path=No
             current_patch_scaled = current_patch
             current_patch_im_scaled = current_patch_im
             angle_AP_rad, angle_RL_rad = 0.0, 0.0
-        # compute shape properties on 2D patch
+        # compute shape properties on 2D patch of the segmentation
         shape_property = _properties2d(current_patch_scaled, [px, py])
         # compute PCA and get center or mass based on segmentation
         coord_src, pca_src, centermass_src = compute_pca(current_patch_scaled)
@@ -192,8 +192,8 @@ def compute_shape(segmentation, image, angle_correction=True, centerline_path=No
 
         if shape_property is not None:
             # Add custom fields
-            shape_property['angle_AP'] = angle_AP_rad * 180.0 / math.pi
-            shape_property['angle_RL'] = angle_RL_rad * 180.0 / math.pi
+            shape_property['angle_AP'] = angle_AP_rad * 180.0 / math.pi     # convert to degrees
+            shape_property['angle_RL'] = angle_RL_rad * 180.0 / math.pi     # convert to degrees
             shape_property['length'] = pz / (np.cos(angle_AP_rad) * np.cos(angle_RL_rad))
             # Loop across properties and assign values for function output
             for property_name in property_list:
