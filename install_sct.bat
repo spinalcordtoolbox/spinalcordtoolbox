@@ -77,7 +77,7 @@ if %SCT_INSTALL_TYPE%==in-place (
 
 rem Validate the default installation directory 
 rem If it's not valid, don't propose it to the user
-call :validate_sct_dir || goto :while_prompt_custom_path
+call :validate_sct_dir >nul || goto :while_prompt_custom_path
 
 :while_prompt_default_path
   echo:
