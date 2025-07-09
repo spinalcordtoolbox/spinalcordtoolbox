@@ -406,8 +406,7 @@ class AnalyzeLesion:
         im_sc = Image(self.fname_sc)
         im_sc_data = im_sc.data
 
-        # Restrict the lesion mask to the spinal cord mask (from anatomical level, it does not make sense to have lesion
-        # outside the spinal cord mask)
+        # Restrict the lesion mask to the spinal cord mask, as lesions should not occur outside the cord
         im_lesion_data = im_lesion_data * im_sc_data
 
         # Get the dimensions of the lesion mask
