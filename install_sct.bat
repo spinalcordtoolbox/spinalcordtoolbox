@@ -79,6 +79,10 @@ rem Validate the default installation directory
 rem If it's not valid, don't propose it to the user
 call :validate_sct_dir >nul || goto :while_prompt_custom_path
 
+rem Count blank attempts when choosing a custom install path
+rem to avoid infinite loops
+set attempt=0
+
 :while_prompt_default_path
   echo:
   echo ### SCT will be installed here: [%SCT_DIR%]
@@ -96,19 +100,20 @@ call :validate_sct_dir >nul || goto :while_prompt_custom_path
 goto :while_prompt_default_path
 
 :while_prompt_custom_path
+  set /a attempt=attempt+1
+  if !attempts! GTR 10 (
+    rem The installation is probably non-interactive,
+    rem and the default path is invalid, so fail
+      echo ### ERROR: The default installation directory is invalid, and no input was detected.
+      echo            Please make sure to enter an input, or run the installer in interactive mode instead.
+      goto error
+  )
+
   echo:
   echo ### Choose install directory.
 
-  rem The non-interactive default is to fail the installation
-  set SCT_DIR=non-interactive
+  set "SCT_DIR="
   set /p SCT_DIR="### Warning^! Give full path ^(e.g. C:\Users\username\sct_v3.0^): "
-
-  if ["%SCT_DIR%"]==["non-interactive"] (
-    rem The installation is non-interactive, and the default path is invalid
-    echo ### ERROR: The default installation directory is invalid.
-    echo            Please run the installer in interactive mode instead.
-    goto error
-  )
 
   rem Ask again if the given path is invalid
   call :validate_sct_dir && goto :done_sct_dir
