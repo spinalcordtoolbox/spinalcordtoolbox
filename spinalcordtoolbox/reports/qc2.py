@@ -1087,15 +1087,13 @@ def crop_with_mask(img_to_crop, img_ref, pad=3, max_slices=None):
     the segmentation spans more slices than `max_slices`, then no padding will occur. Instead,
     all slices containing the segmentation will be used (to preserve the segmentation).
     """
+    if not np.count_nonzero(img_ref.data):
+        raise ValueError("The mask image is empty. Cannot crop using an empty mask. Check the input (e.g. '-qc-seg').")
     # QC images are reoriented to SAL (axial) or RSP (sagittal) such that axis=0 is always the slice index
     axis = 0
-    # fetch the nonzero voxel coordinates from the refernece image:
-    nonzero_voxels = np.where(img_ref.data)
-    if not nonzero_voxels[axis]:
-        raise ValueError("The mask image is empty. Cannot crop using an empty mask. Check the input (e.g. '-qc-seg').")
     # get extents of segmentation used for cropping
-    first_slice = min(nonzero_voxels[axis])
-    last_slice = max(nonzero_voxels[axis])
+    first_slice = min(np.where(img_ref.data)[axis])
+    last_slice = max(np.where(img_ref.data)[axis])
     # if `max_slices` is specified, then override `pad`
     if max_slices is not None:
         # use `max(0, ...)` to avoid cropping the segmentation if it would exceed `max_slices`
