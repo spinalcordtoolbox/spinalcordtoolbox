@@ -670,6 +670,8 @@ def sct_analyze_lesion(
         # Get the total number of lesions; this will represent the number of rows in the figure. For example, if we have
         # 2 lesions, we will have two rows. One row per lesion.
         num_of_lesions = len(label_lst)
+        # Restrict the lesion mask to the spinal cord mask, as lesions should not occur outside the cord
+        im_lesion_data = im_lesion_data * im_sc_data
         # Get the sagittal lesion slices
         sagittal_lesion_slices = np.unique(np.where(im_lesion_data)[0])
         # Get the minimum sagittal slice with lesion. For example, if a lesion cover slices 7,8,9, get 7
