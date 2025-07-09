@@ -28,7 +28,7 @@ import os
 from typing import Sequence
 import textwrap
 
-from spinalcordtoolbox.moco import ParamMoco, moco_wrapper
+from spinalcordtoolbox.moco import ParamMoco, moco_wrapper, moco_wrapper_interleaved
 from spinalcordtoolbox.utils.sys import init_sct, set_loglevel
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, list_type, display_viewer_syntax
 from spinalcordtoolbox.reports.qc import generate_qc
@@ -97,6 +97,12 @@ def get_parser():
         default=param_default.fname_mask,
         help='Binary mask to limit voxels considered by the registration metric. You may also provide a softmask '
              '(nonbinary, [0, 1]), and it will be binarized at 0.5. Example: `dmri_mask.nii.gz`',
+    )
+    optional.add_argument(
+        '-interleaved',
+        choices=('0', '1'),
+        default=param_default.remove_temp_files,
+        help='Interleaved acquisition: 0 = NOT-interleaved, 1 = interleaved.'
     )
     optional.add_argument(
         '-param',
@@ -179,6 +185,7 @@ def main(argv: Sequence[str]):
     param.bval_min = arguments.bvalmin
     param.group_size = arguments.g
     param.fname_mask = arguments.m
+    param.interleaved = arguments.interleaved
     param.interp = arguments.x
     param.path_out = arguments.ofolder
     param.remove_temp_files = arguments.r
@@ -198,7 +205,11 @@ def main(argv: Sequence[str]):
         parser.error("Both '-qc' and '-qc-seg' are required in order to generate a QC report.")
 
     # run moco
-    fname_output_image = moco_wrapper(param)
+    if param.interleaved == '1':
+        # split input data to two datasets (even and odd slices), run moco in each sub-dataset and merge back the data
+        fname_output_image = moco_wrapper_interleaved(param)
+    else:
+        fname_output_image = moco_wrapper(param)
 
     set_loglevel(verbose, caller_module_name=__name__)  # moco_wrapper changes verbose to 0, see issue #3341
 
