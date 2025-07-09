@@ -147,7 +147,9 @@ def compute_expected_measurements(lesion_params, path_seg=None):
     ([(31, 0, 25), (4, 15, 3)], 0.1),
     # Multiple lesions
     ([[(31, 0, 25), (4, 15, 3)],
-      [(29, 45, 25), (3, 10, 2)]], 0.1)
+      [(29, 45, 25), (3, 10, 2)]], 0.1),
+    # Lesion partly outside the spinal cord segmentation (z (RL) slice 19 is outside the SC seg)
+    ([(29, 45, 19), (3, 10, 2)], 0.001)
 ], indirect=["dummy_lesion"])
 def test_sct_analyze_lesion_matches_expected_dummy_lesion_measurements(dummy_lesion, rtol, tmp_path):
     """Run the CLI script and verify that the lesion measurements match
