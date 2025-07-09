@@ -700,10 +700,6 @@ def sct_analyze_lesion(
             # now "labeled" meaning that different lesions have different values, e.g., 1, 2, 3
             # As we are looping across lesions, we get the lesion mask for the current lesion label
             im_label_data_cur = im_lesion_data == lesion_label
-            # Restrict the lesion mask to the spinal cord mask (from anatomical level, it does not make sense to have
-            # lesion outside the spinal cord mask)
-            # Note for `im_sc_data != 0`: Nonzero -> True | Zero -> False; we use this in case of soft SC
-            im_label_data_cur = np.logical_and(im_lesion_data == lesion_label, im_sc_data != 0)
 
             # Loop across sagittal slices
             for idx_col, sagittal_slice in enumerate(range(min_sag_slice, max_sag_slice + 1)):
