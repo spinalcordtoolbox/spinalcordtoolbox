@@ -70,14 +70,17 @@ echo ### Installation type ... %SCT_INSTALL_TYPE%
 
 rem if installing from git folder, then becomes default installation folder
 if %SCT_INSTALL_TYPE%==in-place (
+  echo ### Setting default installation directory to source folder: %SCT_SOURCE%
   set SCT_DIR=%SCT_SOURCE%
 ) else (
+  echo ### Setting default installation directory to home folder: %USERPROFILE%\sct_%SCT_VERSION%
   set SCT_DIR=%USERPROFILE%\sct_%SCT_VERSION%
 )
 
 rem Validate the default installation directory 
 rem If it's not valid, don't propose it to the user
-call :validate_sct_dir >nul || goto :while_prompt_custom_path
+echo ### Checking default installation directory for potential issues...
+call :validate_sct_dir || goto :while_prompt_custom_path
 
 rem Count blank attempts when choosing a custom install path
 rem to avoid infinite loops
