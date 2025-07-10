@@ -70,69 +70,101 @@ echo ### Installation type ... %SCT_INSTALL_TYPE%
 
 rem if installing from git folder, then becomes default installation folder
 if %SCT_INSTALL_TYPE%==in-place (
+  echo ### Setting default installation directory to source folder: %SCT_SOURCE%
   set SCT_DIR=%SCT_SOURCE%
 ) else (
+  echo ### Setting default installation directory to home folder: %USERPROFILE%\sct_%SCT_VERSION%
   set SCT_DIR=%USERPROFILE%\sct_%SCT_VERSION%
 )
 
-rem Allow user to set a custom installation directory
-:while_loop_sct_dir
+rem Validate the default installation directory 
+rem If it's not valid, don't propose it to the user
+echo ### Checking default installation directory for potential issues...
+call :validate_sct_dir || goto :while_prompt_custom_path
+
+rem Count blank attempts when choosing a custom install path
+rem to avoid infinite loops
+set attempt=0
+
+:while_prompt_default_path
   echo:
   echo ### SCT will be installed here: [%SCT_DIR%]
-  set keep_default_path=yes
-  :while_loop_path_agreement
-    set /p keep_default_path="### Do you agree? [y]es/[n]o: "
-    echo %keep_default_path% | findstr /b [YyNn] >nul 2>&1 || goto :while_loop_path_agreement
-  :done_while_loop_path_agreement
 
-  echo %keep_default_path% | findstr /b [Yy] >nul 2>&1
-  if %errorlevel% EQU 0 (
-    rem user accepts default path, so exit loop
-    goto :done_while_loop_sct_dir
+  rem The non-interactive default is to accept
+  set keep_default_path=y
+  set /p keep_default_path="### Do you agree? [y]es/[n]o: "
+
+  rem Either the installation is non-interactive,
+  rem or the user accepts the default path
+  if /i ["%keep_default_path%"]==["y"] goto :done_sct_dir
+
+  rem The user wants a non-default path
+  if /i ["%keep_default_path%"]==["n"] goto :while_prompt_custom_path
+goto :while_prompt_default_path
+
+:while_prompt_custom_path
+  set /a attempt=attempt+1
+  if !attempt! GTR 10 (
+    rem The install path was invalid 10 times, so this is probably non-interactive. Halt.
+      echo ### ERROR: The chosen installation directory is invalid, and no valid input was passed.
+      echo            Please make sure to enter a valid input.
+      goto error
+
   )
 
-  rem user enters new path
   echo:
   echo ### Choose install directory.
-  set /p new_install="### Warning^! Give full path ^(e.g. C:\Users\username\sct_v3.0^): "
 
-  rem Check user-selected path for spaces
-  rem TODO: This may no longer be true as of a patch made to Mamba in Dec. 2024!
-  if not "%new_install%"=="%new_install: =%" (
-       echo ### WARNING: Install directory %new_install% contains spaces.
-       echo ### SCT uses conda, which does not permit spaces in installation paths.
-       echo ### More details can be found here: https://github.com/ContinuumIO/anaconda-issues/issues/716
-       echo:
-       goto :while_loop_sct_dir
-  )
+  set "SCT_DIR="
+  set /p SCT_DIR="### Warning^! Give full path ^(e.g. C:\Users\username\sct_v3.0^): "
 
-  rem Validate the user's choice of path
-  if exist %new_install% (
-    rem directory exists, so update SCT_DIR and exit loop
-    echo ### WARNING: '%new_install%' already exists. Files will be overwritten.
-    set SCT_DIR=%new_install%
-    goto :done_while_loop_sct_dir
-  ) else (
-    if [%new_install%]==[]  (
-      rem If no input, asking again, and again, and again
-      goto :while_loop_sct_dir
-    ) else (
-      set SCT_DIR=%new_install%
-      goto :done_while_loop_sct_dir
-    )
-  )
-:done_while_loop_sct_dir
+  rem Ask again if the given path is invalid
+  call :validate_sct_dir && goto :done_sct_dir
+goto :while_prompt_custom_path
+
+:validate_sct_dir
+rem Validate the user's choice of path in SCT_DIR
+rem Check for an empty path
+if ["%SCT_DIR%"]==[] exit /b 1
+rem Check for spaces
+rem TODO: This may no longer be necessary as of a patch made to Mamba in Dec. 2024!
+if not "%SCT_DIR%"=="%SCT_DIR: =%" (
+  echo ### WARNING: Install directory %SCT_DIR% contains spaces.
+  echo ### SCT uses conda, which does not permit spaces in installation paths.
+  echo ### More details can be found here: https://github.com/ContinuumIO/anaconda-issues/issues/716
+  echo:
+  exit /b 1
+)
+rem Check number of characters in path
+set tmpfile_len=%TMP_DIR%\tmpfile_len.txt
+echo %SCT_DIR%> !tmpfile_len!
+for /F "usebackq" %%a in ('!tmpfile_len!') do set /a size=%%~za - 2
+if !size! GTR 113 (
+  echo ### WARNING: '%SCT_DIR%' exceeds path length limit ^(!size! ^> 113^). Please choose a shorter path.
+  exit /b 1
+)
+rem We passed all the checks
+exit /b 0
+
+:done_sct_dir
+rem At this point, SCT_DIR is a valid path accepted by the user
 
 rem Create directory
 if not exist %SCT_DIR% (
   mkdir %SCT_DIR% || goto error
+) else (
+  echo ### WARNING: '%new_install%' already exists. Files will be overwritten.
 )
 
 rem Copy files to destination directory
 echo:
+set tmpfile_exclude=%TMP_DIR%\exclusion.txt
+echo %SCT_SOURCE%\bin> %tmpfile_exclude%
+echo %SCT_SOURCE%\python>> %tmpfile_exclude%
+echo %SCT_SOURCE%\spinalcordtoolbox.egg-info\>> %tmpfile_exclude%
 if not %SCT_DIR%==%SCT_SOURCE% (
   echo ### Copying source files from %SCT_SOURCE% to %SCT_DIR%
-  xcopy /s /e /q /y %SCT_SOURCE% %SCT_DIR% || goto error
+  xcopy /s /e /q /y %SCT_SOURCE% %SCT_DIR% /EXCLUDE:%tmpfile_exclude% || goto error
 ) else (
   echo ### Skipping copy of source files ^(source and destination folders are the same^)
 )
