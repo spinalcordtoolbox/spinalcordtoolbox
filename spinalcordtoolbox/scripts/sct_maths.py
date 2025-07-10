@@ -69,6 +69,18 @@ def one_or_three_sigmas(arg: str) -> list[float]:
     return values
 
 
+def one_two_three_ints(arg: str) -> list[int]:
+    """
+    Parse the arguments for `-dilate` and `-erode`.
+
+    Returns a list of 1, 2, or 3 ints, measured in voxels.
+    """
+    values = [int(v) for v in arg.split('x')]
+    if len(values) not in [1, 2, 3]:
+        raise ValueError(f"expected 1, 2, or 3 values, got {len(values)}")
+    return values
+
+
 class AppendTodo(argparse.Action):
     """
     Store the arguments of an sct_maths operation in `arguments.todo`.
@@ -243,20 +255,22 @@ def get_parser():
     mathematical.add_argument(
         '-dilate',
         metavar=Metavar.int,
-        type=int,
+        type=one_two_three_ints,
         action=AppendTodo,
         help="Dilate binary or greyscale image with specified size. If shape={'square', 'cube'}: size corresponds to the length of "
              "an edge (size=1 has no effect). If shape={'disk', 'ball'}: size corresponds to the radius, not including "
-             "the center element (size=0 has no effect).",
+             "the center element (size=0 has no effect). "
+             "If shape={'square', 'disk'}: size can be a single number of voxels, "
+             "or 2 numbers separated by `x` to get a rectangle/ellipse footprint (useful for anisotropic images). "
+             "If shape={'cube', 'ball'}: size can be a single number, or 3 numbers separated by `x` to get a box/ellipsoid.",
         )
     mathematical.add_argument(
         '-erode',
         metavar=Metavar.int,
-        type=int,
+        type=one_two_three_ints,
         action=AppendTodo,
-        help="Erode binary or greyscale image with specified size. If shape={'square', 'cube'}: size corresponds to the length of "
-             "an edge (size=1 has no effect). If shape={'disk', 'ball'}: size corresponds to the radius, not including "
-             "the center element (size=0 has no effect).",
+        help="Erode binary or greyscale image with specified size. "
+             "The argument is interpreted the same way as for `-dilate`.",
         )
     mathematical.add_argument(
         '-shape',
@@ -410,6 +424,24 @@ def main(argv: Sequence[str]):
             dim = None
         else:
             parser.error(f"-dim should not be specified for -shape {shape}")
+
+    for arg_name, arg_value in arguments.todo:
+        if arg_name in ['dilate', 'erode']:
+            if shape in ['disk', 'square']:
+                # 2D kernels need 1 or 2 values for the size argument
+                # if 1 value is supplied, we repeat it to get 2 values
+                if len(arg_value) == 1:
+                    arg_value.extend(arg_value)
+                elif len(arg_value) == 3:
+                    parser.error(f"-{arg_name} needs 1 or 2 values for -shape {shape}, but got 3")
+            else:
+                assert shape in ['ball', 'cube']
+                # 3D kernels need 1 or 3 values for the size argument
+                # if 1 value is supplied, we repeat it to get 3 values
+                if len(arg_value) == 1:
+                    arg_value.extend(arg_value + arg_value)
+                elif len(arg_value) == 2:
+                    parser.error(f"-{arg_name} needs 1 or 3 values for -shape {shape}, but got 2")
 
     # Check that the list of operations makes sense
     if not arguments.todo:
