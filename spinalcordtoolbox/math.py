@@ -63,7 +63,7 @@ def _get_footprint(shape, size, dim):
         fp_x = ((r_y * np.arange(-r_x, r_x+1))**2).reshape((2*r_x+1, 1))
         fp_y = ((r_x * np.arange(-r_y, r_y+1))**2).reshape((1, 2*r_y+1))
         footprint = ((fp_x + fp_y) <= (r_x * r_y)**2).astype(np.uint8)
-    elif shape == 'cube':
+    elif shape == 'ball':
         # ellipsoid equation, after clearing denominators:
         # ((x - center_x)*radius_y*radius_z)**2
         # + ((y - center_y)*radius_x*radius_z)**2
