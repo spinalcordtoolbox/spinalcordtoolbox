@@ -398,17 +398,18 @@ class SpinalCordStraightener(object):
         logger.info('Safe zone boundaries (straight space): {}'.format(bound_straight))
         # Remove duplicates from the start and end of the lookup table
         # This is necessary because `get_closest_index` will repeat itself once the first/last indexes are reached
-        # NB: Any slice index set to `None` will have its warping field value set to `-100000` (i.e. no warping)
+        # NB: Any slice index set to `0` will have its warping field value set to `-100000` (i.e. no warping)
         for p in range(0, len(lookup_curved2straight) - 1):
             if lookup_curved2straight[p] == lookup_curved2straight[p + 1]:
-                lookup_curved2straight[p] = None
+                lookup_curved2straight[p] = 0
             else:
                 break
         for p in range(len(lookup_curved2straight) - 1, 0, -1):
             if lookup_curved2straight[p] == lookup_curved2straight[p - 1]:
-                lookup_curved2straight[p] = None
+                lookup_curved2straight[p] = 0
             else:
                 break
+        lookup_curved2straight = np.array(lookup_curved2straight)
 
         lookup_straight2curved = list(range(centerline_straight.number_of_points))
         if self.discs_input_filename != "":
@@ -422,17 +423,18 @@ class SpinalCordStraightener(object):
                     lookup_straight2curved[index] = idx_closest
         # Remove duplicates from the start and end of the lookup table
         # This is necessary because `get_closest_index` will repeat itself once the first/last indexes are reached
-        # NB: Any slice index set to `None` will have its warping field value set to `-100000` (i.e. no warping)
+        # NB: Any slice index set to `0` will have its warping field value set to `-100000` (i.e. no warping)
         for p in range(0, len(lookup_straight2curved) - 1):
             if lookup_straight2curved[p] == lookup_straight2curved[p + 1]:
-                lookup_straight2curved[p] = None
+                lookup_straight2curved[p] = 0
             else:
                 break
         for p in range(len(lookup_straight2curved) - 1, 0, -1):
             if lookup_straight2curved[p] == lookup_straight2curved[p - 1]:
-                lookup_straight2curved[p] = None
+                lookup_straight2curved[p] = 0
             else:
                 break
+        lookup_straight2curved = np.array(lookup_straight2curved)
 
         # Create volumes containing curved and straight warping fields
         data_warp_curved2straight = np.zeros((nx_s, ny_s, nz_s, 1, 3))
@@ -450,32 +452,25 @@ class SpinalCordStraightener(object):
                 nearest_indexes_straight = centerline_straight.find_nearest_indexes(physical_coordinates_straight)
                 distances_straight = centerline_straight.get_distances_from_planes(physical_coordinates_straight,
                                                                                    nearest_indexes_straight)
-                # Map straight-space indices to curved-space indices
-                nearest_indexes_curved = [lookup_straight2curved[idx] for idx in nearest_indexes_straight]
-                # - Some straight-space indices correspond to regions outside the defined curved-space FOV (i.e. the indices map to `None`).
-                #   For those indices, we will remove them from the warping field (by setting their value to `-100000`, i.e. no warping).
-                # - We will also remove any indices that are outside the threshold distance.
-                index_maps_to_none = (np.array(nearest_indexes_curved) == None)  # noqa: E711 (`== None` has special numpy behavior)
-                index_outside_threshold = np.logical_or(distances_straight > self.threshold_distance,
-                                                        distances_straight < -self.threshold_distance)
-                indexes_to_remove = np.logical_or(index_maps_to_none, index_outside_threshold)
-                # NB: `get_inverse_plans_coordinates` expects an integer array, so we set the `None` values to a dummy index (`0`)
-                #     This dummy index shouldn't have any relevance, since the warping field value will be set to `-100000` anyway.
-                nearest_indexes_curved = np.array([0 if idx is None else idx for idx in nearest_indexes_curved])
-
+                lookup = lookup_straight2curved[nearest_indexes_straight]
+                # NB: Any indexes that were mapped to `0` will have their warping field value set to `-100000` (i.e. no warping),
+                #     regardless of the value of `self.threshold_distance`.
+                indexes_out_distance_straight = np.logical_or(
+                    np.logical_or(distances_straight > self.threshold_distance,
+                                  distances_straight < -self.threshold_distance), lookup == 0)
                 projected_points_straight = centerline_straight.get_projected_coordinates_on_planes(
                     physical_coordinates_straight, nearest_indexes_straight)
                 coord_in_planes_straight = centerline_straight.get_in_plans_coordinates(projected_points_straight,
                                                                                         nearest_indexes_straight)
 
-                coord_straight2curved = centerline.get_inverse_plans_coordinates(coord_in_planes_straight, nearest_indexes_curved)
+                coord_straight2curved = centerline.get_inverse_plans_coordinates(coord_in_planes_straight, lookup)
                 displacements_straight = coord_straight2curved - physical_coordinates_straight
                 # Invert Z coordinate as ITK & ANTs physical coordinate system is LPS- (RAI+)
                 # while ours is LPI-
                 # Refs: https://sourceforge.net/p/advants/discussion/840261/thread/2a1e9307/#fb5a
                 #  https://www.slicer.org/wiki/Coordinate_systems
                 displacements_straight[:, 2] = -displacements_straight[:, 2]
-                displacements_straight[indexes_to_remove] = [100000.0, 100000.0, 100000.0]
+                displacements_straight[indexes_out_distance_straight] = [100000.0, 100000.0, 100000.0]
 
                 data_warp_curved2straight[indexes_straight[:, 0], indexes_straight[:, 1], indexes_straight[:, 2], 0, :]\
                     = -displacements_straight
@@ -488,29 +483,22 @@ class SpinalCordStraightener(object):
                 nearest_indexes_curved = centerline.find_nearest_indexes(physical_coordinates)
                 distances_curved = centerline.get_distances_from_planes(physical_coordinates,
                                                                         nearest_indexes_curved)
-                # Map curved-space indices to straight-space indices
-                nearest_indexes_straight = [lookup_curved2straight[idx] for idx in nearest_indexes_curved]
-                # - Some curved-space indices may correspond to regions outside the defined straight-space FOV (i.e. the indices map to `None`).
-                #   For those indices, we will remove them from the warping field (by setting their value to `-100000`, i.e. no warping).
-                # - We will also remove any indices that are outside the threshold distance.
-                index_maps_to_none = (np.array(nearest_indexes_straight) == None)  # noqa: E711 (`== None` has special numpy behavior)
-                index_outside_threshold = np.logical_or(distances_curved > self.threshold_distance,
-                                                        distances_curved < -self.threshold_distance)
-                indexes_to_remove = np.logical_or(index_maps_to_none, index_outside_threshold)
-                # NB: `get_inverse_plans_coordinates` expects an integer array, so we set the `None` values to a dummy index (`0`)
-                #     This dummy index shouldn't have any relevance, since the warping field value will be set to `-100000` anyway.
-                nearest_indexes_straight = np.array([0 if idx is None else idx for idx in nearest_indexes_straight])
-
+                lookup = lookup_curved2straight[nearest_indexes_curved]
+                # NB: Any indexes that were mapped to `0` will have their warping field value set to `-100000` (i.e. no warping),
+                #     regardless of the value of `self.threshold_distance`.
+                indexes_out_distance_curved = np.logical_or(
+                    np.logical_or(distances_curved > self.threshold_distance,
+                                  distances_curved < -self.threshold_distance), lookup == 0)
                 projected_points_curved = centerline.get_projected_coordinates_on_planes(physical_coordinates,
                                                                                          nearest_indexes_curved)
                 coord_in_planes_curved = centerline.get_in_plans_coordinates(projected_points_curved,
                                                                              nearest_indexes_curved)
 
-                coord_curved2straight = centerline_straight.get_inverse_plans_coordinates(coord_in_planes_curved, nearest_indexes_straight)
+                coord_curved2straight = centerline_straight.get_inverse_plans_coordinates(coord_in_planes_curved, lookup)
                 displacements_curved = coord_curved2straight - physical_coordinates
 
                 displacements_curved[:, 2] = -displacements_curved[:, 2]
-                displacements_curved[indexes_to_remove] = [100000.0, 100000.0, 100000.0]
+                displacements_curved[indexes_out_distance_curved] = [100000.0, 100000.0, 100000.0]
 
                 data_warp_straight2curved[indexes[:, 0], indexes[:, 1], indexes[:, 2], 0, :] = -displacements_curved
 
