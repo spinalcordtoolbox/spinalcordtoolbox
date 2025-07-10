@@ -101,7 +101,7 @@ goto :while_prompt_default_path
 
 :while_prompt_custom_path
   set /a attempt=attempt+1
-  if !attempts! GTR 10 (
+  if !attempt! GTR 10 (
     rem The installation is probably non-interactive,
     rem and the default path is invalid, so fail
       echo ### ERROR: The default installation directory is invalid, and no input was detected.
