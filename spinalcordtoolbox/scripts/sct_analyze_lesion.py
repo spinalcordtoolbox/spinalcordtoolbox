@@ -406,9 +406,6 @@ class AnalyzeLesion:
         im_sc = Image(self.fname_sc)
         im_sc_data = im_sc.data
 
-        # Restrict the lesion mask to the spinal cord mask, as lesions should not occur outside the cord
-        im_lesion_data = im_lesion_data * im_sc_data
-
         # Get the dimensions of the lesion mask
         dim = im_lesion_data.shape
 
@@ -772,6 +769,11 @@ class AnalyzeLesion:
     def measure(self):
         im_lesion = Image(self.fname_label)
         im_lesion_data = im_lesion.data
+
+        # Restrict the lesion mask to the spinal cord mask, as lesions should not occur outside the cord
+        if self.fname_sc is not None:
+            im_lesion_data = im_lesion_data * Image(self.fname_sc).data
+
         p_lst = im_lesion.dim[4:7]  # voxel size
 
         label_lst = [label for label in np.unique(im_lesion_data) if label]  # lesion label IDs list
