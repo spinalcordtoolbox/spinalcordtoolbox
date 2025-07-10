@@ -170,7 +170,7 @@ MODELS = {
     },
     "model_seg_ms_lesion": {
          "url": [
-             "https://github.com/ivadomed/ms-lesion-agnostic/releases/download/r20241101/model_seg_ms_lesion_unet3d.zip"
+             "https://github.com/ivadomed/ms-lesion-agnostic/releases/download/r20250626/20250626_model_fold0_ESMRMB_abstract.zip"
          ],
          "description": "Segmentation of spinal cord MS lesions",
          "contrasts": ["any"],
@@ -494,12 +494,12 @@ TASKS = {
     'lesion_ms':
         {'description': 'MS lesion segmentation on spinal cord MRI images',
          'long_description': 'This segmentation model for spinal cord MS lesion segmentation uses a 3D U-Net architecture. It outputs a binary '
-                             'segmentation of MS lesions. The model was trained and tested on datasets including 25 sites, 1611 patients and 2988 '
-                             'volumes. The datasets, mostly coming from “real world” clinical scans at 1.5T and 3T (on GE, Siemens and Philips), '
-                             'included: T1w (n=52), PDw (n=33), T2w (n=1806), T2*w (n=474), PSIR (n=286), STIR (n=72), MP2RAGE-UNI (n=265). '
-                             'The field-of-view coverage varied across sites (some included the brain and the upper cord, while others only '
-                             'included the spinal cord), and acquisitions were either 2D (axial: 1708, sagittal: 976) or 3D (n=304), with voxel '
-                             'dimensions ranging from 0.2mm to 9.5mm (including inter-slice gap).',
+                             'segmentation of MS lesions. We used a foundational model, pretrained on over 10,000 CT scans. The model was fine-tuned '
+                             'and tested on datasets including 20 sites, 1850 patients and 4430 volumes. The datasets, mostly coming from “real world” '
+                             'clinical scans at 1.5T and 3T (on GE, Siemens and Philips), included: T1w (n=23), T2w (n=3061), T2*w (n=548), '
+                             'PSIR (n=363), STIR (n=92), MP2RAGE-UNI (n=343). The field-of-view coverage varied across sites (some included the brain '
+                             'and the upper cord, while others only included the spinal cord), and acquisitions were either 2D (axial: 2895, sagittal: 1169) '
+                             'or 3D (n=366), with voxel dimensions ranging from 0.2x0.2x5 mm3 to 0.8x0.8x9 mm3. ',
          'url': 'https://github.com/ivadomed/ms-lesion-agnostic',
          'models': ['model_seg_ms_lesion'],
          'citation': None,

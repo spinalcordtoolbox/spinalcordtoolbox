@@ -631,7 +631,7 @@ def sct_analyze_lesion(
     fname_input: str,
     fname_label: str,
     fname_sc: str,
-    measure_pd: pd.DataFrame,
+    measure_pd: 'pd.DataFrame',
     argv: Sequence[str],
     path_qc: str,
     dataset: Optional[str],
@@ -829,7 +829,8 @@ def mosaic(img: Image, centers: np.ndarray, radius: tuple[int, int] = (15, 15), 
     return np.block([cropped[i:i+num_col] for i in range(0, len(cropped), num_col)])
 
 
-def add_orientation_labels(ax: mpl_axes.Axes, radius: tuple[int, int] = (15, 15), letters: tuple[str, str, str, str] = ('A', 'P', 'L', 'R')):
+def add_orientation_labels(ax: 'mpl_axes.Axes', radius: tuple[int, int] = (15, 15),
+                           letters: tuple[str, str, str, str] = ('A', 'P', 'L', 'R')):
     """
     Add orientation labels (A, P, L, R) to a figure, yellow with a black outline.
     """
@@ -849,7 +850,7 @@ def add_orientation_labels(ax: mpl_axes.Axes, radius: tuple[int, int] = (15, 15)
         ])
 
 
-def add_segmentation_labels(ax: mpl_axes.Axes, seg_mosaic: np.ndarray, colors: list[str],
+def add_segmentation_labels(ax: 'mpl_axes.Axes', seg_mosaic: np.ndarray, colors: list[str],
                             radius: tuple[int, int] = (15, 15)):
     """
     Add labels corresponding to the value of the segmentation for each slice in the mosaic.
@@ -907,7 +908,7 @@ def equalize_histogram(img: np.ndarray):
     return np.array(c * (max_ - min_) + min_, dtype=img.dtype)
 
 
-def plot_outlines(img: np.ndarray, ax: mpl_axes.Axes, **kwargs):
+def plot_outlines(img: np.ndarray, ax: 'mpl_axes.Axes', **kwargs):
     """
     Draw the outlines of every equal-value area of a 2D Numpy array with Matplotlib.
 
@@ -1086,6 +1087,8 @@ def crop_with_mask(img_to_crop, img_ref, pad=3, max_slices=None):
     the segmentation spans more slices than `max_slices`, then no padding will occur. Instead,
     all slices containing the segmentation will be used (to preserve the segmentation).
     """
+    if not np.count_nonzero(img_ref.data):
+        raise ValueError("The mask image is empty. Cannot crop using an empty mask. Check the input (e.g. '-qc-seg').")
     # QC images are reoriented to SAL (axial) or RSP (sagittal) such that axis=0 is always the slice index
     axis = 0
     # get extents of segmentation used for cropping
@@ -1124,12 +1127,12 @@ def get_max_axial_radius(img):
     """
     # In Axial plane, the radius is the maximum width/height of the spinal cord mask dilated by 20% or 15, whichever is larger.
     dilation = 1.2
-    default = 15
-    heights = [np.max(np.where(slice)[0]) - np.min(np.where(slice)[0]) if np.sum(slice) > 0 else 0 for slice in img.data]
-    widths = [np.max(np.where(slice)[1]) - np.min(np.where(slice)[1]) if np.sum(slice) > 0 else 0 for slice in img.data]
-    heights = [(h * dilation)//2 for h in heights]
-    widths = [(w * dilation)//2 for w in widths]
-    return max(default, max(heights)), max(default, max(widths))
+    radius_default = 15
+    heights = [np.max(np.where(slc)[0]) - np.min(np.where(slc)[0]) if np.sum(slc) > 0 else 0 for slc in img.data]
+    widths = [np.max(np.where(slc)[1]) - np.min(np.where(slc)[1]) if np.sum(slc) > 0 else 0 for slc in img.data]
+    radii_h = [int((h * dilation)//2) for h in heights]
+    radii_w = [int((w * dilation)//2) for w in widths]
+    return max(radius_default, max(radii_h)), max(radius_default, max(radii_w))
 
 
 def get_max_sagittal_radius(img):
