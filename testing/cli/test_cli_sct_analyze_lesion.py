@@ -67,9 +67,8 @@ def compute_expected_measurements(lesion_params, path_seg=None):
             largest_lesion = [(29, 40, 20), (3, 3, 4)]
         z_center = int(round(np.mean(list(range(largest_lesion[0][1], largest_lesion[0][1] + largest_lesion[1][1])))))
         z_range = np.arange(z_center - 2, z_center + 3)  # two slices above and below the lesion center of mass
-        # For each of these slices, compute the spinal cord center of mass in the R-L direction
-        # Note: as path_seg has the AIL orientation, we need to reverse the last axis from "L-R" to "R-L" using [::-1]
-        sc_com = [center_of_mass(Image(path_seg).data[:, z, ::-1])[1] for z in
+        # For each of these slices, compute the spinal cord center of mass in the L-R direction
+        sc_com = [center_of_mass(Image(path_seg).data[:, z, :])[1] for z in
                   z_range]  # 2D slice from AIL: [1] --> L-R
         mid_sagittal_slice = np.mean(sc_com)  # target slice in right-left axis (x direction) for the interpolation
 
