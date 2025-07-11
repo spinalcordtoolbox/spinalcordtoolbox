@@ -59,9 +59,9 @@ def get_parser():
     optional.add_argument(
         "-s",
         help=textwrap.dedent("""
-            Spinal cord segmentation, which will be used to correct morphometric measures with cord angle with respect to slice. (e.g. `t2_seg.nii.gz`)
-
-            If provided, then the lesion volume, length, diameter, axial damage ratio, and tissue bridges will be computed. Otherwise, if not provided, then only the lesion volume will be computed.
+            Spinal cord segmentation (e.g. `t2_seg.nii.gz`). If provided, it is used to restrict the lesion mask (provided with `-m` option) to the spinal cord segmentation. 
+            Additionally, the spinal cord segmentation is used to obtain the spinal cord centerline, which is used to correct morphometric measures with cord angle with respect to slice.
+            If not provided, only the lesion volume is be computed.
         """),  # noqa: E501 (line too long)
         metavar=Metavar.file)
     optional.add_argument(
