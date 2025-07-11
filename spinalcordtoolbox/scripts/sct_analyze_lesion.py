@@ -122,7 +122,7 @@ def get_parser():
 class AnalyzeLesion:
     def __init__(self, fname_mask, fname_sc, fname_ref, path_template, path_ofolder, perslice, verbose):
         self.fname_mask = fname_mask
-        self.interpolated_midsagittal_slice = None  # target float sagittal slice number used for the interpolation. This number is based on the spinal cord center of mass.
+        self.interpolated_midsagittal_slice = None  # target float sagittal slice number used for the interpolation in the RPI orientation
         self.interpolation_slices = None            # sagittal slices used for the interpolation
         self.fname_sc = fname_sc
         self.fname_ref = fname_ref
@@ -820,7 +820,9 @@ class AnalyzeLesion:
                 atlas_data_dct[tract_id] = img_cur_copy.data
                 del img_cur
 
-        # Get two sagittal slices for interpolation (based on the center of mass of the largest lesion)
+        # Get two sagittal slices for interpolation (based on the center of mass of the largest lesion).
+        # Note: The function checks if the spinal cord segmentation is provided, if not, only the volume of each lesion
+        #  is computed (to determine the largest lesion) and the rest of the function is skipped.
         self.get_midsagittal_slice(im_lesion_data, label_lst, p_lst)
 
         # iteration across each lesion to measure statistics
