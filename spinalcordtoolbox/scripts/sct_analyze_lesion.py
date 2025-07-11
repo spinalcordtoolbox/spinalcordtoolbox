@@ -59,7 +59,7 @@ def get_parser():
     optional.add_argument(
         "-s",
         help=textwrap.dedent("""
-            Spinal cord segmentation (e.g. `t2_seg.nii.gz`). If provided, it is used to restrict the lesion mask (provided with `-m` option) to the spinal cord segmentation.
+            Spinal cord segmentation (e.g. `t2_seg.nii.gz`). If provided, any lesion voxels outside the cord segmentation will be set to 0. 
             Additionally, the spinal cord segmentation is used to obtain the spinal cord centerline, which is used to correct morphometric measures with cord angle with respect to slice.
             If not provided, only the lesion volume is be computed.
         """),  # noqa: E501 (line too long)
