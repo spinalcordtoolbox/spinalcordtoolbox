@@ -149,8 +149,8 @@ def compute_expected_measurements(lesion_params, path_seg=None):
 
 
 @pytest.mark.sct_testing
-# Each tuple represents the starting coordinates (x: AP, y: SI, z: RL) and dimensions (width, height, depth) of a
-# dummy lesion
+# Each tuple represents the starting coordinates in the AIL orientation (x: AP, y: IS, z: LR)
+# and dimensions (width, height, depth) of a dummy lesion
 @pytest.mark.parametrize("dummy_lesion, rtol", [
     # Straight region of `t2.nii.gz` -> little curvature -> smaller tolerance
     ([(29, 45, 25), (3, 10, 2)], 0.001),
@@ -160,7 +160,7 @@ def compute_expected_measurements(lesion_params, path_seg=None):
     # Multiple lesions
     ([[(31, 0, 25), (4, 15, 3)],
       [(29, 45, 25), (3, 10, 2)]], 0.1),
-    # Lesion partly outside the spinal cord segmentation (z (RL) slice 19 is outside the SC seg)
+    # Lesion partly outside the spinal cord segmentation (z (LR) slice 19 is outside the SC seg)
     ([(29, 40, 19), (3, 3, 5)], 0.001)
 ], indirect=["dummy_lesion"])
 def test_sct_analyze_lesion_matches_expected_dummy_lesion_measurements(dummy_lesion, rtol, tmp_path):
