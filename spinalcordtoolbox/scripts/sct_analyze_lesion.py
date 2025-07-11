@@ -51,7 +51,7 @@ def get_parser():
     mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         "-m",
-        help='Binary mask of lesions (lesions are labeled as "1").',
+        help='Binary mask of lesions (e.g. `t2_lesion.nii.gz`). Lesions are labeled as "1".',
         metavar=Metavar.file,
     )
 
