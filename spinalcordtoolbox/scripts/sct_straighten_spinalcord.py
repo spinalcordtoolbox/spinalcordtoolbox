@@ -15,7 +15,8 @@ import textwrap
 from spinalcordtoolbox.straightening import SpinalCordStraightener
 from spinalcordtoolbox.centerline.core import ParamCenterline
 from spinalcordtoolbox.reports.qc import generate_qc
-from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
+from spinalcordtoolbox.utils.shell import (SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax,
+                                           list_type)
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 
 
@@ -124,6 +125,7 @@ def get_parser():
     optional.add_argument(
         "-param",
         metavar=Metavar.list,
+        type=list_type(",", str),
         help=textwrap.dedent("""
             Parameters for spinal cord straightening. Separate arguments with ','.
 
@@ -131,6 +133,8 @@ def get_parser():
               - `threshold_distance`: Float `[0, inf)` Threshold at which voxels are not considered into displacement. Increase this threshold if the image is blackout around the spinal cord too much. Default=`10`
               - `accuracy_results`: `{0, 1}` Disable/Enable computation of accuracy results after straightening. Default=`0`
               - `template_orientation`: {0, 1}` Disable/Enable orientation of the straight image to be the same as the template. Default=`0`
+              - `safe_zone: {0, 1}`: Disable/Enable enforcing the "safe zone". Turn this on to ensure that the warping fields will only be defined for areas covered by
+              the spinal cord segmentation, which is useful when only a partial FOV is present (e.g. lumbar data). Default=`0`.
         """),  # noqa: E501 (line too long)
         )
     optional.add_argument(
@@ -232,6 +236,8 @@ def main(argv: Sequence[str]):
                 sc_straight.accuracy_results = int(param_split[1])
             if param_split[0] == 'template_orientation':
                 sc_straight.template_orientation = int(param_split[1])
+            if param_split[0] == 'safe_zone':
+                sc_straight.safe_zone = int(param_split[1])
 
     fname_straight = sc_straight.straighten()
 
