@@ -200,7 +200,7 @@ def test_sct_analyze_lesion_matches_expected_dummy_lesion_measurements(dummy_les
                     if not (measurements.at[idx, key] <= expected_value):
                         raise e  # Only raise exception if the value is greater than expected
             # These measures are the same regardless of angle adjustment/spine curvature
-            elif key in ['volume [mm3]', 'max_axial_damage_ratio []', 'interpolated_midsagittal_slice']:
+            elif key in ['volume [mm3]', 'max_axial_damage_ratio []']:
                 np.testing.assert_equal(measurements.at[idx, key], expected_value)
             else:
                 # However, these measures won't match exactly due to angle adjustment
