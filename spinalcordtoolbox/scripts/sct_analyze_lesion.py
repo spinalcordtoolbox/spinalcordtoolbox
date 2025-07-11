@@ -51,7 +51,7 @@ def get_parser():
     mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         "-m",
-        help='Binary mask of lesions (lesions are labeled as "1").',
+        help='Binary mask of lesions (e.g. `t2_lesion.nii.gz`). Lesions are labeled as "1".',
         metavar=Metavar.file,
     )
 
@@ -59,9 +59,9 @@ def get_parser():
     optional.add_argument(
         "-s",
         help=textwrap.dedent("""
-            Spinal cord centerline or segmentation file, which will be used to correct morphometric measures with cord angle with respect to slice. (e.g. `t2_seg.nii.gz`)
-
-            If provided, then the lesion volume, length, diameter, axial damage ratio, and tissue bridges will be computed. Otherwise, if not provided, then only the lesion volume will be computed.
+            Spinal cord segmentation (e.g. `t2_seg.nii.gz`). If provided, any lesion voxels outside the cord segmentation will be set to 0.
+            Additionally, the spinal cord segmentation is used to obtain the spinal cord centerline, which is used to correct morphometric measures with cord angle with respect to slice.
+            If not provided, only the lesion volume is computed.
         """),  # noqa: E501 (line too long)
         metavar=Metavar.file)
     optional.add_argument(
@@ -405,10 +405,6 @@ class AnalyzeLesion:
         # The orientation is assumed to be RPI (because we reoriented the image to RPI using orient2rpi())
         im_sc = Image(self.fname_sc)
         im_sc_data = im_sc.data
-
-        # Restrict the lesion mask to the spinal cord mask (from anatomical level, it does not make sense to have lesion
-        # outside the spinal cord mask)
-        im_lesion_data = im_lesion_data * im_sc_data
 
         # Get the dimensions of the lesion mask
         dim = im_lesion_data.shape
@@ -773,6 +769,11 @@ class AnalyzeLesion:
     def measure(self):
         im_lesion = Image(self.fname_label)
         im_lesion_data = im_lesion.data
+
+        # Restrict the lesion mask to the spinal cord mask, as lesions should not occur outside the cord
+        if self.fname_sc is not None:
+            im_lesion_data = im_lesion_data * Image(self.fname_sc).data
+
         p_lst = im_lesion.dim[4:7]  # voxel size
 
         label_lst = [label for label in np.unique(im_lesion_data) if label]  # lesion label IDs list
