@@ -665,7 +665,9 @@ def sct_analyze_lesion(
         orig_orientation = im_lesion.orientation
         im_lesion.change_orientation("RPI")
         im_lesion_data = im_lesion.data
-        label_lst = [label for label in np.unique(im_lesion.data) if label]
+        # Restrict the lesion mask to the spinal cord mask, as lesions should not occur outside the cord
+        im_lesion_data = im_lesion_data * im_sc_data
+        label_lst = [label for label in np.unique(im_lesion_data) if label]
 
         # Get the total number of lesions; this will represent the number of rows in the figure. For example, if we have
         # 2 lesions, we will have two rows. One row per lesion.
@@ -698,10 +700,6 @@ def sct_analyze_lesion(
             # now "labeled" meaning that different lesions have different values, e.g., 1, 2, 3
             # As we are looping across lesions, we get the lesion mask for the current lesion label
             im_label_data_cur = im_lesion_data == lesion_label
-            # Restrict the lesion mask to the spinal cord mask (from anatomical level, it does not make sense to have
-            # lesion outside the spinal cord mask)
-            # Note for `im_sc_data != 0`: Nonzero -> True | Zero -> False; we use this in case of soft SC
-            im_label_data_cur = np.logical_and(im_lesion_data == lesion_label, im_sc_data != 0)
 
             # Loop across sagittal slices
             for idx_col, sagittal_slice in enumerate(range(min_sag_slice, max_sag_slice + 1)):
@@ -1087,6 +1085,8 @@ def crop_with_mask(img_to_crop, img_ref, pad=3, max_slices=None):
     the segmentation spans more slices than `max_slices`, then no padding will occur. Instead,
     all slices containing the segmentation will be used (to preserve the segmentation).
     """
+    if not np.count_nonzero(img_ref.data):
+        raise ValueError("The mask image is empty. Cannot crop using an empty mask. Check the input (e.g. '-qc-seg').")
     # QC images are reoriented to SAL (axial) or RSP (sagittal) such that axis=0 is always the slice index
     axis = 0
     # get extents of segmentation used for cropping
@@ -1125,12 +1125,12 @@ def get_max_axial_radius(img):
     """
     # In Axial plane, the radius is the maximum width/height of the spinal cord mask dilated by 20% or 15, whichever is larger.
     dilation = 1.2
-    default = 15
-    heights = [np.max(np.where(slice)[0]) - np.min(np.where(slice)[0]) if np.sum(slice) > 0 else 0 for slice in img.data]
-    widths = [np.max(np.where(slice)[1]) - np.min(np.where(slice)[1]) if np.sum(slice) > 0 else 0 for slice in img.data]
-    heights = [(h * dilation)//2 for h in heights]
-    widths = [(w * dilation)//2 for w in widths]
-    return max(default, max(heights)), max(default, max(widths))
+    radius_default = 15
+    heights = [np.max(np.where(slc)[0]) - np.min(np.where(slc)[0]) if np.sum(slc) > 0 else 0 for slc in img.data]
+    widths = [np.max(np.where(slc)[1]) - np.min(np.where(slc)[1]) if np.sum(slc) > 0 else 0 for slc in img.data]
+    radii_h = [int((h * dilation)//2) for h in heights]
+    radii_w = [int((w * dilation)//2) for w in widths]
+    return max(radius_default, max(radii_h)), max(radius_default, max(radii_w))
 
 
 def get_max_sagittal_radius(img):
