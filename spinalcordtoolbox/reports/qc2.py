@@ -665,7 +665,9 @@ def sct_analyze_lesion(
         orig_orientation = im_lesion.orientation
         im_lesion.change_orientation("RPI")
         im_lesion_data = im_lesion.data
-        label_lst = [label for label in np.unique(im_lesion.data) if label]
+        # Restrict the lesion mask to the spinal cord mask, as lesions should not occur outside the cord
+        im_lesion_data = im_lesion_data * im_sc_data
+        label_lst = [label for label in np.unique(im_lesion_data) if label]
 
         # Get the total number of lesions; this will represent the number of rows in the figure. For example, if we have
         # 2 lesions, we will have two rows. One row per lesion.
@@ -698,10 +700,6 @@ def sct_analyze_lesion(
             # now "labeled" meaning that different lesions have different values, e.g., 1, 2, 3
             # As we are looping across lesions, we get the lesion mask for the current lesion label
             im_label_data_cur = im_lesion_data == lesion_label
-            # Restrict the lesion mask to the spinal cord mask (from anatomical level, it does not make sense to have
-            # lesion outside the spinal cord mask)
-            # Note for `im_sc_data != 0`: Nonzero -> True | Zero -> False; we use this in case of soft SC
-            im_label_data_cur = np.logical_and(im_lesion_data == lesion_label, im_sc_data != 0)
 
             # Loop across sagittal slices
             for idx_col, sagittal_slice in enumerate(range(min_sag_slice, max_sag_slice + 1)):
