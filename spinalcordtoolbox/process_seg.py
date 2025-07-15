@@ -275,7 +275,7 @@ def _properties2d(seg, dim, iz, angle_hog=None):
     area = np.sum(seg_crop_r) * dim[0] * dim[1] / upscale ** 2
     # Compute ellipse orientation, modulo pi, in deg, and between [0, 90]
     orientation = fix_orientation(region.orientation)
-    # Find RL and AP diameter based on major/minor axes and cord orientation=
+    # Find RL and AP diameter based on major/minor axes and cord orientation
     [diameter_AP, diameter_RL] = \
         _find_AP_and_RL_diameter(region.major_axis_length, region.minor_axis_length, orientation,
                                  [i / upscale for i in dim])
@@ -292,7 +292,7 @@ def _properties2d(seg, dim, iz, angle_hog=None):
         'diameter_RL': diameter_RL,
         'centroid': region.centroid,
         'eccentricity': region.eccentricity,
-        'orientation': orientation,
+        'orientation': orientation, # in degrees
         'solidity': solidity,  # convexity measure
     }
 
