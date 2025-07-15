@@ -150,46 +150,6 @@ def compute_shape(segmentation, image, angle_correction=True, centerline_path=No
         angle_hog, conf_src = find_angle_hog(current_patch_im_scaled, centermass_src,
                                              px, py, angle_range=40)    # 40 is taken from registration.algorithms.register2d_centermassrot
 
-        # -------------
-        # Debug figure: image, mask, PCA, HOG
-        import matplotlib.pyplot as plt
-        from matplotlib.patches import Arrow
-        import os
-        img = current_patch_im_scaled
-        mask = current_patch_scaled
-        fig, ax = plt.subplots(figsize=(6, 6))
-        ax.imshow(np.fliplr(np.rot90(img, 3)), cmap='gray', alpha=1)      # to match the orientation of the center of mass and PCA
-        ax.imshow(np.fliplr(np.rot90(mask, 3)), cmap='Reds', alpha=0.4)     # to match the orientation of the center of mass and PCA
-        # Plot PCA axes
-        center = centermass_src  # (y, x) for plotting
-        scale = 10
-        scale_pca = 20
-        for k, color in enumerate(['lime', 'green']):    # to make PCA components in different colors
-            v = pca_src.components_[k]
-            ax.arrow(center[0], center[1], v[1] * scale_pca, v[0] * scale_pca, color=color, linestyle='--', width=0.5, head_width=2, label=f'PCA component {k + 1}')
-            ax.arrow(center[0], center[1], -v[1] * scale_pca, -v[0] * scale_pca, color=color, linestyle='--', width=0.5, head_width=2, label='')
-        # Plot HOG angle
-        angle = -angle_hog  # flip sign to match PCA convention
-        ax.arrow(center[0], center[1], np.sin(angle) * scale, np.cos(angle) * scale, color='blue', width=0.25,
-                 head_width=2, label=f'HOG = {shape_property["angle_hog"]:.1f}°')
-        ax.arrow(center[0], center[1], -np.sin(angle) * scale, -np.cos(angle) * scale, color='blue', width=0.25,
-                 head_width=2)
-        # Plot orientation angle
-        angle_or = (shape_property['orientation_before_fix'])   # in radians
-        ax.arrow(center[0], center[1], np.sin(angle_or) * scale, np.cos(angle_or) * scale,
-                 color='orange', width=0.5, head_width=2, label=f'Ellipse Orientation = {shape_property["orientation"]:.1f}°')
-        ax.arrow(center[0], center[1], -np.sin(angle_or) * scale, -np.cos(angle_or) * scale,
-                    color='orange', width=0.5, head_width=2)
-        ax.set_title(f'Slice {iz}: Image, Mask, PCA, HOG')
-        ax.set_aspect('equal')
-        ax.legend(loc='lower right', framealpha=1.0)
-        plt.tight_layout()
-        #plt.show()
-        fname_fig = os.path.join(f'slice_{iz}_hog.png')
-        plt.savefig(fname_fig, dpi=300, bbox_inches='tight')
-        print(f'Saved debug figure to {fname_fig}')
-        plt.close(fig)
-        # -------------
         # compute shape properties on 2D patch of the segmentation
         # angle_hog is passed to rotate the segmentation to align with AP/RL axes to compute AP and RL diameters along the axes
         shape_property = _properties2d(current_patch_scaled, [px, py], iz, angle_hog=angle_hog)
