@@ -193,8 +193,8 @@ def compute_shape(segmentation, image, angle_correction=True, centerline_path=No
 def _properties2d(seg, dim, iz, angle_hog=None):
     """
     Compute shape property of the input 2D segmentation. Accounts for partial volume information.
-    :param seg: 2D input segmentation in uint8 or float (weighted for partial volume) that has a single object.
-    :param dim: [px, py]: Physical dimension of the segmentation (in mm). X,Y respectively correspond to AP,RL.
+    :param seg: 2D input segmentation in uint8 or float (weighted for partial volume) that has a single object. seg.shape[0] --> RL; seg.shape[1] --> PA
+    :param dim: [px, py]: Physical dimension of the segmentation (in mm). X,Y respectively correspond to RL,PA.
     :param iz: Integer slice number (z index) of the segmentation. Used for plotting purposes.
     :param angle_hog: Optional angle in radians to rotate the segmentation to align with AP/RL axes.
     :return:
