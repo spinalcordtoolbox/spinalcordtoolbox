@@ -9,6 +9,7 @@ import math
 import platform
 import numpy as np
 from skimage import measure, transform
+from scipy.ndimage import map_coordinates
 import logging
 
 from spinalcordtoolbox.image import Image
@@ -47,6 +48,8 @@ def compute_shape(segmentation, image, angle_correction=True, centerline_path=No
                      'angle_RL',
                      'diameter_AP',
                      'diameter_RL',
+                     'ap_diameter_from_pixels',
+                     'rl_diameter_from_pixels',
                      'eccentricity',
                      'orientation',
                      'solidity',
@@ -294,6 +297,16 @@ def _properties2d(seg, dim, iz, angle_hog=None):
         'solidity': solidity,  # convexity measure
     }
 
+    # Apply rotation using angle_hog if provided
+    if angle_hog is not None:
+        # Rotate the segmentation by the angle_hog to align with AP/RL axes
+        seg_crop_r_rotated = _rotate_segmentation_by_angle(seg_crop_r, angle_hog)
+        # Measure diameters along AP and RL axes in the rotated segmentation
+        rotated_properties = _measure_rotated_diameters(seg_crop_r, seg_crop_r_rotated, dim, angle_hog, upscale, iz, properties)
+
+        # Update the properties dictionary with the rotated properties
+        properties.update(rotated_properties)
+
     return properties
 
 
@@ -330,3 +343,150 @@ def _find_AP_and_RL_diameter(major_axis, minor_axis, orientation, dim):
     diameter_AP *= dim[0]
     diameter_RL *= dim[1]
     return diameter_AP, diameter_RL
+
+
+def _rotate_segmentation_by_angle(seg_crop_r, angle_hog):
+    """
+    Rotate the segmentation by the angle (HOG angle found from the image) to align with AP/RL axes.
+
+    :param seg_crop_r: 2D input segmentation
+    :param angle_hog: Rotation angle in radians (HOG angle found from the image)
+    :return seg_crop_r_rotated: Rotated segmentation
+    """
+    # get center of mass (which is computed in the PCA function)
+    _, _, [y0, x0] = compute_pca(seg_crop_r)        # same as `y0, x0 = region.centroid`
+    # Create coordinate grid
+    rows, cols = seg_crop_r.shape
+    Y, X = np.mgrid[0:rows, 0:cols]
+    # Center the coordinates
+    Xc = X - x0
+    Yc = Y - y0
+    # Rotate coordinates (negative sign for counter-clockwise rotation)
+    Xr = Xc * np.cos(-angle_hog) - Yc * np.sin(-angle_hog)
+    Yr = Xc * np.sin(-angle_hog) + Yc * np.cos(-angle_hog)
+    # Shift the rotated coordinates back to their original position in the image. This ensures that the rotated
+    # segmentation is positioned correctly in the output image, with the rotation happening around the center of the
+    # object rather than around the origin of the coordinate system.
+    Xr = Xr + x0
+    Yr = Yr + y0
+
+    # Create coordinate mapping for interpolation
+    coords = np.column_stack([np.ravel(Yr), np.ravel(Xr)])
+
+    # Apply transformation
+    seg_crop_r_rotated = map_coordinates(seg_crop_r, [coords[:, 0], coords[:, 1]], order=1).reshape(seg_crop_r.shape)      # order of the spline interpolation --> order=1: linear interpolation
+
+    return seg_crop_r_rotated
+
+def _measure_rotated_diameters(seg_crop_r, seg_crop_r_rotated, dim, angle_hog, upscale, iz, properties):
+    """
+    Measure the AP and RL diameters in the rotated segmentation.
+    This function counts the number of pixels along the AP and RL axes in the rotated segmentation and converts them
+    to physical dimensions using the provided pixel size.
+
+    :param seg_crop_r: Original cropped segmentation (used only for plotting).
+    :param seg_crop_r_rotated: Rotated segmentation (after applying angle_hog) used to measure diameters. seg.shape[0] --> RL; seg.shape[1] --> PA
+    :param dim: Physical dimensions of the segmentation (in mm). X,Y respectively correspond to RL,PA.
+    :param angle_hog: Rotation angle in radians (HOG angle found from the image)
+    :param upscale: Upscale factor used for resampling the segmentation
+    :param iz: Integer slice number (z index) of the segmentation. Used for plotting purposes.
+    :param properties: Dictionary containing the properties of the original (not-rotated) segmentation. Used for plotting purposes.
+    :return result: Dictionary containing the measured diameters and pixel counts along AP and RL axes.
+    """
+    # Binarize rotated segmentation
+    rotated_bin = np.array(seg_crop_r_rotated > 0.5, dtype='uint8')
+
+    # get center of mass (which is computed in the PCA function); centermass_src: [RL, AP] (assuming RPI orientation)
+    # Note: I'm using [rl0, ap0] instead of [y0, x0] to make it easier to track the axes as numpy handle them in a bit unintuitive way :-D
+    _, _, [rl0, ap0] = compute_pca(rotated_bin)    # same as `y0, x0 = region.centroid`
+    rl0_r, ap0_r = round(rl0), round(ap0)
+
+    # Count non-zero pixels along AP axis, i.e., the number of pixels in the row corresponding to the center of mass along the RL axis
+    ap_pixels = np.sum(rotated_bin[rl0_r, :] > 0)
+    # Count non-zero pixels along RL axis, i.e., the number of pixels in the column corresponding to the center of mass along the AP axis
+    rl_pixels = np.sum(rotated_bin[:, ap0_r] > 0)
+    # Convert pixels to physical dimensions
+    # TODO: double-check dim[0] and dim[1] correspondence to RL and AP diameters
+    rl_diameter = rl_pixels * dim[0] / upscale
+    ap_diameter = ap_pixels * dim[1] / upscale
+
+    # Store all the rotated properties
+    result = {
+        'ap_pixel_count': ap_pixels,
+        'rl_pixel_count': rl_pixels,
+        'ap_diameter_from_pixels': ap_diameter,
+        'rl_diameter_from_pixels': rl_diameter,
+    }
+
+    # Debug -------------
+    # Plot the original and rotated segmentation
+    import matplotlib.pyplot as plt
+    from matplotlib.patches import Ellipse
+    fig = plt.figure(figsize=(6, 6))
+    ax1 = fig.add_subplot(111)
+    # Original segmentation
+    seg_crop_r_bin = np.array(seg_crop_r > 0.5, dtype='uint8')  # binarize the original segmentation
+    ax1.imshow(seg_crop_r_bin, cmap='gray', alpha=1, label='Original Segmentation')
+
+    # Add ellipse fitted using skimage.regionprops
+    _, _, [y0, x0] = compute_pca(seg_crop_r)
+    ellipse = Ellipse(
+        (x0, y0),
+        width=properties['diameter_AP'] * upscale / dim[0],
+        height=properties['diameter_RL'] * upscale / dim[1],
+        angle=properties['orientation'],
+        edgecolor='black',
+        facecolor='none',
+        linewidth=1,
+        label="Ellipse fitted using skimage.regionprops"
+    )
+    ax1.add_patch(ellipse)
+    # Add AP and RL diameters from the original segmentation obtained using skimage.regionprops
+    radius_ap = (properties['diameter_AP'] / dim[0]) * 0.5 * upscale
+    radius_rl = (properties['diameter_RL'] / dim[1]) * 0.5 * upscale
+    dx_ap = radius_ap * np.cos(np.radians(properties['orientation']))
+    dy_ap = radius_ap * np.sin(np.radians(properties['orientation']))
+    dx_rl = radius_rl * -np.sin(np.radians(properties['orientation']))
+    dy_rl = radius_rl * np.cos(np.radians(properties['orientation']))
+    ax1.plot([x0 - dx_ap, x0 + dx_ap], [y0 - dy_ap, y0 + dy_ap], 'r--', linewidth=2, label='AP diameter')
+    ax1.plot([x0 - dx_rl, x0 + dx_rl], [y0 - dy_rl, y0 + dy_rl], 'b--', linewidth=2, label='RL diameter')
+
+    # Rotated segmentation by angle_hog
+    ax1.imshow(rotated_bin, cmap='Reds', alpha=0.4, label='Rotated Segmentation')
+    # Center of mass
+    ax1.plot(ap0_r, rl0_r, 'ro', markersize=6)
+    # Draw arrow for the rotation angle
+    # angle_hog = -angle_hog  # flip sign to match PCA convention
+    ax1.arrow(ap0_r, rl0_r, np.sin(angle_hog + (90 * math.pi / 180)) * 25,
+              np.cos(angle_hog + (90 * math.pi / 180)) * 25, color='black', width=0.1,
+              head_width=1, label=f'HOG angle = {angle_hog * 180 / math.pi:.1f}°')  # convert to degrees
+    # Draw AP and RL axes
+    ax1.axhline(y=rl0_r, color='r', linestyle='--', alpha=1, label='AP axis', linewidth=1)
+    ax1.axvline(x=ap0_r, color='g', linestyle='--', alpha=1, label='RL axis', linewidth=1)
+    # Draw lines for the measured AP and RL diameters
+    r = np.nonzero(rotated_bin[:, ap0_r])[0][0]
+    l = np.nonzero(rotated_bin[:, ap0_r])[0][-1]
+    a = np.nonzero(rotated_bin[rl0_r, :])[0][0]
+    p = np.nonzero(rotated_bin[rl0_r, :])[0][-1]
+    ax1.plot([a, p], [rl0_r, rl0_r], color='blue', linestyle='-', linewidth=2,
+             label=f'AP Diameter = {ap_diameter:.2f} mm')
+    ax1.plot([ap0_r, ap0_r], [r, l], color='orange', linestyle='-', linewidth=2,
+             label=f'RL Diameter = {rl_diameter:.2f} mm')
+    # Add A, P, R, L labels
+    bbox_params = dict(facecolor='black', alpha=1)
+    ax1.text(ap0_r, seg_crop_r.shape[0] * 0.95, 'L', color='white', fontsize=12, ha='center', va='center',
+             bbox=bbox_params)
+    ax1.text(seg_crop_r.shape[1] * 0.95, rl0_r, 'A', color='white', fontsize=12, ha='center', va='center',
+             bbox=bbox_params)
+    ax1.text(ap0_r, seg_crop_r.shape[0] * 0.05, 'R', color='white', fontsize=12, ha='center', va='center',
+             bbox=bbox_params)
+    ax1.text(seg_crop_r.shape[1] * 0.05, rl0_r, 'P', color='white', fontsize=12, ha='center', va='center',
+             bbox=bbox_params)
+    # Plot horizontal and vertical grid lines
+    ax1.grid(which='both', color='gray', linestyle='--', linewidth=0.5, alpha=0.5)
+    ax1.legend(loc='upper right', framealpha=1.0, fontsize=6)
+    ax1.set_title(f'Slice {iz}: Original and Rotated Segmentation by HOG Angle')
+    plt.tight_layout()
+    plt.show()
+
+    return result
