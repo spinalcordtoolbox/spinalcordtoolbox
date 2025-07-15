@@ -140,14 +140,12 @@ def compute_shape(segmentation, image, angle_correction=True, centerline_path=No
             current_patch_scaled = current_patch
             current_patch_im_scaled = current_patch_im
             angle_AP_rad, angle_RL_rad = 0.0, 0.0
-        # compute shape properties on 2D patch of the segmentation
-        shape_property = _properties2d(current_patch_scaled, [px, py])
-        # compute PCA and get center or mass based on segmentation
+
+        # compute PCA and get center or mass based on segmentation; centermass_src: [RL, AP] (assuming RPI orientation)
         coord_src, pca_src, centermass_src = compute_pca(current_patch_scaled)
         # Finds the angle of the image
         angle_hog, conf_src = find_angle_hog(current_patch_im_scaled, centermass_src,
                                              px, py, angle_range=40)    # 40 is taken from registration.algorithms.register2d_centermassrot
-        shape_property['angle_hog'] = angle_hog * 180.0 / math.pi  # convert to degrees
 
         # -------------
         # Debug figure: image, mask, PCA, HOG
@@ -189,6 +187,12 @@ def compute_shape(segmentation, image, angle_correction=True, centerline_path=No
         print(f'Saved debug figure to {fname_fig}')
         plt.close(fig)
         # -------------
+        # compute shape properties on 2D patch of the segmentation
+        # angle_hog is passed to rotate the segmentation to align with AP/RL axes to compute AP and RL diameters along the axes
+        shape_property = _properties2d(current_patch_scaled, [px, py], iz, angle_hog=angle_hog)
+
+        # Add angle_hog to shape_property (convert to degrees)
+        shape_property['angle_hog'] = angle_hog * 180.0 / math.pi
 
         if shape_property is not None:
             # Add custom fields
@@ -223,11 +227,13 @@ def compute_shape(segmentation, image, angle_correction=True, centerline_path=No
     return metrics, fit_results
 
 
-def _properties2d(seg, dim):
+def _properties2d(seg, dim, iz, angle_hog=None):
     """
     Compute shape property of the input 2D segmentation. Accounts for partial volume information.
     :param seg: 2D input segmentation in uint8 or float (weighted for partial volume) that has a single object.
     :param dim: [px, py]: Physical dimension of the segmentation (in mm). X,Y respectively correspond to AP,RL.
+    :param iz: Integer slice number (z index) of the segmentation. Used for plotting purposes.
+    :param angle_hog: Optional angle in radians to rotate the segmentation to align with AP/RL axes.
     :return:
     """
     upscale = 5  # upscale factor for resampling the input segmentation (for better precision)
