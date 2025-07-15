@@ -293,7 +293,6 @@ def _properties2d(seg, dim, iz, angle_hog=None):
         'centroid': region.centroid,
         'eccentricity': region.eccentricity,
         'orientation': orientation,
-        'orientation_before_fix': region.orientation,    # keeping it in radians
         'solidity': solidity,  # convexity measure
     }
 
