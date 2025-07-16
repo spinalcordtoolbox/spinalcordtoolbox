@@ -54,8 +54,10 @@ jobs:
     container: archlinux
     steps:
       - name: Dependencies
-        run: |  # NB: glu is needed for PyQT testing (https://stackoverflow.com/a/66486957/7584115)
-          pacman -Syu --noconfirm gcc git curl glu
+        run: |
+          # NB: glu is needed for PyQT testing (https://stackoverflow.com/a/66486957/7584115)
+          # NB: make sure that this update doesn't update bash/readline (which have an upstream bug w.r.t. readline)
+          pacman -Syu --noconfirm gcc git curl glu --ignore bash,readline
       - uses: actions/checkout@v4
       - name: Install SCT
         run: |
