@@ -974,8 +974,15 @@ class AnalyzeLesion:
         # 4. Calculate target position in right-left axis (x direction) for the interpolation (mean of spinal cord
         # center of mass (in the x-axis (R-L direction))
         self.interpolated_midsagittal_slice_RPI = np.mean(stored_x_coordinates)    # e.g., for [8.6, 8.6, 8.9, 8.8, 9.6] --> 8.7
+        # Convert the interpolated midsagittal slice to the original orientation (just for printing)
+        interpolated_midsagittal_slice_orig_orientation = (
+            rpi_slice_to_orig_orientation(im_lesion_data.shape, self.orientation,
+                                          self.interpolated_midsagittal_slice_RPI, 0))
         printv(f'Interpolated midsagittal slice (same across lesions) = '
-               f'{round(self.interpolated_midsagittal_slice_RPI, 2)}', self.verbose, 'info')
+               f'{round(interpolated_midsagittal_slice_orig_orientation, 2)}', self.verbose, 'info')
+
+        rpi_slice_to_orig_orientation(im_lesion_data.shape, self.orientation, self.interpolated_midsagittal_slice_RPI, 0)
+
         # 5. Interpolate the lesion
         slice1 = int(np.floor(self.interpolated_midsagittal_slice_RPI))     # e.g., 8
         slice2 = int(np.ceil(self.interpolated_midsagittal_slice_RPI))      # e.g., 9
