@@ -821,7 +821,9 @@ class AnalyzeLesion:
                 atlas_data_dct[tract_id] = img_cur_copy.data
                 del img_cur
 
-        # Get two sagittal slices for interpolation (based on the center of mass of the largest lesion).
+        # Get two sagittal slices for interpolation based on the center of mass of the largest lesion. As we need all
+        # lesions (to compute the center of mass of the largest lesion), we call the function here and not in the for
+        # loop below.
         # Note: The function checks if the spinal cord segmentation is provided, if not, only the volume of each lesion
         #  is computed (to determine the largest lesion) and the rest of the function is skipped.
         self.get_midsagittal_slice(im_lesion_data, label_lst, p_lst)
@@ -838,6 +840,8 @@ class AnalyzeLesion:
             # For the tissue bridges, we need the spinal cord segmentation to compute the width of spared tissue ventral
             # and dorsal to the spinal cord lesion
             if self.fname_sc is not None:
+                # The interpolated midsagittal slice is the same across all lesions, but for the clarity, we save it
+                # for each lesion (i.e., each row in the output XLSX file).
                 self.measure_pd.loc[label_idx, 'interpolated_midsagittal_slice'] = \
                     rpi_slice_to_orig_orientation(im_lesion_data.shape, self.orientation,
                                                   self.interpolated_midsagittal_slice_RPI, 0)
