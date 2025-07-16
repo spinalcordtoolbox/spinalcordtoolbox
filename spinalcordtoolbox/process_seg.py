@@ -377,29 +377,59 @@ def _measure_rotated_diameters(seg_crop_r, seg_crop_r_rotated, dim, angle_hog, u
         'rl_diameter_from_pixels': rl_diameter,
     }
 
-    # Debug -------------
+    # Debug plotting
+    _debug_plotting_hog(angle_hog, ap0_r, ap_diameter, dim, iz, properties, rl0_r, rl_diameter, rotated_bin, seg_crop_r,
+                        upscale)
+
+    return result
+
+
+def _debug_plotting_hog(angle_hog, ap0_r, ap_diameter, dim, iz, properties, rl0_r, rl_diameter, rotated_bin, seg_crop_r,
+                        upscale):
+    """
+    """
+    def _add_labels(ax):
+        """Add A, P, R, L labels"""
+        bbox_params = dict(facecolor='black', alpha=1)
+        ax.text(ap0_r, seg_crop_r.shape[0] * 0.95, 'L', color='white', fontsize=12, ha='center', va='center',
+                 bbox=bbox_params)
+        ax.text(seg_crop_r.shape[1] * 0.95, rl0_r, 'A', color='white', fontsize=12, ha='center', va='center',
+                 bbox=bbox_params)
+        ax.text(ap0_r, seg_crop_r.shape[0] * 0.05, 'R', color='white', fontsize=12, ha='center', va='center',
+                 bbox=bbox_params)
+        ax.text(seg_crop_r.shape[1] * 0.05, rl0_r, 'P', color='white', fontsize=12, ha='center', va='center',
+                 bbox=bbox_params)
+
+    def _add_ellipse(ax, x0, y0):
+        """Add an ellipse to the plot."""
+        ellipse = Ellipse(
+            (x0, y0),
+            width=properties['diameter_AP'] * upscale / dim[0],
+            height=properties['diameter_RL'] * upscale / dim[1],
+            angle=properties['orientation'],
+            edgecolor='orange',
+            facecolor='none',
+            linewidth=2,
+            label="Ellipse fitted using skimage.regionprops"
+        )
+        ax.add_patch(ellipse)
+
     # Plot the original and rotated segmentation
     import matplotlib.pyplot as plt
     from matplotlib.patches import Ellipse
-    fig = plt.figure(figsize=(6, 6))
+    fig = plt.figure(figsize=(6, 8))
     ax1 = fig.add_subplot(111)
-    # Original segmentation
+    # 1. Original segmentation
     seg_crop_r_bin = np.array(seg_crop_r > 0.5, dtype='uint8')  # binarize the original segmentation
     ax1.imshow(seg_crop_r_bin, cmap='gray', alpha=1, label='Original Segmentation')
-
     # Add ellipse fitted using skimage.regionprops
     _, _, [y0, x0] = compute_pca(seg_crop_r)
-    ellipse = Ellipse(
-        (x0, y0),
-        width=properties['diameter_AP'] * upscale / dim[0],
-        height=properties['diameter_RL'] * upscale / dim[1],
-        angle=properties['orientation'],
-        edgecolor='black',
-        facecolor='none',
-        linewidth=1,
-        label="Ellipse fitted using skimage.regionprops"
-    )
-    ax1.add_patch(ellipse)
+    # Center of mass in the original segmentation
+    ax1.plot(x0, y0, 'ko', markersize=10, label='Original Segmentation Center of Mass')
+    _add_ellipse(ax1, x0, y0)
+    # Draw AP and RL axes through the center of mass of the original segmentation
+    ax1.axhline(y=y0, color='k', linestyle='--', alpha=1, linewidth=1, label='AP axis (original segmentation)')
+    ax1.axvline(x=x0, color='k', linestyle='--', alpha=1, linewidth=1, label='RL axis (original segmentation)')
     # Add AP and RL diameters from the original segmentation obtained using skimage.regionprops
     radius_ap = (properties['diameter_AP'] / dim[0]) * 0.5 * upscale
     radius_rl = (properties['diameter_RL'] / dim[1]) * 0.5 * upscale
@@ -407,45 +437,43 @@ def _measure_rotated_diameters(seg_crop_r, seg_crop_r_rotated, dim, angle_hog, u
     dy_ap = radius_ap * np.sin(np.radians(properties['orientation']))
     dx_rl = radius_rl * -np.sin(np.radians(properties['orientation']))
     dy_rl = radius_rl * np.cos(np.radians(properties['orientation']))
-    ax1.plot([x0 - dx_ap, x0 + dx_ap], [y0 - dy_ap, y0 + dy_ap], 'r--', linewidth=2, label='AP diameter')
-    ax1.plot([x0 - dx_rl, x0 + dx_rl], [y0 - dy_rl, y0 + dy_rl], 'b--', linewidth=2, label='RL diameter')
+    ax1.plot([x0 - dx_ap, x0 + dx_ap], [y0 - dy_ap, y0 + dy_ap], color='blue', linestyle='--', linewidth=2,
+            label=f'AP diameter (skimage.regionprops) = {properties["diameter_AP"]:.2f} mm')
+    ax1.plot([x0 - dx_rl, x0 + dx_rl], [y0 - dy_rl, y0 + dy_rl], color='blue', linestyle='solid', linewidth=2,
+            label=f'RL diameter (skimage.regionprops) = {properties["diameter_RL"]:.2f} mm')
+    # Add A, P, R, L labels
+    _add_labels(ax1)
 
-    # Rotated segmentation by angle_hog
+    # 2. Rotated segmentation by angle_hog
     ax1.imshow(rotated_bin, cmap='Reds', alpha=0.4, label='Rotated Segmentation')
     # Center of mass
-    ax1.plot(ap0_r, rl0_r, 'ro', markersize=6)
+    ax1.plot(ap0_r, rl0_r, 'ro', markersize=10, label='Rotated Segmentation Center of Mass')
     # Draw arrow for the rotation angle
     # angle_hog = -angle_hog  # flip sign to match PCA convention
     ax1.arrow(ap0_r, rl0_r, np.sin(angle_hog + (90 * math.pi / 180)) * 25,
-              np.cos(angle_hog + (90 * math.pi / 180)) * 25, color='black', width=0.1,
-              head_width=1, label=f'HOG angle = {angle_hog * 180 / math.pi:.1f}°')  # convert to degrees
-    # Draw AP and RL axes
-    ax1.axhline(y=rl0_r, color='r', linestyle='--', alpha=1, label='AP axis', linewidth=1)
-    ax1.axvline(x=ap0_r, color='g', linestyle='--', alpha=1, label='RL axis', linewidth=1)
+             np.cos(angle_hog + (90 * math.pi / 180)) * 25, color='black', width=0.1,
+             head_width=1, label=f'HOG angle = {angle_hog * 180 / math.pi:.1f}°')  # convert to degrees
+    # Draw AP and RL axes through the center of mass of the rotated segmentation
+    ax1.axhline(y=rl0_r, color='k', linestyle='dashdot', alpha=1, linewidth=1, label='AP axis (rotated segmentation)')
+    ax1.axvline(x=ap0_r, color='k', linestyle='dashdot', alpha=1, linewidth=1, label='RL axis (rotated segmentation)')
     # Draw lines for the measured AP and RL diameters
     r = np.nonzero(rotated_bin[:, ap0_r])[0][0]
     l = np.nonzero(rotated_bin[:, ap0_r])[0][-1]
     a = np.nonzero(rotated_bin[rl0_r, :])[0][0]
     p = np.nonzero(rotated_bin[rl0_r, :])[0][-1]
-    ax1.plot([a, p], [rl0_r, rl0_r], color='blue', linestyle='-', linewidth=2,
-             label=f'AP Diameter = {ap_diameter:.2f} mm')
-    ax1.plot([ap0_r, ap0_r], [r, l], color='orange', linestyle='-', linewidth=2,
-             label=f'RL Diameter = {rl_diameter:.2f} mm')
-    # Add A, P, R, L labels
-    bbox_params = dict(facecolor='black', alpha=1)
-    ax1.text(ap0_r, seg_crop_r.shape[0] * 0.95, 'L', color='white', fontsize=12, ha='center', va='center',
-             bbox=bbox_params)
-    ax1.text(seg_crop_r.shape[1] * 0.95, rl0_r, 'A', color='white', fontsize=12, ha='center', va='center',
-             bbox=bbox_params)
-    ax1.text(ap0_r, seg_crop_r.shape[0] * 0.05, 'R', color='white', fontsize=12, ha='center', va='center',
-             bbox=bbox_params)
-    ax1.text(seg_crop_r.shape[1] * 0.05, rl0_r, 'P', color='white', fontsize=12, ha='center', va='center',
-             bbox=bbox_params)
+    ax1.plot([a, p], [rl0_r, rl0_r], color='red', linestyle='--', linewidth=2,
+            label=f'AP Diameter (rotated segmentation) = {ap_diameter:.2f} mm')
+    ax1.plot([ap0_r, ap0_r], [r, l], color='red', linestyle='solid', linewidth=2,
+            label=f'RL Diameter (rotated segmentation) = {rl_diameter:.2f} mm')
+
     # Plot horizontal and vertical grid lines
     ax1.grid(which='both', color='gray', linestyle='--', linewidth=0.5, alpha=0.5)
-    ax1.legend(loc='upper right', framealpha=1.0, fontsize=6)
-    ax1.set_title(f'Slice {iz}: Original and Rotated Segmentation by HOG Angle')
+    ax1.legend(loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=1, framealpha=1.0, fontsize=8)
+    ax1.set_title(f'Slice {iz}\nOriginal segmentation and Segmentation rotated by HOG angle')
+
     plt.tight_layout()
     plt.show()
-
-    return result
+    # Save the figure
+    fig.savefig(f'slice_{iz}_segmentation_properties.png', dpi=300, bbox_inches='tight')
+    plt.close(fig)  # Close the figure to free up memory
+    print(f'Saved figure for slice {iz} with segmentation properties to "slice_{iz}_segmentation_properties.png"')
