@@ -985,8 +985,6 @@ class AnalyzeLesion:
         printv(f'Interpolated midsagittal slice (same across lesions) = '
                f'{round(interpolated_midsagittal_slice_orig_orientation, 2)}', self.verbose, 'info')
 
-        rpi_slice_to_orig_orientation(im_lesion_data.shape, self.orientation, self.interpolated_midsagittal_slice_RPI, 0)
-
         # 5. Interpolate the lesion
         slice1 = int(np.floor(self.interpolated_midsagittal_slice_RPI))     # e.g., 8
         slice2 = int(np.ceil(self.interpolated_midsagittal_slice_RPI))      # e.g., 9
