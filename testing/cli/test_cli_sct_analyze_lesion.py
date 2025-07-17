@@ -67,9 +67,8 @@ def compute_expected_measurements(lesion_params, path_seg=None):
             largest_lesion = [(29, 40, 20), (3, 3, 4)]
         z_center = int(round(np.mean(list(range(largest_lesion[0][1], largest_lesion[0][1] + largest_lesion[1][1])))))
         z_range = np.arange(z_center - 2, z_center + 3)  # two slices above and below the lesion center of mass
-        # For each of these slices, compute the spinal cord center of mass in the R-L direction
-        # Note: as path_seg has the AIL orientation, we need to reverse the last axis from "L-R" to "R-L" using [::-1]
-        sc_com = [center_of_mass(Image(path_seg).data[:, z, ::-1])[1] for z in
+        # For each of these slices, compute the spinal cord center of mass in the L-R direction
+        sc_com = [center_of_mass(Image(path_seg).data[:, z, :])[1] for z in
                   z_range]  # 2D slice from AIL: [1] --> L-R
         mid_sagittal_slice = np.mean(sc_com)  # target slice in right-left axis (x direction) for the interpolation
 
@@ -150,8 +149,8 @@ def compute_expected_measurements(lesion_params, path_seg=None):
 
 
 @pytest.mark.sct_testing
-# Each tuple represents the starting coordinates (x: AP, y: SI, z: RL) and dimensions (width, height, depth) of a
-# dummy lesion
+# Each tuple represents the starting coordinates in the AIL orientation (x: AP, y: IS, z: LR)
+# and dimensions (width, height, depth) of a dummy lesion
 @pytest.mark.parametrize("dummy_lesion, rtol", [
     # Straight region of `t2.nii.gz` -> little curvature -> smaller tolerance
     ([(29, 45, 25), (3, 10, 2)], 0.001),
@@ -161,7 +160,7 @@ def compute_expected_measurements(lesion_params, path_seg=None):
     # Multiple lesions
     ([[(31, 0, 25), (4, 15, 3)],
       [(29, 45, 25), (3, 10, 2)]], 0.1),
-    # Lesion partly outside the spinal cord segmentation (z (RL) slice 19 is outside the SC seg)
+    # Lesion partly outside the spinal cord segmentation (z (LR) slice 19 is outside the SC seg)
     ([(29, 40, 19), (3, 3, 5)], 0.001)
 ], indirect=["dummy_lesion"])
 def test_sct_analyze_lesion_matches_expected_dummy_lesion_measurements(dummy_lesion, rtol, tmp_path):
@@ -201,7 +200,7 @@ def test_sct_analyze_lesion_matches_expected_dummy_lesion_measurements(dummy_les
                     if not (measurements.at[idx, key] <= expected_value):
                         raise e  # Only raise exception if the value is greater than expected
             # These measures are the same regardless of angle adjustment/spine curvature
-            elif key in ['volume [mm3]', 'max_axial_damage_ratio []', 'interpolated_midsagittal_slice']:
+            elif key in ['volume [mm3]', 'max_axial_damage_ratio []']:
                 np.testing.assert_equal(measurements.at[idx, key], expected_value)
             else:
                 # However, these measures won't match exactly due to angle adjustment
