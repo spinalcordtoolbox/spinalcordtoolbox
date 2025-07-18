@@ -74,37 +74,50 @@ class ParamMoco:
         :param iterAvg: int: Whether or not to average registered volumes with target image (default is 1)
         :param output_motion_param: bool: If True, the motion parameters are outputted (default is True)
         """
+        # This parameter is set depending on whether `sct_dmri_moco` or `sct_fmri_moco` is called
         self.is_diffusion = is_diffusion
-        self.debug = 0  # TODO: This param is currently not used anywhere
+
+        # Parameters controlled by specific `sct_dmri_moco`/`sct_fmri_moco` arguments (e.g. `-i`, `-m`, `-g`, etc.)
         self.fname_data = fname_data
-        self.fname_bvecs = fname_bvecs
-        self.fname_bvals = fname_bvals
-        self.fname_target = ''  # TODO: This param currently not used anywhere
         self.fname_mask = fname_mask
         self.path_out = path_out
-        self.mat_final = ''  # TODO: Clarify folder name (self.mat_moco vs. self.mat_final)
-        self.todo = ''  # TODO: This param is only ever used internally, and shouldn't be determined by the user
         self.group_size = group_size
-        self.spline_fitting = 0  # TODO: This currently raises a NotImplementedError, so don't expose it
-        self.remove_temp_files = remove_temp_files
+        self.interp = interp
         self.verbose = verbose
-        self.plot_graph = 0  # TODO: This is only used for `spline_fitting` which raises a NotImplementedError
-        self.suffix = '_moco'  # TODO: This param is only ever used internally, and is never overwritten
+        self.remove_temp_files = remove_temp_files
+
+        # Parameters controlled by the specific `sct_dmri_moco` arguments
+        self.fname_bvecs = fname_bvecs
+        self.fname_bvals = fname_bvals
+        self.bval_min = bval_min
+
+        # Advanced parameters defined by `-param` for both `sct_dmri_moco` and `sct_fmri_moco`
         self.poly = poly
         self.smooth = smooth
-        self.gradStep = gradStep
-        self.iter = iterations
         self.metric = metric
+        self.iter = iterations
+        self.gradStep = gradStep
         self.sampling = sampling
-        self.interp = interp
-        self.min_norm = 0.001  # TODO: This param is currently not used anywhere
-        self.swapXY = 0  # TODO: This param is currently not used anywhere
         self.num_target = num_target
-        self.suffix_mat = None  # TODO: This param is automatically determined based on `is_sagittal`
-        self.bval_min = bval_min
         self.iterAvg = iterAvg
-        self.is_sagittal = False  # TODO: This param is automatically determined based on orientation
-        self.output_motion_param = output_motion_param
+
+        # Params that are always True
+        self.output_motion_param = output_motion_param  # TODO: Why would we set this to False?
+
+        # Unused parameters
+        self.spline_fitting = 0  # TODO: This currently raises a NotImplementedError, so don't expose it
+        self.plot_graph = 0      # TODO: This is only used for `spline_fitting` which raises a NotImplementedError
+        self.min_norm = 0.001    # TODO: This param is currently not used anywhere
+        self.swapXY = 0          # TODO: This param is currently not used anywhere
+        self.debug = 0           # TODO: This param is currently not used anywhere
+
+        # Parameters that are used internally during the moco procedure and shouldn't be determined by the user
+        self.is_sagittal = None  # set automatically based on orientation
+        self.suffix_mat = None   # set automatically based on `is_sagittal`
+        self.suffix = '_moco'    # general suffix for all output files
+        self.mat_moco = ''       # output folder for intermediate `.mat` files
+        self.mat_final = ''      # output folder for final `.mat` files
+        self.todo = ''           # the moco step to perform next
 
     # update constructor with user's parameters
     def update(self, param_user):
