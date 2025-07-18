@@ -44,7 +44,7 @@ class ParamMoco:
     """
     # The constructor
 
-    def __init__(self, is_diffusion=None, group_size=1, metric='MeanSquares', smooth='1', iterations=10):
+    def __init__(self, is_diffusion=None, group_size=1, metric='MeanSquares', smooth='1', iterations='10'):
         """
 
         :param is_diffusion: Bool: If True, data will be treated as diffusion-MRI data (process slightly differs)
