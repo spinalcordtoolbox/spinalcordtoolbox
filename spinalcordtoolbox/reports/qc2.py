@@ -147,7 +147,7 @@ def create_qc_entry(
     display_open(file=str(path_index_html), message="To see the results in a browser")
 
 
-def add_slice_numbers(ax, num_slices, patch_size):
+def add_slice_numbers(ax, num_slices, patch_size, margin: int = 2):
     """
     Overlay slice indices onto an Axial mosaic.
     
@@ -164,14 +164,13 @@ def add_slice_numbers(ax, num_slices, patch_size):
     # Get the mosaic array we just plotted
     img_arr = ax.get_images()[0].get_array()
     n_cols = int(img_arr.shape[1] // patch_size)
-    for i in range(num_slices):
+    for i in range(1, num_slices):  # skip 0
         row = i // n_cols
         col = i % n_cols
-        x = col * patch_size + patch_size / 2
-        y = row * patch_size + patch_size / 2
-        txt = ax.text(x, y, str(i),
-                      ha='center', va='center',
-                      color='yellow', fontsize=4)
+        # top-left inside each tile
+        x = col * patch_size + margin
+        y = row * patch_size + margin
+        txt = ax.text(x, y, str(i), ha='left', va='top', color='yellow', fontsize=4)
         # give it a thin black outline for readability
         txt.set_path_effects([
             mpl_patheffects.Stroke(linewidth=1, foreground='black'),
