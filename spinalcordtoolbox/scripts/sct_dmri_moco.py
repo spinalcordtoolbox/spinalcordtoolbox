@@ -110,7 +110,7 @@ def get_parser():
              f"  - `iterations` [int]: Number of iterations. Default={param_default.iter}.\n"
              f"  - `gradStep` [float]: Searching step used by registration algorithm. The higher the more deformation "
              f"allowed. Default={param_default.gradStep}.\n"
-             f"  - `sample` [None or 0-1]: Sampling rate used for registration metric. "
+             f"  - `sampling` [None or 0-1]: Sampling rate used for registration metric. "
              f"Default={param_default.sampling}.\n"
     )
     optional.add_argument(
