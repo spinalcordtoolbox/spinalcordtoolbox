@@ -48,8 +48,8 @@ def compute_shape(segmentation, image, angle_correction=True, centerline_path=No
                      'angle_RL',
                      'diameter_AP',
                      'diameter_RL',
-                     'ap_diameter_from_pixels',
-                     'rl_diameter_from_pixels',
+                     'diameter_AP_hog',
+                     'diameter_RL_hog',
                      'eccentricity',
                      'orientation',
                      'solidity',
@@ -375,8 +375,8 @@ def _measure_rotated_diameters(seg_crop_r, seg_crop_r_rotated, dim, angle_hog, u
     result = {
         'ap_pixel_count': ap_pixels,
         'rl_pixel_count': rl_pixels,
-        'ap_diameter_from_pixels': ap_diameter,
-        'rl_diameter_from_pixels': rl_diameter,
+        'diameter_AP_hog': ap_diameter,
+        'diameter_RL_hog': rl_diameter,
     }
 
     # Debug plotting
