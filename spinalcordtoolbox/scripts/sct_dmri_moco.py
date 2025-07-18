@@ -102,15 +102,19 @@ def get_parser():
         '-param',
         metavar=Metavar.list,
         type=list_type(',', str),
-        help=f"Advanced parameters. Assign value with `=`, and separate arguments with `,`.\n"
+        help=f"Advanced parameters. Assign value with `=`; Separate arguments with `,`.\n"
              f"  - `poly` [int]: Degree of polynomial function used for regularization along Z. For no regularization "
              f"set to 0. Default={param_default.poly}.\n"
              f"  - `smooth` [mm]: Smoothing kernel. Default={param_default.smooth}.\n"
              f"  - `metric` {{MI, MeanSquares, CC}}: Metric used for registration. Default={param_default.metric}.\n"
+             f"  - `iterations` [int]: Number of iterations. Default={param_default.iter}.\n"
              f"  - `gradStep` [float]: Searching step used by registration algorithm. The higher the more deformation "
              f"allowed. Default={param_default.gradStep}.\n"
-             f"  - `sample` [None or 0-1]: Sampling rate used for registration metric. "
+             f"  - `sampling` [None or 0-1]: Sampling rate used for registration metric. "
              f"Default={param_default.sampling}.\n"
+             f"  - `num_target` [int]: Target volume or group (starting with 0). Default={param_default.num_target}.\n"
+             f"  - `iterAvg` [int]: Iterative averaging: Target volume is a weighted average of the "
+             f"previously-registered volumes. Default={param_default.iterAvg}.\n"
     )
     optional.add_argument(
         '-x',
