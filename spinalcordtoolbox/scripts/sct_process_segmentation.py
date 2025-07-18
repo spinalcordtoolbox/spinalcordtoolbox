@@ -106,13 +106,20 @@ def get_parser():
 
     mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
-        '-i',
+        '-s',
         metavar=Metavar.file,
-        help="Mask to compute morphometrics from. Could be binary or weighted. E.g., spinal cord segmentation."
+        help="Segmentation mask to compute morphometrics from. Could be binary or weighted. E.g., spinal cord segmentation."
              "Example: seg.nii.gz"
     )
 
     optional = parser.optional_arggroup
+    optional.add_argument(
+        '-i',
+        metavar=Metavar.file,
+        default=None,
+        help="Input image used to compute spinal cord orientation (using HOG method)."
+             "Example: t2.nii.gz"
+    )
     optional.add_argument(
         '-o',
         metavar=Metavar.file,
@@ -377,7 +384,8 @@ def main(argv: Sequence[str]):
     # Initialization
     group_funcs = (('MEAN', func_wa), ('STD', func_std))  # functions to perform when aggregating metrics along S-I
 
-    fname_segmentation = get_absolute_path(arguments.i)
+    fname_segmentation = get_absolute_path(arguments.s)
+    fname_image = get_absolute_path(arguments.i) if arguments.i is not None else None
 
     file_out = os.path.abspath(arguments.o)
     append = bool(arguments.append)
@@ -420,6 +428,7 @@ def main(argv: Sequence[str]):
     metrics_agg = {}
 
     metrics, fit_results = compute_shape(fname_segmentation,
+                                         fname_image,
                                          angle_correction=angle_correction,
                                          centerline_path=angle_correction_centerline,
                                          param_centerline=param_centerline,
@@ -445,7 +454,7 @@ def main(argv: Sequence[str]):
 
         # Save array of the centerline in a .csv file if verbose == 2
         if verbose == 2:
-            fname_ctl_csv, _ = splitext(add_suffix(arguments.i, '_centerline_extrapolated'))
+            fname_ctl_csv, _ = splitext(add_suffix(arguments.s, '_centerline_extrapolated'))
             np.savetxt(fname_ctl_csv + '.csv', centerline, delimiter=",")
     else:
         length_from_pmj = None
@@ -487,8 +496,8 @@ def main(argv: Sequence[str]):
     if path_qc is not None:
         if fname_pmj is not None:
             if arguments.qc_image is not None:
-                fname_mask_out = add_suffix(arguments.i, '_mask_csa')
-                fname_ctl = add_suffix(arguments.i, '_centerline_extrapolated')
+                fname_mask_out = add_suffix(arguments.s, '_mask_csa')
+                fname_ctl = add_suffix(arguments.s, '_centerline_extrapolated')
                 fname_ctl_smooth = add_suffix(fname_ctl, '_smooth')
                 if verbose != 2:
                     from spinalcordtoolbox.utils.fs import tmp_create

@@ -1547,8 +1547,8 @@ def find_angle_hog(image, centermass, px, py, angle_range=10):
     :param: image : 2D numpy array to find symmetry axis on
     :param: centermass: tuple of floats indicating the center of mass of the image
     :param: px, py, dimensions of the pixels in the x and y direction
-    :param: angle_range : float or None, in deg, the angle will be search in the range [-angle_range, angle_range], if None angle angle might be returned
-    :return: angle found and confidence score
+    :param: angle_range : float or None, in deg, the angle will be searched in the range [-angle_range, angle_range], if None any angle might be returned
+    :return: angle found (in rad) and confidence score
     """
 
     # param that can actually be tweeked to influence method performance :
