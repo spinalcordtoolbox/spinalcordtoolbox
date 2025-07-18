@@ -119,14 +119,19 @@ class ParamMoco:
         self.mat_final = ''      # output folder for final `.mat` files
         self.todo = ''           # the moco step to perform next
 
-    # update constructor with user's parameters
+    # update constructor with user's parameters (`-param`)
+    # `-param` should have the type "list_type(',', str)", meaning the argument string will already be split by `,`
     def update(self, param_user):
-        # list_objects = param_user.split(',')
-        for object in param_user:
-            if len(object) < 2:
-                printv('ERROR: Wrong usage.', 1, type='error')
-            obj = object.split('=')
-            setattr(self, obj[0], obj[1])
+        for param in param_user:
+            # check for user errors
+            substrings = param.split('=')
+            if len(substrings) != 2:
+                raise ValueError(f"Invalid parameter format: '{param}'. Expected format is 'param_name=value'.")
+            param_name, value = substrings
+            if not hasattr(self, param_name):
+                raise ValueError(f"Unknown parameter '{param_name}'.")
+            # set the validated parameter value
+            setattr(self, param_name, value)
 
 
 def copy_mat_files(nt, list_file_mat, index, folder_out, param):
