@@ -152,7 +152,7 @@ def compute_shape(segmentation, image, angle_correction=True, centerline_path=No
 
         # compute shape properties on 2D patch of the segmentation
         # angle_hog is passed to rotate the segmentation to align with AP/RL axes to compute AP and RL diameters along the axes
-        shape_property = _properties2d(current_patch_scaled, [px, py], iz, angle_hog=angle_hog)
+        shape_property = _properties2d(current_patch_scaled, [px, py], iz, angle_hog=angle_hog, verbose=verbose)
 
         # Add angle_hog to shape_property (convert to degrees)
         shape_property['angle_hog'] = angle_hog * 180.0 / math.pi
@@ -190,7 +190,7 @@ def compute_shape(segmentation, image, angle_correction=True, centerline_path=No
     return metrics, fit_results
 
 
-def _properties2d(seg, dim, iz, angle_hog=None):
+def _properties2d(seg, dim, iz, angle_hog=None, verbose=1):
     """
     Compute shape property of the input 2D segmentation. Accounts for partial volume information.
     :param seg: 2D input segmentation in uint8 or float (weighted for partial volume) that has a single object. seg.shape[0] --> RL; seg.shape[1] --> PA
@@ -261,7 +261,8 @@ def _properties2d(seg, dim, iz, angle_hog=None):
         # Rotate the segmentation by the angle_hog to align with AP/RL axes
         seg_crop_r_rotated = _rotate_segmentation_by_angle(seg_crop_r, angle_hog)
         # Measure diameters along AP and RL axes in the rotated segmentation
-        rotated_properties = _measure_rotated_diameters(seg_crop_r, seg_crop_r_rotated, dim, angle_hog, upscale, iz, properties)
+        rotated_properties = _measure_rotated_diameters(seg_crop_r, seg_crop_r_rotated, dim, angle_hog, upscale,
+                                                        iz, properties, verbose)
 
         # Update the properties dictionary with the rotated properties
         properties.update(rotated_properties)
@@ -337,7 +338,7 @@ def _rotate_segmentation_by_angle(seg_crop_r, angle_hog):
 
     return seg_crop_r_rotated
 
-def _measure_rotated_diameters(seg_crop_r, seg_crop_r_rotated, dim, angle_hog, upscale, iz, properties):
+def _measure_rotated_diameters(seg_crop_r, seg_crop_r_rotated, dim, angle_hog, upscale, iz, properties, verbose):
     """
     Measure the AP and RL diameters in the rotated segmentation.
     This function counts the number of pixels along the AP and RL axes in the rotated segmentation and converts them
@@ -350,6 +351,7 @@ def _measure_rotated_diameters(seg_crop_r, seg_crop_r_rotated, dim, angle_hog, u
     :param upscale: Upscale factor used for resampling the segmentation
     :param iz: Integer slice number (z index) of the segmentation. Used for plotting purposes.
     :param properties: Dictionary containing the properties of the original (not-rotated) segmentation. Used for plotting purposes.
+    :param verbose: Verbosity level. If 2, debug figures are created.
     :return result: Dictionary containing the measured diameters and pixel counts along AP and RL axes.
     """
     # Binarize rotated segmentation
@@ -378,8 +380,9 @@ def _measure_rotated_diameters(seg_crop_r, seg_crop_r_rotated, dim, angle_hog, u
     }
 
     # Debug plotting
-    _debug_plotting_hog(angle_hog, ap0_r, ap_diameter, dim, iz, properties, rl0_r, rl_diameter, rotated_bin, seg_crop_r,
-                        upscale)
+    if verbose == 2:
+        _debug_plotting_hog(angle_hog, ap0_r, ap_diameter, dim, iz, properties, rl0_r, rl_diameter, rotated_bin,
+                            seg_crop_r, upscale)
 
     return result
 
