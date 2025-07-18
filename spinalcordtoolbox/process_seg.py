@@ -56,7 +56,7 @@ def compute_shape(segmentation, image, angle_correction=True, centerline_path=No
     # HOG-related properties that are only available when image (`sct_process_segmentation -i`) is provided
     # TODO: consider whether to use this workaround or include the columns even when image is not provided and use NaN
     hog_properties = ['diameter_AP_hog',
-                     'diameter_RL_hog']
+                      'diameter_RL_hog']
 
     im_seg = Image(segmentation).change_orientation('RPI')
     # Check if the input image is provided (i.e., image is not None)
@@ -259,7 +259,7 @@ def _properties2d(seg, dim, iz, angle_hog=None, verbose=1):
         'diameter_RL': diameter_RL,
         'centroid': region.centroid,
         'eccentricity': region.eccentricity,
-        'orientation': orientation, # in degrees
+        'orientation': orientation,     # in degrees
         'solidity': solidity,  # convexity measure
     }
 
@@ -341,9 +341,12 @@ def _rotate_segmentation_by_angle(seg_crop_r, angle_hog):
     coords = np.column_stack([np.ravel(Yr), np.ravel(Xr)])
 
     # Apply transformation
-    seg_crop_r_rotated = map_coordinates(seg_crop_r, [coords[:, 0], coords[:, 1]], order=1).reshape(seg_crop_r.shape)      # order of the spline interpolation --> order=1: linear interpolation
+    seg_crop_r_rotated = map_coordinates(seg_crop_r,
+                                         [coords[:, 0], coords[:, 1]],
+                                         order=1).reshape(seg_crop_r.shape)      # order of the spline interpolation --> order=1: linear interpolation
 
     return seg_crop_r_rotated
+
 
 def _measure_rotated_diameters(seg_crop_r, seg_crop_r_rotated, dim, angle_hog, upscale, iz, properties, verbose):
     """
@@ -402,13 +405,13 @@ def _debug_plotting_hog(angle_hog, ap0_r, ap_diameter, dim, iz, properties, rl0_
         """Add A, P, R, L labels"""
         bbox_params = dict(facecolor='black', alpha=1)
         ax.text(ap0_r, seg_crop_r.shape[0] * 0.95, 'L', color='white', fontsize=12, ha='center', va='center',
-                 bbox=bbox_params)
+                bbox=bbox_params)
         ax.text(seg_crop_r.shape[1] * 0.95, rl0_r, 'A', color='white', fontsize=12, ha='center', va='center',
-                 bbox=bbox_params)
+                bbox=bbox_params)
         ax.text(ap0_r, seg_crop_r.shape[0] * 0.05, 'R', color='white', fontsize=12, ha='center', va='center',
-                 bbox=bbox_params)
+                bbox=bbox_params)
         ax.text(seg_crop_r.shape[1] * 0.05, rl0_r, 'P', color='white', fontsize=12, ha='center', va='center',
-                 bbox=bbox_params)
+                bbox=bbox_params)
 
     def _add_ellipse(ax, x0, y0):
         """Add an ellipse to the plot."""
@@ -448,9 +451,9 @@ def _debug_plotting_hog(angle_hog, ap0_r, ap_diameter, dim, iz, properties, rl0_
     dx_rl = radius_rl * -np.sin(np.radians(properties['orientation']))
     dy_rl = radius_rl * np.cos(np.radians(properties['orientation']))
     ax1.plot([x0 - dx_ap, x0 + dx_ap], [y0 - dy_ap, y0 + dy_ap], color='blue', linestyle='--', linewidth=2,
-            label=f'AP diameter (skimage.regionprops) = {properties["diameter_AP"]:.2f} mm')
+             label=f'AP diameter (skimage.regionprops) = {properties["diameter_AP"]:.2f} mm')
     ax1.plot([x0 - dx_rl, x0 + dx_rl], [y0 - dy_rl, y0 + dy_rl], color='blue', linestyle='solid', linewidth=2,
-            label=f'RL diameter (skimage.regionprops) = {properties["diameter_RL"]:.2f} mm')
+             label=f'RL diameter (skimage.regionprops) = {properties["diameter_RL"]:.2f} mm')
     # Add A, P, R, L labels
     _add_labels(ax1)
 
@@ -461,20 +464,20 @@ def _debug_plotting_hog(angle_hog, ap0_r, ap_diameter, dim, iz, properties, rl0_
     # Draw arrow for the rotation angle
     # angle_hog = -angle_hog  # flip sign to match PCA convention
     ax1.arrow(ap0_r, rl0_r, np.sin(angle_hog + (90 * math.pi / 180)) * 25,
-             np.cos(angle_hog + (90 * math.pi / 180)) * 25, color='black', width=0.1,
-             head_width=1, label=f'HOG angle = {angle_hog * 180 / math.pi:.1f}°')  # convert to degrees
+              np.cos(angle_hog + (90 * math.pi / 180)) * 25, color='black', width=0.1,
+              head_width=1, label=f'HOG angle = {angle_hog * 180 / math.pi:.1f}°')  # convert to degrees
     # Draw AP and RL axes through the center of mass of the rotated segmentation
     ax1.axhline(y=rl0_r, color='k', linestyle='dashdot', alpha=1, linewidth=1, label='AP axis (rotated segmentation)')
     ax1.axvline(x=ap0_r, color='k', linestyle='dashdot', alpha=1, linewidth=1, label='RL axis (rotated segmentation)')
     # Draw lines for the measured AP and RL diameters
-    r = np.nonzero(rotated_bin[:, ap0_r])[0][0]
-    l = np.nonzero(rotated_bin[:, ap0_r])[0][-1]
-    a = np.nonzero(rotated_bin[rl0_r, :])[0][0]
-    p = np.nonzero(rotated_bin[rl0_r, :])[0][-1]
-    ax1.plot([a, p], [rl0_r, rl0_r], color='red', linestyle='--', linewidth=2,
-            label=f'AP Diameter (rotated segmentation) = {ap_diameter:.2f} mm')
-    ax1.plot([ap0_r, ap0_r], [r, l], color='red', linestyle='solid', linewidth=2,
-            label=f'RL Diameter (rotated segmentation) = {rl_diameter:.2f} mm')
+    right = np.nonzero(rotated_bin[:, ap0_r])[0][0]
+    left = np.nonzero(rotated_bin[:, ap0_r])[0][-1]
+    anterior = np.nonzero(rotated_bin[rl0_r, :])[0][0]
+    posterior = np.nonzero(rotated_bin[rl0_r, :])[0][-1]
+    ax1.plot([anterior, posterior], [rl0_r, rl0_r], color='red', linestyle='--', linewidth=2,
+             label=f'AP Diameter (rotated segmentation) = {ap_diameter:.2f} mm')
+    ax1.plot([ap0_r, ap0_r], [right, left], color='red', linestyle='solid', linewidth=2,
+             label=f'RL Diameter (rotated segmentation) = {rl_diameter:.2f} mm')
 
     # Plot horizontal and vertical grid lines
     ax1.grid(which='both', color='gray', linestyle='--', linewidth=0.5, alpha=0.5)

@@ -114,7 +114,7 @@ def get_parser():
 
     optional = parser.optional_arggroup
     optional.add_argument(
-        c,
+        '-i',
         metavar=Metavar.file,
         default=None,
         help="Input image used to compute spinal cord orientation (using HOG method)."
