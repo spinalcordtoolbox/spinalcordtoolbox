@@ -86,6 +86,22 @@ class QcImage:
             cbar.ax.tick_params(labelsize=5, length=2, pad=1.7)
             ax.text(1.5, 6, text, color='white', size=3.25)
         self._add_orientation_label(ax)
+
+        # If Axial, overlay slice numbers in the top‐left of each tile
+        if self.plane == 'Axial':
+            h, w = mask.shape
+            size = 15                 # same “radius” as in slice.py
+            patch_size = size * 2     # full tile width in pixels
+            nb_col = w // patch_size
+            nb_row = h // patch_size
+            total_slices = nb_row * nb_col
+            self._add_slice_numbers(
+                ax,
+                num_slices=total_slices,
+                patch_size=patch_size,
+                margin=2               # pixels inset from top‐left corner
+            )
+
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
 
@@ -333,6 +349,45 @@ class QcImage:
             text_p.set_path_effects([mpl_patheffects.Stroke(linewidth=1, foreground='black'), mpl_patheffects.Normal()])
             text_l.set_path_effects([mpl_patheffects.Stroke(linewidth=1, foreground='black'), mpl_patheffects.Normal()])
             text_r.set_path_effects([mpl_patheffects.Stroke(linewidth=1, foreground='black'), mpl_patheffects.Normal()])
+
+    def _add_slice_numbers(self, ax, num_slices, patch_size, margin: int = 2):
+        """
+        Overlay slice indices (1,2,…) in the top-left of each tile
+        for an Axial mosaic. Skips slice 0 to avoid APRL conflict.
+
+        Parameters
+        ----------
+        ax : matplotlib.axes.Axes
+            Axes containing the mosaic image.
+        num_slices : int
+            Total number of slices (dim 0 of the volume).
+        patch_size : int
+            Full width/height of each tile in pixels (radius*2).
+        margin : int
+            Pixel inset from the tile's top-left corner.
+        """
+        if self.plane != 'Axial':
+            return
+
+        # grab the image array to compute columns
+        img_arr = ax.get_images()[0].get_array()
+        n_cols = img_arr.shape[1] // patch_size
+
+        for i in range(1, num_slices):  # skip slice 0
+            row, col = divmod(i, n_cols)
+            x = col * patch_size + margin
+            y = row * patch_size + margin
+
+            txt = ax.text(
+                x, y, str(i),
+                ha='left', va='top',
+                color='yellow', size=4
+            )
+            # black outline for readability
+            txt.set_path_effects([
+                mpl_patheffects.Stroke(linewidth=1, foreground='black'),
+                mpl_patheffects.Normal()
+            ])
 
     def _generate_and_save_gif(self, top_images, bottom_images, imgs_to_generate, size_fig, is_mask=False):
         """
