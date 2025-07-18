@@ -41,36 +41,42 @@ def compute_shape(segmentation, image, angle_correction=True, centerline_path=No
     :return metrics: Dict of class Metric(). If a metric cannot be calculated, its value will be nan.
     :return fit_results: class centerline.core.FitResults()
     """
-    # List of properties to output (in the right order)
+    # List of properties that are always available
     property_list = ['area',
-                     'angle_hog',
                      'angle_AP',
                      'angle_RL',
                      'diameter_AP',
                      'diameter_RL',
-                     'diameter_AP_hog',
-                     'diameter_RL_hog',
                      'eccentricity',
                      'orientation',
                      'solidity',
                      'length'
                      ]
 
+    # HOG-related properties that are only available when image (`sct_process_segmentation -i`) is provided
+    # TODO: consider whether to use this workaround or include the columns even when image is not provided and use NaN
+    hog_properties = ['diameter_AP_hog',
+                     'diameter_RL_hog']
+
     im_seg = Image(segmentation).change_orientation('RPI')
-    im = Image(image).change_orientation('RPI')
-    # Make sure the input image and segmentation have the same dimensions
-    if im_seg.dim != im.dim:
-        raise ValueError(
-            f"The input segmentation image ({im_seg.path}) and the input image ({im.path}) do not have the same dimensions. "
-            "Please provide images with the same dimensions."
-        )
+    # Check if the input image is provided (i.e., image is not None)
+    if image is not None:
+        # Add HOG-related properties to the property list when image is provided
+        property_list = property_list[:1] + hog_properties + property_list[1:]
+        im = Image(image).change_orientation('RPI')
+        # Make sure the input image and segmentation have the same dimensions
+        if im_seg.dim != im.dim:
+            raise ValueError(
+                f"The input segmentation image ({im_seg.path}) and the input image ({im.path}) do not have the same "
+                f"dimensions. Please provide images with the same dimensions."
+            )
 
     # Getting image dimensions. x, y and z respectively correspond to RL, PA and IS.
     nx, ny, nz, nt, px, py, pz, pt = im_seg.dim
     pr = min([px, py])
     # Resample to isotropic resolution in the axial plane. Use the minimum pixel dimension as target dimension.
     im_segr = resample_nib(im_seg, new_size=[pr, pr, pz], new_size_type='mm', interpolation='linear')
-    im_r = resample_nib(im, new_size=[pr, pr, pz], new_size_type='mm', interpolation='linear')
+    im_r = resample_nib(im, new_size=[pr, pr, pz], new_size_type='mm', interpolation='linear') if image is not None else None
 
     # Update dimensions from resampled image.
     nx, ny, nz, nt, px, py, pz, pt = im_segr.dim
@@ -115,7 +121,7 @@ def compute_shape(segmentation, image, angle_correction=True, centerline_path=No
                                ncols=80):
         # Extract 2D patch
         current_patch = im_segr.data[:, :, iz]
-        current_patch_im = im_r.data[:, :, iz]
+        current_patch_im = im_r.data[:, :, iz] if image is not None else None
         if angle_correction:
             # Extract tangent vector to the centerline (i.e. its derivative)
             tangent_vect = np.array([deriv[iz][0] * px, deriv[iz][1] * py, pz])
@@ -133,29 +139,30 @@ def compute_shape(segmentation, image, angle_correction=True, centerline_path=No
                                                   output_shape=current_patch.shape,
                                                   order=1,
                                                   )
-            current_patch_im = current_patch_im.astype(np.float64)
-            current_patch_im_scaled = transform.warp(current_patch_im,
-                                                     tform.inverse,
-                                                     output_shape=current_patch_im.shape,
-                                                     order=1,
-                                                     )
+            if image is not None:
+                current_patch_im = current_patch_im.astype(np.float64)
+                current_patch_im_scaled = transform.warp(current_patch_im,
+                                                         tform.inverse,
+                                                         output_shape=current_patch_im.shape,
+                                                         order=1,
+                                                         )
         else:
             current_patch_scaled = current_patch
-            current_patch_im_scaled = current_patch_im
+            current_patch_im_scaled = current_patch_im if current_patch_im is not None else None
             angle_AP_rad, angle_RL_rad = 0.0, 0.0
 
-        # compute PCA and get center or mass based on segmentation; centermass_src: [RL, AP] (assuming RPI orientation)
-        coord_src, pca_src, centermass_src = compute_pca(current_patch_scaled)
-        # Finds the angle of the image
-        angle_hog, conf_src = find_angle_hog(current_patch_im_scaled, centermass_src,
-                                             px, py, angle_range=40)    # 40 is taken from registration.algorithms.register2d_centermassrot
-
-        # compute shape properties on 2D patch of the segmentation
-        # angle_hog is passed to rotate the segmentation to align with AP/RL axes to compute AP and RL diameters along the axes
-        shape_property = _properties2d(current_patch_scaled, [px, py], iz, angle_hog=angle_hog, verbose=verbose)
-
-        # Add angle_hog to shape_property (convert to degrees)
-        shape_property['angle_hog'] = angle_hog * 180.0 / math.pi
+        if image is not None:
+            # compute PCA and get center or mass based on segmentation; centermass_src: [RL, AP] (assuming RPI orientation)
+            coord_src, pca_src, centermass_src = compute_pca(current_patch_scaled)
+            # Finds the angle of the image
+            angle_hog, conf_src = find_angle_hog(current_patch_im_scaled, centermass_src,
+                                                 px, py, angle_range=40)    # 40 is taken from registration.algorithms.register2d_centermassrot
+            # compute shape properties on 2D patch of the segmentation with angle_hog
+            # angle_hog is passed to rotate the segmentation to align with AP/RL axes to compute AP and RL diameters along the axes
+            shape_property = _properties2d(current_patch_scaled, [px, py], iz, angle_hog=angle_hog, verbose=verbose)
+        else:
+            # If image is None, don't pass angle_hog
+            shape_property = _properties2d(current_patch_scaled, [px, py], iz, verbose=verbose)
 
         if shape_property is not None:
             # Add custom fields

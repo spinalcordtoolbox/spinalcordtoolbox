@@ -111,14 +111,15 @@ def get_parser():
         help="Segmentation mask to compute morphometrics from. Could be binary or weighted. E.g., spinal cord segmentation."
              "Example: seg.nii.gz"
     )
-    mandatory.add_argument(
-        '-i',
+
+    optional = parser.optional_arggroup
+    optional.add_argument(
+        c,
         metavar=Metavar.file,
+        default=None,
         help="Input image used to compute spinal cord orientation (using HOG method)."
              "Example: t2.nii.gz"
     )
-
-    optional = parser.optional_arggroup
     optional.add_argument(
         '-o',
         metavar=Metavar.file,
@@ -384,7 +385,7 @@ def main(argv: Sequence[str]):
     group_funcs = (('MEAN', func_wa), ('STD', func_std))  # functions to perform when aggregating metrics along S-I
 
     fname_segmentation = get_absolute_path(arguments.s)
-    fname_image = get_absolute_path(arguments.i)
+    fname_image = get_absolute_path(arguments.i) if arguments.i is not None else None
 
     file_out = os.path.abspath(arguments.o)
     append = bool(arguments.append)
