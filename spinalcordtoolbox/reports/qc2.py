@@ -20,6 +20,7 @@ from typing import Optional, Sequence
 import numpy as np
 from scipy.ndimage import center_of_mass
 import skimage.exposure
+from skimage.draw import line as draw_line
 
 from spinalcordtoolbox.centerline.core import get_centerline, ParamCenterline
 from spinalcordtoolbox.cropping import ImageCropper, BoundingBox
@@ -30,6 +31,7 @@ from spinalcordtoolbox.resampling import resample_nib
 from spinalcordtoolbox.utils.shell import display_open
 from spinalcordtoolbox.utils.sys import __version__, list2cmdline, LazyLoader
 from spinalcordtoolbox.utils.fs import mutex
+from spinalcordtoolbox.aggregate_slicewise import Metric
 
 pd = LazyLoader("pd", globals(), "pandas")
 mpl_plt = LazyLoader("mpl_plt", globals(), "matplotlib.pyplot")
@@ -238,6 +240,7 @@ def sct_register_multimodal(
 def sct_process_segmentation(
         fname_input: str,
         fname_seg: str,
+        metrics: dict[str, Metric],
         argv: Sequence[str],
         path_qc: str,
         dataset: Optional[str],
@@ -265,22 +268,8 @@ def sct_process_segmentation(
         # Load the input images
         img_input = Image(fname_input).change_orientation('SAL')
         img_seg = Image(fname_seg).change_orientation('SAL')
-
-        # Resample images slice by slice
-        p_resample = 0.6    # assuming human
-        logger.info('Resample images to %fx%f mm', p_resample, p_resample)
-        img_input = resample_nib(
-            image=img_input,
-            new_size=[img_input.dim[4], p_resample, p_resample],
-            new_size_type='mm',
-            interpolation='spline',
-        )
-        img_seg = resample_nib(
-            image=img_seg,
-            image_dest=img_input,
-            interpolation='linear',
-        )
-        img_seg.data = (img_seg.data > 0.5) * 1
+        # NOTE: We don't resample the image to 0.6mm iso as the angle_hog was computed on the original image
+        # TODO: consider slice by slice resampling (used e.g. in sct_deepseg_sagittal)
 
         # Each slice is centered on the segmentation
         logger.info('Find the center of each slice')
@@ -307,12 +296,52 @@ def sct_process_segmentation(
         logger.debug('Save image %s', img_path)
         fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
 
-        # Generate the second QC report image - segmentation overlay
+        # Generate the second QC report image
         fig = mpl_figure.Figure()
         fig.set_size_inches(*size_fig, forward=True)
         mpl_backend_agg.FigureCanvasAgg(fig)
         ax = fig.add_axes((0, 0, 1, 1))
-        img = mosaic(img_seg, centers, radius)
+
+        img_temp = img_seg.copy()
+        img_temp.data = np.full_like(img_seg.data, np.nan)
+        # Look across slices, and for each slice, and for each slice
+        # Note #1: as metrics['centermass_x'] and ['centermass_y'] coordinates were obtained from RPI oriented image,
+        #  we need to convert them to the SAL orientation (used in the QC report). This is done using the hacky code
+        #  below :-D
+        # Note #2: metrics['centermass_x'] and ['centermass_y'] seem to be the same as `centers`, but they are obtained differently:
+        #   - metrics['centermass_x'] and ['centermass_y'] are obtained using PCA via spinalcordtoolbox.registration.algorithms.compute_pca
+        #   - centers is obtained using scipy.ndimage.center_of_mass
+        #  I'm using PCA-based metrics['centermass_x'] and metrics['centermass_y'] here to be consistent with code in
+        #  spinalcordtoolbox.process_seg as PCA is used there for the HOG angle computation.
+        # for i, (x, y) in enumerate(zip(metrics['centermass_x'].data, metrics['centermass_y'].data),1):
+        for i in range(img_temp.dim[0]):
+            # Center of mass
+            if 'centermass_x' in metrics and 'centermass_y' in metrics:
+                x = metrics['centermass_x'].data[i] if 'centermass_x' in metrics else np.nan
+                y = metrics['centermass_y'].data[i] if 'centermass_y' in metrics else np.nan
+                if not np.isnan(x) and not np.isnan(y):
+                    x = rpi_slice_to_orig_orientation(img_temp.dim, 'SAL', x, 2)
+                    y = rpi_slice_to_orig_orientation(img_temp.dim, 'SAL', y, 0)
+                    img_temp.data[img_temp.dim[0]-1-i, int(y), int(x)] = 1
+            # Line for the HOG angle
+            if 'angle_hog' in metrics:
+                angle_rad = metrics['angle_hog'].data[i] if 'angle_hog' in metrics else np.nan
+                # Only draw the line if x, y, and angle_rad are all valid (not NaN)
+                if not np.isnan(x) and not np.isnan(y) and not np.isnan(angle_rad):
+                    # Compute the end points of the line
+                    x_start = int(x - radius[0] * np.sin(angle_rad))
+                    y_start = int(y - radius[1] * np.cos(angle_rad))
+                    x_end = int(x + radius[0] * np.sin(angle_rad))
+                    y_end = int(y + radius[1] * np.cos(angle_rad))
+                    # Create coordinates for the line
+                    rr, cc = draw_line(y_start, x_start, y_end, x_end)
+                    # Filter coordinates to ensure they're within image bounds
+                    valid_idx = (0 <= rr) & (rr < img_temp.dim[1]) & (0 <= cc) & (cc < img_temp.dim[2])
+                    # Set line pixels to 1
+                    if np.any(valid_idx):
+                        img_temp.data[img_temp.dim[0] - 1 - i, rr[valid_idx], cc[valid_idx]] = 1
+
+        img = mosaic(img_temp, centers, radius)
         img = np.ma.masked_less_equal(img, 0)
         img.set_fill_value(0)
         ax.imshow(img,

@@ -501,6 +501,7 @@ def main(argv: Sequence[str]):
                 qc2.sct_process_segmentation(
                     fname_input=fname_image,
                     fname_seg=fname_segmentation,
+                    metrics=metrics,
                     argv=argv,
                     path_qc=arguments.qc,
                     dataset=arguments.qc_dataset,

@@ -56,8 +56,10 @@ def compute_shape(segmentation, image, angle_correction=True, centerline_path=No
     # HOG-related properties that are only available when image (`sct_process_segmentation -i`) is provided
     # TODO: consider whether to use this workaround or include the columns even when image is not provided and use NaN
     hog_properties = ['diameter_AP_hog',
-                      'diameter_RL_hog']
-
+                      'diameter_RL_hog',
+                      'centermass_x',
+                      'centermass_y',
+                      'angle_hog']
     im_seg = Image(segmentation).change_orientation('RPI')
     # Check if the input image is provided (i.e., image is not None)
     if image is not None:
@@ -160,6 +162,10 @@ def compute_shape(segmentation, image, angle_correction=True, centerline_path=No
             # compute shape properties on 2D patch of the segmentation with angle_hog
             # angle_hog is passed to rotate the segmentation to align with AP/RL axes to compute AP and RL diameters along the axes
             shape_property = _properties2d(current_patch_scaled, [px, py], iz, angle_hog=angle_hog, verbose=verbose)
+            # Store centermass_src and angle_hog for QC
+            shape_property['centermass_x'] = centermass_src[0]  # shape_properties below was initialized as np.double --> we cannot use tuple but we need to store two separate values
+            shape_property['centermass_y'] = centermass_src[1]
+            shape_property['angle_hog'] = angle_hog     # in radians
         else:
             # If image is None, don't pass angle_hog
             shape_property = _properties2d(current_patch_scaled, [px, py], iz, verbose=verbose)
