@@ -150,7 +150,7 @@ def create_qc_entry(
 def add_slice_numbers(ax, num_slices, patch_size, margin: int = 2):
     """
     Overlay slice indices onto an Axial mosaic.
-    
+
     Parameters
     ----------
     ax : matplotlib.axes.Axes
@@ -158,7 +158,7 @@ def add_slice_numbers(ax, num_slices, patch_size, margin: int = 2):
     num_slices : int
         Total number of axial slices (dim 0 of the original volume).
     patch_size : int
-        The size (in pixels) of each square cell in the mosaic; 
+        The size (in pixels) of each square cell in the mosaic;
         in our code each cell is cropped to radius*2, so patch_size = radius[0]*2.
     """
     # Get the mosaic array we just plotted
@@ -460,6 +460,7 @@ def sct_deepseg_axial(
     fig_num.savefig(str(path_numbers), format='png', transparent=True, dpi=DPI)
     # you can also add it to imgs_to_generate if you like:
     imgs_to_generate['path_numbers_img'] = path_numbers
+
 
 def sct_deepseg_spinal_rootlets(
     imgs_to_generate: dict[str, Path],
