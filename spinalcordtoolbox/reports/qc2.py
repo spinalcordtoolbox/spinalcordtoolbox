@@ -235,6 +235,101 @@ def sct_register_multimodal(
         fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
 
 
+def sct_process_segmentation(
+        fname_input: str,
+        fname_seg: str,
+        argv: Sequence[str],
+        path_qc: str,
+        dataset: Optional[str],
+        subject: Optional[str],
+):
+    """
+    Generate a QC report for sct_process_segmentation showing a line corresponding to the HOG angle
+    (obtained using spinalcordtoolbox.registration.algorithms.find_angle_hog)
+    """
+    command = 'sct_process_segmentation'
+    cmdline = [command]
+    cmdline.extend(argv)
+
+    # Axial orientation, switch between one anat image and one seg image
+    with create_qc_entry(
+        path_input=Path(fname_input).resolve(),
+        path_qc=Path(path_qc),
+        command=command,
+        cmdline=list2cmdline(cmdline),
+        plane='Axial',
+        dataset=dataset,
+        subject=subject,
+    ) as imgs_to_generate:
+
+        # Load the input images
+        img_input = Image(fname_input).change_orientation('SAL')
+        img_seg = Image(fname_seg).change_orientation('SAL')
+
+        # Resample images slice by slice
+        p_resample = 0.6    # assuming human
+        logger.info('Resample images to %fx%f mm', p_resample, p_resample)
+        img_input = resample_nib(
+            image=img_input,
+            new_size=[img_input.dim[4], p_resample, p_resample],
+            new_size_type='mm',
+            interpolation='spline',
+        )
+        img_seg = resample_nib(
+            image=img_seg,
+            image_dest=img_input,
+            interpolation='linear',
+        )
+        img_seg.data = (img_seg.data > 0.5) * 1
+
+        # Each slice is centered on the segmentation
+        logger.info('Find the center of each slice')
+        centers = np.array([center_of_mass(slice) for slice in img_seg.data])
+        inf_nan_fill(centers[:, 0])
+        inf_nan_fill(centers[:, 1])
+
+        # If -qc-seg is available, use it to generate the radius
+        radius = get_max_axial_radius(img_seg) if fname_seg else (15, 15)
+
+        # Generate the first QC report image - background image
+        img = equalize_histogram(mosaic(img_input, centers, radius))
+        # Fix the width to a specific size, and vary the height based on how many rows there are.
+        size_fig = [TARGET_WIDTH_INCH, TARGET_WIDTH_INCH * img.shape[0] / img.shape[1]]
+        fig = mpl_figure.Figure()
+        fig.set_size_inches(*size_fig, forward=True)
+        mpl_backend_agg.FigureCanvasAgg(fig)
+        ax = fig.add_axes((0, 0, 1, 1))
+        ax.imshow(img, cmap='gray', interpolation='none', aspect=1.0)
+        add_orientation_labels(ax, radius=tuple(r for r in radius))
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+        img_path = str(imgs_to_generate['path_background_img'])
+        logger.debug('Save image %s', img_path)
+        fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
+
+        # Generate the second QC report image - segmentation overlay
+        fig = mpl_figure.Figure()
+        fig.set_size_inches(*size_fig, forward=True)
+        mpl_backend_agg.FigureCanvasAgg(fig)
+        ax = fig.add_axes((0, 0, 1, 1))
+        img = mosaic(img_seg, centers, radius)
+        img = np.ma.masked_less_equal(img, 0)
+        img.set_fill_value(0)
+        ax.imshow(img,
+                  cmap=mpl_colors.ListedColormap(["#ff0000"]),  # Red
+                  norm=mpl_colors.Normalize(vmin=0.5, vmax=1),
+                  alpha=1.0,
+                  interpolation='none',
+                  aspect=1.0)
+
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+        img_path = str(imgs_to_generate['path_overlay_img'])
+        logger.debug('Save image %s', img_path)
+        fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
+        print('here')
+
+
 def sct_deepseg(
     fname_input: str,
     fname_seg: str,

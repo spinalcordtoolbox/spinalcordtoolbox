@@ -19,6 +19,7 @@ import textwrap
 import numpy as np
 from matplotlib.ticker import MaxNLocator
 
+from spinalcordtoolbox.reports import qc2
 from spinalcordtoolbox.aggregate_slicewise import aggregate_per_slice_or_level, save_as_csv, func_wa, func_std, \
     func_sum, merge_dict, normalize_csa
 from spinalcordtoolbox.process_seg import compute_shape
@@ -492,6 +493,22 @@ def main(argv: Sequence[str]):
             line['MEAN(area)'] = normalize_csa(line['MEAN(area)'], data_predictors, data_subject)
 
     save_as_csv(metrics_agg_merged, file_out, fname_in=fname_segmentation, append=append)
+
+    # Create QC report for tissue bridges (only if SC is provided)
+    if arguments.qc is not None:
+        if fname_segmentation is not None:
+            if fname_image is not None:
+                qc2.sct_process_segmentation(
+                    fname_input=fname_image,
+                    fname_seg=fname_segmentation,
+                    argv=argv,
+                    path_qc=arguments.qc,
+                    dataset=arguments.qc_dataset,
+                    subject=arguments.qc_subject,
+                )
+            else:
+                parser.error('-i is required to display QC report.')
+
     # QC report (only for PMJ-based CSA)
     if path_qc is not None:
         if fname_pmj is not None:
