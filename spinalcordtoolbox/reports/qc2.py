@@ -20,7 +20,6 @@ from typing import Optional, Sequence
 import numpy as np
 from scipy.ndimage import center_of_mass
 import skimage.exposure
-from skimage.draw import line as draw_line
 
 from spinalcordtoolbox.centerline.core import get_centerline, ParamCenterline
 from spinalcordtoolbox.cropping import ImageCropper, BoundingBox
