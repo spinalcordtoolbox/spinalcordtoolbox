@@ -163,7 +163,7 @@ def compute_shape(segmentation, image, angle_correction=True, centerline_path=No
             # angle_hog is passed to rotate the segmentation to align with AP/RL axes to compute AP and RL diameters along the axes
             shape_property = _properties2d(current_patch_scaled, [px, py], iz, angle_hog=angle_hog, verbose=verbose)
             # Store centermass_src and angle_hog for QC
-            shape_property['centermass_x'] = centermass_src[0]  # shape_properties below was initialized as np.double --> we cannot use tuple but we need to store two separate values
+            shape_property['centermass_x'] = centermass_src[0]  # shape_properties below was initialized as np.double --> we need to store two separate values
             shape_property['centermass_y'] = centermass_src[1]
             shape_property['angle_hog'] = angle_hog     # in radians
         else:
