@@ -279,9 +279,10 @@ def sct_process_segmentation(
 
         # If -qc-seg is available, use it to generate the radius
         radius = get_max_axial_radius(img_seg) if fname_seg else (15, 15)
+        scale = 2.5  # we can consider increasing the number, then the mosaic can be zoomed in/out using the "Full size" button in the QC report
 
         # Generate the first QC report image - background image
-        img = equalize_histogram(mosaic(img_input, centers, radius))
+        img = equalize_histogram(mosaic(img_input, centers, radius, scale=scale))
         # Fix the width to a specific size, and vary the height based on how many rows there are.
         size_fig = [TARGET_WIDTH_INCH, TARGET_WIDTH_INCH * img.shape[0] / img.shape[1]]
         fig = mpl_figure.Figure()
@@ -301,62 +302,59 @@ def sct_process_segmentation(
         fig.set_size_inches(*size_fig, forward=True)
         mpl_backend_agg.FigureCanvasAgg(fig)
         ax = fig.add_axes((0, 0, 1, 1))
-
         img_temp = img_seg.copy()
         img_temp.data = np.full_like(img_seg.data, np.nan)
-        # Look across slices, and for each slice, and for each slice
-        # Note #1: as metrics['centermass_x'] and ['centermass_y'] coordinates were obtained from RPI oriented image,
-        #  we need to convert them to the SAL orientation (used in the QC report). This is done using the hacky code
-        #  below :-D
-        # Note #2: metrics['centermass_x'] and ['centermass_y'] seem to be the same as `centers`, but they are obtained differently:
-        #   - metrics['centermass_x'] and ['centermass_y'] are obtained using PCA via spinalcordtoolbox.registration.algorithms.compute_pca
-        #   - centers is obtained using scipy.ndimage.center_of_mass
-        #  I'm using PCA-based metrics['centermass_x'] and metrics['centermass_y'] here to be consistent with code in
-        #  spinalcordtoolbox.process_seg as PCA is used there for the HOG angle computation.
-        # for i, (x, y) in enumerate(zip(metrics['centermass_x'].data, metrics['centermass_y'].data),1):
-        for i in range(img_temp.dim[0]):
-            # Center of mass
-            if 'centermass_x' in metrics and 'centermass_y' in metrics:
-                x = metrics['centermass_x'].data[i] if 'centermass_x' in metrics else np.nan
-                y = metrics['centermass_y'].data[i] if 'centermass_y' in metrics else np.nan
-                if not np.isnan(x) and not np.isnan(y):
-                    x = rpi_slice_to_orig_orientation(img_temp.dim, 'SAL', x, 2)
-                    y = rpi_slice_to_orig_orientation(img_temp.dim, 'SAL', y, 0)
-                    img_temp.data[img_temp.dim[0]-1-i, int(y), int(x)] = 1
-            # Line for the HOG angle
-            if 'angle_hog' in metrics:
-                angle_rad = metrics['angle_hog'].data[i] if 'angle_hog' in metrics else np.nan
-                # Only draw the line if x, y, and angle_rad are all valid (not NaN)
-                if not np.isnan(x) and not np.isnan(y) and not np.isnan(angle_rad):
-                    # Compute the end points of the line
-                    x_start = int(x - radius[0] * np.sin(angle_rad))
-                    y_start = int(y - radius[1] * np.cos(angle_rad))
-                    x_end = int(x + radius[0] * np.sin(angle_rad))
-                    y_end = int(y + radius[1] * np.cos(angle_rad))
-                    # Create coordinates for the line
-                    rr, cc = draw_line(y_start, x_start, y_end, x_end)
-                    # Filter coordinates to ensure they're within image bounds
-                    valid_idx = (0 <= rr) & (rr < img_temp.dim[1]) & (0 <= cc) & (cc < img_temp.dim[2])
-                    # Set line pixels to 1
-                    if np.any(valid_idx):
-                        img_temp.data[img_temp.dim[0] - 1 - i, rr[valid_idx], cc[valid_idx]] = 1
-
-        img = mosaic(img_temp, centers, radius)
+        # Create empty mosaic
+        img = mosaic(img_temp, centers, radius, scale=scale)
         img = np.ma.masked_less_equal(img, 0)
         img.set_fill_value(0)
-        ax.imshow(img,
-                  cmap=mpl_colors.ListedColormap(["#ff0000"]),  # Red
-                  norm=mpl_colors.Normalize(vmin=0.5, vmax=1),
-                  alpha=1.0,
-                  interpolation='none',
-                  aspect=1.0)
+        ax.imshow(img, aspect=1.0)
+
+        # Plot HOG angle lines directly on axes
+        if 'angle_hog' in metrics:
+            num_col = math.floor(TARGET_WIDTH_PIXL / scale / (2*radius[0]))
+            for i in range(img_temp.dim[0]):
+                # Calculate mosaic position
+                slice_index = img_temp.dim[0] - 1 - i
+                row = slice_index // num_col
+                col = slice_index % num_col
+
+                # Center of mass
+                # Note: This is a bit hacky: I check metrics['centermass_x'] just to kwow if given slice contains the
+                #  cord seg, if so, then I plot the center of mass point based on the mosaic properties.
+                if 'centermass_x' in metrics and 'centermass_y' in metrics:
+                    x = metrics['centermass_x'].data[i] if 'centermass_x' in metrics else np.nan
+                    y = metrics['centermass_y'].data[i] if 'centermass_y' in metrics else np.nan
+                    if not np.isnan(x) and not np.isnan(y):
+                        # Calculate center position within mosaic
+                        x_mosaic = col * (2 * radius[0]) + radius[0]
+                        y_mosaic = row * (2 * radius[1]) + radius[1]
+                        #ax.plot(x_mosaic, y_mosaic, 'o', color='red', markersize=1.0)
+                # HOG angle
+                if 'angle_hog' in metrics:
+                    angle_rad = metrics['angle_hog'].data[i] if 'angle_hog' in metrics else np.nan
+                    if not np.isnan(angle_rad):
+
+                        # Compute the end points of the line
+                        x_start = x_mosaic - radius[0]/2 * np.sin(angle_rad)
+                        y_start = y_mosaic - radius[1]/2 * np.cos(angle_rad)
+                        x_end = x_mosaic + radius[0]/2 * np.sin(angle_rad)
+                        y_end = y_mosaic + radius[1]/2 * np.cos(angle_rad)
+
+                        # Plot the line
+                        ax.plot([x_start, x_end], [y_start, y_end], '-', color='red', linewidth=0.7)
+
+                        # Include the angle text in degrees
+                        angle_deg = -np.degrees(angle_rad)
+                        ax.text(x_mosaic + radius[0] * 0.2, y_mosaic - radius[1] * 0.3, # upper right corner
+                                f'{angle_deg:.1f}°', color='red', fontsize=3,
+                                path_effects=[mpl_patheffects.withStroke(linewidth=0.5, foreground='white')])
 
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
         img_path = str(imgs_to_generate['path_overlay_img'])
         logger.debug('Save image %s', img_path)
         fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
-        print('here')
 
 
 def sct_deepseg(
