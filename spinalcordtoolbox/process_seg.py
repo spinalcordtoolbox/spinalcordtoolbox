@@ -263,7 +263,7 @@ def _properties2d(seg, dim, iz, angle_hog=None, verbose=1):
         'area': area,
         'diameter_AP': diameter_AP,
         'diameter_RL': diameter_RL,
-        'centroid': region.centroid,
+        'centroid': region.centroid,        # Why do we store this? It is not used in the code.
         'eccentricity': region.eccentricity,
         'orientation': orientation,     # in degrees
         'solidity': solidity,  # convexity measure
