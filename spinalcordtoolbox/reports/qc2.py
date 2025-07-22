@@ -314,7 +314,7 @@ def sct_process_segmentation(
             num_col = math.floor(TARGET_WIDTH_PIXL / scale / (2*radius[0]))
             for i in range(img_temp.dim[0]):
                 # Calculate mosaic position
-                slice_index = img_temp.dim[0] - 1 - i
+                slice_index = img_temp.dim[0] - 1 - i   # I need to use this hacky workaround to go from RPI to SAL
                 row = slice_index // num_col
                 col = slice_index % num_col
                 # Center of mass
