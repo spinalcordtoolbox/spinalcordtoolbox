@@ -305,7 +305,7 @@ def sct_process_segmentation(
         img_temp = img_seg.copy()
         img_temp.data = np.full_like(img_seg.data, np.nan)
         # Create empty axes for the mosaic
-        img = mosaic(img_temp, centers, radius, scale=scale)
+        img = mosaic(img_temp, centers, radius=radius, scale=scale)
         img = np.ma.masked_less_equal(img, 0)
         img.set_fill_value(0)
         ax.imshow(img, aspect=1.0)
