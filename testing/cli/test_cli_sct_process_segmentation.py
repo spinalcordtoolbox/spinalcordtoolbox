@@ -34,11 +34,12 @@ def dummy_3d_pmj_label():
     return filename
 
 
-def test_sct_process_segmentation_check_pmj(dummy_3d_mask_nib, dummy_3d_pmj_label, tmp_path):
+def test_sct_process_segmentation_check_pmj(dummy_3d_mask_nib, dummy_3d_pmj_label, tmp_path, tmp_path_qc):
     """ Run sct_process_segmentation with -pmj, -pmj-distance and -pmj-extent and check the results"""
     filename = str(tmp_path / 'tmp_file_out.csv')
     sct_process_segmentation.main(argv=['-i', dummy_3d_mask_nib, '-pmj', dummy_3d_pmj_label,
-                                        '-pmj-distance', '8', '-pmj-extent', '4', '-o', filename])
+                                        '-pmj-distance', '8', '-pmj-extent', '4', '-o', filename,
+                                        '-qc', tmp_path_qc, '-qc-image', dummy_3d_mask_nib])
     with open(filename, "r") as csvfile:
         reader = csv.DictReader(csvfile, delimiter=',')
         row = next(reader)
@@ -48,7 +49,7 @@ def test_sct_process_segmentation_check_pmj(dummy_3d_mask_nib, dummy_3d_pmj_labe
         assert row['SUM(length)'] == '4.0'
 
 
-def test_sct_process_segmentation_check_pmj_reoriented(dummy_3d_mask_nib, dummy_3d_pmj_label, tmp_path):
+def test_sct_process_segmentation_check_pmj_reoriented(dummy_3d_mask_nib, dummy_3d_pmj_label, tmp_path, tmp_path_qc):
     """
     Make sure that the results are the same regardless of the input orientation.
 
@@ -75,7 +76,8 @@ def test_sct_process_segmentation_check_pmj_reoriented(dummy_3d_mask_nib, dummy_
     results = []
     for fnames in fname_dict.values():
         sct_process_segmentation.main(argv=['-i', fnames["i"], '-pmj', fnames["i"], '-o', fnames["out"],
-                                            '-pmj-distance', '8', '-pmj-extent', '4'])
+                                            '-pmj-distance', '8', '-pmj-extent', '4',
+                                            '-qc', tmp_path_qc, '-qc-image', dummy_3d_mask_nib])
         with open(fnames["out"], "r") as csvfile:
             reader = csv.DictReader(csvfile, delimiter=',')
             results.append(next(reader))
@@ -85,11 +87,12 @@ def test_sct_process_segmentation_check_pmj_reoriented(dummy_3d_mask_nib, dummy_
             assert results[0][key] == results[1][key]
 
 
-def test_sct_process_segmentation_check_pmj_perslice(dummy_3d_mask_nib, dummy_3d_pmj_label, tmp_path):
+def test_sct_process_segmentation_check_pmj_perslice(dummy_3d_mask_nib, dummy_3d_pmj_label, tmp_path, tmp_path_qc):
     """ Run sct_process_segmentation with -pmj, -perslice and check the results"""
     filename = str(tmp_path / 'tmp_file_out.csv')
     sct_process_segmentation.main(argv=['-i', dummy_3d_mask_nib, '-pmj', dummy_3d_pmj_label,
-                                        '-perslice', '1', '-o', filename])
+                                        '-perslice', '1', '-o', filename,
+                                        '-qc', tmp_path_qc, '-qc-image', dummy_3d_mask_nib])
     with open(filename, "r") as csvfile:
         reader = csv.DictReader(csvfile, delimiter=',')
         rows = list(reader)

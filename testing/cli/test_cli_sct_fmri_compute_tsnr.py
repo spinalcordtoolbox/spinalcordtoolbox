@@ -13,8 +13,7 @@ logger = logging.getLogger(__name__)
 def test_sct_sct_fmri_compute_tsnr_no_checks():
     """Run the CLI script without checking results.
     TODO: Check the results. (This test replaces the 'sct_testing' test, which did not implement any checks.)"""
-    sct_fmri_compute_tsnr.main(argv=['-i', sct_test_path('fmri', 'fmri.nii.gz'),
-                                     '-o', 'out_fmri_tsnr.nii.gz'])
+    sct_fmri_compute_tsnr.main(argv=['-i', sct_test_path('fmri', 'fmri.nii.gz'), '-o', 'out_fmri_tsnr.nii.gz'])
 
 
 @pytest.fixture()

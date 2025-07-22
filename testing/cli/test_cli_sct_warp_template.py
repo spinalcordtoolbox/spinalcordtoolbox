@@ -32,7 +32,8 @@ def test_sct_warp_template_point_labels(tmp_path, tmp_path_qc):
     sct_register_to_template.main(argv=['-i', sct_test_path('t2', 't2.nii.gz'),
                                         '-s', sct_test_path('t2', 't2_seg-manual.nii.gz'),
                                         '-ldisc', sct_test_path('t2', 'labels.nii.gz'),
-                                        '-ref', 'subject', '-ofolder', str(tmp_path)])
+                                        '-ref', 'subject', '-ofolder', str(tmp_path),
+                                        '-qc', tmp_path_qc])
 
     # Warp the PAM50 template to the cropped T2 image space
     path_out = tmp_path/"PAM50_warped"

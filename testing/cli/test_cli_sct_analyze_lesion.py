@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.fixture()
-def dummy_lesion(request, tmp_path):
+def dummy_lesion(request, tmp_path, tmp_path_qc):
     """Define fake voxel lesions using the specified dimensions."""
     lesion_params = request.param
     if isinstance(lesion_params, list) and all(isinstance(t, tuple) for t in lesion_params):
@@ -41,7 +41,8 @@ def dummy_lesion(request, tmp_path):
     path_ref = sct_test_path("t2", "t2.nii.gz")
     path_out = str(tmp_path/"lesion.nii.gz")
     sct_label_utils.main(argv=['-i', path_ref, '-o', path_out,
-                               '-create', create_arg])
+                               '-create', create_arg,
+                               '-qc', tmp_path_qc])
 
     return path_out, lesion_params
 
@@ -264,18 +265,20 @@ def test_sct_analyze_lesion_matches_expected_dummy_lesion_measurements_without_s
 @pytest.mark.parametrize("dummy_lesion", [
     ([(29, 0, 25), (4, 15, 3)])
 ], indirect=["dummy_lesion"])
-def test_sct_analyze_lesion_with_template(dummy_lesion, tmp_path):
+def test_sct_analyze_lesion_with_template(dummy_lesion, tmp_path, tmp_path_qc):
     # prep the template for use with `-f` argument of sct_analyze_lesion
     sct_register_to_template.main(argv=['-i', sct_test_path('t2', 't2.nii.gz'),
                                         '-s', sct_test_path('t2', 't2_seg-manual.nii.gz'),
                                         '-l', sct_test_path('t2', 'labels.nii.gz'),
                                         '-t', sct_test_path('template'),
-                                        '-ofolder', str(tmp_path)])
+                                        '-ofolder', str(tmp_path),
+                                        '-qc', tmp_path_qc])
     sct_warp_template.main(argv=['-d', sct_test_path('t2', 't2.nii.gz'),
                                  '-w', str(tmp_path/'warp_template2anat.nii.gz'),
                                  '-a', '0',  # -a is '1' by default, but small template doesn't have atlas
                                  '-t', sct_test_path('template'),
-                                 '-ofolder', str(tmp_path)])
+                                 '-ofolder', str(tmp_path),
+                                 '-qc', tmp_path_qc])
     template_path = tmp_path / 'template'
     shutil.copy(template_path / "PAM50_small_levels.nii.gz",
                 template_path / "PAM50_levels.nii.gz")  # Rename to comply with sct_analyze_lesion expectations
@@ -285,7 +288,8 @@ def test_sct_analyze_lesion_with_template(dummy_lesion, tmp_path):
     path_lesion, _ = dummy_lesion
     sct_analyze_lesion.main(argv=['-m', path_lesion,
                                   '-f', str(tmp_path),
-                                  '-ofolder', str(tmp_path)])
+                                  '-ofolder', str(tmp_path),
+                                  '-qc', tmp_path_qc])
     _, fname, _ = extract_fname(path_lesion)
     for suffix in ['_analysis.pkl', '_analysis.xlsx', '_label.nii.gz']:
         assert os.path.isfile(tmp_path / f"{fname}{suffix}")

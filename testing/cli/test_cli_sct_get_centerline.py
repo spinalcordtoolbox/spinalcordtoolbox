@@ -41,7 +41,7 @@ def test_sct_get_centerline_output_file_exists_with_o_arg(tmp_path, tmp_path_qc,
 
 
 @pytest.mark.sct_testing
-def test_sct_get_centerline_soft_sums_to_one_and_overlaps_with_bin(tmp_path):
+def test_sct_get_centerline_soft_sums_to_one_and_overlaps_with_bin(tmp_path, tmp_path_qc):
     """
     This test checks two necessary conditions of the soft centerline:
 
@@ -51,7 +51,8 @@ def test_sct_get_centerline_soft_sums_to_one_and_overlaps_with_bin(tmp_path):
     # Condition 1: All slices of the soft centerline sum to 1
     sct_get_centerline.main(argv=['-i', sct_test_path('t2', 't2_seg-manual.nii.gz'),
                                   '-method', 'fitseg', '-centerline-soft', '1', '-o',
-                                  os.path.join(tmp_path, 't2_seg_centerline_soft.nii.gz')])
+                                  os.path.join(tmp_path, 't2_seg_centerline_soft.nii.gz'),
+                                  '-qc', tmp_path_qc])
     im_soft = Image(os.path.join(tmp_path, 't2_seg_centerline_soft.nii.gz'))
     # Sum soft centerline intensities in the (x,y) plane, across all slices
     sum_over_slices = np.apply_over_axes(np.sum, im_soft.data, [0, 2]).flatten()
@@ -61,7 +62,8 @@ def test_sct_get_centerline_soft_sums_to_one_and_overlaps_with_bin(tmp_path):
     # Condition 2: The max voxels of the soft centerline overlap with the binary centerline
     sct_get_centerline.main(argv=['-i', sct_test_path('t2', 't2_seg-manual.nii.gz'),
                                   '-method', 'fitseg', '-centerline-soft', '0', '-o',
-                                  os.path.join(tmp_path, 't2_seg_centerline_bin.nii.gz')])
+                                  os.path.join(tmp_path, 't2_seg_centerline_bin.nii.gz'),
+                                  '-qc', tmp_path_qc])
     im_bin = Image(os.path.join(tmp_path, 't2_seg_centerline_bin.nii.gz'))
     # Find the maximum intensity voxel across all slices in soft centerline and binary centerline
     max_over_slices_soft = np.apply_over_axes(np.max, im_soft.data, [0, 2])

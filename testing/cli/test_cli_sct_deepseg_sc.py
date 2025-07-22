@@ -13,11 +13,11 @@ from spinalcordtoolbox.image import Image
 logger = logging.getLogger(__name__)
 
 
-def test_sct_deepseg_sc_check_output_qform_sform(tmp_path):
+def test_sct_deepseg_sc_check_output_qform_sform(tmp_path, tmp_path_qc):
     fname_in = sct_test_path('t2', 't2.nii.gz')
     fname_out = str(tmp_path / 'test_seg.nii.gz')
     with pytest.deprecated_call():
-        sct_deepseg_sc.main(argv=['-i', fname_in, '-c', 't2', '-o', fname_out])
+        sct_deepseg_sc.main(argv=['-i', fname_in, '-c', 't2', '-o', fname_out, '-qc', tmp_path_qc])
     # Ensure sform/qform of the segmentation matches that of the input images
     im_in = Image(fname_in)
     im_seg = Image(fname_out)
