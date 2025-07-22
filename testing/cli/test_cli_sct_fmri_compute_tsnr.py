@@ -31,7 +31,7 @@ def img_mask(tmp_path):
     return fname_out
 
 
-def test_sct_sct_fmri_compute_tsnr_with_mask(tmp_path, img_mask):
+def test_sct_sct_fmri_compute_tsnr_with_mask(tmp_path, tmp_path_qc, img_mask):
     """Run the CLI script using a mask image (to test the QC)."""
     sct_fmri_compute_tsnr.main(argv=['-i', sct_test_path('fmri', 'fmri.nii.gz'), '-m', img_mask,
-                                     '-o', 'out_fmri_tsnr.nii.gz', '-qc', str(tmp_path)])
+                                     '-o', 'out_fmri_tsnr.nii.gz', '-qc', tmp_path_qc])

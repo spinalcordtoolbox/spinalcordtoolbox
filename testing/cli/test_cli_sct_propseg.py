@@ -14,9 +14,9 @@ logger = logging.getLogger(__name__)
 
 @pytest.mark.skipif(sys.platform.startswith("win32"), reason="sct_propseg is not supported on Windows")
 @pytest.mark.sct_testing
-def test_sct_propseg_check_dice_coefficient_against_groundtruth():
+def test_sct_propseg_check_dice_coefficient_against_groundtruth(tmp_path_qc):
     """Run the CLI script and verify that dice (computed against ground truth) is within a certain threshold."""
-    sct_propseg.main(argv=['-i', sct_test_path('t2', 't2.nii.gz'), '-c', 't2', '-qc', 'testing-qc'])
+    sct_propseg.main(argv=['-i', sct_test_path('t2', 't2.nii.gz'), '-c', 't2', '-qc', tmp_path_qc])
 
     # open output segmentation
     im_seg = Image('t2_seg.nii.gz')

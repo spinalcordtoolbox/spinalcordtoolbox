@@ -28,14 +28,14 @@ def test_sct_label_vertebrae_consistent_disc(tmp_path):
 
 
 @pytest.mark.sct_testing
-def test_sct_label_vertebrae_initfile_qc_no_checks():
+def test_sct_label_vertebrae_initfile_qc_no_checks(tmp_path_qc):
     """Run the CLI script without checking results.
     TODO: Check the results. (This test replaces the 'sct_testing' test, which did not implement any checks.)"""
     sct_label_vertebrae.main(argv=['-i', sct_test_path('t2', 't2.nii.gz'),
                                    '-s', sct_test_path('t2', 't2_seg-manual.nii.gz'),
                                    '-c', 't2',
                                    '-initfile', sct_test_path('t2', 'init_label_vertebrae.txt'),
-                                   '-t', sct_test_path('template'), '-qc', 'testing-qc'])
+                                   '-t', sct_test_path('template'), '-qc', tmp_path_qc])
 
 
 def test_sct_label_vertebrae_initz_error():

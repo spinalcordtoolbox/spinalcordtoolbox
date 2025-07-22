@@ -163,7 +163,7 @@ def compute_expected_measurements(lesion_params, path_seg=None):
     # Lesion partly outside the spinal cord segmentation (z (LR) slice 19 is outside the SC seg)
     ([(29, 40, 19), (3, 3, 5)], 0.001)
 ], indirect=["dummy_lesion"])
-def test_sct_analyze_lesion_matches_expected_dummy_lesion_measurements(dummy_lesion, rtol, tmp_path):
+def test_sct_analyze_lesion_matches_expected_dummy_lesion_measurements(dummy_lesion, rtol, tmp_path, tmp_path_qc):
     """Run the CLI script and verify that the lesion measurements match
     expected values."""
     # Run the analysis on the dummy lesion file
@@ -172,7 +172,7 @@ def test_sct_analyze_lesion_matches_expected_dummy_lesion_measurements(dummy_les
     sct_analyze_lesion.main(argv=['-m', path_lesion,
                                   '-s', path_seg,
                                   '-ofolder', str(tmp_path),
-                                  '-qc', str(tmp_path / "qc")])
+                                  '-qc', tmp_path_qc])
 
     # Test presence of output files
     _, fname, _ = extract_fname(path_lesion)
@@ -229,14 +229,14 @@ def test_sct_analyze_lesion_matches_expected_dummy_lesion_measurements(dummy_les
       [(29, 45, 25), (3, 10, 2)]], 0.01)
 ], indirect=["dummy_lesion"])
 def test_sct_analyze_lesion_matches_expected_dummy_lesion_measurements_without_segmentation(dummy_lesion, rtol,
-                                                                                            tmp_path):
+                                                                                            tmp_path, tmp_path_qc):
     """Run the CLI script without providing SC segmentation -- only volume is computed. Max_equivalent_diameter and
     length are nan."""
     # Run the analysis on the dummy lesion file
     path_lesion, lesion_params = dummy_lesion
     sct_analyze_lesion.main(argv=['-m', path_lesion,
                                   '-ofolder', str(tmp_path),
-                                  '-qc', str(tmp_path / 'qc')])  # A warning will be printed because no SC seg
+                                  '-qc', tmp_path_qc])  # A warning will be printed because no SC seg
 
     # Test presence of output files
     _, fname, _ = extract_fname(path_lesion)

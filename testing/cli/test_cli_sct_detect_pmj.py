@@ -13,13 +13,13 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.mark.sct_testing
-def test_sct_detect_pmj_check_euclidean_distance_against_groundtruth():
+def test_sct_detect_pmj_check_euclidean_distance_against_groundtruth(tmp_path_qc):
     """Run the CLI script and verify that euclidean distances between predicted and ground truth coordinates
     are within a certain threshold."""
     fname_in = sct_test_path('template', 'template', 'PAM50_small_t2.nii.gz')
     fname_out = 'PAM50_small_t2_pmj.nii.gz'
     fname_gt = sct_test_path('template', 'template', 'PAM50_small_t2_pmj_manual.nii.gz')
-    sct_detect_pmj.main(argv=['-i', fname_in, '-o', fname_out, '-c', 't2', '-qc', 'testing-qc'])
+    sct_detect_pmj.main(argv=['-i', fname_in, '-o', fname_out, '-c', 't2', '-qc', tmp_path_qc])
 
     im_pmj = Image(fname_out)
     im_pmj_manual = Image(fname_gt)

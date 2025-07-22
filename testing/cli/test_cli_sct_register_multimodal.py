@@ -155,7 +155,7 @@ def test_sct_register_multimodal_with_labels(capsys, tmp_path, algo):
     assert "has no effect for 'type=label' registration." in capsys.readouterr().out
 
 
-def test_sct_register_multimodal_with_qc_without_dseg(capsys, tmp_path):
+def test_sct_register_multimodal_with_qc_without_dseg(capsys, tmp_path, tmp_path_qc):
     """
     Test if an error is raised when using QC ('-qc') without providing a destination segmentation ('-dseg').
     """
@@ -163,5 +163,5 @@ def test_sct_register_multimodal_with_qc_without_dseg(capsys, tmp_path):
         sct_register_multimodal.main(['-i', sct_test_path('t2', 't2.nii.gz'),
                                       '-d', sct_test_path('t2', 't2.nii.gz'),
                                       '-ofolder', str(tmp_path),
-                                      '-qc', str(tmp_path)])
+                                      '-qc', tmp_path_qc])
     assert pytest_wrapped_e.value.code == 2

@@ -28,8 +28,7 @@ def test_sct_deepseg_sc_check_output_qform_sform(tmp_path):
 
 
 @pytest.mark.sct_testing
-def test_sct_deepseg_sc_qc_report_exists():
-    dir_qc = 'testing-qc'
+def test_sct_deepseg_sc_qc_report_exists(tmp_path_qc):
     with pytest.deprecated_call():
-        sct_deepseg_sc.main(argv=['-i', sct_test_path('t2', 't2.nii.gz'), '-c', 't2', '-qc', dir_qc])
-    assert os.path.isfile(os.path.join(dir_qc, 'index.html'))
+        sct_deepseg_sc.main(argv=['-i', sct_test_path('t2', 't2.nii.gz'), '-c', 't2', '-qc', tmp_path_qc])
+    assert os.path.isfile(os.path.join(tmp_path_qc, 'index.html'))
