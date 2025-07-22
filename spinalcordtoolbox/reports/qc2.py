@@ -426,41 +426,6 @@ def sct_deepseg_axial(
     logger.debug('Save image %s', img_path)
     fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
 
-    # make a slice‐number overlay PNG
-    # re‐use the mosaic image (before overlay) and draw numbers at each patch center
-    num_slices = img_input.dim[0]
-    # patch_size is the half‐width from slice.py (default 15 → each patch is 30×30px)
-    patch_size = 15 * 2
-    nb_column = img.shape[1] // patch_size
-
-    fig_num = mpl_figure.Figure()
-    fig_num.set_size_inches(*size_fig, forward=True)
-    mpl_backend_agg.FigureCanvasAgg(fig_num)
-    axn = fig_num.add_axes((0, 0, 1, 1))
-    # transparent background
-    axn.imshow(np.zeros_like(img), cmap='gray', alpha=0)
-
-    # draw slice numbers
-    for i in range(num_slices):
-        row = i // nb_column
-        col = i % nb_column
-        x = col * patch_size + patch_size / 2
-        y = row * patch_size + patch_size / 2
-        txt = axn.text(x, y, str(i),
-                       color='yellow', fontsize=4,
-                       ha='center', va='center')
-        txt.set_path_effects([
-            mpl_patheffects.Stroke(linewidth=1, foreground='black'),
-            mpl_patheffects.Normal(),
-        ])
-    axn.axis('off')
-
-    # save it
-    path_numbers = imgs_to_generate['path_overlay_img'].parent / 'numbers_img.png'
-    fig_num.savefig(str(path_numbers), format='png', transparent=True, dpi=DPI)
-    # you can also add it to imgs_to_generate if you like:
-    imgs_to_generate['path_numbers_img'] = path_numbers
-
 
 def sct_deepseg_spinal_rootlets(
     imgs_to_generate: dict[str, Path],
