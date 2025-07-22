@@ -511,6 +511,7 @@ def main(argv: Sequence[str]):
                 parser.error('-i is required to display QC report.')
 
     # QC report (only for PMJ-based CSA)
+    # TODO: refactor this with qc2. Replace arguments.qc_image with arguments.i
     if path_qc is not None:
         if fname_pmj is not None:
             if arguments.qc_image is not None:
