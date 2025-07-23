@@ -14,9 +14,9 @@ logger = logging.getLogger(__name__)
 
 @pytest.mark.skipif(sys.platform.startswith("win32"), reason="sct_propseg is not supported on Windows")
 @pytest.mark.sct_testing
-def test_sct_propseg_check_dice_coefficient_against_groundtruth():
+def test_sct_propseg_check_dice_coefficient_against_groundtruth(tmp_path_qc):
     """Run the CLI script and verify that dice (computed against ground truth) is within a certain threshold."""
-    sct_propseg.main(argv=['-i', sct_test_path('t2', 't2.nii.gz'), '-c', 't2', '-qc', 'testing-qc'])
+    sct_propseg.main(argv=['-i', sct_test_path('t2', 't2.nii.gz'), '-c', 't2', '-qc', tmp_path_qc])
 
     # open output segmentation
     im_seg = Image('t2_seg.nii.gz')
@@ -43,17 +43,18 @@ def test_isct_propseg_compatibility():
 
 
 @pytest.mark.skipif(sys.platform.startswith("win32"), reason="sct_propseg is not supported on Windows")
-def test_sct_propseg_o_flag(tmp_path):
+def test_sct_propseg_o_flag(tmp_path, tmp_path_qc):
     sct_propseg.main(['-i', sct_test_path('t2', 't2.nii.gz'), '-c', 't2', '-ofolder', str(tmp_path),
-                      '-o', 'test_seg.nii.gz'])
+                      '-o', 'test_seg.nii.gz', '-qc', tmp_path_qc])
     output_files = {f for f in os.listdir(tmp_path)}
     assert output_files == {'t2_centerline.nii.gz', 'test_seg.nii.gz'}
 
 
 @pytest.mark.skipif(sys.platform.startswith("win32"), reason="sct_propseg is not supported on Windows")
-def test_sct_propseg_optional_output_files(tmp_path):
+def test_sct_propseg_optional_output_files(tmp_path, tmp_path_qc):
     sct_propseg.main(['-i', sct_test_path('t2', 't2.nii.gz'), '-c', 't2', '-ofolder', str(tmp_path),
-                      '-mesh', '-CSF', '-centerline-coord', '-cross', '-init-tube', '-low-resolution-mesh'])
+                      '-mesh', '-CSF', '-centerline-coord', '-cross', '-init-tube', '-low-resolution-mesh',
+                      '-qc', tmp_path_qc])
     output_files = {f for f in os.listdir(tmp_path)}
     assert output_files == {
         't2_seg.nii.gz', 't2_centerline.nii.gz',     # default output files

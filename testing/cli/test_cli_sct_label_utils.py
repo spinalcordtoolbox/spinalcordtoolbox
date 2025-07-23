@@ -14,28 +14,30 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.mark.sct_testing
-def test_sct_label_utils_cubic_to_point():
+def test_sct_label_utils_cubic_to_point(tmp_path_qc):
     """Run the CLI script and verify the resulting center of mass coordinate."""
     fname_out = 'test_centerofmass.nii.gz'
-    sct_label_utils.main(argv=['-i', sct_test_path('t2', 't2_seg-manual.nii.gz'), '-cubic-to-point', '-o', fname_out])
+    sct_label_utils.main(argv=['-i', sct_test_path('t2', 't2_seg-manual.nii.gz'), '-cubic-to-point', '-o', fname_out,
+                               '-qc', tmp_path_qc])
     # Note: Old, broken 'sct_testing' test used '31,28,25,1' as ground truth. Is this a regression?
     assert Image(fname_out).getNonZeroCoordinates() == [Coordinate([31, 27, 25, 1])]
 
 
 @pytest.mark.sct_testing
-def test_sct_label_utils_create():
+def test_sct_label_utils_create(tmp_path_qc):
     """Run the CLI script without checking results.
     TODO: Check the results. (This test replaces the 'sct_testing' test, which did not implement any checks.)"""
-    sct_label_utils.main(argv=['-i', sct_test_path('t2', 't2_seg-manual.nii.gz'), '-create', '1,1,1,1:2,2,2,2'])
+    sct_label_utils.main(argv=['-i', sct_test_path('t2', 't2_seg-manual.nii.gz'), '-create', '1,1,1,1:2,2,2,2',
+                               '-qc', tmp_path_qc])
 
 
-def test_create_seg_mid(tmp_path):
+def test_create_seg_mid(tmp_path, tmp_path_qc):
     """Test the '-create-seg-mid' option in sct_label_utils."""
     input = sct_test_path('t2', 't2_seg-manual.nii.gz')
     output = str(tmp_path/'t2_seg_labeled.nii.gz')
 
     # Create a single label using the new syntax
-    sct_label_utils.main(['-i', input, '-create-seg-mid', '3', '-o', output])
+    sct_label_utils.main(['-i', input, '-create-seg-mid', '3', '-o', output, '-qc', tmp_path_qc])
     output_img = Image(output)
     labels = np.argwhere(output_img.data)
     assert len(labels) == 1
@@ -50,7 +52,7 @@ def test_create_seg_mid(tmp_path):
         sct_label_utils.main(['-i', input, '-create-seg', '-1,3', '-o', output])
 
 
-def test_project_centerline(tmp_path):
+def test_project_centerline(tmp_path, tmp_path_qc):
     """Test the '-project-centerline' option in sct_label_utils"""
     # Use an image as a shape reference
     img = str(tmp_path/'t2.nii.gz')
@@ -71,7 +73,8 @@ def test_project_centerline(tmp_path):
     sct_label_utils.main([
         '-i', img,
         '-o', ref,
-        '-create', '1,1,1,1:1,2,3,4:10,11,25,25'
+        '-create', '1,1,1,1:1,2,3,4:10,11,25,25',
+        '-qc', tmp_path_qc
         ])
 
     # Project the ref point on the previous line
@@ -79,7 +82,8 @@ def test_project_centerline(tmp_path):
     sct_label_utils.main([
         '-i', mask,
         '-o', out,
-        '-project-centerline', ref
+        '-project-centerline', ref,
+        '-qc', tmp_path_qc
         ])
 
     # The coordinates of this projection should be equal to x=20, y=15, z=1

@@ -13,7 +13,7 @@ from spinalcordtoolbox.scripts import sct_register_multimodal, sct_create_mask
 logger = logging.getLogger(__name__)
 
 
-def test_sct_register_multimodal_mask_files_exist(tmp_path):
+def test_sct_register_multimodal_mask_files_exist(tmp_path, tmp_path_qc):
     """
     Run the script without validating results.
 
@@ -34,7 +34,7 @@ def test_sct_register_multimodal_mask_files_exist(tmp_path):
         '-param', 'step=1,type=seg,algo=centermass:step=2,type=seg,algo=bsplinesyn,slicewise=1,iter=3',
         '-m', fname_mask,
         '-initwarp', sct_test_path('t2', 'warp_template2anat.nii.gz'),
-        '-ofolder', str(tmp_path)
+        '-ofolder', str(tmp_path), '-qc', tmp_path_qc
     ])
 
     for path in ["PAM50_t2_reg.nii.gz", "warp_PAM50_t22mt1.nii.gz"]:
@@ -57,7 +57,7 @@ def test_sct_register_multimodal_mask_files_exist(tmp_path):
     (True, 'step=1,algo=centermassrot,type=imseg,rot_method=pcahog', None),
     (True, 'step=1,algo=columnwise,type=seg,smooth=1', None),
 ])
-def test_sct_register_multimodal_mt0_image_data_within_threshold(use_seg, param, fname_gt, tmp_path):
+def test_sct_register_multimodal_mt0_image_data_within_threshold(use_seg, param, fname_gt, tmp_path, tmp_path_qc):
     """Run the CLI script and verify that the output image data is close to a reference image (within threshold)."""
     fname_out_src = str(tmp_path/'mt0_reg.nii.gz')
     fname_out_dest = str(tmp_path/'mt0_reg_inv.nii.gz')
@@ -68,7 +68,8 @@ def test_sct_register_multimodal_mt0_image_data_within_threshold(use_seg, param,
             '-d', sct_test_path('mt', 'mt1.nii.gz'), '-x', 'linear', '-r', '0', '-param', param,
             '-o', fname_out_src, '-owarp', fname_owarp, '-owarpinv', fname_owarpinv]
     seg_argv = ['-iseg', sct_test_path('mt', 'mt0_seg.nii.gz'),
-                '-dseg', sct_test_path('mt', 'mt1_seg.nii.gz')]
+                '-dseg', sct_test_path('mt', 'mt1_seg.nii.gz'),
+                '-qc', tmp_path_qc]  # qc requires -dseg
     sct_register_multimodal.main(argv=(argv + seg_argv) if use_seg else argv)
 
     for f in [fname_out_src, fname_out_dest, fname_owarp, fname_owarpinv]:
@@ -89,7 +90,7 @@ def test_sct_register_multimodal_mt0_image_data_within_threshold(use_seg, param,
     #     assert abs(np.sum(diff)) < threshold  # FIXME: Use np.linalg.norm when this test is fixed
 
 
-def test_sct_register_multimodal_with_softmask(tmp_path):
+def test_sct_register_multimodal_with_softmask(tmp_path, tmp_path_qc):
     """
     Verify that softmask is actually applied during registration.
 
@@ -107,7 +108,7 @@ def test_sct_register_multimodal_with_softmask(tmp_path):
                           '-o', fname_mask, '-f', 'gaussian'])
     sct_register_multimodal.main(['-i', fname_t1, '-d', fname_t2, '-dseg', sct_test_path('t2', 't2_seg-manual.nii.gz'),
                                   '-param', "step=1,type=im,algo=slicereg,metric=CC", '-m', fname_mask,
-                                  '-ofolder', str(tmp_path), '-r', '0', '-v', '2'])
+                                  '-ofolder', str(tmp_path), '-r', '0', '-v', '2', '-qc', tmp_path_qc])
 
     # If registration was successful, the warping field should be non-empty
     assert np.any(Image(fname_warp).data)
@@ -126,7 +127,7 @@ def test_sct_register_multimodal_with_softmask(tmp_path):
 
 
 @pytest.mark.parametrize('algo', [',algo=rigid', ''])
-def test_sct_register_multimodal_with_labels(capsys, tmp_path, algo):
+def test_sct_register_multimodal_with_labels(capsys, tmp_path, tmp_path_qc, algo):
     """
     Test registration with '-param type=label' set.
 
@@ -155,7 +156,7 @@ def test_sct_register_multimodal_with_labels(capsys, tmp_path, algo):
     assert "has no effect for 'type=label' registration." in capsys.readouterr().out
 
 
-def test_sct_register_multimodal_with_qc_without_dseg(capsys, tmp_path):
+def test_sct_register_multimodal_with_qc_without_dseg(capsys, tmp_path, tmp_path_qc):
     """
     Test if an error is raised when using QC ('-qc') without providing a destination segmentation ('-dseg').
     """
@@ -163,5 +164,5 @@ def test_sct_register_multimodal_with_qc_without_dseg(capsys, tmp_path):
         sct_register_multimodal.main(['-i', sct_test_path('t2', 't2.nii.gz'),
                                       '-d', sct_test_path('t2', 't2.nii.gz'),
                                       '-ofolder', str(tmp_path),
-                                      '-qc', str(tmp_path)])
+                                      '-qc', tmp_path_qc])
     assert pytest_wrapped_e.value.code == 2

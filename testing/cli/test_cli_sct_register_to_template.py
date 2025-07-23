@@ -43,7 +43,7 @@ def labels_discs(tmp_path_factory):
     return file_out
 
 
-def test_sct_register_to_template_non_rpi_template(tmp_path, template_lpi):
+def test_sct_register_to_template_non_rpi_template(tmp_path, tmp_path_qc, template_lpi):
     """Test registration with option -ref subject when template is not RPI orientation, causing #3300."""
     # Run registration to template using the RPI template as input file
     sct_register_to_template.main(argv=['-i', sct_test_path('template', 'template', 'PAM50_small_t2.nii.gz'),
@@ -51,14 +51,15 @@ def test_sct_register_to_template_non_rpi_template(tmp_path, template_lpi):
                                         '-ldisc', sct_test_path('template', 'template', 'PAM50_small_label_disc.nii.gz'),
                                         '-c', 't2', '-t', template_lpi, '-ref', 'subject',
                                         '-param', 'step=1,type=seg,algo=centermass',
-                                        '-ofolder', str(tmp_path), '-r', '0', '-v', '2'])
+                                        '-ofolder', str(tmp_path), '-r', '0', '-v', '2',
+                                        '-qc', tmp_path_qc])
     img_orig = Image(sct_test_path('template', 'template', 'PAM50_small_t2.nii.gz'))
     img_reg = Image(str(tmp_path/'template2anat.nii.gz'))
     # Check if both images almost overlap. If they are right-left flipped, distance should be above threshold
     assert np.linalg.norm(img_orig.data - img_reg.data) < 1
 
 
-def test_sct_register_to_template_non_rpi_data(tmp_path, template_lpi):
+def test_sct_register_to_template_non_rpi_data(tmp_path, tmp_path_qc, template_lpi):
     """
     Test registration with option -ref subject when data is not RPI orientation.
     This test uses the temporary dataset created in test_sct_register_to_template_non_rpi_template().
@@ -69,7 +70,8 @@ def test_sct_register_to_template_non_rpi_data(tmp_path, template_lpi):
                                         '-ldisc', f'{template_lpi}/template/PAM50_small_label_disc.nii.gz',
                                         '-c', 't2', '-t', sct_test_path('template'), '-ref', 'subject',
                                         '-param', 'step=1,type=seg,algo=centermass',
-                                        '-ofolder', str(tmp_path), '-r', '0', '-v', '2'])
+                                        '-ofolder', str(tmp_path), '-r', '0', '-v', '2',
+                                        '-qc', tmp_path_qc])
     img_orig = Image(f'{template_lpi}/template/PAM50_small_t2.nii.gz')
     img_reg = Image(str(tmp_path/'template2anat.nii.gz'))
     # Check if both images almost overlap. If they are right-left flipped, distance should be above threshold
@@ -79,17 +81,18 @@ def test_sct_register_to_template_non_rpi_data(tmp_path, template_lpi):
 @pytest.mark.sct_testing
 @pytest.mark.parametrize("fname_gt, remaining_args", [
     (sct_test_path('template', 'template', 'PAM50_small_cord.nii.gz'),
-     ['-l', sct_test_path('t2', 'labels.nii.gz'), '-t', sct_test_path('template'), '-qc', 'qc-testing', '-param',
+     ['-l', sct_test_path('t2', 'labels.nii.gz'), '-t', sct_test_path('template'), '-param',
       'step=1,type=seg,algo=centermassrot,metric=MeanSquares:step=2,type=seg,algo=bsplinesyn,iter=5,metric=MeanSquares']),
     (os.path.join(__sct_dir__, 'data/PAM50/template/PAM50_cord.nii.gz'),
      ['-ldisc', sct_test_path('t2', 'labels.nii.gz'), '-ref', 'subject'])
 ])
-def test_sct_register_to_template_dice_coefficient_against_groundtruth(fname_gt, remaining_args, tmp_path):
+def test_sct_register_to_template_dice_coefficient_against_groundtruth(fname_gt, remaining_args, tmp_path, tmp_path_qc):
     """Run the CLI script and verify transformed images have expected attributes."""
     fname_seg = sct_test_path('t2', 't2_seg-manual.nii.gz')
     dice_threshold = 0.9
     sct_register_to_template.main(argv=['-i', sct_test_path('t2', 't2.nii.gz'),
-                                        '-s', fname_seg, '-ofolder', str(tmp_path)]
+                                        '-s', fname_seg, '-ofolder', str(tmp_path),
+                                        '-qc', tmp_path_qc]
                                   + remaining_args)
 
     # Straightening files are only generated for `-ref template`. They should *not* exist for `-ref subject`.
@@ -147,7 +150,7 @@ def test_sct_register_to_template_mismatched_xforms(tmp_path, caplog):
     assert "has different qform and sform matrices" in caplog.text
 
 
-def test_sct_register_to_template_more_than_2_labels(tmp_path, labels_discs):
+def test_sct_register_to_template_more_than_2_labels(tmp_path, tmp_path_qc, labels_discs):
     """
     Test registration with >2 labels. This test (and the custom disc label file) are needed because the existing
     `t2/labels.nii.gz` file only contains 2 labels. But, registration will be performed differently depending on
@@ -161,7 +164,8 @@ def test_sct_register_to_template_more_than_2_labels(tmp_path, labels_discs):
                                         '-t', sct_test_path('template'),
                                         '-param', 'step=1,type=seg,algo=centermassrot,metric=MeanSquares:'
                                                   'step=2,type=seg,algo=bsplinesyn,iter=0,metric=MeanSquares',
-                                        '-ofolder', str(tmp_path)])
+                                        '-ofolder', str(tmp_path),
+                                        '-qc', tmp_path_qc])
     # Apply transformation to source labels
     sct_apply_transfo.main(argv=['-i', labels_discs,
                                  '-d', str(tmp_path/'anat2template.nii.gz'),
@@ -176,7 +180,7 @@ def test_sct_register_to_template_more_than_2_labels(tmp_path, labels_discs):
     assert compute_mean_squared_error(im_label_dest, im_label_src_reg) == 0
 
 
-def test_sct_register_to_template_rootlets(tmp_path):
+def test_sct_register_to_template_rootlets(tmp_path, tmp_path_qc):
     """
     Test registration with rootlets segmentation.
     """
@@ -187,7 +191,8 @@ def test_sct_register_to_template_rootlets(tmp_path):
                                         '-param', 'step=1,type=rootlet,algo=bsplinesyn,metric=CC:'
                                                   'step=2,type=seg,algo=centermassrot,metric=MeanSquares:'
                                                   'step=3,type=seg,algo=bsplinesyn,iter=0,metric=MeanSquares',
-                                        '-ofolder', str(tmp_path)])
+                                        '-ofolder', str(tmp_path),
+                                        '-qc', tmp_path_qc])
     # Apply transformation to source labels
     sct_apply_transfo.main(argv=['-i', sct_test_path('t2', 't2_seg-deepseg_rootlets-manual_midpoints.nii.gz'),
                                  '-d', str(tmp_path/'anat2template.nii.gz'),

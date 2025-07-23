@@ -244,3 +244,13 @@ def check_testing_data_integrity(files_checksums: Mapping[os.PathLike, str]):
     assert not changed
     # assert not new
     assert not missing
+
+
+@pytest.fixture(scope="session")
+def tmp_path_qc(tmp_path_factory):
+    """
+    Create a session-scoped temporary directory for QC output.
+    This is used to group generated QC reports into a single report, to allow for easier checking of outputs.
+    """
+    qc_path = tmp_path_factory.mktemp('qc-report-')
+    return str(qc_path)  # most SCT scripts require string inputs for paths
