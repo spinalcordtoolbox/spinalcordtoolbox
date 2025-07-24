@@ -25,7 +25,7 @@ from spinalcordtoolbox.utils.sys import sct_progress_bar
 NEAR_ZERO_THRESHOLD = 1e-6
 
 
-def compute_shape(segmentation, image, angle_correction=True, centerline_path=None, param_centerline=None,
+def compute_shape(segmentation, image=None, angle_correction=True, centerline_path=None, param_centerline=None,
                   verbose=1, remove_temp_files=1):
     """
     Compute morphometric measures of the spinal cord in the transverse (axial) plane from the segmentation.
