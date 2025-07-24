@@ -249,6 +249,10 @@ def sct_process_segmentation(
     Generate a QC report for sct_process_segmentation showing a line corresponding to the HOG angle
     (obtained using spinalcordtoolbox.registration.algorithms.find_angle_hog)
     """
+    # Check if 'angle_hog', 'centermass_x', and 'centermass_y' are in metrics
+    if not all(key in metrics for key in ['angle_hog', 'centermass_x', 'centermass_y']):
+        raise ValueError("Metrics must contain 'angle_hog', 'centermass_x', and 'centermass_y'.")
+
     command = 'sct_process_segmentation'
     cmdline = [command]
     cmdline.extend(argv)
@@ -321,45 +325,43 @@ def add_angle_lines(ax, num_slices, metrics, radius: tuple[int, int] = (15, 15),
     """
     Overlay HOG angle lines and add angle text onto an Axial mosaic.
     """
-    if 'angle_hog' in metrics:
-        num_col = math.floor(TARGET_WIDTH_PIXL / scale / (2 * radius[0]))
-        for i in range(num_slices):
-            # Calculate mosaic position
-            slice_index = num_slices - 1 - i  # I need to use this hacky workaround to go from RPI to SAL
-            row = slice_index // num_col
-            col = slice_index % num_col
-            # Center of mass
-            # Note 1: This is a bit hacky: I check metrics['centermass_x'] just to kwow if given slice contains the
-            #  cord seg, if so, then I plot the center of mass point based on the mosaic properties.
-            # Note 2: metrics['centermass_x'] and ['centermass_y'] seem to be the same as `centers`, but they are obtained differently:
-            #   - metrics['centermass_x'] and ['centermass_y'] are obtained using PCA via spinalcordtoolbox.registration.algorithms.compute_pca
-            #   - centers is obtained using scipy.ndimage.center_of_mass
-            #   For simplicity, I'm using directly the mosaic coordinates based on `centers`
-            if 'centermass_x' in metrics and 'centermass_y' in metrics:
-                x = metrics['centermass_x'].data[i] if 'centermass_x' in metrics else np.nan
-                y = metrics['centermass_y'].data[i] if 'centermass_y' in metrics else np.nan
-                if not np.isnan(x) and not np.isnan(y):
-                    # Calculate center position within mosaic
-                    x_mosaic = col * (2 * radius[0]) + radius[0]
-                    y_mosaic = row * (2 * radius[1]) + radius[1]
-                    # Uncomment the next line to plot the center of mass point
-                    # ax.plot(x_mosaic, y_mosaic, 'o', color='red', markersize=1.0)
-            # HOG angle
-            if 'angle_hog' in metrics:
-                angle_rad = metrics['angle_hog'].data[i] if 'angle_hog' in metrics else np.nan
-                if not np.isnan(angle_rad):
-                    # Compute the end points of the line
-                    x_start = x_mosaic - radius[0] / 2 * np.sin(angle_rad)
-                    y_start = y_mosaic - radius[1] / 2 * np.cos(angle_rad)
-                    x_end = x_mosaic + radius[0] / 2 * np.sin(angle_rad)
-                    y_end = y_mosaic + radius[1] / 2 * np.cos(angle_rad)
-                    # Plot the line
-                    ax.plot([x_start, x_end], [y_start, y_end], '-', color='red', linewidth=0.7)
-                    # Include the angle text in degrees
-                    angle_deg = -np.degrees(angle_rad)
-                    ax.text(x_mosaic + radius[0] * 0.2, y_mosaic - radius[1] * 0.3,  # upper right corner
-                            f'{angle_deg:.1f}°', color='red', fontsize=3,
-                            path_effects=[mpl_patheffects.withStroke(linewidth=0.5, foreground='white')])
+    num_col = math.floor(TARGET_WIDTH_PIXL / scale / (2 * radius[0]))
+    # Loop across axial slices
+    for i in range(num_slices):
+        # Calculate mosaic position
+        slice_index = num_slices - 1 - i  # I need to use this hacky workaround to go from RPI to SAL
+        row = slice_index // num_col
+        col = slice_index % num_col
+        # Center of mass
+        # Note 1: This is a bit hacky: I check metrics['centermass_x'] just to kwow if given slice contains the
+        #  cord seg, if so, then I plot the center of mass point based on the mosaic properties.
+        # Note 2: metrics['centermass_x'] and ['centermass_y'] seem to be the same as `centers`, but they are obtained differently:
+        #   - metrics['centermass_x'] and ['centermass_y'] are obtained using PCA via spinalcordtoolbox.registration.algorithms.compute_pca
+        #   - centers is obtained using scipy.ndimage.center_of_mass
+        #   For simplicity, I'm using directly the mosaic coordinates based on `centers`
+        x = metrics['centermass_x'].data[i] if 'centermass_x' in metrics else np.nan
+        y = metrics['centermass_y'].data[i] if 'centermass_y' in metrics else np.nan
+        if not np.isnan(x) and not np.isnan(y):
+            # Calculate center position within mosaic
+            x_mosaic = col * (2 * radius[0]) + radius[0]
+            y_mosaic = row * (2 * radius[1]) + radius[1]
+            # Uncomment the next line to plot the center of mass point
+            # ax.plot(x_mosaic, y_mosaic, 'o', color='red', markersize=1.0)
+        # HOG angle
+        angle_rad = metrics['angle_hog'].data[i] if 'angle_hog' in metrics else np.nan
+        if not np.isnan(angle_rad):
+            # Compute the end points of the line
+            x_start = x_mosaic - radius[0] / 2 * np.sin(angle_rad)
+            y_start = y_mosaic - radius[1] / 2 * np.cos(angle_rad)
+            x_end = x_mosaic + radius[0] / 2 * np.sin(angle_rad)
+            y_end = y_mosaic + radius[1] / 2 * np.cos(angle_rad)
+            # Plot the line
+            ax.plot([x_start, x_end], [y_start, y_end], '-', color='red', linewidth=0.7)
+            # Include the angle text in degrees
+            angle_deg = -np.degrees(angle_rad)
+            ax.text(x_mosaic + radius[0] * 0.2, y_mosaic - radius[1] * 0.3,  # upper right corner
+                    f'{angle_deg:.1f}°', color='red', fontsize=3,
+                    path_effects=[mpl_patheffects.withStroke(linewidth=0.5, foreground='white')])
 
 
 def sct_deepseg(
