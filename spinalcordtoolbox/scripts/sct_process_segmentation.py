@@ -531,7 +531,7 @@ def main(argv: Sequence[str]):
         else:
             logger.warning('QC report only available for PMJ-based CSA. QC report not generated.')
 
-    # Create QC report for tissue bridges (only if SC is provided)
+    # Create QC report for the HOG angle
     if arguments.qc is not None:
         if fname_segmentation is not None:
             if fname_image is not None:
