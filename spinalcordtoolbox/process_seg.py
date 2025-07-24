@@ -53,16 +53,16 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
                      'length'
                      ]
 
-    # HOG-related properties that are only available when image (`sct_process_segmentation -i`) is provided
-    # TODO: consider whether to use this workaround or include the columns even when image is not provided and use NaN
-    hog_properties = ['diameter_AP_hog',
-                      'diameter_RL_hog',
-                      'centermass_x',
-                      'centermass_y',
-                      'angle_hog']
     im_seg = Image(segmentation).change_orientation('RPI')
     # Check if the input image is provided (i.e., image is not None)
     if image is not None:
+        # HOG-related properties that are only available when image (`sct_process_segmentation -i`) is provided
+        # TODO: consider whether to use this workaround or include the columns even when image is not provided and use NaN
+        hog_properties = ['diameter_AP_hog',
+                          'diameter_RL_hog',
+                          'centermass_x',
+                          'centermass_y',
+                          'angle_hog']
         # Add HOG-related properties to the property list when image is provided
         property_list = property_list[:1] + hog_properties + property_list[1:]
         im = Image(image).change_orientation('RPI')
