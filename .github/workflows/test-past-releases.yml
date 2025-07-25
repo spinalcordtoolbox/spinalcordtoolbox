@@ -81,7 +81,7 @@ jobs:
             export VERSION_TXT=$(< spinalcordtoolbox/version.txt)
             # SCT_DIR was different in the first iteration of Windows support
             if [ "${VERSION_TXT}" == "5.7" ] || [ ${VERSION_TXT} == "5.8" ]; then
-              export SCT_DIR="D:\a\spinalcordtoolbox\spinalcordtoolbox"
+              export SCT_DIR="${{ github.workspace }}"
             else
               export SCT_DIR="$USERPROFILE\sct_${VERSION_TXT}"
             fi
