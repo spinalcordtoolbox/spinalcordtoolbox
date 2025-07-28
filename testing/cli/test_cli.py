@@ -1,6 +1,7 @@
 # pytest unit tests for all cli scripts
 
 import os
+import platform
 import pytest
 from importlib.metadata import entry_points
 import subprocess
@@ -37,4 +38,8 @@ def test_calling_scripts_with_no_args_shows_usage(capsys, script):
     assert b'usage' in completed_process.stderr
     if "CI" in os.environ:
         max_duration = 2.0 if script not in deprecated_scripts else 5.0
+        # GitHub Actions' macOS 15+ runners take consistently longer, so bump by 1s
+        # macOS 13/14 runners are fine with the baseline duration (have yet to fail)
+        if platform.platform == "darwin" and int(platform.mac_ver()[0]) > 14:
+            max_duration += 1.0
         assert duration < max_duration, f"Expected '{script} -h' to execute in under {max_duration}s; took {duration}"
