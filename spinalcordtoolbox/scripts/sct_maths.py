@@ -257,20 +257,23 @@ def get_parser():
         metavar=Metavar.int,
         type=one_two_three_ints,
         action=AppendTodo,
-        help="Dilate binary or greyscale image with specified size. If shape={'square', 'cube'}: size corresponds to the length of "
-             "an edge (size=1 has no effect). If shape={'disk', 'ball'}: size corresponds to the radius, not including "
-             "the center element (size=0 has no effect). "
-             "If shape={'square', 'disk'}: size can be a single number of voxels, "
-             "or 2 numbers separated by `x` to get a rectangle/ellipse footprint (useful for anisotropic images). "
-             "If shape={'cube', 'ball'}: size can be a single number, or 3 numbers separated by `x` to get a box/ellipsoid.",
+        help="Dilate binary or greyscale image.\n"
+             "You can customize the structural element by combining the arguments `-dilate`, `-shape`, and `-dim`. "
+             "(The values passed to `-dilate` will control the side length or radius of whatever shape is chosen.)\n"
+             "You can provide either a single number, or 2/3 numbers separated by `x` (depending on the shape).\n"
+             "\n"
+             "Examples:\n"
+             "  - `-shape cube -dilate 3`            -> Side length 3   -> A 3x3x3 cube.\n"
+             "  - `-shape ball -dilate 2x2x5`        -> Radius 2x2x5    -> A 5x5x11 ball.\n"
+             "  - `-shape disk -dilate 3 -dim 2`     -> Radius 3        -> An 7x7 disk in the X-Y plane, applied to each Z slice.\n"
+             "  - `-shape square -dilate 1x4 -dim 0` -> Side length 1x4 -> A 1x4 rectangle in the Y-Z plane, applied to each X slice.",
         )
     mathematical.add_argument(
         '-erode',
         metavar=Metavar.int,
         type=one_two_three_ints,
         action=AppendTodo,
-        help="Erode binary or greyscale image with specified size. "
-             "The argument is interpreted the same way as for `-dilate`.",
+        help="Erode binary or greyscale image. The argument is interpreted the same way as for `-dilate`.",
         )
     mathematical.add_argument(
         '-shape',
