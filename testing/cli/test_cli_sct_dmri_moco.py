@@ -5,19 +5,31 @@ import logging
 
 from numpy import allclose, genfromtxt
 
-from spinalcordtoolbox.scripts import sct_dmri_moco, sct_image, sct_crop_image, sct_create_mask
+from spinalcordtoolbox.scripts import (sct_dmri_moco, sct_image, sct_crop_image, sct_create_mask,
+                                       sct_deepseg)
 from spinalcordtoolbox.utils.sys import sct_test_path
 
 logger = logging.getLogger(__name__)
 
 
+@pytest.fixture(scope='module')
+def dmri_mean_seg(tmp_path_factory):
+    """Mean segmented image for QC report generation."""
+    tmp_path = tmp_path_factory.mktemp('dmri_mean_seg')
+    path_out = str(tmp_path / 'dmri_mean_seg.nii.gz')
+    sct_deepseg.main(argv=['spinalcord', '-i', sct_test_path('dmri', 'dwi_mean.nii.gz'),
+                           '-o', path_out, '-qc', str(tmp_path)])
+    return path_out
+
+
 @pytest.mark.sct_testing
-def test_sct_dmri_moco_check_params(tmp_path):
+def test_sct_dmri_moco_check_params(tmp_path, tmp_path_qc, dmri_mean_seg):
     """Run the CLI script and validate output moco params."""
     sct_dmri_moco.main(argv=['-i', sct_test_path('dmri', 'dmri.nii.gz'),
                              '-bvec', sct_test_path('dmri', 'bvecs.txt'),
                              '-g', '3', '-x', 'nn', '-r', '0',
-                             '-ofolder', str(tmp_path)])
+                             '-ofolder', str(tmp_path),
+                             '-qc', tmp_path_qc, '-qc-seg', dmri_mean_seg])
 
     lresults = genfromtxt(tmp_path / "moco_params.tsv", skip_header=1, delimiter='\t')
     lgroundtruth = [
@@ -44,12 +56,13 @@ def dmri_mask(tmp_path):
 
 
 @pytest.mark.sct_testing
-def test_sct_dmri_moco_with_mask_check_params(tmp_path, dmri_mask):
+def test_sct_dmri_moco_with_mask_check_params(tmp_path, dmri_mask, tmp_path_qc, dmri_mean_seg):
     """Run the CLI script with '-m' option and validate output moco params."""
     sct_dmri_moco.main(argv=['-i', sct_test_path('dmri', 'dmri.nii.gz'),
                              '-bvec', sct_test_path('dmri', 'bvecs.txt'),
                              '-g', '3', '-r', '0',
-                             '-m', dmri_mask, '-ofolder', str(tmp_path)])
+                             '-m', dmri_mask, '-ofolder', str(tmp_path),
+                             '-qc', tmp_path_qc, '-qc-seg', dmri_mean_seg])
 
     lresults = genfromtxt(tmp_path / "moco_params.tsv", skip_header=1, delimiter='\t')
     lgroundtruth = [
@@ -77,9 +90,9 @@ def dmri_ail_cropped(tmp_path):
 
 
 @pytest.mark.sct_testing
-def test_sct_dmri_moco_sagittal_no_checks(tmp_path, dmri_ail_cropped):
+def test_sct_dmri_moco_sagittal_no_checks(tmp_path, tmp_path_qc, dmri_mean_seg, dmri_ail_cropped):
     """Run the CLI script, but don't check anything."""
     sct_dmri_moco.main(argv=['-i', dmri_ail_cropped, '-bvec', sct_test_path('dmri', 'bvecs.txt'),
                              '-x', 'nn', '-r', '0',
-                             '-ofolder', str(tmp_path)])
+                             '-ofolder', str(tmp_path), '-qc', tmp_path_qc, '-qc-seg', dmri_mean_seg])
     # NB: We skip checking params because there are no output moco params for sagittal images (*_AIL)

@@ -1,6 +1,5 @@
 # pytest unit tests for spinalcordtoolbox.reports.qc in parallel
 
-from tempfile import TemporaryDirectory
 import pytest
 import logging
 import sys
@@ -17,7 +16,7 @@ def gen_qc(path_qc):
     qc.generate_qc(fname_in1=t2_image, fname_seg=t2_seg, path_qc=path_qc, process="sct_deepseg_gm")
 
 
-def test_many_qc():
+def test_many_qc(tmp_path_qc):
     """Test many qc images can be made in parallel"""
     # Turn on debug logging for fs.py to check mutex acquire/release times
     # To check this output locally, run: `sct_testing -o log_cli=true testing/api/test_qc_parallel.py::test_many_qc`
@@ -31,11 +30,10 @@ def test_many_qc():
 
     p = multiprocessing.Pool(multiprocessing.cpu_count())
 
-    with TemporaryDirectory(prefix="sct-qc-") as tmpdir:
-        # This `try, finally` pattern mitigates hanging with pytest-cov
-        # See: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3661#issuecomment-1029057900
-        try:
-            p.map(gen_qc, [tmpdir] * (multiprocessing.cpu_count() * 2))
-        finally:
-            p.close()  # Marks the pool as closed.
-            p.join()   # Waits for workers to exit.
+    # This `try, finally` pattern mitigates hanging with pytest-cov
+    # See: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3661#issuecomment-1029057900
+    try:
+        p.map(gen_qc, [tmp_path_qc] * (multiprocessing.cpu_count() * 2))
+    finally:
+        p.close()  # Marks the pool as closed.
+        p.join()   # Waits for workers to exit.

@@ -154,7 +154,14 @@ jobs:
 
     - name: Run sct_testing
       run: |
-        sct_testing
+        sct_testing --basetemp="$GITHUB_WORKSPACE/tempdir"
+
+    - name: Upload QC
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: Pytest QC (${{ matrix.os }})
+        path: "${{ github.workspace }}/tempdir/qc-report-current"
 
   create-release:
     needs: [test-release, generate-install-methods]

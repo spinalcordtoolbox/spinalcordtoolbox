@@ -224,6 +224,12 @@ jobs:
       - name: Run pytest test suite
         run: |
           ./.ci.sh -t
+      - name: Upload QC
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Pytest QC (${{ matrix.os }})
+          path: "/tmp/pytest-of-runner/pytest-current/qc-report-current"
 
   ubuntu-22_04:
     name: Ubuntu 24.04 (Noble Numbat)
