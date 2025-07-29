@@ -1574,6 +1574,8 @@ def find_angle_hog(image, centermass, px, py, angle_range=10):
     grad_orient_histo = gradient_orientation_histogram(image, nb_bin=nb_bin, seg_weighted_mask=seg_weighted_mask)
 
     # Bins of the histogram :
+    # It is an array containing the central angle (in radians) for each bin of the orientation histogram, allowing you
+    # to map histogram indices to their corresponding angles.
     repr_hist = np.linspace(-(np.pi - 2 * np.pi / nb_bin), (np.pi - 2 * np.pi / nb_bin), nb_bin - 1)
 
     # Smoothing of the histogram, necessary to avoid digitization effects that will favor angles 0, 45, 90, -45, -90:
