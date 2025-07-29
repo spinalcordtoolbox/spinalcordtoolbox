@@ -76,14 +76,14 @@ def test_model_dict():
      None),
 ])
 def test_segment_nifti_binary_seg(fname_image, fname_seg_manual, fname_out, task, thr, expected_dice,
-                                  tmp_path):
+                                  tmp_path, tmp_path_qc):
     """
     Test binary output (produced using values other than `-thr 0`) with sct_deepseg postprocessing CLI arguments.
     """
     # Ignore warnings from ivadomed model source code changing
     warnings.filterwarnings("ignore", category=SourceChangeWarning)
     fname_out = str(tmp_path/fname_out)  # tmp_path for automatic cleanup
-    args = [task, '-i', fname_image, '-o', fname_out, '-qc', str(tmp_path/'qc')]
+    args = [task, '-i', fname_image, '-o', fname_out, '-qc', tmp_path_qc]
     if thr is not None:
         args.extend(['-thr', str(thr)])
     if 'sc_' in task:
@@ -182,7 +182,7 @@ def t2_ax_sc_seg():
      ["-step1-only", "1"]),
 ])
 def test_segment_nifti_multiclass(fname_image, fnames_seg_manual, fname_out, suffixes, task, thr, expected_dice,
-                                  extra_args, tmp_path):
+                                  extra_args, tmp_path, tmp_path_qc):
     """
     Uses the locally-installed sct_testing_data
     """
@@ -194,7 +194,7 @@ def test_segment_nifti_multiclass(fname_image, fnames_seg_manual, fname_out, suf
         pytest.skip("Mouse data must be manually downloaded to run this test.")
 
     fname_out = str(tmp_path / fname_out)
-    sct_deepseg.main([task, '-i', fname_image, '-thr', str(thr), '-o', fname_out, '-qc', str(tmp_path/'qc'),
+    sct_deepseg.main([task, '-i', fname_image, '-thr', str(thr), '-o', fname_out, '-qc', tmp_path_qc,
                       '-largest', '1'] + extra_args)
     # The `-o` argument takes a single filename, even though one (or more!) files might be output.
     # If multiple output files will be produced, `sct_deepseg` will take this singular `-o` and add suffixes to it.
@@ -211,7 +211,7 @@ def test_segment_nifti_multiclass(fname_image, fnames_seg_manual, fname_out, suf
 
 
 @pytest.mark.parametrize("qc_plane", ["Axial", "Sagittal"])
-def test_deepseg_with_cropped_qc(qc_plane, tmp_path):
+def test_deepseg_with_cropped_qc(qc_plane, tmp_path, tmp_path_qc):
     """
     Test that `-qc-seg` cropping works with both Axial and Sagittal QCs.
     """
@@ -219,6 +219,6 @@ def test_deepseg_with_cropped_qc(qc_plane, tmp_path):
     sct_deepseg.main(['lesion_sci_t2',
                       '-i', sct_test_path('t2', 't2_fake_lesion.nii.gz'),
                       '-o', fname_out,
-                      '-qc', str(tmp_path/'qc'),
+                      '-qc', tmp_path_qc,
                       '-qc-plane', qc_plane,
                       '-qc-seg', sct_test_path('t2', 't2_fake_lesion_sc_seg.nii.gz')])
