@@ -67,7 +67,7 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
         property_list = property_list[:1] + hog_properties + property_list[1:]
         im = Image(image).change_orientation('RPI')
         # Make sure the input image and segmentation have the same dimensions
-        if im_seg.dim != im.dim:
+        if im_seg.dim[:3] != im.dim[:3]:
             raise ValueError(
                 f"The input segmentation image ({im_seg.path}) and the input image ({im.path}) do not have the same "
                 f"dimensions. Please provide images with the same dimensions."
