@@ -700,7 +700,7 @@ if [[ $OS == linux ]]; then
   #     Related issue: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4971
   conda install -y -c conda-forge xorg-libxinerama
   mkdir "$SCT_DIR/$PYTHON_DIR/envs/venv_sct/sct_ld_library_path/"
-  find "$SCT_DIR/$PYTHON_DIR/envs/venv_sct/lib/" | grep -i "libxcb-xinerama.so.*" | xargs -I {} cp {} "$SCT_DIR/$PYTHON_DIR/envs/venv_sct/sct_ld_library_path/"
+  cp "$SCT_DIR/$PYTHON_DIR/envs/venv_sct/lib/libxcb-xinerama.so."* "$SCT_DIR/$PYTHON_DIR/envs/venv_sct/sct_ld_library_path/"
 fi
 
 # Skip pip==21.2 to avoid dependency resolver issue (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3593)
