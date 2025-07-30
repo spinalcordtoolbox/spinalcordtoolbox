@@ -48,13 +48,16 @@ logger = logging.getLogger(__name__)
 # (the height is automatically adjusted based on the aspect ratio of the image)
 # Notes:
 #   - This shouldn't ever need to be changed, since "target width" is related
-#     to the design of the QC report interface. If things need to be scaled,
-#     it should be done to the array itself before it is written to the .
+#     to the design of the QC report interface. The images are currently rendered
+#     at 1060px wide, so we should match that in the mosaic arrays we generate.
+#     NOTE: This will result in arrays smaller than 1060px wide, since mosaic
+#     gird wrapping won't exceed this value. But, a smaller visible mosaic is
+#     worth the trade-off of pixel accuracy when rendering the final image.
 #   - `matplotlib` uses inches/DPI to define the canvas. But, given we want
 #     a fixed output size, we can choose some arbitrary values for both.
 #     Presumably, choosing a different DPI value (and thus a different canvas
 #     size in inches) wouldn't change the output image at all. (Is this true?)
-TARGET_WIDTH_PIXL = 1500
+TARGET_WIDTH_PIXL = 1060
 DPI = 300
 TARGET_WIDTH_INCH = TARGET_WIDTH_PIXL / DPI
 
