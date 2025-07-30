@@ -335,15 +335,16 @@ class AnalyzeLesion:
         printv('  Maximum axial damage ratio: ' + str(np.round(maximum_axial_damage_ratio, 2)),
                self.verbose, type='info')
 
-    def _compute_issue_bridge_ratio(self):
+    def _compute_issue_bridge_ratio(self, idx):
         """
+        :param idx: int, index of the lesion
         Compute tissue bridge ratios:
         - ventral_bridge_ratio: ventral midsagittal tissue bridge width divided by total midsagittal tissue bridge width
         - dorsal_bridge_ratio: dorsal midsagittal tissue bridge width divided by total midsagittal tissue bridge width
         """
         # Get the dorsal and ventral tissue bridges
-        dorsal_bridge_width = self.measure_pd['interpolated_dorsal_bridge_width [mm]'][0]
-        ventral_bridge_width = self.measure_pd['interpolated_ventral_bridge_width [mm]'][0]
+        dorsal_bridge_width = float(self.measure_pd.loc[idx, 'interpolated_dorsal_bridge_width [mm]'])
+        ventral_bridge_width = float(self.measure_pd.loc[idx, 'interpolated_ventral_bridge_width [mm]'])
 
         # Compute the total tissue bridge width
         total_bridge_width = dorsal_bridge_width + ventral_bridge_width
@@ -353,8 +354,8 @@ class AnalyzeLesion:
         ventral_bridge_ratio = ventral_bridge_width / total_bridge_width * 100 if total_bridge_width > 0 else 0
 
         # Save the ratios to the measure DataFrame
-        self.measure_pd['dorsal_bridge_ratio [%]'] = dorsal_bridge_ratio
-        self.measure_pd['ventral_bridge_ratio [%]'] = ventral_bridge_ratio
+        self.measure_pd.loc[idx, 'dorsal_bridge_ratio [%]'] = dorsal_bridge_ratio
+        self.measure_pd.loc[idx, 'ventral_bridge_ratio [%]'] = ventral_bridge_ratio
         printv(f'  Midsagittal dorsal bridge ratio: {np.round(dorsal_bridge_ratio, 2)} %',
                self.verbose, type='info')
         printv(f'  Midsagittal ventral bridge ratio: {np.round(ventral_bridge_ratio, 2)} %',
@@ -507,7 +508,7 @@ class AnalyzeLesion:
         # Compute interpolated tissue bridges
         self._measure_interpolated_tissue_bridges(tissue_bridges_df, p_lst, idx)
         # Compute tissue bridge ratios
-        self._compute_issue_bridge_ratio()
+        self._compute_issue_bridge_ratio(idx)
 
         # Get slices of minimum dorsal and ventral tissue bridges for each sagittal slice
         # NOTE: we get minimum because tissue bridges are quantified as the width of spared tissue at the minimum
