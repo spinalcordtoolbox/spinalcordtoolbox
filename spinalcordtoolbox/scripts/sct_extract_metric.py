@@ -20,8 +20,7 @@ import numpy as np
 
 from spinalcordtoolbox.metadata import read_label_file
 from spinalcordtoolbox.aggregate_slicewise import check_labels, extract_metric, save_as_csv, Metric, LabelStruc
-from spinalcordtoolbox.image import add_suffix, Image
-from spinalcordtoolbox.labels import project_centerline, label_regions_from_reference
+from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, list_type, parse_num_list, display_open
 from spinalcordtoolbox.utils.sys import init_sct, printv, __data_dir__, set_loglevel
 from spinalcordtoolbox.utils.fs import check_file_exist, extract_fname, get_absolute_path
@@ -295,25 +294,9 @@ def main(argv: Sequence[str]):
     labels_user = arguments.l
     slices = parse_num_list(arguments.z)
     levels = parse_num_list(arguments.vert)
+    fname_vert_level = arguments.vertfile
     perslice = arguments.perslice
     perlevel = arguments.perlevel
-    if arguments.vertfile is not None and arguments.discfile is not None:
-        parser.error("Both '-vertfile' and '-discfile' were specified. Please only specify one of these options.")
-    elif arguments.discfile is not None:
-        fname_vert_level = arguments.discfile
-    elif arguments.vertfile is not None:
-        fname_vert_level = arguments.vertfile
-    else:
-        printv("No -vertfile/-discfile argument provided. Attempting to get VertLevel "
-               "information from local PAM50 warped template file (if it exists).", verbose)
-        fname_vert_level = os.path.join('.', 'label', 'template', 'PAM50_levels.nii.gz')
-    if not os.path.isfile(fname_vert_level):
-        printv(f"Vertebral level file {fname_vert_level} does not exist. Vert level information will "
-               f"not be displayed. To use vertebral level information, specify either -vertfile or -discfile."
-               f"For generating the required files, please review sct_process_segmentation -h for these arguments.", verbose, type='warning')
-        # Discard the default '-vertfile', so that we don't attempt to find vertebral levels
-        fname_vert_level = None
-
 
     # check if path_label is a file (e.g., single binary mask) instead of a folder (e.g., SCT atlas structure which
     # contains info_label.txt file)
@@ -383,14 +366,7 @@ def main(argv: Sequence[str]):
     # Load vertebral levels
     if not levels:
         fname_vert_level = None
-    elif arguments.discfile is not None:
-        fname_segmentation = "./label/template/PAM50_centerline.nii.gz"
-        discs_projected = project_centerline(Image(fname_segmentation), Image(fname_vert_level))
-        if verbose == 2:
-            discs_projected.save(add_suffix(fname_vert_level, '_projected'))
-        ctl_projected = label_regions_from_reference(Image(fname_segmentation), discs_projected, centerline=True)
-        fname_vert_level = add_suffix(fname_vert_level, '_projected_centerline')
-        ctl_projected.save(fname_vert_level)
+
     # Get dimensions of data and labels
     nx, ny, nz = data.data.shape
     nx_atlas, ny_atlas, nz_atlas, nt_atlas = labels.shape
