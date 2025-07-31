@@ -335,7 +335,7 @@ class AnalyzeLesion:
         printv('  Maximum axial damage ratio: ' + str(np.round(maximum_axial_damage_ratio, 2)),
                self.verbose, type='info')
 
-    def _compute_issue_bridge_ratio(self, idx):
+    def _compute_tissue_bridge_ratio(self, idx):
         """
         :param idx: int, index of the lesion
         Compute tissue bridge ratios:
@@ -508,7 +508,7 @@ class AnalyzeLesion:
         # Compute interpolated tissue bridges
         self._measure_interpolated_tissue_bridges(tissue_bridges_df, p_lst, idx)
         # Compute tissue bridge ratios
-        self._compute_issue_bridge_ratio(idx)
+        self._compute_tissue_bridge_ratio(idx)
 
         # Get slices of minimum dorsal and ventral tissue bridges for each sagittal slice
         # NOTE: we get minimum because tissue bridges are quantified as the width of spared tissue at the minimum
