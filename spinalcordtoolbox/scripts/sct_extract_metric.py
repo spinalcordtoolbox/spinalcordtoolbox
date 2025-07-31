@@ -381,7 +381,9 @@ def main(argv: Sequence[str]):
         labels_tmp[i_label] = np.expand_dims(im_label.data, 3)  # TODO: generalize to 2D input label
     labels = np.concatenate(labels_tmp[:], 3)  # labels: (x,y,z,label)
     # Load vertebral levels
-    if arguments.discfile is not None:
+    if not levels:
+        fname_vert_level = None
+    elif arguments.discfile is not None:
         fname_segmentation = "./label/template/PAM50_centerline.nii.gz"
         discs_projected = project_centerline(Image(fname_segmentation), Image(fname_vert_level))
         if verbose == 2:
