@@ -356,9 +356,9 @@ class AnalyzeLesion:
         # Save the ratios to the measure DataFrame
         self.measure_pd.loc[idx, 'dorsal_bridge_ratio [%]'] = dorsal_bridge_ratio
         self.measure_pd.loc[idx, 'ventral_bridge_ratio [%]'] = ventral_bridge_ratio
-        printv(f'  Midsagittal dorsal bridge ratio: {np.round(dorsal_bridge_ratio, 2)} %',
+        printv(f'  Midsagittal dorsal bridge ratio: {dorsal_bridge_ratio:.2f} %',
                self.verbose, type='info')
-        printv(f'  Midsagittal ventral bridge ratio: {np.round(ventral_bridge_ratio, 2)} %',
+        printv(f'  Midsagittal ventral bridge ratio: {ventral_bridge_ratio:.2f} %',
                self.verbose, type='info')
 
     def _measure_interpolated_tissue_bridges(self, tissue_bridges_df, p_lst, idx):
