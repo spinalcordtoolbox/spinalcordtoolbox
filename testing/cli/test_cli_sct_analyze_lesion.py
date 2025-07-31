@@ -293,3 +293,47 @@ def test_sct_analyze_lesion_with_template(dummy_lesion, tmp_path, tmp_path_qc):
     _, fname, _ = extract_fname(path_lesion)
     for suffix in ['_analysis.pkl', '_analysis.xlsx', '_label.nii.gz']:
         assert os.path.isfile(tmp_path / f"{fname}{suffix}")
+
+
+@pytest.mark.sct_testing
+def test_sct_analyze_lesion_no_lesion_found(tmp_path, tmp_path_qc):
+    """Test that the script exits gracefully when no lesion is found in the input image."""
+    # Create an empty lesion mask (all zeros) using an existing test image as reference
+    path_ref = sct_test_path("t2", "t2.nii.gz")
+    path_empty_lesion = str(tmp_path/"empty_lesion.nii.gz")
+
+    # Create an empty mask (no lesion)
+    sct_label_utils.main(argv=['-i', path_ref,
+                               '-o', path_empty_lesion,
+                               '-create', '0,0,0,0'])  # Create a label at 0,0,0 with value 0 (no lesion)
+
+    # Run the analysis on the empty lesion file
+    # Use pytest's subprocess run to catch the sys.exit() call
+    from subprocess import run
+    import sys
+
+    # Run the script as a separate process to catch the exit code
+    process = run([sys.executable, '-m', 'spinalcordtoolbox.scripts.sct_analyze_lesion',
+                  '-m', path_empty_lesion,
+                  '-ofolder', str(tmp_path),
+                  '-qc', str(tmp_path_qc)],
+                  capture_output=True)
+
+    # Check that the process exited with success code (0)
+    assert process.returncode == 0
+
+    # Check that the appropriate warning message is in the output
+    assert "No lesion found in the input image" in process.stdout.decode('utf-8')
+    assert "Analysis completed with no results (no lesion found)" in process.stdout.decode('utf-8')
+
+    # Verify that no output files were created (or they are empty/contain default values)
+    _, fname, _ = extract_fname(path_empty_lesion)
+    for suffix in ['_analysis.pkl', '_analysis.xlsx', '_label.nii.gz']:
+        # Either the file shouldn't exist or it should be very small (just containing default structure)
+        output_file = tmp_path / f"{fname}{suffix}"
+        if os.path.exists(output_file):
+            # If pkl file exists, it should only contain empty dataframe
+            if suffix == '_analysis.pkl':
+                with open(output_file, 'rb') as f:
+                    data = pickle.load(f)
+                    assert len(data['measures']) == 0
