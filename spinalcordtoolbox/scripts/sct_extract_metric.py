@@ -314,6 +314,7 @@ def main(argv: Sequence[str]):
         # Discard the default '-vertfile', so that we don't attempt to find vertebral levels
         fname_vert_level = None
 
+
     # check if path_label is a file (e.g., single binary mask) instead of a folder (e.g., SCT atlas structure which
     # contains info_label.txt file)
     if os.path.isfile(path_label):
