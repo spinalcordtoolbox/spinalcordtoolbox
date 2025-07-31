@@ -27,6 +27,7 @@ from spinalcordtoolbox.utils.sys import init_sct, printv, __data_dir__, set_logl
 from spinalcordtoolbox.utils.fs import check_file_exist, extract_fname, get_absolute_path
 from spinalcordtoolbox.scripts import sct_maths
 
+
 class Param:
     def __init__(self):
         self.method = 'wa'
@@ -359,7 +360,7 @@ def main(argv: Sequence[str]):
                f"not be displayed. To use vertebral level information, you may need to run "
                f"`sct_warp_template` to generate the appropriate level file in your working directory.", type='warning')
     else:
-        #Exctract centerline of vertebral levels
+        # Exctract centerline of vertebral levels
         im_vertlevel = Image(fname_vert_level)
         # Extract centerline from segmentation
         im_centerline, _, _, _ = get_centerline(im_vertlevel)
