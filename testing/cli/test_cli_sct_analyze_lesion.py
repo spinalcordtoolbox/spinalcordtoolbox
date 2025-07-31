@@ -314,9 +314,9 @@ def test_sct_analyze_lesion_no_lesion_found(tmp_path, tmp_path_qc):
 
     # Run the script as a separate process to catch the exit code
     process = run([sys.executable, '-m', 'spinalcordtoolbox.scripts.sct_analyze_lesion',
-                  '-m', path_empty_lesion,
-                  '-ofolder', str(tmp_path),
-                  '-qc', str(tmp_path_qc)],
+                   '-m', path_empty_lesion,
+                   '-ofolder', str(tmp_path),
+                   '-qc', str(tmp_path_qc)],
                   capture_output=True)
 
     # Check that the process exited with success code (0)
