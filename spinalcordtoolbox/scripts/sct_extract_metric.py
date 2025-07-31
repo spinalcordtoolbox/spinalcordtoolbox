@@ -355,11 +355,7 @@ def main(argv: Sequence[str]):
         labels_tmp[i_label] = np.expand_dims(im_label.data, 3)  # TODO: generalize to 2D input label
     labels = np.concatenate(labels_tmp[:], 3)  # labels: (x,y,z,label)
     # Load vertebral levels
-    if not os.path.isfile(fname_vert_level):
-        printv(f"Vertebral level file {fname_vert_level} does not exist. Vert level information will "
-               f"not be displayed. To use vertebral level information, you may need to run "
-               f"`sct_warp_template` to generate the appropriate level file in your working directory.", type='warning')
-    else:
+    if os.path.isfile(fname_vert_level):
         # Exctract centerline of vertebral levels
         im_vertlevel = Image(fname_vert_level)
         # Extract centerline from segmentation
@@ -371,7 +367,10 @@ def main(argv: Sequence[str]):
         sct_maths.main(argv=['-i', fname_ctl, '-mul', fname_vert_level, '-o', fname_ctl_levels])
         # Use levels on centerline instead
         fname_vert_level = fname_ctl_levels
-
+    else:
+        printv(f"Vertebral level file {fname_vert_level} does not exist. Vert level information will "
+                f"not be displayed. To use vertebral level information, you may need to run "
+                f"`sct_warp_template` to generate the appropriate level file in your working directory.", type='error')
     # Get dimensions of data and labels
     nx, ny, nz = data.data.shape
     nx_atlas, ny_atlas, nz_atlas, nt_atlas = labels.shape
