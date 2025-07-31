@@ -1067,11 +1067,9 @@ class AnalyzeLesion:
         self.measure_pd['label'] = [label for label in np.unique(im_2save.data) if label]
         printv('Lesion count = ' + str(len(self.measure_pd['label'])), self.verbose, 'info')
 
-        # Exit the script gracefully if no lesion is found
+        # Exit the script if no lesion is found
         if len(self.measure_pd['label']) == 0:
-            printv('WARNING: No lesion found in the input image. Exiting.', self.verbose, 'warning')
-            print('Analysis completed with no results (no lesion found).')
-            sys.exit(0)  # Exit with success code
+            printv('ERROR: No lesion found in the input image.', self.verbose, 'error')  # exit code 1
 
     def _orient(self, fname, orientation):
         return Image(fname).change_orientation(orientation).save(fname, mutable=True)

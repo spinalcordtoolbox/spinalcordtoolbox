@@ -297,7 +297,7 @@ def test_sct_analyze_lesion_with_template(dummy_lesion, tmp_path, tmp_path_qc):
 
 @pytest.mark.sct_testing
 def test_sct_analyze_lesion_no_lesion_found(tmp_path, tmp_path_qc):
-    """Test that the script exits gracefully when no lesion is found in the input image."""
+    """Test that the script exits when no lesion is found in the input image."""
     # Create an empty lesion mask (all zeros) using an existing test image as reference
     path_ref = sct_test_path("t2", "t2.nii.gz")
     path_empty_lesion = str(tmp_path/"empty_lesion.nii.gz")
@@ -319,12 +319,11 @@ def test_sct_analyze_lesion_no_lesion_found(tmp_path, tmp_path_qc):
                    '-qc', str(tmp_path_qc)],
                   capture_output=True)
 
-    # Check that the process exited with success code (0)
-    assert process.returncode == 0
+    # Check that the process exited with exit code 1
+    assert process.returncode == 1
 
     # Check that the appropriate warning message is in the output
     assert "No lesion found in the input image" in process.stdout.decode('utf-8')
-    assert "Analysis completed with no results (no lesion found)" in process.stdout.decode('utf-8')
 
     # Verify that no output files were created (or they are empty/contain default values)
     _, fname, _ = extract_fname(path_empty_lesion)
