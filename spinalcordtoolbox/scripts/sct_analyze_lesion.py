@@ -350,8 +350,12 @@ class AnalyzeLesion:
         total_bridge_width = dorsal_bridge_width + ventral_bridge_width
 
         # Compute the dorsal and ventral bridge ratios
-        dorsal_bridge_ratio = dorsal_bridge_width / total_bridge_width * 100 if total_bridge_width > 0 else 0
-        ventral_bridge_ratio = ventral_bridge_width / total_bridge_width * 100 if total_bridge_width > 0 else 0
+    if total_bridge_width > 0:
+        dorsal_bridge_ratio = (dorsal_bridge_width / total_bridge_width) * 100
+        ventral_bridge_ratio = (ventral_bridge_width / total_bridge_width) * 100
+    else:
+        dorsal_bridge_ratio = 0.0
+        ventral_bridge_ratio = 0.0
 
         # Save the ratios to the measure DataFrame
         self.measure_pd.loc[idx, 'dorsal_bridge_ratio [%]'] = dorsal_bridge_ratio
