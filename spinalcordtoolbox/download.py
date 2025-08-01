@@ -66,8 +66,8 @@ DATASET_DICT = {
     },
     "PAM50": {
         "mirrors": [
-            "https://github.com/spinalcordtoolbox/PAM50/releases/download/r20250422/PAM50-r20250422.zip",
-            "https://osf.io/q3m4t/?action=download",
+            "https://github.com/spinalcordtoolbox/PAM50/releases/download/r20250730/PAM50-r20250730.zip",
+            "https://osf.io/zchkp/?action=download"
         ],
         "default_location": os.path.join(__sct_dir__, "data", "PAM50"),
         "download_type": "Templates",
