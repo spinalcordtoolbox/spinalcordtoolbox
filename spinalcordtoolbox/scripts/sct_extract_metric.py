@@ -24,7 +24,7 @@ from spinalcordtoolbox.image import Image, add_suffix
 from spinalcordtoolbox.centerline.core import get_centerline
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, list_type, parse_num_list, display_open
 from spinalcordtoolbox.utils.sys import init_sct, printv, __data_dir__, set_loglevel
-from spinalcordtoolbox.utils.fs import check_file_exist, extract_fname, get_absolute_path
+from spinalcordtoolbox.utils.fs import check_file_exist, extract_fname, get_absolute_path, TempFolder
 from spinalcordtoolbox.scripts import sct_maths
 
 
@@ -358,11 +358,13 @@ def main(argv: Sequence[str]):
     if os.path.isfile(fname_vert_level):
         # Exctract centerline of vertebral levels
         im_vertlevel = Image(fname_vert_level)
+        # Create temp path for outputs
+        temp_folder = TempFolder(basename="optic-detect-centerline")
         # Extract centerline from segmentation
         im_centerline, _, _, _ = get_centerline(im_vertlevel)
-        fname_ctl = add_suffix(fname_vert_level, '_ctl')
+        fname_ctl = os.path.join(temp_folder, add_suffix(fname_vert_level, '_ctl'))
         im_centerline.save(fname_ctl)
-        fname_ctl_levels = add_suffix(fname_vert_level, '_ctl_levels')
+        fname_ctl_levels = os.path.join(temp_folder, add_suffix(fname_vert_level, '_ctl_levels'))
         # Mask the centerline with the vertebral levels
         sct_maths.main(argv=['-i', fname_ctl, '-mul', fname_vert_level, '-o', fname_ctl_levels])
         # Use levels on centerline instead
@@ -370,7 +372,7 @@ def main(argv: Sequence[str]):
     else:
         # The severity of a missing vertlevel file depends on if levels was passed
         message_type = 'error' if levels else 'warning'
-        message = ("Cannot aggregate by vert level." if levels else 
+        message = ("Cannot aggregate by vert level." if levels else
                    "Vert level information will not be displayed.")
         printv(f"Vertebral level file {fname_vert_level} does not exist. {message} "
                f"To use vertebral level information, you may need to run "
