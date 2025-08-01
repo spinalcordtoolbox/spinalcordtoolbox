@@ -368,9 +368,14 @@ def main(argv: Sequence[str]):
         # Use levels on centerline instead
         fname_vert_level = fname_ctl_levels
     else:
-        printv(f"Vertebral level file {fname_vert_level} does not exist. Vert level information will "
-                f"not be displayed. To use vertebral level information, you may need to run "
-                f"`sct_warp_template` to generate the appropriate level file in your working directory.", type='error')
+        # The severity of a missing vertlevel file depends on if levels was passed
+        message_type = 'error' if levels else 'warning'
+        message = ("Cannot aggregate by vert level." if levels else 
+                   "Vert level information will not be displayed.")
+        printv(f"Vertebral level file {fname_vert_level} does not exist. {message} "
+               f"To use vertebral level information, you may need to run "
+               f"`sct_warp_template` to generate the appropriate level file in your working directory.", type=message_type)
+        fname_vert_level = None
     # Get dimensions of data and labels
     nx, ny, nz = data.data.shape
     nx_atlas, ny_atlas, nz_atlas, nt_atlas = labels.shape
