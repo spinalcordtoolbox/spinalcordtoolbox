@@ -230,7 +230,10 @@ def test_sct_analyze_lesion_matches_expected_dummy_lesion_measurements(dummy_les
                 # between the spinal cord centerline and the S-I axis, as per:
                 # https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3681#discussion_r804822552
                 if key == 'max_equivalent_diameter [mm]' or 'bridge' in key:
-                    assert measurements.at[idx, key] <= expected_value
+                    # The values are the same, but one value has slightly more precision than the other, so it is
+                    # greater than expected --> rounding both values to the same number of decimal points before
+                    # comparing
+                    assert round(measurements.at[idx, key], 10) <= round(expected_value, 10)
                 elif key == 'length [mm]':
                     assert measurements.at[idx, key] >= expected_value
 
