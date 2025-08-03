@@ -110,6 +110,21 @@ def compute_expected_measurements(lesion_params, path_seg=None):
                 tissue_bridges[f"slice_{z}_ventral_bridge_width [mm]"] = min(ventral_bridge_widths)
                 tissue_bridges[f"slice_{z}_total_bridge_width [mm]"] = (min(dorsal_bridge_widths) +
                                                                         min(ventral_bridge_widths))
+            # Estimate the interpolated bridge widths at the mid-sagittal slice
+            decimal = mid_sagittal_slice - math.floor(mid_sagittal_slice)
+            z_ceil, z_floor = int(np.ceil(mid_sagittal_slice)), int(np.floor(mid_sagittal_slice))
+            for key in ['dorsal_bridge_width', 'ventral_bridge_width', 'total_bridge_width']:
+                tissue_bridges[f'interpolated_{key} [mm]'] = (decimal * tissue_bridges.get(f'slice_{z_ceil}_{key} [mm]', 0.0) +
+                                                              (1 - decimal) * tissue_bridges.get(f'slice_{z_floor}_{key} [mm]', 0.0))
+
+            # Compute the bridge ratio using the interpolated bridge widths
+            for key in ['dorsal', 'ventral']:
+                # avoid zero division
+                if tissue_bridges[f'interpolated_total_bridge_width [mm]'] != 0.0:
+                    tissue_bridges[f'{key}_bridge_ratio [%]'] = (tissue_bridges[f'interpolated_{key}_bridge_width [mm]'] /
+                                                                 tissue_bridges[f'interpolated_total_bridge_width [mm]']) * 100
+                else:
+                    tissue_bridges[f'{key}_bridge_ratio [%]'] = 0.0
         else:
             mid_sagittal_slice = None
             min_area = 0
