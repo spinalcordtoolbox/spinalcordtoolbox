@@ -120,9 +120,9 @@ def compute_expected_measurements(lesion_params, path_seg=None):
             # Compute the bridge ratio using the interpolated bridge widths
             for key in ['dorsal', 'ventral']:
                 # avoid zero division
-                if tissue_bridges[f'interpolated_total_bridge_width [mm]'] != 0.0:
+                if tissue_bridges['interpolated_total_bridge_width [mm]'] != 0.0:
                     tissue_bridges[f'{key}_bridge_ratio [%]'] = (tissue_bridges[f'interpolated_{key}_bridge_width [mm]'] /
-                                                                 tissue_bridges[f'interpolated_total_bridge_width [mm]']) * 100
+                                                                 tissue_bridges['interpolated_total_bridge_width [mm]']) * 100
                 else:
                     tissue_bridges[f'{key}_bridge_ratio [%]'] = 0.0
         else:
