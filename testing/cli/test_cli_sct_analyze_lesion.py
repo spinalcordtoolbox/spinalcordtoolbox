@@ -173,7 +173,7 @@ def compute_expected_measurements(lesion_params, path_seg=None):
     ([(29, 27, 25), (1, 4, 1)], 0.001),  # NB: Example from #3633
     # Curved region of `t2.nii.gz` -> lots of curvature -> larger tolerance
     ([(31, 0, 25), (4, 15, 3)], 0.1),
-    # Multiple lesions
+    # Multiple lesions along the spinal cord SI axis
     ([[(31, 0, 25), (4, 15, 3)],
       [(29, 45, 25), (3, 10, 2)]], 0.1),
     # Multiple lesions along the spinal cord RL axis
