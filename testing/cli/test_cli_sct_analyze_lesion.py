@@ -158,8 +158,7 @@ def compute_expected_measurements(lesion_params, path_seg=None):
             'max_axial_damage_ratio []': dim[0] * dim[2] / min_area if min_area != 0 else None,
             **tissue_bridges
         }
-
-    expected_measurements_dict[idx] = measurements
+        expected_measurements_dict[idx] = measurements
 
     return expected_measurements_dict
 
