@@ -65,7 +65,7 @@ The easiest way to try out different versions of SCT is using Git.
 
 1. Navigate to the `Releases page <https://github.com/spinalcordtoolbox/spinalcordtoolbox/releases/>`_ , then download the ``install_sct-<version>_win.bat`` script from the "Assets" section of the latest release.
 
-2. Run the script by double-clicking it. The script will fetch the SCT source code, then install the `spinalcordtoolbox` package into a Miniconda environment for you.
+2. Run the script by double-clicking it. The script will fetch the SCT source code, then install the `spinalcordtoolbox` package into a Miniforge environment for you.
 
 3. Once the installer finishes, follow the instructions given at the end of the Command Prompt window, which will instruct you to create the SCT_DIR variable, and to add the SCT installation folder to the PATH variable.
 
