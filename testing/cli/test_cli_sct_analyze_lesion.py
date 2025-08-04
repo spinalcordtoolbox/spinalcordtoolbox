@@ -176,6 +176,9 @@ def compute_expected_measurements(lesion_params, path_seg=None):
     # Multiple lesions
     ([[(31, 0, 25), (4, 15, 3)],
       [(29, 45, 25), (3, 10, 2)]], 0.1),
+    # Multiple lesions along the spinal cord RL axis
+    ([[(29, 50, 29), (2, 5, 2)],
+     [(29, 45, 23), (3, 10, 2)]], 0.1),
     # Lesion partly outside the spinal cord segmentation (z (LR) slice 19 is outside the SC seg)
     ([(29, 40, 19), (3, 3, 5)], 0.001)
 ], indirect=["dummy_lesion"])
