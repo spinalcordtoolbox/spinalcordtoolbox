@@ -6,9 +6,9 @@ Installation with Apptainer
 .. versionadded:: 7.1
 
 .. warning::
-    This is currently experimental; while we have done our best to test and confirm all functions of SCT run identically to a native installation, we cannot guarantee that all functionalities of SCT currently operate as expected in this context. If you run into any bugs, please report them `on the forum <https://forum.spinalcordmri.org/c/sct>`_.
+    This is currently experimental; while we have done our best to test and confirm all functions of SCT run identically to a native installation, we cannot guarantee that all functionalities of SCT currently operate as expected in this context. If you run into any bugs, please report them `on the forum <https://forum.spinalcordmri.org/c/sct>`__.
 
-Like Docker, `Apptainer <https://apptainer.org/docs/user/main/introduction.html>`_ (formerly Singularity) is a portable container platform. It was designed with a focus on being used in "shared system" contexts, where multiple users with different needs require access to the same hardware. If you need to run SCT in this context, and a native install is not possible (as is often the case in High Performance Computer (HPC) clusters), you should install SCT in this way.
+Like Docker, `Apptainer <https://apptainer.org/docs/user/main/introduction.html>`__ (formerly Singularity) is a portable container platform. It was designed with a focus on being used in "shared system" contexts, where multiple users with different needs require access to the same hardware. If you need to run SCT in this context, and a native install is not possible (as is often the case in High Performance Computer (HPC) clusters), you should install SCT in this way.
 
 Using Apptainer introduces a few caveats to using SCT, however:
 
@@ -24,7 +24,7 @@ This method will install SCT within an Apptainer container, ready for portable u
 
 #. Install Apptainer if you have not done so already (or activate the module which contains it, if on an shared resource system).
 
-#. Download the ``sct_apptainer_{sct_version}.tar.gz`` file for your desired SCT release from GitHub (the current release is available `here <https://github.com/spinalcordtoolbox/spinalcordtoolbox/releases/latest/>`_).
+#. Download the ``sct_apptainer_{sct_version}.tar.gz`` file for your desired SCT release from GitHub (the current release is available `here <https://github.com/spinalcordtoolbox/spinalcordtoolbox/releases/latest/>`__).
 
 #. Move the file and unpack it. On most Linux machines, this can be done with the following command:
 
