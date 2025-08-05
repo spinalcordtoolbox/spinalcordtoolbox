@@ -25,7 +25,7 @@ This set of instructions will show you how to install SCT directly on Windows.
 
    This method was first introduced to SCT in April 2022 as part of the Version 5.6 release. Previous versions of SCT required the use of :ref:`Windows Subsystem for Linux (WSL) <wsl-installation>` or :ref:`Docker <docker-install-windows>` in order to support Windows.
 
-   Because this method is new to SCT, we would greatly appreciate hearing any feedback you may have about your experiences using SCT on Windows. If you encounter any issues, or have any questions or concerns, feel free to post on the `Spinalcordmri.org forums <https://forum.spinalcordmri.org/c/sct/8>`_, and SCT's development team will be happy to help.
+   Because this method is new to SCT, we would greatly appreciate hearing any feedback you may have about your experiences using SCT on Windows. If you encounter any issues, or have any questions or concerns, feel free to post on the `Spinalcordmri.org forums <https://forum.spinalcordmri.org/c/sct/8>`__, and SCT's development team will be happy to help.
 
 1. Installing Prerequisites
 ***************************
@@ -35,11 +35,11 @@ SCT depends on two pieces of software that must be set up prior to the installat
 Visual C++ 2019 runtime
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-SCT depends on `onnxruntime <https://onnxruntime.ai/docs/install/#requirements>`_, which in turn depends on the `Visual C++ 2019 runtime <https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170>`_.
+SCT depends on `onnxruntime <https://onnxruntime.ai/docs/install/#requirements>`__, which in turn depends on the `Visual C++ 2019 runtime <https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170>`__.
 
 1. It is likely that you already have this software installed, as many Windows applications rely on this software. You can check for "Microsoft Visual C++ 2015-2022 Redistributable" under the "Apps & Features" section of Windows Settings.
 
-2. If you do not have this software installed, you will typically want to install the "X64" version (``https://aka.ms/vs/17/release/vc_redist.x64.exe``) from `this page <https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#visual-studio-2015-2017-2019-and-2022>`_.
+2. If you do not have this software installed, you will typically want to install the "X64" version (``https://aka.ms/vs/17/release/vc_redist.x64.exe``) from `this page <https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#visual-studio-2015-2017-2019-and-2022>`__.
 
 
 Git for Windows
@@ -47,7 +47,7 @@ Git for Windows
 
 The easiest way to try out different versions of SCT is using Git.
 
-1. Download Git for Windows from `the Git download page <https://git-scm.com/download/win>`_.
+1. Download Git for Windows from `the Git download page <https://git-scm.com/download/win>`__.
 
 2. Run the installer.
 
@@ -63,7 +63,7 @@ The easiest way to try out different versions of SCT is using Git.
 2. Installing SCT
 *****************
 
-1. Navigate to the `Releases page <https://github.com/spinalcordtoolbox/spinalcordtoolbox/releases/>`_ , then download the ``install_sct-<version>_win.bat`` script from the "Assets" section of the latest release.
+1. Navigate to the `Releases page <https://github.com/spinalcordtoolbox/spinalcordtoolbox/releases/>`__ , then download the ``install_sct-<version>_win.bat`` script from the "Assets" section of the latest release.
 
 2. Run the script by double-clicking it. The script will fetch the SCT source code, then install the `spinalcordtoolbox` package into a Miniforge environment for you.
 
@@ -82,7 +82,7 @@ The easiest way to try out different versions of SCT is using Git.
 
 Cygwin is a collection of useful Unix utilities such as ``bash``, ``cd``, ``ls``, and more that combine nicely with SCT's command-line tools. In particular, ``bash`` will allow :ref:`sct_run_batch` to execute bash scripts for batch processing of subjects.
 
-1. Download the Cygwin installer from `the Cygwin installation page <https://www.cygwin.com/install.html>`_.
+1. Download the Cygwin installer from `the Cygwin installation page <https://www.cygwin.com/install.html>`__.
 
 2. Run the installer. (You can click "Next" for every section of the installer, as the default settings are sufficient.)
 
@@ -125,7 +125,7 @@ Basic installation (No GUI)
 
      - Make sure your version of Windows is up to date.
      - Make sure that you have sufficient administrative privileges for your Windows system.
-     - If you cannot update Windows, then you can try the instructions from Microsoft's `"Manual installation steps for older versions of WSL" <https://docs.microsoft.com/en-us/windows/wsl/install-manual>`_ page.
+     - If you cannot update Windows, then you can try the instructions from Microsoft's `"Manual installation steps for older versions of WSL" <https://docs.microsoft.com/en-us/windows/wsl/install-manual>`__ page.
 
 #. Install an Ubuntu distribution in Windows Subsystem for Linux (WSL)
 
@@ -143,7 +143,7 @@ Basic installation (No GUI)
 
 #. Choose the WSL version (1/2).
 
-   By default, Microsoft's instructions will create an Ubuntu environment using Version 2 of WSL. While version 2 has been tested to work with SCT, our development team tests more thoroughly using Version 1 of WSL (due to `better support from GitHub Actions <https://github.com/actions/runner-images/issues/50>`_).
+   By default, Microsoft's instructions will create an Ubuntu environment using Version 2 of WSL. While version 2 has been tested to work with SCT, our development team tests more thoroughly using Version 1 of WSL (due to `better support from GitHub Actions <https://github.com/actions/runner-images/issues/50>`__).
 
    Because of this, we recommend that you convert the WSL2 Ubuntu environment to use WSL1 before continuing. To do this, first close Ubuntu, then re-open Powershell and run the following command:
 
@@ -178,7 +178,7 @@ Basic installation (No GUI)
       git clone https://github.com/spinalcordtoolbox/spinalcordtoolbox.git
       cd spinalcordtoolbox
 
-   To select a `specific release <https://github.com/spinalcordtoolbox/spinalcordtoolbox/releases>`_, replace ``X.Y`` below with the proper release number. If you prefer to use the development version, you can skip this step.
+   To select a `specific release <https://github.com/spinalcordtoolbox/spinalcordtoolbox/releases>`__, replace ``X.Y`` below with the proper release number. If you prefer to use the development version, you can skip this step.
 
    .. code-block:: sh
 
@@ -219,7 +219,7 @@ WSL Installation with GUI (Optional)
 
 If you would like to use SCT's GUI features, or if you would like to try FSLeyes within the same Ubuntu environment, first complete the previous "Basic Installation" section, then continue on to the steps below.
 
-#. Download and install `VcXsrv <https://sourceforge.net/projects/vcxsrv/>`_, a program that makes it possible to run Linux GUI programs installed with WSL.
+#. Download and install `VcXsrv <https://sourceforge.net/projects/vcxsrv/>`__, a program that makes it possible to run Linux GUI programs installed with WSL.
 
 #. Run the newly installed ``XLaunch`` program, then click the following settings:
 
@@ -272,13 +272,13 @@ If you would like to use SCT's GUI features, or if you would like to try FSLeyes
 Docker installation
 -------------------
 
-`Docker <https://www.docker.com/what-container/>`_ is a portable (Linux, macOS, Windows) container platform.
+`Docker <https://www.docker.com/what-container/>`__ is a portable (Linux, macOS, Windows) container platform.
 
 
 Basic Installation (No GUI)
 ***************************
 
-First, `install Docker Desktop <https://docs.docker.com/desktop/install/windows-install/>`_ using the WSL 2 backend. Then, follow the example below to create an OS-specific SCT installation.
+First, `install Docker Desktop <https://docs.docker.com/desktop/install/windows-install/>`__ using the WSL 2 backend. Then, follow the example below to create an OS-specific SCT installation.
 
 Docker Image: Ubuntu
 ^^^^^^^^^^^^^^^^^^^^
@@ -329,7 +329,7 @@ First, save your Docker image if you have not already done so:
 
       docker commit <CONTAINER_ID> <IMAGE_NAME>/ubuntu:ubuntu22.04
 
-4. Install `VcXsrv <https://sourceforge.net/projects/vcxsrv/>`_.
+4. Install `VcXsrv <https://sourceforge.net/projects/vcxsrv/>`__.
 
 5. Launch an X11 Server with XLaunch
 

@@ -58,7 +58,7 @@ Install from Package
 
 The simplest way to install SCT is to use an in-place, static version of a tested package release. If you do not have any special circumstances, we recommend using this installation method.
 
-First, navigate to the `latest release <https://github.com/spinalcordtoolbox/spinalcordtoolbox/releases>`_, then download the install script for SCT (``install_sct-<version>_linux.sh``). Major changes to each release are listed in the :doc:`/dev_section/CHANGES`.
+First, navigate to the `latest release <https://github.com/spinalcordtoolbox/spinalcordtoolbox/releases>`__, then download the install script for SCT (``install_sct-<version>_linux.sh``). Major changes to each release are listed in the :doc:`/dev_section/CHANGES`.
 
 Once you have downloaded SCT, open a new Terminal in the location of the downloaded script, then launch the installer using the ``bash`` command. For example, if the script was downloaded to `Downloads/`, then you would run:
 
@@ -102,7 +102,7 @@ If you wish to benefit from the cutting-edge version of SCT, or if you wish to c
 Install within Docker
 ---------------------
 
-`Docker <https://www.docker.com/what-container/>`_ is a portable container platform. This is useful in some niche cases, such as:
+`Docker <https://www.docker.com/what-container/>`__ is a portable container platform. This is useful in some niche cases, such as:
 
 - When you want to test SCT in a specific OS environment; this is much faster than running a full-fledged virtual machine.
 - For cross-platform use; Docker ensure's reproducibility while providing accessibility across operating systems.
@@ -111,14 +111,14 @@ Install within Docker
 Basic Installation (No GUI)
 ***************************
 
-First, `install Docker <https://docs.docker.com/engine/install/#server>`_. Be sure to install from your distribution's repository.
+First, `install Docker <https://docs.docker.com/engine/install/#server>`__. Be sure to install from your distribution's repository.
 
 .. note::
     Docker Desktop for Linux is not recommended if you intend to use the GUI.
-    Instead install the `Docker Server Engine <https://docs.docker.com/engine/install/#server>`_, which is separate to the Docker Desktop Engine.
-    For example on Ubuntu/Debian, follow the instructions for installing Docker from the `apt repository <https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository>`_.
+    Instead install the `Docker Server Engine <https://docs.docker.com/engine/install/#server>`__, which is separate to the Docker Desktop Engine.
+    For example on Ubuntu/Debian, follow the instructions for installing Docker from the `apt repository <https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository>`__.
    
-By default, Docker commands require the use of ``sudo`` for additional permissions. If you want to run Docker commands without needing to add ``sudo``, please follow `these instructions <https://docs.docker.com/engine/install/linux-postinstall/#manage-docker-as-a-non-root-user>`_ to create a Unix group called ``docker``, then add users your user account to it.
+By default, Docker commands require the use of ``sudo`` for additional permissions. If you want to run Docker commands without needing to add ``sudo``, please follow `these instructions <https://docs.docker.com/engine/install/linux-postinstall/#manage-docker-as-a-non-root-user>`__ to create a Unix group called ``docker``, then add users your user account to it.
 
 Then, follow the example below to create an OS-specific SCT installation (in this case, for Ubuntu 22.04).
 
@@ -215,7 +215,7 @@ You should only install SCT this way if you need to access the internal function
 
 If the installation fails, or you run into errors, please report a bug indicating the dependency versions retrieved using "sct_check_dependencies", and try again with a clean ``pip`` installation/environment.
 
-#. [Optional] `Activate <https://packaging.python.org/en/latest/guides/installing-using-pip-and-virtual-environments/#activate-a-virtual-environment>`_ the ``virtualenv`` environment you want to install SCT within.
+#. [Optional] `Activate <https://packaging.python.org/en/latest/guides/installing-using-pip-and-virtual-environments/#activate-a-virtual-environment>`__ the ``virtualenv`` environment you want to install SCT within.
 
 #. Clone the current SCT repository and enter it.
 
