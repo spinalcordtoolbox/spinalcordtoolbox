@@ -104,9 +104,7 @@ Install within Docker
 
 `Docker <https://www.docker.com/what-container/>`__ is a portable container platform. This is useful in some niche cases, such as:
 
-- When you want to test SCT in a specific OS environment; this is much faster than running a full-fledged virtual machine.
-- For cross-platform use; Docker ensure's reproducibility while providing accessibility across operating systems.
-
+In the context of SCT, it can be used to test SCT in a specific OS environment; this is much faster than running a fully fledged virtual machine.
 
 Basic Installation (No GUI)
 ***************************

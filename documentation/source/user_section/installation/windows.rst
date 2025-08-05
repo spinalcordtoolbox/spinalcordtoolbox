@@ -274,6 +274,7 @@ Docker installation
 
 `Docker <https://www.docker.com/what-container/>`__ is a portable (Linux, macOS, Windows) container platform.
 
+In the context of SCT, it can be used to test SCT in a specific OS environment; this is much faster than running a fully fledged virtual machine.
 
 Basic Installation (No GUI)
 ***************************
