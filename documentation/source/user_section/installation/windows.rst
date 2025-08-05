@@ -8,7 +8,7 @@ We currently provide 3 different ways to install SCT on Windows machines:
 
 - :ref:`Native Windows installation (recommended) <native-installation>`
 - :ref:`Windows Subsystem for Linux (WSL) <wsl-installation>`
-- :ref:`Docker <docker-installation>`
+- :ref:`Docker <docker-install-windows>`
 
 
 -----
@@ -23,7 +23,7 @@ This set of instructions will show you how to install SCT directly on Windows.
 
 .. note::
 
-   This method was first introduced to SCT in April 2022 as part of the Version 5.6 release. Previous versions of SCT required the use of :ref:`Windows Subsystem for Linux (WSL) <wsl-installation>` or :ref:`Docker <docker-installation>` in order to support Windows.
+   This method was first introduced to SCT in April 2022 as part of the Version 5.6 release. Previous versions of SCT required the use of :ref:`Windows Subsystem for Linux (WSL) <wsl-installation>` or :ref:`Docker <docker-install-windows>` in order to support Windows.
 
    Because this method is new to SCT, we would greatly appreciate hearing any feedback you may have about your experiences using SCT on Windows. If you encounter any issues, or have any questions or concerns, feel free to post on the `Spinalcordmri.org forums <https://forum.spinalcordmri.org/c/sct/8>`_, and SCT's development team will be happy to help.
 
@@ -267,7 +267,7 @@ If you would like to use SCT's GUI features, or if you would like to try FSLeyes
 -----
 
 
-.. _docker-installation:
+.. _docker-install-windows:
 
 Docker installation
 -------------------

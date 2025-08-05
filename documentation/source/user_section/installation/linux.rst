@@ -16,7 +16,7 @@ Depending on your use case, there are a number of different installation methods
 
 - :ref:`Packaged Installation <native-install>`: For general use.
 - :ref:`GitHub Installation <github-install>`: For developers.
-- :ref:`Docker Installation <docker-install>`: For cross-platform use/testing.
+- :ref:`Docker Installation <docker-install-linux>`: For cross-platform use/testing.
 - **[Experimental]** :ref:`PIP Installation <pip-install>` Installation ``pip`` for use as a Python package.
 
 
@@ -97,7 +97,7 @@ If you wish to benefit from the cutting-edge version of SCT, or if you wish to c
 
         ./install_sct
 
-.. _docker-install:
+.. _docker-install-linux:
 
 Install within Docker
 ---------------------

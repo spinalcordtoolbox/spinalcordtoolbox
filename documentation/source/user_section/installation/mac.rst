@@ -130,6 +130,7 @@ Procedure:
 
       pip install --user -e .
 
+.. _docker-install-macos:
 
 Option 4: Install with Docker
 -----------------------------

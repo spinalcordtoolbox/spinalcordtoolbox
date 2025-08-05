@@ -15,3 +15,4 @@ Supported Operating Systems
   installation/linux
   installation/windows
   installation/apptainer
+  installation/docker
