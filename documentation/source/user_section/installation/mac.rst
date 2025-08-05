@@ -144,7 +144,6 @@ Basic Installation (No GUI)
 
 First, `install Docker Desktop <https://docs.docker.com/desktop/install/mac-install/>`__. Then, follow the examples below to create an OS-specific SCT installation.
 
-
 Docker Image: Ubuntu
 ^^^^^^^^^^^^^^^^^^^^
 
@@ -158,8 +157,8 @@ First, launch Docker Desktop, then open up a new Terminal window and run the com
    # Launch interactive mode (command-line inside container)
    docker run -it ubuntu:22.04
    # Now, inside Docker container, install dependencies
-   apt-get update
-   apt install -y git curl bzip2 libglib2.0-0 libgl1-mesa-glx libxrender1 libxkbcommon-x11-0 libdbus-1-3 gcc
+   apt update
+   apt install git curl bzip2 libglib2.0-0 libgl1-mesa-glx libxrender1 libxkbcommon-x11-0 libdbus-1-3 gcc
    # Note for above: libglib2.0-0, libgl1-mesa-glx, libxrender1, libxkbcommon-x11-0, libdbus-1-3 are required by PyQt
    # Install SCT
    git clone https://github.com/spinalcordtoolbox/spinalcordtoolbox.git sct
@@ -175,7 +174,6 @@ First, launch Docker Desktop, then open up a new Terminal window and run the com
    docker ps -a  # list all containers (to find out the container ID)
    # specify the ID, and also choose a name to use for the docker image, such as "sct_v6.0"
    docker commit <CONTAINER_ID> <IMAGE_NAME>/ubuntu:ubuntu22.04
-
 
 Enable GUI Scripts (Optional)
 *****************************
