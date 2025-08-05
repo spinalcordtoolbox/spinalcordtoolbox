@@ -288,7 +288,7 @@ First, launch Docker Desktop, then open up a new Powershell or Command Prompt wi
 
 .. code:: bash
 
-   # Start from the Terminal
+   # Start from Powershell or the Command Prompt
    docker pull ubuntu:22.04
    # Launch interactive mode (command-line inside container)
    docker run -it ubuntu:22.04
@@ -309,6 +309,7 @@ First, launch Docker Desktop, then open up a new Powershell or Command Prompt wi
    # specify the ID, and also choose a name to use for the docker image, such as "sct_v6.0"
    docker commit <CONTAINER_ID> <IMAGE_NAME>/ubuntu:ubuntu22.04
 
+Alternatively, you can modify and use this `example Dockerfile for SCT <https://github.com/spinalcordtoolbox/spinalcordtoolbox/tree/master/contrib/docker>`__.
 
 Enable GUI Scripts (Optional)
 *****************************
@@ -334,10 +335,10 @@ First, save your Docker image if you have not already done so:
 
 5. Launch an X11 Server with XLaunch
 
-- Run XLaunch, which should have been installed by default.
-- Check 'Multiple Windows' and set the **display number** to ``0``, which you will need later. (The default display number ``-1`` will automatically detect the display number, unless you are running a setup with multiple monitors it will typically use ``0``)
-- Then, you can click Next, select 'Start no Client' then click Next
-- **Uncheck** 'Native opengl' and **check** 'Disable Access Control' then click Next, then click Finish.
+   - Run XLaunch, which should have been installed by default.
+   - Check 'Multiple Windows' and set the **display number** to ``0``, which you will need later. (The default display number ``-1`` will automatically detect the display number, unless you are running a setup with multiple monitors it will typically use ``0``)
+   - Then, you can click Next, select 'Start no Client' then click Next
+   - **Uncheck** 'Native opengl' and **check** 'Disable Access Control' then click Next, then click Finish.
 
 6. Determine the IPv4 address of the virtual Ethernet Adapter by running 'ipconfig' in Powershell or the Command Prompt, then looking at the ``Ethernet adapter vEthernet (WSL)`` entry.
 

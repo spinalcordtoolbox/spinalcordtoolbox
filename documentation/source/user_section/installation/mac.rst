@@ -175,6 +175,8 @@ First, launch Docker Desktop, then open up a new Terminal window and run the com
    # specify the ID, and also choose a name to use for the docker image, such as "sct_v6.0"
    docker commit <CONTAINER_ID> <IMAGE_NAME>/ubuntu:ubuntu22.04
 
+Alternatively, you can modify and use this `example Dockerfile for SCT <https://github.com/spinalcordtoolbox/spinalcordtoolbox/tree/master/contrib/docker>`__.
+
 Enable GUI Scripts (Optional)
 *****************************
 

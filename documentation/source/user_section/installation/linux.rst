@@ -102,7 +102,7 @@ If you wish to benefit from the cutting-edge version of SCT, or if you wish to c
 Install within Docker
 ---------------------
 
-`Docker <https://www.docker.com/what-container/>`__ is a portable container platform. This is useful in some niche cases, such as:
+`Docker <https://www.docker.com/what-container/>`__ is a portable container platform.
 
 In the context of SCT, it can be used to test SCT in a specific OS environment; this is much faster than running a fully fledged virtual machine.
 
@@ -142,6 +142,8 @@ Then, follow the example below to create an OS-specific SCT installation (in thi
     sudo docker ps -a  # list all containers (to find out the container ID)
     # specify the ID, and also choose a name to use for the docker image, such as "sct_v6.0"
     sudo docker commit <CONTAINER_ID> <IMAGE_NAME>/ubuntu:ubuntu22.04
+
+Alternatively, you can modify and use this `example Dockerfile for SCT <https://github.com/spinalcordtoolbox/spinalcordtoolbox/tree/master/contrib/docker>`__.
 
 Enabling GUI Scripts
 ********************
