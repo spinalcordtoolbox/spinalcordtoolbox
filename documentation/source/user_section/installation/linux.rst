@@ -106,6 +106,8 @@ Install within Docker
 
 In the context of SCT, it can be used to test SCT in a specific OS environment; this is much faster than running a fully fledged virtual machine.
 
+The instructions below are for installing Docker itself, and optionally for enabling GUI scripts. Once this is done, you can follow the :ref:`instructions for installing SCT within Docker <docker-install-sct>`.
+
 Basic Installation (No GUI)
 ***************************
 
@@ -118,51 +120,42 @@ First, `install Docker <https://docs.docker.com/engine/install/#server>`__. Be s
 
 By default, Docker commands require the use of ``sudo`` for additional permissions. If you want to run Docker commands without needing to add ``sudo``, please follow `these instructions <https://docs.docker.com/engine/install/linux-postinstall/#manage-docker-as-a-non-root-user>`__ to create a Unix group called ``docker``, then add your user account to it.
 
-Then, follow the example below to create an OS-specific SCT installation (in this case, for Ubuntu 22.04).
+Next, download the Docker image for Ubuntu 22.04 with the following command (this only needs to be done once):
 
 .. code:: bash
 
     # Pull the Docker image for Ubuntu 22.04
     sudo docker pull ubuntu:22.04
+
+If you want to enable GUI scripts, follow :ref:`the instructions below <docker-gui-linux>`. Otherwise, if you don't need to enable GUI scripts, you can launch an interactive terminal within Docker by running the following command (outside Docker):
+
+.. code:: bash
+
     # Launch interactive mode (command-line inside container)
     sudo docker run -it ubuntu:22.04
-    # Now inside Docker container, install SCT dependencies
-    apt update
-    apt install git curl bzip2 libglib2.0-0 libgl1-mesa-glx libxrender1 libxkbcommon-x11-0 libdbus-1-3 gcc
-    # Note for above: libglib2.0-0, libgl1-mesa-glx, libxrender1, libxkbcommon-x11-0, libdbus-1-3 are required by PyQt
-    # Install SCT
-    git clone https://github.com/spinalcordtoolbox/spinalcordtoolbox.git sct
-    cd sct
-    ./install_sct -y
-    source /root/.bashrc
-    # Test SCT
-    sct_testing
-    # Save the state of the container as a docker image.
-    # Back on the Host machine, open a new terminal and run:
+
+And, after :ref:`installing SCT within Docker <docker-install-sct>`, you can save your container with the following commands (outside Docker):
+
+.. code:: bash
+
+    # Back on the Host machine, run:
     sudo docker ps -a  # list all containers (to find out the container ID)
     # specify the ID, and also choose a name to use for the docker image, such as "sct_v6.0"
     sudo docker commit <CONTAINER_ID> <IMAGE_NAME>/ubuntu:ubuntu22.04
+
+Once the container is saved, you can use it as many times as you want to launch a terminal inside Docker and run SCT commands, by running:
+
+.. code:: bash
+
+    # Replace <IMAGE_NAME> with the name you chose above
+    sudo docker run -it --rm <IMAGE_NAME>/ubuntu:ubuntu22.04
+
+.. _docker-gui-linux:
 
 Enabling GUI Scripts
 ********************
 
 In order to run scripts with GUI you need to allow X11 redirection.
-First, save your Docker image if you haven't already done so:
-
-#. Open another Terminal
-#. List current docker images
-
-    .. code:: bash
-
-        sudo docker ps -a
-
-#. If you haven't already, save the container as a new image
-
-    .. code:: bash
-
-        sudo docker commit <CONTAINER_ID> <IMAGE_NAME>/ubuntu:ubuntu22.04
-
-Then, to forward the X11 server:
 
 .. note::
 
@@ -172,7 +165,7 @@ Then, to forward the X11 server:
 
 #. Install ``xauth`` and ``xhost`` on the host machine, if not already installed:
 
-    For example on Debian/Ubuntu:
+   For example on Debian/Ubuntu:
 
     .. code:: bash
 
@@ -186,19 +179,21 @@ Then, to forward the X11 server:
 
         xhost +local:docker
 
-#. In your Terminal window, run:
-   
+#. Follow the :ref:`instructions for installing SCT within Docker <docker-install-sct>` to create a Docker container with SCT.
+
+#. Once you have a Docker container, you will need to run it with the following command in your terminal (outside Docker) when you want to use GUI scripts:
+
     .. code:: bash
 
         sudo docker run -it --rm --privileged -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix <IMAGE_NAME>/ubuntu:ubuntu22.04``
 
-You can test whether GUI scripts are available by running the following command in your Docker container:
+   This will launch a terminal within your Docker container, and you can test whether GUI scripts are available by running the following command (inside Docker):
  
     .. code:: bash
    
         sct_check_dependencies
-      
-You should see two green ``[OK]`` symbols at the bottom of the report for "PyQT" and "matplotlib" checks, which represent the GUI features provided by SCT are now available.
+
+   You should see two green ``[OK]`` symbols at the bottom of the report for "PyQT" and "matplotlib" checks, which mean that the GUI features provided by SCT are now available.
 
 .. _pip-install:
 

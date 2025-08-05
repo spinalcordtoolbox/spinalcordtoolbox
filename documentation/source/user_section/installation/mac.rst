@@ -139,61 +139,51 @@ Option 4: Install with Docker
 
 In the context of SCT, it can be used to test SCT in a specific OS environment; this is much faster than running a fully fledged virtual machine.
 
+The instructions below are for installing Docker itself, and optionally for enabling GUI scripts. Once this is done, you can follow the :ref:`instructions for installing SCT within Docker <docker-install-sct>`.
+
 Basic Installation (No GUI)
 ***************************
 
-First, `install Docker Desktop <https://docs.docker.com/desktop/install/mac-install/>`__. Then, follow the examples below to create an OS-specific SCT installation.
+First, `install Docker Desktop <https://docs.docker.com/desktop/install/mac-install/>`__. 
 
-Docker Image: Ubuntu
-^^^^^^^^^^^^^^^^^^^^
-
-First, launch Docker Desktop, then open up a new Terminal window and run the commands below:
+Next, download the Docker image for Ubuntu 22.04 with the following Terminal command (this only needs to be done once):
 
 .. code:: bash
 
-   # Start from the Terminal
-   docker pull ubuntu:22.04
-   # If the previous command says 'Cannot connect to the Docker daemon', make sure you have launched Docker Desktop
-   # Launch interactive mode (command-line inside container)
-   docker run -it ubuntu:22.04
-   # Now, inside Docker container, install dependencies
-   apt update
-   apt install git curl bzip2 libglib2.0-0 libgl1-mesa-glx libxrender1 libxkbcommon-x11-0 libdbus-1-3 gcc
-   # Note for above: libglib2.0-0, libgl1-mesa-glx, libxrender1, libxkbcommon-x11-0, libdbus-1-3 are required by PyQt
-   # Install SCT
-   git clone https://github.com/spinalcordtoolbox/spinalcordtoolbox.git sct
-   cd sct
-   ./install_sct -y
-   # For the previous command, it's normal if the last two checks show [FAIL] in red
-   # This will be fixed by doing the "Enable GUI Scripts" optional step in the next section
-   source /root/.bashrc
-   # Test SCT
-   sct_testing
-   # Save the state of the container as a docker image.
-   # Back on the Host machine, open a new terminal and run:
-   docker ps -a  # list all containers (to find out the container ID)
-   # specify the ID, and also choose a name to use for the docker image, such as "sct_v6.0"
-   docker commit <CONTAINER_ID> <IMAGE_NAME>/ubuntu:ubuntu22.04
+    # Start from the Terminal
+    docker pull ubuntu:22.04
+    # If the previous command says 'Cannot connect to the Docker daemon', make sure you have launched Docker Desktop
+
+If you want to enable GUI scripts, follow :ref:`the instructions below <docker-gui-macos>`. Otherwise, if you don't need to enable GUI scripts, you can launch an interactive terminal within Docker by running the following command (outside Docker):
+
+.. code:: bash
+
+    # Launch interactive mode (command-line inside container)
+    docker run -it ubuntu:22.04
+
+And, after :ref:`installing SCT within Docker <docker-install-sct>`, you can save your container with the following commands (outside Docker):
+
+.. code:: bash
+
+    # Back on the Host machine, run:
+    docker ps -a  # list all containers (to find out the container ID)
+    # specify the ID, and also choose a name to use for the docker image, such as "sct_v6.0"
+    docker commit <CONTAINER_ID> <IMAGE_NAME>/ubuntu:ubuntu22.04
+
+Once the container is saved, you can use it as many times as you want to launch a terminal inside Docker and run SCT commands, by running:
+
+.. code:: bash
+
+    # Make sure you have launched Docker Desktop first
+    # Replace <IMAGE_NAME> with the name you chose above
+    docker run -it --rm <IMAGE_NAME>/ubuntu:ubuntu22.04
+
+.. _docker-gui-macos:
 
 Enable GUI Scripts (Optional)
 *****************************
 
-In order to run scripts with GUI you need to allow X11 redirection.
-First, save your Docker image if you haven't already done so:
-
-1. Open another Terminal
-2. List current docker images
-
-   .. code:: bash
-
-      docker ps -a
-
-3. Save container as new image
-
-   .. code:: bash
-
-      docker commit <CONTAINER_ID> <IMAGE_NAME>/ubuntu:ubuntu22.04
-
+In order to run scripts with GUI you will need to allow X11 redirection.
 Create an X11 server for handling display:
 
 1. Install `XQuartz X11 <https://www.xquartz.org/>`__ server.
@@ -205,7 +195,8 @@ Create an X11 server for handling display:
 
       xhost + 127.0.0.1
 
-5. In your other Terminal window, run:
+5. Follow the :ref:`instructions for installing SCT within Docker <docker-install-sct>`. to create a Docker container with SCT.
+6. Once you have a Docker container, you will need to run it with the following command in your Terminal (outside Docker) when you want to use GUI scripts:
 
    .. code:: bash
 
@@ -213,13 +204,13 @@ Create an X11 server for handling display:
 
    (If this command says 'Cannot connect to the Docker daemon', try again after launching Docker Desktop.)
 
-6. You can test whether GUI scripts are available by running the following command in your Docker container:
+   This will launch a terminal within your Docker container, and you can test whether GUI scripts are available by running the following command (inside Docker):
 
    .. code:: bash
 
       sct_check_dependencies
 
-   You should see two green ``[OK]`` symbols at the bottom of the report for "PyQT" and "matplotlib" checks, which represent the GUI features provided by SCT.
+   You should see two green ``[OK]`` symbols at the bottom of the report for "PyQT" and "matplotlib" checks, which mean that the GUI features provided by SCT are now available.
 
 Additional Notes
 ================
