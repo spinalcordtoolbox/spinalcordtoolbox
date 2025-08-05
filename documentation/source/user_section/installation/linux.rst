@@ -113,10 +113,10 @@ First, `install Docker <https://docs.docker.com/engine/install/#server>`__. Be s
 
 .. note::
     Docker Desktop for Linux is not recommended if you intend to use the GUI.
-    Instead install the `Docker Server Engine <https://docs.docker.com/engine/install/#server>`__, which is separate to the Docker Desktop Engine.
+    Instead install the `Docker Server Engine <https://docs.docker.com/engine/install/#server>`__, which is separate from the Docker Desktop Engine.
     For example on Ubuntu/Debian, follow the instructions for installing Docker from the `apt repository <https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository>`__.
-   
-By default, Docker commands require the use of ``sudo`` for additional permissions. If you want to run Docker commands without needing to add ``sudo``, please follow `these instructions <https://docs.docker.com/engine/install/linux-postinstall/#manage-docker-as-a-non-root-user>`__ to create a Unix group called ``docker``, then add users your user account to it.
+
+By default, Docker commands require the use of ``sudo`` for additional permissions. If you want to run Docker commands without needing to add ``sudo``, please follow `these instructions <https://docs.docker.com/engine/install/linux-postinstall/#manage-docker-as-a-non-root-user>`__ to create a Unix group called ``docker``, then add your user account to it.
 
 Then, follow the example below to create an OS-specific SCT installation (in this case, for Ubuntu 22.04).
 
@@ -127,8 +127,8 @@ Then, follow the example below to create an OS-specific SCT installation (in thi
     # Launch interactive mode (command-line inside container)
     sudo docker run -it ubuntu:22.04
     # Now inside Docker container, install SCT dependencies
-    apt-get update
-    apt install -y git curl bzip2 libglib2.0-0 libgl1-mesa-glx libxrender1 libxkbcommon-x11-0 libdbus-1-3 gcc
+    apt update
+    apt install git curl bzip2 libglib2.0-0 libgl1-mesa-glx libxrender1 libxkbcommon-x11-0 libdbus-1-3 gcc
     # Note for above: libglib2.0-0, libgl1-mesa-glx, libxrender1, libxkbcommon-x11-0, libdbus-1-3 are required by PyQt
     # Install SCT
     git clone https://github.com/spinalcordtoolbox/spinalcordtoolbox.git sct
@@ -142,7 +142,6 @@ Then, follow the example below to create an OS-specific SCT installation (in thi
     sudo docker ps -a  # list all containers (to find out the container ID)
     # specify the ID, and also choose a name to use for the docker image, such as "sct_v6.0"
     sudo docker commit <CONTAINER_ID> <IMAGE_NAME>/ubuntu:ubuntu22.04
-
 
 Enabling GUI Scripts
 ********************
@@ -181,7 +180,7 @@ Then, to forward the X11 server:
 
 #. Permit docker access to the X11 Server
 
-   If hosting container from the local machine:
+   If you are hosting the container from the local machine:
 
     .. code:: bash
 
