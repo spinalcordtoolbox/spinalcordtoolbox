@@ -403,6 +403,16 @@ def main(argv: Sequence[str]):
         fname_vert_level = arguments.discfile
     elif arguments.vertfile is not None:
         fname_vert_level = arguments.vertfile
+        from warnings import warn
+        from spinalcordtoolbox.utils.sys import stylize
+        from time import sleep
+        warn(
+            stylize(
+                "`-vertfile flag` is deprecated, and will be removed in a future version of SCT. Please use "
+                "`-discfile` instead (single-voxel labels identifying the intervertebral discs).", ["Red", "Bold"]
+            ), DeprecationWarning
+        )
+        sleep(3)  # Give the user 3 seconds to read the message    else:
     else:
         logger.info("No -vertfile/-discfile argument provided. Attempting to get VertLevel "
                     "information from local PAM50 warped template file (if it exists).")
