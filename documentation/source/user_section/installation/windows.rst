@@ -263,7 +263,9 @@ If you would like to use SCT's GUI features, or if you would like to try FSLeyes
 
    These instructions will install FSLeyes into a fresh ``conda`` environment, then create a link to FSLeyes so that you can use the ``fsleyes`` command without having to activate the conda environment each time.
 
+
 -----
+
 
 .. _docker-install-windows:
 
@@ -274,77 +276,83 @@ Docker installation
 
 In the context of SCT, it can be used to test SCT in a specific OS environment; this is much faster than running a fully fledged virtual machine.
 
-The instructions below are for installing Docker itself, and optionally for enabling GUI scripts. Once this is done, you can follow the :ref:`instructions for installing SCT within Docker <docker-install-sct>`.
-
 Basic Installation (No GUI)
 ***************************
 
-First, `install Docker Desktop <https://docs.docker.com/desktop/install/windows-install/>`__ using the WSL 2 backend.
+First, `install Docker Desktop <https://docs.docker.com/desktop/install/windows-install/>`__ using the WSL 2 backend. Then, follow the example below to create an OS-specific SCT installation.
 
-Next, launch Docker Desktop, then open up a new Powershell or Command Prompt window and run the command below to download the Docker image for Ubuntu 22.04 (this only needs to be done once):
+Docker Image: Ubuntu
+^^^^^^^^^^^^^^^^^^^^
 
-.. code:: bash
-
-    # Start from Powershell or the Command Prompt
-    docker pull ubuntu:22.04
-
-If you want to enable GUI scripts, follow :ref:`the instructions below <docker-gui-windows>`. Otherwise, if you don't need to enable GUI scripts, you can launch an interactive terminal within Docker by running the following command (outside Docker):
+First, launch Docker Desktop, then open up a new Powershell or Command Prompt window and run the commands below:
 
 .. code:: bash
 
-    # Make sure to launch Docker Desktop first,
-    # then run this from Powershell or the Command Prompt
-    docker run -it ubuntu:22.04
+   # Start from the Terminal
+   docker pull ubuntu:22.04
+   # Launch interactive mode (command-line inside container)
+   docker run -it ubuntu:22.04
+   # Now, inside Docker container, install dependencies
+   apt update
+   apt install git curl bzip2 libglib2.0-0 libgl1-mesa-glx libxrender1 libxkbcommon-x11-0 libdbus-1-3 gcc
+   # Note for above: libglib2.0-0, libgl1-mesa-glx, libxrender1, libxkbcommon-x11-0, libdbus-1-3 are required by PyQt
+   # Install SCT
+   git clone https://github.com/spinalcordtoolbox/spinalcordtoolbox.git sct
+   cd sct
+   ./install_sct -y
+   source /root/.bashrc
+   # Test SCT
+   sct_testing
+   # Save the state of the container as a docker image. 
+   # Back on the Host machine, open a new terminal and run:
+   docker ps -a  # list all containers (to find out the container ID)
+   # specify the ID, and also choose a name to use for the docker image, such as "sct_v6.0"
+   docker commit <CONTAINER_ID> <IMAGE_NAME>/ubuntu:ubuntu22.04
 
-And, after :ref:`installing SCT within Docker <docker-install-sct>`, you can save your container with the following commands (outside Docker):
-
-.. code:: bash
-
-    # Back on the Host machine, run:
-    docker ps -a  # list all containers (to find out the container ID)
-    # specify the ID, and also choose a name to use for the docker image, such as "sct_v6.0"
-    docker commit <CONTAINER_ID> <IMAGE_NAME>/ubuntu:ubuntu22.04
-
-Once the container is saved, you can use it as many times as you want to launch a terminal inside Docker and run SCT commands, by running:
-
-.. code:: bash
-
-    # Make sure to launch Docker Desktop first,
-    # then run this from Powershell or the Command Prompt
-    # Replace <IMAGE_NAME> with the name you chose above
-    docker run -it --rm <IMAGE_NAME>/ubuntu:ubuntu22.04
-
-.. _docker-gui-windows:
 
 Enable GUI Scripts (Optional)
 *****************************
 
 In order to run scripts with GUI you need to allow X11 redirection.
+First, save your Docker image if you have not already done so:
 
-1. Install `VcXsrv <https://sourceforge.net/projects/vcxsrv/>`__.
+1. Open another Terminal
 
-2. Launch an X11 Server with XLaunch
+2. List current docker images
 
-   - Run XLaunch, which should have been installed by default.
-   - Check 'Multiple Windows' and set the **display number** to ``0``, which you will need later. (The default display number ``-1`` will automatically detect the display number, unless you are running a setup with multiple monitors it will typically use ``0``)
-   - Then, you can click Next, select 'Start no Client' then click Next
-   - **Uncheck** 'Native opengl' and **check** 'Disable Access Control' then click Next, then click Finish.
+   .. code:: bash
 
-3. Follow the :ref:`instructions for installing SCT within Docker <docker-install-sct>`. to create a Docker container with SCT.
+      docker ps -a
 
-4. Determine the IPv4 address of the virtual Ethernet Adapter by running 'ipconfig' in Powershell or the Command Prompt, then looking at the ``Ethernet adapter vEthernet (WSL)`` entry.
+3. Save container as new image
 
-5. In your Powershell or Command Prompt window, run the following command, filling in the IP address, display number, and image name noted earlier:
+   .. code:: bash
+
+      docker commit <CONTAINER_ID> <IMAGE_NAME>/ubuntu:ubuntu22.04
+
+4. Install `VcXsrv <https://sourceforge.net/projects/vcxsrv/>`__.
+
+5. Launch an X11 Server with XLaunch
+
+- Run XLaunch, which should have been installed by default.
+- Check 'Multiple Windows' and set the **display number** to ``0``, which you will need later. (The default display number ``-1`` will automatically detect the display number, unless you are running a setup with multiple monitors it will typically use ``0``)
+- Then, you can click Next, select 'Start no Client' then click Next
+- **Uncheck** 'Native opengl' and **check** 'Disable Access Control' then click Next, then click Finish.
+
+6. Determine the IPv4 address of the virtual Ethernet Adapter by running 'ipconfig' in Powershell or the Command Prompt, then looking at the ``Ethernet adapter vEthernet (WSL)`` entry.
+
+7. In your Terminal window, run the following command, filling in the IP address, display number, and image name noted earlier:
    
-    .. code:: bash
+   .. code:: bash 
+   
+      docker run -it --rm -e DISPLAY=<IPv4_ADDRESS>:<DISPLAY_NUMBER> -e XDG_RUNTIME_DIR=/tmp/runtime-root <IMAGE_NAME>/ubuntu:ubuntu22.04
 
-        docker run -it --rm -e DISPLAY=<IPv4_ADDRESS>:<DISPLAY_NUMBER> -e XDG_RUNTIME_DIR=/tmp/runtime-root <IMAGE_NAME>/ubuntu:ubuntu22.04
 
-   This will launch a terminal within your Docker container, and you can test whether GUI scripts are available by running the following commands (inside Docker):
+8. You can test whether GUI scripts are available by running the following command in your Docker container:
+ 
+   .. code:: bash
 
-    .. code:: bash
+      mkdir /tmp/runtime-root
+      sct_check_dependencies
 
-        mkdir /tmp/runtime-root
-        sct_check_dependencies
-
-   You should see two green ``[OK]`` symbols at the bottom of the report for "PyQT" and "matplotlib" checks, which mean that the GUI features provided by SCT are now available.
+   You should see two green ``[OK]`` symbols at the bottom of the report for "PyQT" and "matplotlib" checks, which represent the GUI features provided by SCT.
