@@ -470,7 +470,7 @@ def main(argv: Sequence[str]):
         ctl_projected = label_regions_from_reference(Image(fname_segmentation), discs_projected, centerline=True)
         fname_vert_level = os.path.join(path_tmp, add_suffix(fname_vert_level, '_projected_centerline'))
         ctl_projected.save(fname_vert_level)
-        if verbose== 2:
+        if verbose == 2:
             copy(fname_vert_level, os.getcwd())
     if normalize_pam50:
         fname_vert_level_PAM50 = os.path.join(__data_dir__, 'PAM50', 'template', 'PAM50_levels.nii.gz')
