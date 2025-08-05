@@ -86,7 +86,7 @@ def test_sct_image_display_warp_check_output_exists():
     assert os.path.exists(sct_test_path('t2', fname_out))
 
 
-def test_sct_image_stitch(tmp_path):
+def test_sct_image_stitch(tmp_path, tmp_path_qc):
     """Run the CLI script and check that the stitched file was generated."""
     # crop images for testing stitching function
     path_in = sct_test_path('t2', 't2.nii.gz')
@@ -98,5 +98,5 @@ def test_sct_image_stitch(tmp_path):
                               '-ymin', '0', '-ymax', '20', '-zmin', '0', '-zmax', '51'])
 
     fname_out = os.path.join(tmp_path, 'stitched.nii.gz')
-    sct_image.main(argv=['-i', fname_roi1, fname_roi2, '-o', fname_out, '-stitch', '-qc', str(tmp_path)])
+    sct_image.main(argv=['-i', fname_roi1, fname_roi2, '-o', fname_out, '-stitch', '-qc', tmp_path_qc])
     assert os.path.exists(fname_out)

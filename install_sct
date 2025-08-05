@@ -693,8 +693,14 @@ if [[ $OS == linux ]]; then
   conda install -y -c conda-forge libstdcxx-ng
   # Ensure that libffi isn't linked incorrectly (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3927#issuecomment-1573896770)
   conda install -y -c conda-forge libffi
-  # Ensure that PyQt5 has the correct dependencies on Ubuntu
+  # Ensure that PyQt5 has the correct dependencies on Ubuntu (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3925)
+  # NB: We also need to copy the necessary dependencies to a separate subfolder that we add to LD_LIBRARY_PATH in compat/launcher.py
+  #     We do this to avoid exposing the full `lib/` directory, which can cause conflicts with system libraries.
+  #     This should copy 1 .so file and 2 symlinks, but the symlinks are relative, so copying them to a separate folder should be OK.
+  #     Related issue: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4971
   conda install -y -c conda-forge xorg-libxinerama
+  mkdir "$SCT_DIR/$PYTHON_DIR/envs/venv_sct/sct_ld_library_path/"
+  cp "$SCT_DIR/$PYTHON_DIR/envs/venv_sct/lib/libxcb-xinerama.so."* "$SCT_DIR/$PYTHON_DIR/envs/venv_sct/sct_ld_library_path/"
 fi
 
 # Skip pip==21.2 to avoid dependency resolver issue (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3593)
