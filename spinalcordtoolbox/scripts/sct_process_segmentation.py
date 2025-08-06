@@ -569,7 +569,7 @@ def main(argv: Sequence[str]):
         else:
             logger.warning('QC report only available for PMJ-based CSA. QC report not generated.')
     # Clean up temp
-    if arguments.r and arguments.discfile is not None:
+    if arguments.r and os.path.isfile(arguments.discfile):
         logger.info("\nRemove temporary files...")
         temp_folder.cleanup()
     display_open(file_out)
