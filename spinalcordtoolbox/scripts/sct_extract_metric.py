@@ -418,7 +418,7 @@ def main(argv: Sequence[str]):
 
         save_as_csv(agg_metric, fname_output, fname_in=fname_data, append=append_csv)
         append_csv = True  # when looping across labels, need to append results in the same file
-    if arguments.r:
+    if arguments.r and os.path.isfile(fname_vert_level):
         printv("\nRemove temporary files...", verbose)
         temp_folder.cleanup()
     display_open(fname_output)
