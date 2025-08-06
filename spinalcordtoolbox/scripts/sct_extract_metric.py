@@ -357,6 +357,7 @@ def main(argv: Sequence[str]):
         labels_tmp[i_label] = np.expand_dims(im_label.data, 3)  # TODO: generalize to 2D input label
     labels = np.concatenate(labels_tmp[:], 3)  # labels: (x,y,z,label)
     # Load vertebral levels
+    temp_folder = None
     if os.path.isfile(fname_vert_level):
         # Exctract centerline of vertebral levels
         im_vertlevel = Image(fname_vert_level)
@@ -418,7 +419,7 @@ def main(argv: Sequence[str]):
 
         save_as_csv(agg_metric, fname_output, fname_in=fname_data, append=append_csv)
         append_csv = True  # when looping across labels, need to append results in the same file
-    if arguments.r and os.path.isfile(fname_vert_level):
+    if arguments.r and temp_folder is not None:
         printv("\nRemove temporary files...", verbose)
         temp_folder.cleanup()
     display_open(fname_output)
