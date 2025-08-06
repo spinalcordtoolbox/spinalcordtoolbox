@@ -15,7 +15,9 @@ import logging
 import argparse
 from typing import Sequence
 import textwrap
-
+from warnings import warn
+from spinalcordtoolbox.utils.sys import stylize
+from time import sleep
 import numpy as np
 from matplotlib.ticker import MaxNLocator
 
@@ -403,9 +405,6 @@ def main(argv: Sequence[str]):
         fname_vert_level = arguments.discfile
     elif arguments.vertfile is not None:
         fname_vert_level = arguments.vertfile
-        from warnings import warn
-        from spinalcordtoolbox.utils.sys import stylize
-        from time import sleep
         warn(
             stylize(
                 "`-vertfile flag` is deprecated, and will be removed in a future version of SCT. Please use "
