@@ -1,14 +1,9 @@
 # Use a the default Ubuntu 22.04 image
 FROM ubuntu:22.04
 
-# Create a directory for the application
-WORKDIR /app
-
 # Install dependencies
 RUN apt-get update \
     && apt-get install -y \
-        bash \
-        build-essential \
         bzip2 \
         curl \
         gcc \
@@ -30,6 +25,3 @@ ENV PATH="/root/sct/bin:$PATH"
 
 # Automatically activate SCT env in bash
 RUN echo "source /root/sct/python/etc/profile.d/conda.sh && conda activate venv_sct" >> /root/.bashrc
-
-# Add a default entry point (can be redefined at runtime)
-ENTRYPOINT ["python", "scripts/main.py"]
