@@ -259,6 +259,8 @@ def get_parser():
 
     # Arguments which implement shared functionality
     parser.add_common_args()
+    parser.add_tempfile_args()
+
 
     return parser
 
@@ -358,13 +360,18 @@ def main(argv: Sequence[str]):
     if os.path.isfile(fname_vert_level):
         # Exctract centerline of vertebral levels
         im_vertlevel = Image(fname_vert_level)
+        # Binarize vertberal levels before getting centerline
+        im_vertlevel_bin = im_vertlevel.copy()
+        im_vertlevel_bin.data[im_vertlevel_bin.data > 0] = 1
+        print(im_vertlevel_bin.data)
         # Create temp path for outputs
         temp_folder = TempFolder(basename="optic-detect-centerline")
+        path_temp = temp_folder.get_path()
         # Extract centerline from segmentation
         im_centerline, _, _, _ = get_centerline(im_vertlevel)
-        fname_ctl = os.path.join(temp_folder, add_suffix(fname_vert_level, '_ctl'))
+        fname_ctl = os.path.join(path_temp, add_suffix(os.path.basename(fname_vert_level), '_ctl'))
         im_centerline.save(fname_ctl)
-        fname_ctl_levels = os.path.join(temp_folder, add_suffix(fname_vert_level, '_ctl_levels'))
+        fname_ctl_levels = os.path.join(path_temp, add_suffix(os.path.basename(fname_vert_level), '_ctl_levels'))
         # Mask the centerline with the vertebral levels
         sct_maths.main(argv=['-i', fname_ctl, '-mul', fname_vert_level, '-o', fname_ctl_levels])
         # Use levels on centerline instead
