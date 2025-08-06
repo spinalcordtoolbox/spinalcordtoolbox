@@ -364,7 +364,6 @@ def main(argv: Sequence[str]):
         # Binarize vertberal levels before getting centerline
         im_vertlevel_bin = im_vertlevel.copy()
         im_vertlevel_bin.data[im_vertlevel_bin.data > 0] = 1
-        print(im_vertlevel_bin.data)
         # Create temp path for outputs
         temp_folder = TempFolder(basename="optic-detect-centerline")
         path_temp = temp_folder.get_path()
