@@ -568,7 +568,10 @@ def main(argv: Sequence[str]):
                 parser.error('-qc-image is required to display QC report.')
         else:
             logger.warning('QC report only available for PMJ-based CSA. QC report not generated.')
-
+    # Clean up temp
+    if arguments.r:
+        logger.info("\nRemove temporary files...")
+        temp_folder.cleanup()
     display_open(file_out)
 
 
