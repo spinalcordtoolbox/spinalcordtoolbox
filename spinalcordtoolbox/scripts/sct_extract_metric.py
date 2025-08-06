@@ -261,7 +261,6 @@ def get_parser():
     parser.add_common_args()
     parser.add_tempfile_args()
 
-
     return parser
 
 
