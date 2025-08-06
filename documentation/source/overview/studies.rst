@@ -26,6 +26,7 @@ The following studies have used SCT:
 2025 
 ----
 
+-  Baker *et al.* `Cross-sectional relationships between spinal cord gray matter volume and pain in individuals with fibromyalgia and opioid use <https://doi.org/10.1038/s41598-025-13225-7>`_, **Sci. Rep.** 2025
 -  Krieger *et al.* `Depicting multiple sclerosis disease course using lesion parenchymal fraction: a quantified expression of the topographical model of multiple sclerosis. <https://doi.org/10.1093/braincomms/fcaf280>`_, **Brain Commun.** 2025
 -  Zibadinov *et al.* `Neuroimaging phenotype characterization of early aggressive and late severe multiple sclerosis: a case-control study <https://doi.org/10.1093/braincomms/fcaf254>`_, **Brain Commun.** 2025
 -  Witt *et al.* `Tract-Specific Analysis of Diffusion MRI at 3T Detects Cervical Spinal Cord Aberrations in Multiple Sclerosis <https://doi.org/10.1162/IMAG.a.72>`_, **Imaging Neurosci.** 2025
