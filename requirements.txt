@@ -32,7 +32,10 @@ nilearn
 # 2.4.2 causes empty predictions (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4556)
 # 2.6 includes an API change that requires `torch>=2.3`. However, `torch==2.3` removes 
 # support for Intel Macs, and we don't want to remove support, so we use `<2.6`.
-nnunetv2>2.3.0,!=2.4.*,<2.6
+# Note: nnunetv2==2.6.2.dev1 is a development version that is compatible with
+# torch>=2.3 and torch<2.3, but is only released by NeuroPoly on Test PyPI.
+--extra-index-url https://test.pypi.org/simple/ # append_to_freeze
+nnunetv2-neuropoly==2.6.2.dev1
 # SCT is compatible, however the upgrade to numpy==2.0.0 broke *many* upstream packages. Let's try again later. See https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4535
 numpy<2
 # - 1.7.0>onnxruntime>=1.5.1 required `brew install libomp` on macOS.
