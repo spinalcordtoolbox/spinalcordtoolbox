@@ -51,7 +51,7 @@ logger = logging.getLogger(__name__)
 #     to the design of the QC report interface. The images are currently rendered
 #     at 1060px wide, so we should match that in the mosaic arrays we generate.
 #     NOTE: This will result in arrays smaller than 1060px wide, since mosaic
-#     gird wrapping won't exceed this value. But, a smaller visible mosaic is
+#     grid wrapping won't exceed this value. But, a smaller visible mosaic is
 #     worth the trade-off of pixel accuracy when rendering the final image.
 #   - `matplotlib` uses inches/DPI to define the canvas. But, given we want
 #     a fixed output size, we can choose some arbitrary values for both.
