@@ -398,24 +398,7 @@ def main(argv: Sequence[str]):
     levels = arguments.vert
     fname_vert_level = None
     normalize_pam50 = arguments.normalize_PAM50
-    # make sure we have a valid VertLevel file (used for aggregation + VertLevel column)
-    if arguments.vertfile is not None and arguments.discfile is not None:
-        parser.error("Both '-vertfile' and '-discfile' were specified. Please only specify one of these options.")
-    elif arguments.discfile is not None:
-        fname_vert_level = arguments.discfile
-    elif arguments.vertfile is not None:
-        fname_vert_level = arguments.vertfile
-        warn(
-            stylize(
-                "`-vertfile flag` is deprecated, and will be removed in a future version of SCT. Please use "
-                "`-discfile` instead (single-voxel labels identifying the intervertebral discs).", ["Red", "Bold"]
-            ), DeprecationWarning
-        )
-        sleep(3)  # Give the user 3 seconds to read the message
-    else:
-        logger.info("No -vertfile/-discfile argument provided. Attempting to get VertLevel "
-                    "information from local PAM50 warped template file (if it exists).")
-        fname_vert_level = os.path.join('.', 'label', 'template', 'PAM50_levels.nii.gz')
+    # Make sure that the vertfile exists before processing it
     if not os.path.isfile(fname_vert_level):
         logger.warning(f"Vertebral level file {fname_vert_level} does not exist. Vert level information will "
                        f"not be displayed. To use vertebral level information, specify either -vertfile or -discfile."
@@ -427,6 +410,33 @@ def main(argv: Sequence[str]):
             parser.error("Option '-normalize-PAM50' requires a valid vertebral level file ('-vertfile' or '-discfile').")
         elif levels:
             parser.error("Option '-vert' requires a valid vertebral level file ('-vertfile' or '-discfile').")
+
+    # Vertfile exists, so pre-process it if it's a `-discfile`
+    else:
+        # Project discs labels to centerline for discfile
+        if arguments.discfile is not None:
+            discs_projected = project_centerline(Image(fname_segmentation), Image(fname_vert_level))
+            temp_folder = TempFolder(basename="process-segmentation")
+            path_tmp = temp_folder.get_path()
+            discs_projected.save(os.path.join(path_tmp, add_suffix(fname_vert_level, '_projected')))
+            ctl_projected = label_regions_from_reference(Image(fname_segmentation), discs_projected, centerline=True)
+            fname_vert_level = os.path.join(path_tmp, add_suffix(fname_vert_level, '_projected_centerline'))
+            ctl_projected.save(fname_vert_level)
+            if verbose == 2:
+                copy(fname_vert_level, os.path.dirname(file_out))
+        if arguments.vertfile is not None:
+            fname_vert_level = arguments.vertfile
+            warn(
+                stylize(
+                        "`-vertfile flag` is deprecated, and will be removed in a future version of SCT. Please use "
+                        "`-discfile` instead (single-voxel labels identifying the intervertebral discs).", ["Red", "Bold"]
+                        ), DeprecationWarning
+                )
+            sleep(3)  # Give the user 3 seconds to read the message
+        else:
+            logger.info("No -vertfile/-discfile argument provided. Attempting to get VertLevel "
+                        "information from local PAM50 warped template file (if it exists).")
+            fname_vert_level = os.path.join('.', 'label', 'template', 'PAM50_levels.nii.gz')
     perlevel = bool(arguments.perlevel)
     slices = arguments.z
     perslice = bool(arguments.perslice)
@@ -459,17 +469,6 @@ def main(argv: Sequence[str]):
                                          param_centerline=param_centerline,
                                          verbose=verbose,
                                          remove_temp_files=arguments.r)
-    # Project discs labels to centerline for discfile
-    if arguments.discfile is not None:
-        discs_projected = project_centerline(Image(fname_segmentation), Image(fname_vert_level))
-        temp_folder = TempFolder(basename="process-segmentation")
-        path_tmp = temp_folder.get_path()
-        discs_projected.save(os.path.join(path_tmp, add_suffix(fname_vert_level, '_projected')))
-        ctl_projected = label_regions_from_reference(Image(fname_segmentation), discs_projected, centerline=True)
-        fname_vert_level = os.path.join(path_tmp, add_suffix(fname_vert_level, '_projected_centerline'))
-        ctl_projected.save(fname_vert_level)
-        if verbose == 2:
-            copy(fname_vert_level, os.getcwd())
     if normalize_pam50:
         fname_vert_level_PAM50 = os.path.join(__data_dir__, 'PAM50', 'template', 'PAM50_levels.nii.gz')
         metrics_PAM50_space = interpolate_metrics(metrics, fname_vert_level_PAM50, fname_vert_level)
