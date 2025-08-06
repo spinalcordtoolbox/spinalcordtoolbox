@@ -35,3 +35,14 @@ def test_sct_extract_metric_vertlevel_outside_bounds():
     header_row, data_rows = results[0],  np.char.strip(results[1:], '"')
     idx_vertlevel = np.where(header_row == "VertLevel")[0][0]
     assert list(data_rows[:, idx_vertlevel].astype(int)) == [5, 4]  # VertLevel column should only have 2 values
+
+
+def test_sct_extract_metric_vertfile_doesnt_exists():
+    fname_out = 'quantif_mtr.csv'
+    with pytest.raises(SystemExit) as e:
+        sct_extract_metric.main(argv=['-i', sct_test_path('mt', 'mtr.nii.gz'),
+                                      '-f', sct_test_path('mt', 'label/atlas'),
+                                      '-vertfile', sct_test_path('mt', 'label', 'template', 'levels.nii.gz'),
+                                      '-vert', '1:12', '-perlevel', '1',
+                                      '-method', 'wa', '-l', '51', '-o', fname_out])
+        assert e.value.code == 2
