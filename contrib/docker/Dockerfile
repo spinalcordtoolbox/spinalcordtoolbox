@@ -16,8 +16,11 @@ RUN apt-get update \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Install SCT
-RUN git clone https://github.com/spinalcordtoolbox/spinalcordtoolbox.git /root/sct \
+# Install version 7.0 (for example) of SCT
+RUN git clone \
+      --branch 7.0 \
+      https://github.com/spinalcordtoolbox/spinalcordtoolbox.git \
+      /root/sct \
     && /root/sct/install_sct -y
 
 # Add SCT to PATH

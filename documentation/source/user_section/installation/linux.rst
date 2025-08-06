@@ -130,8 +130,8 @@ Then, follow the example below to create an OS-specific SCT installation (in thi
     apt update
     apt install git bzip2 curl gcc git libdbus-1-3 libgl1-mesa-glx libglib2.0-0 libxkbcommon-x11-0 libxrender1
     # Note for above: libdbus-1-3, libgl1-mesa-glx, libglib2.0-0, libxkbcommon-x11-0, libxrender1 are required by PyQt
-    # Install SCT
-    git clone https://github.com/spinalcordtoolbox/spinalcordtoolbox.git sct
+    # Install SCT (you can change 7.0 for the version of your choice)
+    git clone --branch 7.0 https://github.com/spinalcordtoolbox/spinalcordtoolbox.git sct
     cd sct
     ./install_sct -y
     source /root/.bashrc
@@ -140,7 +140,7 @@ Then, follow the example below to create an OS-specific SCT installation (in thi
     # Save the state of the container as a docker image.
     # Back on the Host machine, open a new terminal and run:
     sudo docker ps -a  # list all containers (to find out the container ID)
-    # specify the ID, and also choose a name to use for the docker image, such as "sct_v6.0"
+    # specify the ID, and also choose a name to use for the docker image, such as "sct_v7.0"
     sudo docker commit <CONTAINER_ID> <IMAGE_NAME>/ubuntu:ubuntu22.04
 
 Alternatively, you can modify and use this `example Dockerfile for SCT <https://github.com/spinalcordtoolbox/spinalcordtoolbox/tree/master/contrib/docker>`__.
