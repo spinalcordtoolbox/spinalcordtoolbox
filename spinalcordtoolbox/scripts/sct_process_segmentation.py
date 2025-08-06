@@ -398,6 +398,7 @@ def main(argv: Sequence[str]):
     levels = arguments.vert
     fname_vert_level = None
     normalize_pam50 = arguments.normalize_PAM50
+    temp_folder = None
     # make sure we have a valid VertLevel file (used for aggregation + VertLevel column)
     if arguments.vertfile is not None and arguments.discfile is not None:
         parser.error("Both '-vertfile' and '-discfile' were specified. Please only specify one of these options.")
@@ -569,7 +570,7 @@ def main(argv: Sequence[str]):
         else:
             logger.warning('QC report only available for PMJ-based CSA. QC report not generated.')
     # Clean up temp
-    if arguments.r and os.path.isfile(arguments.discfile):
+    if arguments.r and temp_folder is not None:
         logger.info("\nRemove temporary files...")
         temp_folder.cleanup()
     display_open(file_out)
