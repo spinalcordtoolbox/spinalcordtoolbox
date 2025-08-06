@@ -29,7 +29,7 @@ from spinalcordtoolbox.centerline.core import ParamCenterline
 from spinalcordtoolbox.image import add_suffix, splitext, Image
 from spinalcordtoolbox.labels import project_centerline, label_regions_from_reference
 from spinalcordtoolbox.reports.qc import generate_qc
-from spinalcordtoolbox.utils.fs import get_absolute_path, copy
+from spinalcordtoolbox.utils.fs import get_absolute_path, copy, TempFolder
 from spinalcordtoolbox.utils.sys import __sct_dir__, init_sct, sct_progress_bar, set_loglevel
 from spinalcordtoolbox.utils.shell import (ActionCreateFolder, Metavar, SCTArgumentParser,
                                            display_open, parse_num_list)
@@ -463,7 +463,6 @@ def main(argv: Sequence[str]):
     # Project discs labels to centerline for discfile
     if arguments.discfile is not None:
         discs_projected = project_centerline(Image(fname_segmentation), Image(fname_vert_level))
-        from spinalcordtoolbox.utils.fs import TempFolder
         temp_folder = TempFolder(basename="process-segmentation")
         path_tmp = temp_folder.get_path()
         discs_projected.save(os.path.join(path_tmp, add_suffix(fname_vert_level, '_projected')))
