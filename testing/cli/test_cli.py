@@ -1,13 +1,14 @@
 # pytest unit tests for all cli scripts
 
 import os
-import sys
+import platform
 import pytest
 from importlib.metadata import entry_points
 import subprocess
+import sys
 import time
 
-scripts = [cs.name for cs in entry_points()['console_scripts'] if cs.value.startswith("spinalcordtoolbox")]
+scripts = [cs.name for cs in entry_points().select(group='console_scripts') if cs.value.startswith("spinalcordtoolbox")]
 
 scripts_where_no_args_is_valid = [
     'isct_test_ants',          # No args -> tests ants binaries
@@ -36,11 +37,10 @@ def test_calling_scripts_with_no_args_shows_usage(capsys, script):
     duration = time.time() - start_time
     assert completed_process.returncode == 2
     assert b'usage' in completed_process.stderr
-    # NB: macOS/Windows GitHub Actions runners are inconsistent in their processing speed. Sometimes our requirement is met,
-    #     and other times scripts take significantly longer. It's possible to just "retry" the GHA run, but to save
-    #     development headache, we just skip this check if we're on a macOS/Windows GitHub Actions runner.
-    # TODO: Revisit import profiling and see if there are new enhancements we can make to get scripts back under 2.0s
-    if not ((sys.platform.startswith("darwin") or sys.platform.startswith("win32"))
-            and "CI" in os.environ):
+    if "CI" in os.environ:
         max_duration = 2.0 if script not in deprecated_scripts else 5.0
+        # GitHub Actions' macOS 15+ runners take consistently longer, so bump by 1s
+        # macOS 13/14 runners are fine with the baseline duration (have yet to fail)
+        if sys.platform == "darwin" and int(platform.mac_ver()[0].split(".")[0]) > 14:
+            max_duration += 1.0
         assert duration < max_duration, f"Expected '{script} -h' to execute in under {max_duration}s; took {duration}"

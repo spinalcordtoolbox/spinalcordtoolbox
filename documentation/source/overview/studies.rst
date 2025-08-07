@@ -26,6 +26,17 @@ The following studies have used SCT:
 2025 
 ----
 
+-  Baker *et al.* `Cross-sectional relationships between spinal cord gray matter volume and pain in individuals with fibromyalgia and opioid use <https://doi.org/10.1038/s41598-025-13225-7>`_, **Sci. Rep.** 2025
+-  Krieger *et al.* `Depicting multiple sclerosis disease course using lesion parenchymal fraction: a quantified expression of the topographical model of multiple sclerosis. <https://doi.org/10.1093/braincomms/fcaf280>`_, **Brain Commun.** 2025
+-  Zibadinov *et al.* `Neuroimaging phenotype characterization of early aggressive and late severe multiple sclerosis: a case-control study <https://doi.org/10.1093/braincomms/fcaf254>`_, **Brain Commun.** 2025
+-  Witt *et al.* `Tract-Specific Analysis of Diffusion MRI at 3T Detects Cervical Spinal Cord Aberrations in Multiple Sclerosis <https://doi.org/10.1162/IMAG.a.72>`_, **Imaging Neurosci.** 2025
+-  Connor *et al.* `Reliability of SCIseg Automated Measurement of Midsagittal Tissue Bridges in Spinal Cord Injuries Using an External Dataset <https://doi.org/10.46292/sci25-00015>`_, **Top. Spinal Cord Inj. Rehabil.** 2025
+-  Schading-Sassenhausen *et al.* `Effect of corticospinal and reticulospinal tract damage on spastic muscle tone and mobility: a retrospective observational MRI study <https://doi.org/10.1016/j.ebiom.2025.105824>`_, **eBioMedicine** 2025
+-  Asteggiano *et al.* `Quantitative cervical cord MRI in spinal muscular atrophy: a sensitive imaging biomarker of disease evolution and treatment <https://doi.org/10.1007/s00415-025-13205-x>`_, **J. Neurol.** 2025
+-  David *et al.* `Progressive Remote Axonal Degeneration Following Spinal Cord Injury: A Histological and MRI Study <https://doi.org/10.1089/neur.2025.0011>`_, **Neurotrauma Rep.** 2025
+-  Cronin *et al.* `Comparing single-shot EPI and 2D-navigated, multi-shot EPI diffusion tensor imaging acquisitions in the lumbar spinal cord at 3T <https://doi.org/10.1016/j.mri.2025.110445>`_, **Magn. Reson. Imaging** 2025
+-  Piervincenzi *et al.* `Structural brain changes contributing to motor signs in pure hereditary spastic paraplegia type 4 <https://doi.org/10.1007/s00415-025-13155-4>`_, **J. Neurol.** 2025
+-  Witt *et al.* `Changes in Functional Connectivity in Relapsing-Remitting Multiple Sclerosis Spinal Cord Measured via Region-Based and Data-Driven Analyses <https://doi.org/10.1162/IMAG.a.51>`_, **Imaging Neuroscience** 2025
 -  Muhammad *et al.* `Semiautomated Pipeline Effectively Assesses Severity and Monitor Disease Progression in Compressed Spinal Cord of Degenerative Cervical Myelopathy Patients <https://doi.org/10.1227/neuprac.0000000000000138>`_, **Neurosurg. Pract.** 2025
 -  Jin *et al.* `Quantitative Study on Morphological Parameters of Healthy Cervical Spinal Cord Based on SCT <https://doi.org/10.12455/j.issn.1671-7104.240337>`_, **Chinese Journal of Medical Instrumentation** 2025
 -  Labounek *et al.* `Body size and intracranial volume interact with the structure of the central nervous system: A multi-center in vivo neuroimaging study <https://doi.org/10.1162/imag_a_00559>`_, **Imaging Neuroscience** 2025

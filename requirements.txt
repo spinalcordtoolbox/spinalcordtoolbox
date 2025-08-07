@@ -6,7 +6,7 @@
 # See: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4679
 acvl_utils!=0.2.1
 # Avoid 1.6 and 1.7 due to method=restore bug: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4209#issuecomment-1739644328
-dipy!=1.6.*,!=1.7.*,<1.9.0
+dipy==1.8.0
 # PyTorch's Linux distribution is very large due to its GPU support,
 # but we only need that for training models. Our users only need CPU.
 --extra-index-url https://download.pytorch.org/whl/cpu # append_to_freeze
@@ -30,8 +30,9 @@ nilearn
 # 2.3.0 and below are incompatible due to breaking API change (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4380)
 # 2.4.0/2.4.1 fail during inference due to https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4444
 # 2.4.2 causes empty predictions (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4556)
-# 2.5.2 and above will be tested manually when they are released.
-nnunetv2>2.3.0,!=2.4.*,<=2.5.1
+# 2.6 includes an API change that requires `torch>=2.3`. However, `torch==2.3` removes 
+# support for Intel Macs, and we don't want to remove support, so we use `<2.6`.
+nnunetv2>2.3.0,!=2.4.*,<2.6
 # SCT is compatible, however the upgrade to numpy==2.0.0 broke *many* upstream packages. Let's try again later. See https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4535
 numpy<2
 # - 1.7.0>onnxruntime>=1.5.1 required `brew install libomp` on macOS.

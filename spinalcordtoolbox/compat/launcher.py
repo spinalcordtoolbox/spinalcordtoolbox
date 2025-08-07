@@ -31,16 +31,17 @@ def main():
     env['VXM_BACKEND'] = 'pytorch'
     env['NEURITE_BACKEND'] = 'pytorch'
 
-    # Warn the user if they have `LD_LIBRARY_PATH` set
-    sct_lib_path = os.path.join(__sct_dir__, 'python', 'envs', 'venv_sct', 'lib')
+    # Warn the user if they have `LD_LIBRARY_PATH` set (while not triggering false positives for our own path).
+    sct_lib_path = os.path.join(__sct_dir__, 'python', 'envs', 'venv_sct', 'sct_ld_library_path')
     ld_library_path = env.get("LD_LIBRARY_PATH", "")
     if ld_library_path and ld_library_path != sct_lib_path:
         print(f"WARNING: The environment variable `LD_LIBRARY_PATH` is set to '{ld_library_path}'. "
               f"This may cause conflicts with library files bundled with SCT. Please consider unsetting "
               f"this variable if you run into errors related to 'Undefined symbols' or `.so` files.")
 
-    # Add SCT's `venv_sct/lib` folder to the `LD_LIBRARY_PATH`, allowing us to supply libraries
+    # Add SCT's `venv_sct/sct_ld_library_path` folder to the `LD_LIBRARY_PATH`, allowing us to supply libraries
     # that may be missing from the user's system, such as `libxcb-xinerama.so.0` on Ubuntu (#3925).
+    # The files inside this folder are determined at install time inside `install_sct`.
     env['LD_LIBRARY_PATH'] = (sct_lib_path if not ld_library_path
                               else os.pathsep.join([ld_library_path, sct_lib_path]))
 

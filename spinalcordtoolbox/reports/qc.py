@@ -17,7 +17,7 @@ import skimage.exposure
 from scipy.ndimage import center_of_mass
 
 from spinalcordtoolbox.image import Image, check_image_kind
-from spinalcordtoolbox.reports.qc2 import assign_label_colors_by_groups, create_qc_entry
+from spinalcordtoolbox.reports.qc2 import assign_label_colors_by_groups, create_qc_entry, add_slice_numbers
 from spinalcordtoolbox.reports.slice import Slice, Axial, Sagittal
 from spinalcordtoolbox.utils.sys import list2cmdline, LazyLoader
 
@@ -87,6 +87,22 @@ class QcImage:
             cbar.ax.tick_params(labelsize=5, length=2, pad=1.7)
             ax.text(1.5, 6, text, color='white', size=3.25)
         self._add_orientation_label(ax)
+
+        # If Axial, overlay slice numbers in the top‐left of each tile
+        if self.plane == 'Axial':
+            h, w = mask.shape
+            size = 15                 # same “radius” as in slice.py
+            patch_size = size * 2     # full tile width in pixels
+            nb_col = w // patch_size
+            nb_row = h // patch_size
+            total_slices = nb_row * nb_col
+            add_slice_numbers(
+                ax,
+                num_slices=total_slices,
+                patch_size=patch_size,
+                margin=2               # pixels inset from top‐left corner
+            )
+
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
 
@@ -613,7 +629,7 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
     # Get the aspect ratio (height/width) based on pixel size. Consider only the first 2 slices.
     qc_image.aspect_img, qc_image.aspect_mask = qcslice.aspect()[:2]
 
-    path_input = Path(fname_in1).absolute()
+    path_input = Path(fname_in1).resolve()
     path_qc = Path(path_qc)
     command = process
     cmdline = [command]
