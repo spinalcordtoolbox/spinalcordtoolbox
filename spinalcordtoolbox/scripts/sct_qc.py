@@ -11,7 +11,7 @@ from typing import Sequence
 import textwrap
 
 from spinalcordtoolbox.reports.qc import generate_qc
-from spinalcordtoolbox.utils.sys import init_sct, list2cmdline, set_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, list2cmdline, __sct_dir__, set_loglevel
 from spinalcordtoolbox.utils.shell import SCTArgumentParser
 
 
@@ -69,6 +69,11 @@ def get_parser():
         default=1,
         type=int)
     optional.add_argument(
+        '-custom-labels',
+        metavar="JSON",
+        help="Path to a JSON file containing custom region labels. Only relevant for `-p sct_label_vertebrae`.",
+        default=os.path.join(__sct_dir__, 'spinalcordtoolbox', 'reports', 'sct_label_vertebrae_regions.json'))
+    optional.add_argument(
         '-qc',
         metavar='QC',
         help='Path to save QC report.',
@@ -117,7 +122,8 @@ def main(argv: Sequence[str]):
                 process=arguments.p,
                 fps=arguments.fps,
                 p_resample=arguments.resample,
-                draw_text=bool(arguments.text_labels))
+                draw_text=bool(arguments.text_labels),
+                path_custom_labels=arguments.custom_labels)
 
 
 if __name__ == "__main__":

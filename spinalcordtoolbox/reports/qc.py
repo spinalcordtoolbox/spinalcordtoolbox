@@ -19,7 +19,7 @@ from scipy.ndimage import center_of_mass
 from spinalcordtoolbox.image import Image, check_image_kind
 from spinalcordtoolbox.reports.qc2 import assign_label_colors_by_groups, create_qc_entry, add_slice_numbers
 from spinalcordtoolbox.reports.slice import Slice, Axial, Sagittal
-from spinalcordtoolbox.utils.sys import list2cmdline, LazyLoader
+from spinalcordtoolbox.utils.sys import list2cmdline, LazyLoader, __sct_dir__
 
 mpl_figure = LazyLoader("mpl_figure", globals(), "matplotlib.figure")
 mpl_axes = LazyLoader("mpl_axes", globals(), "matplotlib.axes")
@@ -36,13 +36,6 @@ class QcImage:
     """
     Class used to create a .png file from a 2d image produced by the class "Slice"
     """
-    _labels_regions = {'PONS': 50, 'MO': 51,
-                       'C1': 1, 'C2': 2, 'C3': 3, 'C4': 4, 'C5': 5, 'C6': 6, 'C7': 7,
-                       'T1': 8, 'T2': 9, 'T3': 10, 'T4': 11, 'T5': 12, 'T6': 13, 'T7': 14, 'T8': 15, 'T9': 16,
-                       'T10': 17, 'T11': 18, 'T12': 19,
-                       'L1': 20, 'L2': 21, 'L3': 22, 'L4': 23, 'L5': 24,
-                       'S1': 25, 'S2': 26, 'S3': 27, 'S4': 28, 'S5': 29,
-                       'Co': 30}
     _color_bin_green = ["#ffffff", "#00ff00"]
     _color_bin_red = ["#ffffff", "#ff0000"]
     _seg_colormap = ["#4d0000", "#ff0000"]
@@ -75,7 +68,7 @@ class QcImage:
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
 
-    def no_seg_seg(self, mask, ax, cmap='gray', norm=None, colorbar=False, text=None, map_dict=False):
+    def no_seg_seg(self, mask, ax, cmap='gray', norm=None, colorbar=False, text=None):
         """Create figure with image overlay. Notably used by sct_registration_to_template"""
         img = ax.imshow(mask, cmap=cmap, norm=norm, interpolation=self.interpolation, aspect=self.aspect_mask)
         if colorbar:
@@ -124,7 +117,7 @@ class QcImage:
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
 
-    def label_vertebrae(self, mask, ax, map_dict=None):
+    def label_vertebrae(self, mask, ax):
         """Draw vertebrae areas, then add text showing the vertebrae names"""
         img = np.rint(np.ma.masked_where(mask < 1, mask))
         labels = np.unique(img[np.where(~img.mask)]).astype(int)  # get available labels
@@ -137,27 +130,37 @@ class QcImage:
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
 
-        # Use the existing colormap to draw colored text for any vertebral labels belonging to map_dict
-        if map_dict is None:
-            map_dict = self._labels_regions
-        
         if self._draw_text:
-            a = [0.0]
-            data = mask
-            for index, val in np.ndenumerate(data):
-                if val not in a:
-                    a.append(val)
-                    index = int(val)
-                    if index in map_dict.values():
-                        # NB: We need to subtract `min` to convert the label value into an index for the color list
-                        label_color = color_list[index - labels.min()]
-                        y, x = center_of_mass(np.where(data == val, data, 0))
-                        # Draw text with a shadow
-                        x += data.shape[1] / 25
-                        label = list(map_dict.keys())[list(map_dict.values()).index(index)]
-                        label_text = ax.text(x, y, label, color=label_color, clip_on=True)
-                        label_text.set_path_effects([mpl_patheffects.Stroke(linewidth=2, foreground='black'),
-                                                     mpl_patheffects.Normal()])
+            # Get the mapping between voxel values and text labels
+            default_path_labels = Path(__sct_dir__) / 'spinalcordtoolbox' / 'reports' / 'sct_label_vertebrae_regions.json'
+            if self._path_custom_labels is not None:
+                path_labels = Path(self._path_custom_labels)
+            else:
+                path_labels = default_path_labels
+            try:
+                dict_labels = json.loads(path_labels.read_text())
+                if not isinstance(dict_labels, dict):
+                    raise ValueError("The JSON file should contain a single dictionary")
+                for label_text in dict_labels.values():
+                    if not isinstance(label_text, str):
+                        raise ValueError(f"Not a text label: {label_text!r}")
+                dict_labels = {int(label_num): label_text for label_num, label_text in dict_labels.items()}
+            except ValueError:
+                raise ValueError(f"Invalid format for custom labels, see {default_path_labels} for an example.")
+
+            # Add the text labels
+            for label_num in labels:
+                if label_num in dict_labels:
+                    # NB: We need to subtract `min` to convert the label value into an index for the color list
+                    label_color = color_list[label_num - labels.min()]
+                    # Position the label text
+                    y, x = center_of_mass(img == label_num)
+                    x += img.shape[1] / 25
+                    # Draw text with a shadow
+                    label_text = dict_labels[label_num]
+                    ax.text(x, y, label_text, color=label_color, clip_on=True).set_path_effects(
+                        [mpl_patheffects.Stroke(linewidth=2, foreground='black'), mpl_patheffects.Normal()]
+                    )
 
     def highlight_pmj(self, mask, ax):
         """Hook to show a rectangle where PMJ is on the slice"""
@@ -260,12 +263,6 @@ class QcImage:
             kwargs['colorbar'] = True
             kwargs['text'] = 1
             ax_dim = (0, 0, 0.93, 1)
-        elif self.process == 'sct_label_vertebrae':
-            # Load mapping
-            with open("/Users/nathan/data/whole-spine/derivatives/mapping_tss.json", "r") as file:
-                map_dict = json.load(file)
-            
-            kwargs['map_dict'] = map_dict
         ax = fig.add_axes(ax_dim)
         QcImage.no_seg_seg(self, img, ax, **kwargs)
 
@@ -445,7 +442,7 @@ class QcImage:
 
 
 def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None, path_qc=None, dataset=None,
-                subject=None, process=None, fps=None, p_resample=None, draw_text=True):
+                subject=None, process=None, fps=None, p_resample=None, draw_text=True, path_custom_labels=None):
     """
     Generate a QC entry allowing to quickly review results. This function is the entry point and is called by SCT
     scripts (e.g. sct_propseg).
@@ -624,6 +621,7 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
                          "Try 'equalized' or 'contrast_stretching'")
     qc_image._fps = fps
     qc_image._draw_text = draw_text
+    qc_image._path_custom_labels = path_custom_labels
     qc_image._centermass = None  # center of mass returned by slice.Axial.get_center()
 
     # Get the aspect ratio (height/width) based on pixel size. Consider only the first 2 slices.
