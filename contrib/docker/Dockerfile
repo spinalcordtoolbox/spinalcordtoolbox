@@ -21,7 +21,7 @@ RUN git clone \
       --branch 7.0 \
       https://github.com/spinalcordtoolbox/spinalcordtoolbox.git \
       /root/sct \
-    && /root/sct/install_sct -y
+    && /root/sct/install_sct -iy
 
 # Add SCT to PATH
 ENV PATH="/root/sct/bin:$PATH"

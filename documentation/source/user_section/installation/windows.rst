@@ -299,7 +299,7 @@ First, launch Docker Desktop, then open up a new Powershell or Command Prompt wi
    # Install SCT (you can change 7.0 for the version of your choice)
    git clone --branch 7.0 https://github.com/spinalcordtoolbox/spinalcordtoolbox.git sct
    cd sct
-   ./install_sct -y
+   ./install_sct -iy
    source /root/.bashrc
    # Test SCT
    sct_testing

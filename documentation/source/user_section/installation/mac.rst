@@ -163,7 +163,7 @@ First, launch Docker Desktop, then open up a new Terminal window and run the com
    # Install SCT (you can change 7.0 for the version of your choice)
    git clone --branch 7.0 https://github.com/spinalcordtoolbox/spinalcordtoolbox.git sct
    cd sct
-   ./install_sct -y
+   ./install_sct -iy
    # For the previous command, it's normal if the last two checks show [FAIL] in red
    # This will be fixed by doing the "Enable GUI Scripts" optional step in the next section
    source /root/.bashrc
