@@ -20,10 +20,12 @@ import numpy as np
 
 from spinalcordtoolbox.metadata import read_label_file
 from spinalcordtoolbox.aggregate_slicewise import check_labels, extract_metric, save_as_csv, Metric, LabelStruc
-from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.image import Image, add_suffix
+from spinalcordtoolbox.centerline.core import get_centerline
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, list_type, parse_num_list, display_open
 from spinalcordtoolbox.utils.sys import init_sct, printv, __data_dir__, set_loglevel
-from spinalcordtoolbox.utils.fs import check_file_exist, extract_fname, get_absolute_path
+from spinalcordtoolbox.utils.fs import check_file_exist, extract_fname, get_absolute_path, TempFolder
+from spinalcordtoolbox.scripts import sct_maths
 
 
 class Param:
@@ -257,6 +259,7 @@ def get_parser():
 
     # Arguments which implement shared functionality
     parser.add_common_args()
+    parser.add_tempfile_args()
 
     return parser
 
@@ -353,9 +356,34 @@ def main(argv: Sequence[str]):
         labels_tmp[i_label] = np.expand_dims(im_label.data, 3)  # TODO: generalize to 2D input label
     labels = np.concatenate(labels_tmp[:], 3)  # labels: (x,y,z,label)
     # Load vertebral levels
-    if not levels:
+    temp_folder = None
+    if os.path.isfile(fname_vert_level):
+        # Extract centerline of vertebral levels
+        im_vertlevel = Image(fname_vert_level)
+        # Binarize vertebral levels before getting centerline
+        im_vertlevel_bin = im_vertlevel.copy()
+        im_vertlevel_bin.data[im_vertlevel_bin.data > 0] = 1
+        # Create temp path for outputs
+        temp_folder = TempFolder(basename="optic-detect-centerline")
+        path_temp = temp_folder.get_path()
+        # Extract centerline from segmentation
+        im_centerline, _, _, _ = get_centerline(im_vertlevel_bin)
+        fname_ctl = os.path.join(path_temp, add_suffix(os.path.basename(fname_vert_level), '_ctl'))
+        im_centerline.save(fname_ctl)
+        fname_ctl_levels = os.path.join(path_temp, add_suffix(os.path.basename(fname_vert_level), '_ctl_levels'))
+        # Mask the centerline with the vertebral levels
+        sct_maths.main(argv=['-i', fname_ctl, '-mul', fname_vert_level, '-o', fname_ctl_levels])
+        # Use levels on centerline instead
+        fname_vert_level = fname_ctl_levels
+    else:
+        # The severity of a missing vertlevel file depends on if levels was passed
+        message_type = 'error' if levels else 'warning'
+        message = ("Cannot aggregate by vert level." if levels else
+                   "Vert level information will not be displayed.")
+        printv(f"Vertebral level file {fname_vert_level} does not exist. {message} "
+               f"To use vertebral level information, you may need to run "
+               f"`sct_warp_template` to generate the appropriate level file in your working directory.", type=message_type)
         fname_vert_level = None
-
     # Get dimensions of data and labels
     nx, ny, nz = data.data.shape
     nx_atlas, ny_atlas, nz_atlas, nt_atlas = labels.shape
@@ -389,6 +417,9 @@ def main(argv: Sequence[str]):
 
         save_as_csv(agg_metric, fname_output, fname_in=fname_data, append=append_csv)
         append_csv = True  # when looping across labels, need to append results in the same file
+    if arguments.r and temp_folder is not None:
+        printv("\nRemove temporary files...", verbose)
+        temp_folder.cleanup()
     display_open(fname_output)
 
 
