@@ -48,13 +48,16 @@ logger = logging.getLogger(__name__)
 # (the height is automatically adjusted based on the aspect ratio of the image)
 # Notes:
 #   - This shouldn't ever need to be changed, since "target width" is related
-#     to the design of the QC report interface. If things need to be scaled,
-#     it should be done to the array itself before it is written to the .
+#     to the design of the QC report interface. The images are currently rendered
+#     at 1060px wide, so we should match that in the mosaic arrays we generate.
+#     NOTE: This will result in arrays smaller than 1060px wide, since mosaic
+#     grid wrapping won't exceed this value. But, a smaller visible mosaic is
+#     worth the trade-off of pixel accuracy when rendering the final image.
 #   - `matplotlib` uses inches/DPI to define the canvas. But, given we want
 #     a fixed output size, we can choose some arbitrary values for both.
 #     Presumably, choosing a different DPI value (and thus a different canvas
 #     size in inches) wouldn't change the output image at all. (Is this true?)
-TARGET_WIDTH_PIXL = 1500
+TARGET_WIDTH_PIXL = 1060
 DPI = 300
 TARGET_WIDTH_INCH = TARGET_WIDTH_PIXL / DPI
 
@@ -298,11 +301,13 @@ def sct_deepseg(
         if "rootlets" in argv:
             sct_deepseg_spinal_rootlets(
                 imgs_to_generate, fname_input, fname_seg, fname_seg2, species,
-                radius=(23, 23), base_scaling=2.5)  # standard upscale to see rootlets detail
+                radius=(23, 23), base_scaling=2.5,  # standard upscale to see rootlets detail
+                outline=True)  # add outlines (and labels) to highlight the difficult-to-see rootlets seg
         elif "totalspineseg" in argv:
             sct_deepseg_spinal_rootlets(
                 imgs_to_generate, fname_input, fname_seg, fname_seg2, species,
-                radius=(40, 40), base_scaling=0.5)  # downscale to get "big picture" view of all slices
+                radius=(40, 40), base_scaling=1.0,  # skip upscaling to get "big picture" view of all slices
+                outline=False)  # skip outlines (and labels) because the images will be too small to display them
         # Non-rootlets, axial/sagittal DeepSeg QC report
         elif plane == 'Axial':
             sct_deepseg_axial(
@@ -521,13 +526,12 @@ def sct_deepseg_spinal_rootlets(
                   interpolation='none',
                   aspect=aspect)
 
-        # only display outlines and segmentation labels if scale is large enough to accommodate
+        # only display outlines and segmentation labels if opted into
         # (in practice, this saves them from being added to the tiny totalspineseg QC)
-        if scale >= 1.0:
+        if outline:
             add_segmentation_labels(ax, img, colors=colormaps[i].colors, radius=tuple(r for r in radius))
-            if outline:
-                # linewidth 0.5 is too thick, 0.25 is too thin
-                plot_outlines(img, ax=ax, facecolor='none', edgecolor='black', linewidth=0.3)
+            # linewidth 0.5 is too thick, 0.25 is too thin
+            plot_outlines(img, ax=ax, facecolor='none', edgecolor='black', linewidth=0.3)
 
     ax.get_xaxis().set_visible(False)
     ax.get_yaxis().set_visible(False)
@@ -777,20 +781,22 @@ def sct_analyze_lesion(
                 # If the key exists, it means that we have tissue bridges for the current lesion and sagittal slice
                 if idx_row < len(measure_pd):
                     col_name_dorsal = f"slice_{int(sagittal_slice)}_dorsal_bridge_width [mm]"
-                    dorsal_bridge_width_mm = measure_pd[col_name_dorsal][idx_row]
-                    if col_name_dorsal in measure_pd.columns and not pd.isna(dorsal_bridge_width_mm):
-                        axes[idx_row, idx_col].text(min(np.where(slice_lesion)[0]) - 3,
-                                                    min(np.where(slice_lesion)[1]),
-                                                    f'Dorsal bridge\n{np.round(dorsal_bridge_width_mm, 2)} mm',
-                                                    color='red', fontsize=12, ha='left', va='bottom')
+                    if col_name_dorsal in measure_pd.columns:
+                        dorsal_bridge_width_mm = measure_pd[col_name_dorsal][idx_row]
+                        if not pd.isna(dorsal_bridge_width_mm):
+                            axes[idx_row, idx_col].text(min(np.where(slice_lesion)[0]) - 3,
+                                                        min(np.where(slice_lesion)[1]),
+                                                        f'Dorsal bridge\n{np.round(dorsal_bridge_width_mm, 2)} mm',
+                                                        color='red', fontsize=12, ha='left', va='bottom')
 
                     col_name_ventral = f"slice_{int(sagittal_slice)}_ventral_bridge_width [mm]"
-                    ventral_bridge_width_mm = measure_pd[col_name_ventral][idx_row]
-                    if col_name_ventral in measure_pd.columns and not pd.isna(ventral_bridge_width_mm):
-                        axes[idx_row, idx_col].text(max(np.where(slice_lesion)[0]) + 3,
-                                                    min(np.where(slice_lesion)[1]),
-                                                    f'Ventral bridge\n{np.round(ventral_bridge_width_mm, 2)} mm',
-                                                    color='red', fontsize=12, ha='right', va='bottom')
+                    if col_name_ventral in measure_pd.columns:
+                        ventral_bridge_width_mm = measure_pd[col_name_ventral][idx_row]
+                        if not pd.isna(ventral_bridge_width_mm):
+                            axes[idx_row, idx_col].text(max(np.where(slice_lesion)[0]) + 3,
+                                                        min(np.where(slice_lesion)[1]),
+                                                        f'Ventral bridge\n{np.round(ventral_bridge_width_mm, 2)} mm',
+                                                        color='red', fontsize=12, ha='right', va='bottom')
 
                 # Swap x-axis to anterior-posterior (from the current posterior-anterior), so that ventral tissue
                 # bridges are on the left and dorsal tissue bridges on the right

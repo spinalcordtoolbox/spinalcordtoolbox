@@ -110,6 +110,21 @@ def compute_expected_measurements(lesion_params, path_seg=None):
                 tissue_bridges[f"slice_{z}_ventral_bridge_width [mm]"] = min(ventral_bridge_widths)
                 tissue_bridges[f"slice_{z}_total_bridge_width [mm]"] = (min(dorsal_bridge_widths) +
                                                                         min(ventral_bridge_widths))
+            # Estimate the interpolated bridge widths at the mid-sagittal slice
+            decimal = mid_sagittal_slice - math.floor(mid_sagittal_slice)
+            z_ceil, z_floor = int(np.ceil(mid_sagittal_slice)), int(np.floor(mid_sagittal_slice))
+            for key in ['dorsal_bridge_width', 'ventral_bridge_width', 'total_bridge_width']:
+                tissue_bridges[f'interpolated_{key} [mm]'] = (decimal * tissue_bridges.get(f'slice_{z_ceil}_{key} [mm]', 0.0) +
+                                                              (1 - decimal) * tissue_bridges.get(f'slice_{z_floor}_{key} [mm]', 0.0))
+
+            # Compute the bridge ratio using the interpolated bridge widths
+            for key in ['dorsal', 'ventral']:
+                # avoid zero division
+                if tissue_bridges['interpolated_total_bridge_width [mm]'] != 0.0:
+                    tissue_bridges[f'{key}_bridge_ratio [%]'] = (tissue_bridges[f'interpolated_{key}_bridge_width [mm]'] /
+                                                                 tissue_bridges['interpolated_total_bridge_width [mm]']) * 100
+                else:
+                    tissue_bridges[f'{key}_bridge_ratio [%]'] = 0.0
         else:
             mid_sagittal_slice = None
             min_area = 0
@@ -143,8 +158,7 @@ def compute_expected_measurements(lesion_params, path_seg=None):
             'max_axial_damage_ratio []': dim[0] * dim[2] / min_area if min_area != 0 else None,
             **tissue_bridges
         }
-
-    expected_measurements_dict[idx] = measurements
+        expected_measurements_dict[idx] = measurements
 
     return expected_measurements_dict
 
@@ -158,9 +172,12 @@ def compute_expected_measurements(lesion_params, path_seg=None):
     ([(29, 27, 25), (1, 4, 1)], 0.001),  # NB: Example from #3633
     # Curved region of `t2.nii.gz` -> lots of curvature -> larger tolerance
     ([(31, 0, 25), (4, 15, 3)], 0.1),
-    # Multiple lesions
+    # Multiple lesions along the spinal cord SI axis
     ([[(31, 0, 25), (4, 15, 3)],
       [(29, 45, 25), (3, 10, 2)]], 0.1),
+    # Multiple lesions along the spinal cord RL axis
+    ([[(29, 50, 29), (2, 5, 2)],
+     [(29, 45, 23), (3, 10, 2)]], 0.1),
     # Lesion partly outside the spinal cord segmentation (z (LR) slice 19 is outside the SC seg)
     ([(29, 40, 19), (3, 3, 5)], 0.001)
 ], indirect=["dummy_lesion"])
@@ -190,6 +207,9 @@ def test_sct_analyze_lesion_matches_expected_dummy_lesion_measurements(dummy_les
     for idx, expected_measurements in expected_measurements_dict.items():
         # Validate analysis results
         for key, expected_value in expected_measurements.items():
+            # Sometimes the actual value is NaN (e.g. for lesions outside the cord). Skip checking these.
+            if np.isnan(measurements.at[idx, key]):
+                continue
             # For interpolated measures, because the midsagittal slice is computed using the **spinal cord** center of
             # mass, there is no guarantee that this interpolated slice will fully contain the lesion. Meaning, the
             # averaged value may be computed using empty slices, and thus it should be either close to or less than the
@@ -212,7 +232,10 @@ def test_sct_analyze_lesion_matches_expected_dummy_lesion_measurements(dummy_les
                 # between the spinal cord centerline and the S-I axis, as per:
                 # https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3681#discussion_r804822552
                 if key == 'max_equivalent_diameter [mm]' or 'bridge' in key:
-                    assert measurements.at[idx, key] <= expected_value
+                    # The values are the same, but one value has slightly more precision than the other, so it is
+                    # greater than expected --> rounding both values to the same number of decimal points before
+                    # comparing
+                    assert round(measurements.at[idx, key], 10) <= round(expected_value, 10)
                 elif key == 'length [mm]':
                     assert measurements.at[idx, key] >= expected_value
 
@@ -293,3 +316,46 @@ def test_sct_analyze_lesion_with_template(dummy_lesion, tmp_path, tmp_path_qc):
     _, fname, _ = extract_fname(path_lesion)
     for suffix in ['_analysis.pkl', '_analysis.xlsx', '_label.nii.gz']:
         assert os.path.isfile(tmp_path / f"{fname}{suffix}")
+
+
+@pytest.mark.sct_testing
+def test_sct_analyze_lesion_no_lesion_found(tmp_path, tmp_path_qc):
+    """Test that the script exits when no lesion is found in the input image."""
+    # Create an empty lesion mask (all zeros) using an existing test image as reference
+    path_ref = sct_test_path("t2", "t2.nii.gz")
+    path_empty_lesion = str(tmp_path/"empty_lesion.nii.gz")
+
+    # Create an empty mask (no lesion)
+    sct_label_utils.main(argv=['-i', path_ref,
+                               '-o', path_empty_lesion,
+                               '-create', '0,0,0,0'])  # Create a label at 0,0,0 with value 0 (no lesion)
+
+    # Run the analysis on the empty lesion file
+    # Use pytest's subprocess run to catch the sys.exit() call
+    from subprocess import run
+    import sys
+
+    # Run the script as a separate process to catch the exit code
+    process = run([sys.executable, '-m', 'spinalcordtoolbox.scripts.sct_analyze_lesion',
+                   '-m', path_empty_lesion,
+                   '-ofolder', str(tmp_path),
+                   '-qc', str(tmp_path_qc)],
+                  capture_output=True)
+
+    # Check that the process exited with exit code 1
+    assert process.returncode == 1
+
+    # Check that the appropriate warning message is in the output
+    assert "No lesion found in the input image" in process.stdout.decode('utf-8')
+
+    # Verify that no output files were created (or they are empty/contain default values)
+    _, fname, _ = extract_fname(path_empty_lesion)
+    for suffix in ['_analysis.pkl', '_analysis.xlsx', '_label.nii.gz']:
+        # Either the file shouldn't exist or it should be very small (just containing default structure)
+        output_file = tmp_path / f"{fname}{suffix}"
+        if os.path.exists(output_file):
+            # If pkl file exists, it should only contain empty dataframe
+            if suffix == '_analysis.pkl':
+                with open(output_file, 'rb') as f:
+                    data = pickle.load(f)
+                    assert len(data['measures']) == 0

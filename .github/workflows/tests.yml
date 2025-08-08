@@ -234,7 +234,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: Pytest QC (${{ matrix.os }})
+          name: Pytest QC (${{ runner.os }})
           path: "/tmp/pytest-of-runner/pytest-current/qc-report-current"
 
   ubuntu-22_04:
