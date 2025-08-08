@@ -169,6 +169,32 @@ def test_sct_process_segmentation_check_normalize_PAM50_missing_vertfile(tmp_pat
         assert e.value.code == 2
 
 
+def test_sct_process_segmentation_check_both_discfile_vertfile(tmp_path):
+    """ Run sct_process_segmentation with -vertfile and -discfile"""
+    filename = str(tmp_path / 'tmp_file_out.csv')
+    with pytest.raises(SystemExit) as e:
+        sct_process_segmentation.main(argv=['-i', sct_test_path('t2', 't2_seg-manual.nii.gz'),
+                                            '-vertfile', sct_test_path('t2', 't2_seg-manual_labeled.nii.gz'),
+                                            '-discfile', sct_test_path('t2', 'labels.nii.gz'), '-o', filename])
+        assert e.value.code == 2
+
+
+def test_sct_process_segmentation_check_discfile(tmp_path):
+    """ Run sct_process_segmentation with -vertfile and -discfile"""
+    filename = str(tmp_path / 'tmp_file_out.csv')
+    sct_process_segmentation.main(argv=['-i', sct_test_path('t2', 't2_seg-manual.nii.gz'),
+                                        '-vert', '1:10', '-perslice', '1',
+                                        '-discfile', sct_test_path('t2', 'labels.nii.gz'), '-o', filename])
+    with open(filename, "r") as csvfile:
+        reader = csv.DictReader(csvfile, delimiter=',')
+        rows = list(reader)
+        row = rows[10]
+        assert row['Slice (I->S)'] == '10'
+        assert row['DistancePMJ'] == ''
+        assert row['VertLevel'] == '3'
+        assert float(row['MEAN(area)']) == pytest.approx(78.58643257836141)
+
+
 @pytest.mark.sct_testing
 def test_sct_process_segmentation_no_checks():
     """Run the CLI script without checking results.
