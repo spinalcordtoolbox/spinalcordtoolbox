@@ -358,9 +358,9 @@ def main(argv: Sequence[str]):
     # Load vertebral levels
     temp_folder = None
     if os.path.isfile(fname_vert_level):
-        # Exctract centerline of vertebral levels
+        # Extract centerline of vertebral levels
         im_vertlevel = Image(fname_vert_level)
-        # Binarize vertberal levels before getting centerline
+        # Binarize vertebral levels before getting centerline
         im_vertlevel_bin = im_vertlevel.copy()
         im_vertlevel_bin.data[im_vertlevel_bin.data > 0] = 1
         # Create temp path for outputs
