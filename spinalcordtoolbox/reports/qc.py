@@ -460,7 +460,8 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
     :param p_resample: float: Resolution (in mm) to resample the image to. If not provided, resampling will fall back
                               to the default value of the specific QC report layout (typically no resampling, or 0.6mm).
                               To turn off resampling, pass `p_resample==0`.
-    :param exclude_text: bool: If provided, text won't be drawn on top of labels. Used only for sct_label_vertebrae.
+    :param draw_text: bool: If set to False, text won't be drawn on top of labels. Used only for sct_label_vertebrae.
+    :param path_custom_labels: str: Path to a JSON file with map of int->str labels. Used only for sct_label_vertebrae.
     :return: None
     """
     dpi = 300  # Output resolution of the image
