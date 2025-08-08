@@ -367,7 +367,7 @@ def main(argv: Sequence[str]):
         temp_folder = TempFolder(basename="optic-detect-centerline")
         path_temp = temp_folder.get_path()
         # Extract centerline from segmentation
-        im_centerline, _, _, _ = get_centerline(im_vertlevel)
+        im_centerline, _, _, _ = get_centerline(im_vertlevel_bin)
         fname_ctl = os.path.join(path_temp, add_suffix(os.path.basename(fname_vert_level), '_ctl'))
         im_centerline.save(fname_ctl)
         fname_ctl_levels = os.path.join(path_temp, add_suffix(os.path.basename(fname_vert_level), '_ctl_levels'))
