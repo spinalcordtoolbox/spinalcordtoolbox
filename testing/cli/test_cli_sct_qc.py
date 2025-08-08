@@ -83,8 +83,14 @@ def totalspineseg_labels(tmp_path_factory):
     return os.path.join(tmp_path, "totalspineseg_step2_output.nii.gz")
 
 
-@pytest.mark.parametrize('custom_labels', [custom_label_json, None])
-def test_sct_qc_totalspineseg_custom_labels(custom_labels, totalspineseg_labels, tmp_path_qc):
+@pytest.mark.parametrize('custom_labels,err_msg', [
+    (custom_label_json, ""),
+    (None, ""),
+    ([12, "C2"], "single dictionary"),          # JSON should be a dict
+    ({"C2": "C2"}, "invalid literal for int"),  # Keys should be integers
+    ({12: 12}, "Not a text label")              # Values should be strings
+])
+def test_sct_qc_totalspineseg_custom_labels(custom_labels, err_msg, totalspineseg_labels, tmp_path_qc):
     """Run the CLI script with custom mapping for total spine segmentation."""
     # construct the arguments for sct_qc
     args = ['-i', sct_test_path('t2', 't2.nii.gz'),
@@ -101,4 +107,12 @@ def test_sct_qc_totalspineseg_custom_labels(custom_labels, totalspineseg_labels,
             json.dump(custom_labels, f)
         args += ['-custom-labels', custom_mapping_file]
 
-    sct_qc.main(argv=args)
+    # If an err message was supplied, check for a raised error
+    if err_msg:
+        with pytest.raises(ValueError) as e:
+            sct_qc.main(argv=args)
+        assert err_msg in str(e.value)
+
+    # Otherwise, run the script normally
+    else:
+        sct_qc.main(argv=args)

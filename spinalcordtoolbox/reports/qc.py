@@ -145,8 +145,9 @@ class QcImage:
                     if not isinstance(label_text, str):
                         raise ValueError(f"Not a text label: {label_text!r}")
                 dict_labels = {int(label_num): label_text for label_num, label_text in dict_labels.items()}
-            except ValueError:
-                raise ValueError(f"Invalid format for custom labels, see {default_path_labels} for an example.")
+            except ValueError as e:
+                raise ValueError(f"Invalid format for custom labels, see {default_path_labels} for an example. "
+                                 f"({e})")
 
             # Add the text labels
             for label_num in labels:
