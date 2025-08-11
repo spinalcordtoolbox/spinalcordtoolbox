@@ -6,25 +6,25 @@ Installation with Apptainer
 .. versionadded:: 7.1
 
 .. warning::
-    This is currently experimental; while we have done our best to test and confirm all functions of SCT run identically to a native installation, we cannot guarantee that all functionalities of SCT currently operate as expected in this context. If you run into any bugs, please report them `on the forum <https://forum.spinalcordmri.org/c/sct>`_.
+    This is currently experimental; while we have done our best to test and confirm all functions of SCT run identically to a native installation, we cannot guarantee that all functionalities of SCT currently operate as expected in this context. If you run into any bugs, please report them `on the forum <https://forum.spinalcordmri.org/c/sct>`__.
 
-Like Docker, `Apptainer <https://apptainer.org/docs/user/main/introduction.html>`_ (formerly Singularity) is a portable container platform. It was designed with a focus on being used in "shared system" contexts, where multiple users with different needs require access to the same hardware. If you need to run SCT in this context, and a native install is not possible (as is often the case in High Performance Computer (HPC) clusters), you should install SCT in this way.
+Like Docker, `Apptainer <https://apptainer.org/docs/user/main/introduction.html>`__ (formerly Singularity) is a portable container platform. It was designed with a focus on being used in "shared system" contexts, where multiple users with different needs require access to the same hardware. If you need to run SCT in this context, and a native install is not possible (as is often the case in High Performance Computer (HPC) clusters), you should install SCT in this way.
 
 Using Apptainer introduces a few caveats to using SCT, however:
 
 - Apptainer containers will only work on Linux-based systems, and will not run on Windows or MacOS.
     - They can be run through Windows Subsystem for Linux (WSL) if needed, however.
 - Due to containers being static post-creation, functions which install within or modify SCT (such as ``sct_deepseg -install``) will not work.
-    - We have provided a workaround this this, should you need these functions: see :ref:`here <apptainer-task-install>` for details.
+    - We have provided a workaround for this, should you need these functions: see :ref:`here <apptainer-task-install>` for details.
 
 Installation
 ************
 
 This method will install SCT within an Apptainer container, ready for portable use.
 
-#. Install Apptainer if you have not done so already (or activate the module which contains it, if on an shared resource system)
+#. Install Apptainer if you have not done so already (or activate the module which contains it, if on an shared resource system).
 
-#. Download the ``sct_apptainer_{sct_version}.tar.gz`` file for your desired SCT release from GitHub (the current release is available `here <https://github.com/spinalcordtoolbox/spinalcordtoolbox/releases/latest/>`_).
+#. Download the ``sct_apptainer_{sct_version}.tar.gz`` file for your desired SCT release from GitHub (the current release is available `here <https://github.com/spinalcordtoolbox/spinalcordtoolbox/releases/latest/>`__).
 
 #. Move the file and unpack it. On most Linux machines, this can be done with the following command:
 
@@ -69,7 +69,7 @@ If you need to install a task after the initial ``sct.sif`` file was created, yo
     * ``sct_model_install.def``
     * The ``sct.sif`` file you generated in the prior section.
 
-#. Run the following command, replacing ``<task1> <task2>`` with the list of ``sct_deepseg`` task(s) you want to install (i.e. ``spinalcord t2_tumor``):
+#. Run the following command, replacing ``spinalcord t2_tumor`` with the list of ``sct_deepseg`` task(s) you want to install:
 
     .. code:: sh
 

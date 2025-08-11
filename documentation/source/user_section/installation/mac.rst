@@ -130,24 +130,19 @@ Procedure:
 
       pip install --user -e .
 
+.. _docker-install-macos:
 
 Option 4: Install with Docker
 -----------------------------
 
 `Docker <https://www.docker.com/what-container/>`__ is a portable (Linux, macOS, Windows) container platform.
 
-In the context of SCT, it can be used:
-
-- To run SCT on Windows, until SCT can run natively there
-- For development testing of SCT, faster than running a full-fledged
-  virtual machine
-- <your reason here>
+In the context of SCT, it can be used to test SCT in a specific OS environment; this is much faster than running a fully fledged virtual machine.
 
 Basic Installation (No GUI)
 ***************************
 
 First, `install Docker Desktop <https://docs.docker.com/desktop/install/mac-install/>`__. Then, follow the examples below to create an OS-specific SCT installation.
-
 
 Docker Image: Ubuntu
 ^^^^^^^^^^^^^^^^^^^^
@@ -162,13 +157,13 @@ First, launch Docker Desktop, then open up a new Terminal window and run the com
    # Launch interactive mode (command-line inside container)
    docker run -it ubuntu:22.04
    # Now, inside Docker container, install dependencies
-   apt-get update
-   apt install -y git curl bzip2 libglib2.0-0 libgl1-mesa-glx libxrender1 libxkbcommon-x11-0 libdbus-1-3 gcc
-   # Note for above: libglib2.0-0, libgl1-mesa-glx, libxrender1, libxkbcommon-x11-0, libdbus-1-3 are required by PyQt
-   # Install SCT
-   git clone https://github.com/spinalcordtoolbox/spinalcordtoolbox.git sct
+   apt update
+   apt install git bzip2 curl gcc git libdbus-1-3 libgl1-mesa-glx libglib2.0-0 libxkbcommon-x11-0 libxrender1
+   # Note for above: libdbus-1-3, libgl1-mesa-glx, libglib2.0-0, libxkbcommon-x11-0, libxrender1 are required by PyQt
+   # Install SCT (you can change 7.0 for the version of your choice)
+   git clone --branch 7.0 https://github.com/spinalcordtoolbox/spinalcordtoolbox.git sct
    cd sct
-   ./install_sct -y
+   ./install_sct -iy
    # For the previous command, it's normal if the last two checks show [FAIL] in red
    # This will be fixed by doing the "Enable GUI Scripts" optional step in the next section
    source /root/.bashrc
@@ -177,9 +172,10 @@ First, launch Docker Desktop, then open up a new Terminal window and run the com
    # Save the state of the container as a docker image.
    # Back on the Host machine, open a new terminal and run:
    docker ps -a  # list all containers (to find out the container ID)
-   # specify the ID, and also choose a name to use for the docker image, such as "sct_v6.0"
+   # specify the ID, and also choose a name to use for the docker image, such as "sct_v7.0"
    docker commit <CONTAINER_ID> <IMAGE_NAME>/ubuntu:ubuntu22.04
 
+Alternatively, you can modify and use this `example Dockerfile for SCT <https://github.com/spinalcordtoolbox/spinalcordtoolbox/tree/master/contrib/docker>`__.
 
 Enable GUI Scripts (Optional)
 *****************************

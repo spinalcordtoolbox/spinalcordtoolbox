@@ -8,7 +8,7 @@ We currently provide 3 different ways to install SCT on Windows machines:
 
 - :ref:`Native Windows installation (recommended) <native-installation>`
 - :ref:`Windows Subsystem for Linux (WSL) <wsl-installation>`
-- :ref:`Docker <docker-installation>`
+- :ref:`Docker <docker-install-windows>`
 
 
 -----
@@ -23,9 +23,9 @@ This set of instructions will show you how to install SCT directly on Windows.
 
 .. note::
 
-   This method was first introduced to SCT in April 2022 as part of the Version 5.6 release. Previous versions of SCT required the use of :ref:`Windows Subsystem for Linux (WSL) <wsl-installation>` or :ref:`Docker <docker-installation>` in order to support Windows.
+   This method was first introduced to SCT in April 2022 as part of the Version 5.6 release. Previous versions of SCT required the use of :ref:`Windows Subsystem for Linux (WSL) <wsl-installation>` or :ref:`Docker <docker-install-windows>` in order to support Windows.
 
-   Because this method is new to SCT, we would greatly appreciate hearing any feedback you may have about your experiences using SCT on Windows. If you encounter any issues, or have any questions or concerns, feel free to post on the `Spinalcordmri.org forums <https://forum.spinalcordmri.org/c/sct/8>`_, and SCT's development team will be happy to help.
+   Because this method is new to SCT, we would greatly appreciate hearing any feedback you may have about your experiences using SCT on Windows. If you encounter any issues, or have any questions or concerns, feel free to post on the `Spinalcordmri.org forums <https://forum.spinalcordmri.org/c/sct/8>`__, and SCT's development team will be happy to help.
 
 1. Installing Prerequisites
 ***************************
@@ -35,11 +35,11 @@ SCT depends on two pieces of software that must be set up prior to the installat
 Visual C++ 2019 runtime
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-SCT depends on `onnxruntime <https://onnxruntime.ai/docs/install/#requirements>`_, which in turn depends on the `Visual C++ 2019 runtime <https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170>`_.
+SCT depends on `onnxruntime <https://onnxruntime.ai/docs/install/#requirements>`__, which in turn depends on the `Visual C++ 2019 runtime <https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170>`__.
 
 1. It is likely that you already have this software installed, as many Windows applications rely on this software. You can check for "Microsoft Visual C++ 2015-2022 Redistributable" under the "Apps & Features" section of Windows Settings.
 
-2. If you do not have this software installed, you will typically want to install the "X64" version (``https://aka.ms/vs/17/release/vc_redist.x64.exe``) from `this page <https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#visual-studio-2015-2017-2019-and-2022>`_.
+2. If you do not have this software installed, you will typically want to install the "X64" version (``https://aka.ms/vs/17/release/vc_redist.x64.exe``) from `this page <https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#visual-studio-2015-2017-2019-and-2022>`__.
 
 
 Git for Windows
@@ -47,7 +47,7 @@ Git for Windows
 
 The easiest way to try out different versions of SCT is using Git.
 
-1. Download Git for Windows from `the Git download page <https://git-scm.com/download/win>`_.
+1. Download Git for Windows from `the Git download page <https://git-scm.com/download/win>`__.
 
 2. Run the installer.
 
@@ -63,9 +63,9 @@ The easiest way to try out different versions of SCT is using Git.
 2. Installing SCT
 *****************
 
-1. Navigate to the `Releases page <https://github.com/spinalcordtoolbox/spinalcordtoolbox/releases/>`_ , then download the ``install_sct-<version>_win.bat`` script from the "Assets" section of the latest release.
+1. Navigate to the `Releases page <https://github.com/spinalcordtoolbox/spinalcordtoolbox/releases/>`__ , then download the ``install_sct-<version>_win.bat`` script from the "Assets" section of the latest release.
 
-2. Run the script by double-clicking it. The script will fetch the SCT source code, then install the `spinalcordtoolbox` package into a Miniconda environment for you.
+2. Run the script by double-clicking it. The script will fetch the SCT source code, then install the `spinalcordtoolbox` package into a Miniforge environment for you.
 
 3. Once the installer finishes, follow the instructions given at the end of the Command Prompt window, which will instruct you to create the SCT_DIR variable, and to add the SCT installation folder to the PATH variable.
 
@@ -82,7 +82,7 @@ The easiest way to try out different versions of SCT is using Git.
 
 Cygwin is a collection of useful Unix utilities such as ``bash``, ``cd``, ``ls``, and more that combine nicely with SCT's command-line tools. In particular, ``bash`` will allow :ref:`sct_run_batch` to execute bash scripts for batch processing of subjects.
 
-1. Download the Cygwin installer from `the Cygwin installation page <https://www.cygwin.com/install.html>`_.
+1. Download the Cygwin installer from `the Cygwin installation page <https://www.cygwin.com/install.html>`__.
 
 2. Run the installer. (You can click "Next" for every section of the installer, as the default settings are sufficient.)
 
@@ -125,7 +125,7 @@ Basic installation (No GUI)
 
      - Make sure your version of Windows is up to date.
      - Make sure that you have sufficient administrative privileges for your Windows system.
-     - If you cannot update Windows, then you can try the instructions from Microsoft's `"Manual installation steps for older versions of WSL" <https://docs.microsoft.com/en-us/windows/wsl/install-manual>`_ page.
+     - If you cannot update Windows, then you can try the instructions from Microsoft's `"Manual installation steps for older versions of WSL" <https://docs.microsoft.com/en-us/windows/wsl/install-manual>`__ page.
 
 #. Install an Ubuntu distribution in Windows Subsystem for Linux (WSL)
 
@@ -143,7 +143,7 @@ Basic installation (No GUI)
 
 #. Choose the WSL version (1/2).
 
-   By default, Microsoft's instructions will create an Ubuntu environment using Version 2 of WSL. While version 2 has been tested to work with SCT, our development team tests more thoroughly using Version 1 of WSL (due to `better support from GitHub Actions <https://github.com/actions/runner-images/issues/50>`_).
+   By default, Microsoft's instructions will create an Ubuntu environment using Version 2 of WSL. While version 2 has been tested to work with SCT, our development team tests more thoroughly using Version 1 of WSL (due to `better support from GitHub Actions <https://github.com/actions/runner-images/issues/50>`__).
 
    Because of this, we recommend that you convert the WSL2 Ubuntu environment to use WSL1 before continuing. To do this, first close Ubuntu, then re-open Powershell and run the following command:
 
@@ -178,7 +178,7 @@ Basic installation (No GUI)
       git clone https://github.com/spinalcordtoolbox/spinalcordtoolbox.git
       cd spinalcordtoolbox
 
-   To select a `specific release <https://github.com/spinalcordtoolbox/spinalcordtoolbox/releases>`_, replace ``X.Y`` below with the proper release number. If you prefer to use the development version, you can skip this step.
+   To select a `specific release <https://github.com/spinalcordtoolbox/spinalcordtoolbox/releases>`__, replace ``X.Y`` below with the proper release number. If you prefer to use the development version, you can skip this step.
 
    .. code-block:: sh
 
@@ -219,7 +219,7 @@ WSL Installation with GUI (Optional)
 
 If you would like to use SCT's GUI features, or if you would like to try FSLeyes within the same Ubuntu environment, first complete the previous "Basic Installation" section, then continue on to the steps below.
 
-#. Download and install `VcXsrv <https://sourceforge.net/projects/vcxsrv/>`_, a program that makes it possible to run Linux GUI programs installed with WSL.
+#. Download and install `VcXsrv <https://sourceforge.net/projects/vcxsrv/>`__, a program that makes it possible to run Linux GUI programs installed with WSL.
 
 #. Run the newly installed ``XLaunch`` program, then click the following settings:
 
@@ -267,18 +267,19 @@ If you would like to use SCT's GUI features, or if you would like to try FSLeyes
 -----
 
 
-.. _docker-installation:
+.. _docker-install-windows:
 
 Docker installation
 -------------------
 
-`Docker <https://www.docker.com/what-container/>`_ is a portable (Linux, macOS, Windows) container platform.
+`Docker <https://www.docker.com/what-container/>`__ is a portable (Linux, macOS, Windows) container platform.
 
+In the context of SCT, it can be used to test SCT in a specific OS environment; this is much faster than running a fully fledged virtual machine.
 
 Basic Installation (No GUI)
 ***************************
 
-First, `install Docker Desktop <https://docs.docker.com/desktop/install/windows-install/>`_ using the WSL 2 backend. Then, follow the example below to create an OS-specific SCT installation.
+First, `install Docker Desktop <https://docs.docker.com/desktop/install/windows-install/>`__ using the WSL 2 backend. Then, follow the example below to create an OS-specific SCT installation.
 
 Docker Image: Ubuntu
 ^^^^^^^^^^^^^^^^^^^^
@@ -287,27 +288,28 @@ First, launch Docker Desktop, then open up a new Powershell or Command Prompt wi
 
 .. code:: bash
 
-   # Start from the Terminal
+   # Start from Powershell or the Command Prompt
    docker pull ubuntu:22.04
    # Launch interactive mode (command-line inside container)
    docker run -it ubuntu:22.04
    # Now, inside Docker container, install dependencies
-   apt-get update
-   apt install -y git curl bzip2 libglib2.0-0 libgl1-mesa-glx libxrender1 libxkbcommon-x11-0 libdbus-1-3 gcc
-   # Note for above: libglib2.0-0, libgl1-mesa-glx, libxrender1, libxkbcommon-x11-0, libdbus-1-3 are required by PyQt
-   # Install SCT
-   git clone https://github.com/spinalcordtoolbox/spinalcordtoolbox.git sct
+   apt update
+   apt install git bzip2 curl gcc git libdbus-1-3 libgl1-mesa-glx libglib2.0-0 libxkbcommon-x11-0 libxrender1
+   # Note for above: libdbus-1-3, libgl1-mesa-glx, libglib2.0-0, libxkbcommon-x11-0, libxrender1 are required by PyQt
+   # Install SCT (you can change 7.0 for the version of your choice)
+   git clone --branch 7.0 https://github.com/spinalcordtoolbox/spinalcordtoolbox.git sct
    cd sct
-   ./install_sct -y
+   ./install_sct -iy
    source /root/.bashrc
    # Test SCT
    sct_testing
    # Save the state of the container as a docker image. 
    # Back on the Host machine, open a new terminal and run:
    docker ps -a  # list all containers (to find out the container ID)
-   # specify the ID, and also choose a name to use for the docker image, such as "sct_v6.0"
+   # specify the ID, and also choose a name to use for the docker image, such as "sct_v7.0"
    docker commit <CONTAINER_ID> <IMAGE_NAME>/ubuntu:ubuntu22.04
 
+Alternatively, you can modify and use this `example Dockerfile for SCT <https://github.com/spinalcordtoolbox/spinalcordtoolbox/tree/master/contrib/docker>`__.
 
 Enable GUI Scripts (Optional)
 *****************************
@@ -329,14 +331,14 @@ First, save your Docker image if you have not already done so:
 
       docker commit <CONTAINER_ID> <IMAGE_NAME>/ubuntu:ubuntu22.04
 
-4. Install `VcXsrv <https://sourceforge.net/projects/vcxsrv/>`_.
+4. Install `VcXsrv <https://sourceforge.net/projects/vcxsrv/>`__.
 
 5. Launch an X11 Server with XLaunch
 
-- Run XLaunch, which should have been installed by default.
-- Check 'Multiple Windows' and set the **display number** to ``0``, which you will need later. (The default display number ``-1`` will automatically detect the display number, unless you are running a setup with multiple monitors it will typically use ``0``)
-- Then, you can click Next, select 'Start no Client' then click Next
-- **Uncheck** 'Native opengl' and **check** 'Disable Access Control' then click Next, then click Finish.
+   - Run XLaunch, which should have been installed by default.
+   - Check 'Multiple Windows' and set the **display number** to ``0``, which you will need later. (The default display number ``-1`` will automatically detect the display number, unless you are running a setup with multiple monitors it will typically use ``0``)
+   - Then, you can click Next, select 'Start no Client' then click Next
+   - **Uncheck** 'Native opengl' and **check** 'Disable Access Control' then click Next, then click Finish.
 
 6. Determine the IPv4 address of the virtual Ethernet Adapter by running 'ipconfig' in Powershell or the Command Prompt, then looking at the ``Ethernet adapter vEthernet (WSL)`` entry.
 
@@ -354,4 +356,4 @@ First, save your Docker image if you have not already done so:
       mkdir /tmp/runtime-root
       sct_check_dependencies
 
-   You should see two green ``[OK]`` symbols at the bottom of the report for "PyQT" and "matplotlib" checks, which represent the GUI features provided by SCT. 
+   You should see two green ``[OK]`` symbols at the bottom of the report for "PyQT" and "matplotlib" checks, which represent the GUI features provided by SCT.
