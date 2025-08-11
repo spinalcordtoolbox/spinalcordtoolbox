@@ -154,15 +154,17 @@ def compute_ascor(csa_sc, csa_canal, fname_out, append):
     df_sc = pd.read_csv(csa_sc)
     df_canal = pd.read_csv(csa_canal)
     df_ascor = pd.DataFrame()
-    df_ascor['ascor'] = df_sc['MEAN(area)'] / df_canal['MEAN(area)']
-    printv(f"Computed aSCOR: {df_ascor['ascor'].values[0]}", 1, 'normal')
-    row = [df_sc['Filename'].values[0],
-           df_canal['Filename'].values[0],
-           df_sc['Slice (I->S)'].values[0],
-           df_sc['VertLevel'].values[0],
-           df_sc['DistancePMJ'].values[0],
-           df_ascor['ascor'].values[0]]
-    df_ascor = pd.DataFrame([row], columns=INDEX_COLUMNS)
+    # Loop across rows in dataframe
+    for idx in range(len(df_sc)):
+        ascor_value = df_sc['MEAN(area)'].iloc[idx] / df_canal['MEAN(area)'].iloc[idx]
+        row = [df_sc['Filename'].iloc[idx],
+               df_canal['Filename'].iloc[idx],
+               df_sc['Slice (I->S)'].iloc[idx],
+               df_sc['VertLevel'].iloc[idx],
+               df_sc['DistancePMJ'].iloc[idx],
+               ascor_value]
+        df_ascor = pd.concat([df_ascor, pd.DataFrame([row], columns=INDEX_COLUMNS)], ignore_index=True)
+    printv(f"Computed aSCOR for {len(df_ascor)} rows.", 1, 'normal')
     # Save to csv
     save_ascor_to_csv(df_ascor, fname_out, append)
 
@@ -171,7 +173,7 @@ def save_ascor_to_csv(df_ascor, fname_out, append=False):
     if append:
         dataframe_old = pd.read_csv(fname_out, index_col=INDEX_COLUMNS)
         df_ascor = df_ascor.combine_first(dataframe_old)
-    df_ascor.to_csv(fname_out, index=False, na_rep='n/a')
+    df_ascor.to_csv(fname_out, index=False)
 
 
 def main(argv: Sequence[str]):
