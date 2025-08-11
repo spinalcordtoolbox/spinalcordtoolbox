@@ -342,8 +342,10 @@ def _rotate_segmentation_by_angle(seg_crop_r, angle_hog):
     Xc = X - x0
     Yc = Y - y0
     # Rotate coordinates
-    Xr = Xc * np.cos(-angle_hog) - Yc * np.sin(-angle_hog)
-    Yr = Xc * np.sin(-angle_hog) + Yc * np.cos(-angle_hog)
+    # If the angle is negative, the rotation is clockwise (from Left to Right).
+    # If it is positive, the rotation is counter-clockwise (from Right to Left).
+    Xr = Xc * np.cos(angle_hog) - Yc * np.sin(angle_hog)
+    Yr = Xc * np.sin(angle_hog) + Yc * np.cos(angle_hog)
     # Shift the rotated coordinates back to their original position in the image. This ensures that the rotated
     # segmentation is positioned correctly in the output image, with the rotation happening around the center of the
     # object rather than around the origin of the coordinate system.
