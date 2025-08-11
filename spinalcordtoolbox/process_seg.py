@@ -5,6 +5,7 @@ Copyright (c) 2019 Polytechnique Montreal <www.neuro.polymtl.ca>
 License: see the file LICENSE
 """
 
+import os
 import math
 import platform
 import numpy as np
@@ -491,8 +492,11 @@ def _debug_plotting_hog(angle_hog, ap0_r, ap_diameter, dim, iz, properties, rl0_
     ax1.set_title(f'Slice {iz}\nOriginal segmentation and Segmentation rotated by HOG angle')
 
     plt.tight_layout()
-    plt.show()
+    #plt.show()
     # Save the figure
-    fig.savefig(f'slice_{iz}_segmentation_properties.png', dpi=300, bbox_inches='tight')
+    if not os.path.exists('hog_debug_figures'):
+        os.makedirs('hog_debug_figures')
+    fname_out = os.path.join('hog_debug_figures', f'slice_{iz}.png')
+    fig.savefig(fname_out, dpi=300, bbox_inches='tight')
     plt.close(fig)  # Close the figure to free up memory
-    print(f'Saved figure for slice {iz} with segmentation properties to "slice_{iz}_segmentation_properties.png"')
+    print(f'Saved debug figure for slice {iz} with segmentation properties to {fname_out}')
