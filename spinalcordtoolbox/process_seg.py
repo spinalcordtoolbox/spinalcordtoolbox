@@ -503,7 +503,7 @@ def _debug_plotting_hog(angle_hog, ap0_r, ap_diameter, dim, iz, properties, rl0_
     ax1.set_title(f'Slice {iz}\nOriginal segmentation and Segmentation rotated by HOG angle')
 
     plt.tight_layout()
-    #plt.show()
+    # plt.show()
     # Save the figure
     if not os.path.exists('hog_debug_figures'):
         os.makedirs('hog_debug_figures')
