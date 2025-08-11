@@ -488,6 +488,7 @@ def main(argv: Sequence[str]):
                                          remove_temp_files=arguments.r)
     if normalize_pam50:
         fname_vert_level_PAM50 = os.path.join(__data_dir__, 'PAM50', 'template', 'PAM50_levels.nii.gz')
+        metrics_native_space = metrics  # Save metrics in native space to use them for HOG angle QC
         metrics_PAM50_space = interpolate_metrics(metrics, fname_vert_level_PAM50, fname_vert_level)
         if not levels:  # If no levels -vert were specified by user
             if verbose == 2:
@@ -588,7 +589,7 @@ def main(argv: Sequence[str]):
             qc2.sct_process_segmentation(
                 fname_input=fname_image,
                 fname_seg=fname_segmentation,
-                metrics=metrics,
+                metrics=metrics_native_space if normalize_pam50 else metrics,
                 argv=argv,
                 path_qc=arguments.qc,
                 dataset=arguments.qc_dataset,
