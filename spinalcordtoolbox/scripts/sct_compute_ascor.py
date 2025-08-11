@@ -142,7 +142,58 @@ def get_parser():
              "centerline and the axial plane. If the cord is already quasi-orthogonal to the slab, you can set "
              "-angle-corr to 0."
     )
-
+    optional.add_argument(
+        '-angle-corr-centerline',
+        metavar=Metavar.str,
+        help="Image to be used as a centerline for computing angle correction (can be either a cord segmentation or a "
+             "single-voxel centerline mask). This argument is optional; if not provided, the centerline will be "
+             "derived from the input segmentation. Use this option if the input segmentation is irregularly shaped "
+             "(e.g. gray/white matter). In such a case, it is best to pass the full cord segmentation to this option, "
+             "as you will get a more accurate centerline (and thus a more accurate, consistent angle correction)."
+    )
+    optional.add_argument(
+        '-centerline-algo',
+        choices=['polyfit', 'bspline', 'linear', 'nurbs'],
+        default='bspline',
+        help="Algorithm for centerline fitting. Only relevant with `-angle-corr 1`."
+    )
+    optional.add_argument(
+        '-centerline-smooth',
+        metavar=Metavar.int,
+        type=int,
+        default=30,
+        help="Degree of smoothing for centerline fitting. Only use with `-centerline-algo {bspline, linear}`."
+    )
+    optional.add_argument(
+        '-pmj',
+        metavar=Metavar.file,
+        type=get_absolute_path,
+        help="Ponto-Medullary Junction (PMJ) label file. "
+             "Example: `pmj.nii.gz`"
+    )
+    optional.add_argument(
+        '-pmj-distance',
+        type=float,
+        metavar=Metavar.float,
+        help="Distance (mm) from Ponto-Medullary Junction (PMJ) to the center of the mask used to compute morphometric "
+             "measures. (To be used with flag `-pmj`.)"
+    )
+    optional.add_argument(
+        '-pmj-extent',
+        type=float,
+        metavar=Metavar.float,
+        default=20.0,
+        help="Extent (in mm) for the mask used to compute morphometric measures. Each slice covered by the mask is "
+             "included in the calculation. (To be used with flag `-pmj` and `-pmj-distance`.)"
+    )
+    optional.add_argument(
+        '-normalize-PAM50',
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1],
+        default=0,
+        help="Set to 1 to bring the metrics in the PAM50 anatomical dimensions perslice. `-vertfile` and `-perslice` need to be specified."
+    )
     # Arguments which implement shared functionality
     parser.add_common_args()
     parser.add_tempfile_args()
@@ -172,7 +223,7 @@ def compute_ascor(csa_sc, csa_canal, fname_out, append):
 def save_ascor_to_csv(df_ascor, fname_out, append=False):
     if append:
         dataframe_old = pd.read_csv(fname_out, index_col=INDEX_COLUMNS)
-        df_ascor = df_ascor.combine_first(dataframe_old)
+        df_ascor = pd.concat([dataframe_old.reset_index(), df_ascor], ignore_index=True)
     df_ascor.to_csv(fname_out, index=False)
 
 
@@ -194,17 +245,20 @@ def main(argv: Sequence[str]):
     path_tmp = temp_folder.get_path()
     # Run sct_process_segmentation on spinal cord segmentation
     printv("Running sct_process_segmentation on spinal cord segmentation...", verbose, 'normal')
+    # Remove '-i-SC', '-o', and '-i-canal' arguments from argv before passing to sct_process_segmentation
+    process_seg_argv = [a for i, a in enumerate(argv) if argv[i-1] not in ['-i-SC', '-o', '-i-canal'] and a not in ['-i-SC', '-o', '-i-canal']]
     sct_process_segmentation.main(
                                   ['-i', fname_sc_segmentation,
                                    '-o', os.path.join(path_tmp, "sc.csv"),
-                                   ] + argv[6:]  # pass all other arguments to sct_process_segmentation
+                                   ] + process_seg_argv  # pass all other arguments to sct_process_segmentation
     )
     # Run sct_process_segmentation on spinal canal segmentation
     printv("Running sct_process_segmentation on spinal canal segmentation...", verbose, 'normal')
+    # Remove '-i-SC', '-o', and '-i-canal' arguments from argv before passing to sct_process_segmentation
     sct_process_segmentation.main(
-                                 ['-i', fname_canal_segmentation,
-                                  '-o', os.path.join(path_tmp, "canal.csv"),
-                                  ] + argv[6:]  # pass all other arguments to sct_process_segmentation
+                                  ['-i', fname_canal_segmentation,
+                                   '-o', os.path.join(path_tmp, "canal.csv"),
+                                   ] + process_seg_argv  # pass all other arguments to sct_process_segmentation
     )
     # Compute aSCOR
     printv("Computing aSCOR...", verbose, 'normal')
