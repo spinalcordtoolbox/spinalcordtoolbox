@@ -40,8 +40,8 @@ def get_parser():
     # Initialize the parser
     parser = SCTArgumentParser(
         description=textwrap.dedent("""
-            Compute normalized morphometric metrics to assess:
-
+            Compute adapted spinal cord ratio (aSCOR) from spinal cord and spinal canal segmentation masks.
+            The aSCOR is defined as the ratio between the cross-sectional area of the spinal cord and the cross-sectional area of the spinal canal at the same vertebral level.
         """),  # noqa: E501 (line too long)
     )
 
@@ -51,13 +51,15 @@ def get_parser():
         metavar=Metavar.file,
         help=textwrap.dedent("""
             Spinal cord segmentation mask to compute morphometrics from. If spinal cord segmentation is provided, MSCC is computed. If spinal canal segmentation (spinal cord + CSF) is provided, MCC is computed. Example: `sub-001_T2w_seg.nii.gz`
+            Spinal cord segmentation can be obtained with `sct_deepseg spinalcord`.
         """),  # noqa: E501 (line too long)
     )
     mandatory.add_argument(
         '-i-canal',
         metavar=Metavar.file,
         help=textwrap.dedent("""
-            Spinal canal segmentation mask to compute morphometrics from. If spinal cord segmentation is provided, MSCC is computed. If spinal canal segmentation (spinal cord + CSF) is provided, MCC is computed. Example: `sub-001_T2w_seg.nii.gz`
+            Spinal canal segmentation mask to compute morphometrics from. Example: `sub-001_T2w_canal_seg.nii.gz`
+            Canal segmentation can be obtained with `sct_deepseg sc_canal_t2`.
         """),  # noqa: E501 (line too long)
     )
     optional = parser.optional_arggroup
@@ -202,6 +204,14 @@ def get_parser():
 
 
 def compute_ascor(csa_sc, csa_canal, fname_out, append):
+    """
+    Computes the aSCOR (area Spinal Cord to area Canal Ratio) for each row in the provided CSV files and saves the results to a CSV file.
+
+    :param str csa_sc: Path to the CSV file containing spinal cord area measurements.
+    :param str csa_canal: Path to the CSV file containing spinal canal area measurements.
+    :param str fname_out: Path to the output CSV file where the computed aSCOR values will be saved.
+    :param bool append: If True, append the results to the output file; otherwise, overwrite the file.
+    """
     df_sc = pd.read_csv(csa_sc)
     df_canal = pd.read_csv(csa_canal)
     df_ascor = pd.DataFrame()
@@ -221,6 +231,15 @@ def compute_ascor(csa_sc, csa_canal, fname_out, append):
 
 
 def save_ascor_to_csv(df_ascor, fname_out, append=False):
+    """
+    Saves the aSCOR DataFrame to a CSV file.
+
+    :param pandas.DataFrame: df_ascor : The DataFrame containing aSCOR results to be saved.
+    :param str: fname_out : Path to the output CSV file.
+    :param bool: append : If True, appends `df_ascor` to the existing CSV file. If False, overwrites the file. Default is False.
+    :return None
+
+    """
     if append:
         dataframe_old = pd.read_csv(fname_out, index_col=INDEX_COLUMNS)
         df_ascor = pd.concat([dataframe_old.reset_index(), df_ascor], ignore_index=True)
@@ -232,8 +251,7 @@ def main(argv: Sequence[str]):
     arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_loglevel(verbose=verbose, caller_module_name=__name__)    # values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG]
-    # Step 0: Argument loading and validation
-    # ---------------------------
+
     # Load input and output filenames
     fname_sc_segmentation = get_absolute_path(arguments.i_SC)
     fname_canal_segmentation = get_absolute_path(arguments.i_canal)
