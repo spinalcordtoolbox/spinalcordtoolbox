@@ -230,8 +230,6 @@ def save_ascor_to_csv(df_ascor, fname_out, append=False):
 def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
-    # Get all arguments (including defaults) as a dictionary
-    print(argv[6:])
     verbose = arguments.v
     set_loglevel(verbose=verbose, caller_module_name=__name__)    # values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG]
     # Step 0: Argument loading and validation
