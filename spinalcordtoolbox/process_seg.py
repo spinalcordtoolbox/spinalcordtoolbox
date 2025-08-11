@@ -477,7 +477,10 @@ def _debug_plotting_hog(angle_hog, ap0_r, ap_diameter, dim, iz, properties, rl0_
     # Center of mass
     ax1.plot(ap0_r, rl0_r, 'ro', markersize=10, label='Rotated Segmentation Center of Mass')
     # Draw arrow for the rotation angle
-    angle_hog = -angle_hog  # flip sign to match PCA convention
+    # Flip sign to match PCA convention
+    # See https://github.com/spinalcordtoolbox/spinalcordtoolbox/blob/ba30577e80a4e7387498820f0ff30b8965fbf2a4/spinalcordtoolbox/registration/algorithms.py#L834
+    # TODO: figure out why the link below flip the angle sign only for src_hog but not for dest_hog
+    angle_hog = -angle_hog
     ax1.arrow(ap0_r, rl0_r, np.sin(angle_hog + (90 * math.pi / 180)) * 25,
               np.cos(angle_hog + (90 * math.pi / 180)) * 25, color='black', width=0.1,
               head_width=1, label=f'HOG angle = {angle_hog * 180 / math.pi:.1f}°')  # convert to degrees
