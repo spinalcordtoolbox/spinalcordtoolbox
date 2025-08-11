@@ -14,7 +14,7 @@ import logging
 from typing import Sequence
 from spinalcordtoolbox.utils.fs import extract_fname, get_absolute_path, TempFolder
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
-from spinalcordtoolbox.utils.shell import parse_num_list, Metavar, SCTArgumentParser
+from spinalcordtoolbox.utils.shell import parse_num_list, display_open, Metavar, SCTArgumentParser
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.centerline.core import get_centerline, ParamCenterline
@@ -171,7 +171,7 @@ def save_ascor_to_csv(df_ascor, fname_out, append=False):
     if append:
         dataframe_old = pd.read_csv(fname_out, index_col=INDEX_COLUMNS)
         df_ascor = df_ascor.combine_first(dataframe_old)
-    df_ascor.to_csv(fname_out, na_rep='n/a')
+    df_ascor.to_csv(fname_out, index=False, na_rep='n/a')
 
 
 def main(argv: Sequence[str]):
@@ -208,6 +208,7 @@ def main(argv: Sequence[str]):
     printv("Computing aSCOR...", verbose, 'normal')
     compute_ascor(os.path.join(path_tmp, "sc.csv"), os.path.join(path_tmp, "canal.csv"), fname_out, arguments.append)
     printv(f'\nSaved: {os.path.abspath(fname_out)}')
+    display_open(os.path.abspath(fname_out))
     # Clean up temp
     if arguments.r and temp_folder is not None:
         logger.info("\nRemove temporary files...")
