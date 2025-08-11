@@ -341,7 +341,7 @@ def _rotate_segmentation_by_angle(seg_crop_r, angle_hog):
     # Center the coordinates
     Xc = X - x0
     Yc = Y - y0
-    # Rotate coordinates (negative sign for counter-clockwise rotation)
+    # Rotate coordinates
     Xr = Xc * np.cos(-angle_hog) - Yc * np.sin(-angle_hog)
     Yr = Xc * np.sin(-angle_hog) + Yc * np.cos(-angle_hog)
     # Shift the rotated coordinates back to their original position in the image. This ensures that the rotated
@@ -475,7 +475,7 @@ def _debug_plotting_hog(angle_hog, ap0_r, ap_diameter, dim, iz, properties, rl0_
     # Center of mass
     ax1.plot(ap0_r, rl0_r, 'ro', markersize=10, label='Rotated Segmentation Center of Mass')
     # Draw arrow for the rotation angle
-    # angle_hog = -angle_hog  # flip sign to match PCA convention
+    angle_hog = -angle_hog  # flip sign to match PCA convention
     ax1.arrow(ap0_r, rl0_r, np.sin(angle_hog + (90 * math.pi / 180)) * 25,
               np.cos(angle_hog + (90 * math.pi / 180)) * 25, color='black', width=0.1,
               head_width=1, label=f'HOG angle = {angle_hog * 180 / math.pi:.1f}°')  # convert to degrees

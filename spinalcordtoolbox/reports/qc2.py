@@ -392,7 +392,7 @@ def add_angle_lines(ax, num_slices, metrics, radius: tuple[int, int] = (15, 15),
             # Plot the line
             ax.plot([x_start, x_end], [y_start, y_end], '-', color='red', linewidth=0.7)
             # Include the angle text in degrees
-            angle_deg = -np.degrees(angle_rad)
+            angle_deg = -np.degrees(angle_rad)  # flip sign to match PCA convention
             ax.text(x_mosaic + radius[0] * 0.2, y_mosaic - radius[1] * 0.3,  # upper right corner
                     f'{angle_deg:.1f}°', color='red', fontsize=3,
                     path_effects=[mpl_patheffects.withStroke(linewidth=0.5, foreground='white')])
