@@ -9,17 +9,12 @@
 import sys
 import os
 import textwrap
-import numpy as np
 import logging
 from typing import Sequence
-from spinalcordtoolbox.utils.fs import extract_fname, get_absolute_path, TempFolder
+from spinalcordtoolbox.utils.fs import get_absolute_path, TempFolder
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 from spinalcordtoolbox.utils.shell import parse_num_list, display_open, Metavar, SCTArgumentParser
-
-from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.centerline.core import get_centerline, ParamCenterline
-from spinalcordtoolbox.types import Centerline
-from spinalcordtoolbox.utils.sys import __data_dir__, LazyLoader
+from spinalcordtoolbox.utils.sys import LazyLoader
 from spinalcordtoolbox.scripts import sct_process_segmentation
 
 pd = LazyLoader("pd", globals(), "pandas")
