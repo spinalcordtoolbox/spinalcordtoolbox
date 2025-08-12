@@ -14,6 +14,7 @@ from typing import Sequence
 from spinalcordtoolbox.utils.fs import get_absolute_path, TempFolder
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 from spinalcordtoolbox.utils.shell import parse_num_list, display_open, Metavar, SCTArgumentParser
+from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.utils.sys import LazyLoader
 from spinalcordtoolbox.scripts import sct_process_segmentation
 
@@ -250,7 +251,12 @@ def main(argv: Sequence[str]):
     # Load input and output filenames
     fname_sc_segmentation = get_absolute_path(arguments.i_SC)
     fname_canal_segmentation = get_absolute_path(arguments.i_canal)
-    # TODO check that they are both in the same space
+    img_sc = Image(fname_sc_segmentation).change_orientation('RPI')
+    img_canal = Image(fname_canal_segmentation).change_orientation('RPI')
+    if not img_sc.data.shape == img_canal.data.shape:
+        raise ValueError(f"Shape mismatch between spinal cord segmentation [{img_sc.data.shape}],"
+                         f" and canal segmentation [{img_canal.data.shape}]). "
+                         f"Please verify that your spinal cord and canal segmentations were done in the same space.")
     fname_out = arguments.o
     temp_folder = TempFolder(basename="process-segmentation")
     path_tmp = temp_folder.get_path()
