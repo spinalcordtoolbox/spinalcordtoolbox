@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Compute adapted spinal cord ration (aSCOR) from spinal cord and spinal canal masks.
+# Compute adapted Spinal Cord Occupation Ratio (aSCOR) from spinal cord and spinal canal masks.
 # morphometrics.
 #
 # Copyright (c) 2023 Polytechnique Montreal <www.neuro.polymtl.ca>
@@ -35,7 +35,7 @@ def get_parser():
     # Initialize the parser
     parser = SCTArgumentParser(
         description=textwrap.dedent("""
-            Compute adapted spinal cord ratio (aSCOR) from spinal cord and spinal canal segmentation masks.
+            Compute adapted Spinal Cord Occupation Ratio (aSCOR) from spinal cord and spinal canal segmentation masks.
             The aSCOR is defined as the ratio between the cross-sectional area of the spinal cord and the cross-sectional area of the spinal canal at the same vertebral level.
         """),  # noqa: E501 (line too long)
     )
