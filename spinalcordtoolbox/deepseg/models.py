@@ -486,17 +486,16 @@ TASKS = {
          'models': ['model_seg_ms_lesion_mp2rage'],
          'citation': textwrap.dedent("""
              ```bibtex
-             @article{10.1162/imag_a_00218,
-                      author{Valošek, Jan and Mathieu, Theo and Schlienger, Raphaëlle and Kowalczyk, Olivia S. and Cohen-Adad, Julien},
-                      title"{Automatic Segmentation of the Spinal Cord Nerve Rootlets}",
-                      journal{Imaging Neuroscience},
-                      year{2024},
-                      month{06},
-                      issn{2837-6056},
-                      doi{10.1162/imag_a_00218},
-                      url{https://doi.org/10.1162/imag_a_00218},
+             @inproceedings{laines2024automatic,
+                 author={Laines Medina, N. and Mchinda, S. and Testud, B. and Demorti{\\`e}re, S. and Chen, M. and Granziera, G. and Reich, D. and Tsagkas, C. and Cohen-Adad, 
+                 J. and Callot, V.},
+                 title={Automatic Multiple Sclerosis Lesion Segmentation in the Spinal Cord on 3T and 7T MP2RAGE Images},
+                 booktitle={Proceedings of the 40th Annual Scientific Meeting of the ESMRMB},
+                 year={2024},
+                 address={Barcelona, Spain},
+                 pages={171}
              }
-             ```"""),
+             ```"""),  # noqa E501 (line too long)
          'group': 'pathology'
          },
     'lesion_ms':
