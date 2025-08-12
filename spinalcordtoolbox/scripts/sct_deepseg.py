@@ -210,13 +210,15 @@ def get_parser(subparser_to_return=None):
                  f"`sct_deepseg {task_name} -i t2.nii.gz`")
 
         params = subparser.add_argument_group('\nPARAMETERS')
+        thr_values = [models.MODELS[model_name]['thr'] for model_name in task_dict['models']]
         params.add_argument(
             "-thr",
             type=float,
             dest='binarize_prediction',
-            help="Binarize segmentation with specified threshold. Set to 0 for no thresholding (i.e., soft segmentation). "
-                 "Default value is model-specific and was set during optimization "
-                 "(more info at https://github.com/sct-pipeline/deepseg-threshold).",
+            help=(SUPPRESS if all(t is None for t in thr_values) else
+                  f"Binarize segmentation with specified threshold. Set to 0 for no thresholding (i.e., soft segmentation). "
+                  f"Default value is '{thr_values}', and was chosen by experimentation "
+                  f"(more info at https://github.com/sct-pipeline/deepseg-threshold)."),
             metavar=Metavar.float)
         params.add_argument(
             "-largest",
