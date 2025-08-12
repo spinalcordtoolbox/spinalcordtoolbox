@@ -187,8 +187,8 @@ def get_parser(subparser_to_return=None):
             metavar=Metavar.file)
         input_output.add_argument(
             "-o",
-            help="Output file name. In case of multi-class segmentation, class-specific suffixes will be added. By default,"
-                 "the suffix specified in the packaged model will be added and output extension will be `.nii.gz`.",
+            help="Output file name. The chosen filename will be used as a base name, and model-specific suffixes will "
+                 "be added to the end depending on the type of output (e.g. '_cord.nii.gz', '_gm.nii.gz', etc.).",
             metavar=Metavar.str)
 
         seg = subparser.add_argument_group('\nTASKS')
