@@ -264,18 +264,26 @@ def get_parser(subparser_to_return=None):
             metavar=Metavar.str,
             choices=('Axial', 'Sagittal'),
             default='Axial',
-            help="Plane of the output QC. If Sagittal, it is highly recommended to provide the `-qc-seg` option, "
-                 "as it will ensure the output QC is cropped to a reasonable field of view. "
-                 "(Note: Sagittal view is not currently supported for rootlets/totalspineseg QC.)")
+            # Note: Sagittal view is not currently supported for rootlets/totalspineseg QC
+            help=(SUPPRESS if task_name in ('rootlets', 'totalspineseg') else
+                  "Plane of the output QC. If Sagittal, it is highly recommended to provide the `-qc-seg` option, "
+                  "as it will ensure the output QC is cropped to a reasonable field of view."))
+
+        # This note is meaningless for rootlets/totalspineseg QC since sagittal mosaics aren't supported.
+        note_qc_seg = ""
+        if task_name not in ('rootlets', 'totalspineseg'):
+            note_qc_seg += dedent("""
+
+                If `-qc-seg` is not provided, the default behavior will depend on the value of `-qc-plane`:
+                  - 'Axial': Without '-qc-seg', a sensible crop radius between 15-40 vox will be automatically used, depending on the resolution and segmentation type.
+                  - 'Sagittal': Without '-qc-seg', the full image will be displayed by default. (For very large images, this may cause a crash, so using `-qc-seg` is highly recommended.)
+            """)   # noqa: E501 (line too long)
         misc.add_argument(
             "-qc-seg",
             metavar=Metavar.file,
-            help=dedent("""
-                    Segmentation file to use for cropping the QC. This option is useful when you want to QC a region that is different from the output segmentation. For example, for lesion segmentation, it might be useful to provide a cord segmentation to expand the QC field of view to include the full cord, while also still excluding irrelevant tissue.
-                    If not provided, the default behavior will depend on the `-qc-plane`:
-                       - 'Axial': A sensibly chosen crop radius between 15-40 vox, depending on the resolution and segmentation type.
-                       - 'Sagittal': The full image. (For very large images, this may cause a crash, so using `-qc-seg` is highly recommended.)
-                """)  # noqa: E501 (line too long)
+            help="Segmentation file to use for cropping the QC. This option is useful when you want to QC a region "
+                 "that is different from the output segmentation. For example, it might be useful to provide a "
+                 "dilated cord segmentation to expand the QC field of view." + note_qc_seg
         )
 
         # Add common arguments
