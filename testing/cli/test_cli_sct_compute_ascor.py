@@ -2,9 +2,6 @@
 
 import pytest
 import logging
-import numpy as np
-import tempfile
-import nibabel
 import csv
 
 from spinalcordtoolbox.scripts import sct_compute_ascor, sct_crop_image
