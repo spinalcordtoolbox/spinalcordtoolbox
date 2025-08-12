@@ -199,14 +199,15 @@ def get_parser(subparser_to_return=None):
         seg.add_argument(
             "-custom-url",
             nargs="+",  # NB: `nargs="+"` won't work for installing custom ensemble models, but we no longer have any
-            help="URL(s) pointing to the `.zip` asset for a model release. This option can be used with `-install` to "
-                 "install a specific version of a model. To use this option, navigate to the 'Releases' page of the model, "
-                 "find release you wish to install, and right-click + copy the URL of the `.zip` listed under 'Assets'.\n"
-                 "NB: For multi-model tasks, provide multiple URLs. For single models, just provide one URL.\n"
-                 "Example:\n"
-                 "`sct_deepseg rootlets -install -custom-url "
-                 "https://github.com/ivadomed/model-spinal-rootlets/releases/download/r20240523/model-spinal-rootlets_ventral_D106_r20240523.zip`\n"
-                 "`sct_deepseg rootlets -i sub-amu01_T2w.nii.gz`")
+            # NB: For multi-model tasks, provide multiple URLs. For single models, just provide one URL.
+            #     We don't mention it in the help because we no longer have any multi-model tasks.
+            #     But, if we were to re-add a multi-model task one day, we could selectively amend this message.
+            help=f"URL(s) pointing to the `.zip` asset for a model release. This option can be used with `-install` to "
+                 f"install a specific version of a model. To use this option, navigate to the 'Releases' page of the model, "
+                 f"find release you wish to install, and right-click + copy the URL of the `.zip` listed under 'Assets'.\n"
+                 f"Example:\n"
+                 f"`sct_deepseg {task_name} -install -custom-url CUSTOM_URL`\n"
+                 f"`sct_deepseg {task_name} -i t2.nii.gz`")
 
         params = subparser.add_argument_group('\nPARAMETERS')
         params.add_argument(
