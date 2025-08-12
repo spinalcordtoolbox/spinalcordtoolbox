@@ -173,12 +173,17 @@ def get_parser(subparser_to_return=None):
         )
 
         input_output = subparser.add_argument_group("\nINPUT/OUTPUT")
+        note_lesion_ms_mp2rage = dedent(f"""
+
+            Note: For `lesion_ms_mp2rage`, the input
+            data must be cropped around the spinal cord.
+            ({models.CROP_MESSAGE})
+        """)
         input_output.add_argument(
             "-i",
             nargs="+",
-            help=f"Image to segment. Can be multiple images (separated with space)."
-                 f"\n\nNote: If choosing `lesion_ms_mp2rage`, then the input "
-                 f"data must be cropped around the spinal cord. ({models.CROP_MESSAGE})",
+            help=("Image to segment. Can be multiple images (separated with space)."
+                  + (note_lesion_ms_mp2rage if task_name == 'lesion_ms_mp2rage' else "")),
             metavar=Metavar.file)
         input_output.add_argument(
             "-o",
