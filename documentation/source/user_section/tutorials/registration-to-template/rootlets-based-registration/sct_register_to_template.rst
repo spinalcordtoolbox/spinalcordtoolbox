@@ -1,5 +1,5 @@
 Registration algorithm: ``sct_register_to_template -lrootlet``
-####################################################
+##############################################################
 
 Traditional template-based registration of the spinal cord uses intervertebral discs for alignment. However, substantial anatomical variability across individuals exists between vertebral and spinal levels. Spinal nerve rootlets, which are more consistent across individuals, can be used instead to improve registration accuracy `(Bedard & al, 2025) <https://doi.org/10.1162/IMAG.a.123>`__.
 
