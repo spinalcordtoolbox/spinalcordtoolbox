@@ -173,6 +173,10 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
             # compute PCA and get center or mass based on segmentation; centermass_src: [RL, AP] (assuming RPI orientation)
             coord_src, pca_src, centermass_src = compute_pca(current_patch_scaled)
             # Finds the angle of the image
+            # TODO: explore different sigma values for the HOG method, i.e., the influence how far away pixels will vote for the orientation.
+            # TODO: double-check if sigma is in voxel or mm units.
+            # TODO: do we want to use the same sigma for all slices? As the spinal cord sizes vary across the z-axis.
+            # TODO: Use the angle line found by the HOG method to compute symmetry (based on right and left CSA).
             angle_hog, conf_src = find_angle_hog(current_patch_im_scaled, centermass_src,
                                                  px, py, angle_range=40)    # 40 is taken from registration.algorithms.register2d_centermassrot
 
