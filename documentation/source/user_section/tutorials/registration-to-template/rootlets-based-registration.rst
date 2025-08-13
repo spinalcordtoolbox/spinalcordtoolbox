@@ -9,6 +9,5 @@ This tutorial demonstrates how to `register <http://jpeelle.net/mri/image_proces
    :maxdepth: 1
 
    rootlets-registration/before-starting
-   rootlets-registration/rootlets-segmentation
-   rootlets-registration/labeling
-   rootlets-registration/template-registration
+   rootlets-registration/sct_register_to_template
+   rootlets-registration/applying-the-registration-algorithm
