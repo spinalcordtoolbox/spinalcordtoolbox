@@ -1,4 +1,4 @@
-.. _applying-registration-algorithm:
+.. _applying-registration-rootlets-algorithm:
 
 Applying the registration algorithm
 ###################################
