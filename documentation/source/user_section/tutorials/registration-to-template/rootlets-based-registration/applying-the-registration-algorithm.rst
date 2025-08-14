@@ -7,7 +7,7 @@ To apply the registration algorithm, the following command is used:
 
 .. code:: sh
 
-   sct_register_to_template -i t2.nii.gz -s t2_seg.nii.gz -l t2_labels_vert.nii.gz -c t2 -qc ~/qc_singleSubj
+   sct_register_to_template -i t2.nii.gz -s t2_seg.nii.gz -lrootlet t2_rootlets.nii.gz -c t2 -qc ~/qc_singleSubj
 
 :Input arguments:
    - ``-i`` : Input image
