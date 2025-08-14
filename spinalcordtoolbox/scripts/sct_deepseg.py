@@ -179,7 +179,7 @@ def get_parser(subparser_to_return=None):
         task_args['-i'] = input_output.add_argument(
             "-i",
             nargs="+",
-            help="Image to segment. Can be multiple images (separated with space).",
+            help="Image filename(s) to segment. If segmenting multiple files, separate filenames with a space.",
             metavar=Metavar.file)
         input_output.add_argument(
             "-o",
