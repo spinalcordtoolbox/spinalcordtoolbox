@@ -259,19 +259,19 @@ def get_parser(subparser_to_return=None):
             metavar=Metavar.str,
             help="If provided, this string will be mentioned in the QC report as the subject the process was run on."
         )
+        # Note: Sagittal view is not currently supported for rootlets/totalspineseg QC
+        # This means that the `-qc-plane` argument (and the `-qc-seg` note) should be hidden for these tasks
+        tasks_without_sagittal_qc = ('rootlets', 'totalspineseg')
         misc.add_argument(
             "-qc-plane",
             metavar=Metavar.str,
             choices=('Axial', 'Sagittal'),
             default='Axial',
-            # Note: Sagittal view is not currently supported for rootlets/totalspineseg QC
-            help=(SUPPRESS if task_name in ('rootlets', 'totalspineseg') else
+            help=(SUPPRESS if task_name in tasks_without_sagittal_qc else
                   "Plane of the output QC. If Sagittal, it is highly recommended to provide the `-qc-seg` option, "
                   "as it will ensure the output QC is cropped to a reasonable field of view."))
-
-        # This note is meaningless for rootlets/totalspineseg QC since sagittal mosaics aren't supported.
         note_qc_seg = ""
-        if task_name not in ('rootlets', 'totalspineseg'):
+        if task_name not in tasks_without_sagittal_qc:
             note_qc_seg += dedent("""
 
                 If `-qc-seg` is not provided, the default behavior will depend on the value of `-qc-plane`:
