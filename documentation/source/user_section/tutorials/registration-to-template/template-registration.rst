@@ -8,11 +8,11 @@ This tutorial demonstrates how to `register <http://jpeelle.net/mri/image_proces
 .. toctree::
    :maxdepth: 1
 
-   rootlets-based-registration/before-starting
-   rootlets-based-registration/sct_register_to_template
-   rootlets-based-registration/applying-the-registration-algorithm
-   rootlets-based-registration/customizing-registration
-   rootlets-based-registration/applying-the-warping-fields
+   template-registration/before-starting
+   template-registration/sct_register_to_template
+   template-registration/applying-the-registration-algorithm
+   template-registration/customizing-registration
+   template-registration/applying-the-warping-fields
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/template-registration/registration-pipeline.png
    :align: center
