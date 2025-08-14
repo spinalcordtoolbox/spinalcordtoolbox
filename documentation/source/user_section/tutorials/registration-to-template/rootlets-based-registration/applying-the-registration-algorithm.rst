@@ -24,7 +24,7 @@ To apply the registration algorithm, the following command is used:
 
 Once the command has finished, at the bottom of your terminal there will be instructions for inspecting the results using :ref:`Quality Control (QC) <qc>` reports. Optionally, If you have :ref:`fsleyes-instructions` installed, a ``fsleyes`` command will printed as well.
 
-.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/template-registration/io-sct_register_to_template.png
+.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/sb/add-fig-rootlets-reg/rootlets-based-registration/output-registration-rootlets.png
    :align: center
 
    Input/output images for :ref:`sct_register_to_template`
