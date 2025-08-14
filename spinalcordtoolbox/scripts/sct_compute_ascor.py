@@ -201,7 +201,7 @@ def get_parser():
 
 def compute_ascor(csa_sc, csa_canal, fname_out, append):
     """
-    Computes the aSCOR (area Spinal Cord to area Canal Ratio) for each row in the provided CSV files and saves the results to a CSV file.
+    Computes the aSCOR (spinal cord area to canal area ratio) for each row in the provided CSV files and saves the results to a CSV file.
 
     :param str csa_sc: Path to the CSV file containing spinal cord area measurements.
     :param str csa_canal: Path to the CSV file containing spinal canal area measurements.
