@@ -37,7 +37,7 @@ def get_parser():
     parser = SCTArgumentParser(
         description=textwrap.dedent("""
             Compute adapted Spinal Cord Occupation Ratio (aSCOR) from spinal cord and spinal canal segmentation masks.
-            The aSCOR is defined as the ratio between the cross-sectional area of the spinal cord and the cross-sectional area of the spinal canal at the same vertebral level.
+            The aSCOR is defined as the ratio between the cross-sectional area of the spinal cord and the cross-sectional area of the spinal canal
         """),  # noqa: E501 (line too long)
     )
 
