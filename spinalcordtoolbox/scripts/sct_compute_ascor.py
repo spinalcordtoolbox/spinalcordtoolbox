@@ -46,7 +46,7 @@ def get_parser():
         '-i-SC',
         metavar=Metavar.file,
         help=textwrap.dedent("""
-            Spinal cord segmentation mask to compute morphometrics from. If spinal cord segmentation is provided, MSCC is computed. If spinal canal segmentation (spinal cord + CSF) is provided, MCC is computed. Example: `sub-001_T2w_seg.nii.gz`
+            Spinal cord segmentation mask to compute morphometrics from. Example: `sub-001_T2w_seg.nii.gz`
             Spinal cord segmentation can be obtained with `sct_deepseg spinalcord`.
         """),  # noqa: E501 (line too long)
     )
