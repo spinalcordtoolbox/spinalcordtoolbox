@@ -215,6 +215,8 @@ def get_parser(subparser_to_return=None):
             "-thr",
             type=float,
             dest='binarize_prediction',
+            # If a task's default threshold values are None, we assume that thresholding is not applicable for that task
+            # (e.g. multi-class segmentations that are split into multiple binary images before being outputted)
             help=(SUPPRESS if all(t is None for t in thr_values) else
                   f"Binarize segmentation with specified threshold. Set to 0 for no thresholding (i.e., soft segmentation). "
                   f"Default value is '{thr_values}', and was chosen by experimentation "
