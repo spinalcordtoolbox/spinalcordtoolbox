@@ -155,6 +155,9 @@ def get_parser(subparser_to_return=None):
     # to use the following usage instead, which feels weird when we're using subcommands:
     #    `sct_deepseg -i input.nii.gz TASK_NAME`
     for task_name, task_dict in models.TASKS.items():
+        # Store certain argument objects for later use (as we may want to suppress them for specific tasks)
+        task_args = {}
+
         # Build up the description text in parts so dedent doesn't have a stroke
         description_text = dedent(f"""
             {task_dict["description"]}
@@ -173,17 +176,10 @@ def get_parser(subparser_to_return=None):
         )
 
         input_output = subparser.add_argument_group("\nINPUT/OUTPUT")
-        note_lesion_ms_mp2rage = dedent(f"""
-
-            Note: For `lesion_ms_mp2rage`, the input
-            data must be cropped around the spinal cord.
-            ({models.CROP_MESSAGE})
-        """)
-        input_output.add_argument(
+        task_args['-i'] = input_output.add_argument(
             "-i",
             nargs="+",
-            help=("Image to segment. Can be multiple images (separated with space)."
-                  + (note_lesion_ms_mp2rage if task_name == 'lesion_ms_mp2rage' else "")),
+            help="Image to segment. Can be multiple images (separated with space).",
             metavar=Metavar.file)
         input_output.add_argument(
             "-o",
@@ -211,14 +207,11 @@ def get_parser(subparser_to_return=None):
 
         params = subparser.add_argument_group('\nPARAMETERS')
         thr_values = [models.MODELS[model_name]['thr'] for model_name in task_dict['models']]
-        params.add_argument(
+        task_args['-thr'] = params.add_argument(
             "-thr",
             type=float,
             dest='binarize_prediction',
-            # If a task's default threshold values are None, we assume that thresholding is not applicable for that task
-            # (e.g. multi-class segmentations that are split into multiple binary images before being outputted)
-            help=(SUPPRESS if all(t is None for t in thr_values) else
-                  f"Binarize segmentation with specified threshold. Set to 0 for no thresholding (i.e., soft segmentation). "
+            help=(f"Binarize segmentation with specified threshold. Set to 0 for no thresholding (i.e., soft segmentation). "
                   f"Default value is '{thr_values}', and was chosen by experimentation "
                   f"(more info at https://github.com/sct-pipeline/deepseg-threshold)."),
             metavar=Metavar.float)
@@ -261,26 +254,20 @@ def get_parser(subparser_to_return=None):
             metavar=Metavar.str,
             help="If provided, this string will be mentioned in the QC report as the subject the process was run on."
         )
-        # Note: Sagittal view is not currently supported for rootlets/totalspineseg QC
-        # This means that the `-qc-plane` argument (and the `-qc-seg` note) should be hidden for these tasks
-        tasks_without_sagittal_qc = ('rootlets', 'totalspineseg')
-        misc.add_argument(
+        task_args['-qc-plane'] = misc.add_argument(
             "-qc-plane",
             metavar=Metavar.str,
             choices=('Axial', 'Sagittal'),
             default='Axial',
-            help=(SUPPRESS if task_name in tasks_without_sagittal_qc else
-                  "Plane of the output QC. If Sagittal, it is highly recommended to provide the `-qc-seg` option, "
-                  "as it will ensure the output QC is cropped to a reasonable field of view."))
-        note_qc_seg = ""
-        if task_name not in tasks_without_sagittal_qc:
-            note_qc_seg += dedent("""
+            help="Plane of the output QC. If Sagittal, it is highly recommended to provide the `-qc-seg` option, "
+                 "as it will ensure the output QC is cropped to a reasonable field of view.")
+        note_qc_seg = dedent("""
 
-                If `-qc-seg` is not provided, the default behavior will depend on the value of `-qc-plane`:
-                  - 'Axial': Without '-qc-seg', a sensible crop radius between 15-40 vox will be automatically used, depending on the resolution and segmentation type.
-                  - 'Sagittal': Without '-qc-seg', the full image will be displayed by default. (For very large images, this may cause a crash, so using `-qc-seg` is highly recommended.)
-            """)   # noqa: E501 (line too long)
-        misc.add_argument(
+            If `-qc-seg` is not provided, the default behavior will depend on the value of `-qc-plane`:
+              - 'Axial': Without '-qc-seg', a sensible crop radius between 15-40 vox will be automatically used, depending on the resolution and segmentation type.
+              - 'Sagittal': Without '-qc-seg', the full image will be displayed by default. (For very large images, this may cause a crash, so using `-qc-seg` is highly recommended.)
+        """)   # noqa: E501 (line too long)
+        task_args['-qc-seg'] = misc.add_argument(
             "-qc-seg",
             metavar=Metavar.file,
             help="Segmentation file to use for cropping the QC. This option is useful when you want to QC a region "
@@ -292,7 +279,7 @@ def get_parser(subparser_to_return=None):
         subparser.add_common_args()
         subparser.add_tempfile_args()
 
-        # # Add options that only apply to a specific task
+        # Add options that only apply to specific tasks
         if task_name == 'tumor_edema_cavity_t1_t2':
             input_output.add_argument(
                 "-c",
@@ -310,6 +297,27 @@ def get_parser(subparser_to_return=None):
                      "More details on TotalSpineSeg's two models can be found here: https://github.com/neuropoly/totalspineseg/?tab=readme-ov-file#model-description",
                 choices=(0, 1),
                 default=0)
+
+        # Add input cropping note specific to the `lesion_ms_mp2rage` task
+        if task_name == 'lesion_ms_mp2rage':
+            task_args['-i'].help += dedent(f"""
+
+            Note: For `lesion_ms_mp2rage`, the input
+            data must be cropped around the spinal cord.
+            ({models.CROP_MESSAGE})
+        """)
+
+        # Suppress arguments that are irrelevant for certain tasks
+        # - Sagittal view is not currently supported for rootlets/totalspineseg QC
+        #   This means that the `-qc-plane` argument (and the `-qc-seg` note) should be hidden for these tasks
+        tasks_without_sagittal_qc = ('rootlets', 'totalspineseg')
+        if task_name in tasks_without_sagittal_qc:
+            task_args['-qc-plane'].help = SUPPRESS
+            task_args['-qc-seg'].help = task_args['-qc-seg'].help.replace(note_qc_seg, "")
+
+        # - If none of the models for this task have a default threshold, then thresholding is not applicable.
+        if all(models.MODELS[model_name]['thr'] is None for model_name in task_dict['models']):
+            task_args['-thr'].help = SUPPRESS
 
     if subparser_to_return:
         return parser_dict[subparser_to_return]
