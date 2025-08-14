@@ -7,13 +7,14 @@ To apply the registration algorithm, the following command is used:
 
 .. code:: sh
 
-   sct_register_to_template -i t2.nii.gz -s t2_seg.nii.gz -lrootlet t2_rootlets.nii.gz -c t2 -qc ~/qc_singleSubj
+   sct_register_to_template -i t2.nii.gz -s t2_seg.nii.gz -lrootlet t2_rootlets.nii.gz -c t2 -ofolder rootlets-reg -qc ~/qc_singleSubj
 
 :Input arguments:
    - ``-i`` : Input image
    - ``-s`` : Segmented spinal cord corresponding to the input image
    - ``-lrootlet`` : Dorsal and ventral nerve rootlets segmentation. Example: `anat_rootlets.nii.gz`
    - ``-c`` : Contrast of the image. Specifying this determines the version of the template to use. (Here, ``-c t2`` means that ``PAM50_t2.nii.gz`` will be used.)
+   - ``-ofolder`` : Output folder where the results will be saved. If the folder does not exist, it will be created.
    - ``-qc`` : Directory for Quality Control reporting. QC reports allow us to evaluate the results slice-by-slice.
 
 :Output files/folders:
