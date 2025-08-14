@@ -37,7 +37,7 @@ MODELS = {
         ],
         "description": "Cord segmentation model on mouse MRI. Data from University of Queensland.",
         "contrasts": ["t1"],
-        "thr": 0.0,  # postprocessing.binarize_prediction is not present in model json
+        "thr": 0.0,  # Only for display in argparse help (postprocessing.binarize_prediction is not present in model json)
         "default": False,
     },
     "mice_uqueensland_gm": {
@@ -47,7 +47,7 @@ MODELS = {
         ],
         "description": "Gray matter segmentation model on mouse MRI. Data from University of Queensland.",
         "contrasts": ["t1"],
-        "thr": 0.0,  # postprocessing.binarize_prediction is not present in model json
+        "thr": 0.0,  # Only for display in argparse help (postprocessing.binarize_prediction is not present in model json)
         "default": False,
     },
     "t2_tumor": {
@@ -56,7 +56,7 @@ MODELS = {
         ],
         "description": "Cord tumor segmentation model, trained on T2-weighted contrast.",
         "contrasts": ["t2"],
-        "thr": 0.5,
+        "thr": 0.5,  # Only for display in argparse help (mirrors postprocessing.binarize_prediction, which is 0.5 in model json)
         "default": False,
     },
     "findcord_tumor": {
@@ -65,7 +65,7 @@ MODELS = {
         ],
         "description": "Cord localisation model, trained on T2-weighted images with tumor.",
         "contrasts": ["t2"],
-        "thr": 0.5,
+        "thr": 0.5,  # Only for display in argparse help (mirrors postprocessing.binarize_prediction, which is 0.5 in model json)
         "default": False,
     },
     "model_seg_sctumor-edema-cavity_t2-t1_unet3d-multichannel": {
@@ -74,7 +74,7 @@ MODELS = {
         ],
         "description": "Multiclass cord tumor segmentation model.",
         "contrasts": ["t2", "t1"],
-        "thr": 0.5,
+        "thr": 0.5,  # Only for display in argparse help (mirrors postprocessing.binarize_prediction, which is 0.5 in model json)
         "default": False,
     },
     "model_seg_exvivo_gm-wm_t2_unet2d-multichannel-softseg": {
@@ -83,7 +83,7 @@ MODELS = {
         ],
         "description": "Grey/white matter seg on exvivo human T2w.",
         "contrasts": ["t2"],
-        "thr": 0.0,  # postprocessing.binarize_prediction is not present in model json
+        "thr": 0.0,  # Only for display in argparse help (postprocessing.binarize_prediction is not present in model json)
         "default": False,
     },
     "model_7t_multiclass_gm_sc_unet2d": {
@@ -93,7 +93,7 @@ MODELS = {
         "description": "SC/GM multiclass segmentation on T2*-w contrast at 7T. The model was created by N.J. Laines Medina, "
                        "V. Callot and A. Le Troter at CRMBM-CEMEREM Aix-Marseille University, France",
         "contrasts": ["t2star"],
-        "thr": 0.5,
+        "thr": 0.5,  # Only for display in argparse help (mirrors postprocessing.binarize_prediction, which is 0.5 in model json)
         "default": False,
     },
     "model_seg_epfl_t2w_lumbar_sc": {
@@ -102,13 +102,18 @@ MODELS = {
         ],
         "description": "Lumbar SC segmentation on T2w contrast with 3D UNet",
         "contrasts": ["t2"],
-        "thr": 0.5,
+        "thr": 0.5,  # Only for display in argparse help (mirrors postprocessing.binarize_prediction, which is 0.5 in model json)
         "default": False,
     },
     # NB: Handling image binarization threshold for ivadomed vs. non-ivadomed models:
+    #   - All models:
+    #       - SCT provides a `-thr` argument for overriding default threshold values
+    #       - `-thr` will only be shown to the user if 'model': 'thr' is not None.
+    #       - The argparse help for `-thr` will display the default 'model': 'thr' value
     #   - ivadomed models (above):
-    #       - Threshold value is stored in the ivadomed-specific `.json` sidecar file
+    #       - Threshold value is actually fetched **by the ivadomed package** from a `.json` sidecar file
     #       - Binarization is applied within the ivadomed package
+    #       - Meaning, the 'thr' values above are simply for display in the `-thr` argparse help
     #   - non-ivadomed models (below)
     #       - Models do not have a `.json` sidecar file, since they were not developed with ivadomed
     #       - So, threshold value is stored here, within the model dict
