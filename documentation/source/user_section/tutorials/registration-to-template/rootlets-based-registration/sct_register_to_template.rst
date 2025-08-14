@@ -6,8 +6,7 @@ Traditional template-based registration of the spinal cord uses intervertebral d
 
 ..  TODO change figure
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/sb/add-fig-rootlets-reg/rootlets-based-registration/rootlets-reg-pipeline.png
-   :align: right
-   :figwidth: 300px
+   :align: center
 
    Rootlets-based registration pipeline.
 
