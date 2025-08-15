@@ -1,5 +1,73 @@
 # Changelog
 
+## 7.1 (2025-08-15)
+[View detailed changelog](https://github.com/spinalcordtoolbox/spinalcordtoolbox/compare/7.0...7.1)
+
+**FEATURE**
+ - **sct_analyze_lesion**: Implement "tissue bridge ratio" metrics. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4933)
+ - **sct_compute_compression**: Allow MSCC to be computed on lesion masks (as an alternative to compression labels). [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4862)
+ - **sct_maths**: Implement anisotropic dilation and erosion. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4966)
+ - **sct_process_segmentation**: Add flag `-discfile` to allow for determining `VertLevel` using projected disc labels. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4948)
+
+**ENHANCEMENT**
+ - **sct_deepseg**: Update `lesion_ms` DeepSeg model from `r20241101` to `r20250626` (ESMRMB 2025). [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4945)
+ - **sct_deepseg**: Add slice numbers to axial mosaic QC reports. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4981)
+ - **sct_deepseg**: Tweak `totalspineseg` axial mosaic QC report to make it easier to read. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4993)
+ - **sct_extract_metric**: Use centerline of `-vertfile` for more accurate mapping of vert levels to `z` slices. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4996)
+ - **sct_label_vertebrae**: Speed up labeling for `-discfile` by replacing the straightening step with disc projection. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4896)
+ - **sct_register_multimodal**: Mask output of `sct_apply_transfo` when applying `-initwarp` during multimodal registration. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4927)
+ - **sct_run_batch**: Improve clarity of terminal errors when a batch script fails. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4950)
+ - [EXPERIMENTAL] Add Apptainer installation for use on HPC systems. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4857)
+ - Allow the use of custom mapping for `sct_label_vertebrae`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4921)
+ - Expand `LazyLoader` usage to improve import times across scripts. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4938)
+
+**BUG**
+ - **sct_analyze_lesion**: Change `interpolated_midsagittal_slice` to be saved in the original orientation (instead of `RPI`). [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4969)
+ - **sct_analyze_lesion, sct_qc**: Fix `IndexError` by more thoroughly applying the SC mask to the lesion image. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4961)
+ - **sct_deepseg**: Fix two small crashes when generating QC reports using `-qc-seg`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4956)
+ - **sct_qc**: Update report-ui to v0.1.1. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4892)
+ - **sct_qc**: Use `Path.resolve()` instead of `Path.absolute()`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4917)
+ - **sct_register_multimodal, sct_register_to_template**: Add safeguards to handle when `type=imseg` is used with `rot_method=pca`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4924)
+ - **sct_register_to_template**: Fix check for user's labels against template's labels by adopting `issubset`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4925)
+ - **sct_register_to_template, sct_straighten_spinalcord**: Prevent repeated slices during straightening by correctly zeroing out duplicate slices. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4932)
+ - Update PAM50 template to `r20250730` to fix pixel error in `PAM50_rootlets.nii.gz`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4992)
+
+**INSTALLATION**
+ - Update SCT's virtual environment to use Python 3.10 instead of 3.9. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4869)
+ - Limit `onnx<1.16.2` to fix CI failures on Windows runners. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4901)
+ - Add fixes for `PyQt5` and `onnxruntime` to amend our previous switch to Python 3.10. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4906)
+ - Validate `$SCT_DIR` for path-length issues (even for the default directory + non-interactive mode). [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4935)
+ - Fix failing CI runs for Arch (`rl_print_keybindings`) and Debian 10 (EOL). [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4987)
+
+**DOCUMENTATION**
+ - **sct_deepseg**: Clean up argparse help to only display arguments and descriptions relevant to specific tasks. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/5008) 
+ - **sct_dmri_moco, sct_fmri_moco**: Make sure that all useful parameters in `ParamMoco` are documented in the `-h`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4979)
+ - Move `graymatter` model to `gray_matter` group. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4868)
+ - Update and reorganize Docker installation instructions. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/5001)
+
+**REFACTORING**
+ - Retire our obsolete shim for `str.removesuffix`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4904)
+
+**CI**
+ - Enable `macos-15` and `windows-2025` in all CI workflows. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4856)
+ - Handle `windows-2019` incompatibility with `onnxruntime==1.22.0` (drop `2019`, limit `<1.22.0`). [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4907)
+ - Add a blanket exclusion for `403 - Forbidden` responses to our broken link checker. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4908)
+ - Filter out `Version` and `CodeURL` when diffing JSON sidecars. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4909)
+ - Fix `check-url` Github CI failing when no new URLs are present. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4910)
+ - Remove default value from Apptainer bundling script to fix CI error. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4911)
+ - Fix hanging WSL runners by replacing `windows-2022` with `windows-2025`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4915)
+ - Address new `DeprecationWarnings` thrown during `pytest` test suite. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4940)
+ - Automatically reset the `stable` docs branch when creating a new release. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4942)
+ - Make it easier to manually check QC reports produced by `pytest`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4983)
+ - Remove hardcoded path to `D:\` drive for older Windows tests. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4989)
+ - `test_cli.py`: Increase threshold for macOS duration failures. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4990)
+ - Fix failing tests due to faulty `platform` syntax. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4991)
+ - Disable false-positive shell check for `SC2329` in `install_sct`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/5000)
+ - Tag QC reports from automated tests with the OS used. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/5002)
+
+**GIT/GITHUB**
+ - Simplify SCT's pull request template to match the new Contributing Guidelines. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4912)
+
 ## 7.0 (2025-04-25)
 [View detailed changelog](https://github.com/spinalcordtoolbox/spinalcordtoolbox/compare/6.5...7.0)
 
