@@ -16,8 +16,8 @@
  - **sct_extract_metric**: Use centerline of `-vertfile` for more accurate mapping of vert levels to `z` slices. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4996)
  - **sct_label_vertebrae**: Speed up labeling for `-discfile` by replacing the straightening step with disc projection. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4896)
  - **sct_register_multimodal**: Mask output of `sct_apply_transfo` when applying `-initwarp` during multimodal registration. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4927)
- - **sct_run_batch**: Improve clarity of terminal messages when a batch script fails. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4950)
- - Add Apptainer installation for use on HPC systems. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4857)
+ - **sct_run_batch**: Improve clarity of terminal errors when a batch script fails. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4950)
+ - [EXPERIMENTAL] Add Apptainer installation for use on HPC systems. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4857)
  - Allow the use of custom mapping for `sct_label_vertebrae`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4921)
  - Expand `LazyLoader` usage to improve import times across scripts. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4938)
 
@@ -28,19 +28,19 @@
  - **sct_qc**: Update report-ui to v0.1.1. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4892)
  - **sct_qc**: Use `Path.resolve()` instead of `Path.absolute()`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4917)
  - **sct_register_multimodal, sct_register_to_template**: Add safeguards to handle when `type=imseg` is used with `rot_method=pca`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4924)
- - **sct_register_to_template**: Fix check for user's labels against template's labels by adopting `issubset` . [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4925)
+ - **sct_register_to_template**: Fix check for user's labels against template's labels by adopting `issubset`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4925)
  - **sct_register_to_template, sct_straighten_spinalcord**: Prevent repeated slices during straightening by correctly zeroing out duplicate slices. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4932)
  - Update PAM50 template to `r20250730` to fix pixel error in `PAM50_rootlets.nii.gz`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4992)
 
 **INSTALLATION**
- - Add Apptainer installation for use on HPC systems. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4857)
  - Update SCT's virtual environment to use Python 3.10 instead of 3.9. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4869)
- - Limit `onnx<1.16.2` to fix CI failures on Windows runners (Python 3.9). [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4901)
+ - Limit `onnx<1.16.2` to fix CI failures on Windows runners. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4901)
  - Add fixes for `PyQt5` and `onnxruntime` to amend our previous switch to Python 3.10. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4906)
  - Validate `$SCT_DIR` for path-length issues (even for the default directory + non-interactive mode). [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4935)
  - Fix failing CI runs for Arch (`rl_print_keybindings`) and Debian 10 (EOL). [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4987)
 
 **DOCUMENTATION**
+ - **sct_deepseg**: Clean up argparse help to only display arguments and descriptions relevant to specific tasks. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/5008) 
  - **sct_dmri_moco, sct_fmri_moco**: Make sure that all useful parameters in `ParamMoco` are documented in the `-h`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4979)
  - Move `graymatter` model to `gray_matter` group. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4868)
  - Update and reorganize Docker installation instructions. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/5001)
