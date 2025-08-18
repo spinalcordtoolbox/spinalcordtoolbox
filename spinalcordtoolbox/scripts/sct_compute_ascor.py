@@ -236,7 +236,7 @@ def save_ascor_to_csv(df_ascor, fname_out, append=False):
     :return None
 
     """
-    if append:
+    if append and os.path.exists(fname_out):
         dataframe_old = pd.read_csv(fname_out, index_col=INDEX_COLUMNS)
         df_ascor = pd.concat([dataframe_old.reset_index(), df_ascor], ignore_index=True)
     df_ascor.to_csv(fname_out, index=False)
