@@ -516,11 +516,15 @@ TASKS = {
          'models': ['model_seg_ms_lesion'],
          'citation': textwrap.dedent("""
              ```bibtex
-             @inproceedings{benveniste2025reinforcing,
-                 author={Benveniste PL, Lee LE, Prat A, Vavasour Z, Tam R, Traboulsee A, Kolind S, Oh J, Chen M, Tsagkas C, Granziera C, Medina NL, Muhlau
-                 M, Kirschke J, McGinnis J, Reich D, Hemond C, Callot V, Demortière S, Audoin B, Nair G, Filippi M, Valsasina P, Rocca M,
-                 Ciccarelli O, Yiannakas M, Granberg T, Ouellette R, Shahamat T, Bakshi R, Mainero C, Treaba C, Kerbrat A, Bannier E, Edan G,
-                 Labauge P, O'Grady K, Smith S, Shepherd T, Charlson E, Brisset JC, Talbott J, Liu Y, Lombaert H, Cohen-Adad J},
+             @inproceedings{BenvenisteUnknown-ja,
+                 author={Benveniste, Pierre-Louis and Lee, Lisa Eunyoung and Prat, Alexandre and Vavasour, Zachary and Tam, Roger and Traboulsee,
+                 Anthony and Kolind, Shannon and Oh, Jiwon and Chen, Michelle and Tsagkas, Charidimos and Granziera, Christina and Laines Medina,
+                 Nilser and Muhlau, Mark and Kirschke, Jan and McGinnis, Julian and Reich, Daniel S and Hemond, Christopher and Callot, Virginie
+                 and Demortière, Sarah and Audoin, Bertrand and Nair, Govind and Filippi, Massimo and Valsasina, Paola and Rocca, Maria A and
+                 Ciccarelli, Olga and Yiannakas, Marios and Granberg, Tobias and Ouellette, Russell and Tauhid, Shahamat and Bakshi, Rohit and
+                 Mainero, Caterina and Treaba, Constantina Andrada and Kerbrat,  Anne and Bannier, Elise and Edan, Gilles and Labauge, Pierre and
+                 O'Grady, Kristin P and Smith, Seth A and Shepherd, Timothy M and Charlson, Erik and Brisset, Jean-Christophe and Talbott, Jason
+                 and Liu, Yaou and Lombaert, Hervé and Cohen-Adad, Julien},
                  title={Reinforcing the generalizability of spinal cord multiple sclerosis lesion segmentation models},
                  booktitle={Proceedings of the 41st Annual Scientific Meeting of the ESMRMB},
                  year={2025},
