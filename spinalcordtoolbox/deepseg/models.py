@@ -514,7 +514,19 @@ TASKS = {
                              'or 3D (n=366), with voxel dimensions ranging from 0.2x0.2x5 mm3 to 0.8x0.8x9 mm3. ',
          'url': 'https://github.com/ivadomed/ms-lesion-agnostic',
          'models': ['model_seg_ms_lesion'],
-         'citation': None,
+         'citation': textwrap.dedent("""
+             ```bibtex
+             @inproceedings{benveniste2025reinforcing,
+                 author={Benveniste PL, Lee LE, Prat A, Vavasour Z, Tam R, Traboulsee A, Kolind S, Oh J, Chen M, Tsagkas C, Granziera C, Medina NL, Muhlau
+                 M, Kirschke J, McGinnis J, Reich D, Hemond C, Callot V, Demortière S, Audoin B, Nair G, Filippi M, Valsasina P, Rocca M,
+                 Ciccarelli O, Yiannakas M, Granberg T, Ouellette R, Shahamat T, Bakshi R, Mainero C, Treaba C, Kerbrat A, Bannier E, Edan G,
+                 Labauge P, O'Grady K, Smith S, Shepherd T, Charlson E, Brisset JC, Talbott J, Liu Y, Lombaert H, Cohen-Adad J},
+                 title={Reinforcing the generalizability of spinal cord multiple sclerosis lesion segmentation models},
+                 booktitle={Proceedings of the 41st Annual Scientific Meeting of the ESMRMB},
+                 year={2025},
+                 address={Marseille, France},
+             }
+             ```"""),  # noqa E501 (line too long),
          'group': 'pathology'
          },
     'sc_canal_t2':
