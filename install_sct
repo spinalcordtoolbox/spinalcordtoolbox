@@ -735,6 +735,9 @@ fi
   # This is necessary in order to install 'macosx_11_0' wheels. See also:
   # https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4352
   SYSTEM_VERSION_COMPAT=0 python/envs/venv_sct/bin/pip install -r "$REQUIREMENTS_FILE" --ignore-installed certifi &&
+  # Install NeuroPoly's fork of `nnunetv2`
+  # We can't do this in requirements.txt because `totalspineseg` installs `nnunetv2` and the two packages will clash
+  python/envs/venv_sct/bin/pip install --extra-index-url https://test.pypi.org/simple/ "nnunetv2-neuropoly==2.6.2.dev1" "safetensors==0.5.3" &&
   print info "Installing spinalcordtoolbox..." &&
   python/envs/venv_sct/bin/pip install -e . --use-pep517
 ) ||
