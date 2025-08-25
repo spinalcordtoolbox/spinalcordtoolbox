@@ -67,6 +67,24 @@ def compute_shape(segmentation, angle_correction=True, centerline_path=None, par
 
     # Initialize dictionary of property_list, with 1d array of nan (default value if no property for a given slice).
     shape_properties = {key: np.full(nz, np.nan, dtype=np.double) for key in property_list}
+    # Add quadrant area properties
+    quadrant_keys = [
+        'area_quadrant_anterior_left',
+        'area_quadrant_anterior_right',
+        'area_quadrant_posterior_left',
+        'area_quadrant_posterior_right',
+    ]
+    for key in quadrant_keys:
+        shape_properties[key] = np.full(nz, np.nan, dtype=np.double)
+    # Add symmetry properties
+    symmetry_keys = [
+        'symmetry_RL',
+        'symmetry_AP',
+        'symmetry_anterior_RL',
+        'symmetry_posterior_RL',
+    ]
+    for key in symmetry_keys:
+        shape_properties[key] = np.full(nz, np.nan, dtype=np.double)
 
     fit_results = None
 
@@ -121,12 +139,26 @@ def compute_shape(segmentation, angle_correction=True, centerline_path=None, par
             current_patch_scaled = current_patch
             angle_AP_rad, angle_RL_rad = 0.0, 0.0
         # compute shape properties on 2D patch
-        shape_property = _properties2d(current_patch_scaled, [px, py])
+        shape_property = _properties2d(current_patch_scaled, [px, py], iz)
         if shape_property is not None:
             # Add custom fields
             shape_property['angle_AP'] = angle_AP_rad * 180.0 / math.pi
             shape_property['angle_RL'] = angle_RL_rad * 180.0 / math.pi
             shape_property['length'] = pz / (np.cos(angle_AP_rad) * np.cos(angle_RL_rad))
+            # Assign quadrant areas if present
+            if 'quadrant_areas' in shape_property:
+                qa = shape_property['quadrant_areas']
+                shape_properties['area_quadrant_anterior_left'][iz] = qa.get('anterior_left', np.nan)
+                shape_properties['area_quadrant_anterior_right'][iz] = qa.get('anterior_right', np.nan)
+                shape_properties['area_quadrant_posterior_left'][iz] = qa.get('posterior_left', np.nan)
+                shape_properties['area_quadrant_posterior_right'][iz] = qa.get('posterior_right', np.nan)
+            # Add symmetry measures if present
+            if 'symmetry_measures' in shape_property:
+                sm = shape_property['symmetry_measures']
+                shape_properties['symmetry_RL'][iz] = sm.get('symmetry_RL', np.nan)
+                shape_properties['symmetry_AP'][iz] = sm.get('symmetry_AP', np.nan)
+                shape_properties['symmetry_anterior_RL'][iz] = sm.get('symmetry_anterior_RL', np.nan)
+                shape_properties['symmetry_posterior_RL'][iz] = sm.get('symmetry_posterior_RL', np.nan)
             # Loop across properties and assign values for function output
             for property_name in property_list:
                 shape_properties[property_name][iz] = shape_property[property_name]
@@ -155,11 +187,56 @@ def compute_shape(segmentation, angle_correction=True, centerline_path=None, par
     return metrics, fit_results
 
 
-def _properties2d(image, dim):
+def _calculate_symmetry(area1, area2, total_area, signed=True):
+    """
+    Calculate the symmetry ratio of the spinal cord.
+
+    The symmetry can be computed in two ways:
+    1. Signed: (area1 - area2) / total_area
+       Returns values from -1 to 1, where:
+       - 0 indicates perfect symmetry
+       - Positive values indicate area1 dominance (typically left side)
+       - Negative values indicate area2 dominance (typically right side)
+       - The magnitude indicates the degree of asymmetry
+
+    2. Unsigned: 1 - |area1 - area2| / total_area
+       Returns values from 0 to 1, where:
+       - 1 indicates perfect symmetry
+       - 0 indicates complete asymmetry
+
+    :param area1: Area of the first side (left or anterior)
+    :param area2: Area of the second side (right or posterior)
+    :param total_area: Total area of the spinal cord.
+    :param signed: Whether to return signed symmetry (-1 to 1) or unsigned (0 to 1).
+    :return: Symmetry value, either between -1 and 1 (signed) or between 0 and 1 (unsigned)
+    """
+    # Sanity checks
+    if area1 <= NEAR_ZERO_THRESHOLD or area2 <= NEAR_ZERO_THRESHOLD:
+        return np.nan
+    if total_area <= NEAR_ZERO_THRESHOLD:
+        return np.nan
+
+    if signed:
+        # Calculate signed symmetry as (area1 - area2) / total_area
+        # This gives:
+        # - 0 for perfect symmetry
+        # - Positive values when area1 > area2 (e.g., left side dominance)
+        # - Negative values when area1 < area2 (e.g., right side dominance)
+        symmetry = (area1 - area2) / total_area
+    else:
+        # Calculate unsigned symmetry as 1 - |area1 - area2| / total_area
+        # This gives 1 for perfect symmetry and values closer to 0 for asymmetry
+        symmetry = 1.0 - abs(area1 - area2) / total_area
+
+    return symmetry
+
+
+def _properties2d(image, dim, iz):
     """
     Compute shape property of the input 2D image. Accounts for partial volume information.
     :param image: 2D input image in uint8 or float (weighted for partial volume) that has a single object.
     :param dim: [px, py]: Physical dimension of the image (in mm). X,Y respectively correspond to AP,RL.
+    :param iz: int: index of the slice in the 3D image. Used for debugging.
     :return:
     """
     upscale = 5  # upscale factor for resampling the input image (for better precision)
@@ -207,6 +284,12 @@ def _properties2d(image, dim):
         solidity = np.nan
     else:
         solidity = region.solidity
+
+    # Compute quadrant areas and RL and AP symmetry
+    quadrant_areas, symmetry_measures = compute_quadrant_areas(image_crop_r, region.centroid, orientation,
+                                                                      area, diameter_AP, diameter_RL,
+                                                                      dim, upscale=upscale, iz=iz)
+
     # Fill up dictionary
     properties = {
         'area': area,
@@ -216,6 +299,20 @@ def _properties2d(image, dim):
         'eccentricity': region.eccentricity,
         'orientation': orientation,
         'solidity': solidity,  # convexity measure
+    }
+
+    properties['symmetry_measures'] = {
+        'symmetry_RL': symmetry_measures.get('symmetry_RL', np.nan),    # right-left symmetry
+        'symmetry_AP': symmetry_measures.get('symmetry_AP', np.nan),    # anterior-posterior symmetry
+        'symmetry_anterior_RL': symmetry_measures.get('symmetry_anterior_RL', np.nan),      # anterior RL symmetry
+        'symmetry_posterior_RL': symmetry_measures.get('symmetry_posterior_RL', np.nan),    # posterior RL symmetry
+    }
+
+    properties['quadrant_areas'] = {
+        'anterior_left': quadrant_areas.get('Anterior_Left', np.nan),
+        'anterior_right': quadrant_areas.get('Anterior_Right', np.nan),
+        'posterior_left': quadrant_areas.get('Posterior_Left', np.nan),
+        'posterior_right': quadrant_areas.get('Posterior_Right', np.nan),
     }
 
     return properties
@@ -254,3 +351,233 @@ def _find_AP_and_RL_diameter(major_axis, minor_axis, orientation, dim):
     diameter_AP *= dim[0]
     diameter_RL *= dim[1]
     return diameter_AP, diameter_RL
+
+
+def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, float], orientation_deg: float,
+                           area: float, diameter_AP: float, diameter_RL: float,
+                           dim: list[float], upscale: int, iz: int) -> tuple[dict, dict]:
+    """
+    Compute the cross-sectional area of the four spinal cord quadrants in the axial plane.
+    Also calculates the symmetry of the spinal cord in the right-left (RL) and anterior-posterior (AP) directions.
+
+    The function rotates the coordinate system based on the spinal cord orientation and
+    partitions the segmentation into four quadrants: posterior right, anterior right,
+    posterior left, and anterior left. It then calculates the area of each quadrant in mm².
+
+    :param image_crop_r: 2D upsampled non-binary (due to the angle correction) segmentation mask of the spinal cord.
+    :param centroid: (y, x) coordinates of the centroid in the upsampled image space.
+    :param orientation_deg: Orientation angle of the spinal cord in degrees (from regionprops).
+    :param area: Total area of the spinal cord in mm² (used for symmetry calculations).
+    :param diameter_AP: AP diameter of the spinal cord in mm (used for debug plots).
+    :param diameter_RL: RL diameter of the spinal cord in mm (used for debug plots).
+    :param dim: [px, py] pixel dimensions in mm. X,Y respectively correspond to AP, RL.
+    :param upscale: Upsampling factor used during resampling.
+    :param iz: Slice index used for filename in debug plot.
+
+    :return: quadrant_areas (dict), symmetry_measures (dict)
+        quadrant_areas is a dictionary with the area in mm² for each quadrant:
+                 {
+                    'Posterior_Right': float,
+                    'Anterior_Right': float,
+                    'Posterior_Left': float,
+                    'Anterior_Left': float
+                 }
+        symmetry_measures is a dictionary with symmetry measures:
+                {
+                    'symmetry_RL': float,
+                    'symmetry_AP': float,
+                    'symmetry_anterior_RL': float,
+                    'symmetry_posterior_RL': float,
+                }
+    """
+    y0, x0 = centroid
+    orientation_rad = np.radians(orientation_deg)
+    rows, cols = image_crop_r.shape
+    Y, X = np.mgrid[0:rows, 0:cols]
+
+    # Translate coordinate grid to centroid
+    Xc = X - x0
+    Yc = Y - y0
+
+    # Rotate coordinates to align with AP/RL axes
+    # This rotation is needed to accurately define anatomical quadrants.
+    # Without the rotation, quadrants would be based on image axes (top/bottom/left/right) rather than true anatomical
+    # orientation (posterior/anterior/left/right) resulting in unprecise area calculations whenever the spinal cord is
+    # not perfectly aligned with the image axes.
+    Xr = Xc * np.cos(-orientation_rad) - Yc * np.sin(-orientation_rad)
+    Yr = Xc * np.sin(-orientation_rad) + Yc * np.cos(-orientation_rad)
+
+    # Apply quadrant masks - use the intensity values directly to account for the mask softness
+    post_r_mask = (Yr < 0) & (Xr < 0)    # Posterior Right
+    ant_r_mask = (Yr < 0) & (Xr >= 0)    # Anterior Right
+    post_l_mask = (Yr >= 0) & (Xr < 0)   # Posterior Left
+    ant_l_mask = (Yr >= 0) & (Xr >= 0)   # Anterior Left
+
+    # Calculate physical area in mm²
+    pixel_area_mm2 = (dim[0] * dim[1]) / (upscale**2)
+
+    # Sum areas for each quadrant - multiply by intensity values to account for the mask softness
+    quadrant_areas = {
+        'Posterior_Right': np.sum(image_crop_r[post_r_mask]) * pixel_area_mm2,
+        'Anterior_Right': np.sum(image_crop_r[ant_r_mask]) * pixel_area_mm2,
+        'Posterior_Left': np.sum(image_crop_r[post_l_mask]) * pixel_area_mm2,
+        'Anterior_Left': np.sum(image_crop_r[ant_l_mask]) * pixel_area_mm2
+    }
+
+    # Calculate AP and RL symmetry
+    left_area = quadrant_areas.get('Anterior_Left', 0) + quadrant_areas.get('Posterior_Left', 0)
+    right_area = quadrant_areas.get('Anterior_Right', 0) + quadrant_areas.get('Posterior_Right', 0)
+    symmetry_RL = _calculate_symmetry(left_area, right_area, area)
+    anterior_area = quadrant_areas.get('Anterior_Left', 0) + quadrant_areas.get('Anterior_Right', 0)
+    posterior_area = quadrant_areas.get('Posterior_Left', 0) + quadrant_areas.get('Posterior_Right', 0)
+    symmetry_AP = _calculate_symmetry(anterior_area, posterior_area, area)
+
+    # Calculate anterior RL symmetry and posterior RL symmetry
+    symmetry_anterior_RL = _calculate_symmetry(quadrant_areas['Anterior_Left'], quadrant_areas['Anterior_Right'], anterior_area)
+    symmetry_posterior_RL = _calculate_symmetry(quadrant_areas['Posterior_Left'], quadrant_areas['Posterior_Right'], posterior_area)
+
+    symmetry_measures = {
+        'symmetry_RL': symmetry_RL,  # right-left symmetry
+        'symmetry_AP': symmetry_AP,  # anterior-posterior symmetry
+        'symmetry_anterior_RL': symmetry_anterior_RL,  # anterior RL symmetry
+        'symmetry_posterior_RL': symmetry_posterior_RL,  # posterior RL symmetry
+    }
+
+    # """"DEBUG
+    def _add_ellipse(ax, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale, edgecolor='orange',
+                     linewidth=2.0):
+        """
+        Helper function to add an ellipse to a matplotlib axis.
+        """
+        from matplotlib.patches import Ellipse
+        y0, x0 = centroid
+
+        ellipse = Ellipse(
+            (x0, y0),
+            width=diameter_AP * upscale / dim[0],
+            height=diameter_RL * upscale / dim[1],
+            angle=math.degrees(orientation_rad),
+            edgecolor=edgecolor,
+            facecolor='none',
+            linewidth=linewidth,
+            label=""
+        )
+        ax.add_patch(ellipse)
+
+    def _add_diameter_lines(ax, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale):
+        """
+        Helper function to add diameter lines to a matplotlib axis.
+        """
+        y0, x0 = centroid
+
+        radius_ap = (diameter_AP / dim[0]) * 0.5 * upscale
+        radius_rl = (diameter_RL / dim[1]) * 0.5 * upscale
+
+        dx_ap = radius_ap * np.cos(orientation_rad)
+        dy_ap = radius_ap * np.sin(orientation_rad)
+        dx_rl = radius_rl * -np.sin(orientation_rad)
+        dy_rl = radius_rl * np.cos(orientation_rad)
+
+        ax.plot([x0 - dx_ap, x0 + dx_ap], [y0 - dy_ap, y0 + dy_ap], 'r--', linewidth=2, label='AP diameter')
+        ax.plot([x0 - dx_rl, x0 + dx_rl], [y0 - dy_rl, y0 + dy_rl], 'b--', linewidth=2, label='RL diameter')
+
+        # Add centroid
+        ax.plot(x0, y0, '.g', markersize=15)
+
+    def _setup_axis(ax, title, xlabel='y\nPosterior-Anterior (PA)', ylabel='x\nLeft-Right (LR)'):
+        """
+        Helper function to set up common axis properties.
+        """
+        ax.grid()
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
+        ax.set_title(title)
+
+    # Create a 1x3 figure: quadrants, right/left halves, anterior/posterior halves
+    import os
+    from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+    from matplotlib.figure import Figure
+
+    # Create masks for halves (combining quadrants)
+    right_mask = post_r_mask | ant_r_mask  # Right half (posterior + anterior right)
+    left_mask = post_l_mask | ant_l_mask   # Left half (posterior + anterior left)
+    anterior_mask = ant_r_mask | ant_l_mask  # Anterior half (right + left anterior)
+    posterior_mask = post_r_mask | post_l_mask  # Posterior half (right + left posterior)
+
+    # Calculate areas for halves
+    right_area = quadrant_areas['Posterior_Right'] + quadrant_areas['Anterior_Right']
+    left_area = quadrant_areas['Posterior_Left'] + quadrant_areas['Anterior_Left']
+    anterior_area = quadrant_areas['Anterior_Right'] + quadrant_areas['Anterior_Left']
+    posterior_area = quadrant_areas['Posterior_Right'] + quadrant_areas['Posterior_Left']
+
+    # Create figure with 1x3 subplots
+    fig = Figure(figsize=(18, 6))
+    FigureCanvas(fig)
+
+    # ---------------------------------
+    # Plot 1: Quadrants
+    # ---------------------------------
+    ax1 = fig.add_subplot(1, 3, 1)
+
+    # Plot each quadrant mask with a different color
+    ax1.imshow(np.where(post_r_mask, image_crop_r, np.nan), cmap='Reds', vmin=0, vmax=1, alpha=1)
+    ax1.imshow(np.where(ant_r_mask, image_crop_r, np.nan), cmap='Blues', vmin=0, vmax=1, alpha=1)
+    ax1.imshow(np.where(post_l_mask, image_crop_r, np.nan), cmap='Greens', vmin=0, vmax=1, alpha=1)
+    ax1.imshow(np.where(ant_l_mask, image_crop_r, np.nan), cmap='Purples', vmin=0, vmax=1, alpha=1)
+
+    ax1.imshow(image_crop_r > 0.5, cmap='gray', interpolation='nearest', vmin=0, vmax=1, alpha=.4)
+
+    _add_diameter_lines(ax1, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale)
+    _add_ellipse(ax1, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale)
+    _setup_axis(ax1, 'Quadrants')
+    offset = 20  # pixel offset from centroid for annotation placement
+    ax1.text(x0 - offset, y0 - offset, f"PR:\n{quadrant_areas['Posterior_Right']:.2f} mm²", color='red', fontsize=10, ha='center', va='bottom', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
+    ax1.text(x0 + offset, y0 - offset, f"AR:\n{quadrant_areas['Anterior_Right']:.2f} mm²", color='blue', fontsize=10, ha='center', va='bottom', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
+    ax1.text(x0 - offset, y0 + offset, f"PL:\n{quadrant_areas['Posterior_Left']:.2f} mm²", color='green', fontsize=10, ha='center', va='top', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
+    ax1.text(x0 + offset, y0 + offset, f"AL:\n{quadrant_areas['Anterior_Left']:.2f} mm²", color='purple', fontsize=10, ha='center', va='top', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
+    ax1.text(0.75, 0.05, f"Ant. RL Symmetry: {symmetry_anterior_RL:.3f}", fontsize=10, ha='center', va='center', bbox=dict(facecolor='yellow', alpha=0.8, edgecolor='black'), transform=ax1.transAxes)
+    ax1.text(0.25, 0.05, f"Pos. RL Symmetry: {symmetry_posterior_RL:.3f}", fontsize=10, ha='center', va='center', bbox=dict(facecolor='yellow', alpha=0.8, edgecolor='black'), transform=ax1.transAxes)
+
+    ax1.legend(loc='upper right')
+
+    # ---------------------------------
+    # Plot 2: Right-Left Symmetry
+    # ---------------------------------
+    ax2 = fig.add_subplot(1, 3, 2)
+
+    # Plot each half with a different color
+    ax2.imshow(np.where(right_mask, image_crop_r, np.nan), cmap='Reds', vmin=0, vmax=1, alpha=1, label='Right')
+    ax2.imshow(np.where(left_mask, image_crop_r, np.nan), cmap='Blues', vmin=0, vmax=1, alpha=1, label='Left')
+    ax2.imshow(image_crop_r > 0.5, cmap='gray', interpolation='nearest', vmin=0, vmax=1, alpha=.4)
+
+    _add_diameter_lines(ax2, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale)
+    _add_ellipse(ax2, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale)
+    _setup_axis(ax2, 'Right-Left Symmetry')
+    ax2.text(x0, y0 - offset, f"Right:\n{right_area:.2f} mm²", color='red', fontsize=10, ha='center', va='center', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
+    ax2.text(x0, y0 + offset, f"Left:\n{left_area:.2f} mm²", color='blue', fontsize=10, ha='center', va='center', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
+    ax2.text(0.5, 0.05, f"RL Symmetry: {symmetry_RL:.3f}", fontsize=10, ha='center', va='center', bbox=dict(facecolor='yellow', alpha=0.8, edgecolor='black'), transform=ax2.transAxes)
+
+    # ---------------------------------
+    # Plot 3: Anterior-Posterior Symmetry
+    # ---------------------------------
+    ax3 = fig.add_subplot(1, 3, 3)
+
+    # Plot each half with a different color
+    ax3.imshow(np.where(anterior_mask, image_crop_r, np.nan), cmap='Greens', vmin=0, vmax=1, alpha=1, label='Anterior')
+    ax3.imshow(np.where(posterior_mask, image_crop_r, np.nan), cmap='Purples', vmin=0, vmax=1, alpha=1, label='Posterior')
+    ax3.imshow(image_crop_r > 0.5, cmap='gray', interpolation='nearest', vmin=0, vmax=1, alpha=.4)
+
+    _add_diameter_lines(ax3, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale)
+    _add_ellipse(ax3, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale)
+    _setup_axis(ax3, 'Anterior-Posterior Symmetry')
+    ax3.text(x0 - offset, y0, f"Posterior:\n{posterior_area:.2f} mm²", color='purple', fontsize=10, ha='center', va='center', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
+    ax3.text(x0 + offset, y0, f"Anterior:\n{anterior_area:.2f} mm²", color='green', fontsize=10, ha='center', va='center', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
+    ax3.text(0.5, 0.05, f"AP Symmetry: {symmetry_AP:.3f}", fontsize=10, ha='center', va='center', bbox=dict(facecolor='yellow', alpha=0.8, edgecolor='black'), transform=ax3.transAxes)
+
+    # Save figure
+    os.makedirs('debug_figures', exist_ok=True)
+    fig.tight_layout()
+    fig.savefig(f'debug_figures/cord_quadrant_tmp_fig_slice_{iz:03d}.png', dpi=150)
+    # """
+
+    return quadrant_areas, symmetry_measures
