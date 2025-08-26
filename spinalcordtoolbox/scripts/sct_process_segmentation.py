@@ -56,10 +56,19 @@ class SeparateNormArgs(argparse.Action):
         setattr(namespace, self.dest, data_subject)
 
 
-def get_parser():
+def get_parser(ascor=False):
     """
+    :param bool: ascor: Whether parser is for `sct_compute_ascor` (a light wrapper for `sct_process_segmentation`
+                        that skips some irrelevant args.)
     :return: Returns the parser with the command line documentation contained in it.
     """
+    # Determine whether we are creating a parser for `sct_process_segmentation` (or alternatively `sct_compute_ascor`)
+    is_sct_process_segmentation = (not ascor)
+    # Some arguments aren't relevant for `sct_compute_ascor`, so we want to keep them by default, but skip them if `ascor=True`:
+    #   - `-i`: `sct_compute_ascor` uses 2 different inputs (`-i-SC` and `-i-canal`)
+    #   - `-normalize`: CSA normalization not relevant for aSCOR, since we are computing a ratio
+    #   = `-qc`: QC reports are only available for `-pmj` (displaying extent etc.) which is less relevant for ascor calculation
+
     # Initialize the parser
     parser = SCTArgumentParser(
         description=(
@@ -108,12 +117,13 @@ def get_parser():
     )
 
     mandatory = parser.mandatory_arggroup
-    mandatory.add_argument(
-        '-i',
-        metavar=Metavar.file,
-        help="Mask to compute morphometrics from. Could be binary or weighted. E.g., spinal cord segmentation."
-             "Example: seg.nii.gz"
-    )
+    if is_sct_process_segmentation:
+        mandatory.add_argument(
+            '-i',
+            metavar=Metavar.file,
+            help="Mask to compute morphometrics from. Could be binary or weighted. E.g., spinal cord segmentation."
+                 "Example: seg.nii.gz"
+        )
 
     optional = parser.optional_arggroup
     optional.add_argument(
@@ -241,26 +251,27 @@ def get_parser():
         help="Extent (in mm) for the mask used to compute morphometric measures. Each slice covered by the mask is "
              "included in the calculation. (To be used with flag `-pmj` and `-pmj-distance`.)"
     )
-    optional.add_argument(
-        '-normalize',
-        metavar=Metavar.list,
-        action=SeparateNormArgs,
-        nargs="+",
-        help="Normalize CSA values ('MEAN(area)').\n"
-             "Two models are available:\n"
-             "    1. sex, brain-volume, thalamus-volume.\n"
-             "    2. sex, brain-volume.\n"
-             "Specify each value for the subject after the corresponding predictor.\n"
-             "Example:\n    `-normalize sex 0 brain-volume 960606.0 thalamus-volume 13942.0` \n"
-             "*brain-volume and thalamus-volume are in mm^3. For sex, female: 0, male: 1.\n"
-             "\n"
-             "The models were generated using T1w brain images from 804 healthy (non-pathological) participants "
-             "ranging from 48 to 80 years old, taken from the UK Biobank dataset.\n"
-             "For more details on the subjects and methods used to create the models, go to: "
-             "https://github.com/sct-pipeline/ukbiobank-spinalcord-csa#readme \n"  # TODO add ref of the paper
-             "Given the risks and lack of consensus surrounding CSA normalization, we recommend thoroughly reviewing "
-             "the literature on this topic before applying this feature to your data.\n"
-    )
+    if is_sct_process_segmentation:
+        optional.add_argument(
+            '-normalize',
+            metavar=Metavar.list,
+            action=SeparateNormArgs,
+            nargs="+",
+            help="Normalize CSA values ('MEAN(area)').\n"
+                 "Two models are available:\n"
+                 "    1. sex, brain-volume, thalamus-volume.\n"
+                 "    2. sex, brain-volume.\n"
+                 "Specify each value for the subject after the corresponding predictor.\n"
+                 "Example:\n    `-normalize sex 0 brain-volume 960606.0 thalamus-volume 13942.0` \n"
+                 "*brain-volume and thalamus-volume are in mm^3. For sex, female: 0, male: 1.\n"
+                 "\n"
+                 "The models were generated using T1w brain images from 804 healthy (non-pathological) participants "
+                 "ranging from 48 to 80 years old, taken from the UK Biobank dataset.\n"
+                 "For more details on the subjects and methods used to create the models, go to: "
+                 "https://github.com/sct-pipeline/ukbiobank-spinalcord-csa#readme \n"  # TODO add ref of the paper
+                 "Given the risks and lack of consensus surrounding CSA normalization, we recommend thoroughly reviewing "
+                 "the literature on this topic before applying this feature to your data.\n"
+        )
     optional.add_argument(
         '-normalize-PAM50',
         metavar=Metavar.int,
@@ -269,31 +280,32 @@ def get_parser():
         default=0,
         help="Set to 1 to bring the metrics in the PAM50 anatomical dimensions perslice. `-vertfile` and `-perslice` need to be specified."
     )
-    optional.add_argument(
-        '-qc',
-        metavar=Metavar.folder,
-        type=os.path.abspath,
-        action=ActionCreateFolder,
-        help="The path where the quality control generated content will be saved."
-             " The QC report is only available for PMJ-based CSA (with flag `-pmj`)."
-    )
-    optional.add_argument(
-        '-qc-image',
-        metavar=Metavar.str,
-        help="Input image to display in QC report. Typically, it would be the "
-             "source anatomical image used to generate the spinal cord "
-             "segmentation. This flag is mandatory if using flag `-qc`."
-    )
-    optional.add_argument(
-        '-qc-dataset',
-        metavar=Metavar.str,
-        help="If provided, this string will be mentioned in the QC report as the dataset the process was run on."
-    )
-    optional.add_argument(
-        '-qc-subject',
-        metavar=Metavar.str,
-        help="If provided, this string will be mentioned in the QC report as the subject the process was run on."
-    )
+    if is_sct_process_segmentation:
+        optional.add_argument(
+            '-qc',
+            metavar=Metavar.folder,
+            type=os.path.abspath,
+            action=ActionCreateFolder,
+            help="The path where the quality control generated content will be saved."
+                 " The QC report is only available for PMJ-based CSA (with flag `-pmj`)."
+        )
+        optional.add_argument(
+            '-qc-image',
+            metavar=Metavar.str,
+            help="Input image to display in QC report. Typically, it would be the "
+                 "source anatomical image used to generate the spinal cord "
+                 "segmentation. This flag is mandatory if using flag `-qc`."
+        )
+        optional.add_argument(
+            '-qc-dataset',
+            metavar=Metavar.str,
+            help="If provided, this string will be mentioned in the QC report as the dataset the process was run on."
+        )
+        optional.add_argument(
+            '-qc-subject',
+            metavar=Metavar.str,
+            help="If provided, this string will be mentioned in the QC report as the subject the process was run on."
+        )
 
     # Arguments which implement shared functionality
     parser.add_common_args()
