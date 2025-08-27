@@ -73,7 +73,7 @@ def compute_ascor(csa_sc, csa_canal):
     :return pandas.DataFrame: DataFrame containing the aSCOR results."""
     df_sc = pd.read_csv(csa_sc)
     df_canal = pd.read_csv(csa_canal)
-    df_merged = pd.merge(df_sc, df_canal, on=['Slice (I->S)', 'VertLevel','DistancePMJ'], suffixes=('_sc', '_canal'))
+    df_merged = pd.merge(df_sc, df_canal, on=['Slice (I->S)', 'VertLevel', 'DistancePMJ'], suffixes=('_sc', '_canal'))
     df_ascor = pd.DataFrame()
     # Loop across rows in dataframe df_ascor
     for idx in range(len(df_merged)):
