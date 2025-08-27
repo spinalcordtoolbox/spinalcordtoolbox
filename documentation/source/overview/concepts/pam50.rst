@@ -109,6 +109,6 @@ The figure below (extracted from Frostell et al.) shows the spatial correspondan
 References
 ==========
 
-* `De Leener B, Fonov VS, Collins DL, Callot V, Stikov N, Cohen-Adad J. PAM50: Unbiased multimodal template of the brainstem and spinal cord aligned with the ICBM152 space. Neuroimage, 2018, 165:170-179. <https://paperpile.com/app/p/e74eced0-7d51-08e2-9c18-a34328fb4a86>`_
-* `Levy S, Benhamou M, Naaman C, Rainville P, Callot V, Cohen-Adad J. White matter atlas of the human spinal cord with estimation of partial volume effect. Neuroimage, 2015, 119:262-271. <https://paperpile.com/app/p/e74eced0-7d51-08e2-9c18-a34328fb4a86>`_
+* `De Leener B, Fonov VS, Collins DL, Callot V, Stikov N, Cohen-Adad J. PAM50: Unbiased multimodal template of the brainstem and spinal cord aligned with the ICBM152 space. Neuroimage, 2018, 165:170-179. <https://pubmed.ncbi.nlm.nih.gov/29061527/>`_
+* `Levy S, Benhamou M, Naaman C, Rainville P, Callot V, Cohen-Adad J. White matter atlas of the human spinal cord with estimation of partial volume effect. Neuroimage, 2015, 119:262-271. <https://pubmed.ncbi.nlm.nih.gov/26099457/>`_
 * `Frostell A, Hakim R, Thelin EP, Mattsson P, Svensson M. A Review of the Segmental Diameter of the Healthy Human Spinal Cord. Front Neurol. 2016 Dec 23;7:238.. <https://www.frontiersin.org/articles/10.3389/fneur.2016.00238/full>`_
