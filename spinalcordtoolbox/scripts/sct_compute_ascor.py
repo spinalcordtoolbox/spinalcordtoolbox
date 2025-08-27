@@ -63,15 +63,13 @@ def get_parser():
     return parser
 
 
-def compute_ascor(csa_sc, csa_canal, fname_out, append):
+def compute_ascor(csa_sc, csa_canal):
     """
     Computes the aSCOR (spinal cord area to canal area ratio) for each row in the provided CSV files and saves the results to a CSV file.
 
     :param str csa_sc: Path to the CSV file containing spinal cord area measurements.
     :param str csa_canal: Path to the CSV file containing spinal canal area measurements.
-    :param str fname_out: Path to the output CSV file where the computed aSCOR values will be saved.
-    :param bool append: If True, append the results to the output file; otherwise, overwrite the file.
-    """
+    :return pandas.DataFrame: DataFrame containing the aSCOR results."""
     df_sc = pd.read_csv(csa_sc)
     df_canal = pd.read_csv(csa_canal)
     df_ascor = pd.DataFrame()
@@ -87,23 +85,7 @@ def compute_ascor(csa_sc, csa_canal, fname_out, append):
         df_ascor = pd.concat([df_ascor, pd.DataFrame([row], columns=INDEX_COLUMNS)], ignore_index=True)
     printv(f"Computed aSCOR for {len(df_ascor)} rows.", 1, 'normal')
     # Save to csv
-    save_ascor_to_csv(df_ascor, fname_out, append)
-
-
-def save_ascor_to_csv(df_ascor, fname_out, append=False):
-    """
-    Saves the aSCOR DataFrame to a CSV file.
-
-    :param pandas.DataFrame: df_ascor : The DataFrame containing aSCOR results to be saved.
-    :param str: fname_out : Path to the output CSV file.
-    :param bool: append : If True, appends `df_ascor` to the existing CSV file. If False, overwrites the file. Default is False.
-    :return None
-
-    """
-    if append and os.path.exists(fname_out):
-        dataframe_old = pd.read_csv(fname_out, index_col=INDEX_COLUMNS)
-        df_ascor = pd.concat([dataframe_old.reset_index(), df_ascor], ignore_index=True)
-    df_ascor.to_csv(fname_out, index=False)
+    return df_ascor
 
 
 def main(argv: Sequence[str]):
@@ -141,9 +123,15 @@ def main(argv: Sequence[str]):
                                    '-o', os.path.join(path_tmp, "canal.csv"),
                                    ] + process_seg_argv  # pass all other arguments to sct_process_segmentation
     )
+
     # Compute aSCOR
     printv("Computing aSCOR...", verbose, 'normal')
-    compute_ascor(os.path.join(path_tmp, "sc.csv"), os.path.join(path_tmp, "canal.csv"), fname_out, arguments.append)
+    df_ascor = compute_ascor(os.path.join(path_tmp, "sc.csv"), os.path.join(path_tmp, "canal.csv"))
+    # Save aSCOR to csv
+    if arguments.append and os.path.exists(fname_out):
+        dataframe_old = pd.read_csv(fname_out, index_col=INDEX_COLUMNS)
+        df_ascor = pd.concat([dataframe_old.reset_index(), df_ascor], ignore_index=True)
+    df_ascor.to_csv(fname_out, index=False)
     printv(f'\nSaved: {os.path.abspath(fname_out)}')
     display_open(os.path.abspath(fname_out))
     # Clean up temp
