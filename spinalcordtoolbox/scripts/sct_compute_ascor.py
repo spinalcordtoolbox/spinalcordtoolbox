@@ -73,19 +73,24 @@ def compute_ascor(csa_sc, csa_canal):
     :return pandas.DataFrame: DataFrame containing the aSCOR results."""
     df_sc = pd.read_csv(csa_sc)
     df_canal = pd.read_csv(csa_canal)
+    df_merged = pd.merge(df_sc, df_canal, on=['Slice (I->S)', 'VertLevel','DistancePMJ'], suffixes=('_sc', '_canal'))
     df_ascor = pd.DataFrame()
-    # Loop across rows in dataframe
-    for idx in range(len(df_sc)):
-        ascor_value = df_sc['MEAN(area)'].iloc[idx] / df_canal['MEAN(area)'].iloc[idx]
-        row = [df_sc['Filename'].iloc[idx],
-               df_canal['Filename'].iloc[idx],
-               df_sc['Slice (I->S)'].iloc[idx],
-               df_sc['VertLevel'].iloc[idx],
-               df_sc['DistancePMJ'].iloc[idx],
-               ascor_value]
-        df_ascor = pd.concat([df_ascor, pd.DataFrame([row], columns=INDEX_COLUMNS)], ignore_index=True)
+    # Loop across rows in dataframe df_ascor
+    for idx in range(len(df_merged)):
+        row = df_merged.iloc[idx]
+        try:
+            ascor_value = row['MEAN(area)_sc'] / row['MEAN(area)_canal']
+        except (ValueError, ZeroDivisionError):
+            print(f"Could not compute aSCOR for slice {row['Slice (I->S)']} (SC area: {row['MEAN(area)_sc']}, canal area: {row['MEAN(area)_canal']})")
+            ascor_value = None  # use `nan` in output
+        new_row = [df_sc['Filename'].iloc[idx],
+                   df_canal['Filename'].iloc[idx],
+                   df_merged['Slice (I->S)'].iloc[idx],
+                   df_merged['VertLevel'].iloc[idx],
+                   df_merged['DistancePMJ'].iloc[idx],
+                   ascor_value]
+        df_ascor = pd.concat([df_ascor, pd.DataFrame([new_row], columns=INDEX_COLUMNS)], ignore_index=True)
     printv(f"Computed aSCOR for {len(df_ascor)} rows.", 1, 'normal')
-    # Save to csv
     return df_ascor
 
 
