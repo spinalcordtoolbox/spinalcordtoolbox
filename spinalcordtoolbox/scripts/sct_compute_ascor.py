@@ -95,14 +95,14 @@ def main(argv: Sequence[str]):
     set_loglevel(verbose=verbose, caller_module_name=__name__)    # values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG]
 
     # Load input and output filenames (while passing the remaining args to `sct_process_segmentation`)
-    fname_sc_segmentation = get_absolute_path(arguments.i_SC)
-    fname_canal_segmentation = get_absolute_path(arguments.i_canal)
+    fname_sc_seg = get_absolute_path(arguments.i_SC)
+    fname_canal_seg = get_absolute_path(arguments.i_canal)
     fname_out = arguments.o
     process_seg_argv = [a for i, a in enumerate(argv) if argv[i-1] not in ['-i-SC', '-o', '-i-canal'] and a not in ['-i-SC', '-o', '-i-canal']]
 
     # Validate the inputs
-    img_sc = Image(fname_sc_segmentation).change_orientation('RPI')
-    img_canal = Image(fname_canal_segmentation).change_orientation('RPI')
+    img_sc = Image(fname_sc_seg).change_orientation('RPI')
+    img_canal = Image(fname_canal_seg).change_orientation('RPI')
     if not img_sc.data.shape == img_canal.data.shape:
         raise ValueError(f"Shape mismatch between spinal cord segmentation [{img_sc.data.shape}],"
                          f" and canal segmentation [{img_canal.data.shape}]). "
@@ -111,20 +111,16 @@ def main(argv: Sequence[str]):
     # Run sct_process_segmentation twice: 1) SC seg 2) canal seg
     temp_folder = TempFolder(basename="process-segmentation")
     path_tmp = temp_folder.get_path()
+    path_tmp_sc = os.path.join(path_tmp, "sc.csv")
+    path_tmp_canal = os.path.join(path_tmp, "canal.csv")
     printv("Running sct_process_segmentation on spinal cord segmentation...", verbose, 'normal')
-    sct_process_segmentation.main(
-                                  ['-i', fname_sc_segmentation,
-                                   '-o', os.path.join(path_tmp, "sc.csv"),
-                                   ] + process_seg_argv)
+    sct_process_segmentation.main(['-i', fname_sc_seg, '-o', path_tmp_sc,] + process_seg_argv)
     printv("Running sct_process_segmentation on spinal canal segmentation...", verbose, 'normal')
-    sct_process_segmentation.main(
-                                  ['-i', fname_canal_segmentation,
-                                   '-o', os.path.join(path_tmp, "canal.csv"),
-                                   ] + process_seg_argv)
+    sct_process_segmentation.main(['-i', fname_canal_seg, '-o', path_tmp_canal,] + process_seg_argv)
 
     # Compute aSCOR
     printv("Computing aSCOR...", verbose, 'normal')
-    df_ascor = compute_ascor(os.path.join(path_tmp, "sc.csv"), os.path.join(path_tmp, "canal.csv"))
+    df_ascor = compute_ascor(path_tmp_sc, path_tmp_canal)
     # Save aSCOR to csv
     if arguments.append and os.path.exists(fname_out):
         dataframe_old = pd.read_csv(fname_out, index_col=INDEX_COLUMNS)
