@@ -94,35 +94,33 @@ def main(argv: Sequence[str]):
     verbose = arguments.v
     set_loglevel(verbose=verbose, caller_module_name=__name__)    # values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG]
 
-    # Load input and output filenames
+    # Load input and output filenames (while passing the remaining args to `sct_process_segmentation`)
     fname_sc_segmentation = get_absolute_path(arguments.i_SC)
     fname_canal_segmentation = get_absolute_path(arguments.i_canal)
+    fname_out = arguments.o
+    process_seg_argv = [a for i, a in enumerate(argv) if argv[i-1] not in ['-i-SC', '-o', '-i-canal'] and a not in ['-i-SC', '-o', '-i-canal']]
+
+    # Validate the inputs
     img_sc = Image(fname_sc_segmentation).change_orientation('RPI')
     img_canal = Image(fname_canal_segmentation).change_orientation('RPI')
     if not img_sc.data.shape == img_canal.data.shape:
         raise ValueError(f"Shape mismatch between spinal cord segmentation [{img_sc.data.shape}],"
                          f" and canal segmentation [{img_canal.data.shape}]). "
                          f"Please verify that your spinal cord and canal segmentations were done in the same space.")
-    fname_out = arguments.o
+
+    # Run sct_process_segmentation twice: 1) SC seg 2) canal seg
     temp_folder = TempFolder(basename="process-segmentation")
     path_tmp = temp_folder.get_path()
-    # Run sct_process_segmentation on spinal cord segmentation
     printv("Running sct_process_segmentation on spinal cord segmentation...", verbose, 'normal')
-    # Remove '-i-SC', '-o', and '-i-canal' arguments from argv before passing to sct_process_segmentation
-    process_seg_argv = [a for i, a in enumerate(argv) if argv[i-1] not in ['-i-SC', '-o', '-i-canal'] and a not in ['-i-SC', '-o', '-i-canal']]
     sct_process_segmentation.main(
                                   ['-i', fname_sc_segmentation,
                                    '-o', os.path.join(path_tmp, "sc.csv"),
-                                   ] + process_seg_argv  # pass all other arguments to sct_process_segmentation
-    )
-    # Run sct_process_segmentation on spinal canal segmentation
+                                   ] + process_seg_argv)
     printv("Running sct_process_segmentation on spinal canal segmentation...", verbose, 'normal')
-    # Remove '-i-SC', '-o', and '-i-canal' arguments from argv before passing to sct_process_segmentation
     sct_process_segmentation.main(
                                   ['-i', fname_canal_segmentation,
                                    '-o', os.path.join(path_tmp, "canal.csv"),
-                                   ] + process_seg_argv  # pass all other arguments to sct_process_segmentation
-    )
+                                   ] + process_seg_argv)
 
     # Compute aSCOR
     printv("Computing aSCOR...", verbose, 'normal')
@@ -134,6 +132,7 @@ def main(argv: Sequence[str]):
     df_ascor.to_csv(fname_out, index=False)
     printv(f'\nSaved: {os.path.abspath(fname_out)}')
     display_open(os.path.abspath(fname_out))
+
     # Clean up temp
     if arguments.r and temp_folder is not None:
         logger.info("\nRemove temporary files...")
