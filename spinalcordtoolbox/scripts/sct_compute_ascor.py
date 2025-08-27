@@ -3,7 +3,7 @@
 # Compute adapted Spinal Cord Occupation Ratio (aSCOR) from spinal cord and spinal canal masks.
 # morphometrics.
 #
-# Copyright (c) 2023 Polytechnique Montreal <www.neuro.polymtl.ca>
+# Copyright (c) 2025 Polytechnique Montreal <www.neuro.polymtl.ca>
 # License: see the file LICENSE
 
 import sys
