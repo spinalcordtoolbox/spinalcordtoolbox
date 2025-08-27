@@ -474,12 +474,12 @@ def _measure_rotated_diameters(seg_crop_r, seg_crop_r_rotated, dim, angle_hog, u
     _, _, [rl0, ap0] = compute_pca(rotated_bin)    # same as `y0, x0 = region.centroid`
     rl0_r, ap0_r = round(rl0), round(ap0)
 
-    # Threshold seg_crop_r_rotated to keep the softness of the segmentation but weight the pixel sum
-    seg_crop_r_rotated_thr = seg_crop_r_rotated * (seg_crop_r_rotated > 0.25)   # TODO: find the best threshold value, 0.5 seems to be too conservative
-    # Count non-zero pixels along AP axis, i.e., the number of pixels in the row corresponding to the center of mass along the RL axis
-    ap_pixels = np.sum(seg_crop_r_rotated_thr[rl0_r, :])
-    # Count non-zero pixels along RL axis, i.e., the number of pixels in the column corresponding to the center of mass along the AP axis
-    rl_pixels = np.sum(seg_crop_r_rotated_thr[:, ap0_r])
+    # Note: seg_crop_r_rotated is soft (due to the rotation) so we sum its values to account for softness
+    # Sum non-zero pixels along AP axis, i.e., the number of pixels in the row corresponding to the center of mass along the RL axis
+    # TODO: consider taking into account more than one row
+    ap_pixels = np.sum(seg_crop_r_rotated[rl0_r, :])
+    # Sum non-zero pixels along RL axis, i.e., the number of pixels in the column corresponding to the center of mass along the AP axis
+    rl_pixels = np.sum(seg_crop_r_rotated[:, ap0_r])
     # Convert pixels to physical dimensions
     # TODO: double-check dim[0] and dim[1] correspondence to RL and AP diameters
     rl_diameter = rl_pixels * dim[0] / upscale
@@ -496,13 +496,13 @@ def _measure_rotated_diameters(seg_crop_r, seg_crop_r_rotated, dim, angle_hog, u
     # Debug plotting
     if verbose == 2:
         _debug_plotting_hog(angle_hog, ap0_r, ap_diameter, dim, iz, properties, rl0_r, rl_diameter,
-                            seg_crop_r_rotated_thr, seg_crop_r, upscale)
+                            rotated_bin, seg_crop_r, upscale)
 
     return result
 
 
 def _debug_plotting_hog(angle_hog, ap0_r, ap_diameter, dim, iz, properties, rl0_r, rl_diameter,
-                        seg_crop_r_rotated_thr, seg_crop_r, upscale):
+                        rotated_bin, seg_crop_r, upscale):
     """
     """
     def _add_labels(ax):
@@ -562,7 +562,7 @@ def _debug_plotting_hog(angle_hog, ap0_r, ap_diameter, dim, iz, properties, rl0_
     _add_labels(ax1)
 
     # 2. Rotated segmentation by angle_hog
-    ax1.imshow(seg_crop_r_rotated_thr, cmap='Reds', alpha=0.4, label='Rotated Segmentation')
+    ax1.imshow(rotated_bin, cmap='Reds', alpha=0.4, label='Rotated Segmentation')
     # Center of mass
     ax1.plot(ap0_r, rl0_r, 'ro', markersize=10, label='Rotated Segmentation Center of Mass')
     # Draw arrow for the rotation angle
@@ -577,10 +577,10 @@ def _debug_plotting_hog(angle_hog, ap0_r, ap_diameter, dim, iz, properties, rl0_
     ax1.axhline(y=rl0_r, color='k', linestyle='dashdot', alpha=1, linewidth=1, label='AP axis (rotated segmentation)')
     ax1.axvline(x=ap0_r, color='k', linestyle='dashdot', alpha=1, linewidth=1, label='RL axis (rotated segmentation)')
     # Draw lines for the measured AP and RL diameters
-    right = np.nonzero(seg_crop_r_rotated_thr[:, ap0_r])[0][0]
-    left = np.nonzero(seg_crop_r_rotated_thr[:, ap0_r])[0][-1]
-    anterior = np.nonzero(seg_crop_r_rotated_thr[rl0_r, :])[0][0]
-    posterior = np.nonzero(seg_crop_r_rotated_thr[rl0_r, :])[0][-1]
+    right = np.nonzero(rotated_bin[:, ap0_r])[0][0]
+    left = np.nonzero(rotated_bin[:, ap0_r])[0][-1]
+    anterior = np.nonzero(rotated_bin[rl0_r, :])[0][0]
+    posterior = np.nonzero(rotated_bin[rl0_r, :])[0][-1]
     ax1.plot([anterior, posterior], [rl0_r, rl0_r], color='red', linestyle='--', linewidth=2,
              label=f'AP Diameter (rotated segmentation) = {ap_diameter:.2f} mm')
     ax1.plot([ap0_r, ap0_r], [right, left], color='red', linestyle='solid', linewidth=2,
