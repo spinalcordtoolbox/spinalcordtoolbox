@@ -10,6 +10,7 @@ import sys
 import os
 import textwrap
 import logging
+import itertools
 from typing import Sequence
 from spinalcordtoolbox.utils.fs import get_absolute_path, TempFolder
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
@@ -98,8 +99,10 @@ def main(argv: Sequence[str]):
     fname_sc_seg = get_absolute_path(arguments.i_SC)
     fname_canal_seg = get_absolute_path(arguments.i_canal)
     fname_out = arguments.o
-    process_seg_argv = [a for i, a in enumerate(argv) if argv[i-1] not in ['-i-SC', '-o', '-i-canal'] and a not in ['-i-SC', '-o', '-i-canal']]
-
+    process_seg_argv = list(itertools.chain.from_iterable([
+        [arg, value] for arg, value in zip(argv[::2], argv[1::2])
+        if arg not in ['-i-SC', '-i-canal', '-o']
+    ]))
     # Validate the inputs
     img_sc = Image(fname_sc_seg).change_orientation('RPI')
     img_canal = Image(fname_canal_seg).change_orientation('RPI')
