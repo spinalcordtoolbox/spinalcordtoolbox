@@ -5,7 +5,7 @@ Before starting this tutorial
 
 This rootlets-based registration tutorial is separate from the previous registration tutorials, meaning it can be run standalone.
 
-#. Make sure that you are working with a copy of SCT 7.0 or higher, and have an up-to-date copy of the PAM50 template:
+#. Make sure that you are working with SCT 7.0 or higher, and have an up-to-date copy of the PAM50 template:
 
    .. code:: sh
 
