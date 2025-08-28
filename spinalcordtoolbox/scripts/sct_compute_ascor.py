@@ -11,6 +11,7 @@ import os
 import textwrap
 import logging
 import itertools
+import numpy as np
 from typing import Sequence
 from spinalcordtoolbox.utils.fs import get_absolute_path, TempFolder
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
@@ -23,7 +24,7 @@ pd = LazyLoader("pd", globals(), "pandas")
 
 logger = logging.getLogger(__name__)
 
-INDEX_COLUMNS = ['Filename SC', 'Filename canal', 'Slice (I->S)', 'VertLevel', 'DistancePMJ', 'aSCOR']
+INDEX_COLUMNS = ['Filename_sc', 'Filename_canal', 'Slice (I->S)', 'VertLevel', 'DistancePMJ', 'aSCOR']
 
 
 # PARSER
@@ -74,24 +75,10 @@ def compute_ascor(csa_sc, csa_canal):
     df_sc = pd.read_csv(csa_sc)
     df_canal = pd.read_csv(csa_canal)
     df_merged = pd.merge(df_sc, df_canal, on=['Slice (I->S)', 'VertLevel', 'DistancePMJ'], suffixes=('_sc', '_canal'))
-    df_ascor = pd.DataFrame()
-    # Loop across rows in dataframe df_ascor
-    for idx in range(len(df_merged)):
-        row = df_merged.iloc[idx]
-        try:
-            ascor_value = row['MEAN(area)_sc'] / row['MEAN(area)_canal']
-        except (ValueError, ZeroDivisionError):
-            print(f"Could not compute aSCOR for slice {row['Slice (I->S)']} (SC area: {row['MEAN(area)_sc']}, canal area: {row['MEAN(area)_canal']})")
-            ascor_value = None  # use `nan` in output
-        new_row = [df_sc['Filename'].iloc[idx],
-                   df_canal['Filename'].iloc[idx],
-                   df_merged['Slice (I->S)'].iloc[idx],
-                   df_merged['VertLevel'].iloc[idx],
-                   df_merged['DistancePMJ'].iloc[idx],
-                   ascor_value]
-        df_ascor = pd.concat([df_ascor, pd.DataFrame([new_row], columns=INDEX_COLUMNS)], ignore_index=True)
-    printv(f"Computed aSCOR for {len(df_ascor)} rows.", 1, 'normal')
-    return df_ascor
+    df_merged['aSCOR'] = df_merged['MEAN(area)_sc'].div(df_merged['MEAN(area)_canal'], fill_value=0)
+    df_merged['aSCOR'].replace(np.inf, np.nan)  # output nan instead of inf for /0
+    printv(f"Computed aSCOR for {len(df_merged)} rows.", 1, 'normal')
+    return df_merged[INDEX_COLUMNS]
 
 
 def main(argv: Sequence[str]):
