@@ -52,6 +52,7 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
                      'diameter_RL',
                      'eccentricity',
                      'orientation',
+                     'orientation_OG',
                      'solidity',
                      'length'
                      ]
@@ -362,6 +363,7 @@ def _properties2d(seg, dim, iz, angle_hog=None, verbose=1):
         'centroid': region.centroid,        # Why do we store this? It is not used in the code.
         'eccentricity': region.eccentricity,
         'orientation': orientation,     # in degrees
+        'orientation_OG': -region.orientation,
         'solidity': solidity,  # convexity measure
     }
 
@@ -523,11 +525,11 @@ def _debug_plotting_hog(angle_hog, ap0_r, ap_diameter, dim, iz, properties, rl0_
             (x0, y0),
             width=properties['diameter_AP'] * upscale / dim[0],
             height=properties['diameter_RL'] * upscale / dim[1],
-            angle=properties['orientation'],
+            angle=properties['orientation_OG']*180.0/math.pi,
             edgecolor='orange',
             facecolor='none',
             linewidth=2,
-            label="Ellipse fitted using skimage.regionprops"
+            label="Ellipse fitted using skimage.regionprops, angle{:.2f}".format(properties['orientation_OG']*180.0/math.pi)
         )
         ax.add_patch(ellipse)
 
@@ -550,10 +552,10 @@ def _debug_plotting_hog(angle_hog, ap0_r, ap_diameter, dim, iz, properties, rl0_
     # Add AP and RL diameters from the original segmentation obtained using skimage.regionprops
     radius_ap = (properties['diameter_AP'] / dim[0]) * 0.5 * upscale
     radius_rl = (properties['diameter_RL'] / dim[1]) * 0.5 * upscale
-    dx_ap = radius_ap * np.cos(np.radians(properties['orientation']))
-    dy_ap = radius_ap * np.sin(np.radians(properties['orientation']))
-    dx_rl = radius_rl * -np.sin(np.radians(properties['orientation']))
-    dy_rl = radius_rl * np.cos(np.radians(properties['orientation']))
+    dx_ap = radius_ap * np.cos(properties['orientation_OG'])
+    dy_ap = radius_ap * np.sin(properties['orientation_OG'])
+    dx_rl = radius_rl * -np.sin(properties['orientation_OG'])
+    dy_rl = radius_rl * np.cos(properties['orientation_OG'])
     ax1.plot([x0 - dx_ap, x0 + dx_ap], [y0 - dy_ap, y0 + dy_ap], color='blue', linestyle='--', linewidth=2,
              label=f'AP diameter (skimage.regionprops) = {properties["diameter_AP"]:.2f} mm')
     ax1.plot([x0 - dx_rl, x0 + dx_rl], [y0 - dy_rl, y0 + dy_rl], color='blue', linestyle='solid', linewidth=2,
