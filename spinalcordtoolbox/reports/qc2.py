@@ -274,6 +274,7 @@ def sct_process_segmentation(
         fname_input: str,
         fname_seg: str,
         metrics: dict[str, Metric],
+        angle_type: str,
         argv: Sequence[str],
         path_qc: str,
         dataset: Optional[str],
@@ -284,9 +285,9 @@ def sct_process_segmentation(
     (obtained using spinalcordtoolbox.registration.algorithms.find_angle_hog)
     """
     # Check if 'angle_hog', 'centermass_x', and 'centermass_y' are in metrics
-    if not all(key in metrics for key in ['angle_hog', 'centermass_x', 'centermass_y']):
-        raise ValueError("Metrics must contain 'angle_hog', 'centermass_x', and 'centermass_y'.")
-
+    if not all(key in metrics for key in ['angle_hog', 'centermass_x', 'centermass_y', 'orientation_OG']):
+        raise ValueError("Metrics must contain 'angle_hog', 'orientation_OG', 'centermass_x', and 'centermass_y'.")
+    angle_type = 'angle_hog' if angle_type == 'HOG' else 'orientation_OG'
     command = 'sct_process_segmentation'
     cmdline = [command]
     cmdline.extend(argv)
@@ -347,7 +348,7 @@ def sct_process_segmentation(
         img.set_fill_value(0)
         ax.imshow(img, aspect=1.0)
         # Plot HOG angle lines directly on the empty axes
-        add_angle_lines(ax, img_temp.dim[0], metrics, radius=radius, scale=scale)
+        add_angle_lines(ax, img_temp.dim[0], metrics, angle_type=angle_type, radius=radius, scale=scale)
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
         img_path = str(imgs_to_generate['path_overlay_img'])
@@ -355,7 +356,7 @@ def sct_process_segmentation(
         fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
 
 
-def add_angle_lines(ax, num_slices, metrics, radius: tuple[int, int] = (15, 15), scale: float = 2.5):
+def add_angle_lines(ax, num_slices, metrics, angle_type, radius: tuple[int, int] = (15, 15), scale: float = 2.5):
     """
     Overlay HOG angle lines and add angle text onto an Axial mosaic.
     """
@@ -382,7 +383,7 @@ def add_angle_lines(ax, num_slices, metrics, radius: tuple[int, int] = (15, 15),
             # Uncomment the next line to plot the center of mass point
             # ax.plot(x_mosaic, y_mosaic, 'o', color='red', markersize=1.0)
         # HOG angle
-        angle_rad = metrics['angle_hog'].data[i] if 'angle_hog' in metrics else np.nan
+        angle_rad = metrics[angle_type].data[i] if angle_type in metrics else np.nan
         if not np.isnan(angle_rad):
             # Compute the end points of the line
             x_start = x_mosaic - radius[0] / 2 * np.sin(angle_rad)

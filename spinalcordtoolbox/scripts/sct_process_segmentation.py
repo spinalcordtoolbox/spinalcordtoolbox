@@ -586,15 +586,33 @@ def main(argv: Sequence[str]):
     # Create QC report for the HOG angle
     if arguments.qc is not None:
         if fname_segmentation is not None and fname_image is not None:
+
             qc2.sct_process_segmentation(
                 fname_input=fname_image,
                 fname_seg=fname_segmentation,
                 metrics=metrics_native_space if normalize_pam50 else metrics,
                 argv=argv,
+                angle_type='ellipse',
                 path_qc=arguments.qc,
                 dataset=arguments.qc_dataset,
                 subject=arguments.qc_subject,
             )
+            qc2.sct_process_segmentation(
+                fname_input=fname_image,
+                fname_seg=fname_segmentation,
+                metrics=metrics_native_space if normalize_pam50 else metrics,
+                argv=argv,
+                angle_type='HOG',
+                path_qc=arguments.qc + '_HOG',
+                dataset=arguments.qc_dataset,
+                subject=arguments.qc_subject,
+            )
+
+            #     path_qc=arguments.qc,
+            #     dataset=arguments.qc_dataset,
+            #     subject=arguments.qc_subject,
+            # )
+
     display_open(file_out)
 
 

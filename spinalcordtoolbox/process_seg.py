@@ -529,7 +529,7 @@ def _debug_plotting_hog(angle_hog, ap0_r, ap_diameter, dim, iz, properties, rl0_
             edgecolor='orange',
             facecolor='none',
             linewidth=2,
-            label="Ellipse fitted using skimage.regionprops, angle{:.2f}".format(properties['orientation_OG']*180.0/math.pi)
+            label="Ellipse fitted using skimage.regionprops, angle: {:.2f}".format(-properties['orientation_OG']*180.0/math.pi)
         )
         ax.add_patch(ellipse)
 
