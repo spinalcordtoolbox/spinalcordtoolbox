@@ -140,8 +140,8 @@ MODELS = {
         "url": [
             "https://github.com/ivadomed/model-spinal-rootlets/releases/download/r20250318/model-spinal-rootlets-multicon-r20250318.zip"
         ],
-        "description": "Segmentation of spinal nerve rootlets for T2w and MP2RAGE (UNIT1, INV1, INV2) images using nnUNet",
-        "contrasts": ["t2", "UNIT1", "INV1", "INV2"],
+        "description": "Segmentation of spinal nerve rootlets for T2w and MP2RAGE contrasts (T1w-INV1, T1w-INV2, and UNIT1) using nnUNet",
+        "contrasts": ["t2", "UNIT1", "T1w-INV1", "T1w-INV2"],
         "thr": None,  # Multiclass rootlets model (1.0, 2.0, 3.0...) -> no thresholding
         "default": False,
     },
@@ -414,7 +414,7 @@ TASKS = {
          'group': 'pathology'
          },
     'rootlets':
-        {'description': 'Segmentation of spinal nerve rootlets for T2w and MP2RAGE (UNIT1, INV1, INV2) images',
+        {'description': 'Segmentation of spinal nerve rootlets for T2w and MP2RAGE contrasts (T1w-INV1, T1w-INV2, and UNIT1)',
          'long_description': 'This segmentation model for spinal nerve rootlets segmentation uses a 3D U-Net '
                              'architecture, and was trained with the nnUNetV2 framework. It is a multiclass model, '
                              'outputting a single segmentation image containing 8 classes representing the C2-T1 '
