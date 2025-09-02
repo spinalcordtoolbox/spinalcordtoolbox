@@ -51,8 +51,8 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
                      'diameter_AP',
                      'diameter_RL',
                      'eccentricity',
+                     'orientation_abs',
                      'orientation',
-                     'orientation_OG',
                      'solidity',
                      'length'
                      ]
@@ -62,8 +62,8 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
     if image is not None:
         # HOG-related properties that are only available when image (`sct_process_segmentation -i`) is provided
         # TODO: consider whether to use this workaround or include the columns even when image is not provided and use NaN
-        hog_properties = ['diameter_AP_hog',
-                          'diameter_RL_hog',
+        hog_properties = ['diameter_AP',
+                          'diameter_RL',
                           'centermass_x',
                           'centermass_y',
                           'angle_hog']
@@ -362,21 +362,22 @@ def _properties2d(seg, dim, iz, angle_hog=None, verbose=1):
         'diameter_RL': diameter_RL,
         'centroid': region.centroid,        # Why do we store this? It is not used in the code.
         'eccentricity': region.eccentricity,
-        'orientation': orientation,     # in degrees
-        'orientation_OG': -region.orientation,
+        'orientation_abs': orientation,     # in degrees
+        'orientation': -region.orientation,  # in radians
         'solidity': solidity,  # convexity measure
     }
+    print('AP ellipse')
+    print(properties['diameter_AP'])
+    # Rotate the segmentation by the angle_hog to align with AP/RL axes
+    seg_crop_r_rotated = _rotate_segmentation_by_angle(seg_crop_r, region.orientation)
 
-    # Apply rotation using angle_hog if provided
-    if angle_hog is not None:
-        # Rotate the segmentation by the angle_hog to align with AP/RL axes
-        seg_crop_r_rotated = _rotate_segmentation_by_angle(seg_crop_r, angle_hog)
-        # Measure diameters along AP and RL axes in the rotated segmentation
-        rotated_properties = _measure_rotated_diameters(seg_crop_r, seg_crop_r_rotated, dim, angle_hog, upscale,
-                                                        iz, properties, verbose)
-
-        # Update the properties dictionary with the rotated properties
-        properties.update(rotated_properties)
+    # Measure diameters along AP and RL axes in the rotated segmentation
+    rotated_properties = _measure_rotated_diameters(seg_crop_r, seg_crop_r_rotated, dim, region.orientation, upscale,
+                                                    iz, properties, verbose)
+    print('AP seg')
+    print(rotated_properties['diameter_AP'])
+    # Update the properties dictionary with the rotated properties
+    properties.update(rotated_properties)
 
     return properties
 
@@ -421,7 +422,7 @@ def _rotate_segmentation_by_angle(seg_crop_r, angle_hog):
     Rotate the segmentation by the angle (HOG angle found from the image) to align with AP/RL axes.
 
     :param seg_crop_r: 2D input segmentation
-    :param angle_hog: Rotation angle in radians (HOG angle found from the image)
+    :param angle_hog: Rotation angle in radians (positive values correspond to counter-clockwise rotation)
     :return seg_crop_r_rotated: Rotated segmentation
     """
     # get center of mass (which is computed in the PCA function)
@@ -454,16 +455,16 @@ def _rotate_segmentation_by_angle(seg_crop_r, angle_hog):
     return seg_crop_r_rotated
 
 
-def _measure_rotated_diameters(seg_crop_r, seg_crop_r_rotated, dim, angle_hog, upscale, iz, properties, verbose):
+def _measure_rotated_diameters(seg_crop_r, seg_crop_r_rotated, dim, angle, upscale, iz, properties, verbose):
     """
     Measure the AP and RL diameters in the rotated segmentation.
     This function counts the number of pixels along the AP and RL axes in the rotated segmentation and converts them
     to physical dimensions using the provided pixel size.
 
     :param seg_crop_r: Original cropped segmentation (used only for plotting).
-    :param seg_crop_r_rotated: Rotated segmentation (after applying angle_hog) used to measure diameters. seg.shape[0] --> RL; seg.shape[1] --> PA
+    :param seg_crop_r_rotated: Rotated segmentation (after applying angle) used to measure diameters. seg.shape[0] --> RL; seg.shape[1] --> PA
     :param dim: Physical dimensions of the segmentation (in mm). X,Y respectively correspond to RL,PA.
-    :param angle_hog: Rotation angle in radians (HOG angle found from the image)
+    :param angle: Rotation angle in radians (HOG angle found from the image)
     :param upscale: Upscale factor used for resampling the segmentation
     :param iz: Integer slice number (z index) of the segmentation. Used for plotting purposes.
     :param properties: Dictionary containing the properties of the original (not-rotated) segmentation. Used for plotting purposes.
@@ -491,13 +492,13 @@ def _measure_rotated_diameters(seg_crop_r, seg_crop_r_rotated, dim, angle_hog, u
     result = {
         'ap_pixel_count': ap_pixels,
         'rl_pixel_count': rl_pixels,
-        'diameter_AP_hog': ap_diameter,
-        'diameter_RL_hog': rl_diameter,
+        'diameter_AP': ap_diameter,
+        'diameter_RL': rl_diameter,
     }
 
     # Debug plotting
     if verbose == 2:
-        _debug_plotting_hog(angle_hog, ap0_r, ap_diameter, dim, iz, properties, rl0_r, rl_diameter,
+        _debug_plotting_hog(angle, ap0_r, ap_diameter, dim, iz, properties, rl0_r, rl_diameter,
                             rotated_bin, seg_crop_r, upscale)
 
     return result
@@ -525,11 +526,11 @@ def _debug_plotting_hog(angle_hog, ap0_r, ap_diameter, dim, iz, properties, rl0_
             (x0, y0),
             width=properties['diameter_AP'] * upscale / dim[0],
             height=properties['diameter_RL'] * upscale / dim[1],
-            angle=properties['orientation_OG']*180.0/math.pi,
+            angle=properties['orientation']*180.0/math.pi,
             edgecolor='orange',
             facecolor='none',
             linewidth=2,
-            label="Ellipse fitted using skimage.regionprops, angle: {:.2f}".format(-properties['orientation_OG']*180.0/math.pi)
+            label="Ellipse fitted using skimage.regionprops, angle: {:.2f}".format(-properties['orientation']*180.0/math.pi)
         )
         ax.add_patch(ellipse)
 
@@ -552,10 +553,10 @@ def _debug_plotting_hog(angle_hog, ap0_r, ap_diameter, dim, iz, properties, rl0_
     # Add AP and RL diameters from the original segmentation obtained using skimage.regionprops
     radius_ap = (properties['diameter_AP'] / dim[0]) * 0.5 * upscale
     radius_rl = (properties['diameter_RL'] / dim[1]) * 0.5 * upscale
-    dx_ap = radius_ap * np.cos(properties['orientation_OG'])
-    dy_ap = radius_ap * np.sin(properties['orientation_OG'])
-    dx_rl = radius_rl * -np.sin(properties['orientation_OG'])
-    dy_rl = radius_rl * np.cos(properties['orientation_OG'])
+    dx_ap = radius_ap * np.cos(properties['orientation'])
+    dy_ap = radius_ap * np.sin(properties['orientation'])
+    dx_rl = radius_rl * -np.sin(properties['orientation'])
+    dy_rl = radius_rl * np.cos(properties['orientation'])
     ax1.plot([x0 - dx_ap, x0 + dx_ap], [y0 - dy_ap, y0 + dy_ap], color='blue', linestyle='--', linewidth=2,
              label=f'AP diameter (skimage.regionprops) = {properties["diameter_AP"]:.2f} mm')
     ax1.plot([x0 - dx_rl, x0 + dx_rl], [y0 - dy_rl, y0 + dy_rl], color='blue', linestyle='solid', linewidth=2,
@@ -571,7 +572,7 @@ def _debug_plotting_hog(angle_hog, ap0_r, ap_diameter, dim, iz, properties, rl0_
     # Flip sign to match PCA convention
     # See https://github.com/spinalcordtoolbox/spinalcordtoolbox/blob/ba30577e80a4e7387498820f0ff30b8965fbf2a4/spinalcordtoolbox/registration/algorithms.py#L834
     # TODO: figure out why the link below flip the angle sign only for src_hog but not for dest_hog
-    angle_hog = -angle_hog
+    #angle_hog = -angle_hog
     ax1.arrow(ap0_r, rl0_r, np.sin(angle_hog + (90 * math.pi / 180)) * 25,
               np.cos(angle_hog + (90 * math.pi / 180)) * 25, color='black', width=0.1,
               head_width=1, label=f'HOG angle = {angle_hog * 180 / math.pi:.1f}°')  # convert to degrees
