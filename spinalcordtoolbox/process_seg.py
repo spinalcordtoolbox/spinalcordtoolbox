@@ -238,7 +238,7 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
                 shape_property['angle_AP'] = angle_AP_rad * 180.0 / math.pi     # convert to degrees
                 shape_property['angle_RL'] = angle_RL_rad * 180.0 / math.pi     # convert to degrees
                 shape_property['length'] = pz / (np.cos(angle_AP_rad) * np.cos(angle_RL_rad))
-
+                shape_property['orientation'] = angle_RL_rad * 180.0 / math.pi     # convert to degrees
                 # Loop across properties and assign values for function output
                 for property_name in property_list:
                     shape_properties[property_name][iz] = shape_property[property_name]
@@ -265,7 +265,7 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
                     # Add custom fields
                     shape_property['centermass_x'] = centermass_src[0]
                     shape_property['centermass_y'] = centermass_src[1]
-                    shape_property['angle_hog'] = angle_hog     # in radians
+                    shape_property['angle_hog'] = -angle_hog * 180.0 / math.pi     # degrees, and change sign to match negative if left rotation
                     shape_property['angle_AP'] = angle_AP_rad * 180.0 / math.pi     # convert to degrees
                     shape_property['angle_RL'] = angle_RL_rad * 180.0 / math.pi     # convert to degrees
                     shape_property['length'] = pz / (np.cos(angle_AP_rad) * np.cos(angle_RL_rad))
@@ -284,7 +284,6 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
                     shape_property['angle_AP'] = angle_AP_rad * 180.0 / math.pi     # convert to degrees
                     shape_property['angle_RL'] = angle_RL_rad * 180.0 / math.pi     # convert to degrees
                     shape_property['length'] = pz / (np.cos(angle_AP_rad) * np.cos(angle_RL_rad))
-
                     # Loop across properties and assign values for function output
                     for property_name in property_list:
                         shape_properties[property_name][iz] = shape_property[property_name]
