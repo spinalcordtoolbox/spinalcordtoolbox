@@ -26,6 +26,7 @@ The following studies have used SCT:
 2025 
 ----
 
+-  Witt *et al.* `Leveling up: along-level diffusion tensor imaging in the spinal cord of multiple sclerosis patients <https://doi.org/10.3389/fnimg.2025.1599966>`_, **Front. Neuroimaging** 2025
 -  Khan *et al.* `Quantitative assessment of asymptomatic spinal cord compression using MRI: a multi-center study <https://doi.org/10.1007/s11357-025-01837-w>`_, **GeroScience** 2025
 -  Cappelle *et al.* `The value of manual MRI measurements of brain and spinal cord for daily clinical practice in Multiple Sclerosis subjects: a scoping review <https://doi.org/10.1016/j.msard.2025.106670>`_, **Mult. Scler. Relat. Disord.** 2025
 -  González-Salazar *et al.* `Spinal cord structural changes in SPG4: insights from a large cohort using advanced neuroimaging <https://doi.org/10.1007/s00415-025-13251-5>`_, **J. Neurol.** 2025
