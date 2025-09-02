@@ -383,20 +383,19 @@ def add_angle_lines(ax, num_slices, metrics, angle_type, radius: tuple[int, int]
             # Uncomment the next line to plot the center of mass point
             # ax.plot(x_mosaic, y_mosaic, 'o', color='red', markersize=1.0)
         # HOG angle
-        angle_rad = metrics[angle_type].data[i] if angle_type in metrics else np.nan
-        if not np.isnan(angle_rad):
+        angle_deg = metrics[angle_type].data[i] if angle_type in metrics else np.nan
+        if not np.isnan(angle_deg):
             # Compute the end points of the line
-            x_start = x_mosaic - radius[0] / 2 * np.sin(angle_rad)
-            y_start = y_mosaic - radius[1] / 2 * np.cos(angle_rad)
-            x_end = x_mosaic + radius[0] / 2 * np.sin(angle_rad)
-            y_end = y_mosaic + radius[1] / 2 * np.cos(angle_rad)
+            x_start = x_mosaic - radius[0] / 2 * np.sin(-angle_deg * np.pi / 180)
+            y_start = y_mosaic - radius[1] / 2 * np.cos(-angle_deg * np.pi / 180)
+            x_end = x_mosaic + radius[0] / 2 * np.sin(-angle_deg * np.pi / 180)
+            y_end = y_mosaic + radius[1] / 2 * np.cos(-angle_deg * np.pi / 180)
             # Plot the line
             ax.plot([x_start, x_end], [y_start, y_end], '-', color='red', linewidth=0.7)
             # Include the angle text in degrees
             # Flip sign to match PCA convention
             # See https://github.com/spinalcordtoolbox/spinalcordtoolbox/blob/ba30577e80a4e7387498820f0ff30b8965fbf2a4/spinalcordtoolbox/registration/algorithms.py#L834
             # TODO: figure out why the link below flip the angle sign only for src_hog but not for dest_hog
-            angle_deg = -np.degrees(angle_rad)
             ax.text(x_mosaic + radius[0] * 0.2, y_mosaic - radius[1] * 0.3,  # upper right corner
                     f'{angle_deg:.1f}°', color='red', fontsize=3,
                     path_effects=[mpl_patheffects.withStroke(linewidth=0.5, foreground='white')])

@@ -234,11 +234,10 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
                 # Add custom fields
                 shape_property['centermass_x'] = centermass_src[0]
                 shape_property['centermass_y'] = centermass_src[1]
-                shape_property['angle_hog'] = angle_hog     # in radians
+                shape_property['angle_hog'] = -angle_hog * 180.0 / math.pi     # degrees, and change sign to match negative if left rotation
                 shape_property['angle_AP'] = angle_AP_rad * 180.0 / math.pi     # convert to degrees
                 shape_property['angle_RL'] = angle_RL_rad * 180.0 / math.pi     # convert to degrees
                 shape_property['length'] = pz / (np.cos(angle_AP_rad) * np.cos(angle_RL_rad))
-                shape_property['orientation'] = angle_RL_rad * 180.0 / math.pi     # convert to degrees
                 # Loop across properties and assign values for function output
                 for property_name in property_list:
                     shape_properties[property_name][iz] = shape_property[property_name]
@@ -365,18 +364,15 @@ def _properties2d(seg, dim, iz, angle_hog=None, verbose=1):
         'orientation': -region.orientation,  # in radians
         'solidity': solidity,  # convexity measure
     }
-    print('AP ellipse')
-    print(properties['diameter_AP'])
     # Rotate the segmentation by the angle_hog to align with AP/RL axes
     seg_crop_r_rotated = _rotate_segmentation_by_angle(seg_crop_r, region.orientation)
 
     # Measure diameters along AP and RL axes in the rotated segmentation
     rotated_properties = _measure_rotated_diameters(seg_crop_r, seg_crop_r_rotated, dim, region.orientation, upscale,
                                                     iz, properties, verbose)
-    print('AP seg')
-    print(rotated_properties['diameter_AP'])
     # Update the properties dictionary with the rotated properties
     properties.update(rotated_properties)
+    properties['orientation'] = -properties['orientation'] * 180.0 / math.pi  # convert to degrees
 
     return properties
 
