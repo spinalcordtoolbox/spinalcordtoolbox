@@ -285,9 +285,9 @@ def sct_process_segmentation(
     (obtained using spinalcordtoolbox.registration.algorithms.find_angle_hog)
     """
     # Check if 'angle_hog', 'centermass_x', and 'centermass_y' are in metrics
-    if not all(key in metrics for key in ['angle_hog', 'centermass_x', 'centermass_y', 'orientation_OG']):
-        raise ValueError("Metrics must contain 'angle_hog', 'orientation_OG', 'centermass_x', and 'centermass_y'.")
-    angle_type = 'angle_hog' if angle_type == 'HOG' else 'orientation_OG'
+    if not all(key in metrics for key in ['angle_hog', 'centermass_x', 'centermass_y', 'orientation']):
+        raise ValueError("Metrics must contain 'angle_hog', 'orientation', 'centermass_x', and 'centermass_y'.")
+    angle_type = 'angle_hog' if angle_type == 'HOG' else 'orientation'
     command = 'sct_process_segmentation'
     cmdline = [command]
     cmdline.extend(argv)
