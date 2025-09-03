@@ -62,13 +62,28 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
     if image is not None:
         # HOG-related properties that are only available when image (`sct_process_segmentation -i`) is provided
         # TODO: consider whether to use this workaround or include the columns even when image is not provided and use NaN
-        hog_properties = ['diameter_AP',
-                          'diameter_RL',
-                          'centermass_x',
+        hog_properties = ['centermass_x',
                           'centermass_y',
                           'angle_hog']
-        # Add HOG-related properties to the property list when image is provided
-        property_list = property_list[:1] + hog_properties + property_list[1:]
+        # Add quadrant area properties
+        quadrant_keys = [
+            'area_quadrant_anterior_left',
+            'area_quadrant_anterior_right',
+            'area_quadrant_posterior_left',
+            'area_quadrant_posterior_right',
+        ]
+        # Add symmetry properties
+        symmetry_keys = [
+            'symmetry_RL',
+            'symmetry_dice_RL',
+            'symmetry_AP',
+            'symmetry_dice_AP',
+            'symmetry_anterior_RL',
+            'symmetry_posterior_RL',
+        ]
+        # Add HOG-related properties and symmetry to the property list when image is provided
+        property_list = property_list[:1] + hog_properties + quadrant_keys + symmetry_keys + property_list[1:]
+
         im = Image(image).change_orientation('RPI')
         # Make sure the input image and segmentation have the same dimensions
         if im_seg.dim[:3] != im.dim[:3]:
@@ -171,9 +186,31 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
         # Store the data for this slice
         z_indices.append(iz)
 
-        # Compute shape properties for this slice
-        shape_property = _properties2d(current_patch_scaled, [px, py], iz, verbose=verbose)
 
+        # Store basic properties and angles to be used later after regularization
+        if image is not None:
+            # compute PCA and get center or mass based on segmentation; centermass_src: [RL, AP] (assuming RPI orientation)
+            coord_src, pca_src, centermass_src = compute_pca(current_patch_scaled)
+            # Finds the angle of the image
+            # TODO: explore different sigma values for the HOG method, i.e., the influence how far away pixels will vote for the orientation.
+            # TODO: double-check if sigma is in voxel or mm units.
+            # TODO: do we want to use the same sigma for all slices? As the spinal cord sizes vary across the z-axis.
+            # TODO: Use the angle line found by the HOG method to compute symmetry (based on right and left CSA).
+            angle_hog, conf_src = find_angle_hog(current_patch_im_scaled, centermass_src,
+                                                 px, py, angle_range=40)    # 40 is taken from registration.algorithms.register2d_centermassrot
+
+            angle_hog_values.append(angle_hog)
+            centermass_values.append(centermass_src)
+            # Store the patches to use later after regularization
+            current_patches[iz] = {
+                'patch': current_patch_scaled,
+                'angle_AP_rad': angle_AP_rad,
+                'angle_RL_rad': angle_RL_rad
+            }
+        else:
+            angle_hog = None
+        # Compute shape properties for this slice
+        shape_property = _properties2d(current_patch_scaled, [px, py], iz, angle_hog=angle_hog, verbose=verbose)
         if image is None or filter_size < 0:  #TODO and regularization term filter_size < 0
             # If regularization is disabled or no image is provided,
             # loop through stored patches and compute properties the regular way
@@ -199,27 +236,6 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
                     shape_properties[property_name][iz] = shape_property[property_name]
             else:
                 logging.warning(f'\nNo properties for slice: {iz}')
-
-        # Store basic properties and angles to be used later after regularization
-        if image is not None:
-            # compute PCA and get center or mass based on segmentation; centermass_src: [RL, AP] (assuming RPI orientation)
-            coord_src, pca_src, centermass_src = compute_pca(current_patch_scaled)
-            # Finds the angle of the image
-            # TODO: explore different sigma values for the HOG method, i.e., the influence how far away pixels will vote for the orientation.
-            # TODO: double-check if sigma is in voxel or mm units.
-            # TODO: do we want to use the same sigma for all slices? As the spinal cord sizes vary across the z-axis.
-            # TODO: Use the angle line found by the HOG method to compute symmetry (based on right and left CSA).
-            angle_hog, conf_src = find_angle_hog(current_patch_im_scaled, centermass_src,
-                                                 px, py, angle_range=40)    # 40 is taken from registration.algorithms.register2d_centermassrot
-
-            angle_hog_values.append(angle_hog)
-            centermass_values.append(centermass_src)
-            # Store the patches to use later after regularization
-            current_patches[iz] = {
-                'patch': current_patch_scaled,
-                'angle_AP_rad': angle_AP_rad,
-                'angle_RL_rad': angle_RL_rad
-            }
 
     # Apply regularization to HOG angles along the z-axis if filter_size > 0
     # The code snippet below is taken from algorithms.register2d_centermassrot -- maybe it could be extracted into a
@@ -257,7 +273,7 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
             centermass_src = centermass_values[i]
 
             # Compute shape properties with regularized angle_hog
-            shape_property = _properties2d(current_patch_scaled, [px, py], iz, verbose=verbose)
+            shape_property = _properties2d(current_patch_scaled, [px, py], iz, angle_hog=angle_hog, verbose=verbose)
 
             if shape_property is not None:
                 # Add custom fields
@@ -282,7 +298,7 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
     return metrics, fit_results
 
 
-def _properties2d(seg, dim, iz, verbose=1):
+def _properties2d(seg, dim, iz, angle_hog=None, verbose=1):
     """
     Compute shape property of the input 2D segmentation. Accounts for partial volume information.
     :param seg: 2D input segmentation in uint8 or float (weighted for partial volume) that has a single object. seg.shape[0] --> RL; seg.shape[1] --> PA
@@ -336,6 +352,7 @@ def _properties2d(seg, dim, iz, verbose=1):
         solidity = np.nan
     else:
         solidity = region.solidity
+
     # Fill up dictionary
     properties = {
         'area': area,
@@ -357,6 +374,18 @@ def _properties2d(seg, dim, iz, verbose=1):
     properties.update(rotated_properties)
     properties['orientation'] = -properties['orientation'] * 180.0 / math.pi  # convert to degrees
 
+    if angle_hog is not None:
+        # If angle_hog is provided, rotate the segmentation by this angle to align with AP/RL axes, and use for symmetry assessment
+        seg_crop_r_rotated_hog = _rotate_segmentation_by_angle(seg_crop_r, angle_hog)
+        # Compute quadrant areas and RL and AP symmetry
+        quadrant_areas, symmetry_measures = compute_quadrant_areas(seg_crop_r_rotated_hog, region.centroid, orientation_deg=0,
+                                                                   area=area, diameter_AP=diameter_AP, diameter_RL=diameter_RL,
+                                                                   dim=dim, upscale=upscale, iz=iz)
+        # Update the properties dictionary with the rotated properties
+        properties.update(quadrant_areas)
+        properties.update(symmetry_measures)
+        symmetry_dice = _calculate_symmetry_dice(seg_crop_r_rotated_hog, region.centroid)
+        properties.update(symmetry_dice)
     return properties
 
 
@@ -483,6 +512,349 @@ def _measure_rotated_diameters(seg_crop_r, seg_crop_r_rotated, dim, angle, upsca
                             rotated_bin, seg_crop_r, upscale)
 
     return result
+
+
+def _calculate_symmetry_dice(seg_crop_r_rotated, centroid):
+    """
+    Flip along the RL axis and compute the Dice coefficient between the original and flipped segmentation.
+    :param seg_crop_r_rotated: Rotated segmentation (after applying angle) used to measure diameters. seg.shape[0] --> RL; seg.shape[1] --> PA
+    :param centroid: (y, x) coordinates of the centroid in the upsampled image space.
+    :return: symmetry_dice: Dice coefficient between the original and flipped segmentation.
+    """
+    # TODO: consider using half of segmentation to compute symmetry, to avoid bias
+    # Flip the segmentation along the RL axis
+    # Flip according to centroid position (centroid[1] is x, i.e. RL axis)
+    y0, x0 = centroid
+    y0 = int(round(y0))
+    x0 = int(round(x0))
+    seg_crop_r_flipped = np.zeros_like(seg_crop_r_rotated)
+
+    # Get bounding box of the segmentation (on the cropped segmentation, not the full one)
+    coords = np.argwhere(seg_crop_r_rotated > 0)
+    y_min, x_min = coords.min(axis=0)[:2]
+    y_max, x_max = coords.max(axis=0)[:2]
+    # Center of segmentation along RL axis (x)
+    center_x = int(round((x_min + x_max) / 2))
+
+    # Flip around segmentation center
+    for y, x in coords[:, :2]:
+        x_mirror = 2 * center_x - x
+        if 0 <= x_mirror < seg_crop_r_rotated.shape[1]:
+            seg_crop_r_flipped[y, x_mirror] = seg_crop_r_rotated[y, x]
+    # Erase half of the segmentation to avoid bias
+    seg_crop_r_flipped[:, :x0] = 0
+    seg_crop_r_rotated_cut = np.copy(seg_crop_r_rotated)
+    seg_crop_r_rotated_cut[:, :x0] = 0
+    # Compute the intersection and union for the Dice coefficient
+    intersection_AP = np.sum(seg_crop_r_rotated_cut * seg_crop_r_flipped)
+    union_AP = np.sum(seg_crop_r_rotated_cut) + np.sum(seg_crop_r_flipped)
+
+    # Compute the Dice coefficient
+    symmetry_dice_AP = 2 * intersection_AP / union_AP if union_AP > 0 else 0
+    print('symmetry_dice_AP:', symmetry_dice_AP)
+
+    # Create an empty array for flipped version
+    seg_crop_r_flipped_RL = np.zeros_like(seg_crop_r_rotated)
+
+    # Get bounding box of the segmentation
+    coords = np.argwhere(seg_crop_r_rotated > 0)
+    y_min, x_min = coords.min(axis=0)[:2]
+    y_max, x_max = coords.max(axis=0)[:2]
+
+    # Center of segmentation along RL axis (y)
+    center_y = int(round((y_min + y_max) / 2))
+
+    # Flip around segmentation center (RL axis)
+    for y, x in coords[:, :2]:
+        y_mirror = 2 * center_y - y
+        if 0 <= y_mirror < seg_crop_r_rotated.shape[0]:
+            seg_crop_r_flipped_RL[y_mirror, x] = seg_crop_r_rotated[y, x]
+    seg_crop_r_flipped_RL[:y0, :] = 0
+    seg_crop_r_rotated_cut = np.copy(seg_crop_r_rotated)
+    seg_crop_r_rotated_cut[:y0, :] = 0
+    # Compute the intersection and union for the Dice coefficient
+    intersection_RL = np.sum(seg_crop_r_rotated_cut * seg_crop_r_flipped_RL)
+    union_RL = np.sum(seg_crop_r_rotated_cut) + np.sum(seg_crop_r_flipped_RL)
+
+    # Compute the Dice coefficient
+    symmetry_dice_RL = 2 * intersection_RL / union_RL if union_RL > 0 else 0
+
+    # Store results in a dictionary
+    print('symmetry_dice_RL:', symmetry_dice_RL)
+
+    symmetry_dice = {
+        'symmetry_dice_RL': symmetry_dice_RL,
+        'symmetry_dice_AP': symmetry_dice_AP,
+    }
+    return symmetry_dice
+
+
+def _calculate_symmetry(area1, area2, total_area, signed=True):
+    """
+    Calculate the symmetry ratio of the spinal cord.
+    The symmetry can be computed in two ways:
+    1. Signed: (area1 - area2) / total_area
+       Returns values from -1 to 1, where:
+       - 0 indicates perfect symmetry
+       - Positive values indicate area1 dominance (typically left side)
+       - Negative values indicate area2 dominance (typically right side)
+       - The magnitude indicates the degree of asymmetry
+    2. Unsigned: 1 - |area1 - area2| / total_area
+       Returns values from 0 to 1, where:
+       - 1 indicates perfect symmetry
+       - 0 indicates complete asymmetry
+    :param area1: Area of the first side (left or anterior)
+    :param area2: Area of the second side (right or posterior)
+    :param total_area: Total area of the spinal cord.
+    :param signed: Whether to return signed symmetry (-1 to 1) or unsigned (0 to 1).
+    :return: Symmetry value, either between -1 and 1 (signed) or between 0 and 1 (unsigned)
+    """
+    # Sanity checks
+    if area1 <= NEAR_ZERO_THRESHOLD or area2 <= NEAR_ZERO_THRESHOLD:
+        return np.nan
+    if total_area <= NEAR_ZERO_THRESHOLD:
+        return np.nan
+
+    if signed:
+        # Calculate signed symmetry as (area1 - area2) / total_area
+        # This gives:
+        # - 0 for perfect symmetry
+        # - Positive values when area1 > area2 (e.g., left side dominance)
+        # - Negative values when area1 < area2 (e.g., right side dominance)
+        symmetry = (area1 - area2) / total_area
+    else:
+        # Calculate unsigned symmetry as 1 - |area1 - area2| / total_area
+        # This gives 1 for perfect symmetry and values closer to 0 for asymmetry
+        symmetry = 1.0 - abs(area1 - area2) / total_area
+
+    return symmetry
+
+
+def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, float], orientation_deg: float,
+                           area: float, diameter_AP: float, diameter_RL: float,
+                           dim: list[float], upscale: int, iz: int) -> tuple[dict, dict]:
+    """
+    Compute the cross-sectional area of the four spinal cord quadrants in the axial plane.
+    Also calculates the symmetry of the spinal cord in the right-left (RL) and anterior-posterior (AP) directions.
+    The function rotates the coordinate system based on the spinal cord orientation and
+    partitions the segmentation into four quadrants: posterior right, anterior right,
+    posterior left, and anterior left. It then calculates the area of each quadrant in mm².
+    :param image_crop_r: 2D upsampled non-binary (due to the angle correction) segmentation mask of the spinal cord.
+    :param centroid: (y, x) coordinates of the centroid in the upsampled image space.
+    :param orientation_deg: Orientation angle of the spinal cord in degrees (from regionprops).
+    :param area: Total area of the spinal cord in mm² (used for symmetry calculations).
+    :param diameter_AP: AP diameter of the spinal cord in mm (used for debug plots).
+    :param diameter_RL: RL diameter of the spinal cord in mm (used for debug plots).
+    :param dim: [px, py] pixel dimensions in mm. X,Y respectively correspond to AP, RL.
+    :param upscale: Upsampling factor used during resampling.
+    :param iz: Slice index used for filename in debug plot.
+    :return: quadrant_areas (dict), symmetry_measures (dict)
+        quadrant_areas is a dictionary with the area in mm² for each quadrant:
+                 {
+                    'area_quadrant_posterior_right': float,
+                    'area_quadrant_anterior_right': float,
+                    'area_quadrant_posterior_left': float,
+                    'area_quadrant_anterior_left': float
+                 }
+        symmetry_measures is a dictionary with symmetry measures:
+                {
+                    'symmetry_RL': float,
+                    'symmetry_AP': float,
+                    'symmetry_anterior_RL': float,
+                    'symmetry_posterior_RL': float,
+                }
+    """
+    y0, x0 = centroid
+    orientation_rad = np.radians(orientation_deg)
+    rows, cols = image_crop_r.shape
+    Y, X = np.mgrid[0:rows, 0:cols]
+
+    # Translate coordinate grid to centroid
+    Xc = X - x0
+    Yc = Y - y0
+
+    # Rotate coordinates to align with AP/RL axes
+    # This rotation is needed to accurately define anatomical quadrants.
+    # Without the rotation, quadrants would be based on image axes (top/bottom/left/right) rather than true anatomical
+    # orientation (posterior/anterior/left/right) resulting in unprecise area calculations whenever the spinal cord is
+    # not perfectly aligned with the image axes.
+    Xr = Xc * np.cos(-orientation_rad) - Yc * np.sin(-orientation_rad)
+    Yr = Xc * np.sin(-orientation_rad) + Yc * np.cos(-orientation_rad)
+
+    # Apply quadrant masks - use the intensity values directly to account for the mask softness
+    post_r_mask = (Yr < 0) & (Xr < 0)    # Posterior Right
+    ant_r_mask = (Yr < 0) & (Xr >= 0)    # Anterior Right
+    post_l_mask = (Yr >= 0) & (Xr < 0)   # Posterior Left
+    ant_l_mask = (Yr >= 0) & (Xr >= 0)   # Anterior Left
+
+    # Calculate physical area in mm²
+    pixel_area_mm2 = (dim[0] * dim[1]) / (upscale**2)
+
+    # Sum areas for each quadrant - multiply by intensity values to account for the mask softness
+    quadrant_areas = {
+        'area_quadrant_posterior_right': np.sum(image_crop_r[post_r_mask]) * pixel_area_mm2,
+        'area_quadrant_anterior_right': np.sum(image_crop_r[ant_r_mask]) * pixel_area_mm2,
+        'area_quadrant_posterior_left': np.sum(image_crop_r[post_l_mask]) * pixel_area_mm2,
+        'area_quadrant_anterior_left': np.sum(image_crop_r[ant_l_mask]) * pixel_area_mm2
+    }
+
+    # Calculate AP and RL symmetry
+    left_area = quadrant_areas.get('area_quadrant_anterior_left', 0) + quadrant_areas.get('area_quadrant_posterior_left', 0)
+    right_area = quadrant_areas.get('area_quadrant_anterior_right', 0) + quadrant_areas.get('area_quadrant_posterior_right', 0)
+    symmetry_RL = _calculate_symmetry(left_area, right_area, area)
+    anterior_area = quadrant_areas.get('area_quadrant_anterior_left', 0) + quadrant_areas.get('area_quadrant_anterior_right', 0)
+    posterior_area = quadrant_areas.get('area_quadrant_posterior_left', 0) + quadrant_areas.get('area_quadrant_posterior_right', 0)
+    symmetry_AP = _calculate_symmetry(anterior_area, posterior_area, area)
+
+    # Calculate anterior RL symmetry and posterior RL symmetry
+    symmetry_anterior_RL = _calculate_symmetry(quadrant_areas['area_quadrant_anterior_left'], quadrant_areas['area_quadrant_anterior_right'], anterior_area)
+    symmetry_posterior_RL = _calculate_symmetry(quadrant_areas['area_quadrant_posterior_left'], quadrant_areas['area_quadrant_posterior_right'], posterior_area)
+
+    symmetry_measures = {
+        'symmetry_RL': symmetry_RL,  # right-left symmetry
+        'symmetry_AP': symmetry_AP,  # anterior-posterior symmetry
+        'symmetry_anterior_RL': symmetry_anterior_RL,  # anterior RL symmetry
+        'symmetry_posterior_RL': symmetry_posterior_RL,  # posterior RL symmetry
+    }
+
+    # """"DEBUG
+    def _add_ellipse(ax, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale, edgecolor='orange',
+                     linewidth=2.0):
+        """
+        Helper function to add an ellipse to a matplotlib axis.
+        """
+        from matplotlib.patches import Ellipse
+        y0, x0 = centroid
+
+        ellipse = Ellipse(
+            (x0, y0),
+            width=diameter_AP * upscale / dim[0],
+            height=diameter_RL * upscale / dim[1],
+            angle=math.degrees(orientation_rad),
+            edgecolor=edgecolor,
+            facecolor='none',
+            linewidth=linewidth,
+            label=""
+        )
+        ax.add_patch(ellipse)
+
+    def _add_diameter_lines(ax, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale):
+        """
+        Helper function to add diameter lines to a matplotlib axis.
+        """
+        y0, x0 = centroid
+
+        radius_ap = (diameter_AP / dim[0]) * 0.5 * upscale
+        radius_rl = (diameter_RL / dim[1]) * 0.5 * upscale
+
+        dx_ap = radius_ap * np.cos(orientation_rad)
+        dy_ap = radius_ap * np.sin(orientation_rad)
+        dx_rl = radius_rl * -np.sin(orientation_rad)
+        dy_rl = radius_rl * np.cos(orientation_rad)
+
+        ax.plot([x0 - dx_ap, x0 + dx_ap], [y0 - dy_ap, y0 + dy_ap], 'r--', linewidth=2, label='AP diameter')
+        ax.plot([x0 - dx_rl, x0 + dx_rl], [y0 - dy_rl, y0 + dy_rl], 'b--', linewidth=2, label='RL diameter')
+
+        # Add centroid
+        ax.plot(x0, y0, '.g', markersize=15)
+
+    def _setup_axis(ax, title, xlabel='y\nPosterior-Anterior (PA)', ylabel='x\nLeft-Right (LR)'):
+        """
+        Helper function to set up common axis properties.
+        """
+        ax.grid()
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
+        ax.set_title(title)
+
+    # Create a 1x3 figure: quadrants, right/left halves, anterior/posterior halves
+    import os
+    from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+    from matplotlib.figure import Figure
+
+    # Create masks for halves (combining quadrants)
+    right_mask = post_r_mask | ant_r_mask  # Right half (posterior + anterior right)
+    left_mask = post_l_mask | ant_l_mask   # Left half (posterior + anterior left)
+    anterior_mask = ant_r_mask | ant_l_mask  # Anterior half (right + left anterior)
+    posterior_mask = post_r_mask | post_l_mask  # Posterior half (right + left posterior)
+
+    # Calculate areas for halves
+    right_area = quadrant_areas['area_quadrant_posterior_right'] + quadrant_areas['area_quadrant_anterior_right']
+    left_area = quadrant_areas['area_quadrant_posterior_left'] + quadrant_areas['area_quadrant_anterior_left']
+    anterior_area = quadrant_areas['area_quadrant_anterior_right'] + quadrant_areas['area_quadrant_anterior_left']
+    posterior_area = quadrant_areas['area_quadrant_posterior_right'] + quadrant_areas['area_quadrant_posterior_left']
+
+    # Create figure with 1x3 subplots
+    fig = Figure(figsize=(18, 6))
+    FigureCanvas(fig)
+
+    # ---------------------------------
+    # Plot 1: Quadrants
+    # ---------------------------------
+    ax1 = fig.add_subplot(1, 3, 1)
+
+    # Plot each quadrant mask with a different color
+    ax1.imshow(np.where(post_r_mask, image_crop_r, np.nan), cmap='Reds', vmin=0, vmax=1, alpha=1)
+    ax1.imshow(np.where(ant_r_mask, image_crop_r, np.nan), cmap='Blues', vmin=0, vmax=1, alpha=1)
+    ax1.imshow(np.where(post_l_mask, image_crop_r, np.nan), cmap='Greens', vmin=0, vmax=1, alpha=1)
+    ax1.imshow(np.where(ant_l_mask, image_crop_r, np.nan), cmap='Purples', vmin=0, vmax=1, alpha=1)
+
+    ax1.imshow(image_crop_r > 0.5, cmap='gray', interpolation='nearest', vmin=0, vmax=1, alpha=.4)
+
+    _add_diameter_lines(ax1, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale)
+    _add_ellipse(ax1, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale)
+    _setup_axis(ax1, 'Quadrants')
+    offset = 20  # pixel offset from centroid for annotation placement
+    ax1.text(x0 - offset, y0 - offset, f"PR:\n{quadrant_areas['area_quadrant_posterior_right']:.2f} mm²", color='red', fontsize=10, ha='center', va='bottom', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
+    ax1.text(x0 + offset, y0 - offset, f"AR:\n{quadrant_areas['area_quadrant_anterior_right']:.2f} mm²", color='blue', fontsize=10, ha='center', va='bottom', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
+    ax1.text(x0 - offset, y0 + offset, f"PL:\n{quadrant_areas['area_quadrant_posterior_left']:.2f} mm²", color='green', fontsize=10, ha='center', va='top', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
+    ax1.text(x0 + offset, y0 + offset, f"AL:\n{quadrant_areas['area_quadrant_anterior_left']:.2f} mm²", color='purple', fontsize=10, ha='center', va='top', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
+    ax1.text(0.75, 0.05, f"Ant. RL Symmetry: {symmetry_anterior_RL:.3f}", fontsize=10, ha='center', va='center', bbox=dict(facecolor='yellow', alpha=0.8, edgecolor='black'), transform=ax1.transAxes)
+    ax1.text(0.25, 0.05, f"Pos. RL Symmetry: {symmetry_posterior_RL:.3f}", fontsize=10, ha='center', va='center', bbox=dict(facecolor='yellow', alpha=0.8, edgecolor='black'), transform=ax1.transAxes)
+
+    ax1.legend(loc='upper right')
+
+    # ---------------------------------
+    # Plot 2: Right-Left Symmetry
+    # ---------------------------------
+    ax2 = fig.add_subplot(1, 3, 2)
+
+    # Plot each half with a different color
+    ax2.imshow(np.where(right_mask, image_crop_r, np.nan), cmap='Reds', vmin=0, vmax=1, alpha=1, label='Right')
+    ax2.imshow(np.where(left_mask, image_crop_r, np.nan), cmap='Blues', vmin=0, vmax=1, alpha=1, label='Left')
+    ax2.imshow(image_crop_r > 0.5, cmap='gray', interpolation='nearest', vmin=0, vmax=1, alpha=.4)
+
+    _add_diameter_lines(ax2, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale)
+    _add_ellipse(ax2, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale)
+    _setup_axis(ax2, 'Right-Left Symmetry')
+    ax2.text(x0, y0 - offset, f"Right:\n{right_area:.2f} mm²", color='red', fontsize=10, ha='center', va='center', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
+    ax2.text(x0, y0 + offset, f"Left:\n{left_area:.2f} mm²", color='blue', fontsize=10, ha='center', va='center', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
+    ax2.text(0.5, 0.05, f"RL Symmetry: {symmetry_RL:.3f}", fontsize=10, ha='center', va='center', bbox=dict(facecolor='yellow', alpha=0.8, edgecolor='black'), transform=ax2.transAxes)
+
+    # ---------------------------------
+    # Plot 3: Anterior-Posterior Symmetry
+    # ---------------------------------
+    ax3 = fig.add_subplot(1, 3, 3)
+
+    # Plot each half with a different color
+    ax3.imshow(np.where(anterior_mask, image_crop_r, np.nan), cmap='Greens', vmin=0, vmax=1, alpha=1, label='Anterior')
+    ax3.imshow(np.where(posterior_mask, image_crop_r, np.nan), cmap='Purples', vmin=0, vmax=1, alpha=1, label='Posterior')
+    ax3.imshow(image_crop_r > 0.5, cmap='gray', interpolation='nearest', vmin=0, vmax=1, alpha=.4)
+
+    _add_diameter_lines(ax3, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale)
+    _add_ellipse(ax3, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale)
+    _setup_axis(ax3, 'Anterior-Posterior Symmetry')
+    ax3.text(x0 - offset, y0, f"Posterior:\n{posterior_area:.2f} mm²", color='purple', fontsize=10, ha='center', va='center', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
+    ax3.text(x0 + offset, y0, f"Anterior:\n{anterior_area:.2f} mm²", color='green', fontsize=10, ha='center', va='center', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
+    ax3.text(0.5, 0.05, f"AP Symmetry: {symmetry_AP:.3f}", fontsize=10, ha='center', va='center', bbox=dict(facecolor='yellow', alpha=0.8, edgecolor='black'), transform=ax3.transAxes)
+
+    # Save figure
+    os.makedirs('debug_figures', exist_ok=True)
+    fig.tight_layout()
+    fig.savefig(f'debug_figures/cord_quadrant_tmp_fig_slice_{iz:03d}.png', dpi=150)
+    # """
+
+    return quadrant_areas, symmetry_measures
 
 
 def _debug_plotting_hog(angle_hog, ap0_r, ap_diameter, dim, iz, properties, rl0_r, rl_diameter,
