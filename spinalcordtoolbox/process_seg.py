@@ -331,7 +331,6 @@ def _properties2d(seg, dim, iz, verbose=1):
     [diameter_AP, diameter_RL] = \
         _find_AP_and_RL_diameter(region.major_axis_length, region.minor_axis_length, orientation,
                                  [i / upscale for i in dim])
-    # TODO: compute major_axis_length/minor_axis_length by summing weighted voxels along axis
     # Deal with https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/2307
     if any(x in platform.platform() for x in ['Darwin-15', 'Darwin-16']):
         solidity = np.nan
@@ -434,7 +433,7 @@ def _rotate_segmentation_by_angle(seg_crop_r, angle):
     return seg_crop_r_rotated
 
 
-def _measure_rotated_diameters(seg_crop_r, seg_crop_r_rotated, dim, angle, upscale, iz, properties, verbose):
+def _measure_rotated_diameters(seg_crop_r, seg_crop_r_rotated, dim, angle, upscale, iz, properties, verbose, nb_slices=3):
     """
     Measure the AP and RL diameters in the rotated segmentation.
     This function counts the number of pixels along the AP and RL axes in the rotated segmentation and converts them
@@ -458,10 +457,13 @@ def _measure_rotated_diameters(seg_crop_r, seg_crop_r_rotated, dim, angle, upsca
 
     # Note: seg_crop_r_rotated is soft (due to the rotation) so we sum its values to account for softness
     # Sum non-zero pixels along AP axis, i.e., the number of pixels in the row corresponding to the center of mass along the RL axis
-    # TODO: consider taking into account more than one row
-    ap_pixels = np.sum(seg_crop_r_rotated[rl0_r, :])
+    # Using nb_slices rows to be more robust to small errors in the center of mass estimation, consider adding a parameter for number of rows
+    nb_slices_modif = nb_slices//2
+    rl_center_slices = [rl0_r-nb_slices_modif, rl0_r, rl0_r+nb_slices_modif] if 0 < rl0_r < seg_crop_r_rotated.shape[0]-1 else [rl0_r]
+    ap_pixels = np.sum(seg_crop_r_rotated[rl_center_slices, :])/(nb_slices_modif*2+1)
     # Sum non-zero pixels along RL axis, i.e., the number of pixels in the column corresponding to the center of mass along the AP axis
-    rl_pixels = np.sum(seg_crop_r_rotated[:, ap0_r])
+    ap_center_slices = [ap0_r-nb_slices_modif, ap0_r, ap0_r+nb_slices_modif] if 0 < ap0_r < seg_crop_r_rotated.shape[1]-1 else [ap0_r]
+    rl_pixels = np.sum(seg_crop_r_rotated[:, ap_center_slices])/(nb_slices_modif*2+1)
     # Convert pixels to physical dimensions
     # TODO: double-check dim[0] and dim[1] correspondence to RL and AP diameters
     rl_diameter = rl_pixels * dim[0] / upscale
