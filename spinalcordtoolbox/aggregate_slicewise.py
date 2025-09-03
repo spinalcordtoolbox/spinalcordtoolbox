@@ -559,13 +559,28 @@ def save_as_csv(agg_metric, fname_out, fname_in=None, append=False):
     # list_item = ['VertLevel', 'Label', 'MEAN', 'WA', 'BIN', 'ML', 'MAP', 'STD', 'MAX']
     # TODO: The thing below is ugly and needs to be fixed, but this is the only solution I found to order the columns
     #  without refactoring the code with OrderedDict.
-    list_item = ['Label', 'Size [vox]', 'MEAN(area)', 'STD(area)', 'MEAN(angle_AP)', 'STD(angle_AP)', 'MEAN(angle_RL)',
-                 'STD(angle_RL)', 'MEAN(diameter_AP)', 'STD(diameter_AP)', 'MEAN(diameter_RL)', 'STD(diameter_RL)',
-                 'MEAN(diameter_AP_hog)', 'STD(diameter_AP_hog)', 'MEAN(diameter_RL_hog)', 'STD(diameter_RL_hog)',
-                 'MEAN(eccentricity)', 'STD(eccentricity)', 'MEAN(angle_hog)', 'MEAN(orientation)', 'STD(orientation)',
-                 'MEAN(solidity)', 'STD(solidity)', 'SUM(length)', 'WA()', 'BIN()', 'ML()', 'MAP()', 'MEDIAN()',
-                 'STD()', 'MAX()']
-    # TODO: if append=True but file does not exist yet, raise warning and set append=False
+    list_item = [
+                'Label', 'Size [vox]',
+                'MEAN(area)', 'STD(area)',
+                'MEAN(angle_AP)', 'STD(angle_AP)',
+                'MEAN(angle_RL)', 'STD(angle_RL)',
+                'MEAN(diameter_AP)', 'STD(diameter_AP)',
+                'MEAN(diameter_RL)', 'STD(diameter_RL)',
+                'MEAN(eccentricity)', 'STD(eccentricity)',
+                'MEAN(orientation)', 'STD(orientation)',
+                'MEAN(solidity)', 'STD(solidity)',
+                'MEAN(symmetry_RL)', 'STD(symmetry_RL)',
+                'MEAN(symmetry_dice_RL)', 'STD(symmetry_dice_RL)',
+                'MEAN(symmetry_AP)', 'STD(symmetry_AP)',
+                'MEAN(symmetry_dice_AP)', 'STD(symmetry_dice_AP)',
+                'MEAN(symmetry_anterior_RL)', 'STD(symmetry_anterior_RL)',
+                'MEAN(symmetry_posterior_RL)', 'STD(symmetry_posterior_RL)',
+                'MEAN(area_quadrant_anterior_left)', 'STD(area_quadrant_anterior_left)',
+                'MEAN(area_quadrant_anterior_right)', 'STD(area_quadrant_anterior_right)',
+                'MEAN(area_quadrant_posterior_left)', 'STD(area_quadrant_posterior_left)',
+                'MEAN(area_quadrant_posterior_right)', 'STD(area_quadrant_posterior_right)',
+                'SUM(length)', 'WA()', 'BIN()', 'ML()', 'MAP()', 'MEDIAN()', 'STD()', 'MAX()'
+    ]    # TODO: if append=True but file does not exist yet, raise warning and set append=False
     # write header (only if append=False)
     if not append or not os.path.isfile(fname_out):
         with open(fname_out, 'w', newline='') as csvfile:
