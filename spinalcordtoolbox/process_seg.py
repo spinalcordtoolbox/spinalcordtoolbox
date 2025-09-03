@@ -170,45 +170,35 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
             angle_AP_rad, angle_RL_rad = 0.0, 0.0
         # Store the data for this slice
         z_indices.append(iz)
-        if image is None or filter_size < 0: #TODO and regularization term filter_size < 0
+
+        # Compute shape properties for this slice
+        shape_property = _properties2d(current_patch_scaled, [px, py], iz, verbose=verbose)
+
+        if image is None or filter_size < 0:  #TODO and regularization term filter_size < 0
             # If regularization is disabled or no image is provided,
             # loop through stored patches and compute properties the regular way
-            if image is not None:
-                # Get the index of the current slice in our stored arrays
-                idx = z_indices.index(iz)
-                angle_hog = angle_hog_values[idx]
-                centermass_src = centermass_values[idx]
+            if shape_property is not None:
+                # Add custom fields
+                shape_property['angle_AP'] = angle_AP_rad * 180.0 / math.pi     # convert to degrees
+                shape_property['angle_RL'] = angle_RL_rad * 180.0 / math.pi     # convert to degrees
+                shape_property['length'] = pz / (np.cos(angle_AP_rad) * np.cos(angle_RL_rad))
+                # Loop across properties and assign values for function output
 
-                # Compute shape properties with original angle_hog
-                shape_property = _properties2d(current_patch_scaled, [px, py], iz, angle_hog=angle_hog, verbose=verbose)
-
-                if shape_property is not None:
+                if image is not None:
+                    # Get the index of the current slice in our stored arrays
+                    idx = z_indices.index(iz)
+                    angle_hog = angle_hog_values[idx]
+                    centermass_src = centermass_values[idx]
                     # Add custom fields
                     shape_property['centermass_x'] = centermass_src[0]
                     shape_property['centermass_y'] = centermass_src[1]
                     shape_property['angle_hog'] = -angle_hog * 180.0 / math.pi     # degrees, and change sign to match negative if left rotation
-                    shape_property['angle_AP'] = angle_AP_rad * 180.0 / math.pi     # convert to degrees
-                    shape_property['angle_RL'] = angle_RL_rad * 180.0 / math.pi     # convert to degrees
-                    shape_property['length'] = pz / (np.cos(angle_AP_rad) * np.cos(angle_RL_rad))
 
                     # Loop across properties and assign values for function output
-                    for property_name in property_list:
-                        shape_properties[property_name][iz] = shape_property[property_name]
-                else:
-                    logging.warning(f'\nNo properties for slice: {iz}')
+                for property_name in property_list:
+                    shape_properties[property_name][iz] = shape_property[property_name]
             else:
-                # If image is None, don't pass angle_hog
-                shape_property = _properties2d(current_patch_scaled, [px, py], iz, verbose=verbose)
-                if shape_property is not None:
-                    # Add custom fields
-                    shape_property['angle_AP'] = angle_AP_rad * 180.0 / math.pi     # convert to degrees
-                    shape_property['angle_RL'] = angle_RL_rad * 180.0 / math.pi     # convert to degrees
-                    shape_property['length'] = pz / (np.cos(angle_AP_rad) * np.cos(angle_RL_rad))
-                    # Loop across properties and assign values for function output
-                    for property_name in property_list:
-                        shape_properties[property_name][iz] = shape_property[property_name]
-                else:
-                    logging.warning(f'\nNo properties for slice: {iz}')
+                logging.warning(f'\nNo properties for slice: {iz}')
 
         # Store basic properties and angles to be used later after regularization
         if image is not None:
@@ -267,7 +257,7 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
             centermass_src = centermass_values[i]
 
             # Compute shape properties with regularized angle_hog
-            shape_property = _properties2d(current_patch_scaled, [px, py], iz, angle_hog=angle_hog, verbose=verbose)
+            shape_property = _properties2d(current_patch_scaled, [px, py], iz, verbose=verbose)
 
             if shape_property is not None:
                 # Add custom fields
@@ -292,7 +282,7 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
     return metrics, fit_results
 
 
-def _properties2d(seg, dim, iz, angle_hog=None, verbose=1):
+def _properties2d(seg, dim, iz, verbose=1):
     """
     Compute shape property of the input 2D segmentation. Accounts for partial volume information.
     :param seg: 2D input segmentation in uint8 or float (weighted for partial volume) that has a single object. seg.shape[0] --> RL; seg.shape[1] --> PA
@@ -337,7 +327,7 @@ def _properties2d(seg, dim, iz, angle_hog=None, verbose=1):
     area = np.sum(seg_crop_r) * dim[0] * dim[1] / upscale ** 2
     # Compute ellipse orientation, modulo pi, in deg, and between [0, 90]
     orientation = fix_orientation(region.orientation)
-    # Find RL and AP diameter based on major/minor axes and cord orientation
+    # Find RL and AP diameter based on major/minor axes and cord orientation # TODO: remove
     [diameter_AP, diameter_RL] = \
         _find_AP_and_RL_diameter(region.major_axis_length, region.minor_axis_length, orientation,
                                  [i / upscale for i in dim])
@@ -358,7 +348,7 @@ def _properties2d(seg, dim, iz, angle_hog=None, verbose=1):
         'orientation': -region.orientation,  # in radians
         'solidity': solidity,  # convexity measure
     }
-    # Rotate the segmentation by the angle_hog to align with AP/RL axes
+    # Rotate the segmentation by the orientation to align with AP/RL axes
     seg_crop_r_rotated = _rotate_segmentation_by_angle(seg_crop_r, region.orientation)
 
     # Measure diameters along AP and RL axes in the rotated segmentation
@@ -406,12 +396,12 @@ def _find_AP_and_RL_diameter(major_axis, minor_axis, orientation, dim):
     return diameter_AP, diameter_RL
 
 
-def _rotate_segmentation_by_angle(seg_crop_r, angle_hog):
+def _rotate_segmentation_by_angle(seg_crop_r, angle):
     """
     Rotate the segmentation by the angle (HOG angle found from the image) to align with AP/RL axes.
 
     :param seg_crop_r: 2D input segmentation
-    :param angle_hog: Rotation angle in radians (positive values correspond to counter-clockwise rotation)
+    :param angle: Rotation angle in radians (positive values correspond to counter-clockwise rotation)
     :return seg_crop_r_rotated: Rotated segmentation
     """
     # get center of mass (which is computed in the PCA function)
@@ -425,8 +415,8 @@ def _rotate_segmentation_by_angle(seg_crop_r, angle_hog):
     # Rotate coordinates
     # If the angle is negative, the rotation is clockwise (from Left to Right).
     # If it is positive, the rotation is counter-clockwise (from Right to Left).
-    Xr = Xc * np.cos(angle_hog) - Yc * np.sin(angle_hog)
-    Yr = Xc * np.sin(angle_hog) + Yc * np.cos(angle_hog)
+    Xr = Xc * np.cos(angle) - Yc * np.sin(angle)
+    Yr = Xc * np.sin(angle) + Yc * np.cos(angle)
     # Shift the rotated coordinates back to their original position in the image. This ensures that the rotated
     # segmentation is positioned correctly in the output image, with the rotation happening around the center of the
     # object rather than around the origin of the coordinate system.
