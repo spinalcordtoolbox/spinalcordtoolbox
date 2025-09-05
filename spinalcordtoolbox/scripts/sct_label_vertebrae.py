@@ -20,7 +20,6 @@ from spinalcordtoolbox.vertebrae.core import (
 from spinalcordtoolbox.types import EmptyArrayError
 from spinalcordtoolbox.vertebrae.detect_c2c3 import detect_c2c3
 from spinalcordtoolbox.reports.qc import generate_qc
-from spinalcordtoolbox.math import dilate
 from spinalcordtoolbox.labels import create_labels_along_segmentation
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, printv, __data_dir__, set_loglevel, __version__
@@ -378,16 +377,13 @@ def main(argv: Sequence[str]):
             im_label_c2c3.data[ind_label] = 3
             im_label_c2c3.save(fname_labelz)
 
-        # dilate label so it is not lost when applying warping
-        dilate(Image(fname_labelz), 3, 'ball', islabel=True).save(fname_labelz)
-
         # Apply straightening to z-label
         printv('\nAnd apply straightening to label...', verbose)
         sct_apply_transfo.main(['-i', 'labelz.nii.gz',
                                 '-d', 'data_straightr.nii',
                                 '-w', 'warp_curve2straight.nii.gz',
                                 '-o', 'labelz_straight.nii.gz',
-                                '-x', 'nn',
+                                '-x', 'label',
                                 '-v', '0'])
         # get z value and disk value to initialize labeling
         printv('\nGet z and disc values from straight label...', verbose)

@@ -226,8 +226,8 @@ class Transform:
                 printv("\nDilate labels before warping...", verbose)
                 path_tmp = tmp_create(basename="apply-transfo-3d-label")
                 fname_dilated_labels = os.path.join(path_tmp, "dilated_data.nii")
-                # dilate points
-                dilate(Image(fname_src), 3, 'ball', islabel=True).save(fname_dilated_labels)
+                # dilate points (NB: 'ball' of size <5 can result in lost labels for single-voxel labels, see #4863)
+                dilate(Image(fname_src), 5, 'ball', islabel=True).save(fname_dilated_labels)
                 fname_src = fname_dilated_labels
 
             printv("\nApply transformation and resample to destination space...", verbose)
