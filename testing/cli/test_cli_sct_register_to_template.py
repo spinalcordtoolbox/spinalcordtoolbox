@@ -12,9 +12,23 @@ from spinalcordtoolbox.image import Image, compute_dice
 from spinalcordtoolbox.utils.sys import __sct_dir__
 from spinalcordtoolbox.utils.sys import sct_test_path
 from spinalcordtoolbox.scripts import sct_register_to_template, sct_apply_transfo
-from spinalcordtoolbox.labels import compute_mean_squared_error
 
 logger = logging.getLogger(__name__)
+
+
+def compute_distance(img: Image, ref: Image) -> list:
+    """Compute Euclidean distance between pairs of single-voxel point labels between two images."""
+    coordinates_input = {coord.value: np.array([coord.x, coord.y, coord.z])
+                         for coord in img.getNonZeroCoordinates()}
+    coordinates_ref = {coord.value: np.array([coord.x, coord.y, coord.z])
+                       for coord in ref.getNonZeroCoordinates()}
+
+    distances = []
+    shared_labels = coordinates_input.keys() & coordinates_ref.keys()
+    for label in shared_labels:
+        distances.append(np.linalg.norm(coordinates_input[label] - coordinates_ref[label]))
+
+    return distances
 
 
 @pytest.fixture(scope="module")
@@ -173,11 +187,12 @@ def test_sct_register_to_template_more_than_2_labels(tmp_path, tmp_path_qc, labe
                                  '-o', str(tmp_path/'labels_discs_reg.nii.gz'),
                                  '-x', 'label'])
     # Compute pairwise distance between the template label and the registered label, ie: compute distance between dest
-    # and src_reg for label of value '2', then '3', etc. and compute the mean square of all distances. The labels
-    # should be touching, hence the mean square should be 0.
+    # and src_reg for label of value '2', then '3', etc. The labels should be touching, hence distances should be no
+    # more than sqrt(3) i.e. 1 voxel diagonally in 3D space.
     im_label_dest = Image(sct_test_path('template', 'template', 'PAM50_small_label_disc.nii.gz'))
     im_label_src_reg = Image(str(tmp_path/'labels_discs_reg.nii.gz'))
-    assert compute_mean_squared_error(im_label_dest, im_label_src_reg) == 0
+    distances = compute_distance(im_label_dest, im_label_src_reg)
+    assert all(d < 3**0.5 for d in distances), "coordinates are greater than 1 voxel apart"
 
 
 def test_sct_register_to_template_rootlets(tmp_path, tmp_path_qc):
@@ -200,9 +215,10 @@ def test_sct_register_to_template_rootlets(tmp_path, tmp_path_qc):
                                  '-o', str(tmp_path/'t2_seg-deepseg_rootlets-manual_midpoints_reg.nii.gz'),
                                  '-x', 'label'])
     # Compute pairwise distance between the template label and the registered label, ie: compute distance between dest
-    # and src_reg for label of value '2', then '3', etc. and compute the mean square of all distances. The labels
-    # should be touching, hence the mean square should be 0.
+    # and src_reg for label of value '2', then '3', etc. The labels should be touching, hence distances should be no
+    # more than sqrt(3) i.e. 1 voxel diagonally in 3D space.
     im_label_dest = Image(sct_test_path('template', 'template', 'PAM50_small_rootlets_midpoints.nii.gz'))
     logger.info(tmp_path)
     im_label_src_reg = Image(str(tmp_path/'t2_seg-deepseg_rootlets-manual_midpoints_reg.nii.gz'))
-    assert compute_mean_squared_error(im_label_dest, im_label_src_reg) == 0
+    distances = compute_distance(im_label_dest, im_label_src_reg)
+    assert all(d < 3**0.5 for d in distances), "coordinates are greater than 1 voxel apart"
