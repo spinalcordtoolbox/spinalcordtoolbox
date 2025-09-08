@@ -27,7 +27,7 @@ def test_sct_process_segmentation_check_discfile(tmp_path):
         assert float(row['aSCOR']) == pytest.approx(0.45084325639000783)
 
 
-def test_sct_process_segmentation_shape_mistmatch(tmp_path):
+def test_sct_process_segmentation_shape_mismatch(tmp_path):
     """ Run sct_compute_ascor with a shape mismatch between spinal cord and canal segmentations"""
     filename = str(tmp_path / 'tmp_file_out.csv')
     # Crop the spinal canal segmentation to create a shape mismatch
