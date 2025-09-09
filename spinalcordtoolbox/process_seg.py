@@ -10,6 +10,7 @@ import math
 import platform
 import numpy as np
 from skimage import measure, transform
+import skimage
 from scipy.ndimage import map_coordinates, gaussian_filter1d
 import logging
 import matplotlib.pyplot as plt
@@ -384,7 +385,7 @@ def _properties2d(seg, dim, iz, angle_hog=None, verbose=1):
         # Update the properties dictionary with the rotated properties
         properties.update(quadrant_areas)
         properties.update(symmetry_measures)
-        symmetry_dice = _calculate_symmetry_dice(seg_crop_r_rotated_hog, region.centroid)
+        symmetry_dice = _calculate_symmetry_dice(seg_crop_r_rotated_hog, region.centroid, iz=iz,    upscale=upscale, dim=dim)
         properties.update(symmetry_dice)
     return properties
 
@@ -514,14 +515,13 @@ def _measure_rotated_diameters(seg_crop_r, seg_crop_r_rotated, dim, angle, upsca
     return result
 
 
-def _calculate_symmetry_dice(seg_crop_r_rotated, centroid):
+def _calculate_symmetry_dice(seg_crop_r_rotated, centroid, upscale, dim, iz=None, verbose=2):
     """
     Flip along the RL axis and compute the Dice coefficient between the original and flipped segmentation.
     :param seg_crop_r_rotated: Rotated segmentation (after applying angle) used to measure diameters. seg.shape[0] --> RL; seg.shape[1] --> PA
     :param centroid: (y, x) coordinates of the centroid in the upsampled image space.
     :return: symmetry_dice: Dice coefficient between the original and flipped segmentation.
     """
-    # TODO: consider using half of segmentation to compute symmetry, to avoid bias
     # Flip the segmentation along the RL axis
     # Flip according to centroid position (centroid[1] is x, i.e. RL axis)
     y0, x0 = centroid
@@ -553,6 +553,13 @@ def _calculate_symmetry_dice(seg_crop_r_rotated, centroid):
     symmetry_dice_AP = 2 * intersection_AP / union_AP if union_AP > 0 else 0
     print('symmetry_dice_AP:', symmetry_dice_AP)
 
+    # Compute Hausdorff distance as additional metric
+    hausdorff_distance_AP = skimage.metrics.hausdorff_distance(seg_crop_r_rotated_cut > 0.5, seg_crop_r_flipped > 0.5) * dim[0] / upscale
+    coords_AP = skimage.metrics.hausdorff_pair(seg_crop_r_rotated_cut > 0.5, seg_crop_r_flipped > 0.5)
+    print('coords_AP:', coords_AP)
+    print(seg_crop_r_rotated_cut.shape)
+    print('hausdorff_distance_AP:', hausdorff_distance_AP)
+
     # Create an empty array for flipped version
     seg_crop_r_flipped_RL = np.zeros_like(seg_crop_r_rotated)
 
@@ -570,11 +577,11 @@ def _calculate_symmetry_dice(seg_crop_r_rotated, centroid):
         if 0 <= y_mirror < seg_crop_r_rotated.shape[0]:
             seg_crop_r_flipped_RL[y_mirror, x] = seg_crop_r_rotated[y, x]
     seg_crop_r_flipped_RL[:y0, :] = 0
-    seg_crop_r_rotated_cut = np.copy(seg_crop_r_rotated)
-    seg_crop_r_rotated_cut[:y0, :] = 0
+    seg_crop_r_rotated_cut_RL = np.copy(seg_crop_r_rotated)
+    seg_crop_r_rotated_cut_RL[:y0, :] = 0
     # Compute the intersection and union for the Dice coefficient
-    intersection_RL = np.sum(seg_crop_r_rotated_cut * seg_crop_r_flipped_RL)
-    union_RL = np.sum(seg_crop_r_rotated_cut) + np.sum(seg_crop_r_flipped_RL)
+    intersection_RL = np.sum(seg_crop_r_rotated_cut_RL * seg_crop_r_flipped_RL)
+    union_RL = np.sum(seg_crop_r_rotated_cut_RL) + np.sum(seg_crop_r_flipped_RL)
 
     # Compute the Dice coefficient
     symmetry_dice_RL = 2 * intersection_RL / union_RL if union_RL > 0 else 0
@@ -582,10 +589,57 @@ def _calculate_symmetry_dice(seg_crop_r_rotated, centroid):
     # Store results in a dictionary
     print('symmetry_dice_RL:', symmetry_dice_RL)
 
+    # Compute Hausdorff distance as additional metric
+    print(dim[0])
+    hausdorff_distance_RL = skimage.metrics.hausdorff_distance(seg_crop_r_rotated_cut_RL > 0.5, seg_crop_r_flipped_RL > 0.5) * dim[0] / upscale
+    coords_RL = skimage.metrics.hausdorff_pair(seg_crop_r_rotated_cut_RL > 0.5, seg_crop_r_flipped_RL > 0.5)
+    print('coords_RL:', coords_RL)
+    print(seg_crop_r_rotated_cut_RL.shape)
+    print('hausdorff_distance_RL:', hausdorff_distance_RL)
+
+
     symmetry_dice = {
         'symmetry_dice_RL': symmetry_dice_RL,
         'symmetry_dice_AP': symmetry_dice_AP,
     }
+
+    # Create a debug plot
+    if verbose == 2:
+        plt.figure(figsize=(8, 6))
+        plt.subplot(1, 2, 1)
+        plt.imshow(seg_crop_r_rotated_cut_RL > 0.5, cmap='Reds', vmin=0, vmax=0.1, alpha=1)
+        plt.imshow(seg_crop_r_flipped_RL > 0.5, cmap='Blues', vmin=0, vmax=0.1, alpha=0.6)
+        if coords_RL is not None and len(coords_RL) == 2:
+            (y1, x1), (y2, x2) = coords_RL
+            ax2 = plt.gca()
+            ax2.plot([x1, x2], [y1, y2], 'y-', linewidth=2, label='Hausdorff distance')
+            ax2.plot([x1, x2], [y1, y2], 'yo', markersize=5)
+        plt.title('RL dice')
+        plt.axis('off')
+        plt.subplot(1, 2, 2)
+        plt.imshow(seg_crop_r_rotated_cut > 0.5, cmap='Reds', vmin=0, vmax=0.1)
+        plt.imshow(seg_crop_r_flipped > 0.5, cmap='Blues', vmin=0, vmax=0.1, alpha=0.6)
+        # Plot Hausdorff pair points and line for AP dice
+        if coords_AP is not None and len(coords_AP) == 2:
+            (y1, x1), (y2, x2) = coords_AP
+            ax2 = plt.gca()
+            ax2.plot([x1, x2], [y1, y2], 'y-', linewidth=2, label='Hausdorff distance')
+            ax2.plot([x1, x2], [y1, y2], 'yo', markersize=5)
+        plt.title('AP dice')
+        plt.axis('off')
+        # Move the legend outside of the subplots
+        plt.legend(loc='lower center', bbox_to_anchor=(-0.1, -0.1), ncol=2)
+        plt.suptitle(
+            f'Symmetry Dice RL: {symmetry_dice_RL:.3f}, AP: {symmetry_dice_AP:.3f}\n'
+            f'Hausdorff RL (mm): {hausdorff_distance_RL:.3f}, AP: {hausdorff_distance_AP:.3f}'
+        )
+        if not os.path.exists('symmetry_debug_figures'):
+            os.makedirs('symmetry_debug_figures')
+        fname_out = os.path.join('symmetry_debug_figures', f'process_seg_symmetry_dice_z{iz:03d}.png')
+        plt.savefig(fname_out, dpi=300)
+        plt.close()
+        logging.info(f"Saved symmetry Dice visualization to: {fname_out}")
+
     return symmetry_dice
 
 
@@ -678,6 +732,7 @@ def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, floa
     # Without the rotation, quadrants would be based on image axes (top/bottom/left/right) rather than true anatomical
     # orientation (posterior/anterior/left/right) resulting in unprecise area calculations whenever the spinal cord is
     # not perfectly aligned with the image axes.
+    # TODO remove this rotation as the segmentation is already rotated
     Xr = Xc * np.cos(-orientation_rad) - Yc * np.sin(-orientation_rad)
     Yr = Xc * np.sin(-orientation_rad) + Yc * np.cos(-orientation_rad)
 
@@ -802,7 +857,7 @@ def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, floa
     ax1.imshow(image_crop_r > 0.5, cmap='gray', interpolation='nearest', vmin=0, vmax=1, alpha=.4)
 
     _add_diameter_lines(ax1, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale)
-    _add_ellipse(ax1, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale)
+    #_add_ellipse(ax1, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale)
     _setup_axis(ax1, 'Quadrants')
     offset = 20  # pixel offset from centroid for annotation placement
     ax1.text(x0 - offset, y0 - offset, f"PR:\n{quadrant_areas['area_quadrant_posterior_right']:.2f} mm²", color='red', fontsize=10, ha='center', va='bottom', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
@@ -825,7 +880,7 @@ def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, floa
     ax2.imshow(image_crop_r > 0.5, cmap='gray', interpolation='nearest', vmin=0, vmax=1, alpha=.4)
 
     _add_diameter_lines(ax2, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale)
-    _add_ellipse(ax2, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale)
+    #_add_ellipse(ax2, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale)
     _setup_axis(ax2, 'Right-Left Symmetry')
     ax2.text(x0, y0 - offset, f"Right:\n{right_area:.2f} mm²", color='red', fontsize=10, ha='center', va='center', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
     ax2.text(x0, y0 + offset, f"Left:\n{left_area:.2f} mm²", color='blue', fontsize=10, ha='center', va='center', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
@@ -842,7 +897,7 @@ def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, floa
     ax3.imshow(image_crop_r > 0.5, cmap='gray', interpolation='nearest', vmin=0, vmax=1, alpha=.4)
 
     _add_diameter_lines(ax3, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale)
-    _add_ellipse(ax3, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale)
+    #_add_ellipse(ax3, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale)
     _setup_axis(ax3, 'Anterior-Posterior Symmetry')
     ax3.text(x0 - offset, y0, f"Posterior:\n{posterior_area:.2f} mm²", color='purple', fontsize=10, ha='center', va='center', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
     ax3.text(x0 + offset, y0, f"Anterior:\n{anterior_area:.2f} mm²", color='green', fontsize=10, ha='center', va='center', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
