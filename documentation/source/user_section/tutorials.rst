@@ -73,7 +73,6 @@ If you would prefer to learn how to use SCT in a guided workshop setting, we pro
    tutorials/vertebral-labeling
    tutorials/shape-analysis
    tutorials/lesion-analysis
-   tutorials/spinal-nerve-rootlets-segmentation
    tutorials/registration-to-template
    tutorials/multimodal-registration
    tutorials/gray-matter-segmentation
