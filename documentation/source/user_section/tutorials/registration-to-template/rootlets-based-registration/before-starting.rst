@@ -17,9 +17,8 @@ This rootlets-based registration tutorial is separate from the previous registra
 
    * ``single_subject/data/t2/t2.nii.gz`` : T2w anatomical scan of the spinal cord.
    * ``single_subject/data/t2/t2_seg.nii.gz`` : Segmentation of the spinal cord in the T2w image.
-   * ``single_subject/data/t2/t2_rootlets.nii.gz`` : Segmentation of the spinal nerve rootlets in the T2w image.
 
-   You can get this file by downloading :sct_tutorial_data:`data_lumbar-registration.zip`.
+   You can get this file by downloading :sct_tutorial_data:`data_rootlets-registration.zip`.
 
 #. Open a terminal and navigate to the ``single_subject/data/t2/`` directory:
 

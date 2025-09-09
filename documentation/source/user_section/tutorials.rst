@@ -20,7 +20,6 @@ We provide the following hands-on tutorials for SCT's command-line tools.
    * :doc:`tutorials/shape-analysis/normalize-morphometrics-compression`
 
 #. :doc:`Lesion analysis <tutorials/lesion-analysis>`
-#. :doc:`Spinal nerve rootlets segmentation <tutorials/spinal-nerve-rootlets-segmentation>`
 #. :doc:`Registration to template <tutorials/registration-to-template>`
 
    * :doc:`tutorials/registration-to-template/template-registration`
