@@ -10,7 +10,7 @@ Traditional template-based registration of the spinal cord uses intervertebral d
 
    Rootlets-based registration pipeline.
 
-SCT provides template registration based on spinal nerve rootlets using the :ref:`sct_register_to_template -lrootlet` command. Here are the steps for the algorithm within this command:
+SCT provides template registration based on spinal nerve rootlets using the `-lrootlet <../../../command-line/sct_register_to_template.html#spinalcordtoolbox.scripts.sct_register_to_template-get_parser-optional-arguments>`_ argument of the :ref:`sct_register_to_template` command. Here are the steps for the algorithm within this command:
 
 1. **Center-of-mass calculation**: The center-of-mass of each segmented rootlets level is computed for the subject native image and for the PAM50 template.
 2. **Straightening**: The straightening works by finding, for each point along the spinal cord, the mathematical transformation to go from a curved centerline to a straight centerline.
