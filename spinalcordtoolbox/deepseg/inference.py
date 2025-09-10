@@ -111,7 +111,7 @@ def segment_and_average_volumes(model_paths, input_filenames, options, use_gpu=F
 
 
 def segment_non_ivadomed(path_model, model_type, input_filenames, threshold, keep_largest, fill_holes_in_pred,
-                         remove_small, use_gpu=False, remove_temp_files=True, extra_inference_kwargs=None):
+                         remove_small, use_gpu=False, remove_temp_files=True, extra_inference_kwargs=None, save_probabilities=False):
     # MONAI and NNUnet have similar structure, and so we use nnunet+inference functions with the same signature
     # NB: For TotalSpineSeg, we don't need to create the network ourselves
     if "totalspineseg" in path_model:
@@ -134,7 +134,7 @@ def segment_non_ivadomed(path_model, model_type, input_filenames, threshold, kee
     for fname_in in input_filenames:
         tmpdir = tmp_create(basename="sct_deepseg")
         # model may be multiclass, so the `inference` func should output a list of fnames and targets
-        fnames_out, targets = inference(path_img=fname_in, tmpdir=tmpdir, predictor=net, device=device, **extra_inference_kwargs)
+        fnames_out, targets = inference(path_img=fname_in, tmpdir=tmpdir, predictor=net, device=device, **extra_inference_kwargs, save_probabilities=save_probabilities)
         for fname_out, target in zip(fnames_out, targets):
             im_out = Image(fname_out)
             # Apply postprocessing (replicates existing functionality from ivadomed package)
@@ -163,7 +163,7 @@ def segment_non_ivadomed(path_model, model_type, input_filenames, threshold, kee
     return im_lst, target_lst
 
 
-def segment_monai(path_img, tmpdir, predictor, device: torch.device):
+def segment_monai(path_img, tmpdir, predictor, device: torch.device, save_probabilities: bool):
     """
     Script to run inference on a MONAI-based model for contrast-agnostic soft segmentation of the spinal cord.
 
@@ -219,7 +219,7 @@ def segment_monai(path_img, tmpdir, predictor, device: torch.device):
     return [fname_out], [target]
 
 
-def segment_nnunet(path_img, tmpdir, predictor, device: torch.device):
+def segment_nnunet(path_img, tmpdir, predictor, device: torch.device, save_probabilities: bool):
     """
     This script is used to run inference on a single subject using a nnUNetV2 model.
 
@@ -282,6 +282,8 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device):
         input_image=data,
         # The spacings also have to be reversed to match nnUNet's conventions.
         image_properties={'spacing': img_in.dim[6:3:-1]},
+        # Save the probability maps if specified
+        save_probabilities=save_probabilities
     )
     # Lastly, we undo the transpose to return the image from [z,y,x] (SimpleITK) to [x,y,z] (nibabel)
     pred = pred.transpose([2, 1, 0])
