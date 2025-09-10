@@ -182,9 +182,13 @@ MODELS = {
         "default": False,
     },
     "model_seg_ms_lesion": {
-         "url": [
-             "https://github.com/ivadomed/ms-lesion-agnostic/releases/download/r20250626/20250626_model_fold0_ESMRMB_abstract.zip"
-         ],
+         "url": {
+            "model_fold0": ["https://github.com/ivadomed/ms-lesion-agnostic/releases/download/r20250909/model_fold0.zip"],
+            "model_fold1": ["https://github.com/ivadomed/ms-lesion-agnostic/releases/download/r20250909/model_fold1.zip"],
+            "model_fold2": ["https://github.com/ivadomed/ms-lesion-agnostic/releases/download/r20250909/model_fold2.zip"],
+            "model_fold3": ["https://github.com/ivadomed/ms-lesion-agnostic/releases/download/r20250909/model_fold3.zip"],
+            "model_fold4": ["https://github.com/ivadomed/ms-lesion-agnostic/releases/download/r20250909/model_fold4.zip"]
+    },
          "description": "Segmentation of spinal cord MS lesions",
          "contrasts": ["any"],
          "thr": None,  # Images are already binarized
@@ -505,32 +509,10 @@ TASKS = {
          },
     'lesion_ms':
         {'description': 'MS lesion segmentation on spinal cord MRI images',
-         'long_description': 'This segmentation model for spinal cord MS lesion segmentation uses a 3D U-Net architecture. It outputs a binary '
-                             'segmentation of MS lesions. We used a foundational model, pretrained on over 10,000 CT scans. The model was fine-tuned '
-                             'and tested on datasets including 20 sites, 1850 patients and 4430 volumes. The datasets, mostly coming from “real world” '
-                             'clinical scans at 1.5T and 3T (on GE, Siemens and Philips), included: T1w (n=23), T2w (n=3061), T2*w (n=548), '
-                             'PSIR (n=363), STIR (n=92), MP2RAGE-UNI (n=343). The field-of-view coverage varied across sites (some included the brain '
-                             'and the upper cord, while others only included the spinal cord), and acquisitions were either 2D (axial: 2895, sagittal: 1169) '
-                             'or 3D (n=366), with voxel dimensions ranging from 0.2x0.2x5 mm3 to 0.8x0.8x9 mm3. ',
+         'long_description': 'TODO',
          'url': 'https://github.com/ivadomed/ms-lesion-agnostic',
          'models': ['model_seg_ms_lesion'],
-         'citation': textwrap.dedent("""
-             ```bibtex
-             @inproceedings{BenvenisteUnknown-ja,
-                 author={Benveniste, Pierre-Louis and Lee, Lisa Eunyoung and Prat, Alexandre and Vavasour, Zachary and Tam, Roger and Traboulsee,
-                 Anthony and Kolind, Shannon and Oh, Jiwon and Chen, Michelle and Tsagkas, Charidimos and Granziera, Christina and Laines Medina,
-                 Nilser and Muhlau, Mark and Kirschke, Jan and McGinnis, Julian and Reich, Daniel S and Hemond, Christopher and Callot, Virginie
-                 and Demortière, Sarah and Audoin, Bertrand and Nair, Govind and Filippi, Massimo and Valsasina, Paola and Rocca, Maria A and
-                 Ciccarelli, Olga and Yiannakas, Marios and Granberg, Tobias and Ouellette, Russell and Tauhid, Shahamat and Bakshi, Rohit and
-                 Mainero, Caterina and Treaba, Constantina Andrada and Kerbrat,  Anne and Bannier, Elise and Edan, Gilles and Labauge, Pierre and
-                 O'Grady, Kristin P and Smith, Seth A and Shepherd, Timothy M and Charlson, Erik and Brisset, Jean-Christophe and Talbott, Jason
-                 and Liu, Yaou and Lombaert, Hervé and Cohen-Adad, Julien},
-                 title={Reinforcing the generalizability of spinal cord multiple sclerosis lesion segmentation models},
-                 booktitle={Proceedings of the 41st Annual Scientific Meeting of the ESMRMB},
-                 year={2025},
-                 address={Marseille, France},
-             }
-             ```"""),  # noqa E501 (line too long),
+         'citation': "TODO",  # noqa E501 (line too long),
          'group': 'pathology'
          },
     'sc_canal_t2':
@@ -635,6 +617,27 @@ def install_model(name_model, custom_url=None):
             tss_init.init_inference(data_path=Path(folder(name_model)), quiet=False, dict_urls=url_field,
                                     store_export=False)  # Avoid having duplicate .zip files stored on disk
             urls_used = url_field
+        # For the ms_lesion model, we need to regroup the folds together
+        elif name_model == 'model_seg_ms_lesion':
+            urls_used = {}
+            for i, fold in enumerate(url_field.keys()):
+                if i == 0:
+                    urls_used[fold] = download.install_data(url_field[fold], folder(name_model), dirs_to_preserve=("nnUNetTrainer",))
+                else:
+                    urls_used[fold] = download.install_data(url_field[fold], folder(os.path.join(name_model, fold)))
+                    # Then move folder foldi to nnUNetTrainer... folder
+                    src = folder(os.path.join(name_model, fold, f"fold_{i}"))
+                    # Find the destination folder which starts with nnUNetTrainer
+                    dst = os.path.join(folder(name_model), next(d for d in os.listdir(folder(name_model)) if d.startswith("nnUNetTrainer")))
+                    if not os.path.exists(dst):
+                        raise FileNotFoundError(f"Could not find destination folder {dst}")
+                    else:
+                        # Move contents of src inside dst
+                        shutil.move(src, os.path.join(dst, f"fold_{i}"))
+            # Then we remove all folders which are not nnUNetTrainer... (leftover from downloading each fold separately)
+            for d in os.listdir(folder(name_model)):
+                if not d.startswith("nnUNetTrainer"):
+                    shutil.rmtree(os.path.join(folder(name_model), d))         
         else:
             urls_used = {}
             for seed_name, model_urls in url_field.items():
