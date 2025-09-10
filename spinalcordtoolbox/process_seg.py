@@ -77,8 +77,12 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
         symmetry_keys = [
             'symmetry_RL',
             'symmetry_dice_RL',
+            'symmetry_hausdorff_RL',
+            'symmetry_difference_RL',
             'symmetry_AP',
             'symmetry_dice_AP',
+            'symmetry_hausdorff_AP',
+            'symmetry_difference_AP',
             'symmetry_anterior_RL',
             'symmetry_posterior_RL',
         ]
@@ -551,14 +555,11 @@ def _calculate_symmetry_dice(seg_crop_r_rotated, centroid, upscale, dim, iz=None
 
     # Compute the Dice coefficient
     symmetry_dice_AP = 2 * intersection_AP / union_AP if union_AP > 0 else 0
-    print('symmetry_dice_AP:', symmetry_dice_AP)
+    symmetric_difference_AP = (union_AP - (2*intersection_AP)) * dim[0] * dim[1] / (upscale**2)
 
     # Compute Hausdorff distance as additional metric
     hausdorff_distance_AP = skimage.metrics.hausdorff_distance(seg_crop_r_rotated_cut > 0.5, seg_crop_r_flipped > 0.5) * dim[0] / upscale
     coords_AP = skimage.metrics.hausdorff_pair(seg_crop_r_rotated_cut > 0.5, seg_crop_r_flipped > 0.5)
-    print('coords_AP:', coords_AP)
-    print(seg_crop_r_rotated_cut.shape)
-    print('hausdorff_distance_AP:', hausdorff_distance_AP)
 
     # Create an empty array for flipped version
     seg_crop_r_flipped_RL = np.zeros_like(seg_crop_r_rotated)
@@ -585,22 +586,19 @@ def _calculate_symmetry_dice(seg_crop_r_rotated, centroid, upscale, dim, iz=None
 
     # Compute the Dice coefficient
     symmetry_dice_RL = 2 * intersection_RL / union_RL if union_RL > 0 else 0
-
-    # Store results in a dictionary
-    print('symmetry_dice_RL:', symmetry_dice_RL)
+    symmetric_difference_RL = (union_RL - (2*intersection_RL)) * dim[0] * dim[1] / (upscale**2)
 
     # Compute Hausdorff distance as additional metric
-    print(dim[0])
     hausdorff_distance_RL = skimage.metrics.hausdorff_distance(seg_crop_r_rotated_cut_RL > 0.5, seg_crop_r_flipped_RL > 0.5) * dim[0] / upscale
     coords_RL = skimage.metrics.hausdorff_pair(seg_crop_r_rotated_cut_RL > 0.5, seg_crop_r_flipped_RL > 0.5)
-    print('coords_RL:', coords_RL)
-    print(seg_crop_r_rotated_cut_RL.shape)
-    print('hausdorff_distance_RL:', hausdorff_distance_RL)
-
 
     symmetry_dice = {
         'symmetry_dice_RL': symmetry_dice_RL,
         'symmetry_dice_AP': symmetry_dice_AP,
+        'symmetry_hausdorff_RL': hausdorff_distance_RL,
+        'symmetry_hausdorff_AP': hausdorff_distance_AP,
+        'symmetry_difference_RL': symmetric_difference_RL,
+        'symmetry_difference_AP': symmetric_difference_AP,
     }
 
     # Create a debug plot
@@ -614,7 +612,7 @@ def _calculate_symmetry_dice(seg_crop_r_rotated, centroid, upscale, dim, iz=None
             ax2 = plt.gca()
             ax2.plot([x1, x2], [y1, y2], 'y-', linewidth=2, label='Hausdorff distance')
             ax2.plot([x1, x2], [y1, y2], 'yo', markersize=5)
-        plt.title('RL dice')
+        #plt.title('RL dice')
         plt.axis('off')
         plt.subplot(1, 2, 2)
         plt.imshow(seg_crop_r_rotated_cut > 0.5, cmap='Reds', vmin=0, vmax=0.1)
@@ -625,13 +623,14 @@ def _calculate_symmetry_dice(seg_crop_r_rotated, centroid, upscale, dim, iz=None
             ax2 = plt.gca()
             ax2.plot([x1, x2], [y1, y2], 'y-', linewidth=2, label='Hausdorff distance')
             ax2.plot([x1, x2], [y1, y2], 'yo', markersize=5)
-        plt.title('AP dice')
+        #plt.title('AP dice')
         plt.axis('off')
         # Move the legend outside of the subplots
         plt.legend(loc='lower center', bbox_to_anchor=(-0.1, -0.1), ncol=2)
         plt.suptitle(
             f'Symmetry Dice RL: {symmetry_dice_RL:.3f}, AP: {symmetry_dice_AP:.3f}\n'
-            f'Hausdorff RL (mm): {hausdorff_distance_RL:.3f}, AP: {hausdorff_distance_AP:.3f}'
+            f'Hausdorff RL (mm): {hausdorff_distance_RL:.3f}, AP: {hausdorff_distance_AP:.3f}\n'
+            f'Symmetric diff RL (mm²): {symmetric_difference_RL:.3f}, AP: {symmetric_difference_AP:.3f}'
         )
         if not os.path.exists('symmetry_debug_figures'):
             os.makedirs('symmetry_debug_figures')
