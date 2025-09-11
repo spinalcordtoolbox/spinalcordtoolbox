@@ -51,14 +51,11 @@ def create_nnunet_from_plans(path_model, device: 'torch.device'):
     )
     print(f'Running inference on device: {predictor.device}')
 
-    trainer = None
-
     # initializes the network architecture, loads the checkpoint
     predictor.initialize_from_trained_model_folder(
         join(path_model),
         use_folds=folds_avail,
-        checkpoint_name=checkpoint_name,
-        trainer=trainer,
+        checkpoint_name=checkpoint_name
     )
     print('Model loaded successfully.')
 
