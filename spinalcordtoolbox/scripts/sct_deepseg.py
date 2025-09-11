@@ -449,6 +449,8 @@ def main(argv: Sequence[str]):
                                                                        options={**vars(arguments),
                                                                                 "fname_prior": fname_prior})
         else:
+            if arguments.task == 'lesion_ms':
+                save_probabilities = arguments.soft_ms_lesion
             thr = (arguments.binarize_prediction if arguments.binarize_prediction is not None
                    else models.MODELS[name_model]['thr'])  # Default `thr` value stored in model dict
             im_lst, target_lst = inference.segment_non_ivadomed(
@@ -463,7 +465,7 @@ def main(argv: Sequence[str]):
                 extra_inference_kwargs={arg_name: getattr(arguments, arg_name)
                                         for arg_name in ["step1_only"]  # Used only by totalspineseg
                                         if hasattr(arguments, arg_name)},
-                save_probabilities=arguments.soft_ms_lesion,
+                save_probabilities=save_probabilities,
             )
 
         # Delete intermediate outputs
