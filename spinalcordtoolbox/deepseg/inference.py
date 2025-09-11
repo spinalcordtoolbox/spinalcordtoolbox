@@ -166,6 +166,7 @@ def segment_non_ivadomed(path_model, model_type, input_filenames, threshold, kee
 def segment_monai(path_img, tmpdir, predictor, device: torch.device, save_probabilities: bool):
     """
     Script to run inference on a MONAI-based model for contrast-agnostic soft segmentation of the spinal cord.
+    save_probabilities is not used in MONAI, but we include it in the function signature to match the other segmentation functions.
 
     Author: Naga Karthik
     Original script: https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/blob/e65478099d026f865b7f1d7d0082e6e9a507a744/monai/run_inference_single_image.py
@@ -355,7 +356,8 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device, save_proba
     return fnames_out, targets
 
 
-def segment_totalspineseg(path_img, tmpdir, predictor, device, step1_only=False):
+def segment_totalspineseg(path_img, tmpdir, predictor, device, step1_only=False, save_probabilities: bool = False):
+    # Save probabilities is not used in totalspineseg, but we include it in the function signature to match the other segmentation functions
     # for totalspineseg, the 'predictor' is just the model path
     path_model = predictor
     # fetch the release subdirectory from the model path
