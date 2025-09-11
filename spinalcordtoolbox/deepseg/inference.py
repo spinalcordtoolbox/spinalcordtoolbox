@@ -283,8 +283,16 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device, save_proba
         # The spacings also have to be reversed to match nnUNet's conventions.
         image_properties={'spacing': img_in.dim[6:3:-1]},
         # Save the probability maps if specified
-        save_probabilities=save_probabilities,
+        save_or_return_probabilities=save_probabilities,
     )
+    # If we saved the probabilities, `pred` is a tuple of (binary pred, prob map)
+    if save_probabilities:
+        # keep the soft segmentation
+        prob_map = pred[1]
+        # The shape of the prob_map is (num_classes, z, y, x), so we keep only the non-background class (1)
+        pred = prob_map[1]
+        # We threshold the soft segmentation at 1e-3 to avoid having very small values in the output
+        pred[pred < 1e-3] = 0
     # Lastly, we undo the transpose to return the image from [z,y,x] (SimpleITK) to [x,y,z] (nibabel)
     pred = pred.transpose([2, 1, 0])
     img_out = img_in.copy()
@@ -316,6 +324,10 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device, save_proba
     # see also: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4805
     elif sorted(labels.keys()) == ['sc']:
         targets = ["_seg"]
+        outputs = [img_out]
+    # in the case of the lesion_ms model for soft labels, we don't want the binarization done afterwards
+    elif save_probabilities:
+        targets = ["_msLesionSoft"]
         outputs = [img_out]
     # for the other multiclass models (SCI lesion/SC, mouse GM/WM, etc.), save 1 image per label
     else:

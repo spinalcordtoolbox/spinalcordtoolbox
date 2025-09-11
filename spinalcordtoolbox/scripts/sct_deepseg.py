@@ -306,6 +306,15 @@ def get_parser(subparser_to_return=None):
             data must be cropped around the spinal cord.
             ({models.CROP_MESSAGE})
         """)
+            
+        # Add possibility of having soft segmentation for the lesion_ms task
+        if task_name == 'lesion_ms':
+            params.add_argument(
+                "-soft-ms-lesion",
+                action="store_true",
+                help="If set, the model will output a soft segmentation (i.e. probability map) instead of a binary "
+                     "segmentation."
+            )
 
         # Suppress arguments that are irrelevant for certain tasks
         # - Sagittal view is not currently supported for rootlets/totalspineseg QC
@@ -440,9 +449,6 @@ def main(argv: Sequence[str]):
                                                                        options={**vars(arguments),
                                                                                 "fname_prior": fname_prior})
         else:
-            save_probabilities = False
-            if arguments.task == 'lesion_ms':
-                save_probabilities = True
             thr = (arguments.binarize_prediction if arguments.binarize_prediction is not None
                    else models.MODELS[name_model]['thr'])  # Default `thr` value stored in model dict
             im_lst, target_lst = inference.segment_non_ivadomed(
@@ -457,7 +463,7 @@ def main(argv: Sequence[str]):
                 extra_inference_kwargs={arg_name: getattr(arguments, arg_name)
                                         for arg_name in ["step1_only"]  # Used only by totalspineseg
                                         if hasattr(arguments, arg_name)},
-                save_probabilities=save_probabilities,
+                save_probabilities=arguments.soft_ms_lesion,
             )
 
         # Delete intermediate outputs

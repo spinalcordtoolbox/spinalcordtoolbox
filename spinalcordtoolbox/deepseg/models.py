@@ -188,7 +188,7 @@ MODELS = {
             "model_fold2": ["https://github.com/ivadomed/ms-lesion-agnostic/releases/download/r20250909/model_fold2.zip"],
             "model_fold3": ["https://github.com/ivadomed/ms-lesion-agnostic/releases/download/r20250909/model_fold3.zip"],
             "model_fold4": ["https://github.com/ivadomed/ms-lesion-agnostic/releases/download/r20250909/model_fold4.zip"]
-    },
+         },
          "description": "Segmentation of spinal cord MS lesions",
          "contrasts": ["any"],
          "thr": None,  # Images are already binarized
@@ -637,7 +637,7 @@ def install_model(name_model, custom_url=None):
             # Then we remove all folders which are not nnUNetTrainer... (leftover from downloading each fold separately)
             for d in os.listdir(folder(name_model)):
                 if not d.startswith("nnUNetTrainer"):
-                    shutil.rmtree(os.path.join(folder(name_model), d))         
+                    shutil.rmtree(os.path.join(folder(name_model), d))
         else:
             urls_used = {}
             for seed_name, model_urls in url_field.items():
