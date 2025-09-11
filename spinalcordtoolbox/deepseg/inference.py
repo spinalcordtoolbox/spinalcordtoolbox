@@ -111,7 +111,7 @@ def segment_and_average_volumes(model_paths, input_filenames, options, use_gpu=F
 
 
 def segment_non_ivadomed(path_model, model_type, input_filenames, threshold, keep_largest, fill_holes_in_pred,
-                         remove_small, use_gpu=False, remove_temp_files=True, extra_inference_kwargs=None, save_probabilities=False):
+                         remove_small, use_gpu=False, remove_temp_files=True, single_fold=False, extra_inference_kwargs=None):
     # MONAI and NNUnet have similar structure, and so we use nnunet+inference functions with the same signature
     # NB: For TotalSpineSeg, we don't need to create the network ourselves
     if "totalspineseg" in path_model:
@@ -129,12 +129,16 @@ def segment_non_ivadomed(path_model, model_type, input_filenames, threshold, kee
 
     # load model from checkpoint
     net = create_net(path_model, device)
+    # For single-fold inference, we only use 1 fold instead of the full ensemble
+    if single_fold and model_type == "nnunet":
+        print("here")
+        net = ds_nnunet.create_nnunet_from_plans(path_model, device, single_fold=single_fold)
 
     im_lst, target_lst = [], []
     for fname_in in input_filenames:
         tmpdir = tmp_create(basename="sct_deepseg")
         # model may be multiclass, so the `inference` func should output a list of fnames and targets
-        fnames_out, targets = inference(path_img=fname_in, tmpdir=tmpdir, predictor=net, device=device, **extra_inference_kwargs, save_probabilities=save_probabilities)
+        fnames_out, targets = inference(path_img=fname_in, tmpdir=tmpdir, predictor=net, device=device, **extra_inference_kwargs)
         for fname_out, target in zip(fnames_out, targets):
             im_out = Image(fname_out)
             # Apply postprocessing (replicates existing functionality from ivadomed package)
@@ -163,7 +167,7 @@ def segment_non_ivadomed(path_model, model_type, input_filenames, threshold, kee
     return im_lst, target_lst
 
 
-def segment_monai(path_img, tmpdir, predictor, device: torch.device, save_probabilities: bool):
+def segment_monai(path_img, tmpdir, predictor, device: torch.device):
     """
     Script to run inference on a MONAI-based model for contrast-agnostic soft segmentation of the spinal cord.
     save_probabilities is not used in MONAI, but we include it in the function signature to match the other segmentation functions.
@@ -220,9 +224,11 @@ def segment_monai(path_img, tmpdir, predictor, device: torch.device, save_probab
     return [fname_out], [target]
 
 
-def segment_nnunet(path_img, tmpdir, predictor, device: torch.device, save_probabilities: bool):
+def segment_nnunet(path_img, tmpdir, predictor, device: torch.device, soft_ms_lesion=False):
     """
     This script is used to run inference on a single subject using a nnUNetV2 model.
+    For soft segmentation of MS lesions, set `soft_ms_lesion=True`. Output segmentation will be thresholded at 1e-3.
+    For quicker inference using only a single fold (instead of the full 5-fold ensemble), set `single_fold=True`. This is only for the lesion_ms model.
 
     Author: Jan Valosek, Naga Karthik
     Original script: https://github.com/ivadomed/model_seg_sci/blob/4184bc22ef7317b3de5f85dee28449d6f381c984/packaging/run_inference_single_subject.py
@@ -284,10 +290,10 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device, save_proba
         # The spacings also have to be reversed to match nnUNet's conventions.
         image_properties={'spacing': img_in.dim[6:3:-1]},
         # Save the probability maps if specified
-        save_or_return_probabilities=save_probabilities,
+        save_or_return_probabilities=soft_ms_lesion,
     )
     # If we saved the probabilities, `pred` is a tuple of (binary pred, prob map)
-    if save_probabilities:
+    if soft_ms_lesion:
         # keep the soft segmentation
         prob_map = pred[1]
         # The shape of the prob_map is (num_classes, z, y, x), so we keep only the non-background class (1)
@@ -327,7 +333,7 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device, save_proba
         targets = ["_seg"]
         outputs = [img_out]
     # in the case of the lesion_ms model for soft labels, we don't want the binarization done afterwards
-    elif save_probabilities:
+    elif soft_ms_lesion:
         targets = ["_msLesionSoft"]
         outputs = [img_out]
     # for the other multiclass models (SCI lesion/SC, mouse GM/WM, etc.), save 1 image per label
@@ -356,7 +362,7 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device, save_proba
     return fnames_out, targets
 
 
-def segment_totalspineseg(path_img, tmpdir, predictor, device, step1_only=False, save_probabilities: bool = False):
+def segment_totalspineseg(path_img, tmpdir, predictor, device, step1_only=False):
     # Save probabilities is not used in totalspineseg, but we include it in the function signature to match the other segmentation functions
     # for totalspineseg, the 'predictor' is just the model path
     path_model = predictor
