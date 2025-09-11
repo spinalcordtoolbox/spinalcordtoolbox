@@ -33,7 +33,7 @@ nilearn
 # 2.6 includes an API change that requires `torch>=2.3`. However, `torch==2.3` removes 
 # support for Intel Macs, and we don't want to remove support, so we use `<2.6`.
 # nnunetv2>2.3.0,!=2.4.*,<2.6
-git+https://github.com/joshuacwnewton/nnUNet@neuropoly-fork-patches#egg=nnunetv2-neuropoly
+nnunetv2 @ git+https://github.com/plbenveniste/nnUNet@plb/joshu_fork
 # SCT is compatible, however the upgrade to numpy==2.0.0 broke *many* upstream packages. Let's try again later. See https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4535
 numpy<2
 # - 1.7.0>onnxruntime>=1.5.1 required `brew install libomp` on macOS.
