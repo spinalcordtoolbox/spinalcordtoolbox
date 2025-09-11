@@ -306,7 +306,7 @@ def get_parser(subparser_to_return=None):
             data must be cropped around the spinal cord.
             ({models.CROP_MESSAGE})
         """)
-            
+
         # Add possibility of having soft segmentation for the lesion_ms task
         if task_name == 'lesion_ms':
             params.add_argument(
