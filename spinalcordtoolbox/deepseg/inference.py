@@ -283,7 +283,7 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device, save_proba
         # The spacings also have to be reversed to match nnUNet's conventions.
         image_properties={'spacing': img_in.dim[6:3:-1]},
         # Save the probability maps if specified
-        save_probabilities=save_probabilities
+        save_probabilities=save_probabilities,
     )
     # Lastly, we undo the transpose to return the image from [z,y,x] (SimpleITK) to [x,y,z] (nibabel)
     pred = pred.transpose([2, 1, 0])
