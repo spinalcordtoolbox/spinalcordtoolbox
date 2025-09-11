@@ -449,6 +449,7 @@ def main(argv: Sequence[str]):
                                                                        options={**vars(arguments),
                                                                                 "fname_prior": fname_prior})
         else:
+            save_probabilities = False
             if arguments.task == 'lesion_ms':
                 save_probabilities = arguments.soft_ms_lesion
             thr = (arguments.binarize_prediction if arguments.binarize_prediction is not None
