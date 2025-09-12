@@ -542,7 +542,7 @@ def _calculate_symmetry_dice(seg_crop_r_rotated, centroid, upscale, dim, iz=None
 
     # Flip around segmentation center
     for y, x in coords[:, :2]:
-        x_mirror = 2 * center_x - x
+        x_mirror = 2 * x0 - x
         if 0 <= x_mirror < seg_crop_r_rotated.shape[1]:
             seg_crop_r_flipped[y, x_mirror] = seg_crop_r_rotated[y, x]
     # Erase half of the segmentation to avoid bias
@@ -573,8 +573,9 @@ def _calculate_symmetry_dice(seg_crop_r_rotated, centroid, upscale, dim, iz=None
     center_y = int(round((y_min + y_max) / 2))
 
     # Flip around segmentation center (RL axis)
+    print(center_y, y0)
     for y, x in coords[:, :2]:
-        y_mirror = 2 * center_y - y
+        y_mirror = 2 * y0 - y
         if 0 <= y_mirror < seg_crop_r_rotated.shape[0]:
             seg_crop_r_flipped_RL[y_mirror, x] = seg_crop_r_rotated[y, x]
     seg_crop_r_flipped_RL[:y0, :] = 0
@@ -605,8 +606,10 @@ def _calculate_symmetry_dice(seg_crop_r_rotated, centroid, upscale, dim, iz=None
     if verbose == 2:
         plt.figure(figsize=(8, 6))
         plt.subplot(1, 2, 1)
-        plt.imshow(seg_crop_r_rotated_cut_RL > 0.5, cmap='Reds', vmin=0, vmax=0.1, alpha=1)
+        plt.imshow(seg_crop_r_rotated > 0.5, cmap='gray', vmin=0, vmax=0.1, alpha=1)
+        plt.imshow(seg_crop_r_rotated_cut_RL > 0.5, cmap='Reds', vmin=0, vmax=0.1, alpha=0.7)
         plt.imshow(seg_crop_r_flipped_RL > 0.5, cmap='Blues', vmin=0, vmax=0.1, alpha=0.6)
+        plt.plot(x0, y0, 'go', markersize=5, label='Centroid')
         if coords_RL is not None and len(coords_RL) == 2:
             (y1, x1), (y2, x2) = coords_RL
             ax2 = plt.gca()
@@ -615,8 +618,11 @@ def _calculate_symmetry_dice(seg_crop_r_rotated, centroid, upscale, dim, iz=None
         #plt.title('RL dice')
         plt.axis('off')
         plt.subplot(1, 2, 2)
-        plt.imshow(seg_crop_r_rotated_cut > 0.5, cmap='Reds', vmin=0, vmax=0.1)
-        plt.imshow(seg_crop_r_flipped > 0.5, cmap='Blues', vmin=0, vmax=0.1, alpha=0.6)
+        plt.imshow(seg_crop_r_rotated > 0.5, cmap='gray', vmin=0, vmax=0.1, alpha=1)
+        plt.imshow(seg_crop_r_rotated_cut > 0.5, cmap='Reds', vmin=0, vmax=0.1, alpha=0.7)
+        plt.imshow(seg_crop_r_flipped > 0.5, cmap='Blues', vmin=0, vmax=0.1, alpha=0.4)
+        plt.plot(x0, y0, 'go', markersize=5, label='Centroid')
+
         # Plot Hausdorff pair points and line for AP dice
         if coords_AP is not None and len(coords_AP) == 2:
             (y1, x1), (y2, x2) = coords_AP
