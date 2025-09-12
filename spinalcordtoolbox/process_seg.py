@@ -191,7 +191,6 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
         # Store the data for this slice
         z_indices.append(iz)
 
-
         # Store basic properties and angles to be used later after regularization
         if image is not None:
             # compute PCA and get center or mass based on segmentation; centermass_src: [RL, AP] (assuming RPI orientation)
@@ -216,7 +215,7 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
             angle_hog = None
         # Compute shape properties for this slice
         shape_property = _properties2d(current_patch_scaled, [px, py], iz, angle_hog=angle_hog, verbose=verbose)
-        if image is None or filter_size < 0:  #TODO and regularization term filter_size < 0
+        if image is None or filter_size < 0:  # TODO and regularization term filter_size < 0
             # If regularization is disabled or no image is provided,
             # loop through stored patches and compute properties the regular way
             if shape_property is not None:
@@ -485,7 +484,7 @@ def _measure_rotated_diameters(seg_crop_r, seg_crop_r_rotated, dim, angle, upsca
     """
     # Get center of mass (which is computed in the PCA function); centermass_src: [RL, AP] (assuming RPI orientation)
     # Note: I'm using [rl0, ap0] instead of [y0, x0] to make it easier to track the axes as numpy handle them in a bit unintuitive way :-D
-    rotated_bin = np.array(seg_crop_r_rotated > 0.5, dtype='uint8') # binarize the rotated segmentation for PCA
+    rotated_bin = np.array(seg_crop_r_rotated > 0.5, dtype='uint8')  # binarize the rotated segmentation for PCA
     _, _, [rl0, ap0] = compute_pca(rotated_bin)    # same as `y0, x0 = region.centroid`
     rl0_r, ap0_r = round(rl0), round(ap0)
 
@@ -603,7 +602,7 @@ def _calculate_symmetry_dice(seg_crop_r_rotated, centroid, upscale, dim, iz=None
             ax2 = plt.gca()
             ax2.plot([x1, x2], [y1, y2], 'y-', linewidth=2, label='Hausdorff distance')
             ax2.plot([x1, x2], [y1, y2], 'yo', markersize=5)
-        #plt.title('RL dice')
+        # plt.title('RL dice')
         plt.axis('off')
         plt.subplot(1, 2, 2)
         plt.imshow(seg_crop_r_rotated > 0.5, cmap='gray', vmin=0, vmax=0.1, alpha=1)
@@ -617,7 +616,7 @@ def _calculate_symmetry_dice(seg_crop_r_rotated, centroid, upscale, dim, iz=None
             ax2 = plt.gca()
             ax2.plot([x1, x2], [y1, y2], 'y-', linewidth=2, label='Hausdorff distance')
             ax2.plot([x1, x2], [y1, y2], 'yo', markersize=5)
-        #plt.title('AP dice')
+        # plt.title('AP dice')
         plt.axis('off')
         # Move the legend outside of the subplots
         plt.legend(loc='lower center', bbox_to_anchor=(-0.1, -0.1), ncol=2)
@@ -850,7 +849,7 @@ def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, floa
     ax1.imshow(image_crop_r > 0.5, cmap='gray', interpolation='nearest', vmin=0, vmax=1, alpha=.4)
 
     _add_diameter_lines(ax1, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale)
-    #_add_ellipse(ax1, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale)
+    # _add_ellipse(ax1, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale)
     _setup_axis(ax1, 'Quadrants')
     offset = 20  # pixel offset from centroid for annotation placement
     ax1.text(x0 - offset, y0 - offset, f"PR:\n{quadrant_areas['area_quadrant_posterior_right']:.2f} mm²", color='red', fontsize=10, ha='center', va='bottom', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
@@ -873,7 +872,7 @@ def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, floa
     ax2.imshow(image_crop_r > 0.5, cmap='gray', interpolation='nearest', vmin=0, vmax=1, alpha=.4)
 
     _add_diameter_lines(ax2, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale)
-    #_add_ellipse(ax2, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale)
+    # _add_ellipse(ax2, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale)
     _setup_axis(ax2, 'Right-Left Symmetry')
     ax2.text(x0, y0 - offset, f"Right:\n{right_area:.2f} mm²", color='red', fontsize=10, ha='center', va='center', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
     ax2.text(x0, y0 + offset, f"Left:\n{left_area:.2f} mm²", color='blue', fontsize=10, ha='center', va='center', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
@@ -890,7 +889,7 @@ def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, floa
     ax3.imshow(image_crop_r > 0.5, cmap='gray', interpolation='nearest', vmin=0, vmax=1, alpha=.4)
 
     _add_diameter_lines(ax3, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale)
-    #_add_ellipse(ax3, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale)
+    # _add_ellipse(ax3, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale)
     _setup_axis(ax3, 'Anterior-Posterior Symmetry')
     ax3.text(x0 - offset, y0, f"Posterior:\n{posterior_area:.2f} mm²", color='purple', fontsize=10, ha='center', va='center', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
     ax3.text(x0 + offset, y0, f"Anterior:\n{anterior_area:.2f} mm²", color='green', fontsize=10, ha='center', va='center', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
