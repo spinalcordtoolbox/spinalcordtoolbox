@@ -535,10 +535,7 @@ def _calculate_symmetry_dice(seg_crop_r_rotated, centroid, upscale, dim, iz=None
 
     # Get bounding box of the segmentation (on the cropped segmentation, not the full one)
     coords = np.argwhere(seg_crop_r_rotated > 0)
-    y_min, x_min = coords.min(axis=0)[:2]
-    y_max, x_max = coords.max(axis=0)[:2]
     # Center of segmentation along RL axis (x)
-    center_x = int(round((x_min + x_max) / 2))
 
     # Flip around segmentation center
     for y, x in coords[:, :2]:
@@ -564,16 +561,7 @@ def _calculate_symmetry_dice(seg_crop_r_rotated, centroid, upscale, dim, iz=None
     # Create an empty array for flipped version
     seg_crop_r_flipped_RL = np.zeros_like(seg_crop_r_rotated)
 
-    # Get bounding box of the segmentation
-    coords = np.argwhere(seg_crop_r_rotated > 0)
-    y_min, x_min = coords.min(axis=0)[:2]
-    y_max, x_max = coords.max(axis=0)[:2]
-
-    # Center of segmentation along RL axis (y)
-    center_y = int(round((y_min + y_max) / 2))
-
     # Flip around segmentation center (RL axis)
-    print(center_y, y0)
     for y, x in coords[:, :2]:
         y_mirror = 2 * y0 - y
         if 0 <= y_mirror < seg_crop_r_rotated.shape[0]:
