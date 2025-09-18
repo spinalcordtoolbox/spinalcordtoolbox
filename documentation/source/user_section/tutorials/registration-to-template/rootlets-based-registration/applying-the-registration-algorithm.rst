@@ -12,7 +12,7 @@ To apply the registration algorithm, the following command is used:
 :Input arguments:
    - ``-i`` : Input image
    - ``-s`` : Segmented spinal cord corresponding to the input image
-   - ``-lrootlet`` : Dorsal and ventral nerve rootlets segmentation. Example: `anat_rootlets.nii.gz`
+   - ``-lrootlet`` : Dorsal and ventral nerve rootlets segmentation. Example: ``anat_rootlets.nii.gz``
    - ``-c`` : Contrast of the image. Specifying this determines the version of the template to use. (Here, ``-c t2`` means that ``PAM50_t2.nii.gz`` will be used.)
    - ``-ofolder`` : Output folder where the results will be saved. If the folder does not exist, it will be created.
    - ``-qc`` : Directory for Quality Control reporting. QC reports allow us to evaluate the results slice-by-slice.
