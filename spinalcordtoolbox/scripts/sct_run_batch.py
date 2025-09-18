@@ -26,6 +26,7 @@ import shutil
 from typing import Sequence
 from types import SimpleNamespace
 import textwrap
+import argparse
 
 import yaml
 import psutil
@@ -38,6 +39,20 @@ from spinalcordtoolbox.utils.fs import Tee
 from stat import S_IEXEC
 
 csi_filter.register_codec()
+
+
+class ParseExcludeFileAction(argparse.Action):
+    """Reads in a YML file and determines if exclusion list contains subjects and/or files."""
+    def __call__(self, parser, namespace, values, option_string=None):
+        with open(values, 'r') as yaml_file:
+            yaml_contents = yaml.safe_load(yaml_file)
+        if not isinstance(yaml_contents, list) and all(isinstance(item, str) for item in yaml_contents):
+            raise ValueError(f"The exclude file {values} should contain a list of subjects or files to exclude.")
+        yaml_data = {
+            'files': [item for item in yaml_contents if (item.endswith('.nii')) or item.endswith('.nii.gz')],
+            'subjects': [item for item in yaml_contents if not (item.endswith('.nii')) or item.endswith('.nii.gz')]
+        }
+        setattr(namespace, self.dest, yaml_data)
 
 
 def get_parser():
@@ -135,6 +150,28 @@ def get_parser():
                             Examples: `-exclude-list sub-003 sub-004` or `-exclude-list sub-003/ses-01 ses-02`
         """),  # noqa: E501 (line too long)
                         nargs='+')
+    parser.add_argument('-exclude-file',
+                        action=ParseExcludeFileAction,
+                        help=textwrap.dedent("""
+                            Path to a YAML file (e.g. `exclude.yml`) containing a bullet list (`-`) of subjects or files to exclude.
+
+                            The list will be treated differently depending on whether subjects or files are listed:
+                              - Subjects (e.g. `sub-01` or `sub-01/ses-01`): The subject will not be processed (script will not be run).
+                              - Files (e.g. `sub-01_ses-01_T1w.nii.gz`): The script will still be run, however an environment variable called `EXCLUDE_FILES` will be created containing the list of files. That way, you can choose to skip specific processing steps within your script.
+
+                            You can use the following `bash` syntax to skip files:
+
+                                # check if FILE_T2 is in the list of excluded files
+                                FILE_T2="$SUBJECT"_T2w.nii.gz
+                                if [[ ! " $EXCLUDE_FILES " =~ " $FILE_T2 " ]]; then
+                                    # process file only if it is not excluded
+                                    FILE_T2_SEG="$SUBJECT"_T2w_seg.nii.gz
+                                    sct_deepseg spinalcord $FILE_T2 -o $FILE_T2_SEG
+                                fi
+
+                            Note: You can use QC reports to generate a YAML file with excluded files (via the "Save Fails" button).
+                            """)   # noqa: E501 (line too long)
+                        ),
     parser.add_argument('-ignore-ses', action='store_true',
                         help="By default, if 'ses' subfolders are present, then 'sct_run_batch' will run the script "
                              "within each individual 'ses' subfolder. Passing `-ignore-ses` will change the behavior "
@@ -257,7 +294,7 @@ def _filter_directories(dir_list, include=None, include_list=None, exclude=None,
 
 
 def run_single(subj_dir, script, script_args, path_segmanual, path_data, path_data_processed, path_results, path_log,
-               path_qc, itk_threads, continue_on_error=False):
+               path_qc, itk_threads, continue_on_error=False, exclude_files=None):
     """
     Job function for mapping with multiprocessing
     :param subj_dir:
@@ -306,6 +343,8 @@ def run_single(subj_dir, script, script_args, path_segmanual, path_data, path_da
     })
     if 'SCT_DIR' not in envir:
         envir['SCT_DIR'] = __sct_dir__
+    if exclude_files:
+        envir['EXCLUDE_FILES'] = ' '.join(exclude_files)
 
     cmd = [script_full, subj_dir] + script_args.split(' ')
 
@@ -524,12 +563,17 @@ def main(argv: Sequence[str]):
     if (arguments.include is not None) and (arguments.include_list is not None):
         parser.error('Only one of `include` and `include-list` can be used')
 
-    if (arguments.exclude is not None) and (arguments.exclude_list is not None):
-        parser.error('Only one of `exclude` and `exclude-list` can be used')
+    if sum([arg is not None for arg in [arguments.exclude, arguments.exclude_list, arguments.exclude_file]]) > 1:
+        parser.error('Only one of `exclude`, `exclude-list`, and `exclude-file` can be used')
+
+    # Check `-exclude-list` (or if `-exclude-file` contains subjects)
+    exclude_list = arguments.exclude_list
+    if arguments.exclude_file['subjects']:
+        exclude_list = arguments.exclude_file['subjects']
 
     subject_dirs = _filter_directories(subject_dirs,
                                        include=arguments.include, include_list=arguments.include_list,
-                                       exclude=arguments.exclude, exclude_list=arguments.exclude_list)
+                                       exclude=arguments.exclude, exclude_list=exclude_list)
 
     # Determine the number of jobs we can run simultaneously
     if arguments.jobs < 1:
@@ -557,7 +601,8 @@ def main(argv: Sequence[str]):
                                                path_log=path_log,
                                                path_qc=path_qc,
                                                itk_threads=arguments.itk_threads,
-                                               continue_on_error=arguments.continue_on_error)
+                                               continue_on_error=arguments.continue_on_error,
+                                               exclude_files=arguments.exclude_file['files'])
             results = list(p.imap(run_single_dir, subject_dirs))
     except Exception as e:
         if do_email:
