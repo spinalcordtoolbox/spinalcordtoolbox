@@ -11,7 +11,7 @@ Run the following command to segment the spinal nerve rootlets from the input im
 
 .. code:: sh
 
-   sct_deepseg rootlets -i t2.nii.gz -o t2_rootlets.nii.gzs -qc ~/qc_singleSubj
+   sct_deepseg rootlets -i t2.nii.gz -o t2_rootlets.nii.gz -qc ~/qc_singleSubj
 
 :Input arguments:
     - ``rootlets`` : Task to perform. In our case, we use the ``rootlets`` task.
