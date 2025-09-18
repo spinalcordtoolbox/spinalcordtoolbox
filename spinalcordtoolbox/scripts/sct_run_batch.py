@@ -49,8 +49,8 @@ class ParseExcludeFileAction(argparse.Action):
         if not isinstance(yaml_contents, list) and all(isinstance(item, str) for item in yaml_contents):
             raise ValueError(f"The exclude file {values} should contain a list of subjects or files to exclude.")
         yaml_data = {
-            'files': [item for item in yaml_contents if (item.endswith('.nii')) or item.endswith('.nii.gz')],
-            'subjects': [item for item in yaml_contents if not (item.endswith('.nii')) or item.endswith('.nii.gz')]
+            'files': [item for item in yaml_contents if (item.endswith('.nii') or item.endswith('.nii.gz'))],
+            'subjects': [item for item in yaml_contents if not (item.endswith('.nii') or item.endswith('.nii.gz'))]
         }
         setattr(namespace, self.dest, yaml_data)
 
