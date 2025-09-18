@@ -140,8 +140,8 @@ MODELS = {
         "url": [
             "https://github.com/ivadomed/model-spinal-rootlets/releases/download/r20250318/model-spinal-rootlets-multicon-r20250318.zip"
         ],
-        "description": "Segmentation of spinal nerve rootlets for T2w and MP2RAGE (UNIT1, INV1, INV2) images using nnUNet",
-        "contrasts": ["t2", "UNIT1", "INV1", "INV2"],
+        "description": "Segmentation of spinal nerve rootlets for T2w and MP2RAGE contrasts (T1w-INV1, T1w-INV2, and UNIT1) using nnUNet",
+        "contrasts": ["t2", "UNIT1", "T1w-INV1", "T1w-INV2"],
         "thr": None,  # Multiclass rootlets model (1.0, 2.0, 3.0...) -> no thresholding
         "default": False,
     },
@@ -414,7 +414,7 @@ TASKS = {
          'group': 'pathology'
          },
     'rootlets':
-        {'description': 'Segmentation of spinal nerve rootlets for T2w and MP2RAGE (UNIT1, INV1, INV2) images',
+        {'description': 'Segmentation of spinal nerve rootlets for T2w and MP2RAGE contrasts (T1w-INV1, T1w-INV2, and UNIT1)',
          'long_description': 'This segmentation model for spinal nerve rootlets segmentation uses a 3D U-Net '
                              'architecture, and was trained with the nnUNetV2 framework. It is a multiclass model, '
                              'outputting a single segmentation image containing 8 classes representing the C2-T1 '
@@ -514,7 +514,23 @@ TASKS = {
                              'or 3D (n=366), with voxel dimensions ranging from 0.2x0.2x5 mm3 to 0.8x0.8x9 mm3. ',
          'url': 'https://github.com/ivadomed/ms-lesion-agnostic',
          'models': ['model_seg_ms_lesion'],
-         'citation': None,
+         'citation': textwrap.dedent("""
+             ```bibtex
+             @inproceedings{BenvenisteUnknown-ja,
+                 author={Benveniste, Pierre-Louis and Lee, Lisa Eunyoung and Prat, Alexandre and Vavasour, Zachary and Tam, Roger and Traboulsee,
+                 Anthony and Kolind, Shannon and Oh, Jiwon and Chen, Michelle and Tsagkas, Charidimos and Granziera, Christina and Laines Medina,
+                 Nilser and Muhlau, Mark and Kirschke, Jan and McGinnis, Julian and Reich, Daniel S and Hemond, Christopher and Callot, Virginie
+                 and Demortière, Sarah and Audoin, Bertrand and Nair, Govind and Filippi, Massimo and Valsasina, Paola and Rocca, Maria A and
+                 Ciccarelli, Olga and Yiannakas, Marios and Granberg, Tobias and Ouellette, Russell and Tauhid, Shahamat and Bakshi, Rohit and
+                 Mainero, Caterina and Treaba, Constantina Andrada and Kerbrat,  Anne and Bannier, Elise and Edan, Gilles and Labauge, Pierre and
+                 O'Grady, Kristin P and Smith, Seth A and Shepherd, Timothy M and Charlson, Erik and Brisset, Jean-Christophe and Talbott, Jason
+                 and Liu, Yaou and Lombaert, Hervé and Cohen-Adad, Julien},
+                 title={Reinforcing the generalizability of spinal cord multiple sclerosis lesion segmentation models},
+                 booktitle={Proceedings of the 41st Annual Scientific Meeting of the ESMRMB},
+                 year={2025},
+                 address={Marseille, France},
+             }
+             ```"""),  # noqa E501 (line too long),
          'group': 'pathology'
          },
     'sc_canal_t2':
