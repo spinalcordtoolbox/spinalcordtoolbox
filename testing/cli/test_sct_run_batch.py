@@ -3,6 +3,7 @@
 import glob
 import os
 import json
+import yaml
 
 import pytest
 from stat import S_IEXEC
@@ -30,6 +31,27 @@ def dummy_script(tmp_path):
     # > Although Windows supports chmod(), you can only set the file’s read-only flag with it
     # > (via the stat.S_IWRITE and stat.S_IREAD constants or a corresponding integer value).
     # > All other bits are ignored.
+    return path_out
+
+
+@pytest.fixture
+def dummy_script_with_file_exclusion(tmp_path):
+    """Dummy executable script that displays file only for non-excluded files."""
+    path_out = str(tmp_path / "dummy_script_with_file_exclusion.sh")
+    script_text = """
+    #!/bin/bash
+    SUBJECT=$1
+    # check if FILE_T2 is in the list of excluded files
+    FILE_T2="$SUBJECT"_T2w.nii.gz
+    if [[ ! " $EXCLUDE_FILES " =~ " $FILE_T2 " ]]; then
+        # process file only if it is not excluded
+        echo "$SUBJECT"
+    fi
+    """
+    with open(path_out, 'w') as script:
+        script.write(dedent(script_text)[1:])
+    script_stat = os.stat(path_out)
+    os.chmod(path_out, script_stat.st_mode | S_IEXEC)
     return path_out
 
 
@@ -88,6 +110,50 @@ def test_only_one_include_exclude(tmp_path, dummy_script):
         sct_run_batch.main(['-exclude', 'arg', '-exclude-list', 'arg2',
                             '-path-data', str(data), '-path-out', str(out), '-script', dummy_script])
     assert e.value.code == 2  # Default error code given by `parser.error` within an ArgumentParser
+
+
+@pytest.mark.parametrize("exclusion_type", ['subject', 'file'])
+def test_exclude_file(tmp_path, dummy_script, dummy_script_with_file_exclusion, exclusion_type):
+    """
+    Test that `-exclude-file` properly filters subjects or files depending on the contents of the YAML file.
+    """
+    # generate I/O folders
+    sub_dir_list = ['sub-001', 'sub-002', 'sub-003', 'sub-010', 'sub-011', 'sub-012']
+    data = tmp_path / 'data'
+    for sub in sub_dir_list:
+        (data / sub / 'anat').mkdir(parents=True)
+    out = tmp_path / 'out'
+
+    # generate `exclude.yml`
+    sub_exclude_list = sub_dir_list[::2]  # exclude every other subject
+    exclude_list = (sub_exclude_list if exclusion_type == 'subject'
+                    else [f"{sub}_T2w.nii.gz" for sub in sub_exclude_list])
+    fname_exclude = tmp_path / 'exclude.yml'
+    with open(fname_exclude, 'w') as fp:
+        yaml.dump(exclude_list, fp)
+
+    # run script
+    script_to_run = dummy_script if exclusion_type == 'subject' else dummy_script_with_file_exclusion
+    sct_run_batch.main(argv=['-path-data', str(data), '-path-out', str(out), '-script', script_to_run,
+                             '-exclude-file', str(fname_exclude)])
+
+    # test log contents to see which subjects were processed
+    script_name = os.path.splitext(os.path.basename(script_to_run))[0]
+    for sub in sub_dir_list:
+        # excluded subjects
+        log_file = out / 'log' / f'{script_name}_{sub}.log'
+        if sub in sub_exclude_list:
+            # subject exclusion: no log file (subject was not processed)
+            if exclusion_type == 'subject':
+                assert not log_file.exists()
+            # file exclusion: empty log file (`echo` should be skipped for that subject)
+            else:
+                assert exclusion_type == 'file'
+                assert log_file.exists() and os.path.getsize(log_file) == 0
+
+        # included subjects: non-empty log file (`echo` should be run for that subject)
+        else:
+            assert log_file.exists() and os.path.getsize(log_file) > 0
 
 
 def test_directory_inclusion_exclusion():
