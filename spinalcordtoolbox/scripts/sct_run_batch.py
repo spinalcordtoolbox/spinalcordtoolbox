@@ -568,7 +568,7 @@ def main(argv: Sequence[str]):
 
     # Check `-exclude-list` (or if `-exclude-file` contains subjects)
     exclude_list = arguments.exclude_list
-    if arguments.exclude_file['subjects']:
+    if arguments.exclude_file is not None and arguments.exclude_file['subjects']:
         exclude_list = arguments.exclude_file['subjects']
 
     subject_dirs = _filter_directories(subject_dirs,
@@ -602,7 +602,7 @@ def main(argv: Sequence[str]):
                                                path_qc=path_qc,
                                                itk_threads=arguments.itk_threads,
                                                continue_on_error=arguments.continue_on_error,
-                                               exclude_files=arguments.exclude_file['files'])
+                                               exclude_files=(arguments.exclude_file['files'] if arguments.exclude_file is not None else None))
             results = list(p.imap(run_single_dir, subject_dirs))
     except Exception as e:
         if do_email:
