@@ -163,6 +163,27 @@ def get_parser():
 
                             Examples: `-include-list sub-001 sub-002` or `-include-list sub-001/ses-01 ses-02`"""),  # noqa: E501 (line too long)
                         nargs='+')
+    parser.add_argument('-include-yml',
+                        action=ParseYMLAction,
+                        help=textwrap.dedent("""
+                            Path to a YAML file (e.g. `include.yml`) containing a bullet list (`-`) of subjects or files to include.
+
+                            The list will be treated differently depending on whether subjects or files are listed:
+                              - Subjects (e.g. `sub-01` or `sub-01/ses-01`): Only these subjects will be processed (script will not be run for non-included subjects).
+                              - Files (e.g. `sub-01_ses-01_T1w.nii.gz`): The script will be run, and an environment variable called `INCLUDE_FILES` will be created
+                              containing the list of files. That way, you can choose to run specific processing steps within your script for only those files.
+
+                            You can use the following `bash` syntax to process included files:
+
+                                # check if FILE_T2 is in the list of included files
+                                FILE_T2="$SUBJECT"_T2w.nii.gz
+                                if [[ " $INCLUDE_FILES " =~ " $FILE_T2 " ]]; then
+                                    # process file only if it is included
+                                    FILE_T2_SEG="$SUBJECT"_T2w_seg.nii.gz
+                                    sct_deepseg spinalcord $FILE_T2 -o $FILE_T2_SEG
+                                fi
+                            """)   # noqa: E501 (line too long)
+                        ),
     parser.add_argument('-exclude',
                         help='Optional regex used to filter the list of subject directories. Only process '
                         'a subject if they do not match the regex. Exclusions are processed '
@@ -318,7 +339,7 @@ def _filter_directories(dir_list, include=None, include_list=None, exclude=None,
 
 
 def run_single(subj_dir, script, script_args, path_segmanual, path_data, path_data_processed, path_results, path_log,
-               path_qc, itk_threads, continue_on_error=False, exclude_files=None):
+               path_qc, itk_threads, continue_on_error=False, include_files=None, exclude_files=None):
     """
     Job function for mapping with multiprocessing
     :param subj_dir:
@@ -367,6 +388,8 @@ def run_single(subj_dir, script, script_args, path_segmanual, path_data, path_da
     })
     if 'SCT_DIR' not in envir:
         envir['SCT_DIR'] = __sct_dir__
+    if include_files:
+        envir['INCLUDE_FILES'] = ' '.join(include_files)
     if exclude_files:
         envir['EXCLUDE_FILES'] = ' '.join(exclude_files)
 
@@ -584,11 +607,16 @@ def main(argv: Sequence[str]):
 
     subject_dirs = _parse_dataset_directory(path_data, arguments.subject_prefix, arguments.ignore_ses)
 
-    if (arguments.include is not None) and (arguments.include_list is not None):
-        parser.error('Only one of `include` and `include-list` can be used')
+    if sum([arg is not None for arg in [arguments.include, arguments.include_list, arguments.include_yml]]) > 1:
+        parser.error('Only one of `include`, `include-list`, and `include-yml` can be used')
 
     if sum([arg is not None for arg in [arguments.exclude, arguments.exclude_list, arguments.exclude_yml]]) > 1:
         parser.error('Only one of `exclude`, `exclude-list`, and `exclude-yml` can be used')
+
+    # Check `-include-list` (or if `-include-yml` contains subjects)
+    include_list = arguments.include_list
+    if arguments.include_yml is not None and arguments.include_yml['subjects']:
+        include_list = arguments.include_yml['subjects']
 
     # Check `-exclude-list` (or if `-exclude-yml` contains subjects)
     exclude_list = arguments.exclude_list
@@ -596,7 +624,7 @@ def main(argv: Sequence[str]):
         exclude_list = arguments.exclude_yml['subjects']
 
     subject_dirs = _filter_directories(subject_dirs,
-                                       include=arguments.include, include_list=arguments.include_list,
+                                       include=arguments.include, include_list=include_list,
                                        exclude=arguments.exclude, exclude_list=exclude_list)
 
     # Determine the number of jobs we can run simultaneously
@@ -626,6 +654,7 @@ def main(argv: Sequence[str]):
                                                path_qc=path_qc,
                                                itk_threads=arguments.itk_threads,
                                                continue_on_error=arguments.continue_on_error,
+                                               include_files=(arguments.include_yml['files'] if arguments.include_yml is not None else None),
                                                exclude_files=(arguments.exclude_yml['files'] if arguments.exclude_yml is not None else None))
             results = list(p.imap(run_single_dir, subject_dirs))
     except Exception as e:
