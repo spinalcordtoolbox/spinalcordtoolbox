@@ -41,13 +41,13 @@ from stat import S_IEXEC
 csi_filter.register_codec()
 
 
-class ParseExcludeFileAction(argparse.Action):
-    """Reads in a YML file and determines if exclusion list contains subjects and/or files."""
+class ParseYMLAction(argparse.Action):
+    """Reads in a YML file and determines if it contains subjects and/or files."""
     def __call__(self, parser, namespace, values, option_string=None):
         with open(values, 'r') as yaml_file:
             yaml_contents = yaml.safe_load(yaml_file)
         if not isinstance(yaml_contents, list) and all(isinstance(item, str) for item in yaml_contents):
-            raise ValueError(f"The exclude file {values} should contain a list of subjects or files to exclude.")
+            raise ValueError(f"The YML file {values} should contain a list of subjects or files.")
         yaml_data = {
             'files': [item for item in yaml_contents if (item.endswith('.nii') or item.endswith('.nii.gz'))],
             'subjects': [item for item in yaml_contents if not (item.endswith('.nii') or item.endswith('.nii.gz'))]
@@ -151,7 +151,7 @@ def get_parser():
         """),  # noqa: E501 (line too long)
                         nargs='+')
     parser.add_argument('-exclude-yml',
-                        action=ParseExcludeFileAction,
+                        action=ParseYMLAction,
                         help=textwrap.dedent("""
                             Path to a YAML file (e.g. `exclude.yml`) containing a bullet list (`-`) of subjects or files to exclude.
 
