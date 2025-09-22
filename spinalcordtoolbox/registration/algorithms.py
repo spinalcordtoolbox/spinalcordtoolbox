@@ -349,6 +349,7 @@ def register_rootlet(src, dest, step, ants_registration_params, metricSize, padd
     src_rootlet = src[1]
     dest_rootlet = dest[1]
     # Dilate rootlets masks:
+    # We use a ball of size 3 because rootlets labels aren't single-voxel point labels, so it is less necessary to use a large dilation factor (e.g. 5)
     src_mask = image.Image(dilate(image.Image(src_rootlet), size=3, shape='ball'), hdr=image.Image(src_rootlet).hdr).save(image.add_suffix(src_rootlet, '_dil'))
     src_mask = image.add_suffix(src_rootlet, '_dil')
     dest_mask = image.Image(dilate(image.Image(dest_rootlet), size=3, shape='ball'), hdr=image.Image(dest_rootlet).hdr).save(image.add_suffix(dest_rootlet, '_dil'))
