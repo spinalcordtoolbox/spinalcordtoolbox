@@ -169,7 +169,7 @@ def get_parser():
                             Path to a YAML file (e.g. `include.yml`) containing a bullet list (`-`) of subjects or files to include.
 
                             The list will be treated differently depending on whether subjects or files are listed:
-                              - Subjects (e.g. `sub-01` or `sub-01/ses-01`): Only these subjects will be processed (script will not be run for non-included subjects).
+                              - Subject/session folders (e.g. `sub-01` or `sub-01/ses-01`): The same as `-include-list` (subject/session inclusion).
                               - Files (e.g. `sub-01_ses-01_T1w.nii.gz`): The script will be run, and an environment variable called `INCLUDE_FILES` will be created
                               containing the list of files. That way, you can choose to run specific processing steps within your script for only those files.
 
@@ -201,7 +201,7 @@ def get_parser():
                             Path to a YAML file (e.g. `exclude.yml`) containing a bullet list (`-`) of subjects or files to exclude.
 
                             The list will be treated differently depending on whether subjects or files are listed:
-                              - Subjects (e.g. `sub-01` or `sub-01/ses-01`): The subject will not be processed (script will not be run).
+                              - Subject/session folders (e.g. `sub-01` or `sub-01/ses-01`): The same as `-exclude-list` (subject/session exclusion).
                               - Files (e.g. `sub-01_ses-01_T1w.nii.gz`): The script will still be run, however an environment variable called `EXCLUDE_FILES` will be created containing the list of files. That way, you can choose to skip specific processing steps within your script.
 
                             You can use the following `bash` syntax to skip files:
