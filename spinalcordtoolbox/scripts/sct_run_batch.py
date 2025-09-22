@@ -46,11 +46,35 @@ class ParseYMLAction(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         with open(values, 'r') as yaml_file:
             yaml_contents = yaml.safe_load(yaml_file)
-        if not isinstance(yaml_contents, list) and all(isinstance(item, str) for item in yaml_contents):
-            raise ValueError(f"The YML file {values} should contain a list of subjects or files.")
+
+        # collect lists of subjects/files
+        lists_to_merge = []
+        error_msg = f"The YML file {values} should contain a list of subjects or files (or multiple categories of lists)."
+        # parse dict format (i.e. QC reports that include categories such as `FILES_SEG:` and `FILES_REG:`)
+        if isinstance(yaml_contents, dict):
+            for parsed_value in yaml_contents.values():
+                if isinstance(parsed_value, list):
+                    lists_to_merge.append(parsed_value)
+                else:
+                    raise ValueError(error_msg)
+        # parse list format (simple list of subjects/files recommended in docs)
+        elif isinstance(yaml_contents, list):
+            lists_to_merge.append(yaml_contents)
+        else:
+            raise ValueError(error_msg)
+
+        # parse lists
+        set_entries = set()
+        for entry_list in lists_to_merge:
+            for entry in entry_list:
+                if not isinstance(entry, str):
+                    raise ValueError(f"The YML file {values} should contain filename strings, but encountered {entry}.")
+                set_entries.add(entry)
+
+        # sort entries into files or subjects
         yaml_data = {
-            'files': [item for item in yaml_contents if (item.endswith('.nii') or item.endswith('.nii.gz'))],
-            'subjects': [item for item in yaml_contents if not (item.endswith('.nii') or item.endswith('.nii.gz'))]
+            'files': [item for item in set_entries if (item.endswith('.nii') or item.endswith('.nii.gz'))],
+            'subjects': [item for item in set_entries if not (item.endswith('.nii') or item.endswith('.nii.gz'))]
         }
         setattr(namespace, self.dest, yaml_data)
 
