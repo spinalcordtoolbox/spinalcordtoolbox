@@ -150,7 +150,7 @@ def get_parser():
                             Examples: `-exclude-list sub-003 sub-004` or `-exclude-list sub-003/ses-01 ses-02`
         """),  # noqa: E501 (line too long)
                         nargs='+')
-    parser.add_argument('-exclude-file',
+    parser.add_argument('-exclude-yml',
                         action=ParseExcludeFileAction,
                         help=textwrap.dedent("""
                             Path to a YAML file (e.g. `exclude.yml`) containing a bullet list (`-`) of subjects or files to exclude.
@@ -563,13 +563,13 @@ def main(argv: Sequence[str]):
     if (arguments.include is not None) and (arguments.include_list is not None):
         parser.error('Only one of `include` and `include-list` can be used')
 
-    if sum([arg is not None for arg in [arguments.exclude, arguments.exclude_list, arguments.exclude_file]]) > 1:
-        parser.error('Only one of `exclude`, `exclude-list`, and `exclude-file` can be used')
+    if sum([arg is not None for arg in [arguments.exclude, arguments.exclude_list, arguments.exclude_yml]]) > 1:
+        parser.error('Only one of `exclude`, `exclude-list`, and `exclude-yml` can be used')
 
-    # Check `-exclude-list` (or if `-exclude-file` contains subjects)
+    # Check `-exclude-list` (or if `-exclude-yml` contains subjects)
     exclude_list = arguments.exclude_list
-    if arguments.exclude_file is not None and arguments.exclude_file['subjects']:
-        exclude_list = arguments.exclude_file['subjects']
+    if arguments.exclude_yml is not None and arguments.exclude_yml['subjects']:
+        exclude_list = arguments.exclude_yml['subjects']
 
     subject_dirs = _filter_directories(subject_dirs,
                                        include=arguments.include, include_list=arguments.include_list,
@@ -602,7 +602,7 @@ def main(argv: Sequence[str]):
                                                path_qc=path_qc,
                                                itk_threads=arguments.itk_threads,
                                                continue_on_error=arguments.continue_on_error,
-                                               exclude_files=(arguments.exclude_file['files'] if arguments.exclude_file is not None else None))
+                                               exclude_files=(arguments.exclude_yml['files'] if arguments.exclude_yml is not None else None))
             results = list(p.imap(run_single_dir, subject_dirs))
     except Exception as e:
         if do_email:

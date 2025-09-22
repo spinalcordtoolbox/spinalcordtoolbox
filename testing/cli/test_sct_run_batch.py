@@ -113,9 +113,9 @@ def test_only_one_include_exclude(tmp_path, dummy_script):
 
 
 @pytest.mark.parametrize("exclusion_type", ['subject', 'file'])
-def test_exclude_file(tmp_path, dummy_script, dummy_script_with_file_exclusion, exclusion_type):
+def test_exclude_yml(tmp_path, dummy_script, dummy_script_with_file_exclusion, exclusion_type):
     """
-    Test that `-exclude-file` properly filters subjects or files depending on the contents of the YAML file.
+    Test that `-exclude-yml` properly filters subjects or files depending on the contents of the YAML file.
     """
     # generate I/O folders
     sub_dir_list = ['sub-001', 'sub-002', 'sub-003', 'sub-010', 'sub-011', 'sub-012']
@@ -135,7 +135,7 @@ def test_exclude_file(tmp_path, dummy_script, dummy_script_with_file_exclusion, 
     # run script
     script_to_run = dummy_script if exclusion_type == 'subject' else dummy_script_with_file_exclusion
     sct_run_batch.main(argv=['-path-data', str(data), '-path-out', str(out), '-script', script_to_run,
-                             '-exclude-file', str(fname_exclude)])
+                             '-exclude-yml', str(fname_exclude)])
 
     # test log contents to see which subjects were processed
     script_name = os.path.splitext(os.path.basename(script_to_run))[0]
