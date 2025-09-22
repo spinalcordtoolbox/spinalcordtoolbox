@@ -113,7 +113,8 @@ def test_only_one_include_exclude(tmp_path, dummy_script):
 
 
 @pytest.mark.parametrize("exclusion_type", ['subject', 'file'])
-def test_exclude_yml(tmp_path, dummy_script, dummy_script_with_file_exclusion, exclusion_type):
+@pytest.mark.parametrize("exclude_format", ['dict', 'list'])
+def test_exclude_yml(tmp_path, dummy_script, dummy_script_with_file_exclusion, exclusion_type, exclude_format):
     """
     Test that `-exclude-yml` properly filters subjects or files depending on the contents of the YAML file.
     """
@@ -128,6 +129,9 @@ def test_exclude_yml(tmp_path, dummy_script, dummy_script_with_file_exclusion, e
     sub_exclude_list = sub_dir_list[::2]  # exclude every other subject
     exclude_list = (sub_exclude_list if exclusion_type == 'subject'
                     else [f"{sub}_T2w.nii.gz" for sub in sub_exclude_list])
+    # mimic the YML formatting of the QC report (dict of lists)
+    if exclude_format == 'dict':
+        exclude_list = {f"FILES_{value}": [value] for value in exclude_list}
     fname_exclude = tmp_path / 'exclude.yml'
     with open(fname_exclude, 'w') as fp:
         yaml.dump(exclude_list, fp)
