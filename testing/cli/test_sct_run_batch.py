@@ -43,9 +43,17 @@ def dummy_script_with_file_exclusion(tmp_path):
     SUBJECT=$1
     # check if FILE_T2 is in the list of excluded files
     FILE_T2="$SUBJECT"_T2w.nii.gz
-    if [[ ! " $EXCLUDE_FILES " =~ " $FILE_T2 " ]]; then
-        # process file only if it is not excluded
-        echo "$SUBJECT"
+    # process file if it is included
+    if [[ -n "$INCLUDE_FILES" ]]; then
+        if [[ " $INCLUDE_FILES " =~ " $FILE_T2 " ]]; then
+            echo "$SUBJECT"
+        fi
+    fi
+    # process file if it is not excluded
+    if [[ -n "$EXCLUDE_FILES" ]]; then
+        if [[ ! " $EXCLUDE_FILES " =~ " $FILE_T2 " ]]; then
+            echo "$SUBJECT"
+        fi
     fi
     """
     with open(path_out, 'w') as script:
@@ -112,11 +120,14 @@ def test_only_one_include_exclude(tmp_path, dummy_script):
     assert e.value.code == 2  # Default error code given by `parser.error` within an ArgumentParser
 
 
-@pytest.mark.parametrize("exclusion_type", ['subject', 'file'])
-@pytest.mark.parametrize("exclude_format", ['dict', 'list'])
-def test_exclude_yml(tmp_path, dummy_script, dummy_script_with_file_exclusion, exclusion_type, exclude_format):
+@pytest.mark.parametrize("entry_type", ['subject', 'file'])
+@pytest.mark.parametrize("yml_format", ['dict', 'list'])
+@pytest.mark.parametrize("__clude", ['include', 'exclude'])
+def test_yml(tmp_path, dummy_script, dummy_script_with_file_exclusion, entry_type, yml_format, __clude):
     """
-    Test that `-exclude-yml` properly filters subjects or files depending on the contents of the YAML file.
+    Test that `-include-yml` and `-exclude-yml` properly filter subjects or files depending on the contents of the YAML file.
+
+    NB: Both options should result in the same behavior, as long as the list of subjects is inverted.
     """
     # generate I/O folders
     sub_dir_list = ['sub-001', 'sub-002', 'sub-003', 'sub-010', 'sub-011', 'sub-012']
@@ -125,21 +136,24 @@ def test_exclude_yml(tmp_path, dummy_script, dummy_script_with_file_exclusion, e
         (data / sub / 'anat').mkdir(parents=True)
     out = tmp_path / 'out'
 
-    # generate `exclude.yml`
-    sub_exclude_list = sub_dir_list[::2]  # exclude every other subject
-    exclude_list = (sub_exclude_list if exclusion_type == 'subject'
-                    else [f"{sub}_T2w.nii.gz" for sub in sub_exclude_list])
+    # generate `include.yml` or `exclude.yml` depending on test case
+    sub_exclude_list = sub_dir_list[::2]   # exclude every other subject
+    sub_include_list = sub_dir_list[1::2]  # include the non-excluded subjects
+    yml_to_write = sub_exclude_list if __clude == "exclude" else sub_include_list
+    yml_to_write = (yml_to_write if entry_type == 'subject'
+                    else [f"{sub}_T2w.nii.gz" for sub in yml_to_write])
     # mimic the YML formatting of the QC report (dict of lists)
-    if exclude_format == 'dict':
-        exclude_list = {f"FILES_{value}": [value] for value in exclude_list}
-    fname_exclude = tmp_path / 'exclude.yml'
-    with open(fname_exclude, 'w') as fp:
-        yaml.dump(exclude_list, fp)
+    if yml_format == 'dict':
+        yml_to_write = {f"FILES_{value}": [value] for value in yml_to_write}
+    # write the YML contents to a file
+    fname_yml = tmp_path / f'{__clude}.yml'
+    with open(fname_yml, 'w') as fp:
+        yaml.dump(yml_to_write, fp)
 
     # run script
-    script_to_run = dummy_script if exclusion_type == 'subject' else dummy_script_with_file_exclusion
+    script_to_run = dummy_script if entry_type == 'subject' else dummy_script_with_file_exclusion
     sct_run_batch.main(argv=['-path-data', str(data), '-path-out', str(out), '-script', script_to_run,
-                             '-exclude-yml', str(fname_exclude)])
+                             f'-{__clude}-yml', str(fname_yml)])
 
     # test log contents to see which subjects were processed
     script_name = os.path.splitext(os.path.basename(script_to_run))[0]
@@ -148,11 +162,11 @@ def test_exclude_yml(tmp_path, dummy_script, dummy_script_with_file_exclusion, e
         log_file = out / 'log' / f'{script_name}_{sub}.log'
         if sub in sub_exclude_list:
             # subject exclusion: no log file (subject was not processed)
-            if exclusion_type == 'subject':
+            if entry_type == 'subject':
                 assert not log_file.exists()
             # file exclusion: empty log file (`echo` should be skipped for that subject)
             else:
-                assert exclusion_type == 'file'
+                assert entry_type == 'file'
                 assert log_file.exists() and os.path.getsize(log_file) == 0
 
         # included subjects: non-empty log file (`echo` should be run for that subject)
