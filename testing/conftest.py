@@ -42,6 +42,10 @@ def pytest_sessionstart():
 
 def pytest_sessionfinish():
     """Perform actions that must be done after the test session."""
+    # don't generate summary files locally, since they are time-consuming and delay local testing
+    if "CI" not in os.environ:
+        return
+
     # get the newest temporary path created by pytest
     pytest_tempdirs = glob(os.path.join(tempfile.gettempdir(), "pytest-of-*", "pytest-current"))
     tmp_path = max(pytest_tempdirs, key=lambda p: os.path.getctime(p)) if pytest_tempdirs else ""
