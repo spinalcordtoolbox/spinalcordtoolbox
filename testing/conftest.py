@@ -48,7 +48,7 @@ def pytest_sessionfinish():
 
     # get the newest temporary path created by pytest
     pytest_tempdirs = glob(os.path.join(tempfile.gettempdir(), "pytest-of-*", "pytest-current"))
-    tmp_path = max(pytest_tempdirs, key=lambda p: os.path.getctime(p)) if pytest_tempdirs else ""
+    tmp_path = max(pytest_tempdirs, key=lambda p: os.path.getctime(p), default="")
 
     # generate directory summaries for both sct_testing_data and the temporary directory
     for (folder, fname_out) in [(tmp_path, "pytest-tmp.json"),
