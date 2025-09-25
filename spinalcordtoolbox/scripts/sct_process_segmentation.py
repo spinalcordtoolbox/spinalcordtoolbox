@@ -127,13 +127,6 @@ def get_parser(ascor=False):
         )
     optional = parser.optional_arggroup
     optional.add_argument(
-        '-i',
-        metavar=Metavar.file,
-        default=None,
-        help="Input image used to compute spinal cord orientation (using HOG method)."
-             "Example: t2.nii.gz"
-    )
-    optional.add_argument(
         '-o',
         metavar=Metavar.file,
         default='csa.csv',
@@ -257,6 +250,13 @@ def get_parser(ascor=False):
         default=20.0,
         help="Extent (in mm) for the mask used to compute morphometric measures. Each slice covered by the mask is "
              "included in the calculation. (To be used with flag `-pmj` and `-pmj-distance`.)"
+    )
+    optional.add_argument(
+        '-symmetry',
+        metavar=Metavar.file,
+        default=None,
+        help="Input image used to compute spinal cord orientation (using HOG method)."
+             "Example: t2.nii.gz"
     )
     if is_sct_process_segmentation:
         optional.add_argument(
@@ -410,8 +410,8 @@ def main(argv: Sequence[str]):
     # Initialization
     group_funcs = (('MEAN', func_wa), ('STD', func_std))  # functions to perform when aggregating metrics along S-I
 
-    fname_segmentation = get_absolute_path(arguments.s)
-    fname_image = get_absolute_path(arguments.i) if arguments.i is not None else None
+    fname_segmentation = get_absolute_path(arguments.i)
+    fname_image = get_absolute_path(arguments.symmetry) if arguments.symmetry is not None else None
 
     file_out = os.path.abspath(arguments.o)
     append = bool(arguments.append)
