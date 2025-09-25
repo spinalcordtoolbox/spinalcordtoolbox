@@ -99,7 +99,7 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
 
     # Getting image dimensions. x, y and z respectively correspond to RL, PA and IS.
     nx, ny, nz, nt, px, py, pz, pt = im_seg.dim
-    pr = min([px, py])
+    pr = 0.1
     # Resample to isotropic resolution in the axial plane. Use the minimum pixel dimension as target dimension.
     im_segr = resample_nib(im_seg, new_size=[pr, pr, pz], new_size_type='mm', interpolation='linear')
     im_r = resample_nib(im, new_size=[pr, pr, pz], new_size_type='mm', interpolation='linear') if image is not None else None
