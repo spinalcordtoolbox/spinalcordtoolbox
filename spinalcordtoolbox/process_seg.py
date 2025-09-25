@@ -106,7 +106,6 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
 
     # Update dimensions from resampled image.
     nx, ny, nz, nt, px, py, pz, pt = im_segr.dim
-
     # Extract min and max index in Z direction
     data_seg = im_segr.data
     X, Y, Z = (data_seg > NEAR_ZERO_THRESHOLD).nonzero()
@@ -311,7 +310,7 @@ def _properties2d(seg, dim, iz, angle_hog=None, verbose=1):
     :param angle_hog: Optional angle in radians to rotate the segmentation to align with AP/RL axes.
     :return:
     """
-    upscale = 5  # upscale factor for resampling the input segmentation (for better precision)
+    upscale = 1  # upscale factor for resampling the input segmentation (for better precision)
     pad = 3  # padding used for cropping
     # Check if slice is empty
     if np.all(seg < NEAR_ZERO_THRESHOLD):
@@ -337,8 +336,9 @@ def _properties2d(seg, dim, iz, angle_hog=None, verbose=1):
     seg_crop = seg_norm[np.clip(minx-pad, 0, seg_bin.shape[0]): np.clip(maxx+pad, 0, seg_bin.shape[0]),
                         np.clip(miny-pad, 0, seg_bin.shape[1]): np.clip(maxy+pad, 0, seg_bin.shape[1])]
     # Oversample segmentation to reach sufficient precision when computing shape metrics on the binary mask
-    seg_crop_r = transform.pyramid_expand(seg_crop, upscale=upscale, sigma=None, order=1)
-    # Binarize segmentation using threshold at 0. Necessary input for measure.regionprops
+    #seg_crop_r = transform.pyramid_expand(seg_crop, upscale=upscale, sigma=None, order=1)
+    seg_crop_r = seg_crop
+    # Binarize segmentation using threshold at 0.5 Necessary input for measure.regionprops
     seg_crop_r_bin = np.array(seg_crop_r > 0.5, dtype='uint8')
     # Get all closed binary regions from the segmentation (normally there is only one)
     regions = measure.regionprops(seg_crop_r_bin, intensity_image=seg_crop_r)
