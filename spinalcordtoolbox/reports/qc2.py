@@ -274,17 +274,17 @@ def sct_process_segmentation(
         fname_input: str,
         fname_seg: str,
         metrics: dict[str, Metric],
-        angle_type: str,
         argv: Sequence[str],
         path_qc: str,
         dataset: Optional[str],
         subject: Optional[str],
+        angle_type: Optional[str] = 'angle_hog',
 ):
     """
     Generate a QC report for sct_process_segmentation showing a line corresponding to the HOG angle
     (obtained using spinalcordtoolbox.registration.algorithms.find_angle_hog)
     """
-    angle_type = 'angle_hog' if angle_type == 'HOG' else 'orientation'
+
     command = 'sct_process_segmentation'
     cmdline = [command]
     cmdline.extend(argv)
