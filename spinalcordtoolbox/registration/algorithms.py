@@ -349,6 +349,7 @@ def register_rootlet(src, dest, step, ants_registration_params, metricSize, padd
     src_rootlet = src[1]
     dest_rootlet = dest[1]
     # Dilate rootlets masks:
+    # We use a ball of size 3 because rootlets labels aren't single-voxel point labels, so it is less necessary to use a large dilation factor (e.g. 5)
     src_mask = image.Image(dilate(image.Image(src_rootlet), size=3, shape='ball'), hdr=image.Image(src_rootlet).hdr).save(image.add_suffix(src_rootlet, '_dil'))
     src_mask = image.add_suffix(src_rootlet, '_dil')
     dest_mask = image.Image(dilate(image.Image(dest_rootlet), size=3, shape='ball'), hdr=image.Image(dest_rootlet).hdr).save(image.add_suffix(dest_rootlet, '_dil'))
@@ -752,7 +753,7 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
     nx, ny, nz, nt, px, py, pz, pt = image.Image(fname_dest[0]).dim
 
     logger.info(f"  matrix size: {str(nx)} x {str(ny)} x {str(nz)}")
-    logger.info(f"  voxel size: {str(px)}mm x {str(py)}mm x {str(nz)}mm")
+    logger.info(f"  voxel size: {str(px)}mm x {str(py)}mm x {str(pz)}mm")
 
     # Split source volume along z
     logger.info("\nSplit input segmentation...")

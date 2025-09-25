@@ -140,8 +140,8 @@ MODELS = {
         "url": [
             "https://github.com/ivadomed/model-spinal-rootlets/releases/download/r20250318/model-spinal-rootlets-multicon-r20250318.zip"
         ],
-        "description": "Segmentation of spinal nerve rootlets for T2w and MP2RAGE (UNIT1, INV1, INV2) images using nnUNet",
-        "contrasts": ["t2", "UNIT1", "INV1", "INV2"],
+        "description": "Segmentation of spinal nerve rootlets for T2w and MP2RAGE contrasts (T1w-INV1, T1w-INV2, and UNIT1) using nnUNet",
+        "contrasts": ["t2", "UNIT1", "T1w-INV1", "T1w-INV2"],
         "thr": None,  # Multiclass rootlets model (1.0, 2.0, 3.0...) -> no thresholding
         "default": False,
     },
@@ -414,7 +414,7 @@ TASKS = {
          'group': 'pathology'
          },
     'rootlets':
-        {'description': 'Segmentation of spinal nerve rootlets for T2w and MP2RAGE (UNIT1, INV1, INV2) images',
+        {'description': 'Segmentation of spinal nerve rootlets for T2w and MP2RAGE contrasts (T1w-INV1, T1w-INV2, and UNIT1)',
          'long_description': 'This segmentation model for spinal nerve rootlets segmentation uses a 3D U-Net '
                              'architecture, and was trained with the nnUNetV2 framework. It is a multiclass model, '
                              'outputting a single segmentation image containing 8 classes representing the C2-T1 '
@@ -424,7 +424,18 @@ TASKS = {
                              'subject, 45 images).',
          'url': 'https://github.com/ivadomed/model-spinal-rootlets',
          'models': ['model_seg_spinal_rootlets_nnunet'],
-         'citation': None
+         'citation': textwrap.dedent("""
+             ```bibtex
+             @misc{krejci2025rootletsegdeeplearningmethod,
+                   title={RootletSeg: Deep learning method for spinal rootlets segmentation across MRI contrasts}, 
+                   author={Katerina Krejci and Jiri Chmelik and Sandrine Bédard and Falk Eippert and Ulrike Horn and Virginie Callot and Julien Cohen-Adad and Jan Valosek},
+                   year={2025},
+                   eprint={2509.16255},
+                   archivePrefix={arXiv},
+                   primaryClass={q-bio.TO},
+                   url={https://arxiv.org/abs/2509.16255}, 
+             }
+             ```"""),  # noqa E501 (line too long)
          },
     'gm_wm_mouse_t1':
         {'description': 'Exvivo mouse GM/WM segmentation for T1w contrast',
