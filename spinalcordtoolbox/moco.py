@@ -192,14 +192,33 @@ def moco_wrapper(param):
     # Start timer
     start_time = time.time()
 
-    printv('\nInput parameters:', param.verbose)
-    printv('  Input file ............ ' + param.fname_data, param.verbose)
-    printv('  Group size ............ {}'.format(param.group_size), param.verbose)
-    printv('  Mask .................. {}'.format(param.fname_mask), param.verbose)
-    printv('  Reference image ....... {}'.format(param.fname_ref), param.verbose)
-    printv('  bvals (dmri only) ..... {}'.format(param.fname_bvals), param.verbose)
-    printv('  bvecs (dmri only) ..... {}'.format(param.fname_bvecs), param.verbose)
-    printv('')
+    printv(f"""
+Input parameters:
+----------------------------------------------------
+Input file:            {param.fname_data}
+Output folder:         {os.path.abspath(param.path_out)}
+Mask:                  {param.fname_mask if param.fname_mask != '' else 'None'}
+Reference image:       {param.fname_ref if param.fname_ref != '' else 'None'}
+bvals (dmri only):     {param.fname_bvals}
+bvecs (dmri only):     {param.fname_bvecs}
+    """.format(param=param), param.verbose)
+
+    printv(f"""
+Motion correction parameters:
+----------------------------------------------------
+Group size:            {param.group_size}      
+Polynomial order:      {param.poly}
+Smoothing (mm):        {param.smooth}
+Metric:                {param.metric}
+Iterations:            {param.iter}
+Gradient step:         {param.gradStep}
+Sampling:              {param.sampling}
+Target:                {param.num_target if param.fname_ref == '' else 'N/A (reference image provided)'}
+Iterative averaging:   {param.iterAvg}
+Interpolation:         {param.interp}
+    """.format(param=param), param.verbose)
+
+    # Create tmp folder
     path_tmp = tmp_create(basename="moco-wrapper")
 
     # Copying input data to tmp folder
@@ -562,17 +581,7 @@ def moco(param):
     suffix = param.suffix
     verbose = param.verbose
 
-    printv('\nInput parameters:', param.verbose)
-    printv('  Input file ............ ' + file_data, param.verbose)
-    printv('  Reference file ........ ' + file_target, param.verbose)
-    printv('  Polynomial degree ..... ' + param.poly, param.verbose)
-    printv('  Smoothing kernel ...... ' + param.smooth, param.verbose)
-    printv('  Gradient step ......... ' + param.gradStep, param.verbose)
-    printv('  Metric ................ ' + param.metric, param.verbose)
-    printv('  Sampling .............. ' + param.sampling, param.verbose)
-    printv('  Todo .................. ' + todo, param.verbose)
-    printv('  Mask  ................. ' + param.fname_mask, param.verbose)
-    printv('  Output mat folder ..... ' + folder_mat, param.verbose)
+    printv('Motion correction wrapper: ' + todo, param.verbose)
 
     try:
         os.makedirs(folder_mat)
