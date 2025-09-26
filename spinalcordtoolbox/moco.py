@@ -386,7 +386,19 @@ def moco_wrapper(param):
     printv('  Estimating motion across groups...', param.verbose)
     printv('-------------------------------------------------------------------------------', param.verbose)
     param_moco.file_data = file_datasubgroup
-    param_moco.file_target = list_file_group[0]  # target is the first volume (closest to the first b=0 if DWI scan)
+    if param.fname_ref != '':
+        param_moco.file_target = file_ref
+    else:
+        if param.num_target.isdigit():
+            num_target = int(param.num_target)
+            if num_target < 0 or num_target >= nb_groups:
+                printv('\nERROR: Target image number is out of range. It should be between 0 and ' + str(nb_groups - 1)
+                       + '.\n', 1, 'error')
+                sys.exit(2)
+        else:
+            printv('\nERROR: Target image number is not an integer.\n', 1, 'error')
+            sys.exit(2)
+        param_moco.file_target = list_file_group[num_target]
     param_moco.path_out = ''
     param_moco.todo = 'estimate_and_apply'
     param_moco.mat_moco = 'mat_groups'
