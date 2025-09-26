@@ -54,7 +54,7 @@ def get_parser():
         metavar=Metavar.int,
         type=positive_int_type,
         default=param_default.group_size,
-        help='Group nvols successive dMRI volumes for more robustness. Values `2` or greater will create groups of '
+        help='Group nvols successive fMRI volumes for more robustness. Values `2` or greater will create groups of '
              'that size, while a value of `1` will turn off grouping (i.e. per-volume motion correction).'
     )
     optional.add_argument(
