@@ -27,7 +27,7 @@ def get_parser():
             Motion correction of fMRI data. Some robust features include:
 
               - group-wise (`-g`)
-              - slice-wise regularized along z using polynomial function (`-p`). For more info about the method, type: `isct_antsSliceRegularizedRegistration`
+              - slice-wise regularized along z using polynomial function (`-param poly`). For more info about the method, type: `isct_antsSliceRegularizedRegistration`
               - masking (`-m`)
               - iterative averaging of target volume
 

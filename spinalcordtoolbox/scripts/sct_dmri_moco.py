@@ -44,7 +44,7 @@ def get_parser():
             Motion correction of dMRI data. Some of the features to improve robustness were proposed in Xu et al. (https://dx.doi.org/10.1016/j.neuroimage.2012.11.014) and include:
 
               - group-wise (`-g`)
-              - slice-wise regularized along z using polynomial function (-param). For more info about the method, type: `isct_antsSliceRegularizedRegistration`
+              - slice-wise regularized along z using polynomial function (`-param poly`). For more info about the method, type: `isct_antsSliceRegularizedRegistration`
               - masking (`-m`)
               - iterative averaging of target volume
 
