@@ -52,7 +52,8 @@ def get_parser():
         '-g',
         metavar=Metavar.int,
         type=int,
-        help="Group nvols successive fMRI volumes for more robustness."
+        default=param_default.group_size,
+        help="Group nvols successive fMRI volumes for more robustness. Set to 1 for no grouping."
     )
     optional.add_argument(
         '-m',

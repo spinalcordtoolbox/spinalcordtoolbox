@@ -89,7 +89,7 @@ def get_parser():
         type=int,
         metavar=Metavar.int,
         default=param_default.group_size,
-        help='Group nvols successive dMRI volumes for more robustness.',
+        help='Group nvols successive dMRI volumes for more robustness. Set to 1 for no grouping.',
     )
     optional.add_argument(
         '-m',
