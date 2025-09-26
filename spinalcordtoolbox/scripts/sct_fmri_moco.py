@@ -62,6 +62,11 @@ def get_parser():
              "(nonbinary, [0, 1]), and it will be binarized at 0.5."
     )
     optional.add_argument(
+        '-ref',
+        metavar=Metavar.file,
+        help="Reference volume for motion correction, for example the mean fMRI volume."
+    )
+    optional.add_argument(
         '-param',
         metavar=Metavar.list,
         type=list_type(',', str),
@@ -75,7 +80,7 @@ def get_parser():
              f"allowed. Default={param_default.gradStep}.\n"
              f"  - `sampling` [None or 0-1]: Sampling rate used for registration metric. "
              f"Default={param_default.sampling}.\n"
-             f"  - `num_target` [int]: Target volume or group (starting with 0). Default={param_default.num_target}.\n"
+             f"  - `num_target` [int]: Target volume or group (starting with 0). Not used if `-ref` is provided. Default={param_default.num_target}.\n"
              f"  - `iterAvg` [int]: Iterative averaging: Target volume is a weighted average of the "
              f"previously-registered volumes. Default={param_default.iterAvg}.\n"
     )
@@ -148,6 +153,8 @@ def main(argv: Sequence[str]):
         param.group_size = arguments.g
     if arguments.m is not None:
         param.fname_mask = arguments.m
+    if arguments.ref is not None:
+        param.fname_ref = arguments.ref
     if arguments.param is not None:
         param.update(arguments.param)
     param.verbose = verbose
