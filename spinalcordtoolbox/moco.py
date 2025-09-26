@@ -47,7 +47,7 @@ class ParamMoco:
     def __init__(self, is_diffusion=None, fname_data='', fname_bvecs='', fname_bvals='', fname_mask='', path_out='',
                  group_size=1, remove_temp_files=1, verbose=1, poly='2', smooth='1', gradStep='1', iterations='10',
                  metric='MeanSquares', sampling='None', interp='spline', num_target='0',
-                 bval_min=100, iterAvg=1, output_motion_param=True):
+                 bval_min=100, iterAvg=1, output_motion_param=True, fname_ref=''):
         """
 
         :param is_diffusion: Bool: If True, data will be treated as diffusion-MRI data (process slightly differs)
@@ -73,6 +73,7 @@ class ParamMoco:
                               - Note: This value is passed to `sct_dmri_separate_b0_and_dwi.identify_b0()`
         :param iterAvg: int: Whether or not to average registered volumes with target image (default is 1)
         :param output_motion_param: bool: If True, the motion parameters are outputted (default is True)
+        :param fname_ref: str: Reference volume for motion correction, for example the mean fMRI volume.
         """
         # This parameter is set depending on whether `sct_dmri_moco` or `sct_fmri_moco` is called
         self.is_diffusion = is_diffusion
@@ -80,6 +81,7 @@ class ParamMoco:
         # Parameters controlled by specific `sct_dmri_moco`/`sct_fmri_moco` arguments (e.g. `-i`, `-m`, `-g`, etc.)
         self.fname_data = fname_data
         self.fname_mask = fname_mask
+        self.fname_ref = fname_ref
         self.path_out = path_out
         self.group_size = group_size
         self.interp = interp
@@ -178,6 +180,7 @@ def moco_wrapper(param):
     file_datasub = 'datasub.nii'  # corresponds to the full input data minus the b=0 scans (if param.is_diffusion=True)
     file_datasubgroup = 'datasub-groups.nii'  # concatenation of the average of each file_datasub
     file_mask = 'mask.nii'
+    file_ref = 'reference.nii'
     file_moco_params_csv = 'moco_params.tsv'
     file_moco_params_x = 'moco_params_x.nii.gz'
     file_moco_params_y = 'moco_params_y.nii.gz'
@@ -192,7 +195,11 @@ def moco_wrapper(param):
     printv('\nInput parameters:', param.verbose)
     printv('  Input file ............ ' + param.fname_data, param.verbose)
     printv('  Group size ............ {}'.format(param.group_size), param.verbose)
-
+    printv('  Mask .................. {}'.format(param.fname_mask), param.verbose)
+    printv('  Reference image ....... {}'.format(param.fname_ref), param.verbose)
+    printv('  bvals (dmri only) ..... {}'.format(param.fname_bvals), param.verbose)
+    printv('  bvecs (dmri only) ..... {}'.format(param.fname_bvecs), param.verbose)
+    printv('')
     path_tmp = tmp_create(basename="moco-wrapper")
 
     # Copying input data to tmp folder
@@ -204,6 +211,11 @@ def moco_wrapper(param):
         im_mask.save(os.path.join(path_tmp, file_mask), mutable=True, verbose=param.verbose)
         # Update field in param (because used later in another function, and param class will be passed)
         param.fname_mask = file_mask
+    if param.fname_ref != '':
+        im_ref = convert(Image(param.fname_ref))
+        im_ref.save(os.path.join(path_tmp, file_ref), mutable=True, verbose=param.verbose)
+        # Update field in param (because used later in another function, and param class will be passed)
+        param.fname_ref = file_ref
     if param.fname_bvals != '':
         _, _, ext_bvals = extract_fname(param.fname_bvals)
         file_bvals = f"bvals.{ext_bvals}"  # Use hardcoded name to avoid potential duplicate files when copying
