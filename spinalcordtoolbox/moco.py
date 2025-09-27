@@ -357,7 +357,7 @@ Interpolation:         {param.interp}
         # Average across time
         list_file_group.append(os.path.join(file_dwi_basename + '_' + str(iGroup) + '_mean' + ext_data))
         im_dwi_out_mean = im_dwi_out.mean(dim=3)
-        im_dwi_out_mean.hdr.set_data_dtype(np.float64)
+        im_dwi_out_mean.hdr.set_data_dtype(im_dwi_out_mean.data.dtype)  # avoid issues with mismatched header dtype
         im_dwi_out_mean.save(list_file_group[-1])
 
     # Merge across groups
