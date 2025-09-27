@@ -27,7 +27,7 @@ def get_parser():
             Motion correction of fMRI data. Some robust features include:
 
               - group-wise (`-g`)
-              - slice-wise regularized along z using polynomial function (`-p`). For more info about the method, type: `isct_antsSliceRegularizedRegistration`
+              - slice-wise regularized along z using polynomial function (`-param poly`). For more info about the method, type: `isct_antsSliceRegularizedRegistration`
               - masking (`-m`)
               - iterative averaging of target volume
 
@@ -52,13 +52,19 @@ def get_parser():
         '-g',
         metavar=Metavar.int,
         type=int,
-        help="Group nvols successive fMRI volumes for more robustness."
+        default=param_default.group_size,
+        help="Group nvols successive fMRI volumes for more robustness. Set to 1 for no grouping."
     )
     optional.add_argument(
         '-m',
         metavar=Metavar.file,
         help="Binary mask to limit voxels considered by the registration metric. You may also provide a softmask "
              "(nonbinary, [0, 1]), and it will be binarized at 0.5."
+    )
+    optional.add_argument(
+        '-ref',
+        metavar=Metavar.file,
+        help="Reference volume for motion correction, for example the mean fMRI volume."
     )
     optional.add_argument(
         '-param',
@@ -69,12 +75,12 @@ def get_parser():
              f"set to 0. Default={param_default.poly}.\n"
              f"  - `smooth` [mm]: Smoothing kernel. Default={param_default.smooth}.\n"
              f"  - `metric` {{MI, MeanSquares, CC}}: Metric used for registration. Default={param_default.metric}.\n"
-             f"  - `iterations` [int]: Number of iterations. Default={param_default.iter}.\n"
+             f"  - `iter` [int]: Number of iterations. Default={param_default.iter}.\n"
              f"  - `gradStep` [float]: Searching step used by registration algorithm. The higher the more deformation "
              f"allowed. Default={param_default.gradStep}.\n"
              f"  - `sampling` [None or 0-1]: Sampling rate used for registration metric. "
              f"Default={param_default.sampling}.\n"
-             f"  - `num_target` [int]: Target volume or group (starting with 0). Default={param_default.num_target}.\n"
+             f"  - `num_target` [int]: Target volume or group (starting with 0). Not used if `-ref` is provided. Default={param_default.num_target}.\n"
              f"  - `iterAvg` [int]: Iterative averaging: Target volume is a weighted average of the "
              f"previously-registered volumes. Default={param_default.iterAvg}.\n"
     )
@@ -147,6 +153,8 @@ def main(argv: Sequence[str]):
         param.group_size = arguments.g
     if arguments.m is not None:
         param.fname_mask = arguments.m
+    if arguments.ref is not None:
+        param.fname_ref = arguments.ref
     if arguments.param is not None:
         param.update(arguments.param)
     param.verbose = verbose
