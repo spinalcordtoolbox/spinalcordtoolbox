@@ -10,8 +10,12 @@ import math
 import platform
 import numpy as np
 from skimage import measure, transform
+from scipy.signal import argrelextrema
+from scipy.signal import find_peaks
+
 import skimage
 from scipy.ndimage import map_coordinates, gaussian_filter1d
+from scipy.spatial.distance import euclidean
 import logging
 import matplotlib.pyplot as plt
 
@@ -336,7 +340,7 @@ def _properties2d(seg, dim, iz, angle_hog=None, verbose=1):
     seg_crop = seg_norm[np.clip(minx-pad, 0, seg_bin.shape[0]): np.clip(maxx+pad, 0, seg_bin.shape[0]),
                         np.clip(miny-pad, 0, seg_bin.shape[1]): np.clip(maxy+pad, 0, seg_bin.shape[1])]
     # Oversample segmentation to reach sufficient precision when computing shape metrics on the binary mask
-    #seg_crop_r = transform.pyramid_expand(seg_crop, upscale=upscale, sigma=None, order=1)
+    #seg_crop_r = transform.pyramid_expand(seg_crop, upscale=upscale, sigma=None, order=1) TODO: to remove
     seg_crop_r = seg_crop
     # Binarize segmentation using threshold at 0.5 Necessary input for measure.regionprops
     seg_crop_r_bin = np.array(seg_crop_r > 0.5, dtype='uint8')
@@ -369,7 +373,7 @@ def _properties2d(seg, dim, iz, angle_hog=None, verbose=1):
         'solidity': solidity,  # convexity measure
     }
     # Rotate the segmentation by the orientation to align with AP/RL axes
-    seg_crop_r_rotated = _rotate_segmentation_by_angle(seg_crop_r, region.orientation)
+    seg_crop_r_rotated = _rotate_segmentation_by_angle(seg_crop_r, -region.orientation)
 
     # Measure diameters along AP and RL axes in the rotated segmentation
     rotated_properties = _measure_rotated_diameters(seg_crop_r, seg_crop_r_rotated, dim, region.orientation, upscale,
@@ -490,15 +494,86 @@ def _measure_rotated_diameters(seg_crop_r, seg_crop_r_rotated, dim, angle, upsca
 
     # Note: seg_crop_r_rotated is soft (due to the rotation) so we sum its values to account for softness
     # Sum non-zero pixels along AP axis, i.e., the number of pixels in the row corresponding to the center of mass along the RL axis
-    # Using nb_slices rows to be more robust to small errors in the center of mass estimation, consider adding a parameter for number of rows
-    nb_slices_modif = nb_slices//2
-    rl_center_slices = [rl0_r-nb_slices_modif, rl0_r, rl0_r+nb_slices_modif] if 0 < rl0_r < seg_crop_r_rotated.shape[0]-1 else [rl0_r]
-    ap_pixels = np.sum(seg_crop_r_rotated[rl_center_slices, :])/(nb_slices_modif*2+1)
-    # Sum non-zero pixels along RL axis, i.e., the number of pixels in the column corresponding to the center of mass along the AP axis
-    ap_center_slices = [ap0_r-nb_slices_modif, ap0_r, ap0_r+nb_slices_modif] if 0 < ap0_r < seg_crop_r_rotated.shape[1]-1 else [ap0_r]
-    rl_pixels = np.sum(seg_crop_r_rotated[:, ap_center_slices])/(nb_slices_modif*2+1)
+    # Compute AP diameter as the minimum sum of pixels along AP axis within a 5 mm extent centered at rl0_r
+    extent_mm = 1
+    extent_pix = int(round(extent_mm * upscale / dim[0]))
+    half_extent = extent_pix // 2
+    ap_sums = []
+    for offset in range(-half_extent, half_extent + 1):
+        idx = rl0_r + offset
+        if 0 <= idx < seg_crop_r_rotated.shape[0]:
+            ap_sums.append(np.sum(seg_crop_r_rotated[idx, :]))
+    if ap_sums:
+        ap_pixels = min(ap_sums)
+        coord_ap = np.argmin(ap_sums) + (rl0_r - half_extent)  # TODO check if this is correct
+
+    # For RL diameter, find Right most, and left most voxels, and compute the distance between them
+    coords = np.nonzero(seg_crop_r_rotated > 0.5)
+    # TODO: chexk if seg is empty  
+
+    leftmost_idx = np.argmin(coords[0])   # column index is x
+    rightmost_idx = np.argmax(coords[0])
+    left_point_x = coords[0][leftmost_idx]
+    left_point_y = coords[1][leftmost_idx]
+    right_point_x = coords[0][rightmost_idx]
+    right_point_y = coords[1][rightmost_idx]
+    # Find the first occurrence of a non-zero value in the specified row
+    row_left = seg_crop_r_rotated[:int(ap0_r), left_point_y]
+    # Find the values in row_left that are between 0 and 1 (exclusive)
+    epsilon = 1e-8
+    row_left_edge = row_left[(row_left < 1.00 - epsilon) & (row_left > 0.0 + epsilon)]
+    coord_row_left = np.where((row_left < 1.00 - epsilon) & (row_left > 0.0 + epsilon))[0]
+    row = seg_crop_r_rotated[:, left_point_y]
+    idx_left = np.min(np.where(row > 1.0 - epsilon))
+    left_soft_sum = np.sum(row_left_edge)
+
+    # Compute the derivative of the row
+    peaks, props = find_peaks(row, plateau_size=True)
+    left_edges = props['left_edges']
+    right_edges = props['right_edges']
+    plateaus = [(int(l), int(r)) for l, r in zip(left_edges, right_edges)]
+
+    if plateaus:
+        idx_left = plateaus[0][0]
+        left_soft_sum = np.sum(row[:idx_left])
+
+    row_right = seg_crop_r_rotated[int(ap0_r)::, right_point_y]
+    # Find the values in row_right that are between 0 and 1 (exclusive)
+
+    row_right_edge = row_right[(row_right < 1.00 - epsilon) & (row_right > 0.0 + epsilon)]
+    coord_row_right = np.where((row_right < 1.00 - epsilon) & (row_right > 0.0 + epsilon))[0]
+    row = seg_crop_r_rotated[:, right_point_y]
+    print(row)
+    # Take index of the maximum value in the row rightest
+    # Find the last local maxima in the row
+    print("Local Maxima:")
+    peaks, props = find_peaks(row, plateau_size=True)
+    left_edges = props['left_edges']
+    right_edges = props['right_edges']
+    plateaus = [(int(l), int(r)) for l, r in zip(left_edges, right_edges)]
+    print("Peaks:", peaks)
+    print("Plateaus:", plateaus)
+    if plateaus:
+        idx_right = plateaus[-1][0]
+        right_soft_sum = np.sum(row[(idx_right + 1)::])
+    print("idx_right:", idx_right)
+    print("Right length edge:", right_soft_sum)
+    print(row_right_edge)
+    print("First non-zero index in row", coord_row_right)
+    rl_pixels_centroid = idx_right - idx_left + 1 + left_soft_sum + right_soft_sum
+    print("RL pixels (centroid):", rl_pixels_centroid)
+
+    sum_half_left = np.sum(seg_crop_r_rotated[:int(ap0_r), left_point_y])
+    sum_half_right = np.sum(seg_crop_r_rotated[int(ap0_r)::, right_point_y])
+    rl_pixels = right_point_x - left_point_x + 1  # +1 to account for pixel size
+    print("RL pixels binary:", rl_pixels)
+    print("Sum halfs:", sum_half_left + sum_half_right)
+    rl_pixels = sum_half_left+sum_half_right
+    coord_rl = np.array([[left_point_x, left_point_y], [right_point_x, right_point_y]])
+
     # Convert pixels to physical dimensions
     # TODO: double-check dim[0] and dim[1] correspondence to RL and AP diameters
+    rl_pixels = rl_pixels_centroid
     rl_diameter = rl_pixels * dim[0] / upscale
     ap_diameter = ap_pixels * dim[1] / upscale
 
@@ -513,7 +588,7 @@ def _measure_rotated_diameters(seg_crop_r, seg_crop_r_rotated, dim, angle, upsca
     # Debug plotting
     if verbose == 2:
         _debug_plotting_hog(angle, ap0_r, ap_diameter, dim, iz, properties, rl0_r, rl_diameter,
-                            rotated_bin, seg_crop_r, upscale)
+                            seg_crop_r_rotated, seg_crop_r, upscale, coord_rl, coord_ap)
 
     return result
 
@@ -905,7 +980,7 @@ def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, floa
 
 
 def _debug_plotting_hog(angle_hog, ap0_r, ap_diameter, dim, iz, properties, rl0_r, rl_diameter,
-                        rotated_bin, seg_crop_r, upscale):
+                        rotated_bin, seg_crop_r, upscale, coord_rl, coord_ap):
     """
     """
     def _add_labels(ax):
@@ -948,8 +1023,8 @@ def _debug_plotting_hog(angle_hog, ap0_r, ap_diameter, dim, iz, properties, rl0_
     ax1.plot(x0, y0, 'ko', markersize=10, label='Original Segmentation Center of Mass')
     _add_ellipse(ax1, x0, y0)
     # Draw AP and RL axes through the center of mass of the original segmentation
-    ax1.axhline(y=y0, color='k', linestyle='--', alpha=1, linewidth=1, label='AP axis (original segmentation)')
-    ax1.axvline(x=x0, color='k', linestyle='--', alpha=1, linewidth=1, label='RL axis (original segmentation)')
+    #ax1.axhline(y=y0, color='k', linestyle='--', alpha=1, linewidth=1, label='AP axis (ellipse - regionprops)')
+    #ax1.axvline(x=x0, color='k', linestyle='--', alpha=1, linewidth=1, label='RL axis (ellipse - regionprops)')
     # Add AP and RL diameters from the original segmentation obtained using skimage.regionprops
     radius_ap = (properties['diameter_AP'] / dim[0]) * 0.5 * upscale
     radius_rl = (properties['diameter_RL'] / dim[1]) * 0.5 * upscale
@@ -965,29 +1040,35 @@ def _debug_plotting_hog(angle_hog, ap0_r, ap_diameter, dim, iz, properties, rl0_
     _add_labels(ax1)
 
     # 2. Rotated segmentation by angle_hog
-    ax1.imshow(rotated_bin, cmap='Reds', alpha=0.4, label='Rotated Segmentation')
+    ax1.imshow(rotated_bin, cmap='Reds', alpha=0.8, label='Rotated Segmentation')
     # Center of mass
     ax1.plot(ap0_r, rl0_r, 'ro', markersize=10, label='Rotated Segmentation Center of Mass')
     # Draw arrow for the rotation angle
     # Flip sign to match PCA convention
     # See https://github.com/spinalcordtoolbox/spinalcordtoolbox/blob/ba30577e80a4e7387498820f0ff30b8965fbf2a4/spinalcordtoolbox/registration/algorithms.py#L834
     # TODO: figure out why the link below flip the angle sign only for src_hog but not for dest_hog
-    #angle_hog = -angle_hog
+
     ax1.arrow(ap0_r, rl0_r, np.sin(angle_hog + (90 * math.pi / 180)) * 25,
               np.cos(angle_hog + (90 * math.pi / 180)) * 25, color='black', width=0.1,
               head_width=1, label=f'HOG angle = {angle_hog * 180 / math.pi:.1f}°')  # convert to degrees
     # Draw AP and RL axes through the center of mass of the rotated segmentation
-    ax1.axhline(y=rl0_r, color='k', linestyle='dashdot', alpha=1, linewidth=1, label='AP axis (rotated segmentation)')
-    ax1.axvline(x=ap0_r, color='k', linestyle='dashdot', alpha=1, linewidth=1, label='RL axis (rotated segmentation)')
+    #ax1.axhline(y=rl0_r, color='k', linestyle='dashdot', alpha=1, linewidth=1, label='AP axis (rotated segmentation)')
+    #ax1.axvline(x=ap0_r, color='k', linestyle='dashdot', alpha=1, linewidth=1, label='RL axis (rotated segmentation)')
     # Draw lines for the measured AP and RL diameters
     right = np.nonzero(rotated_bin[:, ap0_r])[0][0]
     left = np.nonzero(rotated_bin[:, ap0_r])[0][-1]
-    anterior = np.nonzero(rotated_bin[rl0_r, :])[0][0]
-    posterior = np.nonzero(rotated_bin[rl0_r, :])[0][-1]
-    ax1.plot([anterior, posterior], [rl0_r, rl0_r], color='red', linestyle='--', linewidth=2,
-             label=f'AP Diameter (rotated segmentation) = {ap_diameter:.2f} mm')
-    ax1.plot([ap0_r, ap0_r], [right, left], color='red', linestyle='solid', linewidth=2,
-             label=f'RL Diameter (rotated segmentation) = {rl_diameter:.2f} mm')
+    rotated_bin_bin = np.array(rotated_bin > 0.5, dtype='uint8')  # binarize the rotated segmentation
+    anterior = np.nonzero(rotated_bin_bin[coord_ap, :])[0][0]
+    posterior = np.nonzero(rotated_bin_bin[coord_ap, :])[0][-1]
+    
+    # ax1.plot([anterior, posterior], [rl0_r, rl0_r], color='red', linestyle='--', linewidth=2,
+    #          label=f'AP Diameter (rotated segmentation) = {ap_diameter:.2f} mm')
+    # ax1.plot([ap0_r, ap0_r], [right, left], color='red', linestyle='solid', linewidth=2,
+    #          label=f'RL Diameter (rotated segmentation) = {rl_diameter:.2f} mm')
+    ax1.plot([anterior, posterior], [coord_ap, coord_ap], color='red', linestyle='--', linewidth=2,
+             label=f'AP Diameter (rotated segmentation) = {ap_diameter:.2f} mm, coord_ap={coord_ap}')
+    ax1.plot([coord_rl[0, 1], coord_rl[1, 1]], [coord_rl[0, 0], coord_rl[1, 0]], color='red', linestyle='solid', linewidth=2,
+             label=f'RL Diameter (rotated segmentation) = {rl_diameter:.2f} mm, coord_rl={coord_rl}')
 
     # Plot horizontal and vertical grid lines
     ax1.grid(which='both', color='gray', linestyle='--', linewidth=0.5, alpha=0.5)
