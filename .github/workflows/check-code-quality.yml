@@ -45,7 +45,7 @@ jobs:
         
         # Filter out any which are in the blacklist
         while read l; do
-          git_diff_files=$(grep -v "$l" <<< "$git_diff_files")
+          git_diff_files=$(grep -v "$l" <<< "$git_diff_files" || (($? == 1)) )
         # This `cat` call MUST be here; otherwise a subshell is created, and recursive variable updating is not possible
         #   Thank you to JN for figuring this out: https://stackoverflow.com/a/16854326
         done <<< $(cat ".github/workflows/check_url_blacklist.txt")
@@ -57,7 +57,7 @@ jobs:
         fi
         
         # Get all urls within the changed files; the '||' is to prevent grep from crashing the entire script if it finds nothing
-        git_diff_urls=$(grep -HEio '\b(https?)://[-a-z0-9+&@#/%?=~_|$!:,.;]*[a-z0-9+&@#/%=~_|$]' "$git_diff_files" || echo "")
+        git_diff_urls=$(grep -HEio '\b(https?)://[-a-z0-9+&@#/%?=~_|$!:,.;]*[a-z0-9+&@#/%=~_|$]' "$git_diff_files" || (($? == 1)) )
         
         # If no URLs were found within, end early to avoid an error
         if [[ "$git_diff_urls" == "" ]]; then
