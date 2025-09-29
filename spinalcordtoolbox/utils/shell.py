@@ -402,6 +402,25 @@ def list_type(delimiter, subtype, length=None):
     return list_typecast_func
 
 
+def positive_int_type(input_value):
+    """
+        Type function which can be used with argparse's `type` option. This
+        allows for more complex type parsing, enforcing the requirement of an
+        input integer to be positive.
+    """
+    try:
+        int_value = int(input_value)         # cast first to check for type errors
+        if int_value != float(input_value):  # allow "1" and "1.0" but not "1.5"
+            raise ValueError("non-integer number encountered")
+        if int_value < 0:
+            raise ValueError("negative integer encountered")
+        if int_value == 0:
+            raise ValueError("zero encountered")
+    except ValueError as e:
+        raise ValueError(f"expected positive integer, got {input_value}") from e
+    return int_value
+
+
 class Metavar(str, Enum):
     """
     This class is used to display intuitive input types via the metavar field of argparse

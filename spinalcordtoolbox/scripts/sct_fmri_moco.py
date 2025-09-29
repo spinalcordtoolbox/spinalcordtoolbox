@@ -12,7 +12,8 @@ import textwrap
 
 from spinalcordtoolbox.moco import ParamMoco, moco_wrapper
 from spinalcordtoolbox.utils.sys import init_sct, set_loglevel
-from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax, list_type
+from spinalcordtoolbox.utils.shell import (SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax,
+                                           list_type, positive_int_type)
 from spinalcordtoolbox.reports.qc import generate_qc
 
 
@@ -51,7 +52,7 @@ def get_parser():
     optional.add_argument(
         '-g',
         metavar=Metavar.int,
-        type=int,
+        type=positive_int_type,
         default=param_default.group_size,
         help='Group nvols successive dMRI volumes for more robustness. Values `2` or greater will create groups of '
              'that size, while a value of `1` will turn off grouping (i.e. per-volume motion correction).'

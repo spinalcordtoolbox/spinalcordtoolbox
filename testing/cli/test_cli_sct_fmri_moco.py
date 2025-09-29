@@ -28,3 +28,14 @@ def test_sct_fmri_moco_no_checks(tmp_path_qc, fmri_mean_seg):
     TODO: Check the results. (This test replaces the 'sct_testing' test, which did not implement any checks.)"""
     sct_fmri_moco.main(argv=['-i', sct_test_path('fmri', 'fmri_r.nii.gz'), '-g', '4', '-x', 'nn', '-r', '0',
                              '-qc', tmp_path_qc, '-qc-seg', fmri_mean_seg])
+
+
+@pytest.mark.parametrize("group_size", [-1, 0, 1.5, 'NaN'])
+def test_sct_fmri_moco_invalid_group_values(tmp_path, tmp_path_qc, fmri_mean_seg, group_size):
+    """Ensure that invalid group sizes return a parsing error."""
+    with pytest.raises(SystemExit) as e:
+        sct_fmri_moco.main(argv=['-i', sct_test_path('fmri', 'fmri.nii.gz'),
+                                 '-g', str(group_size), '-x', 'nn', '-r', '0',
+                                 '-ofolder', str(tmp_path),
+                                 '-qc', tmp_path_qc, '-qc-seg', fmri_mean_seg])
+    assert e.value.code == 2
