@@ -131,7 +131,6 @@ def segment_non_ivadomed(path_model, model_type, input_filenames, threshold, kee
     net = create_net(path_model, device)
     # For single-fold inference, we only use 1 fold instead of the full ensemble
     if single_fold and model_type == "nnunet":
-        print("here")
         net = ds_nnunet.create_nnunet_from_plans(path_model, device, single_fold=single_fold)
 
     im_lst, target_lst = [], []
@@ -297,9 +296,8 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device, soft_ms_le
         # keep the soft segmentation
         prob_map = pred[1]
         # The shape of the prob_map is (num_classes, z, y, x), so we keep only the non-background class (1)
-        pred = prob_map[1]
-        # We threshold the soft segmentation at 1e-3 to avoid having very small values in the output
-        pred[pred < 1e-3] = 0
+        # Similar to nnunet, the value of the soft max is the value of the probability map at class 1 if the value is greater than that of class 0
+        pred = np.where(prob_map[1] > prob_map[0], prob_map[1], 0)
     # Lastly, we undo the transpose to return the image from [z,y,x] (SimpleITK) to [x,y,z] (nibabel)
     pred = pred.transpose([2, 1, 0])
     img_out = img_in.copy()
