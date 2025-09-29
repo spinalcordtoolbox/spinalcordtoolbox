@@ -5,6 +5,9 @@
 # acvl_utils is a utility package used by `nnunetv2`. v0.2.1 broke usage of `nnunetv2`, so skip it:
 # See: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4679
 acvl_utils!=0.2.1
+# blosc2 is a utility package used by `nnunetv2`, and v3.9.0 and above require `numpy==2.0`.
+# 3.9.0 specifically forgot to specify `>=2.0`, so it will break if installed alongside `numpy==1.26`
+blosc2<3.9.0
 # Avoid 1.6 and 1.7 due to method=restore bug: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4209#issuecomment-1739644328
 dipy==1.8.0
 # PyTorch's Linux distribution is very large due to its GPU support,
