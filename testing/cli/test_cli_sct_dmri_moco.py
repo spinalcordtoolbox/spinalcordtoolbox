@@ -96,3 +96,15 @@ def test_sct_dmri_moco_sagittal_no_checks(tmp_path, tmp_path_qc, dmri_mean_seg, 
                              '-x', 'nn', '-r', '0',
                              '-ofolder', str(tmp_path), '-qc', tmp_path_qc, '-qc-seg', dmri_mean_seg])
     # NB: We skip checking params because there are no output moco params for sagittal images (*_AIL)
+
+
+@pytest.mark.parametrize("group_size", [-1, 0, 1.5, 'NaN'])
+def test_sct_dmri_moco_invalid_group_values(tmp_path, tmp_path_qc, dmri_mean_seg, group_size):
+    """Ensure that invalid group sizes return a parsing error."""
+    with pytest.raises(SystemExit) as e:
+        sct_dmri_moco.main(argv=['-i', sct_test_path('dmri', 'dmri.nii.gz'),
+                                 '-bvec', sct_test_path('dmri', 'bvecs.txt'),
+                                 '-g', str(group_size), '-x', 'nn', '-r', '0',
+                                 '-ofolder', str(tmp_path),
+                                 '-qc', tmp_path_qc, '-qc-seg', dmri_mean_seg])
+    assert e.value.code == 2

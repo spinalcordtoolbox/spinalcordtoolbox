@@ -12,7 +12,8 @@ import textwrap
 
 from spinalcordtoolbox.moco import ParamMoco, moco_wrapper
 from spinalcordtoolbox.utils.sys import init_sct, set_loglevel
-from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax, list_type
+from spinalcordtoolbox.utils.shell import (SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax,
+                                           list_type, positive_int_type)
 from spinalcordtoolbox.reports.qc import generate_qc
 
 
@@ -27,7 +28,7 @@ def get_parser():
             Motion correction of fMRI data. Some robust features include:
 
               - group-wise (`-g`)
-              - slice-wise regularized along z using polynomial function (`-p`). For more info about the method, type: `isct_antsSliceRegularizedRegistration`
+              - slice-wise regularized along z using polynomial function (`-param poly`). For more info about the method, type: `isct_antsSliceRegularizedRegistration`
               - masking (`-m`)
               - iterative averaging of target volume
 
@@ -51,8 +52,10 @@ def get_parser():
     optional.add_argument(
         '-g',
         metavar=Metavar.int,
-        type=int,
-        help="Group nvols successive fMRI volumes for more robustness."
+        type=positive_int_type,
+        default=param_default.group_size,
+        help='Group nvols successive dMRI volumes for more robustness. Values `2` or greater will create groups of '
+             'that size, while a value of `1` will turn off grouping (i.e. per-volume motion correction).'
     )
     optional.add_argument(
         '-m',
@@ -69,7 +72,7 @@ def get_parser():
              f"set to 0. Default={param_default.poly}.\n"
              f"  - `smooth` [mm]: Smoothing kernel. Default={param_default.smooth}.\n"
              f"  - `metric` {{MI, MeanSquares, CC}}: Metric used for registration. Default={param_default.metric}.\n"
-             f"  - `iterations` [int]: Number of iterations. Default={param_default.iter}.\n"
+             f"  - `iter` [int]: Number of iterations. Default={param_default.iter}.\n"
              f"  - `gradStep` [float]: Searching step used by registration algorithm. The higher the more deformation "
              f"allowed. Default={param_default.gradStep}.\n"
              f"  - `sampling` [None or 0-1]: Sampling rate used for registration metric. "
