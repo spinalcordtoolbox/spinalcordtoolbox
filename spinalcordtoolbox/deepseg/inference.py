@@ -285,6 +285,7 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device, soft_ms_le
     # (This would automatically be done by nnUNet if we were to predict from image files, rather than a npy array.)
     data = np.expand_dims(data, axis=0).astype(np.float32)
     # If using the lesion_ms model, we want to return the logits per fold for different ensembling strategies
+    return_logits_per_fold = False
     if task == "lesion_ms":
         return_logits_per_fold = True
     pred = predictor.predict_single_npy_array(
