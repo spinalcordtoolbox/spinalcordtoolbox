@@ -471,10 +471,10 @@ def main(argv: Sequence[str]):
                 single_fold=getattr(arguments, "single_fold", False),
                 # Pass any "extra" kwargs defined in task-specific subparsers
                 extra_inference_kwargs={arg_name: getattr(arguments, arg_name)
-                                        for arg_name in ["step1_only", "soft_ms_lesion"]
+                                        for arg_name in ["step1_only", "soft_ms_lesion", "task"]
                                         if hasattr(arguments, arg_name)
                                         # "step1_only" -> used only by totalspineseg
-                                        # "soft_ms_lesion" and "single_fold" -> used only by lesion_ms
+                                        # "soft_ms_lesion" and "task" -> used only by lesion_ms
                                         },
             )
 
