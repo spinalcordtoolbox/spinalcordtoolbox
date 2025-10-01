@@ -40,7 +40,8 @@ def get_parser():
         choices=('sct_propseg', 'sct_deepseg_sc', 'sct_deepseg_gm', 'sct_deepseg_lesion',
                  'sct_register_multimodal', 'sct_register_to_template', 'sct_warp_template',
                  'sct_label_vertebrae', 'sct_detect_pmj', 'sct_label_utils', 'sct_get_centerline',
-                 'sct_fmri_moco', 'sct_dmri_moco', 'sct_image_stitch', 'sct_fmri_compute_tsnr'))
+                 'sct_fmri_moco', 'sct_dmri_moco', 'sct_image_stitch', 'sct_fmri_compute_tsnr',
+                 'scratch'))
 
     optional = parser.optional_arggroup
     optional.add_argument(
@@ -110,20 +111,33 @@ def main(argv: Sequence[str]):
     if arguments.p == 'sct_deepseg_lesion' and arguments.plane is None:
         parser.error('Please provide the plane of the output QC with `-plane`')
 
-    generate_qc(fname_in1=arguments.i,
-                fname_in2=arguments.d,
-                fname_seg=arguments.s,
-                # Internal functions use capitalized strings ('Axial'/'Sagittal')
-                plane=arguments.plane.capitalize() if isinstance(arguments.plane, str) else arguments.plane,
-                args=f'("sct_qc {list2cmdline(argv)}")',
-                path_qc=arguments.qc,
-                dataset=arguments.qc_dataset,
-                subject=arguments.qc_subject,
-                process=arguments.p,
-                fps=arguments.fps,
-                p_resample=arguments.resample,
-                draw_text=bool(arguments.text_labels),
-                path_custom_labels=arguments.custom_labels)
+    if arguments.p == 'scratch':
+        from spinalcordtoolbox.reports.qc2 import scratch
+        scratch(
+            fname_input=arguments.i,
+            fname_output=arguments.d,
+            fname_seg=arguments.s,
+            argv=argv,
+            path_qc=arguments.qc,
+            dataset=arguments.qc_dataset,
+            subject=arguments.qc_subject,
+            p_resample=(0.6 if arguments.resample is None else arguments.resample),
+        )
+    else:
+        generate_qc(fname_in1=arguments.i,
+                    fname_in2=arguments.d,
+                    fname_seg=arguments.s,
+                    # Internal functions use capitalized strings ('Axial'/'Sagittal')
+                    plane=arguments.plane.capitalize() if isinstance(arguments.plane, str) else arguments.plane,
+                    args=f'("sct_qc {list2cmdline(argv)}")',
+                    path_qc=arguments.qc,
+                    dataset=arguments.qc_dataset,
+                    subject=arguments.qc_subject,
+                    process=arguments.p,
+                    fps=arguments.fps,
+                    p_resample=arguments.resample,
+                    draw_text=bool(arguments.text_labels),
+                    path_custom_labels=arguments.custom_labels)
 
 
 if __name__ == "__main__":
