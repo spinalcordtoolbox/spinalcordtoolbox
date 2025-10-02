@@ -307,6 +307,23 @@ def get_parser(subparser_to_return=None):
             ({models.CROP_MESSAGE})
         """)
 
+        # Add possibility of having soft segmentation for the lesion_ms task
+        if task_name == 'lesion_ms':
+            params.add_argument(
+                "-soft-ms-lesion",
+                action="store_true",
+                help="If set, the model will output a soft segmentation (i.e. probability map) instead of a binary "
+                     "segmentation."
+            )
+
+        # Add possibility of segmenting on only 1 fold for quicker inference
+        if task_name == 'lesion_ms':
+            params.add_argument(
+                "-single-fold",
+                action="store_true",
+                help="If set, only 1 fold will be used for inference instead of the full 5-fold ensemble. This will speed up inference, but may reduce segmentation quality."
+            )
+
         # Suppress arguments that are irrelevant for certain tasks
         # - Sagittal view is not currently supported for rootlets/totalspineseg QC
         #   This means that the `-qc-plane` argument (and the `-qc-seg` note) should be hidden for these tasks
@@ -450,10 +467,15 @@ def main(argv: Sequence[str]):
                 fill_holes_in_pred=arguments.fill_holes,
                 remove_small=arguments.remove_small,
                 use_gpu=use_gpu, remove_temp_files=arguments.r,
+                # Single fold inference possibility for lesion_ms task
+                single_fold=getattr(arguments, "single_fold", False),
                 # Pass any "extra" kwargs defined in task-specific subparsers
                 extra_inference_kwargs={arg_name: getattr(arguments, arg_name)
-                                        for arg_name in ["step1_only"]  # Used only by totalspineseg
-                                        if hasattr(arguments, arg_name)}
+                                        for arg_name in ["step1_only", "soft_ms_lesion", "task"]
+                                        if hasattr(arguments, arg_name)
+                                        # "step1_only" -> used only by totalspineseg
+                                        # "soft_ms_lesion" and "task" -> used only by lesion_ms
+                                        },
             )
 
         # Delete intermediate outputs

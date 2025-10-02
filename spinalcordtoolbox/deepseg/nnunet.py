@@ -11,12 +11,13 @@ os.environ['nnUNet_results'] = "./nnUNet_results"
 
 from batchgenerators.utilities.file_and_folder_operations import join  # noqa: E402
 from nnunetv2.inference.predict_from_raw_data import nnUNetPredictor   # noqa: E402
+import importlib   # noqa: E402
 
 if TYPE_CHECKING:
     import torch
 
 
-def create_nnunet_from_plans(path_model, device: 'torch.device'):
+def create_nnunet_from_plans(path_model, device: 'torch.device', single_fold: bool = False) -> nnUNetPredictor:
     tile_step_size = 0.5
     # get the nnunet trainer directory
     trainer_dirs = glob.glob(os.path.join(path_model, "nnUNetTrainer*"))
@@ -29,6 +30,12 @@ def create_nnunet_from_plans(path_model, device: 'torch.device'):
     if not fold_dirs:
         raise FileNotFoundError(f"No 'fold_*' directories found in model path: {path_model}")
     folds_avail = 'all' if fold_dirs == ['fold_all'] else [int(f.split('_')[-1]) for f in fold_dirs]
+    if single_fold:
+        folds_avail_temp = folds_avail
+        folds_avail = [1]  # use only fold 1 it exists for all models (as it was the best for the lesion_ms model)
+        if 1 not in folds_avail:
+            folds_avail = [folds_avail[0]]  # otherwise use the first fold available
+        print(f'Using single fold: {folds_avail} for inference instead of the full ensemble of {sorted(folds_avail_temp)}')
 
     # We prioritize 'checkpoint_final.pth', but fallback to 'checkpoint_best.pth' if not available
     checkpoints = {os.path.basename(path) for path in glob.glob(os.path.join(path_model, "**", "checkpoint_*.pth"))}
@@ -51,12 +58,29 @@ def create_nnunet_from_plans(path_model, device: 'torch.device'):
     )
     print(f'Running inference on device: {predictor.device}')
 
+    trainer_class = load_trainer_class_if_available(path_model)
+
     # initializes the network architecture, loads the checkpoint
     predictor.initialize_from_trained_model_folder(
         join(path_model),
         use_folds=folds_avail,
         checkpoint_name=checkpoint_name,
+        trainer_class=trainer_class
     )
     print('Model loaded successfully.')
 
     return predictor
+
+
+def load_trainer_class_if_available(path_model):
+    """
+    This functions load a custom nnUNet trainer class if available in the model folder.
+    """
+    trainer_file = os.path.join(path_model, "trainer_class.py")
+    if os.path.exists(trainer_file):
+        spec = importlib.util.spec_from_file_location("trainer_class", trainer_file)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        if hasattr(module, "get_trainer_class"):
+            return module.get_trainer_class()
+    return None

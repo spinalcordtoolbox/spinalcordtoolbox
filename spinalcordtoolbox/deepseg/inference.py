@@ -111,7 +111,7 @@ def segment_and_average_volumes(model_paths, input_filenames, options, use_gpu=F
 
 
 def segment_non_ivadomed(path_model, model_type, input_filenames, threshold, keep_largest, fill_holes_in_pred,
-                         remove_small, use_gpu=False, remove_temp_files=True, extra_inference_kwargs=None):
+                         remove_small, use_gpu=False, remove_temp_files=True, single_fold=False, extra_inference_kwargs=None):
     # MONAI and NNUnet have similar structure, and so we use nnunet+inference functions with the same signature
     # NB: For TotalSpineSeg, we don't need to create the network ourselves
     if "totalspineseg" in path_model:
@@ -129,6 +129,9 @@ def segment_non_ivadomed(path_model, model_type, input_filenames, threshold, kee
 
     # load model from checkpoint
     net = create_net(path_model, device)
+    # For single-fold inference, we only use 1 fold instead of the full ensemble
+    if single_fold and model_type == "nnunet":
+        net = ds_nnunet.create_nnunet_from_plans(path_model, device, single_fold=single_fold)
 
     im_lst, target_lst = [], []
     for fname_in in input_filenames:
@@ -166,6 +169,7 @@ def segment_non_ivadomed(path_model, model_type, input_filenames, threshold, kee
 def segment_monai(path_img, tmpdir, predictor, device: torch.device):
     """
     Script to run inference on a MONAI-based model for contrast-agnostic soft segmentation of the spinal cord.
+    save_probabilities is not used in MONAI, but we include it in the function signature to match the other segmentation functions.
 
     Author: Naga Karthik
     Original script: https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/blob/e65478099d026f865b7f1d7d0082e6e9a507a744/monai/run_inference_single_image.py
@@ -219,9 +223,11 @@ def segment_monai(path_img, tmpdir, predictor, device: torch.device):
     return [fname_out], [target]
 
 
-def segment_nnunet(path_img, tmpdir, predictor, device: torch.device):
+def segment_nnunet(path_img, tmpdir, predictor, device: torch.device, soft_ms_lesion=False, task=None):
     """
     This script is used to run inference on a single subject using a nnUNetV2 model.
+    For soft segmentation of MS lesions, set `soft_ms_lesion=True`. Output segmentation will be thresholded at 1e-3.
+    For quicker inference using only a single fold (instead of the full 5-fold ensemble), set `single_fold=True`. This is only for the lesion_ms model.
 
     Author: Jan Valosek, Naga Karthik
     Original script: https://github.com/ivadomed/model_seg_sci/blob/4184bc22ef7317b3de5f85dee28449d6f381c984/packaging/run_inference_single_subject.py
@@ -278,11 +284,40 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device):
     # We also need to add an axis and convert to float32 to match nnUNet's input expectations
     # (This would automatically be done by nnUNet if we were to predict from image files, rather than a npy array.)
     data = np.expand_dims(data, axis=0).astype(np.float32)
+    # If using the lesion_ms model, we want to return the logits per fold for different ensembling strategies
+    return_logits_per_fold = False
+    if task == "lesion_ms":
+        return_logits_per_fold = True
     pred = predictor.predict_single_npy_array(
         input_image=data,
         # The spacings also have to be reversed to match nnUNet's conventions.
         image_properties={'spacing': img_in.dim[6:3:-1]},
+        # Save the probability maps if specified
+        save_or_return_probabilities=soft_ms_lesion,
+        return_logits_per_fold=return_logits_per_fold
     )
+    # For the lesion_ms model, `pred` is a list of np.arrays, one per fold (beware of soft_ms_lesion which has a different output format)
+    if task == "lesion_ms":
+        # If we saved the probabilities, `pred` is a tuple of (binary pred, prob map)
+        if soft_ms_lesion:
+            _, prob_maps = pred
+            # In this case, pred is: pred[0] = list of softmax values per fold for class 0, pred[1] = list of softmax values per fold for class 1
+            ensembled_pred = np.zeros_like(prob_maps[0][1])
+            for prob_map in prob_maps:  # loop over folds
+                # The shape of the prob_map is (num_classes, z, y, x), so we keep only the non-background class (1)
+                # Similar to nnunet, the value of the soft max is the value of the probability map at class 1 if the value is greater than that of class 0
+                fold_pred = np.where(prob_map[1] > prob_map[0], prob_map[1], 0)
+                ensembled_pred += fold_pred
+            # Divide by number of folds to get the average
+            pred = ensembled_pred / len(prob_maps)
+            # We do not binarize the output, since we want the soft segmentation
+        else:
+            # We sum the elements of the list to get the ensembled output
+            ensembled_pred = np.sum(pred, axis=0)
+            # Divide by number of folds to get the average
+            pred = ensembled_pred / len(pred)
+            # Binarize the ensembled output at a low threshold to get the final segmentation
+            pred = binarize(pred, 0.5)
     # Lastly, we undo the transpose to return the image from [z,y,x] (SimpleITK) to [x,y,z] (nibabel)
     pred = pred.transpose([2, 1, 0])
     img_out = img_in.copy()
@@ -315,6 +350,10 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device):
     elif sorted(labels.keys()) == ['sc']:
         targets = ["_seg"]
         outputs = [img_out]
+    # in the case of the lesion_ms model for soft labels, we don't want the binarization done afterwards
+    elif soft_ms_lesion:
+        targets = ["_msLesionSoft"]
+        outputs = [img_out]
     # for the other multiclass models (SCI lesion/SC, mouse GM/WM, etc.), save 1 image per label
     else:
         targets, outputs = [], []
@@ -342,6 +381,7 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device):
 
 
 def segment_totalspineseg(path_img, tmpdir, predictor, device, step1_only=False):
+    # Save probabilities is not used in totalspineseg, but we include it in the function signature to match the other segmentation functions
     # for totalspineseg, the 'predictor' is just the model path
     path_model = predictor
     # fetch the release subdirectory from the model path
