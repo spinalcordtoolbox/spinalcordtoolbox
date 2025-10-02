@@ -11,7 +11,7 @@ os.environ['nnUNet_results'] = "./nnUNet_results"
 
 from batchgenerators.utilities.file_and_folder_operations import join  # noqa: E402
 from nnunetv2.inference.predict_from_raw_data import nnUNetPredictor   # noqa: E402
-import importlib
+import importlib   # noqa: E402
 
 if TYPE_CHECKING:
     import torch
