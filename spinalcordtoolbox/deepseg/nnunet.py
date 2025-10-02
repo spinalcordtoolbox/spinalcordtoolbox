@@ -11,6 +11,7 @@ os.environ['nnUNet_results'] = "./nnUNet_results"
 
 from batchgenerators.utilities.file_and_folder_operations import join  # noqa: E402
 from nnunetv2.inference.predict_from_raw_data import nnUNetPredictor   # noqa: E402
+import importlib
 
 if TYPE_CHECKING:
     import torch
@@ -57,12 +58,29 @@ def create_nnunet_from_plans(path_model, device: 'torch.device', single_fold: bo
     )
     print(f'Running inference on device: {predictor.device}')
 
+    trainer_class = load_trainer_class_if_available(path_model)
+
     # initializes the network architecture, loads the checkpoint
     predictor.initialize_from_trained_model_folder(
         join(path_model),
         use_folds=folds_avail,
-        checkpoint_name=checkpoint_name
+        checkpoint_name=checkpoint_name,
+        trainer_class=trainer_class
     )
     print('Model loaded successfully.')
 
     return predictor
+
+
+def load_trainer_class_if_available(path_model):
+    """
+    This functions load a custom nnUNet trainer class if available in the model folder.
+    """
+    trainer_file = os.path.join(path_model, "trainer_class.py")
+    if os.path.exists(trainer_file):
+        spec = importlib.util.spec_from_file_location("trainer_class", trainer_file)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        if hasattr(module, "get_trainer_class"):
+            return module.get_trainer_class()
+    return None
