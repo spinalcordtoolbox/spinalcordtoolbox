@@ -699,6 +699,30 @@ class AnalyzeLesion:
         image_out[indices] = image[indices]
         return image_out
 
+    def _get_vertebral_level_for_slice(self, im_vert_data, slice_idx):
+        """
+        Get the most common vertebral level for a given slice.
+        For slices with overlapping vertebral levels, the most common level (based on the number of voxels) is returned.
+
+        :param im_vert_data: 3D numpy array containing vertebral level labels
+        :param slice_idx: int, slice index in the z-direction
+        :return: int or str, vertebral level or 'N/A' if no level found
+        """
+        if slice_idx >= im_vert_data.shape[2]:
+            return 'N/A'
+
+        # Get all vertebral level values in this slice (excluding 0)
+        slice_data = im_vert_data[:, :, slice_idx]
+        unique_levels, counts = np.unique(slice_data[slice_data > 0], return_counts=True)
+        # Example: [289 272], [5 6] means that level 5 has 289 voxels and level 6 has 272 voxels in this slice
+
+        if len(unique_levels) == 0:
+            return 'N/A'
+
+        # Return the most common vertebral level in this slice
+        most_common_idx = np.argmax(counts)
+        return int(unique_levels[most_common_idx])
+
     def __relative_ROIvol_in_mask(self, im_mask_data, im_atlas_roi_data, p_lst, indices_to_keep):
         #
         #   Goal:
@@ -725,7 +749,19 @@ class AnalyzeLesion:
 
     def _measure_eachLesion_distribution(self, lesion_id, atlas_data, im_vert, im_lesion, p_lst):
         sheet_name = 'lesion#' + str(lesion_id) + '_distribution'
-        self.distrib_matrix_dct[sheet_name] = pd.DataFrame.from_dict({'row': [str(v) for v in self.rows.keys()]})
+
+        # Create the initial DataFrame with row column
+        df_data = {'row': [str(v) for v in self.rows.keys()]}
+
+        # Add vertebral level column when using per-slice analysis
+        if self.row_name == "slice":
+            vert_levels = []
+            for slice_idx in self.rows.keys():
+                vert_level = self._get_vertebral_level_for_slice(im_vert, slice_idx)
+                vert_levels.append(vert_level)
+            df_data['vert_level'] = vert_levels
+
+        self.distrib_matrix_dct[sheet_name] = pd.DataFrame.from_dict(df_data)
 
         # initialized to 0 for each vertebral level and each PAM50 tract
         for tract_id in atlas_data:
@@ -786,7 +822,22 @@ class AnalyzeLesion:
             # numpy array index equivalent to [:, :, :]
             total_row: (slice(None), slice(None), slice(None)),
         }
-        self.distrib_matrix_dct[sheet_name] = pd.DataFrame.from_dict({'row': [str(r) for r in rows_with_total]})
+
+        # Create the initial DataFrame with row column
+        df_data = {'row': [str(r) for r in rows_with_total]}
+
+        # Add vertebral level column when using per-slice analysis
+        if self.row_name == "slice":
+            vert_levels = []
+            for row_key in rows_with_total.keys():
+                if row_key == total_row:
+                    vert_levels.append('Total')
+                else:
+                    vert_level = self._get_vertebral_level_for_slice(im_vert, row_key)
+                    vert_levels.append(vert_level)
+            df_data['vert_level'] = vert_levels
+
+        self.distrib_matrix_dct[sheet_name] = pd.DataFrame.from_dict(df_data)
 
         # initialized to 0 for each vertebral level and each PAM50 tract
         for tract_id in atlas_data:
