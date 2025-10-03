@@ -887,6 +887,7 @@ class AnalyzeLesion:
             if os.path.isfile(self.path_levels):
                 img_vert = Image(self.path_levels)
                 im_vert_data = img_vert.data
+                # Per-level atlas-based analysis
                 if self.row_name == "vert":
                     # list of vertebral levels available in the input image
                     # precompute the list of indices for each vertebral level
@@ -895,6 +896,7 @@ class AnalyzeLesion:
                         vert: np.where(im_vert_data == vert)
                         for vert in np.unique(im_vert_data) if vert
                     }
+                # Per-slice atlas-based analysis (`-perslice 1` input arg)
                 else:
                     assert self.row_name == "slice"
                     # Keep the same vert image, but uses slices instead
