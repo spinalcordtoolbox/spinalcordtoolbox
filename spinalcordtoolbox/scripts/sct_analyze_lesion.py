@@ -749,6 +749,7 @@ class AnalyzeLesion:
         return vol_mask_roi_wa, vol_tot_roi
 
     def _measure_eachLesion_distribution(self, lesion_id, atlas_data, im_vert, im_lesion, p_lst):
+        """the lesion is the reference (the percentage of the lesion in each region)"""
         sheet_name = 'lesion#' + str(lesion_id) + '_distribution'
 
         # Create the initial DataFrame with row column
@@ -815,7 +816,7 @@ class AnalyzeLesion:
         return np.sum(res_mask) * 100.0 / np.sum(res_tot)
 
     def _measure_totLesion_distribution(self, im_lesion, atlas_data, im_vert, p_lst):
-
+        """the region is the reference (the percentage of the region affected by the lesion)"""
         sheet_name = 'ROI_occupied_by_lesion'
         total_row = f'total % (all {self.row_name})'
         rows_with_total = {
