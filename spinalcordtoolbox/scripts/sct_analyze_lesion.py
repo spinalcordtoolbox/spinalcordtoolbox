@@ -737,6 +737,7 @@ class AnalyzeLesion:
         #           - p_lst - type=list of float
         #           - indices_to_keep - type=(anything that can be used to index numpy arrays)
         #                               anything outside this mask will be set to 0
+        #                               These indices correspond to either a slice or a vertebral level
         #
         im_atlas_roi_data = self.__keep_only_indices(im_atlas_roi_data, indices_to_keep)
         im_mask_data = self.__keep_only_indices(im_mask_data, indices_to_keep)
