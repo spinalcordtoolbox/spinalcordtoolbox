@@ -247,7 +247,7 @@ def get_axial_slicing_specs(
     img_input: Image,
     img_seg: Image,
     p_resample: float = 0.6,
-    radius: int = 15,
+    size: int = 30,
 ) -> tuple[
     tuple[str, str, str, str],  # orientation_labels
     list[str],  # slice_labels
@@ -261,7 +261,7 @@ def get_axial_slicing_specs(
     The input image is first re-oriented to SAL, then each S-I slice is:
     - resampled isotropically to `p_resample` millimeters,
     - individually centered around its center of mass in the segmentation,
-    - cropped to a rectangle of `2*radius` voxels.
+    - cropped to a rectangle of `size` voxels.
 
     The resulting `shape`, `affine`, `offsets` can be passed to `get_slices`
     to extract the same slices from any nifti image.
@@ -274,7 +274,7 @@ def get_axial_slicing_specs(
     Returns:
     1. The appropriate orientation labels for a mosaic.
     2. The list of slice numbers from the original input image orientation.
-    3. The single slice shape `(2*radius, 2*radius)`.
+    3. The single slice shape `(size, size)`.
     4. The resampling affine, of shape (4, 4).
     5. The resampling offsets, as a numpy array of shape (N, 3).
     """
@@ -297,9 +297,9 @@ def get_axial_slicing_specs(
     inf_nan_fill(offsets[:, 1])
     inf_nan_fill(offsets[:, 2])
 
-    # Crop to the desired radius
-    shape = (2*radius, 2*radius)
-    offsets[:, 1:3] -= radius
+    # Crop to the desired size
+    shape = (size, size)
+    offsets[:, 1:3] -= (size - 1) / 2
 
     # The slice labels in the original orientation of the input image
     slice_labels = [str(x) for x in range(nx)]
@@ -310,40 +310,104 @@ def get_axial_slicing_specs(
     return orientation_labels, slice_labels, shape, affine, offsets
 
 
-@contextmanager
-def ax_to_save(path: Path) -> 'AbstractContextManager[mpl_axes.Axes]':
+def get_sagittal_slicing_specs(
+    img_input: Image,
+    img_seg: Image,
+    p_resample: float = 0.6,
+) -> tuple[
+    tuple[str, str, str, str],  # orientation_labels
+    list[str],  # slice_labels
+    tuple[int, int],  # shape
+    np.ndarray,  # affine, of shape (4, 4)
+    np.ndarray,  # offsets, of shape (N, 3)
+]:
     """
-    Generate a new figure.
+    Generate a resampling grid for sagittal slices of the input image.
 
-    This context manager yields an `mpl_axes.Axes` object, which can be used
-    to add various graphical elements to the figure. When the `with` block
-    exits, the resulting figure is rendered and saved to the path as a png.
+    The input image is first re-oriented to RSP, then each R-L slice is:
+    - resampled isotropically to `p_resample` millimeters;
+    - centered in the P-A direction around the segmentation center of mass;
+    - cropped in the P-A direction to the larger of:
+      - 110% the maximum width of the segmentation, or
+      - 50% of the total image;
+    - untouched in the S-I direction.
+
+    Any slices that are more than 2 slices away from the segmentation are
+    also dropped.
+
+    The resulting `shape`, `affine`, `offsets` can be passed to `get_slices`
+    to extract the same slices from any nifti image.
+
+    The slices are returned in R-L order (index 0 is Right), regardless of
+    the original input image orientation, for consistency when generating
+    mosaics. The returned `slice_labels` can be displayed as slice numbers
+    from the original image orientation.
+
+    Returns:
+    1. The appropriate orientation labels for a mosaic.
+    2. The list of slice numbers from the original input image orientation.
+    3. The single slice shape as a pair of integers.
+    4. The resampling affine, of shape (4, 4).
+    5. The resampling offsets, as a numpy array of shape (N, 3).
     """
-    # Initialize the figure
-    fig = mpl_figure.Figure(
-        figsize=(TARGET_WIDTH_INCH, TARGET_WIDTH_INCH),
-        dpi=DPI,
+    # Standardize to RSP with a fixed resolution for each SP slice
+    shape, affine = img_input.data.shape, img_input.affine
+    shape, affine = reorient_grid(shape, affine, "RSP")
+    shape, affine = rescale_grid(shape, affine, [None, p_resample, p_resample])
+
+    # Resample the segmentation to the current voxel grid,
+    # so that we can compute each slice's center of mass
+    nx, ny, nz = shape
+    shape = (ny, nz)
+    offsets = np.array([[x, 0, 0] for x in range(nx)], dtype=np.float64)
+    slices_seg = get_slices(img_seg, shape, affine, offsets, order=1)
+
+    # Check which slices contain the segmentation, and compute their P-A width
+    width = {}
+    for x, slice_seg in enumerate(slices_seg):
+        [columns] = slice_seg.any(axis=0).nonzero()
+        if columns.size != 0:
+            width[x] = int(columns.max()) - int(columns.min()) + 1
+    if not width:
+        raise ValueError("The mask image is empty. Cannot crop using an empty mask. Check the input (e.g. '-qc-seg').")
+
+    # Compute the cropping bounds in the R-L direction
+    x_min = max(0, min(width.keys())-2)
+    x_max = min(nx-1, max(width.keys())+2)
+
+    # Compute the cropping width in the P-A direction
+    z_width = math.ceil(max(0.5*nz, 1.1*max(width.values())))
+
+    # Recenter the relevant slices in the P-A direction
+    shape = (ny, z_width)
+    offsets = np.array(
+        [
+            [x, 0, ndimage.center_of_mass(slices_seg[x])[1]]
+            for x in range(x_min, x_max+1)
+        ],
+        dtype=np.float64,
     )
-    mpl_backend_agg.FigureCanvasAgg(fig)
-    ax = fig.add_axes((0, 0, 1, 1))
-    ax.xaxis.set_visible(False)
-    ax.yaxis.set_visible(False)
+    inf_nan_fill(offsets[:, 2])
+    offsets[:, 2] -= (z_width - 1) / 2
 
-    # Give ax to the body of the `with` block
-    yield ax
+    # The slice labels in the original orientation of the input image
+    slice_labels = [str(x) for x in range(nx)]
+    if "L" in img_input.orientation:
+        slice_labels.reverse()
+    slice_labels = slice_labels[x_min:x_max+1]
 
-    # Finalize by saving the figure as a png
-    fig.savefig(str(path), format='png', transparent=True)
+    orientation_labels = ("S", "I", "P", "A")
+    return orientation_labels, slice_labels, shape, affine, offsets
 
 
 def generate_mosaic(
-    ax: 'mpl_axes.Axes',
     img: Image,
     orientation_labels: tuple[str, str, str, str],
     slice_labels: list[str],
     shape: tuple[int, int],
     affine: np.ndarray,
     offsets: np.ndarray,
+    path: Path,
 ):
     """
     Extract slices from an image and draw them as a mosaic, with labels.
@@ -357,6 +421,16 @@ def generate_mosaic(
         for x in range(0, canvas.shape[0], shape[0])
         for y in range(0, canvas.shape[1], shape[1])
     ]
+
+    # Initialize the figure
+    fig = mpl_figure.Figure(
+        figsize=(canvas.shape[1]*2.5/DPI, canvas.shape[0]*2.5/DPI),
+        dpi=DPI,
+    )
+    mpl_backend_agg.FigureCanvasAgg(fig)
+    ax = fig.add_axes((0, 0, 1, 1))
+    ax.xaxis.set_visible(False)
+    ax.yaxis.set_visible(False)
 
     # Extract image slices and insert them in the mosaic
     img_slices = get_slices(img, shape, affine, offsets, order=2)
@@ -384,6 +458,9 @@ def generate_mosaic(
             ax.text(right, (top + bottom) / 2, orientation_labels[3], ha='right', va='center', **text_args)
         else:
             ax.text(left, top, label, ha='left', va='top', **text_args)
+
+    # Save the figure as a png
+    fig.savefig(str(path), format='png', transparent=True)
 
 
 def scratch(
@@ -416,13 +493,10 @@ def scratch(
         img_output = Image(fname_output)
         img_seg = Image(fname_seg)
 
-        slicing_specs = get_axial_slicing_specs(img_input, img_seg, p_resample)
+        slicing_specs = get_sagittal_slicing_specs(img_input, img_seg, p_resample)
 
-        with ax_to_save(imgs_to_generate['path_background_img']) as ax:
-            generate_mosaic(ax, img_input, *slicing_specs)
-
-        with ax_to_save(imgs_to_generate['path_overlay_img']) as ax:
-            generate_mosaic(ax, img_output, *slicing_specs)
+        generate_mosaic(img_input, *slicing_specs, imgs_to_generate['path_background_img'])
+        generate_mosaic(img_output, *slicing_specs, imgs_to_generate['path_overlay_img'])
 
 
 def add_slice_numbers(ax, num_slices, patch_size, margin: int = 2):
