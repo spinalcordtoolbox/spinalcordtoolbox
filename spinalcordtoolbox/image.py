@@ -3,6 +3,8 @@ SCT Image API
 
 Copyright (c) 2018 Polytechnique Montreal <www.neuro.polymtl.ca>
 License: see the file LICENSE
+
+dummy change: https://spinalcordtoolbox.com/stable/
 """
 
 # TODO: Sort out the use of Image.hdr and Image.header --> they seem to carry duplicated information.

@@ -1,3 +1,4 @@
+# dummy change
 # NB: Any lines marked with 'append_to_freeze' will be copied over to `requirements-freeze.txt` when creating SCT's
 #     stable releases. We do this because `pip freeze` will not capture options (e.g. --extra-index-url) or
 #     platform-specific requirements (e.g. sys.platform == 'win32')
