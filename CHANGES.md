@@ -1,4 +1,3 @@
-dummy change
 # Changelog
 
 ## 7.1 (2025-08-15)
