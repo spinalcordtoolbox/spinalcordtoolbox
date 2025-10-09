@@ -34,11 +34,10 @@ jobs:
 
     # There's a daily check for _all_ links in check-broken-links.yml,
     #   so this only checks for links within changed files.
-    # Add any file patterns you want ignored to 'check_url_blacklist.txt'
     - name: Check for broken links
       run: |
         set -eu -o pipefail
         git diff --name-only --diff-filter=d \
           --merge-base refs/remotes/origin/master -- \
           | { grep -E '\.(txt|md|py|rst)$' || (($? == 1)) ; } \
-          | xargs --delimiter='\n' --no-run-if-empty .github/workflows/check-broken-links.sh
+          | xargs --delimiter='\n' .github/workflows/check-broken-links.sh
