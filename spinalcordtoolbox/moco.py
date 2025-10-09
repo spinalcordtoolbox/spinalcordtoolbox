@@ -292,10 +292,9 @@ def moco_wrapper(param):
                                                      param.verbose)
 
         # check if dmri and bvecs are the same size
-        if not nb_b0 + nb_dwi == nt:
-            printv(
-                '\nERROR in ' + os.path.basename(__file__) + ': Size of data (' + str(nt) + ') and size of bvecs (' + str(
-                    nb_b0 + nb_dwi) + ') are not the same. Check your bvecs file.\n', 1, 'error')
+        if nt != (nb_b0 + nb_dwi):
+            printv(f"\nERROR in {os.path.basename(__file__)}: Size of data ({nt}) and size of bvecs ({nb_b0 + nb_dwi}) "
+                   f"are not the same. Check your bvecs file.\n", 1, 'error')
 
     # ==================================================================================================================
     # Prepare data (mean/groups...)
