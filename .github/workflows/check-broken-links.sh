@@ -1,9 +1,7 @@
 #!/usr/bin/env bash
 set -eu -o pipefail
 
-echo "Checking for broken links in $# files:"
-printf '%s\n' -- "$@"
-echo '=========='
+printf '%s\n' "Checking for broken links in $# files:" "$@" '=========='
 
 # Find and check each URL in the files provided as arguments to the script.
 # The (($# == 0)) test is to prevent grep from using standard input if no files were given.
