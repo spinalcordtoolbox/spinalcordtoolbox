@@ -22,6 +22,7 @@ import time
 import functools
 import operator
 import csv
+import textwrap
 
 import numpy as np
 import scipy.interpolate
@@ -192,31 +193,31 @@ def moco_wrapper(param):
     # Start timer
     start_time = time.time()
 
-    printv(f"""
-Input parameters:
-----------------------------------------------------
-Input file:            {param.fname_data}
-Output folder:         {os.path.abspath(param.path_out)}
-Mask:                  {param.fname_mask if param.fname_mask != '' else 'None'}
-Reference image:       {param.fname_ref if param.fname_ref != '' else 'None'}
-bvals (dmri only):     {param.fname_bvals}
-bvecs (dmri only):     {param.fname_bvecs}
-    """, param.verbose)
+    printv(textwrap.dedent(f"""
+        Input parameters:
+        ----------------------------------------------------
+        Input file:            {param.fname_data}
+        Output folder:         {os.path.abspath(param.path_out)}
+        Mask:                  {param.fname_mask if param.fname_mask != '' else 'None'}
+        Reference image:       {param.fname_ref if param.fname_ref != '' else 'None'}
+        bvals (dmri only):     {param.fname_bvals}
+        bvecs (dmri only):     {param.fname_bvecs}
+    """), param.verbose)
 
-    printv(f"""
-Motion correction parameters:
-----------------------------------------------------
-Group size:            {param.group_size}
-Polynomial order:      {param.poly}
-Smoothing (mm):        {param.smooth}
-Metric:                {param.metric}
-Iterations:            {param.iter}
-Gradient step:         {param.gradStep}
-Sampling:              {param.sampling}
-Target:                {param.num_target if param.fname_ref == '' else 'N/A (reference image provided)'}
-Iterative averaging:   {param.iterAvg}
-Interpolation:         {param.interp}
-    """, param.verbose)
+    printv(textwrap.dedent(f"""
+        Motion correction parameters:
+        ----------------------------------------------------
+        Group size:            {param.group_size}
+        Polynomial order:      {param.poly}
+        Smoothing (mm):        {param.smooth}
+        Metric:                {param.metric}
+        Iterations:            {param.iter}
+        Gradient step:         {param.gradStep}
+        Sampling:              {param.sampling}
+        Target:                {param.num_target if param.fname_ref == '' else 'N/A (reference image provided)'}
+        Iterative averaging:   {param.iterAvg}
+        Interpolation:         {param.interp}
+    """), param.verbose)
 
     # Create tmp folder
     path_tmp = tmp_create(basename="moco-wrapper")
