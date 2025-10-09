@@ -296,7 +296,6 @@ def moco_wrapper(param):
             printv(
                 '\nERROR in ' + os.path.basename(__file__) + ': Size of data (' + str(nt) + ') and size of bvecs (' + str(
                     nb_b0 + nb_dwi) + ') are not the same. Check your bvecs file.\n', 1, 'error')
-            sys.exit(2)
 
     # ==================================================================================================================
     # Prepare data (mean/groups...)
