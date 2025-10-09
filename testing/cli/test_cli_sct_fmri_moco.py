@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.fixture(scope='module')
-def fmri_mean_seg(tmp_path_factory):
+def fmri_mean_seg(tmp_path_factory, tmp_path_qc):
     """Mean segmented image for QC report generation."""
     tmp_path = tmp_path_factory.mktemp('fmri_mean_seg')
     path_mean = str(tmp_path / 'fmri_mean.nii.gz')
@@ -18,7 +18,7 @@ def fmri_mean_seg(tmp_path_factory):
 
     sct_maths.main(argv=['-i', sct_test_path('fmri', 'fmri.nii.gz'), '-mean', 't',
                          '-o', path_mean])
-    sct_deepseg.main(argv=['spinalcord', '-i', path_mean, '-o', path_out, '-qc', str(tmp_path)])
+    sct_deepseg.main(argv=['spinalcord', '-i', path_mean, '-o', path_out, '-qc', str(tmp_path_qc)])
     return path_out
 
 
