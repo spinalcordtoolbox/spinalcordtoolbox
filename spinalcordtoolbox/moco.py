@@ -201,12 +201,12 @@ Mask:                  {param.fname_mask if param.fname_mask != '' else 'None'}
 Reference image:       {param.fname_ref if param.fname_ref != '' else 'None'}
 bvals (dmri only):     {param.fname_bvals}
 bvecs (dmri only):     {param.fname_bvecs}
-    """.format(param=param), param.verbose)
+    """, param.verbose)
 
     printv(f"""
 Motion correction parameters:
 ----------------------------------------------------
-Group size:            {param.group_size}      
+Group size:            {param.group_size}
 Polynomial order:      {param.poly}
 Smoothing (mm):        {param.smooth}
 Metric:                {param.metric}
@@ -216,7 +216,7 @@ Sampling:              {param.sampling}
 Target:                {param.num_target if param.fname_ref == '' else 'N/A (reference image provided)'}
 Iterative averaging:   {param.iterAvg}
 Interpolation:         {param.interp}
-    """.format(param=param), param.verbose)
+    """, param.verbose)
 
     # Create tmp folder
     path_tmp = tmp_create(basename="moco-wrapper")
