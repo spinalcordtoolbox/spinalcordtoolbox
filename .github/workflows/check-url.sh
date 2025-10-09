@@ -4,8 +4,8 @@ if [ $# -ne 2 ]; then
     exit 1;
 fi
 
-filename=$0
-URL=$1
+filename=$1
+URL=$2
 # --head: Sends a HEAD request. We use this to be good netizens, since we only need the header to check the response code.
 # --silent: Hides the curl progress bar, which is unnecessary noise when testing >600 urls.
 # --insecure: Skip SSL verification. Since we're only checking the headers, this should be safe to do. (https://curl.se/docs/sslcerts.html)
