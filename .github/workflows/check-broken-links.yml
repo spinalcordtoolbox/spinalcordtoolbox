@@ -12,31 +12,11 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Check for broken links
+      # We use '-print0 | xargs' instead of '-exec' to make sure that
+      # check-broken-links.sh gets run at least once, so that we get its
+      # summary output
       run: |
-        # Create URL files for later reference
-        touch valid_urls.txt redirected_urls.txt invalid_urls.txt
-        
-        # Get the list of URLs within the project
-        git_diff_urls=$(find . -type f \( -name "*.txt" -o -name "*.md" -o -name "*.py" -o -name "*.rst" \) |
-          xargs grep -Eio '\b(https?)://[-a-z0-9+&@#/%?=~_|$!:,.;]*[a-z0-9+&@#/%=~_|$]' |
-          sed 's/:/;/'
-        )
-        
-        # Filter out files which are in the blacklist
-        while read l; do
-          git_diff_urls=$(grep -v "$l" <<< "$git_diff_urls")
-        # This `cat` call MUST be here; otherwise a subshell is created, and recursive variable updating is not possible
-        #   Thank you to JN for figuring this out: https://stackoverflow.com/a/16854326
-        done <<< $(cat ".github/workflows/check_url_blacklist.txt")
-        
-        # Check each remaining file in the URL for validity
-        xargs -rn 1 ".github/workflows/check-url.sh" <<< "$git_diff_urls"
-
-    - name: Summarize
-      run: |
-        NUM_OK=$(wc -l valid_urls.txt | cut -d " " -f 1)
-        NUM_REDIRECT=$(wc -l redirected_urls.txt | cut -d " " -f 1)
-        NUM_BAD=$(wc -l invalid_urls.txt | cut -d " " -f 1)
-        cat invalid_urls.txt
-        echo -en "========== \033[0;32m$NUM_OK passed\033[0;0m, \033[0;33m$NUM_REDIRECT redirected\033[0;0m, \033[0;31m$NUM_BAD failed\033[0;0m ==========\n"
-        exit $NUM_BAD
+        find \
+          -type d \( -path ./.git -o -path ./python \) -prune -o \
+          -type f \( -name '*.txt' -o -name '*.md' -o -name '*.py' -o -name '*.rst' \) \
+          -print0 | xargs -0 .github/workflows/check-broken-links.sh
