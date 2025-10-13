@@ -40,6 +40,8 @@ nilearn
 nnunetv2>2.3.0,!=2.4.*,<2.6
 # SCT is compatible, however the upgrade to numpy==2.0.0 broke *many* upstream packages. Let's try again later. See https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4535
 numpy<2
+# This is a sub-package of `numpy` whose update broke compatibility with older versions of `numpy`. See https://github.com/pydata/numexpr/issues/540
+numexpr!=2.14.0
 # - 1.7.0>onnxruntime>=1.5.1 required `brew install libomp` on macOS.
 #   So, pin to >=1.7.0 to avoid having to ask users to install libomp.
 # - Avoid version 1.16.0 due to: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4225
