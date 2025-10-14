@@ -966,6 +966,14 @@ class AnalyzeLesion:
         #  is computed (to determine the largest lesion) and the rest of the function is skipped.
         self.get_midsagittal_slice(im_lesion_data, label_lst, p_lst)
 
+        # Restrict the atlas to the spinal cord mask, since we assume that lesions occur only within the spinal cord.
+        # In cases of complete traumatic SCI (i.e., lesions fully occupying the spinal cord cross-section), any atlas
+        # regions extending beyond the spinal cord could yield <100% values for __relative_ROIvol_in_mask. But a fully
+        # occupied spinal cord by the lesion should correspond to 100% values.
+        if self.path_template is not None and self.fname_sc is not None:
+            atlas_data_dct = {tract_id: atlas_data * Image(self.fname_sc).data
+                              for tract_id, atlas_data in atlas_data_dct.items()}
+
         # iteration across each lesion to measure statistics
         for lesion_label in label_lst:
             im_lesion_data_cur = np.copy(im_lesion_data == lesion_label)
