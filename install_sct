@@ -748,6 +748,9 @@ if [[ "$INSTALL_GPU_TORCH" == "yes" ]]; then
   else
     echo "Downgrading torch to 1.13.1 (for compatibility with CUDA 11.6)"
     python/envs/venv_sct/bin/pip install --force-reinstall --no-deps torch==1.13.1+cu116 torchvision==0.14.1+cu116 --extra-index-url https://download.pytorch.org/whl/cu116 || true
+
+    echo "Patching nnunetv2 (for compatibility with torch 1.13.1)"
+    patch -p2 -d python/envs/venv_sct/lib/python3.10/site-packages/nnunetv2/ < nnunetv2_remove_optimizedmodule.patch
   fi
 fi
 

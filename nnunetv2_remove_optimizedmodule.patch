@@ -1,0 +1,101 @@
+diff --git a/nnunetv2/inference/predict_from_raw_data.py b/nnunetv2/inference/predict_from_raw_data.py
+index 1f5ede6..a862e5c 100644
+--- a/nnunetv2/inference/predict_from_raw_data.py
++++ b/nnunetv2/inference/predict_from_raw_data.py
+@@ -13,7 +13,7 @@ from batchgenerators.dataloading.multi_threaded_augmenter import MultiThreadedAu
+ from batchgenerators.utilities.file_and_folder_operations import load_json, join, isfile, maybe_mkdir_p, isdir, subdirs, \
+     save_json
+ from torch import nn
+-from torch._dynamo import OptimizedModule
++# from torch._dynamo import OptimizedModule
+ from torch.nn.parallel import DistributedDataParallel
+ from tqdm import tqdm
+ 
+@@ -116,8 +116,7 @@ class nnUNetPredictor(object):
+         self.trainer_name = trainer_name
+         self.allowed_mirroring_axes = inference_allowed_mirroring_axes
+         self.label_manager = plans_manager.get_label_manager(dataset_json)
+-        if ('nnUNet_compile' in os.environ.keys()) and (os.environ['nnUNet_compile'].lower() in ('true', '1', 't')) \
+-                and not isinstance(self.network, OptimizedModule):
++        if ('nnUNet_compile' in os.environ.keys()) and (os.environ['nnUNet_compile'].lower() in ('true', '1', 't')):
+             print('Using torch.compile')
+             self.network = torch.compile(self.network)
+ 
+@@ -139,9 +138,9 @@ class nnUNetPredictor(object):
+         allow_compile = True
+         allow_compile = allow_compile and ('nnUNet_compile' in os.environ.keys()) and (
+                     os.environ['nnUNet_compile'].lower() in ('true', '1', 't'))
+-        allow_compile = allow_compile and not isinstance(self.network, OptimizedModule)
++        allow_compile = allow_compile
+         if isinstance(self.network, DistributedDataParallel):
+-            allow_compile = allow_compile and isinstance(self.network.module, OptimizedModule)
++            allow_compile = allow_compile
+         if allow_compile:
+             print('Using torch.compile')
+             self.network = torch.compile(self.network)
+@@ -479,11 +478,7 @@ class nnUNetPredictor(object):
+ 
+         for params in self.list_of_parameters:
+ 
+-            # messing with state dict names...
+-            if not isinstance(self.network, OptimizedModule):
+-                self.network.load_state_dict(params)
+-            else:
+-                self.network._orig_mod.load_state_dict(params)
++            self.network.load_state_dict(params)
+ 
+             # why not leave prediction on device if perform_everything_on_device? Because this may cause the
+             # second iteration to crash due to OOM. Grabbing that with try except cause way more bloated code than
+diff --git a/nnunetv2/training/nnUNetTrainer/nnUNetTrainer.py b/nnunetv2/training/nnUNetTrainer/nnUNetTrainer.py
+index b23847c..8e94da0 100644
+--- a/nnunetv2/training/nnUNetTrainer/nnUNetTrainer.py
++++ b/nnunetv2/training/nnUNetTrainer/nnUNetTrainer.py
+@@ -38,7 +38,7 @@ from batchgeneratorsv2.transforms.utils.remove_label import RemoveLabelTansform
+ from batchgeneratorsv2.transforms.utils.seg_to_regions import ConvertSegmentationToRegionsTransform
+ from torch import autocast, nn
+ from torch import distributed as dist
+-from torch._dynamo import OptimizedModule
++# from torch._dynamo import OptimizedModule
+ from torch.cuda import device_count
+ from torch.cuda.amp import GradScaler
+ from torch.nn.parallel import DistributedDataParallel as DDP
+@@ -892,8 +892,8 @@ class nnUNetTrainer(object):
+             mod = self.network.module
+         else:
+             mod = self.network
+-        if isinstance(mod, OptimizedModule):
+-            mod = mod._orig_mod
++        # if isinstance(mod, OptimizedModule):
++        #     mod = mod._orig_mod
+ 
+         mod.decoder.deep_supervision = enabled
+ 
+@@ -1158,8 +1158,8 @@ class nnUNetTrainer(object):
+                     mod = self.network.module
+                 else:
+                     mod = self.network
+-                if isinstance(mod, OptimizedModule):
+-                    mod = mod._orig_mod
++                # if isinstance(mod, OptimizedModule):
++                #     mod = mod._orig_mod
+ 
+                 checkpoint = {
+                     'network_weights': mod.state_dict(),
+@@ -1200,15 +1200,9 @@ class nnUNetTrainer(object):
+ 
+         # messing with state dict naming schemes. Facepalm.
+         if self.is_ddp:
+-            if isinstance(self.network.module, OptimizedModule):
+-                self.network.module._orig_mod.load_state_dict(new_state_dict)
+-            else:
+-                self.network.module.load_state_dict(new_state_dict)
++            self.network.module.load_state_dict(new_state_dict)
+         else:
+-            if isinstance(self.network, OptimizedModule):
+-                self.network._orig_mod.load_state_dict(new_state_dict)
+-            else:
+-                self.network.load_state_dict(new_state_dict)
++            self.network.load_state_dict(new_state_dict)
+         self.optimizer.load_state_dict(checkpoint['optimizer_state'])
+         if self.grad_scaler is not None:
+             if checkpoint['grad_scaler_state'] is not None:
