@@ -740,6 +740,17 @@ fi
 ) ||
   die "Failed running pip install: $?"
 
+# If installer is run with GPU option, then on this branch specifically, we want to force the installation of
+#
+if [[ "$INSTALL_GPU_TORCH" == "yes" ]]; then
+  if [[ $OS == osx ]]; then
+    echo "Ignoring '-g' option on macOS: CUDA is not supported by PyTorch on this system"
+  else
+    echo "Downgrading torch to 1.13.1 (for compatibility with CUDA 11.6)"
+    python/envs/venv_sct/bin/pip install --force-reinstall --no-deps torch==1.13.1+cu116 torchvision==0.14.1+cu116 --extra-index-url https://download.pytorch.org/whl/cu116 || true
+  fi
+fi
+
 ## Create launchers for Python scripts
 print info "Creating launchers for Python scripts..."
 mkdir -p "$SCT_DIR/$BIN_DIR"
