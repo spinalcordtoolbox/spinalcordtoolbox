@@ -13,7 +13,8 @@ import textwrap
 
 import numpy as np
 from skimage.measure import label
-from scipy.ndimage import center_of_mass
+from scipy.ndimage import center_of_mass, distance_transform_edt
+from scipy.stats import norm
 
 from spinalcordtoolbox.image import Image, rpi_slice_to_orig_orientation
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
@@ -690,6 +691,33 @@ class AnalyzeLesion:
         self.measure_pd.loc[idx, 'max_equivalent_diameter [mm]'] = diameter_cur
         printv('  Max. equivalent diameter: ' + str(np.round(diameter_cur, 2)) + ' mm', self.verbose, type='info')
 
+    def __soften_lesion(self, im_mask_data):
+        """
+        Soften the lesion mask to account for partial volume effects (PVE).
+        The softening is done over 2D axial slices.
+        :param im_mask_data: 3D numpy array, binary mask of the currently processed lesion
+        :return: 3D numpy array, softened lesion mask
+        """
+        # Exact Euclidean distance transform (EDT) over 2D axial slices
+        d = np.zeros(im_mask_data.shape)
+        for slice in range(im_mask_data.shape[2]):
+            lesion = im_mask_data[:, :, slice]
+            dist_out = distance_transform_edt(lesion == 0)
+            dist_in = distance_transform_edt(lesion == 1)
+            d_slice = dist_out - dist_in  # negative inside the mask
+            d[:, :, slice] = d_slice
+
+        # Gaussian CDF over 2D axial slices
+        soft_mask = np.zeros(im_mask_data.shape)
+        num_of_pix = 2
+        sigma = 0.39 * num_of_pix  # voxel units (0.39 ≈ 1 voxel: ~2.56 STDs span the 10-90% range, so 1/2.56 ≈ 0.39)
+
+        for slice in range(im_mask_data.shape[2]):
+            d_slice = d[:, :, slice]
+            soft_mask[:, :, slice] = norm.cdf((-d_slice + 1) / sigma)   # +1 to have 0.5 at the boundary
+
+        return soft_mask
+
     def ___pve_weighted_avg(self, im_mask_data, im_atlas_data):
         return im_mask_data * im_atlas_data
 
@@ -771,6 +799,10 @@ class AnalyzeLesion:
 
         vol_mask_tot = 0.0  # vol tot of this lesion through the vertebral levels and PAM50 tracts
         im_vert_and_lesion = im_vert * im_lesion  # to check which vertebral levels have lesions
+
+        # Soften the lesion to account for PVE
+        im_lesion = self.__soften_lesion(im_mask_data=im_lesion)
+
         # Loop over slices or vertebral levels
         for row, indices_to_keep in sct_progress_bar(self.rows.items(), unit=self.row_name,
                                                      desc="  Computing lesion distribution (volume values)"):
@@ -846,6 +878,10 @@ class AnalyzeLesion:
             self.distrib_matrix_dct[sheet_name][f"PAM50_{tract_id:02}"] = [0] * len(rows_with_total)
 
         im_vert_and_lesion = im_vert * im_lesion  # to check which vertebral levels have lesions
+
+        # Soften the lesion to account for PVE
+        im_lesion = self.__soften_lesion(im_mask_data=im_lesion)
+
         # loop over slices/vertlevels
         for row, indices_to_keep in sct_progress_bar(rows_with_total.items(), unit=self.row_name,
                                                      desc="  Computing ROI distribution for all lesions"):
