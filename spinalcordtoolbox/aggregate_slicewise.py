@@ -566,6 +566,8 @@ def save_as_csv(agg_metric, fname_out, fname_in=None, append=False):
                 'MEAN(angle_RL)', 'STD(angle_RL)',
                 'MEAN(diameter_AP)', 'STD(diameter_AP)',
                 'MEAN(diameter_RL)', 'STD(diameter_RL)',
+                'MEAN(diameter_AP_ellipse)', 'STD(diameter_AP_ellipse)',
+                'MEAN(diameter_RL_ellipse)', 'STD(diameter_RL_ellipse)',
                 'MEAN(eccentricity)', 'STD(eccentricity)',
                 'MEAN(orientation)', 'STD(orientation)',
                 'MEAN(solidity)', 'STD(solidity)',
