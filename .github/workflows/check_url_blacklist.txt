@@ -1,5 +1,0 @@
-sct.def
-CHANGES.md
-requirements.txt
-requirements-freeze.txt
-./python/envs/

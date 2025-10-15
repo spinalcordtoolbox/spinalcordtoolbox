@@ -11,16 +11,17 @@ Run the following command to segment the spinal nerve rootlets from the input im
 
 .. code:: sh
 
-   sct_deepseg rootlets -i t2.nii.gz -qc ~/qc_singleSubj
+   sct_deepseg rootlets -i t2.nii.gz -o t2_rootlets.nii.gz -qc ~/qc_singleSubj
 
 :Input arguments:
     - ``rootlets`` : Task to perform. In our case, we use the ``rootlets`` task.
     - ``-i`` : Input T2w image
+    - ``-o`` : Output file name for the rootlets segmentation
     - ``-qc`` : Directory for Quality Control reporting. QC reports allow us to evaluate the segmentation slice-by-slice
 
 :Output files/folders:
-    - ``t2_seg.nii.gz`` : 3D level-specific segmentation (i.e., 2: C2 rootlet, 3: C3 rootlet, etc.) of the dorsal and ventral spinal nerve rootlets
-    - ``t2_seg.json`` : JSON file containing details about the segmentation model
+    - ``t2_rootlets.nii.gz`` : 3D level-specific segmentation (i.e., 2: C2 rootlet, 3: C3 rootlet, etc.) of the dorsal and ventral spinal nerve rootlets
+    - ``t2_rootlets.json`` : JSON file containing details about the segmentation model
 
 
 Details:

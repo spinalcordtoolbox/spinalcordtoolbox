@@ -237,9 +237,10 @@ def get_parser():
     )
     optional.add_argument(
         '-x',
-        choices=['nn', 'linear', 'spline'],
+        choices=['nn', 'linear', 'spline', 'label'],
         default='linear',
-        help="Final interpolation."
+        help="Interpolation method to use when applying the final warping field to the source/dest images. "
+             "(Refer to the help text for `sct_apply_transfo -x` for more details)."
     )
     optional.add_argument(
         '-ofolder',

@@ -22,6 +22,7 @@ import time
 import functools
 import operator
 import csv
+import textwrap
 
 import numpy as np
 import scipy.interpolate
@@ -47,7 +48,7 @@ class ParamMoco:
     def __init__(self, is_diffusion=None, fname_data='', fname_bvecs='', fname_bvals='', fname_mask='', path_out='',
                  group_size=1, remove_temp_files=1, verbose=1, poly='2', smooth='1', gradStep='1', iterations='10',
                  metric='MeanSquares', sampling='None', interp='spline', num_target='0',
-                 bval_min=100, iterAvg=1, output_motion_param=True):
+                 bval_min=100, iterAvg=1, output_motion_param=True, fname_ref=''):
         """
 
         :param is_diffusion: Bool: If True, data will be treated as diffusion-MRI data (process slightly differs)
@@ -73,6 +74,7 @@ class ParamMoco:
                               - Note: This value is passed to `sct_dmri_separate_b0_and_dwi.identify_b0()`
         :param iterAvg: int: Whether or not to average registered volumes with target image (default is 1)
         :param output_motion_param: bool: If True, the motion parameters are outputted (default is True)
+        :param fname_ref: str: Reference volume for motion correction, for example the mean fMRI volume.
         """
         # This parameter is set depending on whether `sct_dmri_moco` or `sct_fmri_moco` is called
         self.is_diffusion = is_diffusion
@@ -80,6 +82,7 @@ class ParamMoco:
         # Parameters controlled by specific `sct_dmri_moco`/`sct_fmri_moco` arguments (e.g. `-i`, `-m`, `-g`, etc.)
         self.fname_data = fname_data
         self.fname_mask = fname_mask
+        self.fname_ref = fname_ref
         self.path_out = path_out
         self.group_size = group_size
         self.interp = interp
@@ -178,6 +181,7 @@ def moco_wrapper(param):
     file_datasub = 'datasub.nii'  # corresponds to the full input data minus the b=0 scans (if param.is_diffusion=True)
     file_datasubgroup = 'datasub-groups.nii'  # concatenation of the average of each file_datasub
     file_mask = 'mask.nii'
+    file_ref = 'reference.nii'
     file_moco_params_csv = 'moco_params.tsv'
     file_moco_params_x = 'moco_params_x.nii.gz'
     file_moco_params_y = 'moco_params_y.nii.gz'
@@ -189,10 +193,33 @@ def moco_wrapper(param):
     # Start timer
     start_time = time.time()
 
-    printv('\nInput parameters:', param.verbose)
-    printv('  Input file ............ ' + param.fname_data, param.verbose)
-    printv('  Group size ............ {}'.format(param.group_size), param.verbose)
+    printv(textwrap.dedent(f"""
+        Input parameters:
+        ----------------------------------------------------
+        Input file:            {param.fname_data}
+        Output folder:         {os.path.abspath(param.path_out)}
+        Mask:                  {param.fname_mask if param.fname_mask != '' else 'None'}
+        Reference image:       {param.fname_ref if param.fname_ref != '' else 'None'}
+        bvals (dmri only):     {param.fname_bvals}
+        bvecs (dmri only):     {param.fname_bvecs}
+    """), param.verbose)
 
+    printv(textwrap.dedent(f"""
+        Motion correction parameters:
+        ----------------------------------------------------
+        Group size:            {param.group_size}
+        Polynomial order:      {param.poly}
+        Smoothing (mm):        {param.smooth}
+        Metric:                {param.metric}
+        Iterations:            {param.iter}
+        Gradient step:         {param.gradStep}
+        Sampling:              {param.sampling}
+        Target:                {param.num_target if param.fname_ref == '' else 'N/A (reference image provided)'}
+        Iterative averaging:   {param.iterAvg}
+        Interpolation:         {param.interp}
+    """), param.verbose)
+
+    # Create tmp folder
     path_tmp = tmp_create(basename="moco-wrapper")
 
     # Copying input data to tmp folder
@@ -204,6 +231,11 @@ def moco_wrapper(param):
         im_mask.save(os.path.join(path_tmp, file_mask), mutable=True, verbose=param.verbose)
         # Update field in param (because used later in another function, and param class will be passed)
         param.fname_mask = file_mask
+    if param.fname_ref != '':
+        im_ref = convert(Image(param.fname_ref))
+        im_ref.save(os.path.join(path_tmp, file_ref), mutable=True, verbose=param.verbose)
+        # Update field in param (because used later in another function, and param class will be passed)
+        param.fname_ref = file_ref
     if param.fname_bvals != '':
         _, _, ext_bvals = extract_fname(param.fname_bvals)
         file_bvals = f"bvals.{ext_bvals}"  # Use hardcoded name to avoid potential duplicate files when copying
@@ -260,11 +292,9 @@ def moco_wrapper(param):
                                                      param.verbose)
 
         # check if dmri and bvecs are the same size
-        if not nb_b0 + nb_dwi == nt:
-            printv(
-                '\nERROR in ' + os.path.basename(__file__) + ': Size of data (' + str(nt) + ') and size of bvecs (' + str(
-                    nb_b0 + nb_dwi) + ') are not the same. Check your bvecs file.\n', 1, 'error')
-            sys.exit(2)
+        if nt != (nb_b0 + nb_dwi):
+            printv(f"\nERROR in {os.path.basename(__file__)}: Size of data ({nt}) and size of bvecs ({nb_b0 + nb_dwi}) "
+                   f"are not the same. Check your bvecs file.\n", 1, 'error')
 
     # ==================================================================================================================
     # Prepare data (mean/groups...)
@@ -325,7 +355,9 @@ def moco_wrapper(param):
         im_dwi_out = concat_data(im_dwi_list, 3).save(file_dwi_merge_i, verbose=0)
         # Average across time
         list_file_group.append(os.path.join(file_dwi_basename + '_' + str(iGroup) + '_mean' + ext_data))
-        im_dwi_out.mean(dim=3).save(list_file_group[-1])
+        im_dwi_out_mean = im_dwi_out.mean(dim=3)
+        im_dwi_out_mean.hdr.set_data_dtype(im_dwi_out_mean.data.dtype)  # avoid issues with mismatched header dtype
+        im_dwi_out_mean.save(list_file_group[-1])
 
     # Merge across groups
     printv('\nMerge across groups...', param.verbose)
@@ -374,7 +406,19 @@ def moco_wrapper(param):
     printv('  Estimating motion across groups...', param.verbose)
     printv('-------------------------------------------------------------------------------', param.verbose)
     param_moco.file_data = file_datasubgroup
-    param_moco.file_target = list_file_group[0]  # target is the first volume (closest to the first b=0 if DWI scan)
+    if param.fname_ref != '':
+        param_moco.file_target = file_ref
+    else:
+        if param.num_target.isdigit():
+            num_target = int(param.num_target)
+            if num_target < 0 or num_target >= nb_groups:
+                printv('\nERROR: Target image number is out of range. It should be between 0 and ' + str(nb_groups - 1)
+                       + '.\n', 1, 'error')
+                sys.exit(2)
+        else:
+            printv('\nERROR: Target image number is not an integer.\n', 1, 'error')
+            sys.exit(2)
+        param_moco.file_target = list_file_group[num_target]
     param_moco.path_out = ''
     param_moco.todo = 'estimate_and_apply'
     param_moco.mat_moco = 'mat_groups'
@@ -538,17 +582,7 @@ def moco(param):
     suffix = param.suffix
     verbose = param.verbose
 
-    printv('\nInput parameters:', param.verbose)
-    printv('  Input file ............ ' + file_data, param.verbose)
-    printv('  Reference file ........ ' + file_target, param.verbose)
-    printv('  Polynomial degree ..... ' + param.poly, param.verbose)
-    printv('  Smoothing kernel ...... ' + param.smooth, param.verbose)
-    printv('  Gradient step ......... ' + param.gradStep, param.verbose)
-    printv('  Metric ................ ' + param.metric, param.verbose)
-    printv('  Sampling .............. ' + param.sampling, param.verbose)
-    printv('  Todo .................. ' + todo, param.verbose)
-    printv('  Mask  ................. ' + param.fname_mask, param.verbose)
-    printv('  Output mat folder ..... ' + folder_mat, param.verbose)
+    printv('Motion correction wrapper: ' + todo, param.verbose)
 
     try:
         os.makedirs(folder_mat)
