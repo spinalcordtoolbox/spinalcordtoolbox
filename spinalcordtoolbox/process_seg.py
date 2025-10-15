@@ -366,8 +366,9 @@ def _properties2d(seg, dim, iz, angle_hog=None, verbose=1):
     # Fill up dictionary
     properties = {
         'area': area,
-        'diameter_AP_ellipse': diameter_AP,
-        'diameter_RL_ellipse': diameter_RL,
+        'diameter_AP_ellipse': diameter_AP, # TODO:remove
+        'diameter_RL_ellipse': diameter_RL, # TODO:remove
+        'diameter_RL': diameter_RL,
         'centroid': region.centroid,        # Why do we store this? It is not used in the code.
         'eccentricity': region.eccentricity,
         'orientation_abs': orientation,     # in degrees
@@ -472,7 +473,7 @@ def _rotate_segmentation_by_angle(seg_crop_r, angle):
     return seg_crop_r_rotated
 
 
-def _measure_rotated_diameters(seg_crop_r, seg_crop_r_rotated, dim, angle, upscale, iz, properties, verbose, nb_slices=3):
+def _measure_rotated_diameters(seg_crop_r, seg_crop_r_rotated, dim, angle, upscale, iz, properties, verbose):
     """
     Measure the AP and RL diameters in the rotated segmentation.
     This function counts the number of pixels along the AP and RL axes in the rotated segmentation and converts them
@@ -503,65 +504,20 @@ def _measure_rotated_diameters(seg_crop_r, seg_crop_r_rotated, dim, angle, upsca
     indices = np.array([i for i in range(rl0_r - extent_avg//2, rl0_r + extent_avg//2 + 1)])
     ap_pixels = np.sum(seg_crop_r_rotated[indices, :], axis=1).mean()
     coord_ap = rl0_r
+    
 
-    # For RL diameter, find Right most, and left most voxels, and compute the distance between them
-    coords = np.nonzero(seg_crop_r_rotated > 0.5)
-
-    leftmost_idx = np.argmin(coords[0])   # column index is x
-    rightmost_idx = np.argmax(coords[0])
-    left_point_x = coords[0][leftmost_idx]
-    left_point_y = coords[1][leftmost_idx]
-    right_point_x = coords[0][rightmost_idx]
-    right_point_y = coords[1][rightmost_idx]
-    # Find the first occurrence of a non-zero value in the specified row
-   
-    # Find the values in row_left that are between 0 and 1 (exclusive)
-    row = seg_crop_r_rotated[:, left_point_y]
-    # Get local maxima from the row to get the softness of the edge
-    peaks, props = find_peaks(row, plateau_size=True)
-    left_edges = props['left_edges']
-    right_edges = props['right_edges']
-    plateaus = [(int(l), int(r)) for l, r in zip(left_edges, right_edges)]
-
-    if plateaus:
-        idx_left = plateaus[0][0]
-        left_soft_sum = np.sum(row[:idx_left])
-    else:
-        idx_left = peaks[0] if peaks.size > 0 else 0
-        left_soft_sum = np.sum(row[:idx_left])
-
-    # Find the values in row_right that are between 0 and 1 (exclusive)
-    row = seg_crop_r_rotated[:, right_point_y]
-    # Take index of the maximum value in the row rightest
-    # Find the last local maxima in the row
-    peaks, props = find_peaks(row, plateau_size=True)
-    left_edges = props['left_edges']
-    right_edges = props['right_edges']
-    plateaus = [(int(l), int(r)) for l, r in zip(left_edges, right_edges)]
-    if plateaus:
-        idx_right = plateaus[-1][0]
-        right_soft_sum = np.sum(row[(idx_right + 1)::])
-    else:
-        idx_right = peaks[0] if peaks.size > 0 else 0
-        right_soft_sum = np.sum(row[(idx_right + 1)::])
-    rl_pixels = idx_right - idx_left + 1 + left_soft_sum + right_soft_sum
-    coord_rl = np.array([[left_point_x, left_point_y], [right_point_x, right_point_y]])
-    # Convert pixels to physical dimensions
-    rl_diameter = rl_pixels * dim[0] / upscale
     ap_diameter = ap_pixels * dim[1] / upscale
 
     # Store all the rotated properties
     result = {
         'ap_pixel_count': ap_pixels,
-        'rl_pixel_count': rl_pixels,
         'diameter_AP': ap_diameter,
-        'diameter_RL': rl_diameter,
     }
 
     # Debug plotting
     if verbose == 2:
-        _debug_plotting_hog(angle, ap0_r, ap_diameter, dim, iz, properties, rl0_r, rl_diameter,
-                            seg_crop_r_rotated, seg_crop_r, upscale, coord_rl, coord_ap)
+        _debug_plotting_hog(angle, ap0_r, ap_diameter, dim, iz, properties, rl0_r, properties["diameter_RL_ellipse"],
+                            seg_crop_r_rotated, seg_crop_r, upscale, coord_ap)
 
     return result
 
@@ -953,7 +909,7 @@ def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, floa
 
 
 def _debug_plotting_hog(angle_hog, ap0_r, ap_diameter, dim, iz, properties, rl0_r, rl_diameter,
-                        rotated_bin, seg_crop_r, upscale, coord_rl, coord_ap):
+                        rotated_bin, seg_crop_r, upscale, coord_ap):
     """
     """
     def _add_labels(ax):
@@ -1029,10 +985,8 @@ def _debug_plotting_hog(angle_hog, ap0_r, ap_diameter, dim, iz, properties, rl0_
     
     ax1.plot([anterior, posterior], [coord_ap, coord_ap], color='red', linestyle='--', linewidth=2,
             label=f'AP Diameter (rotated segmentation) = {ap_diameter:.2f} mm, coord_ap={coord_ap}')
-    ax1.plot([coord_rl[0, 1], coord_rl[1, 1]], [coord_rl[0, 0], coord_rl[1, 0]], 'ro', markersize=8,
-            label=f'R extremity points (rotated segmentation) = {rl_diameter:.2f} mm, coord_rl={coord_rl}')
-    ax1.plot([ap0_r, ap0_r], [coord_rl[0, 0], coord_rl[1, 0]], color='red', linestyle='solid', linewidth=2,
-             label=f'RL Diameter (rotated segmentation) = {rl_diameter:.2f} mm, coord_rl={coord_rl}')
+    ax1.plot([ap0_r, ap0_r], [left, right], color='red', linestyle='solid', linewidth=2,
+             label=f'RL Diameter (rotated segmentation) = {rl_diameter:.2f} mm')
 
     # Plot horizontal and vertical grid lines
     ax1.grid(which='both', color='gray', linestyle='--', linewidth=0.5, alpha=0.5)
