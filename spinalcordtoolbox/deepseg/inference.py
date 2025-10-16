@@ -223,7 +223,7 @@ def segment_monai(path_img, tmpdir, predictor, device: torch.device):
     return [fname_out], [target]
 
 
-def segment_nnunet(path_img, tmpdir, predictor, device: torch.device, soft_ms_lesion=False, task=None):
+def segment_nnunet(path_img, tmpdir, predictor, device: torch.device, ensemble=False, soft_ms_lesion=False):
     """
     This script is used to run inference on a single subject using a nnUNetV2 model.
     For soft segmentation of MS lesions, set `soft_ms_lesion=True`. Output segmentation will be thresholded at 1e-3.
@@ -284,20 +284,17 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device, soft_ms_le
     # We also need to add an axis and convert to float32 to match nnUNet's input expectations
     # (This would automatically be done by nnUNet if we were to predict from image files, rather than a npy array.)
     data = np.expand_dims(data, axis=0).astype(np.float32)
-    # If using the lesion_ms model, we want to return the logits per fold for different ensembling strategies
-    return_logits_per_fold = False
-    if task == "lesion_ms":
-        return_logits_per_fold = True
     pred = predictor.predict_single_npy_array(
         input_image=data,
         # The spacings also have to be reversed to match nnUNet's conventions.
         image_properties={'spacing': img_in.dim[6:3:-1]},
         # Save the probability maps if specified
         save_or_return_probabilities=soft_ms_lesion,
-        return_logits_per_fold=return_logits_per_fold
+        # If using a model ensemble, return the logits per fold so we can average them ourselves
+        return_logits_per_fold=True if ensemble else False
     )
     # For the lesion_ms model, `pred` is a list of np.arrays, one per fold (beware of soft_ms_lesion which has a different output format)
-    if task == "lesion_ms":
+    if ensemble:
         # If we saved the probabilities, `pred` is a tuple of (binary pred, prob map)
         if soft_ms_lesion:
             _, prob_maps = pred

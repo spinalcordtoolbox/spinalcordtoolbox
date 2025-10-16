@@ -459,6 +459,18 @@ def main(argv: Sequence[str]):
         else:
             thr = (arguments.binarize_prediction if arguments.binarize_prediction is not None
                    else models.MODELS[name_model]['thr'])  # Default `thr` value stored in model dict
+            # Pass any "extra" kwargs defined only for specific models/tasks
+            extra_inference_kwargs = {
+                arg_name: getattr(arguments, arg_name)
+                # "step1_only" -> used only by totalspineseg
+                # "soft_ms_lesion" -> used only by lesion_ms
+                for arg_name in ["step1_only", "soft_ms_lesion"]
+                if hasattr(arguments, arg_name)
+            }
+            # The MS lesion model is multifold, which requires turning on the "ensemble averaging" behavior
+            if arguments.task == 'lesion_ms':
+                extra_inference_kwargs['ensemble'] = True
+            # Run inference
             im_lst, target_lst = inference.segment_non_ivadomed(
                 path_model, model_type, input_filenames, thr,
                 # NOTE: contrast-agnostic nnunet model sometimes predicts pixels outside the cord, we want to
@@ -470,12 +482,7 @@ def main(argv: Sequence[str]):
                 # Single fold inference possibility for lesion_ms task
                 single_fold=getattr(arguments, "single_fold", False),
                 # Pass any "extra" kwargs defined in task-specific subparsers
-                extra_inference_kwargs={arg_name: getattr(arguments, arg_name)
-                                        for arg_name in ["step1_only", "soft_ms_lesion", "task"]
-                                        if hasattr(arguments, arg_name)
-                                        # "step1_only" -> used only by totalspineseg
-                                        # "soft_ms_lesion" and "task" -> used only by lesion_ms
-                                        },
+                extra_inference_kwargs=extra_inference_kwargs,
             )
 
         # Delete intermediate outputs
