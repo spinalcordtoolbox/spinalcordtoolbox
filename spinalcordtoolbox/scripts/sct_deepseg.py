@@ -460,6 +460,12 @@ def main(argv: Sequence[str]):
             thr = (arguments.binarize_prediction if arguments.binarize_prediction is not None
                    else models.MODELS[name_model]['thr'])  # Default `thr` value stored in model dict
             # Pass any "extra" kwargs defined only for specific models/tasks
+            extra_network_kwargs = {
+                arg_name: getattr(arguments, arg_name)
+                # "single_fold" -> used only by lesion_ms
+                for arg_name in ["single_fold"]
+                if hasattr(arguments, arg_name)
+            }
             extra_inference_kwargs = {
                 arg_name: getattr(arguments, arg_name)
                 # "step1_only" -> used only by totalspineseg
@@ -479,9 +485,8 @@ def main(argv: Sequence[str]):
                 fill_holes_in_pred=arguments.fill_holes,
                 remove_small=arguments.remove_small,
                 use_gpu=use_gpu, remove_temp_files=arguments.r,
-                # Single fold inference possibility for lesion_ms task
-                single_fold=getattr(arguments, "single_fold", False),
                 # Pass any "extra" kwargs defined in task-specific subparsers
+                extra_network_kwargs=extra_network_kwargs,
                 extra_inference_kwargs=extra_inference_kwargs,
             )
 

@@ -18,6 +18,10 @@ if TYPE_CHECKING:
 
 
 def create_nnunet_from_plans(path_model, device: 'torch.device', single_fold: bool = False) -> nnUNetPredictor:
+    """
+    When creating the nnunet for the `lesion_ms` model, if you want quicker inference using only a single fold
+    (instead of the full 5-fold ensemble), set `single_fold=True`.
+    """
     tile_step_size = 0.5
     # get the nnunet trainer directory
     trainer_dirs = glob.glob(os.path.join(path_model, "nnUNetTrainer*"))

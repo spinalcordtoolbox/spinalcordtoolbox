@@ -111,7 +111,7 @@ def segment_and_average_volumes(model_paths, input_filenames, options, use_gpu=F
 
 
 def segment_non_ivadomed(path_model, model_type, input_filenames, threshold, keep_largest, fill_holes_in_pred,
-                         remove_small, use_gpu=False, remove_temp_files=True, single_fold=False, extra_inference_kwargs=None):
+                         remove_small, use_gpu=False, remove_temp_files=True, extra_network_kwargs=None, extra_inference_kwargs=None):
     # MONAI and NNUnet have similar structure, and so we use nnunet+inference functions with the same signature
     # NB: For TotalSpineSeg, we don't need to create the network ourselves
     if "totalspineseg" in path_model:
@@ -128,10 +128,7 @@ def segment_non_ivadomed(path_model, model_type, input_filenames, threshold, kee
     device = torch.device("cuda" if use_gpu else "cpu")
 
     # load model from checkpoint
-    net = create_net(path_model, device)
-    # For single-fold inference, we only use 1 fold instead of the full ensemble
-    if single_fold and model_type == "nnunet":
-        net = ds_nnunet.create_nnunet_from_plans(path_model, device, single_fold=single_fold)
+    net = create_net(path_model, device, **extra_network_kwargs)
 
     im_lst, target_lst = [], []
     for fname_in in input_filenames:
@@ -227,7 +224,6 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device, ensemble=F
     """
     This script is used to run inference on a single subject using a nnUNetV2 model.
     For soft segmentation of MS lesions, set `soft_ms_lesion=True`. Output segmentation will be thresholded at 1e-3.
-    For quicker inference using only a single fold (instead of the full 5-fold ensemble), set `single_fold=True`. This is only for the lesion_ms model.
 
     Author: Jan Valosek, Naga Karthik
     Original script: https://github.com/ivadomed/model_seg_sci/blob/4184bc22ef7317b3de5f85dee28449d6f381c984/packaging/run_inference_single_subject.py
