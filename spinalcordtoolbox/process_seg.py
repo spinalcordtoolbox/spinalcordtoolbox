@@ -803,7 +803,6 @@ def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, floa
         _setup_axis(ax2, 'Right-Left Symmetry')
         ax2.text(x0, y0 - offset, f"Right:\n{right_area:.2f} mm²", color='red', fontsize=10, ha='center', va='center', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
         ax2.text(x0, y0 + offset, f"Left:\n{left_area:.2f} mm²", color='blue', fontsize=10, ha='center', va='center', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
-        ax2.text(0.5, 0.05, f"RL Symmetry: {symmetry_RL:.3f}", fontsize=10, ha='center', va='center', bbox=dict(facecolor='yellow', alpha=0.8, edgecolor='black'), transform=ax2.transAxes)
 
         # ---------------------------------
         # Plot 3: Anterior-Posterior Symmetry
@@ -820,12 +819,11 @@ def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, floa
         _setup_axis(ax3, 'Anterior-Posterior Symmetry')
         ax3.text(x0 - offset, y0, f"Posterior:\n{posterior_area:.2f} mm²", color='purple', fontsize=10, ha='center', va='center', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
         ax3.text(x0 + offset, y0, f"Anterior:\n{anterior_area:.2f} mm²", color='green', fontsize=10, ha='center', va='center', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
-        ax3.text(0.5, 0.05, f"AP Symmetry: {symmetry_AP:.3f}", fontsize=10, ha='center', va='center', bbox=dict(facecolor='yellow', alpha=0.8, edgecolor='black'), transform=ax3.transAxes)
 
         # Save figure
-        os.makedirs('debug_figures', exist_ok=True)
+        os.makedirs('debug_figures_area_quadrants', exist_ok=True)
         fig.tight_layout()
-        fig.savefig(f'debug_figures/cord_quadrant_tmp_fig_slice_{iz:03d}.png', dpi=150)
+        fig.savefig(f'debug_figures_area_quadrants/cord_quadrant_tmp_fig_slice_{iz:03d}.png', dpi=150)
         # """
 
     return quadrant_areas
