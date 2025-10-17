@@ -258,9 +258,7 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
             plt.ylabel('Angle (deg)')
             plt.title(f"Regularized HOG angle estimation (filter_size: {filter_size})")
             plt.legend()
-            if not os.path.exists('hog_debug_figures'):
-                os.makedirs('hog_debug_figures')
-            fname_out = os.path.join('hog_debug_figures', 'process_seg_regularize_hog_rotation.png')
+            fname_out = os.path.join('process_seg_regularize_hog_rotation.png')
             plt.savefig(fname_out, dpi=300)
             plt.close()
             logging.info(f"Saved regularized HOG angles visualization to: {fname_out}")
@@ -621,9 +619,9 @@ def _calculate_symmetry(seg_crop_r_rotated, centroid, dim, iz=None, verbose=1):
             f'Hausdorff RL (mm): {hausdorff_distance_RL:.3f}, AP: {hausdorff_distance_AP:.3f}\n'
             f'Symmetric diff RL (mm²): {symmetric_difference_RL:.3f}, AP: {symmetric_difference_AP:.3f}'
         )
-        if not os.path.exists('symmetry_debug_figures'):
-            os.makedirs('symmetry_debug_figures')
-        fname_out = os.path.join('symmetry_debug_figures', f'process_seg_symmetry_dice_z{iz:03d}.png')
+        if not os.path.exists('debug_figures_symmetry'):
+            os.makedirs('debug_figures_symmetry')
+        fname_out = os.path.join('debug_figures_symmetry', f'process_seg_symmetry_dice_z{iz:03d}.png')
         plt.savefig(fname_out, dpi=300)
         plt.close()
         logging.info(f"Saved symmetry Dice visualization to: {fname_out}")
@@ -917,9 +915,9 @@ def _debug_plotting_hog(angle_hog, ap0_r, ap_diameter, dim, iz, properties, rl0_
     plt.tight_layout()
     # plt.show()
     # Save the figure
-    if not os.path.exists('hog_debug_figures'):
-        os.makedirs('hog_debug_figures')
-    fname_out = os.path.join('hog_debug_figures', f'slice_{iz}.png')
+    if not os.path.exists('debug_figures_diameters'):
+        os.makedirs('debug_figures_diameters')
+    fname_out = os.path.join('debug_figures_diameters', f'slice_{iz}.png')
     fig.savefig(fname_out, dpi=300, bbox_inches='tight')
     plt.close(fig)  # Close the figure to free up memory
     print(f'Saved debug figure for slice {iz} with segmentation properties to {fname_out}')
