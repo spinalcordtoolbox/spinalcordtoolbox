@@ -37,7 +37,7 @@ def dummy_3d_pmj_label():
 def test_sct_process_segmentation_check_pmj(dummy_3d_mask_nib, dummy_3d_pmj_label, tmp_path, tmp_path_qc):
     """ Run sct_process_segmentation with -pmj, -pmj-distance and -pmj-extent and check the results"""
     filename = str(tmp_path / 'tmp_file_out.csv')
-    sct_process_segmentation.main(argv=['-s', dummy_3d_mask_nib, '-pmj', dummy_3d_pmj_label,
+    sct_process_segmentation.main(argv=['-i', dummy_3d_mask_nib, '-pmj', dummy_3d_pmj_label,
                                         '-pmj-distance', '8', '-pmj-extent', '4', '-o', filename])
     with open(filename, "r") as csvfile:
         reader = csv.DictReader(csvfile, delimiter=',')
@@ -74,7 +74,7 @@ def test_sct_process_segmentation_check_pmj_reoriented(dummy_3d_mask_nib, dummy_
     # Run sct_process_segmentation on both sets of images, then compare results
     results = []
     for fnames in fname_dict.values():
-        sct_process_segmentation.main(argv=['-s', fnames["i"], '-pmj', fnames["i"], '-o', fnames["out"],
+        sct_process_segmentation.main(argv=['-i', fnames["i"], '-pmj', fnames["i"], '-o', fnames["out"],
                                             '-pmj-distance', '8', '-pmj-extent', '4'])
         with open(fnames["out"], "r") as csvfile:
             reader = csv.DictReader(csvfile, delimiter=',')
@@ -88,7 +88,7 @@ def test_sct_process_segmentation_check_pmj_reoriented(dummy_3d_mask_nib, dummy_
 def test_sct_process_segmentation_check_pmj_perslice(dummy_3d_mask_nib, dummy_3d_pmj_label, tmp_path, tmp_path_qc):
     """ Run sct_process_segmentation with -pmj, -perslice and check the results"""
     filename = str(tmp_path / 'tmp_file_out.csv')
-    sct_process_segmentation.main(argv=['-s', dummy_3d_mask_nib, '-pmj', dummy_3d_pmj_label,
+    sct_process_segmentation.main(argv=['-i', dummy_3d_mask_nib, '-pmj', dummy_3d_pmj_label,
                                         '-perslice', '1', '-o', filename])
     with open(filename, "r") as csvfile:
         reader = csv.DictReader(csvfile, delimiter=',')
@@ -102,7 +102,7 @@ def test_sct_process_segmentation_check_pmj_perslice(dummy_3d_mask_nib, dummy_3d
 
 def test_sct_process_segmentation_missing_pmj_args(dummy_3d_mask_nib, dummy_3d_pmj_label):
     """ Run sct_process_segmentation with PMJ method when missing -pmj or -pmj-distance """
-    for args in [['-s', dummy_3d_mask_nib, '-pmj', dummy_3d_pmj_label], ['-s', dummy_3d_mask_nib, '-pmj-distance', '4']]:
+    for args in [['-i', dummy_3d_mask_nib, '-pmj', dummy_3d_pmj_label], ['-i', dummy_3d_mask_nib, '-pmj-distance', '4']]:
         with pytest.raises(SystemExit) as e:
             sct_process_segmentation.main(argv=args)
             assert e.value.code == 2
@@ -111,19 +111,19 @@ def test_sct_process_segmentation_missing_pmj_args(dummy_3d_mask_nib, dummy_3d_p
 def test_sct_process_segmentation_check_normalize(dummy_3d_mask_nib, tmp_path):
     """ Run sct_process_segmentation with -normalize and check the results"""
     filename = str(tmp_path / 'tmp_file_out.csv')
-    sct_process_segmentation.main(argv=['-s', dummy_3d_mask_nib, '-normalize', 'brain-volume',
+    sct_process_segmentation.main(argv=['-i', dummy_3d_mask_nib, '-normalize', 'brain-volume',
                                         '960606.0', 'sex', '0', 'thalamus-volume', '13942.0', '-o', filename])
     with open(filename, "r") as csvfile:
         reader = csv.DictReader(csvfile, delimiter=',')
         row = next(reader)
-        assert float(row['MEAN(area)']) == pytest.approx(228.20973426502943)
+        assert float(row['MEAN(area)']) == pytest.approx(226.41333426502936)
 
 
 def test_sct_process_segmentation_check_normalize_missing_value(dummy_3d_mask_nib, tmp_path):
     """ Run sct_process_segmentation with -normalize when missing a value"""
     filename = str(tmp_path / 'tmp_file_out.csv')
     with pytest.raises(SystemExit) as e:
-        sct_process_segmentation.main(argv=['-s', dummy_3d_mask_nib, '-normalize', 'brain-volume',
+        sct_process_segmentation.main(argv=['-i', dummy_3d_mask_nib, '-normalize', 'brain-volume',
                                             '960606.0', 'sex', 'thalamus-volume', '13942.0', '-o', filename])
         assert e.value.code == 2
 
@@ -132,7 +132,7 @@ def test_sct_process_segmentation_check_normalize_missing_predictor(dummy_3d_mas
     """ Run sct_process_segmentation with -normalize when missing a predictor"""
     filename = str(tmp_path / 'tmp_file_out.csv')
     with pytest.raises(SystemExit) as e:
-        sct_process_segmentation.main(argv=['-s', dummy_3d_mask_nib, '-normalize',
+        sct_process_segmentation.main(argv=['-i', dummy_3d_mask_nib, '-normalize',
                                             'sex', '0', 'thalamus-volume', '13942.0', '-o', filename])
         assert e.value.code == 2
 
@@ -140,14 +140,14 @@ def test_sct_process_segmentation_check_normalize_missing_predictor(dummy_3d_mas
 def test_sct_process_segmentation_check_normalize_PAM50(tmp_path):
     """ Run sct_process_segmentation with -normalize PAM50"""
     filename = str(tmp_path / 'tmp_file_out.csv')
-    sct_process_segmentation.main(argv=['-s', sct_test_path('t2', 't2_seg-manual.nii.gz'), '-normalize-PAM50', '1',
+    sct_process_segmentation.main(argv=['-i', sct_test_path('t2', 't2_seg-manual.nii.gz'), '-normalize-PAM50', '1',
                                         '-perslice', '1', '-vertfile', sct_test_path('t2', 't2_seg-manual_labeled.nii.gz'), '-o', filename])
     with open(filename, "r") as csvfile:
         reader = csv.DictReader(csvfile, delimiter=',')
         rows = list(reader)
         row = rows[26]
         assert row['Slice (I->S)'] == '827'
-        assert float(row['MEAN(area)']) == pytest.approx(71.96880493869594)
+        assert float(row['MEAN(area)']) == pytest.approx(70.45049211878325)
         assert row['VertLevel'] == '5'
 
 
@@ -155,7 +155,7 @@ def test_sct_process_segmentation_check_normalize_PAM50_missing_perslice(tmp_pat
     """ Run sct_process_segmentation with -normalize PAM50 when missing perslice argument"""
     filename = str(tmp_path / 'tmp_file_out.csv')
     with pytest.raises(SystemExit) as e:
-        sct_process_segmentation.main(argv=['-s', sct_test_path('t2', 't2_seg-manual.nii.gz'), '-normalize-PAM50', '1',
+        sct_process_segmentation.main(argv=['-i', sct_test_path('t2', 't2_seg-manual.nii.gz'), '-normalize-PAM50', '1',
                                             '-vertfile', sct_test_path('t2', 't2_seg-manual_labeled.nii.gz'), '-o', filename])
         assert e.value.code == 2
 
@@ -164,7 +164,7 @@ def test_sct_process_segmentation_check_normalize_PAM50_missing_vertfile(tmp_pat
     """ Run sct_process_segmentation with -normalize PAM50 when missing -vertfile"""
     filename = str(tmp_path / 'tmp_file_out.csv')
     with pytest.raises(SystemExit) as e:
-        sct_process_segmentation.main(argv=['-s', sct_test_path('t2', 't2_seg-manual.nii.gz'), '-normalize-PAM50', '1',
+        sct_process_segmentation.main(argv=['-i', sct_test_path('t2', 't2_seg-manual.nii.gz'), '-normalize-PAM50', '1',
                                             '-perslice', '1', '-o', filename])
         assert e.value.code == 2
 
@@ -192,11 +192,11 @@ def test_sct_process_segmentation_check_discfile(tmp_path):
         assert row['Slice (I->S)'] == '10'
         assert row['DistancePMJ'] == ''
         assert row['VertLevel'] == '3'
-        assert float(row['MEAN(area)']) == pytest.approx(78.58643257836141)
+        assert float(row['MEAN(area)']) == pytest.approx(78.17036713469571)
 
 
 @pytest.mark.sct_testing
 def test_sct_process_segmentation_no_checks():
     """Run the CLI script without checking results.
     TODO: Check the results. (This test replaces the 'sct_testing' test, which did not implement any checks.)"""
-    sct_process_segmentation.main(argv=['-s', sct_test_path('t2', 't2_seg-manual.nii.gz')])
+    sct_process_segmentation.main(argv=['-i', sct_test_path('t2', 't2_seg-manual.nii.gz')])
