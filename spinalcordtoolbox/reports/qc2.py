@@ -472,6 +472,7 @@ def scratch(
     dataset: Optional[str],
     subject: Optional[str],
     p_resample: float,
+    plane: Optional[str] = 'Axial'
 ):
     """Scratch"""
     command = 'sct_register_multimodal'
@@ -484,7 +485,7 @@ def scratch(
         path_qc=Path(path_qc),
         command=command,
         cmdline=list2cmdline(cmdline),
-        plane='Axial',
+        plane=plane,
         dataset=dataset,
         subject=subject,
     ) as imgs_to_generate:
@@ -493,7 +494,10 @@ def scratch(
         img_output = Image(fname_output)
         img_seg = Image(fname_seg)
 
-        slicing_specs = get_sagittal_slicing_specs(img_input, img_seg, p_resample)
+        slicing_specs = {
+            'Axial':    get_axial_slicing_specs,
+            'Sagittal': get_sagittal_slicing_specs,
+        }[plane](img_input, img_seg, p_resample)
 
         generate_mosaic(img_input, *slicing_specs, imgs_to_generate['path_background_img'])
         generate_mosaic(img_output, *slicing_specs, imgs_to_generate['path_overlay_img'])

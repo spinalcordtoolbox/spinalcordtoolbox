@@ -122,6 +122,8 @@ def main(argv: Sequence[str]):
             dataset=arguments.qc_dataset,
             subject=arguments.qc_subject,
             p_resample=(0.6 if arguments.resample is None else arguments.resample),
+            # quick hack to reuse `-plane` to test axial/sagittal scratch QCs
+            plane=arguments.plane.capitalize() if arguments.plane is not None else 'Axial'
         )
     else:
         generate_qc(fname_in1=arguments.i,
