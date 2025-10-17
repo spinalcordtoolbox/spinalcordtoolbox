@@ -79,11 +79,9 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
         ]
         # Add symmetry properties
         symmetry_keys = [
-            'symmetry_RL',
             'symmetry_dice_RL',
             'symmetry_hausdorff_RL',
             'symmetry_difference_RL',
-            'symmetry_AP',
             'symmetry_dice_AP',
             'symmetry_hausdorff_AP',
             'symmetry_difference_AP',
@@ -361,8 +359,8 @@ def _properties2d(seg, dim, iz, angle_hog=None, verbose=1):
     # Fill up dictionary
     properties = {
         'area': area,
-        'diameter_AP_ellipse': diameter_AP, # TODO:remove
-        'diameter_RL_ellipse': diameter_RL, # TODO:remove
+        'diameter_AP_ellipse': diameter_AP,
+        'diameter_RL_ellipse': diameter_RL,
         'diameter_RL': diameter_RL,
         'centroid': region.centroid,        # Why do we store this? It is not used in the code.
         'eccentricity': region.eccentricity,
@@ -384,14 +382,13 @@ def _properties2d(seg, dim, iz, angle_hog=None, verbose=1):
         # If angle_hog is provided, rotate the segmentation by this angle to align with AP/RL axes, and use for symmetry assessment
         seg_crop_r_rotated_hog = _rotate_segmentation_by_angle(seg_crop_r, angle_hog)
         # Compute quadrant areas and RL and AP symmetry
-        quadrant_areas, symmetry_measures = compute_quadrant_areas(seg_crop_r_rotated_hog, region.centroid, orientation_deg=0,
-                                                                   area=area, diameter_AP=diameter_AP, diameter_RL=diameter_RL,
-                                                                   dim=dim, iz=iz, verbose=verbose)
+        quadrant_areas = compute_quadrant_areas(seg_crop_r_rotated_hog, region.centroid, orientation_deg=0,
+                                                area=area, diameter_AP=diameter_AP, diameter_RL=diameter_RL,
+                                                dim=dim, iz=iz, verbose=verbose)
         # Update the properties dictionary with the rotated properties
         properties.update(quadrant_areas)
-        properties.update(symmetry_measures)
-        symmetry_dice = _calculate_symmetry_dice(seg_crop_r_rotated_hog, region.centroid, iz=iz, dim=dim, verbose=verbose)
-        properties.update(symmetry_dice)
+        symmetry_metrics = _calculate_symmetry(seg_crop_r_rotated_hog, region.centroid, iz=iz, dim=dim, verbose=verbose)
+        properties.update(symmetry_metrics)
     return properties
 
 
@@ -516,14 +513,17 @@ def _measure_rotated_diameters(seg_crop_r, seg_crop_r_rotated, dim, angle, iz, p
     return result
 
 
-def _calculate_symmetry_dice(seg_crop_r_rotated, centroid, dim, iz=None, verbose=1):
+def _calculate_symmetry(seg_crop_r_rotated, centroid, dim, iz=None, verbose=1):
     """
-    Flip along the RL axis and compute the Dice coefficient between the original and flipped segmentation.
+    Compute symmetry metrics by flipping the segmentation along the RL and AP axes and comparing with the original.
+    Calculates Dice coefficient, symmetric difference, and Hausdorff distance for both axes.
     :param seg_crop_r_rotated: Rotated segmentation (after applying angle) used to measure diameters. seg.shape[0] --> RL; seg.shape[1] --> PA
     :param centroid: (y, x) coordinates of the centroid in the upsampled image space.
-    :return: symmetry_dice: Dice coefficient between the original and flipped segmentation.
+    :param dim: [px, py] pixel dimensions in mm.
+    :param iz: Optional slice index for debug plotting.
+    :param verbose: Verbosity level for debug plotting.
+    :return: symmetry_metrics: Dictionary with symmetry metrics for RL and AP axes.
     """
-    # Flip the segmentation along the RL axis
     # Flip according to centroid position (centroid[1] is x, i.e. RL axis)
     y0, x0 = centroid
     y0 = int(round(y0))
@@ -578,7 +578,7 @@ def _calculate_symmetry_dice(seg_crop_r_rotated, centroid, dim, iz=None, verbose
     hausdorff_distance_RL = skimage.metrics.hausdorff_distance(seg_crop_r_rotated_cut_RL > 0.5, seg_crop_r_flipped_RL > 0.5) * dim[0]
     coords_RL = skimage.metrics.hausdorff_pair(seg_crop_r_rotated_cut_RL > 0.5, seg_crop_r_flipped_RL > 0.5)
 
-    symmetry_dice = {
+    symmetry_metrics = {
         'symmetry_dice_RL': symmetry_dice_RL,
         'symmetry_dice_AP': symmetry_dice_AP,
         'symmetry_hausdorff_RL': hausdorff_distance_RL,
@@ -630,48 +630,7 @@ def _calculate_symmetry_dice(seg_crop_r_rotated, centroid, dim, iz=None, verbose
         plt.close()
         logging.info(f"Saved symmetry Dice visualization to: {fname_out}")
 
-    return symmetry_dice
-
-
-def _calculate_symmetry(area1, area2, total_area, signed=True):
-    """
-    Calculate the symmetry ratio of the spinal cord.
-    The symmetry can be computed in two ways:
-    1. Signed: (area1 - area2) / total_area
-       Returns values from -1 to 1, where:
-       - 0 indicates perfect symmetry
-       - Positive values indicate area1 dominance (typically left side)
-       - Negative values indicate area2 dominance (typically right side)
-       - The magnitude indicates the degree of asymmetry
-    2. Unsigned: 1 - |area1 - area2| / total_area
-       Returns values from 0 to 1, where:
-       - 1 indicates perfect symmetry
-       - 0 indicates complete asymmetry
-    :param area1: Area of the first side (left or anterior)
-    :param area2: Area of the second side (right or posterior)
-    :param total_area: Total area of the spinal cord.
-    :param signed: Whether to return signed symmetry (-1 to 1) or unsigned (0 to 1).
-    :return: Symmetry value, either between -1 and 1 (signed) or between 0 and 1 (unsigned)
-    """
-    # Sanity checks
-    if area1 <= NEAR_ZERO_THRESHOLD or area2 <= NEAR_ZERO_THRESHOLD:
-        return np.nan
-    if total_area <= NEAR_ZERO_THRESHOLD:
-        return np.nan
-
-    if signed:
-        # Calculate signed symmetry as (area1 - area2) / total_area
-        # This gives:
-        # - 0 for perfect symmetry
-        # - Positive values when area1 > area2 (e.g., left side dominance)
-        # - Negative values when area1 < area2 (e.g., right side dominance)
-        symmetry = (area1 - area2) / total_area
-    else:
-        # Calculate unsigned symmetry as 1 - |area1 - area2| / total_area
-        # This gives 1 for perfect symmetry and values closer to 0 for asymmetry
-        symmetry = 1.0 - abs(area1 - area2) / total_area
-
-    return symmetry
+    return symmetry_metrics
 
 
 def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, float], orientation_deg: float,
@@ -691,7 +650,7 @@ def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, floa
     :param diameter_RL: RL diameter of the spinal cord in mm (used for debug plots).
     :param dim: [px, py] pixel dimensions in mm. X,Y respectively correspond to AP, RL.
     :param iz: Slice index used for filename in debug plot.
-    :return: quadrant_areas (dict), symmetry_measures (dict)
+    :return: quadrant_areas (dict)
         quadrant_areas is a dictionary with the area in mm² for each quadrant:
                  {
                     'area_quadrant_posterior_right': float,
@@ -699,13 +658,6 @@ def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, floa
                     'area_quadrant_posterior_left': float,
                     'area_quadrant_anterior_left': float
                  }
-        symmetry_measures is a dictionary with symmetry measures:
-                {
-                    'symmetry_RL': float,
-                    'symmetry_AP': float,
-                    'symmetry_anterior_RL': float,
-                    'symmetry_posterior_RL': float,
-                }
     """
     y0, x0 = centroid
     orientation_rad = np.radians(orientation_deg)
@@ -745,21 +697,8 @@ def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, floa
     # Calculate AP and RL symmetry
     left_area = quadrant_areas.get('area_quadrant_anterior_left', 0) + quadrant_areas.get('area_quadrant_posterior_left', 0)
     right_area = quadrant_areas.get('area_quadrant_anterior_right', 0) + quadrant_areas.get('area_quadrant_posterior_right', 0)
-    symmetry_RL = _calculate_symmetry(left_area, right_area, area)
     anterior_area = quadrant_areas.get('area_quadrant_anterior_left', 0) + quadrant_areas.get('area_quadrant_anterior_right', 0)
     posterior_area = quadrant_areas.get('area_quadrant_posterior_left', 0) + quadrant_areas.get('area_quadrant_posterior_right', 0)
-    symmetry_AP = _calculate_symmetry(anterior_area, posterior_area, area)
-
-    # Calculate anterior RL symmetry and posterior RL symmetry
-    symmetry_anterior_RL = _calculate_symmetry(quadrant_areas['area_quadrant_anterior_left'], quadrant_areas['area_quadrant_anterior_right'], anterior_area)
-    symmetry_posterior_RL = _calculate_symmetry(quadrant_areas['area_quadrant_posterior_left'], quadrant_areas['area_quadrant_posterior_right'], posterior_area)
-
-    symmetry_measures = {
-        'symmetry_RL': symmetry_RL,  # right-left symmetry
-        'symmetry_AP': symmetry_AP,  # anterior-posterior symmetry
-        'symmetry_anterior_RL': symmetry_anterior_RL,  # anterior RL symmetry
-        'symmetry_posterior_RL': symmetry_posterior_RL,  # posterior RL symmetry
-    }
 
     # """"DEBUG
     if verbose == 2:
@@ -894,7 +833,7 @@ def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, floa
         fig.savefig(f'debug_figures/cord_quadrant_tmp_fig_slice_{iz:03d}.png', dpi=150)
         # """
 
-    return quadrant_areas, symmetry_measures
+    return quadrant_areas
 
 
 def _debug_plotting_hog(angle_hog, ap0_r, ap_diameter, dim, iz, properties, rl0_r, rl_diameter,
