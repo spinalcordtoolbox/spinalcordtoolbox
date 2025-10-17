@@ -195,6 +195,26 @@ def test_sct_process_segmentation_check_discfile(tmp_path):
         assert float(row['MEAN(area)']) == pytest.approx(78.17036713469571)
 
 
+def test_sct_process_segmentation_symmetry(tmp_path):
+    """ Run sct_process_segmentation with -vertfile and -discfile"""
+    filename = str(tmp_path / 'tmp_file_out.csv')
+    sct_process_segmentation.main(argv=['-i', sct_test_path('t2', 't2_seg-manual.nii.gz'),
+                                        '-vert', '1:10', '-perslice', '1',
+                                        '-discfile', sct_test_path('t2', 'labels.nii.gz'), '-symmetry', sct_test_path('t2', 't2.nii.gz'), '-o', filename])
+    with open(filename, "r") as csvfile:
+        reader = csv.DictReader(csvfile, delimiter=',')
+        rows = list(reader)
+        row = rows[10]
+        assert row['Slice (I->S)'] == '10'
+        assert float(row['MEAN(symmetry_dice_RL)']) == pytest.approx(0.9014033394872861)
+        assert float(row['MEAN(symmetry_dice_AP)']) == pytest.approx(0.9085034024027201)
+        assert float(row['MEAN(symmetry_hausdorff_RL)']) == pytest.approx(0.8)
+        assert float(row['MEAN(symmetry_hausdorff_AP)']) == pytest.approx(0.9055385138137417)
+        assert float(row['MEAN(symmetry_difference_RL)']) == pytest.approx(7.768345054890907)
+        assert float(row['MEAN(symmetry_difference_AP)']) == pytest.approx(7.182125561205922)
+
+
+
 @pytest.mark.sct_testing
 def test_sct_process_segmentation_no_checks():
     """Run the CLI script without checking results.
