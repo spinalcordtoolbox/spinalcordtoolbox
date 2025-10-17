@@ -391,7 +391,7 @@ def _properties2d(seg, dim, iz, angle_hog=None, verbose=1):
         # Compute quadrant areas and RL and AP symmetry
         quadrant_areas, symmetry_measures = compute_quadrant_areas(seg_crop_r_rotated_hog, region.centroid, orientation_deg=0,
                                                                    area=area, diameter_AP=diameter_AP, diameter_RL=diameter_RL,
-                                                                   dim=dim, upscale=upscale, iz=iz)
+                                                                   dim=dim, upscale=upscale, iz=iz, verbose=verbose)
         # Update the properties dictionary with the rotated properties
         properties.update(quadrant_areas)
         properties.update(symmetry_measures)
@@ -682,7 +682,7 @@ def _calculate_symmetry(area1, area2, total_area, signed=True):
 
 def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, float], orientation_deg: float,
                            area: float, diameter_AP: float, diameter_RL: float,
-                           dim: list[float], upscale: int, iz: int) -> tuple[dict, dict]:
+                           dim: list[float], upscale: int, iz: int, verbose=1) -> tuple[dict, dict]:
     """
     Compute the cross-sectional area of the four spinal cord quadrants in the axial plane.
     Also calculates the symmetry of the spinal cord in the right-left (RL) and anterior-posterior (AP) directions.
@@ -769,141 +769,142 @@ def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, floa
     }
 
     # """"DEBUG
-    def _add_ellipse(ax, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale, edgecolor='orange',
-                     linewidth=2.0):
-        """
-        Helper function to add an ellipse to a matplotlib axis.
-        """
-        from matplotlib.patches import Ellipse
-        y0, x0 = centroid
+    if verbose == 2:
+        def _add_ellipse(ax, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale, edgecolor='orange',
+                        linewidth=2.0):
+            """
+            Helper function to add an ellipse to a matplotlib axis.
+            """
+            from matplotlib.patches import Ellipse
+            y0, x0 = centroid
 
-        ellipse = Ellipse(
-            (x0, y0),
-            width=diameter_AP * upscale / dim[0],
-            height=diameter_RL * upscale / dim[1],
-            angle=math.degrees(orientation_rad),
-            edgecolor=edgecolor,
-            facecolor='none',
-            linewidth=linewidth,
-            label=""
-        )
-        ax.add_patch(ellipse)
+            ellipse = Ellipse(
+                (x0, y0),
+                width=diameter_AP * upscale / dim[0],
+                height=diameter_RL * upscale / dim[1],
+                angle=math.degrees(orientation_rad),
+                edgecolor=edgecolor,
+                facecolor='none',
+                linewidth=linewidth,
+                label=""
+            )
+            ax.add_patch(ellipse)
 
-    def _add_diameter_lines(ax, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale):
-        """
-        Helper function to add diameter lines to a matplotlib axis.
-        """
-        y0, x0 = centroid
+        def _add_diameter_lines(ax, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale):
+            """
+            Helper function to add diameter lines to a matplotlib axis.
+            """
+            y0, x0 = centroid
 
-        radius_ap = (diameter_AP / dim[0]) * 0.5 * upscale
-        radius_rl = (diameter_RL / dim[1]) * 0.5 * upscale
+            radius_ap = (diameter_AP / dim[0]) * 0.5 * upscale
+            radius_rl = (diameter_RL / dim[1]) * 0.5 * upscale
 
-        dx_ap = radius_ap * np.cos(orientation_rad)
-        dy_ap = radius_ap * np.sin(orientation_rad)
-        dx_rl = radius_rl * -np.sin(orientation_rad)
-        dy_rl = radius_rl * np.cos(orientation_rad)
+            dx_ap = radius_ap * np.cos(orientation_rad)
+            dy_ap = radius_ap * np.sin(orientation_rad)
+            dx_rl = radius_rl * -np.sin(orientation_rad)
+            dy_rl = radius_rl * np.cos(orientation_rad)
 
-        ax.plot([x0 - dx_ap, x0 + dx_ap], [y0 - dy_ap, y0 + dy_ap], 'r--', linewidth=2, label='AP diameter')
-        ax.plot([x0 - dx_rl, x0 + dx_rl], [y0 - dy_rl, y0 + dy_rl], 'b--', linewidth=2, label='RL diameter')
+            ax.plot([x0 - dx_ap, x0 + dx_ap], [y0 - dy_ap, y0 + dy_ap], 'r--', linewidth=2, label='AP diameter')
+            ax.plot([x0 - dx_rl, x0 + dx_rl], [y0 - dy_rl, y0 + dy_rl], 'b--', linewidth=2, label='RL diameter')
 
-        # Add centroid
-        ax.plot(x0, y0, '.g', markersize=15)
+            # Add centroid
+            ax.plot(x0, y0, '.g', markersize=15)
 
-    def _setup_axis(ax, title, xlabel='y\nPosterior-Anterior (PA)', ylabel='x\nLeft-Right (LR)'):
-        """
-        Helper function to set up common axis properties.
-        """
-        ax.grid()
-        ax.set_xlabel(xlabel)
-        ax.set_ylabel(ylabel)
-        ax.set_title(title)
+        def _setup_axis(ax, title, xlabel='y\nPosterior-Anterior (PA)', ylabel='x\nLeft-Right (LR)'):
+            """
+            Helper function to set up common axis properties.
+            """
+            ax.grid()
+            ax.set_xlabel(xlabel)
+            ax.set_ylabel(ylabel)
+            ax.set_title(title)
 
-    # Create a 1x3 figure: quadrants, right/left halves, anterior/posterior halves
-    import os
-    from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
-    from matplotlib.figure import Figure
+        # Create a 1x3 figure: quadrants, right/left halves, anterior/posterior halves
+        import os
+        from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+        from matplotlib.figure import Figure
 
-    # Create masks for halves (combining quadrants)
-    right_mask = post_r_mask | ant_r_mask  # Right half (posterior + anterior right)
-    left_mask = post_l_mask | ant_l_mask   # Left half (posterior + anterior left)
-    anterior_mask = ant_r_mask | ant_l_mask  # Anterior half (right + left anterior)
-    posterior_mask = post_r_mask | post_l_mask  # Posterior half (right + left posterior)
+        # Create masks for halves (combining quadrants)
+        right_mask = post_r_mask | ant_r_mask  # Right half (posterior + anterior right)
+        left_mask = post_l_mask | ant_l_mask   # Left half (posterior + anterior left)
+        anterior_mask = ant_r_mask | ant_l_mask  # Anterior half (right + left anterior)
+        posterior_mask = post_r_mask | post_l_mask  # Posterior half (right + left posterior)
 
-    # Calculate areas for halves
-    right_area = quadrant_areas['area_quadrant_posterior_right'] + quadrant_areas['area_quadrant_anterior_right']
-    left_area = quadrant_areas['area_quadrant_posterior_left'] + quadrant_areas['area_quadrant_anterior_left']
-    anterior_area = quadrant_areas['area_quadrant_anterior_right'] + quadrant_areas['area_quadrant_anterior_left']
-    posterior_area = quadrant_areas['area_quadrant_posterior_right'] + quadrant_areas['area_quadrant_posterior_left']
+        # Calculate areas for halves
+        right_area = quadrant_areas['area_quadrant_posterior_right'] + quadrant_areas['area_quadrant_anterior_right']
+        left_area = quadrant_areas['area_quadrant_posterior_left'] + quadrant_areas['area_quadrant_anterior_left']
+        anterior_area = quadrant_areas['area_quadrant_anterior_right'] + quadrant_areas['area_quadrant_anterior_left']
+        posterior_area = quadrant_areas['area_quadrant_posterior_right'] + quadrant_areas['area_quadrant_posterior_left']
 
-    # Create figure with 1x3 subplots
-    fig = Figure(figsize=(18, 6))
-    FigureCanvas(fig)
+        # Create figure with 1x3 subplots
+        fig = Figure(figsize=(18, 6))
+        FigureCanvas(fig)
 
-    # ---------------------------------
-    # Plot 1: Quadrants
-    # ---------------------------------
-    ax1 = fig.add_subplot(1, 3, 1)
+        # ---------------------------------
+        # Plot 1: Quadrants
+        # ---------------------------------
+        ax1 = fig.add_subplot(1, 3, 1)
 
-    # Plot each quadrant mask with a different color
-    ax1.imshow(np.where(post_r_mask, image_crop_r, np.nan), cmap='Reds', vmin=0, vmax=1, alpha=1)
-    ax1.imshow(np.where(ant_r_mask, image_crop_r, np.nan), cmap='Blues', vmin=0, vmax=1, alpha=1)
-    ax1.imshow(np.where(post_l_mask, image_crop_r, np.nan), cmap='Greens', vmin=0, vmax=1, alpha=1)
-    ax1.imshow(np.where(ant_l_mask, image_crop_r, np.nan), cmap='Purples', vmin=0, vmax=1, alpha=1)
+        # Plot each quadrant mask with a different color
+        ax1.imshow(np.where(post_r_mask, image_crop_r, np.nan), cmap='Reds', vmin=0, vmax=1, alpha=1)
+        ax1.imshow(np.where(ant_r_mask, image_crop_r, np.nan), cmap='Blues', vmin=0, vmax=1, alpha=1)
+        ax1.imshow(np.where(post_l_mask, image_crop_r, np.nan), cmap='Greens', vmin=0, vmax=1, alpha=1)
+        ax1.imshow(np.where(ant_l_mask, image_crop_r, np.nan), cmap='Purples', vmin=0, vmax=1, alpha=1)
 
-    ax1.imshow(image_crop_r > 0.5, cmap='gray', interpolation='nearest', vmin=0, vmax=1, alpha=.4)
+        ax1.imshow(image_crop_r > 0.5, cmap='gray', interpolation='nearest', vmin=0, vmax=1, alpha=.4)
 
-    _add_diameter_lines(ax1, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale)
-    # _add_ellipse(ax1, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale)
-    _setup_axis(ax1, 'Quadrants')
-    offset = 20  # pixel offset from centroid for annotation placement
-    ax1.text(x0 - offset, y0 - offset, f"PR:\n{quadrant_areas['area_quadrant_posterior_right']:.2f} mm²", color='red', fontsize=10, ha='center', va='bottom', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
-    ax1.text(x0 + offset, y0 - offset, f"AR:\n{quadrant_areas['area_quadrant_anterior_right']:.2f} mm²", color='blue', fontsize=10, ha='center', va='bottom', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
-    ax1.text(x0 - offset, y0 + offset, f"PL:\n{quadrant_areas['area_quadrant_posterior_left']:.2f} mm²", color='green', fontsize=10, ha='center', va='top', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
-    ax1.text(x0 + offset, y0 + offset, f"AL:\n{quadrant_areas['area_quadrant_anterior_left']:.2f} mm²", color='purple', fontsize=10, ha='center', va='top', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
-    ax1.text(0.75, 0.05, f"Ant. RL Symmetry: {symmetry_anterior_RL:.3f}", fontsize=10, ha='center', va='center', bbox=dict(facecolor='yellow', alpha=0.8, edgecolor='black'), transform=ax1.transAxes)
-    ax1.text(0.25, 0.05, f"Pos. RL Symmetry: {symmetry_posterior_RL:.3f}", fontsize=10, ha='center', va='center', bbox=dict(facecolor='yellow', alpha=0.8, edgecolor='black'), transform=ax1.transAxes)
+        _add_diameter_lines(ax1, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale)
+        # _add_ellipse(ax1, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale)
+        _setup_axis(ax1, 'Quadrants')
+        offset = 20  # pixel offset from centroid for annotation placement
+        ax1.text(x0 - offset, y0 - offset, f"PR:\n{quadrant_areas['area_quadrant_posterior_right']:.2f} mm²", color='red', fontsize=10, ha='center', va='bottom', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
+        ax1.text(x0 + offset, y0 - offset, f"AR:\n{quadrant_areas['area_quadrant_anterior_right']:.2f} mm²", color='blue', fontsize=10, ha='center', va='bottom', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
+        ax1.text(x0 - offset, y0 + offset, f"PL:\n{quadrant_areas['area_quadrant_posterior_left']:.2f} mm²", color='green', fontsize=10, ha='center', va='top', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
+        ax1.text(x0 + offset, y0 + offset, f"AL:\n{quadrant_areas['area_quadrant_anterior_left']:.2f} mm²", color='purple', fontsize=10, ha='center', va='top', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
+        ax1.text(0.75, 0.05, f"Ant. RL Symmetry: {symmetry_anterior_RL:.3f}", fontsize=10, ha='center', va='center', bbox=dict(facecolor='yellow', alpha=0.8, edgecolor='black'), transform=ax1.transAxes)
+        ax1.text(0.25, 0.05, f"Pos. RL Symmetry: {symmetry_posterior_RL:.3f}", fontsize=10, ha='center', va='center', bbox=dict(facecolor='yellow', alpha=0.8, edgecolor='black'), transform=ax1.transAxes)
 
-    ax1.legend(loc='upper right')
+        ax1.legend(loc='upper right')
 
-    # ---------------------------------
-    # Plot 2: Right-Left Symmetry
-    # ---------------------------------
-    ax2 = fig.add_subplot(1, 3, 2)
+        # ---------------------------------
+        # Plot 2: Right-Left Symmetry
+        # ---------------------------------
+        ax2 = fig.add_subplot(1, 3, 2)
 
-    # Plot each half with a different color
-    ax2.imshow(np.where(right_mask, image_crop_r, np.nan), cmap='Reds', vmin=0, vmax=1, alpha=1, label='Right')
-    ax2.imshow(np.where(left_mask, image_crop_r, np.nan), cmap='Blues', vmin=0, vmax=1, alpha=1, label='Left')
-    ax2.imshow(image_crop_r > 0.5, cmap='gray', interpolation='nearest', vmin=0, vmax=1, alpha=.4)
+        # Plot each half with a different color
+        ax2.imshow(np.where(right_mask, image_crop_r, np.nan), cmap='Reds', vmin=0, vmax=1, alpha=1, label='Right')
+        ax2.imshow(np.where(left_mask, image_crop_r, np.nan), cmap='Blues', vmin=0, vmax=1, alpha=1, label='Left')
+        ax2.imshow(image_crop_r > 0.5, cmap='gray', interpolation='nearest', vmin=0, vmax=1, alpha=.4)
 
-    _add_diameter_lines(ax2, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale)
-    # _add_ellipse(ax2, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale)
-    _setup_axis(ax2, 'Right-Left Symmetry')
-    ax2.text(x0, y0 - offset, f"Right:\n{right_area:.2f} mm²", color='red', fontsize=10, ha='center', va='center', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
-    ax2.text(x0, y0 + offset, f"Left:\n{left_area:.2f} mm²", color='blue', fontsize=10, ha='center', va='center', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
-    ax2.text(0.5, 0.05, f"RL Symmetry: {symmetry_RL:.3f}", fontsize=10, ha='center', va='center', bbox=dict(facecolor='yellow', alpha=0.8, edgecolor='black'), transform=ax2.transAxes)
+        _add_diameter_lines(ax2, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale)
+        # _add_ellipse(ax2, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale)
+        _setup_axis(ax2, 'Right-Left Symmetry')
+        ax2.text(x0, y0 - offset, f"Right:\n{right_area:.2f} mm²", color='red', fontsize=10, ha='center', va='center', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
+        ax2.text(x0, y0 + offset, f"Left:\n{left_area:.2f} mm²", color='blue', fontsize=10, ha='center', va='center', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
+        ax2.text(0.5, 0.05, f"RL Symmetry: {symmetry_RL:.3f}", fontsize=10, ha='center', va='center', bbox=dict(facecolor='yellow', alpha=0.8, edgecolor='black'), transform=ax2.transAxes)
 
-    # ---------------------------------
-    # Plot 3: Anterior-Posterior Symmetry
-    # ---------------------------------
-    ax3 = fig.add_subplot(1, 3, 3)
+        # ---------------------------------
+        # Plot 3: Anterior-Posterior Symmetry
+        # ---------------------------------
+        ax3 = fig.add_subplot(1, 3, 3)
 
-    # Plot each half with a different color
-    ax3.imshow(np.where(anterior_mask, image_crop_r, np.nan), cmap='Greens', vmin=0, vmax=1, alpha=1, label='Anterior')
-    ax3.imshow(np.where(posterior_mask, image_crop_r, np.nan), cmap='Purples', vmin=0, vmax=1, alpha=1, label='Posterior')
-    ax3.imshow(image_crop_r > 0.5, cmap='gray', interpolation='nearest', vmin=0, vmax=1, alpha=.4)
+        # Plot each half with a different color
+        ax3.imshow(np.where(anterior_mask, image_crop_r, np.nan), cmap='Greens', vmin=0, vmax=1, alpha=1, label='Anterior')
+        ax3.imshow(np.where(posterior_mask, image_crop_r, np.nan), cmap='Purples', vmin=0, vmax=1, alpha=1, label='Posterior')
+        ax3.imshow(image_crop_r > 0.5, cmap='gray', interpolation='nearest', vmin=0, vmax=1, alpha=.4)
 
-    _add_diameter_lines(ax3, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale)
-    # _add_ellipse(ax3, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale)
-    _setup_axis(ax3, 'Anterior-Posterior Symmetry')
-    ax3.text(x0 - offset, y0, f"Posterior:\n{posterior_area:.2f} mm²", color='purple', fontsize=10, ha='center', va='center', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
-    ax3.text(x0 + offset, y0, f"Anterior:\n{anterior_area:.2f} mm²", color='green', fontsize=10, ha='center', va='center', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
-    ax3.text(0.5, 0.05, f"AP Symmetry: {symmetry_AP:.3f}", fontsize=10, ha='center', va='center', bbox=dict(facecolor='yellow', alpha=0.8, edgecolor='black'), transform=ax3.transAxes)
+        _add_diameter_lines(ax3, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale)
+        # _add_ellipse(ax3, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale)
+        _setup_axis(ax3, 'Anterior-Posterior Symmetry')
+        ax3.text(x0 - offset, y0, f"Posterior:\n{posterior_area:.2f} mm²", color='purple', fontsize=10, ha='center', va='center', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
+        ax3.text(x0 + offset, y0, f"Anterior:\n{anterior_area:.2f} mm²", color='green', fontsize=10, ha='center', va='center', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
+        ax3.text(0.5, 0.05, f"AP Symmetry: {symmetry_AP:.3f}", fontsize=10, ha='center', va='center', bbox=dict(facecolor='yellow', alpha=0.8, edgecolor='black'), transform=ax3.transAxes)
 
-    # Save figure
-    os.makedirs('debug_figures', exist_ok=True)
-    fig.tight_layout()
-    fig.savefig(f'debug_figures/cord_quadrant_tmp_fig_slice_{iz:03d}.png', dpi=150)
-    # """
+        # Save figure
+        os.makedirs('debug_figures', exist_ok=True)
+        fig.tight_layout()
+        fig.savefig(f'debug_figures/cord_quadrant_tmp_fig_slice_{iz:03d}.png', dpi=150)
+        # """
 
     return quadrant_areas, symmetry_measures
 
