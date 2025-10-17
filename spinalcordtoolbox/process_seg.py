@@ -520,11 +520,11 @@ def _calculate_symmetry(seg_crop_r_rotated, centroid, dim, iz=None, verbose=1):
     :param verbose: Verbosity level for debug plotting.
     :return: symmetry_metrics: Dictionary with symmetry metrics for RL and AP axes.
     """
-    # Flip according to centroid position (centroid[1] is x, i.e. RL axis)
     y0, x0 = centroid
     y0 = int(round(y0))
     x0 = int(round(x0))
-    seg_crop_r_flipped = np.zeros_like(seg_crop_r_rotated)
+    # Create an empty array for flipped version of AP axis
+    seg_crop_r_flipped_AP = np.zeros_like(seg_crop_r_rotated)
 
     # Get bounding box of the segmentation (on the cropped segmentation, not the full one)
     coords = np.argwhere(seg_crop_r_rotated > 0)
@@ -534,24 +534,24 @@ def _calculate_symmetry(seg_crop_r_rotated, centroid, dim, iz=None, verbose=1):
     for y, x in coords[:, :2]:
         x_mirror = 2 * x0 - x
         if 0 <= x_mirror < seg_crop_r_rotated.shape[1]:
-            seg_crop_r_flipped[y, x_mirror] = seg_crop_r_rotated[y, x]
+            seg_crop_r_flipped_AP[y, x_mirror] = seg_crop_r_rotated[y, x]
     # Erase half of the segmentation to avoid bias
-    seg_crop_r_flipped[:, :x0] = 0
+    seg_crop_r_flipped_AP[:, :x0] = 0
     seg_crop_r_rotated_cut = np.copy(seg_crop_r_rotated)
     seg_crop_r_rotated_cut[:, :x0] = 0
     # Compute the intersection and union for the Dice coefficient
-    intersection_AP = np.sum(seg_crop_r_rotated_cut * seg_crop_r_flipped)
-    union_AP = np.sum(seg_crop_r_rotated_cut) + np.sum(seg_crop_r_flipped)
+    intersection_AP = np.sum(seg_crop_r_rotated_cut * seg_crop_r_flipped_AP)
+    union_AP = np.sum(seg_crop_r_rotated_cut) + np.sum(seg_crop_r_flipped_AP)
 
     # Compute the Dice coefficient
     symmetry_dice_AP = 2 * intersection_AP / union_AP if union_AP > 0 else 0
     symmetric_difference_AP = (union_AP - (2*intersection_AP)) * dim[0] * dim[1]
 
     # Compute Hausdorff distance as additional metric
-    hausdorff_distance_AP = skimage.metrics.hausdorff_distance(seg_crop_r_rotated_cut > 0.5, seg_crop_r_flipped > 0.5) * dim[0]
-    coords_AP = skimage.metrics.hausdorff_pair(seg_crop_r_rotated_cut > 0.5, seg_crop_r_flipped > 0.5)
+    hausdorff_distance_AP = skimage.metrics.hausdorff_distance(seg_crop_r_rotated_cut > 0.5, seg_crop_r_flipped_AP > 0.5) * dim[0]
+    coords_AP = skimage.metrics.hausdorff_pair(seg_crop_r_rotated_cut > 0.5, seg_crop_r_flipped_AP > 0.5)  # For debug plots
 
-    # Create an empty array for flipped version
+    # Create an empty array for flipped version of RL axis
     seg_crop_r_flipped_RL = np.zeros_like(seg_crop_r_rotated)
 
     # Flip around segmentation center (RL axis)
@@ -601,7 +601,7 @@ def _calculate_symmetry(seg_crop_r_rotated, centroid, dim, iz=None, verbose=1):
         plt.subplot(1, 2, 2)
         plt.imshow(seg_crop_r_rotated > 0.5, cmap='gray', vmin=0, vmax=0.1, alpha=1)
         plt.imshow(seg_crop_r_rotated_cut > 0.5, cmap='Reds', vmin=0, vmax=0.1, alpha=0.7)
-        plt.imshow(seg_crop_r_flipped > 0.5, cmap='Blues', vmin=0, vmax=0.1, alpha=0.4)
+        plt.imshow(seg_crop_r_flipped_AP > 0.5, cmap='Blues', vmin=0, vmax=0.1, alpha=0.4)
         plt.plot(x0, y0, 'go', markersize=5, label='Centroid')
 
         # Plot Hausdorff pair points and line for AP dice
