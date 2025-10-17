@@ -160,7 +160,7 @@ def test_sct_process_segmentation_check_normalize_PAM50(tmp_path):
     """ Run sct_process_segmentation with -normalize PAM50"""
     filename = str(tmp_path / 'tmp_file_out.csv')
     sct_process_segmentation.main(argv=['-i', sct_test_path('t2', 't2_seg-manual.nii.gz'), '-normalize-PAM50', '1',
-                                        '-perslice', '1', '-vertfile', sct_test_path('t2', 't2_seg-manual_labeled.nii.gz'), '-o', filename])
+                                        '-perslice', '1', '-discfile', sct_test_path('t2', 'labels.nii.gz'), '-o', filename])
     with open(filename, "r") as csvfile:
         reader = csv.DictReader(csvfile, delimiter=',')
         rows = list(reader)
@@ -175,7 +175,7 @@ def test_sct_process_segmentation_check_normalize_PAM50_missing_perslice(tmp_pat
     filename = str(tmp_path / 'tmp_file_out.csv')
     with pytest.raises(SystemExit) as e:
         sct_process_segmentation.main(argv=['-i', sct_test_path('t2', 't2_seg-manual.nii.gz'), '-normalize-PAM50', '1',
-                                            '-vertfile', sct_test_path('t2', 't2_seg-manual_labeled.nii.gz'), '-o', filename])
+                                            '-discfile', sct_test_path('t2', 'labels.nii.gz'), '-o', filename])
         assert e.value.code == 2
 
 
@@ -199,7 +199,7 @@ def test_sct_process_segmentation_check_both_discfile_vertfile(tmp_path):
 
 
 def test_sct_process_segmentation_check_discfile(tmp_path):
-    """ Run sct_process_segmentation with -vertfile and -discfile"""
+    """ Run sct_process_segmentation with-discfile"""
     filename = str(tmp_path / 'tmp_file_out.csv')
     sct_process_segmentation.main(argv=['-i', sct_test_path('t2', 't2_seg-manual.nii.gz'),
                                         '-vert', '1:10', '-perslice', '1',
@@ -215,7 +215,7 @@ def test_sct_process_segmentation_check_discfile(tmp_path):
 
 
 def test_sct_process_segmentation_symmetry(tmp_path):
-    """ Run sct_process_segmentation with -vertfile and -discfile"""
+    """ Run sct_process_segmentation with -symmetry and check the results"""
     filename = str(tmp_path / 'tmp_file_out.csv')
     sct_process_segmentation.main(argv=['-i', sct_test_path('t2', 't2_seg-manual.nii.gz'),
                                         '-vert', '1:10', '-perslice', '1',
@@ -231,7 +231,6 @@ def test_sct_process_segmentation_symmetry(tmp_path):
         assert float(row['MEAN(symmetry_hausdorff_AP)']) == pytest.approx(0.9055385138137417)
         assert float(row['MEAN(symmetry_difference_RL)']) == pytest.approx(7.768345054890907)
         assert float(row['MEAN(symmetry_difference_AP)']) == pytest.approx(7.182125561205922)
-
 
 
 @pytest.mark.sct_testing
