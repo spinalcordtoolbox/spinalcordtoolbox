@@ -316,7 +316,6 @@ def _properties2d(seg, dim, iz, angle_hog=None, verbose=1):
     :param angle_hog: Optional angle in radians to rotate the segmentation to align with AP/RL axes.
     :return:
     """
-    upscale = 1  # upscale factor for resampling the input segmentation (for better precision)
     pad = 3  # padding used for cropping
     # Check if slice is empty
     if np.all(seg < NEAR_ZERO_THRESHOLD):
@@ -341,8 +340,6 @@ def _properties2d(seg, dim, iz, angle_hog=None, verbose=1):
     # Use those bounding box coordinates to crop the segmentation (for faster processing)
     seg_crop = seg_norm[np.clip(minx-pad, 0, seg_bin.shape[0]): np.clip(maxx+pad, 0, seg_bin.shape[0]),
                         np.clip(miny-pad, 0, seg_bin.shape[1]): np.clip(maxy+pad, 0, seg_bin.shape[1])]
-    # Oversample segmentation to reach sufficient precision when computing shape metrics on the binary mask
-    #seg_crop_r = transform.pyramid_expand(seg_crop, upscale=upscale, sigma=None, order=1) TODO: to remove
     seg_crop_r = seg_crop
     # Binarize segmentation using threshold at 0.5 Necessary input for measure.regionprops
     seg_crop_r_bin = np.array(seg_crop_r > 0.5, dtype='uint8')
@@ -350,13 +347,13 @@ def _properties2d(seg, dim, iz, angle_hog=None, verbose=1):
     regions = measure.regionprops(seg_crop_r_bin, intensity_image=seg_crop_r)
     region = regions[0]
     # Compute area with weighted segmentation and adjust area with physical pixel size
-    area = np.sum(seg_crop_r) * dim[0] * dim[1] / upscale ** 2
+    area = np.sum(seg_crop_r) * dim[0] * dim[1]
     # Compute ellipse orientation, modulo pi, in deg, and between [0, 90]
     orientation = fix_orientation(region.orientation)
     # Find RL and AP diameter based on major/minor axes and cord orientation # TODO: remove
     [diameter_AP, diameter_RL] = \
         _find_AP_and_RL_diameter(region.major_axis_length, region.minor_axis_length, orientation,
-                                 [i / upscale for i in dim])
+                                 dim)
     # Deal with https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/2307
     if any(x in platform.platform() for x in ['Darwin-15', 'Darwin-16']):
         solidity = np.nan
@@ -379,7 +376,7 @@ def _properties2d(seg, dim, iz, angle_hog=None, verbose=1):
     seg_crop_r_rotated = _rotate_segmentation_by_angle(seg_crop_r, -region.orientation)
 
     # Measure diameters along AP and RL axes in the rotated segmentation
-    rotated_properties = _measure_rotated_diameters(seg_crop_r, seg_crop_r_rotated, dim, region.orientation, upscale,
+    rotated_properties = _measure_rotated_diameters(seg_crop_r, seg_crop_r_rotated, dim, region.orientation,
                                                     iz, properties, verbose)
     # Update the properties dictionary with the rotated properties
     properties.update(rotated_properties)
@@ -391,11 +388,11 @@ def _properties2d(seg, dim, iz, angle_hog=None, verbose=1):
         # Compute quadrant areas and RL and AP symmetry
         quadrant_areas, symmetry_measures = compute_quadrant_areas(seg_crop_r_rotated_hog, region.centroid, orientation_deg=0,
                                                                    area=area, diameter_AP=diameter_AP, diameter_RL=diameter_RL,
-                                                                   dim=dim, upscale=upscale, iz=iz, verbose=verbose)
+                                                                   dim=dim, iz=iz, verbose=verbose)
         # Update the properties dictionary with the rotated properties
         properties.update(quadrant_areas)
         properties.update(symmetry_measures)
-        symmetry_dice = _calculate_symmetry_dice(seg_crop_r_rotated_hog, region.centroid, iz=iz,    upscale=upscale, dim=dim)
+        symmetry_dice = _calculate_symmetry_dice(seg_crop_r_rotated_hog, region.centroid, iz=iz, dim=dim, verbose=verbose)
         properties.update(symmetry_dice)
     return properties
 
@@ -473,7 +470,7 @@ def _rotate_segmentation_by_angle(seg_crop_r, angle):
     return seg_crop_r_rotated
 
 
-def _measure_rotated_diameters(seg_crop_r, seg_crop_r_rotated, dim, angle, upscale, iz, properties, verbose):
+def _measure_rotated_diameters(seg_crop_r, seg_crop_r_rotated, dim, angle, iz, properties, verbose):
     """
     Measure the AP and RL diameters in the rotated segmentation.
     This function counts the number of pixels along the AP and RL axes in the rotated segmentation and converts them
@@ -483,7 +480,6 @@ def _measure_rotated_diameters(seg_crop_r, seg_crop_r_rotated, dim, angle, upsca
     :param seg_crop_r_rotated: Rotated segmentation (after applying angle) used to measure diameters. seg.shape[0] --> RL; seg.shape[1] --> PA
     :param dim: Physical dimensions of the segmentation (in mm). X,Y respectively correspond to RL,PA.
     :param angle: Rotation angle in radians (HOG angle found from the image)
-    :param upscale: Upscale factor used for resampling the segmentation
     :param iz: Integer slice number (z index) of the segmentation. Used for plotting purposes.
     :param properties: Dictionary containing the properties of the original (not-rotated) segmentation. Used for plotting purposes.
     :param verbose: Verbosity level. If 2, debug figures are created.
@@ -506,7 +502,7 @@ def _measure_rotated_diameters(seg_crop_r, seg_crop_r_rotated, dim, angle, upsca
     coord_ap = rl0_r
     
 
-    ap_diameter = ap_pixels * dim[1] / upscale
+    ap_diameter = ap_pixels * dim[1]
 
     # Store all the rotated properties
     result = {
@@ -517,12 +513,12 @@ def _measure_rotated_diameters(seg_crop_r, seg_crop_r_rotated, dim, angle, upsca
     # Debug plotting
     if verbose == 2:
         _debug_plotting_hog(angle, ap0_r, ap_diameter, dim, iz, properties, rl0_r, properties["diameter_RL_ellipse"],
-                            seg_crop_r_rotated, seg_crop_r, upscale, coord_ap)
+                            seg_crop_r_rotated, seg_crop_r, coord_ap)
 
     return result
 
 
-def _calculate_symmetry_dice(seg_crop_r_rotated, centroid, upscale, dim, iz=None, verbose=2):
+def _calculate_symmetry_dice(seg_crop_r_rotated, centroid, dim, iz=None, verbose=1):
     """
     Flip along the RL axis and compute the Dice coefficient between the original and flipped segmentation.
     :param seg_crop_r_rotated: Rotated segmentation (after applying angle) used to measure diameters. seg.shape[0] --> RL; seg.shape[1] --> PA
@@ -555,10 +551,10 @@ def _calculate_symmetry_dice(seg_crop_r_rotated, centroid, upscale, dim, iz=None
 
     # Compute the Dice coefficient
     symmetry_dice_AP = 2 * intersection_AP / union_AP if union_AP > 0 else 0
-    symmetric_difference_AP = (union_AP - (2*intersection_AP)) * dim[0] * dim[1] / (upscale**2)
+    symmetric_difference_AP = (union_AP - (2*intersection_AP)) * dim[0] * dim[1]
 
     # Compute Hausdorff distance as additional metric
-    hausdorff_distance_AP = skimage.metrics.hausdorff_distance(seg_crop_r_rotated_cut > 0.5, seg_crop_r_flipped > 0.5) * dim[0] / upscale
+    hausdorff_distance_AP = skimage.metrics.hausdorff_distance(seg_crop_r_rotated_cut > 0.5, seg_crop_r_flipped > 0.5) * dim[0]
     coords_AP = skimage.metrics.hausdorff_pair(seg_crop_r_rotated_cut > 0.5, seg_crop_r_flipped > 0.5)
 
     # Create an empty array for flipped version
@@ -578,10 +574,10 @@ def _calculate_symmetry_dice(seg_crop_r_rotated, centroid, upscale, dim, iz=None
 
     # Compute the Dice coefficient
     symmetry_dice_RL = 2 * intersection_RL / union_RL if union_RL > 0 else 0
-    symmetric_difference_RL = (union_RL - (2*intersection_RL)) * dim[0] * dim[1] / (upscale**2)
+    symmetric_difference_RL = (union_RL - (2*intersection_RL)) * dim[0] * dim[1]
 
     # Compute Hausdorff distance as additional metric
-    hausdorff_distance_RL = skimage.metrics.hausdorff_distance(seg_crop_r_rotated_cut_RL > 0.5, seg_crop_r_flipped_RL > 0.5) * dim[0] / upscale
+    hausdorff_distance_RL = skimage.metrics.hausdorff_distance(seg_crop_r_rotated_cut_RL > 0.5, seg_crop_r_flipped_RL > 0.5) * dim[0]
     coords_RL = skimage.metrics.hausdorff_pair(seg_crop_r_rotated_cut_RL > 0.5, seg_crop_r_flipped_RL > 0.5)
 
     symmetry_dice = {
@@ -682,7 +678,7 @@ def _calculate_symmetry(area1, area2, total_area, signed=True):
 
 def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, float], orientation_deg: float,
                            area: float, diameter_AP: float, diameter_RL: float,
-                           dim: list[float], upscale: int, iz: int, verbose=1) -> tuple[dict, dict]:
+                           dim: list[float], iz: int, verbose=1) -> tuple[dict, dict]:
     """
     Compute the cross-sectional area of the four spinal cord quadrants in the axial plane.
     Also calculates the symmetry of the spinal cord in the right-left (RL) and anterior-posterior (AP) directions.
@@ -696,7 +692,6 @@ def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, floa
     :param diameter_AP: AP diameter of the spinal cord in mm (used for debug plots).
     :param diameter_RL: RL diameter of the spinal cord in mm (used for debug plots).
     :param dim: [px, py] pixel dimensions in mm. X,Y respectively correspond to AP, RL.
-    :param upscale: Upsampling factor used during resampling.
     :param iz: Slice index used for filename in debug plot.
     :return: quadrant_areas (dict), symmetry_measures (dict)
         quadrant_areas is a dictionary with the area in mm² for each quadrant:
@@ -739,7 +734,7 @@ def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, floa
     ant_l_mask = (Yr >= 0) & (Xr >= 0)   # Anterior Left
 
     # Calculate physical area in mm²
-    pixel_area_mm2 = (dim[0] * dim[1]) / (upscale**2)
+    pixel_area_mm2 = (dim[0] * dim[1])
 
     # Sum areas for each quadrant - multiply by intensity values to account for the mask softness
     quadrant_areas = {
@@ -770,7 +765,7 @@ def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, floa
 
     # """"DEBUG
     if verbose == 2:
-        def _add_ellipse(ax, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale, edgecolor='orange',
+        def _add_ellipse(ax, centroid, diameter_AP, diameter_RL, orientation_rad, dim, edgecolor='orange',
                         linewidth=2.0):
             """
             Helper function to add an ellipse to a matplotlib axis.
@@ -780,8 +775,8 @@ def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, floa
 
             ellipse = Ellipse(
                 (x0, y0),
-                width=diameter_AP * upscale / dim[0],
-                height=diameter_RL * upscale / dim[1],
+                width=diameter_AP / dim[0],
+                height=diameter_RL / dim[1],
                 angle=math.degrees(orientation_rad),
                 edgecolor=edgecolor,
                 facecolor='none',
@@ -790,14 +785,14 @@ def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, floa
             )
             ax.add_patch(ellipse)
 
-        def _add_diameter_lines(ax, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale):
+        def _add_diameter_lines(ax, centroid, diameter_AP, diameter_RL, orientation_rad, dim):
             """
             Helper function to add diameter lines to a matplotlib axis.
             """
             y0, x0 = centroid
 
-            radius_ap = (diameter_AP / dim[0]) * 0.5 * upscale
-            radius_rl = (diameter_RL / dim[1]) * 0.5 * upscale
+            radius_ap = (diameter_AP / dim[0]) * 0.5
+            radius_rl = (diameter_RL / dim[1]) * 0.5
 
             dx_ap = radius_ap * np.cos(orientation_rad)
             dy_ap = radius_ap * np.sin(orientation_rad)
@@ -853,7 +848,7 @@ def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, floa
 
         ax1.imshow(image_crop_r > 0.5, cmap='gray', interpolation='nearest', vmin=0, vmax=1, alpha=.4)
 
-        _add_diameter_lines(ax1, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale)
+        _add_diameter_lines(ax1, centroid, diameter_AP, diameter_RL, orientation_rad, dim, )
         # _add_ellipse(ax1, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale)
         _setup_axis(ax1, 'Quadrants')
         offset = 20  # pixel offset from centroid for annotation placement
@@ -876,7 +871,7 @@ def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, floa
         ax2.imshow(np.where(left_mask, image_crop_r, np.nan), cmap='Blues', vmin=0, vmax=1, alpha=1, label='Left')
         ax2.imshow(image_crop_r > 0.5, cmap='gray', interpolation='nearest', vmin=0, vmax=1, alpha=.4)
 
-        _add_diameter_lines(ax2, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale)
+        _add_diameter_lines(ax2, centroid, diameter_AP, diameter_RL, orientation_rad, dim)
         # _add_ellipse(ax2, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale)
         _setup_axis(ax2, 'Right-Left Symmetry')
         ax2.text(x0, y0 - offset, f"Right:\n{right_area:.2f} mm²", color='red', fontsize=10, ha='center', va='center', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
@@ -893,7 +888,7 @@ def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, floa
         ax3.imshow(np.where(posterior_mask, image_crop_r, np.nan), cmap='Purples', vmin=0, vmax=1, alpha=1, label='Posterior')
         ax3.imshow(image_crop_r > 0.5, cmap='gray', interpolation='nearest', vmin=0, vmax=1, alpha=.4)
 
-        _add_diameter_lines(ax3, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale)
+        _add_diameter_lines(ax3, centroid, diameter_AP, diameter_RL, orientation_rad, dim)
         # _add_ellipse(ax3, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale)
         _setup_axis(ax3, 'Anterior-Posterior Symmetry')
         ax3.text(x0 - offset, y0, f"Posterior:\n{posterior_area:.2f} mm²", color='purple', fontsize=10, ha='center', va='center', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
@@ -910,7 +905,7 @@ def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, floa
 
 
 def _debug_plotting_hog(angle_hog, ap0_r, ap_diameter, dim, iz, properties, rl0_r, rl_diameter,
-                        rotated_bin, seg_crop_r, upscale, coord_ap):
+                        rotated_bin, seg_crop_r, coord_ap):
     """
     """
     def _add_labels(ax):
@@ -929,8 +924,8 @@ def _debug_plotting_hog(angle_hog, ap0_r, ap_diameter, dim, iz, properties, rl0_
         """Add an ellipse to the plot."""
         ellipse = Ellipse(
             (x0, y0),
-            width=properties['diameter_AP_ellipse'] * upscale / dim[0],
-            height=properties['diameter_RL_ellipse'] * upscale / dim[1],
+            width=properties['diameter_AP_ellipse'] / dim[0],
+            height=properties['diameter_RL_ellipse'] / dim[1],
             angle=properties['orientation']*180.0/math.pi,
             edgecolor='orange',
             facecolor='none',
@@ -958,8 +953,8 @@ def _debug_plotting_hog(angle_hog, ap0_r, ap_diameter, dim, iz, properties, rl0_
               np.cos(angle_hog + (90 * math.pi / 180)) * 25, color='black', width=0.1,
               head_width=1, label=f'HOG angle = {angle_hog * 180 / math.pi:.1f}°')  # convert to degrees
     # Add AP and RL diameters from the original segmentation obtained using skimage.regionprops
-    radius_ap = (properties['diameter_AP_ellipse'] / dim[0]) * 0.5 * upscale
-    radius_rl = (properties['diameter_RL_ellipse'] / dim[1]) * 0.5 * upscale
+    radius_ap = (properties['diameter_AP_ellipse'] / dim[0]) * 0.5
+    radius_rl = (properties['diameter_RL_ellipse'] / dim[1]) * 0.5
     dx_ap = radius_ap * np.cos(properties['orientation'])
     dy_ap = radius_ap * np.sin(properties['orientation'])
     dx_rl = radius_rl * -np.sin(properties['orientation'])
