@@ -10,14 +10,12 @@ import math
 import platform
 import numpy as np
 from skimage import measure, transform
-from scipy.signal import argrelextrema
-from scipy.signal import find_peaks
-
 import skimage
 from scipy.ndimage import map_coordinates, gaussian_filter1d
-from scipy.spatial.distance import euclidean
 import logging
 import matplotlib.pyplot as plt
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+from matplotlib.figure import Figure
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.aggregate_slicewise import Metric
@@ -813,11 +811,6 @@ def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, floa
             ax.set_xlabel(xlabel)
             ax.set_ylabel(ylabel)
             ax.set_title(title)
-
-        # Create a 1x3 figure: quadrants, right/left halves, anterior/posterior halves
-        import os
-        from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
-        from matplotlib.figure import Figure
 
         # Create masks for halves (combining quadrants)
         right_mask = post_r_mask | ant_r_mask  # Right half (posterior + anterior right)
