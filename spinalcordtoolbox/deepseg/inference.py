@@ -220,6 +220,34 @@ def segment_monai(path_img, tmpdir, predictor, device: torch.device):
     return [fname_out], [target]
 
 
+def average_nnunet_predictions(pred, probabilities=False):
+    """
+    Compute an average prediction for multi-fold output of `nnunetv2`.
+    
+    The averaging process will differ depending on whether `pred` contains probability maps or per-fold logits.
+    """
+    # If we saved the probabilities, `pred` is a tuple of (binary pred, prob map)
+    if probabilities:
+        _, prob_maps = pred
+        # In this case, pred is: pred[0] = list of softmax values per fold for class 0, pred[1] = list of softmax values per fold for class 1
+        ensembled_pred = np.zeros_like(prob_maps[0][1])
+        for prob_map in prob_maps:  # loop over folds
+            # The shape of the prob_map is (num_classes, z, y, x), so we keep only the non-background class (1)
+            # Similar to nnunet, the value of the soft max is the value of the probability map at class 1 if the value is greater than that of class 0
+            fold_pred = np.where(prob_map[1] > prob_map[0], prob_map[1], 0)
+            ensembled_pred += fold_pred
+        # Divide by number of folds to get the average
+        pred = ensembled_pred / len(prob_maps)
+        # We do not binarize the output, since we want the soft segmentation
+    else:
+        # We sum the elements of the list to get the ensembled output
+        ensembled_pred = np.sum(pred, axis=0)
+        # Divide by number of folds to get the average
+        pred = ensembled_pred / len(pred)
+        # Binarize the ensembled output at a low threshold to get the final segmentation
+        pred = binarize(pred, 0.5)
+
+
 def segment_nnunet(path_img, tmpdir, predictor, device: torch.device, ensemble=False, soft_ms_lesion=False):
     """
     This script is used to run inference on a single subject using a nnUNetV2 model.
@@ -289,28 +317,9 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device, ensemble=F
         # If using a model ensemble, return the logits per fold so we can average them ourselves
         return_logits_per_fold=True if ensemble else False
     )
-    # For the lesion_ms model, `pred` is a list of np.arrays, one per fold (beware of soft_ms_lesion which has a different output format)
+    # For the lesion_ms model, `pred` is a list of np.arrays, one per fold and needs averaging
     if ensemble:
-        # If we saved the probabilities, `pred` is a tuple of (binary pred, prob map)
-        if soft_ms_lesion:
-            _, prob_maps = pred
-            # In this case, pred is: pred[0] = list of softmax values per fold for class 0, pred[1] = list of softmax values per fold for class 1
-            ensembled_pred = np.zeros_like(prob_maps[0][1])
-            for prob_map in prob_maps:  # loop over folds
-                # The shape of the prob_map is (num_classes, z, y, x), so we keep only the non-background class (1)
-                # Similar to nnunet, the value of the soft max is the value of the probability map at class 1 if the value is greater than that of class 0
-                fold_pred = np.where(prob_map[1] > prob_map[0], prob_map[1], 0)
-                ensembled_pred += fold_pred
-            # Divide by number of folds to get the average
-            pred = ensembled_pred / len(prob_maps)
-            # We do not binarize the output, since we want the soft segmentation
-        else:
-            # We sum the elements of the list to get the ensembled output
-            ensembled_pred = np.sum(pred, axis=0)
-            # Divide by number of folds to get the average
-            pred = ensembled_pred / len(pred)
-            # Binarize the ensembled output at a low threshold to get the final segmentation
-            pred = binarize(pred, 0.5)
+      pred = average_nnunet_predictions(pred, probabilities=soft_ms_lesion)
     # Lastly, we undo the transpose to return the image from [z,y,x] (SimpleITK) to [x,y,z] (nibabel)
     pred = pred.transpose([2, 1, 0])
     img_out = img_in.copy()
