@@ -768,7 +768,7 @@ def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, floa
         _add_diameter_lines(ax1, centroid, diameter_AP, diameter_RL, orientation_rad, dim, )
         _setup_axis(ax1, 'Quadrants')
         offset = 20  # pixel offset from centroid for annotation placement
-        ax1.text(x0 - offset, y0 - offset, f"PR:\n{quadrant_areas['area_quadrant_posterior_right']:.2f} mm²", color='red', 
+        ax1.text(x0 - offset, y0 - offset, f"PR:\n{quadrant_areas['area_quadrant_posterior_right']:.2f} mm²", color='red',
                  fontsize=10, ha='center', va='bottom', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
         ax1.text(x0 + offset, y0 - offset, f"AR:\n{quadrant_areas['area_quadrant_anterior_right']:.2f} mm²", color='blue',
                  fontsize=10, ha='center', va='bottom', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
@@ -895,7 +895,6 @@ def _debug_plotting_hog(angle_hog, ap0_r, ap_diameter, dim, iz, properties, rl0_
         posterior = np.nonzero(rotated_bin_bin[coord_ap, :])[0][-1]
     else:
         anterior = posterior = np.nan
-    
     ax1.plot([anterior, posterior], [coord_ap, coord_ap], color='red', linestyle='--', linewidth=2,
              label=f'AP Diameter (rotated segmentation) = {ap_diameter:.2f} mm, coord_ap={coord_ap}')
     ax1.plot([ap0_r, ap0_r], [left, right], color='red', linestyle='solid', linewidth=2,
