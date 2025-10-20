@@ -213,8 +213,8 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
         else:
             angle_hog = None
         # Compute shape properties for this slice
-        shape_property = _properties2d(current_patch_scaled, [px, py], iz, angle_hog=angle_hog, verbose=verbose)
         if image is None or filter_size < 0:  # TODO and regularization term filter_size < 0
+            shape_property = _properties2d(current_patch_scaled, [px, py], iz, angle_hog=angle_hog, verbose=verbose)
             # If regularization is disabled or no image is provided,
             # loop through stored patches and compute properties the regular way
             if shape_property is not None:
