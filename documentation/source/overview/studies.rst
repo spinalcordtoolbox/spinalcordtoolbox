@@ -26,6 +26,7 @@ The following studies have used SCT:
 2025 
 ----
 
+-  Hernandez-Charpak *et al.* `Towards personalized mapping through lumbosacral spinal cord task fMRI <https://doi.org/10.1162/imag_a_00455>`_, **Imaging Neurosci.** 2025
 -  Fauziyya *et al.* `Magnetization transfer MRI (MT-MRI) detects white matter damage beyond the primary site of compression in degenerative cervical myelopathy using a novel semi-automated analysis <https://doi.org/10.1016/j.compbiomed.2025.111083>`_, **Comput. Biol. Med.** 2025
 -  Qi *et al.* `Structure Changes in the Cervical Spinal Cord and Brain in Children With Complete Thoracolumbar Spinal Cord Injury <https://doi.org/10.1177/15459683251369490>`_, **Neurorehabilit. Neural Repair** 2025
 -  Lobo *et al.* `Longitudinal Evaluation of Ataxia and Brain Structural Changes in RFC1-Related Disorder <https://doi.org/10.1002/mdc3.70344>`_, **Mov. Disord.** 2025
