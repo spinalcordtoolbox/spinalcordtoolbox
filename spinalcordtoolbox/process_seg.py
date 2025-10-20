@@ -705,26 +705,6 @@ def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, floa
 
     # """"DEBUG
     if verbose == 2:
-        def _add_ellipse(ax, centroid, diameter_AP, diameter_RL, orientation_rad, dim, edgecolor='orange',
-                        linewidth=2.0):
-            """
-            Helper function to add an ellipse to a matplotlib axis.
-            """
-            from matplotlib.patches import Ellipse
-            y0, x0 = centroid
-
-            ellipse = Ellipse(
-                (x0, y0),
-                width=diameter_AP / dim[0],
-                height=diameter_RL / dim[1],
-                angle=math.degrees(orientation_rad),
-                edgecolor=edgecolor,
-                facecolor='none',
-                linewidth=linewidth,
-                label=""
-            )
-            ax.add_patch(ellipse)
-
         def _add_diameter_lines(ax, centroid, diameter_AP, diameter_RL, orientation_rad, dim):
             """
             Helper function to add diameter lines to a matplotlib axis.
@@ -784,13 +764,16 @@ def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, floa
         ax1.imshow(image_crop_r > 0.5, cmap='gray', interpolation='nearest', vmin=0, vmax=1, alpha=.4)
 
         _add_diameter_lines(ax1, centroid, diameter_AP, diameter_RL, orientation_rad, dim, )
-        # _add_ellipse(ax1, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale)
         _setup_axis(ax1, 'Quadrants')
         offset = 20  # pixel offset from centroid for annotation placement
-        ax1.text(x0 - offset, y0 - offset, f"PR:\n{quadrant_areas['area_quadrant_posterior_right']:.2f} mm²", color='red', fontsize=10, ha='center', va='bottom', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
-        ax1.text(x0 + offset, y0 - offset, f"AR:\n{quadrant_areas['area_quadrant_anterior_right']:.2f} mm²", color='blue', fontsize=10, ha='center', va='bottom', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
-        ax1.text(x0 - offset, y0 + offset, f"PL:\n{quadrant_areas['area_quadrant_posterior_left']:.2f} mm²", color='green', fontsize=10, ha='center', va='top', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
-        ax1.text(x0 + offset, y0 + offset, f"AL:\n{quadrant_areas['area_quadrant_anterior_left']:.2f} mm²", color='purple', fontsize=10, ha='center', va='top', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
+        ax1.text(x0 - offset, y0 - offset, f"PR:\n{quadrant_areas['area_quadrant_posterior_right']:.2f} mm²", color='red', 
+                 fontsize=10, ha='center', va='bottom', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
+        ax1.text(x0 + offset, y0 - offset, f"AR:\n{quadrant_areas['area_quadrant_anterior_right']:.2f} mm²", color='blue',
+                 fontsize=10, ha='center', va='bottom', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
+        ax1.text(x0 - offset, y0 + offset, f"PL:\n{quadrant_areas['area_quadrant_posterior_left']:.2f} mm²", color='green',
+                 fontsize=10, ha='center', va='top', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
+        ax1.text(x0 + offset, y0 + offset, f"AL:\n{quadrant_areas['area_quadrant_anterior_left']:.2f} mm²", color='purple',
+                 fontsize=10, ha='center', va='top', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
         ax1.legend(loc='upper right')
 
         # ---------------------------------
@@ -822,8 +805,10 @@ def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, floa
         _add_diameter_lines(ax3, centroid, diameter_AP, diameter_RL, orientation_rad, dim)
         # _add_ellipse(ax3, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale)
         _setup_axis(ax3, 'Anterior-Posterior Symmetry')
-        ax3.text(x0 - offset, y0, f"Posterior:\n{posterior_area:.2f} mm²", color='purple', fontsize=10, ha='center', va='center', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
-        ax3.text(x0 + offset, y0, f"Anterior:\n{anterior_area:.2f} mm²", color='green', fontsize=10, ha='center', va='center', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
+        ax3.text(x0 - offset, y0, f"Posterior:\n{posterior_area:.2f} mm²", color='purple',
+                 fontsize=10, ha='center', va='center', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
+        ax3.text(x0 + offset, y0, f"Anterior:\n{anterior_area:.2f} mm²", color='green',
+                 fontsize=10, ha='center', va='center', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
 
         # Save figure
         os.makedirs('debug_figures_area_quadrants', exist_ok=True)
