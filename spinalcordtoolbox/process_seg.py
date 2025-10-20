@@ -491,7 +491,6 @@ def _measure_rotated_diameters(seg_crop_r, seg_crop_r_rotated, dim, angle, iz, p
     indices = np.array([i for i in range(rl0_r - extent_avg//2, rl0_r + extent_avg//2 + 1)])
     ap_pixels = np.sum(seg_crop_r_rotated[indices, :], axis=1).mean()
     coord_ap = rl0_r
-    
 
     ap_diameter = ap_pixels * dim[1]
 
@@ -865,7 +864,7 @@ def _debug_plotting_hog(angle_hog, ap0_r, ap_diameter, dim, iz, properties, rl0_
     # 1. Original segmentation
     seg_crop_r_bin = np.array(seg_crop_r > 0.5, dtype='uint8')  # binarize the original segmentation
     ax1.imshow(seg_crop_r_bin, cmap='gray', alpha=0.6, label='Original Segmentation')
-    #ax1.imshow(seg_crop_r_bin, cmap='Reds', alpha=1, label='Original Segmentation', vmin=0, vmax=1.3)
+    # ax1.imshow(seg_crop_r_bin, cmap='Reds', alpha=1, label='Original Segmentation', vmin=0, vmax=1.3)
     # Add ellipse fitted using skimage.regionprops
     _, _, [y0, x0] = compute_pca(seg_crop_r)
     # Center of mass in the original segmentation
@@ -883,9 +882,9 @@ def _debug_plotting_hog(angle_hog, ap0_r, ap_diameter, dim, iz, properties, rl0_
     dx_rl = radius_rl * -np.sin(properties['orientation'])
     dy_rl = radius_rl * np.cos(properties['orientation'])
     ax1.plot([x0 - dx_ap, x0 + dx_ap], [y0 - dy_ap, y0 + dy_ap], color='blue', linestyle='--', linewidth=2,
-              label=f'AP diameter (skimage.regionprops) = {properties["diameter_AP_ellipse"]:.2f} mm')
+             label=f'AP diameter (skimage.regionprops) = {properties["diameter_AP_ellipse"]:.2f} mm')
     ax1.plot([x0 - dx_rl, x0 + dx_rl], [y0 - dy_rl, y0 + dy_rl], color='blue', linestyle='solid', linewidth=2,
-              label=f'RL diameter (skimage.regionprops) = {properties["diameter_RL_ellipse"]:.2f} mm')
+             label=f'RL diameter (skimage.regionprops) = {properties["diameter_RL_ellipse"]:.2f} mm')
     # Add A, P, R, L labels
     _add_labels(ax1)
 
@@ -903,7 +902,7 @@ def _debug_plotting_hog(angle_hog, ap0_r, ap_diameter, dim, iz, properties, rl0_
         anterior = posterior = np.nan
     
     ax1.plot([anterior, posterior], [coord_ap, coord_ap], color='red', linestyle='--', linewidth=2,
-            label=f'AP Diameter (rotated segmentation) = {ap_diameter:.2f} mm, coord_ap={coord_ap}')
+             label=f'AP Diameter (rotated segmentation) = {ap_diameter:.2f} mm, coord_ap={coord_ap}')
     ax1.plot([ap0_r, ap0_r], [left, right], color='red', linestyle='solid', linewidth=2,
              label=f'RL Diameter (rotated segmentation) = {rl_diameter:.2f} mm')
 
