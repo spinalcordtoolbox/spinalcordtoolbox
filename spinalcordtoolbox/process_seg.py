@@ -479,6 +479,13 @@ def _measure_rotated_diameters(seg_crop_r, seg_crop_r_rotated, dim, angle, iz, p
     # Get center of mass (which is computed in the PCA function); centermass_src: [RL, AP] (assuming RPI orientation)
     # Note: I'm using [rl0, ap0] instead of [y0, x0] to make it easier to track the axes as numpy handle them in a bit unintuitive way :-D
     rotated_bin = np.array(seg_crop_r_rotated > 0.5, dtype='uint8')  # binarize the rotated segmentation for PCA
+    # Check if segmentation is empty after rotation
+    if np.all(rotated_bin < NEAR_ZERO_THRESHOLD):
+        logging.debug('The rotated segmentation is empty.')
+        return {
+            'ap_pixel_count': np.nan,
+            'diameter_AP': np.nan,
+        }
     _, _, [rl0, ap0] = compute_pca(rotated_bin)    # same as `y0, x0 = region.centroid`
     rl0_r, ap0_r = round(rl0), round(ap0)
 
