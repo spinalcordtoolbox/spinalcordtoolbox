@@ -509,7 +509,14 @@ TASKS = {
          },
     'lesion_ms':
         {'description': 'MS lesion segmentation on spinal cord MRI images',
-         'long_description': 'TODO',
+         'long_description': 'This segmentation model for spinal cord MS lesion segmentation uses a 3D U-Net architecture. It outputs a binary '
+                             'segmentation of MS lesions. The model was trained and evaluated on a large-scale dataset comprising 4,428 annotated '
+                             'images from 1,849 persons with MS across 23 imaging centers. The dataset included images acquired on GE, Siemens or '
+                             'Philips MRI systems, at 1.5T, 3T or 7T, using six distinct MRI contrasts: T2w (n=3,060), T2*w (n=548), PSIR '
+                             '(n=363), UNIT1 (reconstructed uniform image from MP2RAGE sequence, n=343), STIR (n=92), and T1w (n=22), and spans '
+                             '2D axial (n=2,895), 2D sagittal (n=1,160), and 3D (n=373) acquisition planes. The field-of-view coverage varied '
+                             'across sites (brain and upper SC, or SC only). Image resolution exhibited high variability, with an average '
+                             '(± standard deviation) of 1.10±1.13 x 0.51±0.24 x 3.27±1.95 mm³ reported in “RPI-” orientation ',
          'url': 'https://github.com/ivadomed/ms-lesion-agnostic',
          'models': ['model_seg_ms_lesion'],
          'citation': "TODO",  # noqa E501 (line too long),
