@@ -486,31 +486,32 @@ def _measure_rotated_diameters(seg_crop_r, seg_crop_r_rotated, dim, angle, iz, p
             'ap_pixel_count': np.nan,
             'diameter_AP': np.nan,
         }
-    _, _, [rl0, ap0] = compute_pca(rotated_bin)    # same as `y0, x0 = region.centroid`
-    rl0_r, ap0_r = round(rl0), round(ap0)
+    else:
+        _, _, [rl0, ap0] = compute_pca(rotated_bin)    # same as `y0, x0 = region.centroid`
+        rl0_r, ap0_r = round(rl0), round(ap0)
 
-    # Note: seg_crop_r_rotated is soft (due to the rotation) so we sum its values to account for softness
-    # Sum non-zero pixels along AP axis, i.e., the number of pixels in the row corresponding to the center of mass along the RL axis
-    # Compute AP diameter average acrross 3 mm extent centered at rl0_r
+        # Note: seg_crop_r_rotated is soft (due to the rotation) so we sum its values to account for softness
+        # Sum non-zero pixels along AP axis, i.e., the number of pixels in the row corresponding to the center of mass along the RL axis
+        # Compute AP diameter average acrross 3 mm extent centered at rl0_r
 
-    # Use centroid for AP diameter
-    extent_avg = 30  # extent used for averaging the minimum (to account for noise)
-    indices = np.array([i for i in range(rl0_r - extent_avg//2, rl0_r + extent_avg//2 + 1)])
-    ap_pixels = np.sum(seg_crop_r_rotated[indices, :], axis=1).mean()
-    coord_ap = rl0_r
+        # Use centroid for AP diameter
+        extent_avg = 30  # extent used for averaging the minimum (to account for noise)
+        indices = np.array([i for i in range(rl0_r - extent_avg//2, rl0_r + extent_avg//2 + 1)])
+        ap_pixels = np.sum(seg_crop_r_rotated[indices, :], axis=1).mean()
+        coord_ap = rl0_r
 
-    ap_diameter = ap_pixels * dim[1]
+        ap_diameter = ap_pixels * dim[1]
 
-    # Store all the rotated properties
-    result = {
-        'ap_pixel_count': ap_pixels,
-        'diameter_AP': ap_diameter,
-    }
+        # Store all the rotated properties
+        result = {
+            'ap_pixel_count': ap_pixels,
+            'diameter_AP': ap_diameter,
+        }
 
-    # Debug plotting
-    if verbose == 2:
-        _debug_plotting_hog(angle, ap0_r, ap_diameter, dim, iz, properties, rl0_r, properties["diameter_RL_ellipse"],
-                            seg_crop_r_rotated, seg_crop_r, coord_ap)
+        # Debug plotting
+        if verbose == 2:
+            _debug_plotting_hog(angle, ap0_r, ap_diameter, dim, iz, properties, rl0_r, properties["diameter_RL_ellipse"],
+                                seg_crop_r_rotated, seg_crop_r, coord_ap)
 
     return result
 
