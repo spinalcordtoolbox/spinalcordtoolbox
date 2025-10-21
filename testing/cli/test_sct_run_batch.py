@@ -121,14 +121,22 @@ def subject_yml(request, subject_dirs, tmp_path):
 
 
 # NB: We don't use @pytest.mark.parametrize() to set up the YML file because the YML fixture is parametrized instead
-def test_yml_containing_subjects(tmp_path, subject_dirs, dummy_script, subject_yml):
+@pytest.mark.parametrize("use_config_file", [False, True], ids=["argv", "config"])
+def test_yml_containing_subjects(tmp_path, subject_dirs, dummy_script, subject_yml, use_config_file):
     """Test that `-include-yml` and `-exclude-yml` properly filter subjects (e.g. sub-001, sub-002)."""
     # run script
     out = tmp_path / 'out'
     data_dir, sub_names = subject_dirs
     yml_type = 'include' if subject_yml.name == 'include.yml' else 'exclude'
-    sct_run_batch.main(argv=['-path-data', str(data_dir), '-path-out', str(out), '-script', dummy_script,
-                             f'-{yml_type}-yml', str(subject_yml)])
+
+    argv = ['-path-data', str(data_dir), '-path-output', str(out), '-script', dummy_script, f'-{yml_type}-yml', str(subject_yml)]
+    if use_config_file:
+        config_path = tmp_path / 'config.yml'
+        config = {arg_name[1:].replace("-", "_"): val for arg_name, val in zip(argv[::2], argv[1::2])}
+        with open(config_path, 'w') as fp:
+            yaml.dump(config, fp)
+        argv = ['-config', str(config_path)]
+    sct_run_batch.main(argv=argv)
 
     # test log contents to see which subjects were processed
     # - excluded subjects: no log file (subject was not processed)
