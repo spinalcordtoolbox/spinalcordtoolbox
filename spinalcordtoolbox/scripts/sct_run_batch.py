@@ -170,8 +170,7 @@ def get_parser():
 
                             The list will be treated differently depending on whether subjects or files are listed:
                               - Subject/session folders (e.g. `sub-01` or `sub-01/ses-01`): The same as `-include-list` (subject/session inclusion).
-                              - Files (e.g. `sub-01_ses-01_T1w.nii.gz`): The script will be run, and an environment variable called `INCLUDE_FILES` will be created
-                              containing the list of files. That way, you can choose to run specific processing steps within your script for only those files.
+                              - Files (ending in `.nii` or `.nii.gz`): The script will be run, and an environment variable called `INCLUDE_FILES` will be created containing the list of files. That way, you can choose to run specific processing steps within your script for only those files.
 
                             You can use the following `bash` syntax to process included files:
 
@@ -202,7 +201,7 @@ def get_parser():
 
                             The list will be treated differently depending on whether subjects or files are listed:
                               - Subject/session folders (e.g. `sub-01` or `sub-01/ses-01`): The same as `-exclude-list` (subject/session exclusion).
-                              - Files (e.g. `sub-01_ses-01_T1w.nii.gz`): The script will still be run, however an environment variable called `EXCLUDE_FILES` will be created containing the list of files. That way, you can choose to skip specific processing steps within your script.
+                              - Files (ending in `.nii` or `.nii.gz`): The script will still be run, however an environment variable called `EXCLUDE_FILES` will be created containing the list of files. That way, you can choose to skip specific processing steps within your script.
 
                             You can use the following `bash` syntax to skip files:
 
