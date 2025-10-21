@@ -879,8 +879,21 @@ class AnalyzeLesion:
 
         im_vert_and_lesion = im_vert * im_lesion  # to check which vertebral levels have lesions
 
+        # Compute volume of the original lesion
+        vol_bin_lesion = np.sum(im_lesion) * p_lst[0] * p_lst[1] * p_lst[2]
+        # Save volume into a text file
+        fname_vol_lesion_txt = os.path.join(self.wrk_dir, self.fname_mask.replace('.nii.gz', '.txt'))
+        with open(fname_vol_lesion_txt, 'w') as f:
+            f.write(f'Volume of the binary lesion: {vol_bin_lesion:.4f} mm³\n')
+
         # Soften the lesion to account for PVE
         im_lesion = self.__soften_lesion(im_mask_data=im_lesion)
+
+        # Compute volume of the soft lesion
+        vol_soft_lesion = np.sum(im_lesion) * p_lst[0] * p_lst[1] * p_lst[2]
+        # Save volume into the same text file
+        with open(fname_vol_lesion_txt, 'a') as f:
+            f.write(f'Volume of the soft lesion: {vol_soft_lesion:.4f} mm³\n')
 
         # loop over slices/vertlevels
         for row, indices_to_keep in sct_progress_bar(rows_with_total.items(), unit=self.row_name,
