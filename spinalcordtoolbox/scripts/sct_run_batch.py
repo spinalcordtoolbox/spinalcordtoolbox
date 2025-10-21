@@ -41,44 +41,56 @@ from stat import S_IEXEC
 csi_filter.register_codec()
 
 
+def parse_yml(fname_yml, self=None):
+    def _exception(self, message):
+        if self is None:
+            raise ValueError(message)
+        else:
+            raise argparse.ArgumentError(self, message)
+
+    try:
+        with open(fname_yml, 'r') as yaml_file:
+            yaml_contents = yaml.safe_load(yaml_file)
+    except Exception as e:
+        raise _exception(self, f"Could not read YML file {fname_yml}: {e}")
+
+    # collect lists of subjects/files
+    lists_to_merge = []
+    error_msg = f"The YML file {fname_yml} should contain a list of subjects or files (or multiple categories of lists)."
+    # parse dict format (i.e. QC reports that include categories such as `FILES_SEG:` and `FILES_REG:`)
+    if isinstance(yaml_contents, dict):
+        for parsed_value in yaml_contents.values():
+            if isinstance(parsed_value, list):
+                lists_to_merge.append(parsed_value)
+            else:
+                raise _exception(self, error_msg)
+    # parse list format (simple list of subjects/files recommended in docs)
+    elif isinstance(yaml_contents, list):
+        lists_to_merge.append(yaml_contents)
+    else:
+        raise _exception(self, error_msg)
+
+    # parse lists
+    set_entries = set()
+    for entry_list in lists_to_merge:
+        for entry in entry_list:
+            if not isinstance(entry, str):
+                raise _exception(self, f"The YML file {fname_yml} should contain filename strings, but encountered {entry}.")
+            set_entries.add(entry)
+
+    # sort entries into files or subjects
+    yaml_data = {
+        'files': [item for item in set_entries if (item.endswith('.nii') or item.endswith('.nii.gz'))],
+        'subjects': [item for item in set_entries if not (item.endswith('.nii') or item.endswith('.nii.gz'))]
+    }
+
+    return yaml_data
+
+
 class ParseYMLAction(argparse.Action):
     """Reads in a YML file and determines if it contains subjects and/or files."""
     def __call__(self, parser, namespace, values, option_string=None):
-        try:
-            with open(values, 'r') as yaml_file:
-                yaml_contents = yaml.safe_load(yaml_file)
-        except Exception as e:
-            raise argparse.ArgumentError(self, f"Could not read YML file {values}: {e}")
-
-        # collect lists of subjects/files
-        lists_to_merge = []
-        error_msg = f"The YML file {values} should contain a list of subjects or files (or multiple categories of lists)."
-        # parse dict format (i.e. QC reports that include categories such as `FILES_SEG:` and `FILES_REG:`)
-        if isinstance(yaml_contents, dict):
-            for parsed_value in yaml_contents.values():
-                if isinstance(parsed_value, list):
-                    lists_to_merge.append(parsed_value)
-                else:
-                    raise argparse.ArgumentError(self, error_msg)
-        # parse list format (simple list of subjects/files recommended in docs)
-        elif isinstance(yaml_contents, list):
-            lists_to_merge.append(yaml_contents)
-        else:
-            raise argparse.ArgumentError(self, error_msg)
-
-        # parse lists
-        set_entries = set()
-        for entry_list in lists_to_merge:
-            for entry in entry_list:
-                if not isinstance(entry, str):
-                    raise argparse.ArgumentError(self, f"The YML file {values} should contain filename strings, but encountered {entry}.")
-                set_entries.add(entry)
-
-        # sort entries into files or subjects
-        yaml_data = {
-            'files': [item for item in set_entries if (item.endswith('.nii') or item.endswith('.nii.gz'))],
-            'subjects': [item for item in set_entries if not (item.endswith('.nii') or item.endswith('.nii.gz'))]
-        }
+        yaml_data = parse_yml(values, self=self)
         setattr(namespace, self.dest, yaml_data)
 
 
@@ -474,6 +486,12 @@ def main(argv: Sequence[str]):
                 del config[k]  # Remove the unknown key
                 warnings.warn(UserWarning(
                     'Unknown key "{}" found in your configuration file, ignoring.'.format(k)))
+
+        # Invoke the "parse YML" function for include_yml and exclude_yml if they are included
+        # This is necessary because `.set_defaults` would otherwise bypass the custom action.
+        for arg in ["include_yml", "exclude_yml"]:
+            if arg in config:
+                config[arg] = parse_yml(config[arg])
 
         # Update the default to match the config
         parser.set_defaults(**config)
