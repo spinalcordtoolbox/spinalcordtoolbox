@@ -35,10 +35,9 @@ def create_nnunet_from_plans(path_model, device: 'torch.device', single_fold: bo
         raise FileNotFoundError(f"No 'fold_*' directories found in model path: {path_model}")
     folds_avail = 'all' if fold_dirs == ['fold_all'] else [int(f.split('_')[-1]) for f in fold_dirs]
     if single_fold:
-        folds_avail_temp = folds_avail
-        folds_avail = [1]  # use only fold 1 it exists for all models (as it was the best for the lesion_ms model)
-        if 1 not in folds_avail:
-            folds_avail = [folds_avail[0]]  # otherwise use the first fold available
+        # use only fold 1 it exists for all models (as it was the best for the lesion_ms model)
+        # otherwise use the first fold available
+        folds_avail = [1] if 1 in folds_avail else [folds_avail[0]]  
         print(f'Using single fold: {folds_avail} for inference instead of the full ensemble of {sorted(folds_avail_temp)}')
 
     # We prioritize 'checkpoint_final.pth', but fallback to 'checkpoint_best.pth' if not available
