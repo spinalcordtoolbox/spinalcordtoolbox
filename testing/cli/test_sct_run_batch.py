@@ -4,6 +4,8 @@ import glob
 import os
 import json
 import yaml
+import pathlib
+import itertools
 
 import pytest
 from stat import S_IEXEC
@@ -63,6 +65,111 @@ def dummy_script_with_file_exclusion(tmp_path):
     return path_out
 
 
+@pytest.fixture(scope='module')
+def subject_dirs(tmpdir_factory):
+    """Generate dummy BIDS-like dataset with subject anat directories."""
+    sub_names = ['sub-001', 'sub-002', 'sub-003', 'sub-010', 'sub-011', 'sub-012']
+    sub_dirs = []
+    data_dir = pathlib.Path(tmpdir_factory.mktemp('data'))
+    for sub in sub_names:
+        anat_dir = data_dir / sub / 'anat'
+        anat_dir.mkdir(parents=True)
+        sub_dirs.append(anat_dir)
+    return data_dir, sub_names
+
+
+def yml_file(tmp_path, subject_dirs, exclusion_type, yml_format, entry_type):
+    """
+    Function that generates an `include.yml` or `exclude.yml` file based on the given parameters.
+
+    :param tmp_path: Pytest fixture providing a pathlib.Path temporary directory.
+    :param subject_dirs: tuple containing the data directory path and list of subject names.
+    :param exclusion_type: str, either 'include' or 'exclude', indicating the type of YML file to create.
+    :param yml_format: str, either 'dict' or 'list', indicating the desired YML format.
+    :param entry_type: str, either 'subject' or 'filename', indicating the type of entries in the YML file.
+    """
+    # construct the entries based on exclusion_type and entry_type
+    _, sub_names = subject_dirs
+    yml_to_write = (sub_names[::2] if exclusion_type == "exclude"  # every 2nd subject is excluded
+                    else sub_names[1::2])                          # conversely, every other 2nd subject is included, too
+    yml_to_write = (yml_to_write if entry_type == 'subject'
+                    else [f"{sub}_T2w.nii.gz" for sub in yml_to_write])
+
+    # if 'dict' is specified, then mimic the YML formatting of the QC report (dict of lists)
+    if yml_format == 'dict':
+        yml_to_write = {f"FILES_{value}": [value] for value in yml_to_write}
+
+    # write the YML contents to a file
+    fname_yml = tmp_path / f'{exclusion_type}.yml'
+    with open(fname_yml, 'w') as fp:
+        yaml.dump(yml_to_write, fp)
+
+    return fname_yml
+
+
+# Parametrize the YML generation fixtures by exclusion_type and yml_format
+YML_PARAMETERS = list(itertools.product(
+    ['include', 'exclude'],  # exclusion_type
+    ['dict', 'list']         # yml_format
+))
+
+
+@pytest.fixture(params=YML_PARAMETERS, ids=["-".join(params) for params in YML_PARAMETERS])
+def subject_yml(request, subject_dirs, tmp_path):
+    """Generate a parametrized inclusion/exclusion YML file containing a list of subject names."""
+    return yml_file(tmp_path, subject_dirs, *request.param, entry_type="subject")
+
+
+# NB: We don't use @pytest.mark.parametrize() to set up the YML file because the YML fixture is parametrized instead
+def test_yml_containing_subjects(tmp_path, subject_dirs, dummy_script, subject_yml):
+    """Test that `-include-yml` and `-exclude-yml` properly filter subjects (e.g. sub-001, sub-002)."""
+    # run script
+    out = tmp_path / 'out'
+    data_dir, sub_names = subject_dirs
+    yml_type = 'include' if subject_yml.name == 'include.yml' else 'exclude'
+    sct_run_batch.main(argv=['-path-data', str(data_dir), '-path-out', str(out), '-script', dummy_script,
+                             f'-{yml_type}-yml', str(subject_yml)])
+
+    # test log contents to see which subjects were processed
+    # - excluded subjects: no log file (subject was not processed)
+    # - included subjects: non-empty log file (`echo` should be run for that subject)
+    script_name = os.path.splitext(os.path.basename(dummy_script))[0]
+    for sub in sub_names:
+        log_file = out / 'log' / f'{script_name}_{sub}.log'
+        if sub in sub_names[::2]:  # every 2nd subject is excluded
+            assert not log_file.exists()
+        else:
+            assert log_file.exists() and os.path.getsize(log_file) > 0
+
+
+@pytest.fixture(params=YML_PARAMETERS, ids=["-".join(params) for params in YML_PARAMETERS])
+def filename_yml(request, subject_dirs, tmp_path):
+    """Generate a parametrized inclusion/exclusion YML file containing a list of filenames."""
+    return yml_file(tmp_path, subject_dirs, *request.param,  entry_type="filename")
+
+
+# NB: We don't use @pytest.mark.parametrize() to set up the YML file because the YML fixture is parametrized instead
+def test_yml_containing_filenames(tmp_path, subject_dirs, dummy_script_with_file_exclusion, filename_yml):
+    """Test that `-include-yml` and `-exclude-yml` properly filter subject filenames (e.g. sub-001_T2w.nii.gz)."""
+    # run script
+    out = tmp_path / 'out'
+    data_dir, sub_names = subject_dirs
+    yml_type = 'include' if filename_yml.name == 'include.yml' else 'exclude'
+    sct_run_batch.main(argv=['-path-data', str(data_dir), '-path-out', str(out), '-script', dummy_script_with_file_exclusion,
+                             f'-{yml_type}-yml', str(filename_yml)])
+
+    # test log contents to see which subjects were processed
+    # - excluded subjects: empty log file (subject was processed but file was skipped, so `echo` should not be run)
+    # - included subjects: non-empty log file (`echo` should be run for that subject)
+    script_name = os.path.splitext(os.path.basename(dummy_script_with_file_exclusion))[0]
+    for sub in sub_names:
+        log_file = out / 'log' / f'{script_name}_{sub}.log'
+        if sub in sub_names[::2]:  # every 2nd subject is excluded
+            assert log_file.exists() and os.path.getsize(log_file) == 0
+        else:
+            assert log_file.exists() and os.path.getsize(log_file) > 0
+
+
 def test_config_with_args_warning(tmp_path, dummy_script):
     """
     Test that an error is thrown when trying to pass an argument ('-include') alongside a config file.
@@ -118,60 +225,6 @@ def test_only_one_include_exclude(tmp_path, dummy_script):
         sct_run_batch.main(['-exclude', 'arg', '-exclude-list', 'arg2',
                             '-path-data', str(data), '-path-out', str(out), '-script', dummy_script])
     assert e.value.code == 2  # Default error code given by `parser.error` within an ArgumentParser
-
-
-@pytest.mark.parametrize("entry_type", ['subject', 'file'])
-@pytest.mark.parametrize("yml_format", ['dict', 'list'])
-@pytest.mark.parametrize("__clude", ['include', 'exclude'])
-def test_yml(tmp_path, dummy_script, dummy_script_with_file_exclusion, entry_type, yml_format, __clude):
-    """
-    Test that `-include-yml` and `-exclude-yml` properly filter subjects or files depending on the contents of the YAML file.
-
-    NB: Both options should result in the same behavior, as long as the list of subjects is inverted.
-    """
-    # generate I/O folders
-    sub_dir_list = ['sub-001', 'sub-002', 'sub-003', 'sub-010', 'sub-011', 'sub-012']
-    data = tmp_path / 'data'
-    for sub in sub_dir_list:
-        (data / sub / 'anat').mkdir(parents=True)
-    out = tmp_path / 'out'
-
-    # generate `include.yml` or `exclude.yml` depending on test case
-    sub_exclude_list = sub_dir_list[::2]   # exclude every other subject
-    sub_include_list = sub_dir_list[1::2]  # include the non-excluded subjects
-    yml_to_write = sub_exclude_list if __clude == "exclude" else sub_include_list
-    yml_to_write = (yml_to_write if entry_type == 'subject'
-                    else [f"{sub}_T2w.nii.gz" for sub in yml_to_write])
-    # mimic the YML formatting of the QC report (dict of lists)
-    if yml_format == 'dict':
-        yml_to_write = {f"FILES_{value}": [value] for value in yml_to_write}
-    # write the YML contents to a file
-    fname_yml = tmp_path / f'{__clude}.yml'
-    with open(fname_yml, 'w') as fp:
-        yaml.dump(yml_to_write, fp)
-
-    # run script
-    script_to_run = dummy_script if entry_type == 'subject' else dummy_script_with_file_exclusion
-    sct_run_batch.main(argv=['-path-data', str(data), '-path-out', str(out), '-script', script_to_run,
-                             f'-{__clude}-yml', str(fname_yml)])
-
-    # test log contents to see which subjects were processed
-    script_name = os.path.splitext(os.path.basename(script_to_run))[0]
-    for sub in sub_dir_list:
-        # excluded subjects
-        log_file = out / 'log' / f'{script_name}_{sub}.log'
-        if sub in sub_exclude_list:
-            # subject exclusion: no log file (subject was not processed)
-            if entry_type == 'subject':
-                assert not log_file.exists()
-            # file exclusion: empty log file (`echo` should be skipped for that subject)
-            else:
-                assert entry_type == 'file'
-                assert log_file.exists() and os.path.getsize(log_file) == 0
-
-        # included subjects: non-empty log file (`echo` should be run for that subject)
-        else:
-            assert log_file.exists() and os.path.getsize(log_file) > 0
 
 
 def test_directory_inclusion_exclusion():
