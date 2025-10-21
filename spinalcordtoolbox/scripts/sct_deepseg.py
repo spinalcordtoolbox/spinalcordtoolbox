@@ -297,6 +297,20 @@ def get_parser(subparser_to_return=None):
                      "More details on TotalSpineSeg's two models can be found here: https://github.com/neuropoly/totalspineseg/?tab=readme-ov-file#model-description",
                 choices=(0, 1),
                 default=0)
+        if task_name == 'lesion_ms':
+            # Add possibility of having soft segmentation for the lesion_ms task
+            params.add_argument(
+                "-soft-ms-lesion",
+                action="store_true",
+                help="If set, the model will output a soft segmentation (i.e. probability map) instead of a binary "
+                     "segmentation."
+            )
+            # Add possibility of segmenting on only 1 fold for quicker inference
+            params.add_argument(
+                "-single-fold",
+                action="store_true",
+                help="If set, only 1 fold will be used for inference instead of the full 5-fold ensemble. This will speed up inference, but may reduce segmentation quality."
+            )
 
         # Add input cropping note specific to the `lesion_ms_mp2rage` task
         if task_name == 'lesion_ms_mp2rage':
@@ -306,23 +320,6 @@ def get_parser(subparser_to_return=None):
             data must be cropped around the spinal cord.
             ({models.CROP_MESSAGE})
         """)
-
-        # Add possibility of having soft segmentation for the lesion_ms task
-        if task_name == 'lesion_ms':
-            params.add_argument(
-                "-soft-ms-lesion",
-                action="store_true",
-                help="If set, the model will output a soft segmentation (i.e. probability map) instead of a binary "
-                     "segmentation."
-            )
-
-        # Add possibility of segmenting on only 1 fold for quicker inference
-        if task_name == 'lesion_ms':
-            params.add_argument(
-                "-single-fold",
-                action="store_true",
-                help="If set, only 1 fold will be used for inference instead of the full 5-fold ensemble. This will speed up inference, but may reduce segmentation quality."
-            )
 
         # Suppress arguments that are irrelevant for certain tasks
         # - Sagittal view is not currently supported for rootlets/totalspineseg QC
