@@ -222,7 +222,7 @@ def segment_monai(path_img, tmpdir, predictor, device: torch.device):
 def average_nnunet_predictions(pred, probabilities=False):
     """
     Compute an average prediction for multi-fold output of `nnunetv2`.
-    
+
     The averaging process will differ depending on whether `pred` contains probability maps or per-fold logits.
     """
     # If we saved the probabilities, `pred` is a tuple of (binary pred, prob map)
@@ -319,7 +319,7 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device, ensemble=F
     )
     # For the lesion_ms model, `pred` is a list of np.arrays, one per fold and needs averaging
     if ensemble:
-      pred = average_nnunet_predictions(pred, probabilities=soft_ms_lesion)
+        pred = average_nnunet_predictions(pred, probabilities=soft_ms_lesion)
     # Lastly, we undo the transpose to return the image from [z,y,x] (SimpleITK) to [x,y,z] (nibabel)
     pred = pred.transpose([2, 1, 0])
     img_out = img_in.copy()
