@@ -519,7 +519,7 @@ TASKS = {
                              '(± standard deviation) of 1.10±1.13 x 0.51±0.24 x 3.27±1.95 mm³ reported in “RPI-” orientation ',
          'url': 'https://github.com/ivadomed/ms-lesion-agnostic',
          'models': ['model_seg_ms_lesion'],
-         'citation': "TODO",  # noqa E501 (line too long),
+         'citation': "",  # TODO: #5062 (Update when new study is published)
          'group': 'pathology'
          },
     'sc_canal_t2':
