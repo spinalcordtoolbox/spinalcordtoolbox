@@ -26,6 +26,11 @@ The following studies have used SCT:
 2025 
 ----
 
+-  Hernandez-Charpak *et al.* `Towards personalized mapping through lumbosacral spinal cord task fMRI <https://doi.org/10.1162/imag_a_00455>`_, **Imaging Neurosci.** 2025
+-  Fauziyya *et al.* `Magnetization transfer MRI (MT-MRI) detects white matter damage beyond the primary site of compression in degenerative cervical myelopathy using a novel semi-automated analysis <https://doi.org/10.1016/j.compbiomed.2025.111083>`_, **Comput. Biol. Med.** 2025
+-  Qi *et al.* `Structure Changes in the Cervical Spinal Cord and Brain in Children With Complete Thoracolumbar Spinal Cord Injury <https://doi.org/10.1177/15459683251369490>`_, **Neurorehabilit. Neural Repair** 2025
+-  Lobo *et al.* `Longitudinal Evaluation of Ataxia and Brain Structural Changes in RFC1-Related Disorder <https://doi.org/10.1002/mdc3.70344>`_, **Mov. Disord.** 2025
+-  Usuda *et al.* `Quantitative comparison of uncrossed corticospinal tracts arising from different cortical areas in humans <https://doi.org/10.1016/j.neures.2025.104954>`_, **Neuroscience Research** 2025
 -  Witt *et al.* `Leveling up: along-level diffusion tensor imaging in the spinal cord of multiple sclerosis patients <https://doi.org/10.3389/fnimg.2025.1599966>`_, **Front. Neuroimaging** 2025
 -  Khan *et al.* `Quantitative assessment of asymptomatic spinal cord compression using MRI: a multi-center study <https://doi.org/10.1007/s11357-025-01837-w>`_, **GeroScience** 2025
 -  Cappelle *et al.* `The value of manual MRI measurements of brain and spinal cord for daily clinical practice in Multiple Sclerosis subjects: a scoping review <https://doi.org/10.1016/j.msard.2025.106670>`_, **Mult. Scler. Relat. Disord.** 2025

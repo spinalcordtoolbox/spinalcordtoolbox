@@ -428,7 +428,18 @@ TASKS = {
                              'subject, 45 images).',
          'url': 'https://github.com/ivadomed/model-spinal-rootlets',
          'models': ['model_seg_spinal_rootlets_nnunet'],
-         'citation': None
+         'citation': textwrap.dedent("""
+             ```bibtex
+             @misc{krejci2025rootletsegdeeplearningmethod,
+                   title={RootletSeg: Deep learning method for spinal rootlets segmentation across MRI contrasts}, 
+                   author={Katerina Krejci and Jiri Chmelik and Sandrine Bédard and Falk Eippert and Ulrike Horn and Virginie Callot and Julien Cohen-Adad and Jan Valosek},
+                   year={2025},
+                   eprint={2509.16255},
+                   archivePrefix={arXiv},
+                   primaryClass={q-bio.TO},
+                   url={https://arxiv.org/abs/2509.16255}, 
+             }
+             ```"""),  # noqa E501 (line too long)
          },
     'gm_wm_mouse_t1':
         {'description': 'Exvivo mouse GM/WM segmentation for T1w contrast',

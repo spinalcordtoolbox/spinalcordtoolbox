@@ -5,8 +5,15 @@
 # acvl_utils is a utility package used by `nnunetv2`. v0.2.1 broke usage of `nnunetv2`, so skip it:
 # See: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4679
 acvl_utils!=0.2.1
+# blosc2 is a utility package used by `nnunetv2`, and v3.9.0 required `numpy==2.0`
+# However, 3.9.0 specifically forgot to specify `>=2.0`, so it will break if installed alongside `numpy==1.26`
+# 3.9.1 and above re-added `numpy==1.26` support, so it is safe to skip this version but allow newer versions
+# See: https://github.com/Blosc/python-blosc2/issues/485
+blosc2!=3.9.0
 # Avoid 1.6 and 1.7 due to method=restore bug: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4209#issuecomment-1739644328
 dipy==1.8.0
+# Avoid 3.15.0 due to known build errors on older versions of macOS (https://github.com/h5py/h5py/issues/2720)
+h5py!=3.15.0
 # PyTorch's Linux distribution is very large due to its GPU support,
 # but we only need that for training models. Our users only need CPU.
 --extra-index-url https://download.pytorch.org/whl/cpu # append_to_freeze
@@ -37,6 +44,9 @@ nilearn
 nnunetv2-neuropoly
 # SCT is compatible, however the upgrade to numpy==2.0.0 broke *many* upstream packages. Let's try again later. See https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4535
 numpy<2
+# This is a sub-package of `numpy` whose update broke compatibility with older versions of `numpy`. 
+# This was fixed in 2.14.1. See also: https://github.com/pydata/numexpr/issues/540
+numexpr!=2.14.0
 # - 1.7.0>onnxruntime>=1.5.1 required `brew install libomp` on macOS.
 #   So, pin to >=1.7.0 to avoid having to ask users to install libomp.
 # - Avoid version 1.16.0 due to: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4225

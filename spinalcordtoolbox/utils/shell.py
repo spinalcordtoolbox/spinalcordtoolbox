@@ -305,30 +305,34 @@ class SCTArgumentParser(argparse.ArgumentParser):
             nargs='?',
             metavar=Metavar.file,
             action=TimeProfilingAction,
-            help="Enables time-based profiling of the program, dumping the results to the specified file.\n"
-                 "\n"
-                 "If no file is specified, human-readable results are placed into a 'time_profiling_results.txt' "
-                 f"document in the current directory ('{os.getcwd()}'). If the specified file is a `.prof` file, the "
-                 "file will instead be in binary format, ready for use with common post-profiler utilities (such as "
-                 "`snakeviz`)."
+            help=argparse.SUPPRESS
+            # TODO: Find a way to only show these "developer" util helpers in certain contexts
+            # help="Enables time-based profiling of the program, dumping the results to the specified file.\n"
+            #      "\n"
+            #      "If no file is specified, human-readable results are placed into a 'time_profiling_results.txt' "
+            #      f"document in the current directory ('{os.getcwd()}'). If the specified file is a `.prof` file, the "
+            #      "file will instead be in binary format, ready for use with common post-profiler utilities (such as "
+            #      "`snakeviz`)."
         )
         arg_group.add_argument(
             '-trace-memory',
             nargs='?',
             metavar=Metavar.folder,
             action=MemoryTracingAction,
-            help="Enables memory tracing of the program.\n"
-                 "\n"
-                 "When active, a measure of the peak memory (in KiB) will be output to the file `peak_memory.txt`. "
-                 "Optionally, developers can also modify the SCT code to add additional `snapshot_memory()` calls. "
-                 "These calls will 'snapshot' the memory usage at that moment, saving the memory trace at that point "
-                 "into a second file (`memory_snapshots.txt`).\n"
-                 "\n"
-                 f"By default, both outputs will be placed in the current directory ('{os.getcwd()}'). Optionally, you "
-                 "may provide an alternative directory (`-trace-memory <dir_name>`), in which case all files will "
-                 "be placed in that directory instead.\n"
-                 "Note that this WILL incur an overhead to runtime, so it is generally advised that you do not run "
-                 "this in conjunction with the time profiler or in time-sensitive contexts."
+            help=argparse.SUPPRESS
+            # TODO: Find a way to only show these "developer" util helpers in certain contexts
+            # help="Enables memory tracing of the program.\n"
+            #      "\n"
+            #      "When active, a measure of the peak memory (in KiB) will be output to the file `peak_memory.txt`. "
+            #      "Optionally, developers can also modify the SCT code to add additional `snapshot_memory()` calls. "
+            #      "These calls will 'snapshot' the memory usage at that moment, saving the memory trace at that point "
+            #      "into a second file (`memory_snapshots.txt`).\n"
+            #      "\n"
+            #      f"By default, both outputs will be placed in the current directory ('{os.getcwd()}'). Optionally, you "
+            #      "may provide an alternative directory (`-trace-memory <dir_name>`), in which case all files will "
+            #      "be placed in that directory instead.\n"
+            #      "Note that this WILL incur an overhead to runtime, so it is generally advised that you do not run "
+            #      "this in conjunction with the time profiler or in time-sensitive contexts."
         )
 
         # Return the arg_group to allow for chained operations
@@ -396,6 +400,25 @@ def list_type(delimiter, subtype, length=None):
         return vals
 
     return list_typecast_func
+
+
+def positive_int_type(input_value):
+    """
+        Type function which can be used with argparse's `type` option. This
+        allows for more complex type parsing, enforcing the requirement of an
+        input integer to be positive.
+    """
+    try:
+        int_value = int(input_value)         # cast first to check for type errors
+        if int_value != float(input_value):  # allow "1" and "1.0" but not "1.5"
+            raise ValueError("non-integer number encountered")
+        if int_value < 0:
+            raise ValueError("negative integer encountered")
+        if int_value == 0:
+            raise ValueError("zero encountered")
+    except ValueError as e:
+        raise ValueError(f"expected positive integer, got {input_value}") from e
+    return int_value
 
 
 class Metavar(str, Enum):
