@@ -708,14 +708,14 @@ class AnalyzeLesion:
             d_slice = dist_out - dist_in  # negative inside the mask
             d[:, :, slice] = d_slice
 
-        # Gaussian CDF over 2D axial slices
+        # Gaussian CDF (Cumulative distribution function) over 2D axial slices
         soft_mask = np.zeros(im_mask_data.shape)
-        num_of_pix = 2
+        num_of_pix = 3
         sigma = 0.39 * num_of_pix  # voxel units (0.39 ≈ 1 voxel: ~2.56 STDs span the 10-90% range, so 1/2.56 ≈ 0.39)
 
         for slice in range(im_mask_data.shape[2]):
             d_slice = d[:, :, slice]
-            soft_mask[:, :, slice] = norm.cdf((-d_slice + 1) / sigma)   # +1 to have 0.5 at the boundary
+            soft_mask[:, :, slice] = norm.cdf(-d_slice / sigma)
 
         return soft_mask
 
@@ -801,10 +801,11 @@ class AnalyzeLesion:
         vol_mask_tot = 0.0  # vol tot of this lesion through the vertebral levels and PAM50 tracts
         im_vert_and_lesion = im_vert * im_lesion  # to check which vertebral levels have lesions
 
-        # # Soften the lesion to account for PVE
-        # im_lesion = self.__soften_lesion(im_mask_data=im_lesion)
-        # Simple Gaussian smoothing
-        im_lesion = smooth(im_lesion, sigmas=[0.5, 0.5, 0])  # sigma corresponding to half the voxel size
+        # Soften the lesion to account for PVE
+        im_lesion = self.__soften_lesion(im_mask_data=im_lesion)
+
+        # # Simple Gaussian smoothing
+        # im_lesion = smooth(im_lesion, sigmas=[0.5, 0.5, 0])  # sigma corresponding to half the voxel size
 
         # Loop over slices or vertebral levels
         for row, indices_to_keep in sct_progress_bar(self.rows.items(), unit=self.row_name,
@@ -883,20 +884,20 @@ class AnalyzeLesion:
         # Compute volume of the original lesion
         vol_bin_lesion = np.sum(im_lesion) * p_lst[0] * p_lst[1] * p_lst[2]
         # Save volume into a text file
-        fname_vol_lesion_txt = os.path.join(self.wrk_dir, self.fname_mask.replace('.nii.gz', '-gaussian_filter_2D.txt'))
+        fname_vol_lesion_txt = os.path.join(self.wrk_dir, self.fname_mask.replace('.nii.gz', '-CDF_2D.txt'))
         with open(fname_vol_lesion_txt, 'w') as f:
             f.write(f'Volume of the binary lesion: {vol_bin_lesion:.4f} mm³\n')
 
-        # # Soften the lesion to account for PVE
-        # im_lesion = self.__soften_lesion(im_mask_data=im_lesion)
+        # Soften the lesion to account for PVE
+        im_lesion = self.__soften_lesion(im_mask_data=im_lesion)
 
-        # Simple Gaussian smoothing
-        im_lesion = smooth(im_lesion, sigmas=[0.5, 0.5, 0])  # sigma corresponding to half the voxel size
+        # # Simple Gaussian smoothing
+        # im_lesion = smooth(im_lesion, sigmas=[0.5, 0.5, 0])  # sigma corresponding to half the voxel size
 
         # Save the soft lesion
         img_smoothed_lesion = Image(self.fname_label)
         img_smoothed_lesion.data = im_lesion
-        fname_smoothed_lesion = os.path.join(self.wrk_dir, self.fname_mask.replace('.nii.gz', '-gaussian_filter_2D.nii.gz'))
+        fname_smoothed_lesion = os.path.join(self.wrk_dir, self.fname_mask.replace('.nii.gz', '-CDF_2D.nii.gz'))
         img_smoothed_lesion.save(fname_smoothed_lesion)
         printv(f'  Soft lesion saved as: {fname_smoothed_lesion}', self.verbose, type='info')
 
