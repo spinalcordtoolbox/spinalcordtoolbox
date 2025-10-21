@@ -639,7 +639,7 @@ def install_model(name_model, custom_url=None):
                 logger.info(f"\nInstalling '{seed_name}'...")
                 urls_used[seed_name] = download.install_data(model_urls, target_directory, keep=True,
                                                              dirs_to_preserve=dirs_to_preserve)
-    # Write `source.json` (for model provenance / updating) # noqa: W291
+    # Write `source.json` (for model provenance / updating)
     source_dict = {
         'model_name': name_model,
         'model_urls': urls_used,
