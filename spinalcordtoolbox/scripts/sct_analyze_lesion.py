@@ -713,7 +713,7 @@ class AnalyzeLesion:
 
         # Gaussian CDF (Cumulative distribution function) over 2D axial slices
         soft_mask = np.zeros(im_mask_data.shape)
-        num_of_pix = 3
+        num_of_pix = 1
         sigma = 0.39 * num_of_pix  # voxel units (0.39 ≈ 1 voxel: ~2.56 STDs span the 10-90% range, so 1/2.56 ≈ 0.39)
 
         for slice in range(im_mask_data.shape[2]):
@@ -891,7 +891,7 @@ class AnalyzeLesion:
         # Compute volume of the original lesion
         vol_bin_lesion = np.sum(im_lesion) * p_lst[0] * p_lst[1] * p_lst[2]
         # Save volume into a text file
-        fname_vol_lesion_txt = os.path.join(self.wrk_dir, self.fname_mask.replace('.nii.gz', '-CDF_2D_sigma3_normalized_volume.txt'))
+        fname_vol_lesion_txt = os.path.join(self.wrk_dir, self.fname_mask.replace('.nii.gz', '-CDF_2D_sigma1_normalized_volume.txt'))
         with open(fname_vol_lesion_txt, 'w') as f:
             f.write(f'Volume of the binary lesion: {vol_bin_lesion:.4f} mm³\n')
 
@@ -904,7 +904,7 @@ class AnalyzeLesion:
         # Save the soft lesion
         img_smoothed_lesion = Image(self.fname_label)
         img_smoothed_lesion.data = im_lesion
-        fname_smoothed_lesion = os.path.join(self.wrk_dir, self.fname_mask.replace('.nii.gz', '-CDF_2D_sigma3_normalized_volume.nii.gz'))
+        fname_smoothed_lesion = os.path.join(self.wrk_dir, self.fname_mask.replace('.nii.gz', '-CDF_2D_sigma1_normalized_volume.nii.gz'))
         img_smoothed_lesion.save(fname_smoothed_lesion)
         printv(f'  Soft lesion saved as: {fname_smoothed_lesion}', self.verbose, type='info')
 
