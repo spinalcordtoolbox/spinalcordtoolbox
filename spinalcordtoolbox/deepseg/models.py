@@ -624,33 +624,21 @@ def install_model(name_model, custom_url=None):
             tss_init.init_inference(data_path=Path(folder(name_model)), quiet=False, dict_urls=url_field,
                                     store_export=False)  # Avoid having duplicate .zip files stored on disk
             urls_used = url_field
-        # For the ms_lesion model, we need to regroup the folds together
-        elif name_model == 'model_seg_ms_lesion':
-            urls_used = {}
-            for i, fold in enumerate(url_field.keys()):
-                if i == 0:
-                    urls_used[fold] = download.install_data(url_field[fold], folder(name_model), dirs_to_preserve=("nnUNetTrainer",))
-                else:
-                    urls_used[fold] = download.install_data(url_field[fold], folder(os.path.join(name_model, fold)))
-                    # Then move folder foldi to nnUNetTrainer... folder
-                    src = folder(os.path.join(name_model, fold, f"fold_{i}"))
-                    # Find the destination folder which starts with nnUNetTrainer
-                    dst = os.path.join(folder(name_model), next(d for d in os.listdir(folder(name_model)) if d.startswith("nnUNetTrainer")))
-                    if not os.path.exists(dst):
-                        raise FileNotFoundError(f"Could not find destination folder {dst}")
-                    else:
-                        # Move contents of src inside dst
-                        shutil.move(src, os.path.join(dst, f"fold_{i}"))
-            # Then we remove all folders which are not nnUNetTrainer... (leftover from downloading each fold separately)
-            for d in os.listdir(folder(name_model)):
-                if not d.startswith("nnUNetTrainer"):
-                    shutil.rmtree(os.path.join(folder(name_model), d))
         else:
             urls_used = {}
             for seed_name, model_urls in url_field.items():
+                # For the ms_lesion model, we need to regroup the folds together
+                # For lesion_ms, we can extract all the folds to the same `nnunetTrainer` directory 
+                if name_model == "model_seg_ms_lesion":
+                    target_directory = folder(name_model)
+                    dirs_to_preserve = ("nnUNetTrainer",)
+                # For other multi-seed models, create subfolders for each seed
+                else:
+                    target_directory = folder(os.path.join(name_model, seed_name))
+                    dirs_to_preserve = ()
                 logger.info(f"\nInstalling '{seed_name}'...")
-                urls_used[seed_name] = download.install_data(model_urls,
-                                                             folder(os.path.join(name_model, seed_name)), keep=True)
+                urls_used[seed_name] = download.install_data(model_urls, target_directory, keep=True,
+                                                             dirs_to_preserve=dirs_to_preserve)
     # Write `source.json` (for model provenance / updating)
     source_dict = {
         'model_name': name_model,
