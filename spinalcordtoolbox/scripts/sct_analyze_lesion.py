@@ -17,6 +17,7 @@ from scipy.ndimage import center_of_mass, distance_transform_edt
 from scipy.stats import norm
 
 from spinalcordtoolbox.image import Image, rpi_slice_to_orig_orientation
+from spinalcordtoolbox.math import smooth
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
 from spinalcordtoolbox.metadata import read_label_file
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
@@ -800,8 +801,10 @@ class AnalyzeLesion:
         vol_mask_tot = 0.0  # vol tot of this lesion through the vertebral levels and PAM50 tracts
         im_vert_and_lesion = im_vert * im_lesion  # to check which vertebral levels have lesions
 
-        # Soften the lesion to account for PVE
-        im_lesion = self.__soften_lesion(im_mask_data=im_lesion)
+        # # Soften the lesion to account for PVE
+        # im_lesion = self.__soften_lesion(im_mask_data=im_lesion)
+        # Simple Gaussian smoothing
+        im_lesion = smooth(im_lesion, sigmas=[0.5, 0.5, 0.5])  # sigma corresponding to half the voxel size
 
         # Loop over slices or vertebral levels
         for row, indices_to_keep in sct_progress_bar(self.rows.items(), unit=self.row_name,
@@ -882,17 +885,20 @@ class AnalyzeLesion:
         # Compute volume of the original lesion
         vol_bin_lesion = np.sum(im_lesion) * p_lst[0] * p_lst[1] * p_lst[2]
         # Save volume into a text file
-        fname_vol_lesion_txt = os.path.join(self.wrk_dir, self.fname_mask.replace('.nii.gz', '.txt'))
+        fname_vol_lesion_txt = os.path.join(self.wrk_dir, self.fname_mask.replace('.nii.gz', '-gaussian_filter_3D.txt'))
         with open(fname_vol_lesion_txt, 'w') as f:
             f.write(f'Volume of the binary lesion: {vol_bin_lesion:.4f} mm³\n')
 
-        # Soften the lesion to account for PVE
-        im_lesion = self.__soften_lesion(im_mask_data=im_lesion)
+        # # Soften the lesion to account for PVE
+        # im_lesion = self.__soften_lesion(im_mask_data=im_lesion)
+
+        # Simple Gaussian smoothing
+        im_lesion = smooth(im_lesion, sigmas=[0.5, 0.5, 0.5])  # sigma corresponding to half the voxel size
 
         # Save the soft lesion
         img_smoothed_lesion = Image(self.fname_label)
         img_smoothed_lesion.data = im_lesion
-        fname_smoothed_lesion = os.path.join(self.wrk_dir, self.fname_mask)
+        fname_smoothed_lesion = os.path.join(self.wrk_dir, self.fname_mask.replace('.nii.gz', '-gaussian_filter_3D.nii.gz'))
         img_smoothed_lesion.save(fname_smoothed_lesion)
         printv(f'  Soft lesion saved as: {fname_smoothed_lesion}', self.verbose, type='info')
 
