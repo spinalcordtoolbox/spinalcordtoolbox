@@ -889,6 +889,13 @@ class AnalyzeLesion:
         # Soften the lesion to account for PVE
         im_lesion = self.__soften_lesion(im_mask_data=im_lesion)
 
+        # Save the soft lesion
+        img_smoothed_lesion = Image(self.fname_label)
+        img_smoothed_lesion.data = im_lesion
+        fname_smoothed_lesion = os.path.join(self.wrk_dir, self.fname_mask)
+        img_smoothed_lesion.save(fname_smoothed_lesion)
+        printv(f'  Soft lesion saved as: {fname_smoothed_lesion}', self.verbose, type='info')
+
         # Compute volume of the soft lesion
         vol_soft_lesion = np.sum(im_lesion) * p_lst[0] * p_lst[1] * p_lst[2]
         # Save volume into the same text file
