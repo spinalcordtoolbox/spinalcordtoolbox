@@ -44,8 +44,11 @@ csi_filter.register_codec()
 class ParseYMLAction(argparse.Action):
     """Reads in a YML file and determines if it contains subjects and/or files."""
     def __call__(self, parser, namespace, values, option_string=None):
-        with open(values, 'r') as yaml_file:
-            yaml_contents = yaml.safe_load(yaml_file)
+        try:
+            with open(values, 'r') as yaml_file:
+                yaml_contents = yaml.safe_load(yaml_file)
+        except Exception as e:
+            raise argparse.ArgumentError(self, f"Could not read YML file {values}: {e}")
 
         # collect lists of subjects/files
         lists_to_merge = []
@@ -56,19 +59,19 @@ class ParseYMLAction(argparse.Action):
                 if isinstance(parsed_value, list):
                     lists_to_merge.append(parsed_value)
                 else:
-                    raise ValueError(error_msg)
+                    raise argparse.ArgumentError(self, error_msg)
         # parse list format (simple list of subjects/files recommended in docs)
         elif isinstance(yaml_contents, list):
             lists_to_merge.append(yaml_contents)
         else:
-            raise ValueError(error_msg)
+            raise argparse.ArgumentError(self, error_msg)
 
         # parse lists
         set_entries = set()
         for entry_list in lists_to_merge:
             for entry in entry_list:
                 if not isinstance(entry, str):
-                    raise ValueError(f"The YML file {values} should contain filename strings, but encountered {entry}.")
+                    raise argparse.ArgumentError(self, f"The YML file {values} should contain filename strings, but encountered {entry}.")
                 set_entries.add(entry)
 
         # sort entries into files or subjects
