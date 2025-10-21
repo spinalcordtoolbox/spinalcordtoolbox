@@ -880,8 +880,6 @@ class AnalyzeLesion:
         for tract_id in atlas_data:
             self.distrib_matrix_dct[sheet_name][f"PAM50_{tract_id:02}"] = [0] * len(rows_with_total)
 
-        im_vert_and_lesion = im_vert * im_lesion  # to check which vertebral levels have lesions
-
         # Compute volume of the original lesion
         vol_bin_lesion = np.sum(im_lesion) * p_lst[0] * p_lst[1] * p_lst[2]
         # Save volume into a text file
@@ -901,6 +899,8 @@ class AnalyzeLesion:
         fname_smoothed_lesion = os.path.join(self.wrk_dir, self.fname_mask.replace('.nii.gz', '-gaussian_filter_3D.nii.gz'))
         img_smoothed_lesion.save(fname_smoothed_lesion)
         printv(f'  Soft lesion saved as: {fname_smoothed_lesion}', self.verbose, type='info')
+
+        im_vert_and_lesion = im_vert * im_lesion  # to check which vertebral levels have lesions
 
         # Compute volume of the soft lesion
         vol_soft_lesion = np.sum(im_lesion) * p_lst[0] * p_lst[1] * p_lst[2]
