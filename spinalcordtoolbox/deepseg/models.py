@@ -628,7 +628,7 @@ def install_model(name_model, custom_url=None):
             urls_used = {}
             for seed_name, model_urls in url_field.items():
                 # For the ms_lesion model, we need to regroup the folds together
-                # For lesion_ms, we can extract all the folds to the same `nnunetTrainer` directory 
+                # For lesion_ms, we can extract all the folds to the same `nnunetTrainer` directory
                 if name_model == "model_seg_ms_lesion":
                     target_directory = folder(name_model)
                     dirs_to_preserve = ("nnUNetTrainer",)
