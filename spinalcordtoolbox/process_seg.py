@@ -193,6 +193,8 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
         # Store basic properties and angles to be used later after regularization
         if image is not None:
             # compute PCA and get center or mass based on segmentation; centermass_src: [RL, AP] (assuming RPI orientation)
+            # Change Nan for zeros to avoid problems in PCA computation
+            current_patch_scaled[np.isnan(current_patch_scaled)] = 0
             coord_src, pca_src, centermass_src = compute_pca(current_patch_scaled)
             # Finds the angle of the image
             # TODO: explore different sigma values for the HOG method, i.e., the influence how far away pixels will vote for the orientation.
