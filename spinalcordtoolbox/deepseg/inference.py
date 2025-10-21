@@ -245,6 +245,7 @@ def average_nnunet_predictions(pred, probabilities=False):
         pred = ensembled_pred / len(pred)
         # Binarize the ensembled output at a low threshold to get the final segmentation
         pred = binarize(pred, 0.5)
+    return pred
 
 
 def segment_nnunet(path_img, tmpdir, predictor, device: torch.device, ensemble=False, soft_ms_lesion=False):
