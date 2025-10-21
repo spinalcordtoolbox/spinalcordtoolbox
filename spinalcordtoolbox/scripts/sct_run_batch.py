@@ -606,10 +606,10 @@ def main(argv: Sequence[str]):
 
     subject_dirs = _parse_dataset_directory(path_data, arguments.subject_prefix, arguments.ignore_ses)
 
-    if sum([arg is not None for arg in [arguments.include, arguments.include_list, arguments.include_yml]]) > 1:
+    if sum(arg is not None for arg in [arguments.include, arguments.include_list, arguments.include_yml]) > 1:
         parser.error('Only one of `include`, `include-list`, and `include-yml` can be used')
 
-    if sum([arg is not None for arg in [arguments.exclude, arguments.exclude_list, arguments.exclude_yml]]) > 1:
+    if sum(arg is not None for arg in [arguments.exclude, arguments.exclude_list, arguments.exclude_yml]) > 1:
         parser.error('Only one of `exclude`, `exclude-list`, and `exclude-yml` can be used')
 
     # Check `-include-list` (or if `-include-yml` contains subjects)
