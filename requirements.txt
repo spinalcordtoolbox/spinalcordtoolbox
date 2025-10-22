@@ -33,13 +33,15 @@ monai[nibabel]
 msvc-runtime==14.42.34433; sys.platform == 'win32' # append_to_freeze
 nibabel
 nilearn
-# Only allow nnunetv2==2.3.1 or 2.5.1 (NB: there is no 2.5.0)
+# - Notes for stock `nnunetv2`:
 # 2.3.0 and below are incompatible due to breaking API change (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4380)
 # 2.4.0/2.4.1 fail during inference due to https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4444
 # 2.4.2 causes empty predictions (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4556)
-# 2.6 includes an API change that requires `torch>=2.3`. However, `torch==2.3` removes 
+# 2.6 includes an API change that requires `torch>=2.3`. However, `torch==2.3` removes
 # support for Intel Macs, and we don't want to remove support, so we use `<2.6`.
-nnunetv2>2.3.0,!=2.4.*,<2.6
+# - Notes for `nnunetv2-neuropoly` (our fork):
+# 2.6+ is now compatible with older versions of torch (>=2.1.2), so we can use the latest version.
+nnunetv2-neuropoly
 # SCT is compatible, however the upgrade to numpy==2.0.0 broke *many* upstream packages. Let's try again later. See https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4535
 numpy<2
 # This is a sub-package of `numpy` whose update broke compatibility with older versions of `numpy`. 
@@ -75,7 +77,7 @@ requirements-parser
 scipy
 scikit-image
 scikit-learn
-totalspineseg
+totalspineseg[neuropoly]
 xlwt
 # - torch<2.6: In January 2025, PyTorch changed the default of `torch.load()` to `weights_only=True`, breaking the
 #              loading of some of our models. We can set `weights_only=False` to retain the old behavior, however

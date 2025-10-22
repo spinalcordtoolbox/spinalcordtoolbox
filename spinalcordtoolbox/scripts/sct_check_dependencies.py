@@ -75,6 +75,8 @@ def resolve_module(framework_name):
         # `matplotlib_inline` is only needed to run SCT scripts in Jupyter notebooks, and IPython would already be
         # installed in the parent context. So, we map `matplotlib-inline` to None to skip import (which would fail).
         'matplotlib-inline': (None, False),
+        # The `nnunetv2-neuropoly` fork maps to the `nnunetv2` name
+        'nnunetv2-neuropoly': ('nnunetv2', False),
     }
 
     try:
