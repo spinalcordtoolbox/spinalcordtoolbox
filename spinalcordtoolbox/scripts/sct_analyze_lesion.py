@@ -700,7 +700,7 @@ class AnalyzeLesion:
         :return: 3D numpy array, softened lesion mask
         """
 
-        bin_mask_volume = np.sum(im_mask_data)
+        # bin_mask_volume = np.sum(im_mask_data)
 
         # Exact Euclidean distance transform (EDT) over 2D axial slices
         d = np.zeros(im_mask_data.shape)
@@ -720,9 +720,9 @@ class AnalyzeLesion:
             d_slice = d[:, :, slice]
             soft_mask[:, :, slice] = norm.cdf(-d_slice / sigma)
 
-        soft_mask_volume = np.sum(soft_mask)
-        # Rescale to get the same total volume as the original binary mask
-        soft_mask = soft_mask * (bin_mask_volume / soft_mask_volume)
+        # soft_mask_volume = np.sum(soft_mask)
+        # # Rescale to get the same total volume as the original binary mask
+        # soft_mask = soft_mask * (bin_mask_volume / soft_mask_volume)
 
         return soft_mask
 
@@ -891,7 +891,7 @@ class AnalyzeLesion:
         # Compute volume of the original lesion
         vol_bin_lesion = np.sum(im_lesion) * p_lst[0] * p_lst[1] * p_lst[2]
         # Save volume into a text file
-        fname_vol_lesion_txt = os.path.join(self.wrk_dir, self.fname_mask.replace('.nii.gz', '-CDF_2D_sigma1_normalized_volume.txt'))
+        fname_vol_lesion_txt = os.path.join(self.wrk_dir, self.fname_mask.replace('.nii.gz', '-CDF_2D_sigma1.txt'))
         with open(fname_vol_lesion_txt, 'w') as f:
             f.write(f'Volume of the binary lesion: {vol_bin_lesion:.4f} mm³\n')
 
@@ -904,7 +904,7 @@ class AnalyzeLesion:
         # Save the soft lesion
         img_smoothed_lesion = Image(self.fname_label)
         img_smoothed_lesion.data = im_lesion
-        fname_smoothed_lesion = os.path.join(self.wrk_dir, self.fname_mask.replace('.nii.gz', '-CDF_2D_sigma1_normalized_volume.nii.gz'))
+        fname_smoothed_lesion = os.path.join(self.wrk_dir, self.fname_mask.replace('.nii.gz', '-CDF_2D_sigma1.nii.gz'))
         img_smoothed_lesion.save(fname_smoothed_lesion)
         printv(f'  Soft lesion saved as: {fname_smoothed_lesion}', self.verbose, type='info')
 
