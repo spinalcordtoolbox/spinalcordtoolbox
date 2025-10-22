@@ -182,9 +182,13 @@ MODELS = {
         "default": False,
     },
     "model_seg_ms_lesion": {
-         "url": [
-             "https://github.com/ivadomed/ms-lesion-agnostic/releases/download/r20250626/20250626_model_fold0_ESMRMB_abstract.zip"
-         ],
+         "url": {
+            "model_fold0": ["https://github.com/ivadomed/ms-lesion-agnostic/releases/download/r20250909/model_fold0.zip"],
+            "model_fold1": ["https://github.com/ivadomed/ms-lesion-agnostic/releases/download/r20250909/model_fold1.zip"],
+            "model_fold2": ["https://github.com/ivadomed/ms-lesion-agnostic/releases/download/r20250909/model_fold2.zip"],
+            "model_fold3": ["https://github.com/ivadomed/ms-lesion-agnostic/releases/download/r20250909/model_fold3.zip"],
+            "model_fold4": ["https://github.com/ivadomed/ms-lesion-agnostic/releases/download/r20250909/model_fold4.zip"]
+         },
          "description": "Segmentation of spinal cord MS lesions",
          "contrasts": ["any"],
          "thr": None,  # Images are already binarized
@@ -517,31 +521,16 @@ TASKS = {
     'lesion_ms':
         {'description': 'MS lesion segmentation on spinal cord MRI images',
          'long_description': 'This segmentation model for spinal cord MS lesion segmentation uses a 3D U-Net architecture. It outputs a binary '
-                             'segmentation of MS lesions. We used a foundational model, pretrained on over 10,000 CT scans. The model was fine-tuned '
-                             'and tested on datasets including 20 sites, 1850 patients and 4430 volumes. The datasets, mostly coming from “real world” '
-                             'clinical scans at 1.5T and 3T (on GE, Siemens and Philips), included: T1w (n=23), T2w (n=3061), T2*w (n=548), '
-                             'PSIR (n=363), STIR (n=92), MP2RAGE-UNI (n=343). The field-of-view coverage varied across sites (some included the brain '
-                             'and the upper cord, while others only included the spinal cord), and acquisitions were either 2D (axial: 2895, sagittal: 1169) '
-                             'or 3D (n=366), with voxel dimensions ranging from 0.2x0.2x5 mm3 to 0.8x0.8x9 mm3. ',
+                             'segmentation of MS lesions. The model was trained and evaluated on a large-scale dataset comprising 4,428 annotated '
+                             'images from 1,849 persons with MS across 23 imaging centers. The dataset included images acquired on GE, Siemens or '
+                             'Philips MRI systems, at 1.5T, 3T or 7T, using six distinct MRI contrasts: T2w (n=3,060), T2*w (n=548), PSIR '
+                             '(n=363), UNIT1 (reconstructed uniform image from MP2RAGE sequence, n=343), STIR (n=92), and T1w (n=22), and spans '
+                             '2D axial (n=2,895), 2D sagittal (n=1,160), and 3D (n=373) acquisition planes. The field-of-view coverage varied '
+                             'across sites (brain and upper SC, or SC only). Image resolution exhibited high variability, with an average '
+                             '(± standard deviation) of 1.10±1.13 x 0.51±0.24 x 3.27±1.95 mm³ reported in “RPI-” orientation ',
          'url': 'https://github.com/ivadomed/ms-lesion-agnostic',
          'models': ['model_seg_ms_lesion'],
-         'citation': textwrap.dedent("""
-             ```bibtex
-             @inproceedings{BenvenisteUnknown-ja,
-                 author={Benveniste, Pierre-Louis and Lee, Lisa Eunyoung and Prat, Alexandre and Vavasour, Zachary and Tam, Roger and Traboulsee,
-                 Anthony and Kolind, Shannon and Oh, Jiwon and Chen, Michelle and Tsagkas, Charidimos and Granziera, Christina and Laines Medina,
-                 Nilser and Muhlau, Mark and Kirschke, Jan and McGinnis, Julian and Reich, Daniel S and Hemond, Christopher and Callot, Virginie
-                 and Demortière, Sarah and Audoin, Bertrand and Nair, Govind and Filippi, Massimo and Valsasina, Paola and Rocca, Maria A and
-                 Ciccarelli, Olga and Yiannakas, Marios and Granberg, Tobias and Ouellette, Russell and Tauhid, Shahamat and Bakshi, Rohit and
-                 Mainero, Caterina and Treaba, Constantina Andrada and Kerbrat,  Anne and Bannier, Elise and Edan, Gilles and Labauge, Pierre and
-                 O'Grady, Kristin P and Smith, Seth A and Shepherd, Timothy M and Charlson, Erik and Brisset, Jean-Christophe and Talbott, Jason
-                 and Liu, Yaou and Lombaert, Hervé and Cohen-Adad, Julien},
-                 title={Reinforcing the generalizability of spinal cord multiple sclerosis lesion segmentation models},
-                 booktitle={Proceedings of the 41st Annual Scientific Meeting of the ESMRMB},
-                 year={2025},
-                 address={Marseille, France},
-             }
-             ```"""),  # noqa E501 (line too long),
+         'citation': "",  # TODO: #5062 (Update when new study is published)
          'group': 'pathology'
          },
     'sc_canal_t2':
@@ -649,9 +638,18 @@ def install_model(name_model, custom_url=None):
         else:
             urls_used = {}
             for seed_name, model_urls in url_field.items():
+                # For the ms_lesion model, we need to regroup the folds together
+                # For lesion_ms, we can extract all the folds to the same `nnunetTrainer` directory
+                if name_model == "model_seg_ms_lesion":
+                    target_directory = folder(name_model)
+                    dirs_to_preserve = ("nnUNetTrainer",)
+                # For other multi-seed models, create subfolders for each seed
+                else:
+                    target_directory = folder(os.path.join(name_model, seed_name))
+                    dirs_to_preserve = ()
                 logger.info(f"\nInstalling '{seed_name}'...")
-                urls_used[seed_name] = download.install_data(model_urls,
-                                                             folder(os.path.join(name_model, seed_name)), keep=True)
+                urls_used[seed_name] = download.install_data(model_urls, target_directory, keep=True,
+                                                             dirs_to_preserve=dirs_to_preserve)
     # Write `source.json` (for model provenance / updating)
     source_dict = {
         'model_name': name_model,

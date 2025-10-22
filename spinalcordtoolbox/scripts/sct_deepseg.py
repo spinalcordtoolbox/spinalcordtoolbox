@@ -297,6 +297,20 @@ def get_parser(subparser_to_return=None):
                      "More details on TotalSpineSeg's two models can be found here: https://github.com/neuropoly/totalspineseg/?tab=readme-ov-file#model-description",
                 choices=(0, 1),
                 default=0)
+        if task_name == 'lesion_ms':
+            # Add possibility of having soft segmentation for the lesion_ms task
+            params.add_argument(
+                "-soft-ms-lesion",
+                action="store_true",
+                help="If set, the model will output a soft segmentation (i.e. probability map) instead of a binary "
+                     "segmentation."
+            )
+            # Add possibility of segmenting on only 1 fold for quicker inference
+            params.add_argument(
+                "-single-fold",
+                action="store_true",
+                help="If set, only 1 fold will be used for inference instead of the full 5-fold ensemble. This will speed up inference, but may reduce segmentation quality."
+            )
 
         # Add input cropping note specific to the `lesion_ms_mp2rage` task
         if task_name == 'lesion_ms_mp2rage':
@@ -442,6 +456,24 @@ def main(argv: Sequence[str]):
         else:
             thr = (arguments.binarize_prediction if arguments.binarize_prediction is not None
                    else models.MODELS[name_model]['thr'])  # Default `thr` value stored in model dict
+            # Pass any "extra" kwargs defined only for specific models/tasks
+            extra_network_kwargs = {
+                arg_name: getattr(arguments, arg_name)
+                # "single_fold" -> used only by lesion_ms
+                for arg_name in ["single_fold"]
+                if hasattr(arguments, arg_name)
+            }
+            extra_inference_kwargs = {
+                arg_name: getattr(arguments, arg_name)
+                # "step1_only" -> used only by totalspineseg
+                # "soft_ms_lesion" -> used only by lesion_ms
+                for arg_name in ["step1_only", "soft_ms_lesion"]
+                if hasattr(arguments, arg_name)
+            }
+            # The MS lesion model is multifold, which requires turning on the "ensemble averaging" behavior
+            if arguments.task == 'lesion_ms':
+                extra_inference_kwargs['ensemble'] = True
+            # Run inference
             im_lst, target_lst = inference.segment_non_ivadomed(
                 path_model, model_type, input_filenames, thr,
                 # NOTE: contrast-agnostic nnunet model sometimes predicts pixels outside the cord, we want to
@@ -451,9 +483,8 @@ def main(argv: Sequence[str]):
                 remove_small=arguments.remove_small,
                 use_gpu=use_gpu, remove_temp_files=arguments.r,
                 # Pass any "extra" kwargs defined in task-specific subparsers
-                extra_inference_kwargs={arg_name: getattr(arguments, arg_name)
-                                        for arg_name in ["step1_only"]  # Used only by totalspineseg
-                                        if hasattr(arguments, arg_name)}
+                extra_network_kwargs=extra_network_kwargs,
+                extra_inference_kwargs=extra_inference_kwargs,
             )
 
         # Delete intermediate outputs
