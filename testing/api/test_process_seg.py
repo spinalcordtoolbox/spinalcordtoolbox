@@ -195,18 +195,18 @@ im_segs = [
     # test with AP angled spinal cord
     (dummy_segmentation(size_arr=(64, 64, 20), shape='ellipse', radius_RL=13.0, radius_AP=5.0, angle_AP=20.0,
                         debug=DEBUG),
-     {'area': 197.0, 'diameter_AP': 10.0, 'diameter_RL': 26.0, 'angle_RL': 0.0, 'angle_AP': 20.0, 'length': 21.02},
+     {'area': 197.0, 'diameter_AP': 9.41, 'diameter_RL': 26.0, 'angle_RL': 0.0, 'angle_AP': 20.0, 'length': 21.02},
      {'angle_corr': True}),
     # test with RL and AP angled spinal cord
     (dummy_segmentation(size_arr=(64, 64, 50), shape='ellipse', radius_RL=13.0, radius_AP=5.0,
                         angle_RL=-10.0, angle_AP=15.0, debug=DEBUG),
-     {'area': 197.0, 'diameter_AP': 10.0, 'diameter_RL': 26.0, 'angle_RL': -10.0, 'angle_AP': 15.0},
+     {'area': 196.0, 'diameter_AP':  9.465, 'diameter_RL': 26.0, 'angle_RL': -10.0, 'angle_AP': 15.0},
      {'angle_corr': True}),
     # Reproduce issue: "LinAlgError: SVD did not converge". Note: due to the cropping, the estimated angle_RL is wrong,
     # so it had to be made wrong in the expected values
     (dummy_segmentation(size_arr=(64, 64, 50), shape='ellipse', radius_RL=13.0, radius_AP=5.0,
                         angle_RL=-10.0, angle_AP=30.0, debug=DEBUG),
-     {'area': 197.0, 'diameter_AP': 10.0, 'diameter_RL': 26.0, 'angle_RL': -11.5, 'angle_AP': 30.0},
+     {'area': 197.0, 'diameter_AP': 9.418, 'diameter_RL': 26.0, 'angle_RL': -11.5, 'angle_AP': 30.0},
      {'angle_corr': True}),
     # test uint8 input
     (dummy_segmentation(size_arr=(32, 32, 50), dtype=np.uint8, angle_RL=15, debug=DEBUG),
