@@ -268,8 +268,6 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
         # Now compute shape properties using the regularized angles
         for i, iz in enumerate(z_indices_array):
             current_patch_scaled = current_patches[iz]['patch']
-            # Make sure no NaN values are present
-           # current_patch_scaled[np.isnan(current_patch_scaled)] = 0
             angle_AP_rad = current_patches[iz]['angle_AP_rad']
             angle_RL_rad = current_patches[iz]['angle_RL_rad']
             angle_hog = angle_hog_regularized[i]
