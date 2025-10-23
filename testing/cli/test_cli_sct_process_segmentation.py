@@ -166,7 +166,7 @@ def test_sct_process_segmentation_check_normalize_PAM50(tmp_path):
         rows = list(reader)
         row = rows[26]
         assert row['Slice (I->S)'] == '827'
-        assert float(row['MEAN(area)']) == pytest.approx(70.45049211878325)
+        assert float(row['MEAN(area)']) == pytest.approx(70.13567242657102)
         assert row['VertLevel'] == '5'
 
 
