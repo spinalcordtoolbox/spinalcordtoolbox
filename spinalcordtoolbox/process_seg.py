@@ -154,7 +154,8 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
         current_patch = im_segr.data[:, :, iz]
         # Special check for the edge case when segmentation has only a single pixel (e.g., in the lumbar region),
         # in this case we skip the slice as we cannot compute PCA
-        if np.count_nonzero(current_patch) <= 1:
+        # Change Nan for zeros to avoid problems in PCA computation
+        if np.count_nonzero(current_patch) <= 1/0.1:  # equivalent to np.sum(current_patch) <= 1 after resampling
             logging.warning(f'Skipping slice {iz} as the segmentation contains only a single pixel.')
             continue
 
@@ -187,40 +188,31 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
             current_patch_scaled = current_patch
             current_patch_im_scaled = current_patch_im if current_patch_im is not None else None
             angle_AP_rad, angle_RL_rad = 0.0, 0.0
-        # Store the data for this slice
-        z_indices.append(iz)
 
         # Store basic properties and angles to be used later after regularization
         if image is not None:
             # compute PCA and get center or mass based on segmentation; centermass_src: [RL, AP] (assuming RPI orientation)
-            # Change Nan for zeros to avoid problems in PCA computation
-            current_patch_scaled[np.isnan(current_patch_scaled)] = 0
             # Check for empty slice
-            try:
-                coord_src, pca_src, centermass_src = compute_pca(current_patch_scaled)
-                # Finds the angle of the image
-                # TODO: explore different sigma values for the HOG method, i.e., the influence how far away pixels will vote for the orientation.
-                # TODO: double-check if sigma is in voxel or mm units.
-                # TODO: do we want to use the same sigma for all slices? As the spinal cord sizes vary across the z-axis.
-                angle_hog, conf_src = find_angle_hog(current_patch_im_scaled, centermass_src,
-                                                    px, py, angle_range=40)    # 40 is taken from registration.algorithms.register2d_centermassrot
-
-                angle_hog_values.append(angle_hog)
-                centermass_values.append(centermass_src)
-                # Store the patches to use later after regularization
-                current_patches[iz] = {
-                    'patch': current_patch_scaled,
-                    'angle_AP_rad': angle_AP_rad,
-                    'angle_RL_rad': angle_RL_rad
-                }
-            except ValueError:
-                print(f"Empty slice detected at z={iz}.")
-                current_patches[iz] = {
-                    'patch': current_patch_scaled,
-                    'angle_AP_rad': np.nan,
-                    'angle_RL_rad': np.nan
-                }
+            if np.count_nonzero(current_patch_scaled) <= 1/0.1:  # equivalent to np.sum(current_patch_scaled) <= 1 after resampling
+                logging.warning(f'Skipping slice {iz} as the segmentation contains only a single pixel.')
                 continue
+            z_indices.append(iz)
+            coord_src, pca_src, centermass_src = compute_pca(current_patch_scaled)
+            # Finds the angle of the image
+            # TODO: explore different sigma values for the HOG method, i.e., the influence how far away pixels will vote for the orientation.
+            # TODO: double-check if sigma is in voxel or mm units.
+            # TODO: do we want to use the same sigma for all slices? As the spinal cord sizes vary across the z-axis.
+            angle_hog, conf_src = find_angle_hog(current_patch_im_scaled, centermass_src,
+                                                 px, py, angle_range=40)    # 40 is taken from registration.algorithms.register2d_centermassrot
+
+            angle_hog_values.append(angle_hog)
+            centermass_values.append(centermass_src)
+            # Store the patches to use later after regularization
+            current_patches[iz] = {
+                'patch': current_patch_scaled,
+                'angle_AP_rad': angle_AP_rad,
+                'angle_RL_rad': angle_RL_rad
+            }
         else:
             angle_hog = None
         # Compute shape properties for this slice
@@ -250,7 +242,6 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
                     shape_properties[property_name][iz] = shape_property[property_name]
             else:
                 logging.warning(f'\nNo properties for slice: {iz}')
-
     # Apply regularization to HOG angles along the z-axis if filter_size > 0
     # The code snippet below is taken from algorithms.register2d_centermassrot -- maybe it could be extracted into a
     # function and reused
@@ -276,10 +267,12 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
 
         # Now compute shape properties using the regularized angles
         for i, iz in enumerate(z_indices_array):
-            angle_hog = angle_hog_regularized[i]
             current_patch_scaled = current_patches[iz]['patch']
+            # Make sure no NaN values are present
+           # current_patch_scaled[np.isnan(current_patch_scaled)] = 0
             angle_AP_rad = current_patches[iz]['angle_AP_rad']
             angle_RL_rad = current_patches[iz]['angle_RL_rad']
+            angle_hog = angle_hog_regularized[i]
 
             # Get centermass for this slice
             centermass_src = centermass_values[i]
