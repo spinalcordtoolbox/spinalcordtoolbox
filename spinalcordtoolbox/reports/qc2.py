@@ -317,7 +317,8 @@ def sct_deepseg(
         # Non-rootlets, axial/sagittal DeepSeg QC report
         elif plane == 'Axial':
             sct_deepseg_axial(
-                imgs_to_generate, fname_input, fname_seg, fname_seg2, species, fname_qc_seg)
+                imgs_to_generate, fname_input, fname_seg, fname_seg2, species, fname_qc_seg,
+                radius=(27, 27) if "sc_canal_t2" in argv else (15, 15))
         else:
             assert plane == 'Sagittal', (f"`plane` must be either 'Axial' "
                                          f"or 'Sagittal', but got {plane}")
@@ -332,6 +333,7 @@ def sct_deepseg_axial(
     fname_seg_lesion: Optional[str],
     species: str,
     fname_qc_seg: Optional[str],
+    radius: Sequence[int]
 ):
     """
     Generate a QC report for sct_deepseg, with varied colormaps depending on the type of segmentation.
@@ -391,7 +393,7 @@ def sct_deepseg_axial(
     inf_nan_fill(centers[:, 1])
 
     # If -qc-seg is available, use it to generate the radius
-    radius = get_max_axial_radius(img_qc_seg) if fname_qc_seg else (15, 15)
+    radius = get_max_axial_radius(img_qc_seg) if fname_qc_seg else radius
 
     # Generate the first QC report image
     img = equalize_histogram(mosaic(img_input, centers, radius))
