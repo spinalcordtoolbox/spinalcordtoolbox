@@ -150,7 +150,7 @@ def create_qc_entry(
     display_open(file=str(path_index_html), message="To see the results in a browser")
 
 
-def add_slice_numbers(ax, num_slices, patch_size, margin: int = 2):
+def add_slice_numbers(ax, num_slices, radius, margin: int = 2):
     """
     Overlay slice indices onto an Axial mosaic.
 
@@ -160,19 +160,19 @@ def add_slice_numbers(ax, num_slices, patch_size, margin: int = 2):
         Axes containing a single imshow of the mosaic.
     num_slices : int
         Total number of axial slices (dim 0 of the original volume).
-    patch_size : int
-        The size (in pixels) of each square cell in the mosaic;
-        in our code each cell is cropped to radius*2, so patch_size = radius[0]*2.
+    radius : (int, int)
+        The size (in pixels) of the x/y radii of each square cell in the mosaic.
     """
     # Get the mosaic array we just plotted
     img_arr = ax.get_images()[0].get_array()
-    n_cols = int(img_arr.shape[1] // patch_size)
+    patch_size = [2*r for r in radius]
+    n_cols = int(img_arr.shape[1] // patch_size[1])
     for i in range(1, num_slices):  # skip 0
         row = i // n_cols
         col = i % n_cols
         # top-left inside each tile
-        x = col * patch_size + margin
-        y = row * patch_size + margin
+        x = col * patch_size[1] + margin
+        y = row * patch_size[0] + margin
         txt = ax.text(x, y, str(i), ha='left', va='top', color='yellow', fontsize=4)
         # give it a thin black outline for readability
         txt.set_path_effects([
@@ -397,7 +397,7 @@ def sct_deepseg_axial(
     ax = fig.add_axes((0, 0, 1, 1))
     ax.imshow(img, cmap='gray', interpolation='none', aspect=1.0)
     add_orientation_labels(ax, radius=radius)
-    add_slice_numbers(ax, img_input.dim[0], radius[0] * 2)
+    add_slice_numbers(ax, img_input.dim[0], radius=radius)
     ax.get_xaxis().set_visible(False)
     ax.get_yaxis().set_visible(False)
     img_path = str(imgs_to_generate['path_background_img'])
