@@ -841,7 +841,7 @@ def mosaic(img: Image, centers: np.ndarray, radius: tuple[int, int] = (15, 15), 
     max_row_width = TARGET_WIDTH_PIXL / scale
 
     # Fit as many slices as possible in each row
-    num_col = math.floor(max_row_width / (2*radius[0]))
+    num_col = math.floor(max_row_width / (2*radius[1]))
 
     # Center and crop each axial slice
     cropped = []
