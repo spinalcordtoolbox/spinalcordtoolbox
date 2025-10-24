@@ -1168,7 +1168,8 @@ def get_max_axial_radius(img):
     widths = [np.max(np.where(slc)[1]) - np.min(np.where(slc)[1]) if np.sum(slc) > 0 else 0 for slc in img.data]
     radii_h = [int((h * dilation)//2) for h in heights]
     radii_w = [int((w * dilation)//2) for w in widths]
-    return max(radius_default, max(radii_h)), max(radius_default, max(radii_w))
+    max_radius = max([radius_default] + radii_h + radii_w)
+    return max_radius, max_radius
 
 
 def get_max_sagittal_radius(img):
