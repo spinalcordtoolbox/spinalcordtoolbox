@@ -540,7 +540,7 @@ def project_centerline(img: Image, ref: Image) -> Image:
             "Input image and referenced labels should have the same dimension",
             img=img.data.shape,
             ref=ref.data.shape)
-    
+
     # Fetch resolution
     nx, ny, nz, nt, px, py, pz, pt = img.dim
 
