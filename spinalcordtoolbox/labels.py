@@ -235,9 +235,13 @@ def label_regions_from_reference(img: Image, ref: Image, centerline: bool = Fals
 
     out = zeros_like(img)
 
+    # Fetch resolution
+    nx, ny, nz, nt, px, py, pz, pt = img.dim
+
     # Extract centerline from segmentation
     _, arr_ctl, _, _ = get_centerline(img)
     centerline_arr = arr_ctl.T
+    centerline_real = centerline_arr*np.array([px, py, pz])
 
     if centerline:
         coordinates_input = np.concatenate((centerline_arr, np.ones((centerline_arr.shape[0], 1))), axis=1)
@@ -249,7 +253,9 @@ def label_regions_from_reference(img: Image, ref: Image, centerline: bool = Fals
 
     # for all points in the segmentation project on the centerline and compare the `z` coordinate to the appropriate vertebral level
     for x, y, z, _ in coordinates_input:
-        projection = project_point_on_line(point=np.array([x, y, z]), line=centerline_arr)
+        x_real, y_real, z_real = x * px, y * py, z * pz
+        projection_real = project_point_on_line(point=np.array([x_real, y_real, z_real]), line=centerline_real)
+        projection = projection_real / np.array([px, py, pz])
         _, _, z_proj = np.rint(projection).astype(int)
         # case 1: `z` is above the top-most disc label
         if z_proj > coordinates_ref[0].z:
@@ -534,10 +540,14 @@ def project_centerline(img: Image, ref: Image) -> Image:
             "Input image and referenced labels should have the same dimension",
             img=img.data.shape,
             ref=ref.data.shape)
+    
+    # Fetch resolution
+    nx, ny, nz, nt, px, py, pz, pt = img.dim
 
     # Extract centerline from segmentation
     _, arr_ctl, _, _ = get_centerline(img)
     centerline = arr_ctl.T
+    centerline_real = centerline*np.array([px, py, pz])
 
     # Extract referenced coordinates
     coordinates_ref = ref.getNonZeroCoordinates(sorting='value')
@@ -547,7 +557,9 @@ def project_centerline(img: Image, ref: Image) -> Image:
 
     # Compute the shortest distance for each referenced points on the centerline
     for x, y, z, value in coordinates_ref:
-        projection = project_point_on_line(point=np.array([x, y, z]), line=centerline)
+        x_real, y_real, z_real = x * px, y * py, z * pz
+        projection_real = project_point_on_line(point=np.array([x_real, y_real, z_real]), line=centerline_real)
+        projection = projection_real / np.array([px, py, pz])
         x, y, z = np.rint(projection).astype(int)
         if out.data[x, y, z] != 0:
             if out.data[x, y, z] == value:
