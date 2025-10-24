@@ -93,16 +93,16 @@ sct_register_to_template -i t2.nii.gz -s t2_seg.nii.gz -l labels_vert.nii.gz -c 
 # Warp template without the white matter atlas (we don't need it at this point)
 sct_warp_template -d t2.nii.gz -w warp_template2anat.nii.gz -a 0
 # Compute cross-sectional area (and other morphometry measures) for each slice
-sct_process_segmentation -s t2_seg.nii.gz
+sct_process_segmentation -i t2_seg.nii.gz
 # Compute cross-sectional area and average between C2 and C3 levels
-sct_process_segmentation -s t2_seg.nii.gz -vert 2:3 -o csa_c2c3.csv
+sct_process_segmentation -i t2_seg.nii.gz -vert 2:3 -o csa_c2c3.csv
 # Compute cross-sectionnal area based on distance from pontomedullary junction (PMJ)
 # Detect PMJ
 sct_detect_pmj -i t2.nii.gz -c t2 -qc "$SCT_BP_QC_FOLDER" 
 # Compute cross-section area at 60 mm from PMJ averaged on a 30 mm extent
-sct_process_segmentation -s t2_seg.nii.gz -pmj t2_pmj.nii.gz -pmj-distance 60 -pmj-extent 30 -qc "$SCT_BP_QC_FOLDER" -qc-image t2.nii.gz -o csa_pmj.csv
+sct_process_segmentation -i t2_seg.nii.gz -pmj t2_pmj.nii.gz -pmj-distance 60 -pmj-extent 30 -qc "$SCT_BP_QC_FOLDER" -qc-image t2.nii.gz -o csa_pmj.csv
 # Compute morphometrics in PAM50 anatomical dimensions
-sct_process_segmentation -s t2_seg.nii.gz -vertfile t2_seg_labeled.nii.gz -perslice 1 -normalize-PAM50 1 -o csa_pam50.csv
+sct_process_segmentation -i t2_seg.nii.gz -vertfile t2_seg_labeled.nii.gz -perslice 1 -normalize-PAM50 1 -o csa_pam50.csv
 # Go back to root folder
 cd ..
 
@@ -121,8 +121,8 @@ sct_warp_template -d t2s.nii.gz -w warp_template2t2s.nii.gz
 # Subtract GM segmentation from cord segmentation to obtain WM segmentation
 sct_maths -i t2s_seg.nii.gz -sub t2s_gmseg.nii.gz -o t2s_wmseg.nii.gz
 # Compute cross-sectional area of the gray and white matter between C2 and C5
-sct_process_segmentation -s t2s_wmseg.nii.gz -vert 2:5 -perlevel 1 -o csa_wm.csv -angle-corr-centerline t2s_seg.nii.gz
-sct_process_segmentation -s t2s_gmseg.nii.gz -vert 2:5 -perlevel 1 -o csa_gm.csv -angle-corr-centerline t2s_seg.nii.gz
+sct_process_segmentation -i t2s_wmseg.nii.gz -vert 2:5 -perlevel 1 -o csa_wm.csv -angle-corr-centerline t2s_seg.nii.gz
+sct_process_segmentation -i t2s_gmseg.nii.gz -vert 2:5 -perlevel 1 -o csa_gm.csv -angle-corr-centerline t2s_seg.nii.gz
 # OPTIONAL: Update template registration using information from gray matter segmentation
 # # <<<
 # # Register WM/GM template to WM/GM seg
