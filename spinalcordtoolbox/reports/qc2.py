@@ -150,7 +150,7 @@ def create_qc_entry(
     display_open(file=str(path_index_html), message="To see the results in a browser")
 
 
-def add_slice_numbers(ax, num_slices, radius, margin: int = 2):
+def add_slice_numbers(ax, num_slices, radius, margin: int = 2, reverse=False):
     """
     Overlay slice indices onto an Axial mosaic.
 
@@ -162,18 +162,24 @@ def add_slice_numbers(ax, num_slices, radius, margin: int = 2):
         Total number of axial slices (dim 0 of the original volume).
     radius : (int, int)
         The size (in pixels) of the x/y radii of each square cell in the mosaic.
+    reverse : bool
+        Whether to reverse the slice numbering (for SI-flipped images). If false, slice 0 is
+        at the top-left, otherwise slice 0 is at the bottom-left.
     """
     # Get the mosaic array we just plotted
     img_arr = ax.get_images()[0].get_array()
     patch_size = [2*r for r in radius]
     n_cols = int(img_arr.shape[1] // patch_size[1])
-    for i in range(1, num_slices):  # skip 0
+    slice_range = list(range(1, num_slices))  # skip 0
+    for i in slice_range:
         row = i // n_cols
         col = i % n_cols
         # top-left inside each tile
         x = col * patch_size[1] + margin
         y = row * patch_size[0] + margin
-        txt = ax.text(x, y, str(i), ha='left', va='top', color='yellow', fontsize=4)
+        # if there was an SI flip, then the label should be reverse
+        label = str(i) if not reverse else str((num_slices - 1) - i)
+        txt = ax.text(x, y, label, ha='left', va='top', color='yellow', fontsize=4)
         # give it a thin black outline for readability
         txt.set_path_effects([
             mpl_patheffects.Stroke(linewidth=1, foreground='black'),
@@ -337,7 +343,9 @@ def sct_deepseg_axial(
     #        use the old qc.py method "_make_QC_image_for_3d_volumes" for generating the background img.
     # Resample images slice by slice
     p_resample = {'human': 0.6, 'mouse': 0.1}[species]
-    img_input = Image(fname_input).change_orientation('SAL')
+    img_input = Image(fname_input)
+    orientation_orig = img_input.orientation
+    img_input = img_input.change_orientation('SAL')
     img_seg_sc = Image(fname_seg_sc).change_orientation('SAL')
     img_seg_lesion = Image(fname_seg_lesion).change_orientation('SAL') if fname_seg_lesion else None
     img_qc_seg = Image(fname_qc_seg).change_orientation('SAL') if fname_qc_seg else None
@@ -397,7 +405,7 @@ def sct_deepseg_axial(
     ax = fig.add_axes((0, 0, 1, 1))
     ax.imshow(img, cmap='gray', interpolation='none', aspect=1.0)
     add_orientation_labels(ax, radius=radius)
-    add_slice_numbers(ax, img_input.dim[0], radius=radius)
+    add_slice_numbers(ax, img_input.dim[0], radius=radius, reverse=("I" in orientation_orig))
     ax.get_xaxis().set_visible(False)
     ax.get_yaxis().set_visible(False)
     img_path = str(imgs_to_generate['path_background_img'])
