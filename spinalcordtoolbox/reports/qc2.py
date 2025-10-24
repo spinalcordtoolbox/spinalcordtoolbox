@@ -162,6 +162,8 @@ def add_slice_numbers(ax, num_slices, radius, margin: int = 2, reverse=False):
         Total number of axial slices (dim 0 of the original volume).
     radius : (int, int)
         The size (in pixels) of the x/y radii of each square cell in the mosaic.
+    margin : int
+        Margin (in pixels) from the top-left corner of each cell to place the text.
     reverse : bool
         Whether to reverse the slice numbering (for SI-flipped images). If false, slice 0 is
         at the top-left, otherwise slice 0 is at the bottom-left.
