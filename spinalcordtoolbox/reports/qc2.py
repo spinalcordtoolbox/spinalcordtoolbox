@@ -396,7 +396,7 @@ def sct_deepseg_axial(
     mpl_backend_agg.FigureCanvasAgg(fig)
     ax = fig.add_axes((0, 0, 1, 1))
     ax.imshow(img, cmap='gray', interpolation='none', aspect=1.0)
-    add_orientation_labels(ax)
+    add_orientation_labels(ax, radius=radius)
     add_slice_numbers(ax, img_input.dim[0], radius[0] * 2)
     ax.get_xaxis().set_visible(False)
     ax.get_yaxis().set_visible(False)
