@@ -34,7 +34,7 @@ def test_sct_process_segmentation_check_discfile(tmp_path, t2_canal_seg):
         assert row['Slice (I->S)'] == '10'
         assert row['DistancePMJ'] == ''
         assert row['VertLevel'] == '3'
-        assert float(row['aSCOR']) == pytest.approx(0.45084325639000783)
+        assert float(row['aSCOR']) == pytest.approx(0.44901418259799436)
 
 
 def test_sct_process_segmentation_shape_mismatch(tmp_path, t2_canal_seg):

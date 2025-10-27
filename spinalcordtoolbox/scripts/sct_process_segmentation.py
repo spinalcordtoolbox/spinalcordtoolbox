@@ -21,6 +21,7 @@ from time import sleep
 import numpy as np
 from matplotlib.ticker import MaxNLocator
 
+from spinalcordtoolbox.reports import qc2
 from spinalcordtoolbox.aggregate_slicewise import aggregate_per_slice_or_level, save_as_csv, func_wa, func_std, \
     func_sum, merge_dict, normalize_csa
 from spinalcordtoolbox.process_seg import compute_shape
@@ -124,7 +125,6 @@ def get_parser(ascor=False):
             help="Mask to compute morphometrics from. Could be binary or weighted. E.g., spinal cord segmentation."
                  "Example: seg.nii.gz"
         )
-
     optional = parser.optional_arggroup
     optional.add_argument(
         '-o',
@@ -250,6 +250,13 @@ def get_parser(ascor=False):
         default=20.0,
         help="Extent (in mm) for the mask used to compute morphometric measures. Each slice covered by the mask is "
              "included in the calculation. (To be used with flag `-pmj` and `-pmj-distance`.)"
+    )
+    optional.add_argument(
+        '-symmetry',
+        metavar=Metavar.file,
+        default=None,
+        help="Input image used to compute spinal cord orientation (using HOG method)."
+             "Example: t2.nii.gz"
     )
     if is_sct_process_segmentation:
         optional.add_argument(
@@ -404,6 +411,7 @@ def main(argv: Sequence[str]):
     group_funcs = (('MEAN', func_wa), ('STD', func_std))  # functions to perform when aggregating metrics along S-I
 
     fname_segmentation = get_absolute_path(arguments.i)
+    fname_image = get_absolute_path(arguments.symmetry) if arguments.symmetry is not None else None
 
     file_out = os.path.abspath(arguments.o)
     append = bool(arguments.append)
@@ -483,6 +491,7 @@ def main(argv: Sequence[str]):
     metrics_agg = {}
 
     metrics, fit_results = compute_shape(fname_segmentation,
+                                         fname_image,
                                          angle_correction=angle_correction,
                                          centerline_path=angle_correction_centerline,
                                          param_centerline=param_centerline,
@@ -490,6 +499,7 @@ def main(argv: Sequence[str]):
                                          remove_temp_files=arguments.r)
     if normalize_pam50:
         fname_vert_level_PAM50 = os.path.join(__data_dir__, 'PAM50', 'template', 'PAM50_levels.nii.gz')
+        metrics_native_space = metrics  # Save metrics in native space to use them for HOG angle QC
         metrics_PAM50_space = interpolate_metrics(metrics, fname_vert_level_PAM50, fname_vert_level)
         if not levels:  # If no levels -vert were specified by user
             if verbose == 2:
@@ -546,7 +556,9 @@ def main(argv: Sequence[str]):
             line['MEAN(area)'] = normalize_csa(line['MEAN(area)'], data_predictors, data_subject)
 
     save_as_csv(metrics_agg_merged, file_out, fname_in=fname_segmentation, append=append)
+
     # QC report (only for PMJ-based CSA)
+    # TODO: refactor this with qc2. Replace arguments.qc_image with arguments.i
     if path_qc is not None:
         if fname_pmj is not None:
             if arguments.qc_image is not None:
@@ -581,10 +593,21 @@ def main(argv: Sequence[str]):
                 parser.error('-qc-image is required to display QC report.')
         else:
             logger.warning('QC report only available for PMJ-based CSA. QC report not generated.')
-    # Clean up temp
-    if arguments.r and temp_folder is not None:
-        logger.info("\nRemove temporary files...")
-        temp_folder.cleanup()
+
+    # Create QC report for the HOG angle
+    if arguments.qc is not None:
+        if fname_image is not None:
+            qc2.sct_process_segmentation(
+                fname_input=fname_image,
+                fname_seg=fname_segmentation,
+                metrics=metrics_native_space if normalize_pam50 else metrics,
+                argv=argv,
+                path_qc=arguments.qc,
+                dataset=arguments.qc_dataset,
+                subject=arguments.qc_subject,
+                angle_type='angle_hog',
+            )
+
     display_open(file_out)
 
 
