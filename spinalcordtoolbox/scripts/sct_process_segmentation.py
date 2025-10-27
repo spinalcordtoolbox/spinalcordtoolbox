@@ -444,15 +444,20 @@ def main(argv: Sequence[str]):
 
     # Vertfile exists, so pre-process it if it's a `-discfile`
     else:
-        # Project discs labels to centerline for discfile
         if arguments.discfile is not None:
+            # Project discs labels to centerline for discfile (then use the centerline to label the input segmentation)
             discs_projected = project_centerline(Image(fname_segmentation), Image(fname_vert_level))
+            ctl_projected = label_regions_from_reference(Image(fname_segmentation), discs_projected, centerline=True)
+            # Save the images to a tmpdir (making sure to use `basename` to avoid needing to create the parent directories)
             temp_folder = TempFolder(basename="process-segmentation")
             path_tmp = temp_folder.get_path()
-            discs_projected.save(os.path.join(path_tmp, add_suffix(fname_vert_level, '_projected')))
-            ctl_projected = label_regions_from_reference(Image(fname_segmentation), discs_projected, centerline=True)
-            fname_vert_level = os.path.join(path_tmp, add_suffix(fname_vert_level, '_projected_centerline'))
-            ctl_projected.save(fname_vert_level)
+            path_tmp_discs = os.path.join(path_tmp, add_suffix(os.path.basename(fname_vert_level), '_projected'))
+            path_tmp_ctl = os.path.join(path_tmp, add_suffix(os.path.basename(fname_vert_level), '_projected_centerline'))
+            discs_projected.save(path_tmp_discs)
+            ctl_projected.save(path_tmp_ctl)
+            # Overwrite the input argument so that the temporary projected file is used from now on
+            fname_vert_level = path_tmp_ctl
+            # If requested, save the projected centerline to the output directory
             if verbose == 2:
                 copy(fname_vert_level, os.path.dirname(file_out))
 
