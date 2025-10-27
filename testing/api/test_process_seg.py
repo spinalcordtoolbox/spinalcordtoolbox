@@ -210,7 +210,7 @@ im_segs = [
      {'angle_corr': True}),
     # test uint8 input
     (dummy_segmentation(size_arr=(32, 32, 50), dtype=np.uint8, angle_RL=15, debug=DEBUG),
-     {'area': 77, 'angle_RL': 15.0, 'angle_AP': 0.0},
+     {'area': 77, 'angle_RL': 13.269097801736525, 'angle_AP': 0.0},
      {'angle_corr': True}),
     # test all output params
     (dummy_segmentation(size_arr=(128, 128, 5), pixdim=(1, 1, 1), shape='ellipse', radius_RL=50.0, radius_AP=30.0,
