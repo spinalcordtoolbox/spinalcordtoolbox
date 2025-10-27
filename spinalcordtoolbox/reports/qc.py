@@ -92,8 +92,9 @@ class QcImage:
             add_slice_numbers(
                 ax,
                 num_slices=total_slices,
-                patch_size=patch_size,
-                margin=2               # pixels inset from top‐left corner
+                radius=(size, size),
+                margin=2,              # pixels inset from top‐left corner
+                reverse=("I" in self.orig_orientation)
             )
 
         ax.get_xaxis().set_visible(False)
@@ -594,9 +595,11 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
     qcslice._image_seg = None  # for cropping
     qcslice._absolute_paths = list()  # Used because change_orientation removes the field absolute_path
     image_ref = None  # first pass: we don't have a reference image to resample to
+    orig_orientations = list()
     for i, image in enumerate(im_list):
         img = image.copy()
         qcslice._absolute_paths.append(img.absolutepath)  # change_orientation removes the field absolute_path
+        orig_orientations.append(img.orientation)
         img.change_orientation('SAL')
         if p_resample:
             type_img = 'seg' if ('seg' in check_image_kind(img)) else 'im'  # condense seg/softseg into just 'seg'
@@ -625,6 +628,7 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
     qc_image._draw_text = draw_text
     qc_image._path_custom_labels = path_custom_labels
     qc_image._centermass = None  # center of mass returned by slice.Axial.get_center()
+    qc_image.orig_orientation = orig_orientations[0]  # just take the first orientation
 
     # Get the aspect ratio (height/width) based on pixel size. Consider only the first 2 slices.
     qc_image.aspect_img, qc_image.aspect_mask = qcslice.aspect()[:2]
