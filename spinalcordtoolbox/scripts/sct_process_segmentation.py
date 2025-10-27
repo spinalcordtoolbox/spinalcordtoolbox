@@ -445,18 +445,18 @@ def main(argv: Sequence[str]):
     # Vertfile exists, so pre-process it if it's a `-discfile`
     else:
         if arguments.discfile is not None:
-            # Project discs labels to centerline for discfile (then use the centerline to label the input segmentation)
-            discs_projected = project_centerline(Image(fname_segmentation), Image(fname_vert_level))
-            ctl_projected = label_regions_from_reference(Image(fname_segmentation), discs_projected, centerline=True)
-            # Save the images to a tmpdir (making sure to use `basename` to avoid needing to create the parent directories)
+            # Copy the input files to the tempdir
             temp_folder = TempFolder(basename="process-segmentation")
-            path_tmp = temp_folder.get_path()
-            path_tmp_discs = os.path.join(path_tmp, add_suffix(os.path.basename(fname_vert_level), '_projected'))
-            path_tmp_ctl = os.path.join(path_tmp, add_suffix(os.path.basename(fname_vert_level), '_projected_centerline'))
-            discs_projected.save(path_tmp_discs)
-            ctl_projected.save(path_tmp_ctl)
-            # Overwrite the input argument so that the temporary projected file is used from now on
-            fname_vert_level = path_tmp_ctl
+            path_tmp_seg = temp_folder.copy_from(fname_segmentation)
+            path_tmp_vert_level = temp_folder.copy_from(fname_vert_level)
+            # Project discs labels onto centerline
+            discs_projected = project_centerline(Image(path_tmp_seg), Image(path_tmp_vert_level))
+            discs_projected.save(add_suffix(path_tmp_vert_level, '_projected'), mutable=True)
+            # Use the projected disc labels to extract a labeled centerline from the input segmentation
+            ctl_projected = label_regions_from_reference(Image(path_tmp_seg), discs_projected, centerline=True)
+            ctl_projected.save(add_suffix(path_tmp_vert_level, '_projected_centerline'), mutable=True)
+            # Overwrite the input argument so that the labeled centerline (in the tmpdir) is used from now on
+            fname_vert_level = ctl_projected.absolutepath
             # If requested, save the projected centerline to the output directory
             if verbose == 2:
                 copy(fname_vert_level, os.path.dirname(file_out))
