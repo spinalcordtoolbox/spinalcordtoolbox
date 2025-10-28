@@ -208,13 +208,19 @@ def get_parser(ascor=False):
              "-angle-corr to 0."
     )
     optional.add_argument(
-        '-angle-corr-centerline',
+        '-centerline',
         metavar=Metavar.str,
-        help="Image to be used as a centerline for computing angle correction (can be either a cord segmentation or a "
-             "single-voxel centerline mask). This argument is optional; if not provided, the centerline will be "
-             "derived from the input segmentation. Use this option if the input segmentation is irregularly shaped "
-             "(e.g. gray/white matter). In such a case, it is best to pass the full cord segmentation to this option, "
-             "as you will get a more accurate centerline (and thus a more accurate, consistent angle correction)."
+        help=textwrap.dedent("""
+        Mask image containing a SC seg or centerline. (Optional: If not provided, the centerline will be derived from `-i` instead.)
+
+        The `-centerline` image is used with other flags:
+          - `-angle-corr 1`: If provided, angles will be computed using the shape of the `-centerline` image (which will then be used to angle-correct the metrics for `-i`).
+          - `-discfile`: If provided, the disc labels will be projected onto the `-centerline` image (which will then be used to aggregate the metrics for `-i`).
+
+        You should specify this option if you want to override the centerline that would be derived from `-i`. For example:
+          - You are calculating the CSA of an irregular segmentation (e.g. lesion mask) that would produce poor angle correction.
+          - You are calculating the CSA of multiple segmentations for the same subject and want a consistent centerline for both.
+        """)
     )
     optional.add_argument(
         '-centerline-algo',
@@ -446,7 +452,11 @@ def main(argv: Sequence[str]):
     else:
         # Project discs labels to centerline for discfile
         if arguments.discfile is not None:
-            discs_projected = project_centerline(Image(fname_segmentation), Image(fname_vert_level))
+            if arguments.centerline is not None:
+                fname_centerline = arguments.centerline
+            else:
+                fname_centerline = fname_segmentation
+            discs_projected = project_centerline(img=Image(fname_centerline), ref=Image(fname_vert_level))
             temp_folder = TempFolder(basename="process-segmentation")
             path_tmp = temp_folder.get_path()
             discs_projected.save(os.path.join(path_tmp, add_suffix(fname_vert_level, '_projected')))
@@ -460,7 +470,7 @@ def main(argv: Sequence[str]):
     slices = arguments.z
     perslice = bool(arguments.perslice)
     angle_correction = bool(arguments.angle_corr)
-    angle_correction_centerline = arguments.angle_corr_centerline
+    centerline = arguments.centerline
     param_centerline = ParamCenterline(
         algo_fitting=arguments.centerline_algo,
         smooth=arguments.centerline_smooth,
@@ -484,7 +494,7 @@ def main(argv: Sequence[str]):
 
     metrics, fit_results = compute_shape(fname_segmentation,
                                          angle_correction=angle_correction,
-                                         centerline_path=angle_correction_centerline,
+                                         centerline_path=centerline,
                                          param_centerline=param_centerline,
                                          verbose=verbose,
                                          remove_temp_files=arguments.r)
