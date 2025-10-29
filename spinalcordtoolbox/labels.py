@@ -249,7 +249,7 @@ def label_regions_from_reference(img: Image, ref: Image, centerline: bool = Fals
         coordinates_input = img.getNonZeroCoordinates()
 
     # Extract reference coordinates
-    coordinates_ref = ref.getNonZeroCoordinates(sorting='value')
+    coordinates_ref = ref.getNonZeroCoordinates(sorting='z', reverse_coord=True)
 
     # for all points in the segmentation project on the centerline and compare the `z` coordinate to the appropriate vertebral level
     for x, y, z, _ in coordinates_input:
