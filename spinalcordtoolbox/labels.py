@@ -10,6 +10,7 @@ from typing import Sequence, Tuple
 
 import numpy as np
 from scipy.ndimage import center_of_mass
+from scipy.spatial import KDTree
 
 from spinalcordtoolbox.image import Image, zeros_like
 from spinalcordtoolbox.types import Coordinate
@@ -524,57 +525,28 @@ def project_centerline(img: Image, ref: Image) -> Image:
     :param ref: reference labels
     :returns: image with the new projected labels on the centerline
     """
+    # The centerline of the segmentation, with one point for each S-I slice.
+    centerline_phys = get_centerline(img, space='phys')[1].T  # shape (N, 3), float
 
-    # Checking orientation
-    og_img_orientation = img.orientation
-    if img.orientation != "RPI":
-        img.change_orientation("RPI")
+    # The label coordinates, in the same physical space.
+    labels_pix = np.argwhere(ref.data)  # shape (L, 3), int
+    labels_phys = ref.transfo_pix2phys(labels_pix, mode='absolute')  # shape (L, 3), float
 
-    og_ref_orientation = ref.orientation
-    if ref.orientation != "RPI":
-        ref.change_orientation("RPI")
+    # For each label voxel, the centerline index which is closest in physical space.
+    _, indices = KDTree(centerline_phys).query(labels_phys)  # shape (L,), int
 
-    # Checking input dimensions
-    if img.data.shape != ref.data.shape:
-        raise ShapeMismatchError(
-            "Input image and referenced labels should have the same dimension",
-            img=img.data.shape,
-            ref=ref.data.shape)
+    # Check for collisions
+    if len(set(indices)) != len(indices):
+        logger.warning("Two labels were projected on the same coordinate")
 
-    # Fetch resolution
-    nx, ny, nz, nt, px, py, pz, pt = img.dim
+    # Go from centerline indices back to voxel coordinates in the segmentation image.
+    projected_phys = centerline_phys[indices]  # shape (L, 3), float
+    projected_pix = img.transfo_phys2pix(projected_phys)  # shape (L, 3), int
+    projected_pix = projected_pix.clip(0, np.array(img.data.shape) - 1)
 
-    # Extract centerline from segmentation
-    _, arr_ctl, _, _ = get_centerline(img)
-    centerline = arr_ctl.T
-    centerline_real = centerline*np.array([px, py, pz])
-
-    # Extract referenced coordinates
-    coordinates_ref = ref.getNonZeroCoordinates(sorting='value')
-
-    # Create the output image
-    out = zeros_like(ref)
-
-    # Compute the shortest distance for each referenced points on the centerline
-    for x, y, z, value in coordinates_ref:
-        x_real, y_real, z_real = x * px, y * py, z * pz
-        projection_real = project_point_on_line(point=np.array([x_real, y_real, z_real]), line=centerline_real)
-        projection = projection_real / np.array([px, py, pz])
-        x, y, z = np.rint(projection).astype(int)
-        if out.data[x, y, z] != 0:
-            if out.data[x, y, z] == value:
-                logger.warning("Two labels with the same value were projected on the same coordinate")
-            else:
-                # overwrite with the highest value because referenced points are sorted
-                logger.warning("Two labels were projected on the same coordinate, the highest value was kept")
-        out.data[x, y, z] = value
-
-    if out.orientation != og_img_orientation:
-        img.change_orientation(og_img_orientation)
-
-    if ref.orientation != og_ref_orientation:
-        ref.change_orientation(og_ref_orientation)
-        out.change_orientation(og_ref_orientation)
+    # Put the projected label values at these coordinates.
+    out = zeros_like(img)
+    out.data[tuple(projected_pix.T)] = ref.data[tuple(labels_pix.T)]
 
     return out
 
