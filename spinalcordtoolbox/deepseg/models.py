@@ -125,7 +125,7 @@ MODELS = {
         "description": "Spinal cord segmentation agnostic to MRI contrasts",
         "contrasts": ["any"],
         "thr": None,  # We're now using an nnUNet model, which does not need a threshold
-        "default": False,
+        "default": True,
     },
     "model_seg_sci_multiclass_sc_lesion_nnunet": {
         "url": [
