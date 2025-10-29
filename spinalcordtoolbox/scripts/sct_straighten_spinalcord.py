@@ -15,8 +15,9 @@ import textwrap
 from spinalcordtoolbox.straightening import SpinalCordStraightener
 from spinalcordtoolbox.centerline.core import ParamCenterline
 from spinalcordtoolbox.reports.qc import generate_qc
-from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel, removesuffix
+from spinalcordtoolbox.utils.shell import (SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax,
+                                           list_type)
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 
 
 def get_parser():
@@ -27,25 +28,23 @@ def get_parser():
                     "Cohen-Adad J. Topologically-preserving straightening of spinal cord MRI. J Magn "
                     "Reson Imaging. 2017 Oct;46(4):1209-1219"
     )
-    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         "-i",
         metavar=Metavar.file,
-        help='Input image with curved spinal cord. Example: `t2.nii.gz`',
-        required=True)
+        help='Input image with curved spinal cord. Example: `t2.nii.gz`')
     mandatory.add_argument(
         "-s",
         metavar=Metavar.file,
-        help='Spinal cord centerline (or segmentation) of the input image. To obtain the centerline, you can use '
-             'sct_get_centerline. To obtain the segmentation you can use sct_propseg or sct_deepseg_sc. '
-             'Example: centerline.nii.gz',
-        required=True)
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
-    optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit")
+        help=textwrap.dedent("""
+            Spinal cord centerline (or segmentation) of the input image. To obtain the centerline, you can use sct_get_centerline.
+            To obtain the segmentation you can use `sct_propseg` or `sct_deepseg spinalcord`.
+            Example: `centerline.nii.gz`
+        """)
+    )
+
+    optional = parser.optional_arggroup
     optional.add_argument(
         "-dest",
         metavar=Metavar.file,
@@ -55,8 +54,7 @@ def get_parser():
              "instead of linear scaling, the source centerline will be non-linearly matched so "
              "that the inter-vertebral discs of the input image will match that of the "
              "destination image. This feature is particularly useful for registering to a "
-             "template while accounting for disc alignment.",
-        required=False)
+             "template while accounting for disc alignment.")
     optional.add_argument(
         "-ldisc-input",
         metavar=Metavar.file,
@@ -65,26 +63,22 @@ def get_parser():
         "you are interested in levels C2 to C7, then you should provide disc labels 2,3,4,5,"
         "6,7). More details about label creation at "
         "https://spinalcordtoolbox.com/user_section/tutorials/vertebral-labeling.html. "
-        "This option must be used with the `-ldisc-dest` parameter.",
-        required=False)
+        "This option must be used with the `-ldisc-dest` parameter.")
     optional.add_argument(
         "-ldisc-dest",
         metavar=Metavar.file,
         help="Labels located at the posterior edge of the intervertebral discs, for the destination file (`-dest`). "
-             "The same comments as in `-ldisc-input` apply. This option must be used with the `-ldisc-input` parameter.",
-        required=False)
+             "The same comments as in `-ldisc-input` apply. This option must be used with the `-ldisc-input` parameter.")
     optional.add_argument(
         "-disable-straight2curved",
         action='store_true',
         help="Disable straight to curved transformation computation, in case you do not need the "
-             "output warping field straight-->curve (faster).",
-        required=False)
+             "output warping field straight-->curve (faster).")
     optional.add_argument(
         "-disable-curved2straight",
         action='store_true',
         help="Disable curved to straight transformation computation, in case you do not need the "
-             "output warping field curve-->straight (faster).",
-        required=False)
+             "output warping field curve-->straight (faster).")
     optional.add_argument(
         "-speed-factor",
         metavar=Metavar.float,
@@ -97,7 +91,6 @@ def get_parser():
              'will be downsampled to 2x2x2 mm3, providing a speed factor of approximately 8.'
              ' Note that accelerating the straightening process reduces the precision of the '
              'algorithm, and induces undesirable edges effects. Default=1 (no downsampling).',
-        required=False,
         default=1)
     optional.add_argument(
         "-xy-size",
@@ -105,20 +98,17 @@ def get_parser():
         type=float,
         help='Size of the output FOV in the RL/AP plane, in mm. The resolution of the destination '
              'image is the same as that of the source image (`-i`). Default: `35`.',
-        required=False,
         default=35.0)
     optional.add_argument(
         "-o",
         metavar=Metavar.file,
         help='Straightened file. By default, the suffix "_straight" will be added to the input file name.',
-        required=False,
         default='')
     optional.add_argument(
         "-ofolder",
         metavar=Metavar.folder,
         help="Output folder (all outputs will go there).",
         action=ActionCreateFolder,
-        required=False,
         default='.')
     optional.add_argument(
         '-centerline-algo',
@@ -135,6 +125,7 @@ def get_parser():
     optional.add_argument(
         "-param",
         metavar=Metavar.list,
+        type=list_type(",", str),
         help=textwrap.dedent("""
             Parameters for spinal cord straightening. Separate arguments with ','.
 
@@ -142,9 +133,10 @@ def get_parser():
               - `threshold_distance`: Float `[0, inf)` Threshold at which voxels are not considered into displacement. Increase this threshold if the image is blackout around the spinal cord too much. Default=`10`
               - `accuracy_results`: `{0, 1}` Disable/Enable computation of accuracy results after straightening. Default=`0`
               - `template_orientation`: {0, 1}` Disable/Enable orientation of the straight image to be the same as the template. Default=`0`
+              - `safe_zone: {0, 1}`: Disable/Enable enforcing the "safe zone". Turn this on to ensure that the warping fields will only be defined for areas covered by
+              the spinal cord segmentation, which is useful when only a partial FOV is present (e.g. lumbar data). Default=`0`.
         """),  # noqa: E501 (line too long)
-        required=False)
-
+        )
     optional.add_argument(
         "-x",
         help="Final interpolation. Default: `spline`.",
@@ -153,35 +145,21 @@ def get_parser():
     optional.add_argument(
         '-qc',
         metavar=Metavar.str,
-        help='The path where the quality control generated content will be saved',
-        default=None)
+        help='The path where the quality control generated content will be saved')
     optional.add_argument(
         '-qc-dataset',
         metavar=Metavar.str,
         help='If provided, this string will be mentioned in the QC report as the dataset the '
-             'process was run on',
-        default=None)
+             'process was run on')
     optional.add_argument(
         '-qc-subject',
         metavar=Metavar.str,
         help='If provided, this string will be mentioned in the QC report as the subject the '
-             'process was run on',
-        default=None)
-    optional.add_argument(
-        "-r",
-        type=int,
-        help="Remove temporary files.",
-        required=False,
-        choices=(0, 1),
-        default=1)
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
+             'process was run on')
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
+    parser.add_tempfile_args()
 
     return parser
 
@@ -258,6 +236,8 @@ def main(argv: Sequence[str]):
                 sc_straight.accuracy_results = int(param_split[1])
             if param_split[0] == 'template_orientation':
                 sc_straight.template_orientation = int(param_split[1])
+            if param_split[0] == 'safe_zone':
+                sc_straight.safe_zone = int(param_split[1])
 
     fname_straight = sc_straight.straighten()
 
@@ -269,7 +249,7 @@ def main(argv: Sequence[str]):
         qc_dataset = arguments.qc_dataset
         qc_subject = arguments.qc_subject
         generate_qc(fname_straight, args=argv, path_qc=os.path.abspath(path_qc),
-                    dataset=qc_dataset, subject=qc_subject, process=removesuffix(os.path.basename(__file__), ".py"))
+                    dataset=qc_dataset, subject=qc_subject, process=os.path.basename(__file__).removesuffix(".py"))
 
     display_viewer_syntax([fname_straight], verbose=verbose)
 

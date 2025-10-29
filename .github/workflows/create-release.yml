@@ -6,6 +6,13 @@ on:
       milestone_title:
         description: 'Milestone title (this release)'
         required: true
+      dry_run:
+        description: "Dry Run; if True, no changes are made on the repo and no release is made (but everything else is run!)"
+        type: choice
+        options:
+          - 'True'
+          - 'False'
+        default: 'True'
   schedule:
     # https://docs.github.com/en/free-pro-team@latest/actions/reference/workflow-syntax-for-github-actions#onschedule
     # > Scheduled workflows run on the latest commit on the default or base branch
@@ -49,6 +56,44 @@ jobs:
         name: requirements-freeze
         path: requirements-freeze.txt
 
+  generate-install-methods:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout spinalcordtoolbox
+        uses: actions/checkout@v4
+
+      - name: Create Installation Script Directory
+        # KO: This directory makes artifacting everything together much easier later
+        run: |
+          mkdir install_scripts
+
+      - name: Create ${{ github.event.inputs.milestone_title }} Native Windows install script
+        run: |
+          cp install_sct.bat install_sct-${{ github.event.inputs.milestone_title }}_win.bat
+          perl -pi -e 's/set git_ref=master/set git_ref=${{ github.event.inputs.milestone_title }}/' install_sct-${{ github.event.inputs.milestone_title }}_win.bat
+          mv install_sct-${{ github.event.inputs.milestone_title }}_win.bat install_scripts/
+
+      - name: Create ${{ github.event.inputs.milestone_title }} Linux/macOS install scripts
+        # NB: `install_sct` works for both Linux and macOS platforms. So, here, we simply duplicate the script for both
+        # platforms (which will allow us to collect some rudimentary statistics + make our installation steps clearer).
+        run: |
+          cp install_sct install_sct-${{ github.event.inputs.milestone_title }}_linux.sh
+          perl -pi -e 's/SCT_GIT_REF="master"/SCT_GIT_REF="${{ github.event.inputs.milestone_title }}"/' install_sct-${{ github.event.inputs.milestone_title }}_linux.sh
+          mv install_sct-${{ github.event.inputs.milestone_title }}_linux.sh install_scripts/
+          cp install_scripts/install_sct-${{ github.event.inputs.milestone_title }}_linux.sh install_scripts/install_sct-${{ github.event.inputs.milestone_title }}_macos.sh
+
+      - name: Generate Apptainer Tarball
+        run: |
+          cd ./contrib/apptainer
+          ./bundle_for_release.sh ${{ github.event.inputs.milestone_title }}
+          mv sct_apptainer_${{ github.event.inputs.milestone_title }}.tar.gz ../../install_scripts
+
+      - name: Upload Install Scripts
+        uses: actions/upload-artifact@v4
+        with:
+          name: install-scripts
+          path: install_scripts/*
+
   test-release:
     # The purpose of this step is to run tests using the requirements-freeze file
     # In 99% of cases, this will be identical to running tests using `requirements.txt`. But, sometimes
@@ -56,7 +101,7 @@ jobs:
     needs: generate-requirements-freeze
     strategy:
       matrix:
-        os: [ubuntu-22.04, ubuntu-24.04, macos-13, macos-14, windows-2019, windows-2022]
+        os: [ubuntu-22.04, ubuntu-24.04, macos-13, macos-14, macos-15, windows-2022, windows-2025]
     runs-on: ${{ matrix.os }}
     # NB: Setting `bash` as the default shell is a bit of a hack workaround for Windows to allow it to run .sh scripts.
     #     Normally, we would ask the user to install a Windows-compatible bash via either Cygwin or Git for Windows.
@@ -109,13 +154,23 @@ jobs:
 
     - name: Run sct_testing
       run: |
-        sct_testing
+        sct_testing --basetemp="$GITHUB_WORKSPACE/tempdir"
+
+    - name: Upload QC
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: Pytest QC (${{ matrix.os }})
+        path: "${{ github.workspace }}/tempdir/qc-report-current"
 
   create-release:
-    needs: test-release
+    needs: [test-release, generate-install-methods]
     runs-on: ubuntu-latest
-    # Only create the release if workflow is run manually. (This allows the other steps in the workflow to test PRs.)
-    if: github.event_name == 'workflow_dispatch'
+    # Only create a release on GitHub if workflow is run manually. (This allows the other steps in the workflow to test PRs.)
+    # We also only make a "real" release if the user explicitly requested it (`dry_run == False`); this allows us to
+    #  test changes to this script (and other release-affecting scripts) without cluttering the GitHub repo!
+    # KO: The order of this evaluation is important; the latter is only "real" in the context of workflow_dispatch
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run == 'False'
     steps:
     # The GitHub Actions bot email was taken from: https://github.community/t/github-actions-bot-email-address/17204/6
     - name: Set bot user data for commits
@@ -134,6 +189,11 @@ jobs:
       with:
         name: requirements-freeze
 
+    - name: Download Install Scripts
+      uses: actions/download-artifact@v4
+      with:
+        name: install-scripts
+
     - name: Commit requirements-freeze.txt (for release)
       run: |
         git checkout -b bot/${{ github.event.inputs.milestone_title }}
@@ -151,21 +211,8 @@ jobs:
         git tag ${{ github.event.inputs.milestone_title }}
         git push --tags
 
-    - name: Create ${{ github.event.inputs.milestone_title }} Native Windows install script
-      run: |
-        cp install_sct.bat install_sct-${{ github.event.inputs.milestone_title }}_win.bat
-        perl -pi -e 's/set git_ref=master/set git_ref=${{ github.event.inputs.milestone_title }}/' install_sct-${{ github.event.inputs.milestone_title }}_win.bat
-
-    - name: Create ${{ github.event.inputs.milestone_title }} Linux/macOS install scripts
-      # NB: `install_sct` works for both Linux and macOS platforms. So, here, we simply duplicate the script for both
-      # platforms (which will allow us to collect some rudimentary statistics + make our installation steps clearer).
-      run: |
-        cp install_sct install_sct-${{ github.event.inputs.milestone_title }}_linux.sh
-        perl -pi -e 's/SCT_GIT_REF="master"/SCT_GIT_REF="${{ github.event.inputs.milestone_title }}"/' install_sct-${{ github.event.inputs.milestone_title }}_linux.sh
-        cp install_sct-${{ github.event.inputs.milestone_title }}_linux.sh install_sct-${{ github.event.inputs.milestone_title }}_macos.sh
-
-    - uses: ncipollo/release-action@v1
-      name: Create release
+    - name: Create release
+      uses: ncipollo/release-action@v1
       id: create_release
       with:
         tag: ${{ github.event.inputs.milestone_title }}
@@ -173,5 +220,16 @@ jobs:
         bodyFile: ".github/workflows/release-body.md"
         artifacts: "install_sct-${{ github.event.inputs.milestone_title }}_win.bat,\
                     install_sct-${{ github.event.inputs.milestone_title }}_linux.sh,\
-                    install_sct-${{ github.event.inputs.milestone_title }}_macos.sh"
+                    install_sct-${{ github.event.inputs.milestone_title }}_macos.sh,\
+                    sct_apptainer_${{ github.event.inputs.milestone_title }}.tar.gz"
         draft: true
+
+    - name: Update `stable` docs branch to point to new release
+      # - We use a manual `stable` branch instead of ReadTheDocs' automated `stable` system.
+      # - This allows us to backport simple doc changes (e.g. typo fixes) to our `stable` branch
+      #   without having to create any new tags or releases.
+      # - When a new release is created, it becomes the new base of the `stable` branch.
+      # - NOTE: This will wipe out all the previous backported changes, so make sure to also update `master`
+      #   whenever we backport changes (so that they will be preserved when resetting the branch to the release).
+      run: |
+        git push --force origin refs/tags/"${{ github.event.inputs.milestone_title }}":refs/heads/stable

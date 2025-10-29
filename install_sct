@@ -111,7 +111,7 @@ function run() {
 }
 
 # Force a clean exit
-# shellcheck disable=SC2317  # Don't warn about unreachable commands in this function, since it's invoked in a trap
+# shellcheck disable=SC2317,SC2329  # Don't warn about unreachable commands in this function, since it's invoked in a trap
 function finish() {
   # Catch the last return code
   value="$?"
@@ -132,7 +132,7 @@ then upload it as a .txt attachment in a new topic on SCT's forum:
 }
 
 # reenable tty echo when user presses keyboard interrupt and output non-zero status for finish() function
-# shellcheck disable=SC2317  # Don't warn about unreachable commands in this function, since it's invoked in a trap
+# shellcheck disable=SC2317,SC2329  # Don't warn about unreachable commands in this function, since it's invoked in a trap
 detectKeyboardInterrupt() {
       # reenable tty echo
       print error "Installation aborted by the user."
@@ -168,8 +168,6 @@ function fetch_os_type() {
       export LANG=en_US.UTF-8
     fi
     OS="osx"
-    # make sure bashrc is loaded when starting a new Terminal
-    force_bashrc_loading
   # Linux
   elif echo "$uname_output" | grep -i linux >/dev/null 2>&1; then
     OS="linux"
@@ -259,28 +257,53 @@ function get_shell_rc_path() {
   fi
 }
 
-# Force bashrc loading
-function force_bashrc_loading() {
-  sourceblock="
-if [[ -n \"\$BASH_VERSION\" ]]; then
-    # include .bashrc if it exists
-    if [[ -f \"\$HOME/.bashrc\" ]]; then
-    . \"\$HOME/.bashrc\"
-    fi
-fi"
-  bidon=""
-  for profile in ~/.bash_profile ~/.bash_login ~/.profile; do
-    if [[ -a "$profile" ]]; then
-      if ! grep -E "(\.|source) .*bashrc" "$profile" >/dev/null 2>&1; then
-        echo "$sourceblock" >>"$profile"
-      fi
-      bidon="done"
-      break
-    fi
-  done
+# Deal with permission issues on files used by SCT installer
+# It is strangely common for a user to not have read/write access to files
+# present in their own home directory (e.g. not owning .bashrc, somehow).
+# So, we provide advice here so that they can hopefully fix the issue
+# themselves, rather than having to contact us.
+function check_permissions() {
+  FILE_TO_CHECK="$1"
+  echo -n "Checking permissions on required file $FILE_TO_CHECK:"
 
-  if [[ -z "$bidon" ]]; then
-    echo "$sourceblock" >>~/.bash_profile
+  if [ -e "$FILE_TO_CHECK" ]; then EXIST="True"; else EXIST="False"; fi
+  if [ -O "$FILE_TO_CHECK" ]; then OWNED="True"; else OWNED="False"; fi
+  if [ -r "$FILE_TO_CHECK" ]; then READS="True"; else READS="False"; fi
+  if [ -w "$FILE_TO_CHECK" ]; then WRITE="True"; else WRITE="False"; fi
+
+  MSG_EXIST="  - File exists: $EXIST"
+  MSG_OWNED="  - File ownership: $OWNED"
+  MSG_READS="  - Read permissions: $READS"
+  MSG_WRITE="  - Write permissions: $WRITE"
+
+  WARNING="False"
+  if [ $EXIST == "False" ]; then
+    MSG_EXIST+="\n    NOTE: The SCT installer will create this file."
+  fi
+  if [ $OWNED == "False" ]; then
+    MSG_OWNED+="\n    WARNING: If you encounter permission issues, you can try running the following command:"
+    MSG_OWNED+="\n             sudo chown \"$(whoami)\" \"$FILE_TO_CHECK\""
+    WARNING="True"
+  fi
+  if [ $READS == "False" ]; then
+    MSG_READS+="\n    WARNING: If you encounter permission issues, you can try running the following command:"
+    MSG_READS+="\n             sudo chmod u+r \"$FILE_TO_CHECK\""
+    WARNING="True"
+  fi
+  if [ $WRITE == "False" ]; then
+    MSG_WRITE+="\n    WARNING: If you encounter permission issues, you can try running the following command:"
+    MSG_WRITE+="\n             sudo chmod u+w \"$FILE_TO_CHECK\""
+    WARNING="True"
+  fi
+
+  # Note: Ideally we would properly color each individual message, however `print` adds a *lot* of
+  #       unnecessary spacing, so chaining multiple `print` messages looks very bad. We could remove
+  #       the spacing from `print`, but this would drastically change the output of our installer.
+  MSG_TO_WRITE="$MSG_EXIST\n$MSG_OWNED\n$MSG_READS\n$MSG_WRITE"
+  if [ $WARNING == "True" ]; then
+    print warning "$MSG_TO_WRITE"
+  else
+    print info "$MSG_TO_WRITE"
   fi
 }
 
@@ -336,6 +359,38 @@ function usage() {
     printing==1  { print }
     (printing==1 && blanks>=2) { exit }
   ' "$0"
+}
+
+function validate_install_dir() {
+  PATH_TO_CHECK="$1"
+  # Check user-selected path for spaces
+  space_regex="[[:space:]]+"
+  if [[ $PATH_TO_CHECK =~ $space_regex ]]; then
+    print warning "WARNING: Install directory $PATH_TO_CHECK contains spaces.\n\
+         SCT uses conda, which does not permit spaces in installation paths.\n\
+         More details can be found here: https://github.com/ContinuumIO/anaconda-issues/issues/716"
+    return 1
+  elif (( ${#PATH_TO_CHECK} > 107 )); then
+    print warning "WARNING: Install directory $PATH_TO_CHECK exceeds path limit of 107 characters (${#PATH_TO_CHECK}).\n\
+       SCT uses conda, which may encounter strange issues with long paths.\n\
+       More details can be found here: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4813#issuecomment-2741165452"
+    return 1
+  # Avoid horrible bug, like removing /bin if SCT_DIR "/" or $HOME/bin
+  elif [[ "$PATH_TO_CHECK" == "/" ]] || [[ "$HOME" == "${PATH_TO_CHECK%/}" ]]; then
+    print warning "WARNING: Cannot be installed directly in $PATH_TO_CHECK"
+    print warning "Please pick a full path"
+    return 1
+  elif [[ -d "$PATH_TO_CHECK" ]]; then
+    # directory exists --> update SCT_DIR and exit loop
+    print warning "WARNING: Directory already exists. Files will be overwritten."
+    return 0
+  elif [[ ! "$PATH_TO_CHECK" ]]; then
+    # If no input, asking again, and again, and again
+    print warning "WARNING: Empty input. Please enter a valid path."
+    return 1
+  else
+    return 0
+  fi
 }
 
 # ======================================================================================================================
@@ -450,6 +505,10 @@ echo -e "Installation type ... $SCT_INSTALL_TYPE"
 echo -e "Operating system .... $OS ($OSver)"
 echo -e "Shell config ........ $RC_FILE_PATH"
 
+# check permissions on shell config file (but don't fail either way)
+echo ""
+check_permissions "$RC_FILE_PATH"
+
 # if installing from git folder, then becomes default installation folder
 if [[ "$SCT_INSTALL_TYPE" == "in-place" ]]; then
   SCT_DIR="$SCT_SOURCE"
@@ -458,23 +517,38 @@ else
 fi
 
 # Set install dir
+keep_default_path=""
 while true; do
-  keep_default_path=""
-  while [[ ! "$keep_default_path" =~ ^([Yy](es)?|[Nn]o?)$ ]]; do
-    print info "SCT will be installed here: [$SCT_DIR]"
-    keep_default_path="yes"
-    if [ -z "$NONINTERACTIVE" ]; then
-      print question "
+  # If we're on the first iteration of the loop...
+  if [ -z "${keep_default_path}" ]; then
+    # Then check if the default install directory is valid. If it is, then we can prompt users whether they want to keep it.
+    if validate_install_dir "$SCT_DIR"; then
+      while [[ ! "$keep_default_path" =~ ^([Yy](es)?|[Nn]o?)$ ]]; do
+        print info "SCT will be installed here: [$SCT_DIR]"
+        keep_default_path="yes"
+        if [ -z "$NONINTERACTIVE" ]; then
+          print question "
 Do you agree? [y]es/[n]o: "
-      read -r keep_default_path
-    fi
-  done
-  if [[ "$keep_default_path" =~ ^[Yy] ]]; then
-    # user accepts default path --> exit loop
-    break
-  fi
+          read -r keep_default_path
+        fi
+      done
+      if [[ "$keep_default_path" =~ ^[Yy] ]]; then
+        # user accepts default path --> exit loop
+        break
+      fi
 
-  # ASSUMPTION: the rest of these are not guarded by $NONINTERACTIVE because this loop should have been broken already in that case.
+    # If the default install directory is not valid, then we shouldn't even present the option to keep it.
+    # Instead, we should proceed to the next step (which is to prompt the user for a new path).
+    else
+      keep_default_path="no"
+      # However, if the user cannot enter input (non-interactive mode), then we must halt the installation.
+      if [ "$NONINTERACTIVE" ]; then
+        error_msg="ERROR: Default installation directory must be valid when running in non-interactive mode (-y)."
+        error_msg="${error_msg} Please fix the issues reported above, or run the installer in interactive mode instead."
+        die "$error_msg"
+      fi
+    fi
+  fi
 
   print question "Choose install directory. Warning! Give full path (e.g. /usr/django/sct_v3.0): \n"
   # user enters new path
@@ -485,29 +559,14 @@ Do you agree? [y]es/[n]o: "
   # Remove trailing /
   new_install="${new_install%/}"
 
-  # Check user-selected path for spaces
-  space_regex="[[:space:]]+"
-  if [[ $SCT_DIR =~ $space_regex ]]; then
-    print info "ERROR: Install directory $SCT_DIR contains spaces.\n\
-                SCT uses conda, which does not permit spaces in installation paths.\n\
-                More details can be found here: https://github.com/ContinuumIO/anaconda-issues/issues/716"
-    continue
-  # Avoid horrible bug, like removing /bin if SCT_DIR "/" or $HOME/bin
-  elif [[ "$new_install" == "/" ]] || [[ "$HOME" == "${new_install%/}" ]]; then
-    print info "Cannot be installed directly in $new_install"
-    print info "Please pick a full path"
-    continue
-  elif [[ -d "$new_install" ]]; then
-    # directory exists --> update SCT_DIR and exit loop
-    print warning "WARNING: Directory already exists. Files will be overwritten."
+  # Check user-selected path for issues (spaces, path length, clash with $HOME, etc.)
+  if validate_install_dir "$new_install"; then
+    # If the path is valid, then we can exit the loop
     SCT_DIR="$new_install"
     break
-  elif [[ ! "$new_install" ]]; then
-    # If no input, asking again, and again, and again
-    continue
   else
-    SCT_DIR="$new_install"
-    break
+    # if the path is invalid, then repeat
+    continue
   fi
 done
 
@@ -611,7 +670,7 @@ find "$SCT_DIR/$PYTHON_DIR" -type f -exec touch {} +
 # create conda environment
 print info "Creating conda environment..."
 # NB: We use an absolute path (-p) rather than a relative name (-n) to better isolate the conda environment
-python/bin/conda create -y -p "$SCT_DIR/$PYTHON_DIR/envs/venv_sct" python=3.9
+python/bin/conda create -y -p "$SCT_DIR/$PYTHON_DIR/envs/venv_sct" python=3.10
 
 # Reapply the touch fix to avoid `pip` connection issues on WSL
 find "$SCT_DIR/$PYTHON_DIR" -type f -exec touch {} +
@@ -634,6 +693,14 @@ if [[ $OS == linux ]]; then
   conda install -y -c conda-forge libstdcxx-ng
   # Ensure that libffi isn't linked incorrectly (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3927#issuecomment-1573896770)
   conda install -y -c conda-forge libffi
+  # Ensure that PyQt5 has the correct dependencies on Ubuntu (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3925)
+  # NB: We also need to copy the necessary dependencies to a separate subfolder that we add to LD_LIBRARY_PATH in compat/launcher.py
+  #     We do this to avoid exposing the full `lib/` directory, which can cause conflicts with system libraries.
+  #     This should copy 1 .so file and 2 symlinks, but the symlinks are relative, so copying them to a separate folder should be OK.
+  #     Related issue: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4971
+  conda install -y -c conda-forge xorg-libxinerama
+  mkdir "$SCT_DIR/$PYTHON_DIR/envs/venv_sct/sct_ld_library_path/"
+  cp "$SCT_DIR/$PYTHON_DIR/envs/venv_sct/lib/libxcb-xinerama.so."* "$SCT_DIR/$PYTHON_DIR/envs/venv_sct/sct_ld_library_path/"
 fi
 
 # Skip pip==21.2 to avoid dependency resolver issue (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3593)

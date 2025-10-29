@@ -10,7 +10,7 @@ from operator import itemgetter
 from numpy import dot, cross, array, einsum, stack, zeros
 from numpy.linalg import norm, inv
 import numpy as np
-from scipy.spatial import cKDTree
+import scipy
 
 
 class Coordinate:
@@ -66,33 +66,42 @@ class Coordinate:
     def __ne__(self, other):
         return not self.__eq__(other)
 
-    def permute(self, img, orient_dest, orient_src=None):
+    def permute(self, img_src, orient_dest, mode='absolute'):
         """
         Permute coordinate based on source and destination orientation.
 
-        :param img : spinalcordtoolbox.Image() object
-        :param orient_dest:
-        :param orient_src:
-        :return:
+        :param img_src : spinalcordtoolbox.Image() object. Must represent the space that the coordinate
+                         is currently in. The source orientation and the dimensions are pulled from
+                         this image, which are used to permute/invert the coordinate.
+        :param orient_dest: The orientation to output the new coordinate in.
+        :param mode: Determines how inversions are handled. If 'absolute', the coordinate is recomputed using
+                     a new origin based on the source image's maximum dimension for the inverted axes. If
+                     'relative', the coordinate is treated as vector and inverted by multiplying by -1.
+        :return: numpy array with the new coordinates in the destination orientation.
 
         Example:
         .. code:: python
 
             coord.permute(Image('data.nii.gz'), 'RPI')
-            coord.permute(Image('data.nii.gz'), 'RPI', orient_src='SAL')
         """
         # convert coordinates to array
         coord_arr = np.array([self.x, self.y, self.z])
-        dim_arr = np.array(img.dim[0:3])
+        dim_arr = np.array(img_src.dim[0:3])
         # permutes
         from spinalcordtoolbox.image import _get_permutations
-        perm, inversion = _get_permutations(orient_dest, img.orientation)  # we need to invert src and dest for this to work
+        perm, inversion = _get_permutations(orient_dest, img_src.orientation)  # we need to invert src and dest for this to work
         coord_permute = np.array([coord_arr[perm[0]], coord_arr[perm[1]], coord_arr[perm[2]]])
         dim_permute = np.array([dim_arr[perm[0]], dim_arr[perm[1]], dim_arr[perm[2]]])
         # invert indices based on maximum dimension for each axis
         for i in range(3):
             if inversion[i] == -1:
-                coord_permute[i] = dim_permute[i] - coord_permute[i]
+                if mode == 'absolute':
+                    coord_permute[i] = (dim_permute[i] - 1) - coord_permute[i]
+                elif mode == 'relative':
+                    coord_permute[i] = -1 * coord_permute[i]
+                else:
+                    raise ValueError(f"Permutations can be 'absolute' or 'relative', but a '{mode}' permutation was "
+                                     f"requested instead.")
         return coord_permute
 
     def __add__(self, other):
@@ -231,7 +240,7 @@ class Centerline:
         self.offset_plans = array([item[3] for item in self.plans_parameters])
 
         # initialization of KDTree for enabling computation of nearest points in centerline
-        self.tree_points = cKDTree(self.points)
+        self.tree_points = scipy.spatial.cKDTree(self.points)
 
         if self.compute_init_distribution:
             self.compute_vertebral_distribution(discs_levels=self.discs_levels, label_reference=self.label_reference)
@@ -390,7 +399,7 @@ class Centerline:
 
         # Assign first/last labels once we guarantee that there even *are* valid labels
         if index_last_label is None or index_last_label is None:
-            raise ValueError(f"None of the provided disc levels {[l[3] for l in discs_levels]} are present in the"
+            raise ValueError(f"None of the provided disc levels {[lev[3] for lev in discs_levels]} are present in the"
                              f"list of expected disc levels: {list(self.list_labels)}.")
         self.first_label = self.list_labels[index_first_label]
         self.last_label = self.list_labels[index_last_label]

@@ -177,6 +177,7 @@ def register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg=
                     '-d', dest[ifile],
                     '-o', add_suffix(src[ifile], '_reg'),
                     '-x', interp_step[ifile],
+                    '-crop', '3' if (i_step == 1 and fname_initwarp) else '0',
                     '-v', '0',
                     '-w'] + warp_forward
                 )
@@ -326,6 +327,13 @@ def register(src, dest, step, param):
     printv('  dof ............ ' + step.dof, param.verbose)
     printv('  smoothWarpXY ... ' + step.smoothWarpXY, param.verbose)
     printv('  rot_method ..... ' + step.rot_method, param.verbose)
+
+    # validate `-param` here to fail early if invalid (but after displaying them to the user)
+    if step.algo == 'centermassrot':
+        valid_types = {'pca': 'seg', 'hog': 'imseg', 'pcahog': 'imseg'}
+        if step.type != valid_types[step.rot_method]:
+            raise ValueError(f"Parameter 'rot_method={step.rot_method}' is only valid for type={valid_types[step.rot_method]}', "
+                             f"not '{step.type}'. Please update your `-param` settings to use a valid combination.")
 
     # set metricSize
     if step.metric == 'MI':

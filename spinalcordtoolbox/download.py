@@ -41,8 +41,8 @@ DATASET_DICT = {
     },
     "sct_testing_data": {
         "mirrors": [
-            "https://github.com/spinalcordtoolbox/sct_testing_data/releases/download/r20250109/sct_testing_data-r20250109.zip",
-            "https://osf.io/eqp8y/?action=download",
+            "https://github.com/spinalcordtoolbox/sct_testing_data/releases/download/r20250506/sct_testing_data-r20250506.zip",
+            "https://osf.io/verw8/?action=download",
         ],
         "default_location": os.path.join(__sct_dir__, "data", "sct_testing_data"),
         "download_type": "Datasets",
@@ -50,7 +50,7 @@ DATASET_DICT = {
     },
     "sct_course_data": {
         "mirrors": [
-            "https://github.com/spinalcordtoolbox/sct_tutorial_data/archive/refs/tags/SCT-Course-20241209.zip",
+            "https://github.com/spinalcordtoolbox/sct_tutorial_data/archive/refs/tags/r20250916.zip",
         ],
         "default_location": os.path.join(__sct_dir__, "data", "sct_course_data"),
         "download_type": "SCT Course Files",
@@ -66,8 +66,8 @@ DATASET_DICT = {
     },
     "PAM50": {
         "mirrors": [
-            "https://github.com/spinalcordtoolbox/PAM50/releases/download/r20250109/PAM50-r20250109.zip",
-            "https://osf.io/nkqtx/?action=download",
+            "https://github.com/spinalcordtoolbox/PAM50/releases/download/r20250730/PAM50-r20250730.zip",
+            "https://osf.io/zchkp/?action=download"
         ],
         "default_location": os.path.join(__sct_dir__, "data", "PAM50"),
         "download_type": "Templates",
@@ -156,7 +156,7 @@ DATASET_DICT = {
     },
     "PAM50_normalized_metrics": {
         "mirrors": [
-            "https://github.com/spinalcordtoolbox/PAM50-normalized-metrics/archive/refs/tags/r20230222.zip"
+            "https://github.com/spinalcordtoolbox/PAM50-normalized-metrics/archive/refs/tags/r20250321.zip"
         ],
         "default_location": os.path.join(__sct_dir__, "data", "PAM50_normalized_metrics"),
         "download_type": "Templates",

@@ -11,9 +11,7 @@ import os
 import shutil
 import logging
 import subprocess
-import time
 import shlex
-import atexit
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -24,6 +22,7 @@ import tqdm
 
 # Expose Tensorflow's LazyLoader class in `utils.sys` namespace
 from contrib.tensorflow.lazy_loader import LazyLoader  # noqa
+from spinalcordtoolbox.utils.profiling import begin_global_timer
 
 logger = logging.getLogger(__name__)
 
@@ -143,19 +142,6 @@ def set_loglevel(verbose, caller_module_name):
         pass
 
 
-def removesuffix(self: str, suffix: str) -> str:
-    """
-    Source: https://www.python.org/dev/peps/pep-0616/
-
-    TODO: Replace with built-in str.removesuffix method after upgrading to Python 3.9
-    """
-    # suffix='' should not call self[:-0].
-    if suffix and self.endswith(suffix):
-        return self[:-len(suffix)]
-    else:
-        return self[:]
-
-
 # TODO: add test
 def init_sct():
     """
@@ -183,31 +169,19 @@ def init_sct():
     hdlr.setFormatter(fmt)
     logging.root.addHandler(hdlr)
 
-    # Enable timer, if requested
-    if os.environ.get("SCT_TIMER", None) is not None:
-        add_elapsed_time_counter()
-
     # Display SCT version
     logger.info('\n--\nSpinal Cord Toolbox ({})\n'.format(__version__))
 
     # Display command (Only if called from CLI: check for .py in first arg)
     # Use next(iter()) to not fail on empty list (vs. sys.argv[0])
     if '.py' in next(iter(sys.argv), None):
-        script = removesuffix(os.path.basename(sys.argv[0]), ".py")
+        script = os.path.basename(sys.argv[0]).removesuffix(".py")
         arguments = ' '.join(sys.argv[1:])
         logger.info(f"{script} {arguments}\n"
                     f"--\n")
 
-
-def add_elapsed_time_counter():
-    class Timer():
-        def __init__(self):
-            self._t0 = time.time()
-
-        def atexit(self):
-            print("Elapsed time: %.3f seconds" % (time.time() - self._t0))
-    t = Timer()
-    atexit.register(t.atexit)
+    # Enable timing
+    begin_global_timer()
 
 
 def send_email(addr_to, addr_from, subject, message='', passwd=None, filename=None, html=False, smtp_host=None, smtp_port=None, login=None):

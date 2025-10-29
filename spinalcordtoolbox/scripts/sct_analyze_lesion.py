@@ -41,6 +41,9 @@ def get_parser():
               - width_interpolated_midsagittal_slice `[mm]`: width of the lesion along the Anterior-Posterior (AP) axis the **interpolated midsagittal slice**
               - interpolated_dorsal_bridge_width `[mm]`: width of spared tissue dorsal to the spinal cord lesion in the **interpolated midsagittal slice**
               - interpolated_ventral_bridge_width `[mm]`: width of spared tissue ventral to the spinal cord lesion in the **interpolated midsagittal slice**
+              - interpolated_total_bridge_width `[mm]`: total width of spared tissue in the **interpolated midsagittal slice** (i.e. dorsal + ventral)
+              - dorsal_bridge_ratio `[%]`: dorsal midsagittal tissue bridge width divided by total midsagittal tissue bridge width
+              - ventral_bridge_ratio `[%]`: ventral midsagittal tissue bridge width divided by total midsagittal tissue bridge width
               - dorsal_bridge_width `[mm]`: width of spared tissue dorsal to the spinal cord lesion (i.e. towards the posterior direction of the AP axis) for each sagittal slice containing the lesion
               - ventral_bridge_width `[mm]`: width of spared tissue ventral to the spinal cord lesion (i.e. towards the anterior direction of the AP axis) for each sagittal slice containing the lesion
 
@@ -48,49 +51,38 @@ def get_parser():
         """),  # noqa: E501 (line too long)
     )
 
-    mandatory_arguments = parser.add_argument_group("MANDATORY ARGUMENTS")
-    mandatory_arguments.add_argument(
+    mandatory = parser.mandatory_arggroup
+    mandatory.add_argument(
         "-m",
-        required=True,
-        help='Binary mask of lesions (lesions are labeled as "1").',
+        help='Binary mask of lesions (e.g. `t2_lesion.nii.gz`). Lesions are labeled as "1".',
         metavar=Metavar.file,
     )
 
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
-    optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="show this help message and exit")
+    optional = parser.optional_arggroup
     optional.add_argument(
         "-s",
-        required=False,
         help=textwrap.dedent("""
-            Spinal cord centerline or segmentation file, which will be used to correct morphometric measures with cord angle with respect to slice. (e.g. `t2_seg.nii.gz`)
-
-            If provided, then the lesion volume, length, diameter, axial damage ratio, and tissue bridges will be computed. Otherwise, if not provided, then only the lesion volume will be computed.
+            Spinal cord segmentation (e.g. `t2_seg.nii.gz`). If provided, any lesion voxels outside the cord segmentation will be set to 0.
+            Additionally, the spinal cord segmentation is used to obtain the spinal cord centerline, which is used to correct morphometric measures with cord angle with respect to slice.
+            If not provided, only the lesion volume is computed.
         """),  # noqa: E501 (line too long)
         metavar=Metavar.file)
     optional.add_argument(
         "-i",
         help='Image from which to extract average values within lesions (e.g. "t2.nii.gz"). If provided, the function '
              'computes the mean and standard deviation values of this image within each lesion.',
-        metavar=Metavar.file,
-        default=None,
-        required=False)
+        metavar=Metavar.file)
     optional.add_argument(
         "-f",
         help=textwrap.dedent("""
             Path to folder containing the atlas/template registered to the anatomical image. If provided, the function computes:
 
-              - a. for each lesion, the proportion of that lesion within each vertebral level and each region of the template (e.g. GM, WM, WM tracts). Each cell contains a percentage value representing how much of the lesion volume exists within the region indicated by the row/column (rows represent vertebral levels, columns represent ROIs). The percentage values are summed to totals in both the bottom row and the right column, and the sum of all cells is 100 (i.e. 100 percent of the lesion), found in the bottom-right.
-              - b. the proportions of each ROI (e.g. vertebral level, GM, WM) occupied by lesions.
+              1. for each lesion, the proportion of that lesion within each vertebral level and each region of the template (e.g. GM, WM, WM tracts). Each cell contains a percentage value representing how much of the lesion volume exists within the region indicated by the row/column (rows represent vertebral levels, columns represent ROIs). The percentage values are summed to totals in both the bottom row and the right column, and the sum of all cells is 100 (i.e. 100 percent of the lesion), found in the bottom-right.
+              2. the proportions of each ROI (e.g. vertebral level, GM, WM) occupied by lesions.
 
             These percentage values are stored in different pages of the output `lesion_analysis.xlsx` spreadsheet; one page for each lesion (a.) plus a final page summarizing the total ROI occupation of all lesions (b.)
         """),  # noqa: E501 (line too long)
-        metavar=Metavar.str,
-        default=None,
-        required=False)
+        metavar=Metavar.str)
     optional.add_argument(
         "-perslice",
         help="Specify whether to aggregate atlas metrics (`-f` option) per slice (`-perslice 1`) or per vertebral "
@@ -98,16 +90,14 @@ def get_parser():
         metavar=Metavar.int,
         type=int,
         choices=(0, 1),
-        default=0,
-        required=False
+        default=0
     )
     optional.add_argument(
         "-ofolder",
         help='Output folder (e.g. "."). Default is the current folder (".").',
         metavar=Metavar.folder,
         action=ActionCreateFolder,
-        default='.',
-        required=False)
+        default='.')
     optional.add_argument(
         '-qc',
         metavar=Metavar.folder,
@@ -124,21 +114,10 @@ def get_parser():
         metavar=Metavar.str,
         help="If provided, this string will be mentioned in the QC report as the subject the process was run on."
     )
-    optional.add_argument(
-        "-r",
-        type=int,
-        help="Remove temporary files.",
-        required=False,
-        default=1,
-        choices=(0, 1))
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
+    parser.add_tempfile_args()
 
     return parser
 
@@ -146,8 +125,9 @@ def get_parser():
 class AnalyzeLesion:
     def __init__(self, fname_mask, fname_sc, fname_ref, path_template, path_ofolder, perslice, verbose):
         self.fname_mask = fname_mask
-        self.interpolated_midsagittal_slice = None  # target float sagittal slice number used for the interpolation. This number is based on the spinal cord center of mass.
-        self.interpolation_slices = None            # sagittal slices used for the interpolation
+        # NB: We use `_RPI` to distinguish from the slice values that get output to the user (in original orientation)
+        self.interpolated_midsagittal_slice_RPI = None  # target float sagittal slice number used for the interpolation
+        self.interpolation_slices_RPI = None            # sagittal slices used for the interpolation
         self.fname_sc = fname_sc
         self.fname_ref = fname_ref
         self.path_template = path_template
@@ -356,6 +336,34 @@ class AnalyzeLesion:
         printv('  Maximum axial damage ratio: ' + str(np.round(maximum_axial_damage_ratio, 2)),
                self.verbose, type='info')
 
+    def _compute_tissue_bridge_ratio(self, idx):
+        """
+        :param idx: int, index of the lesion
+        Compute tissue bridge ratios:
+        - ventral_bridge_ratio: ventral midsagittal tissue bridge width divided by total midsagittal tissue bridge width
+        - dorsal_bridge_ratio: dorsal midsagittal tissue bridge width divided by total midsagittal tissue bridge width
+        """
+        # Get the dorsal and ventral tissue bridges
+        dorsal_bridge_width = float(self.measure_pd.loc[idx, 'interpolated_dorsal_bridge_width [mm]'])
+        ventral_bridge_width = float(self.measure_pd.loc[idx, 'interpolated_ventral_bridge_width [mm]'])
+        total_bridge_width = float(self.measure_pd.loc[idx, 'interpolated_total_bridge_width [mm]'])
+
+        # Compute the dorsal and ventral bridge ratios
+        if total_bridge_width > 0:
+            dorsal_bridge_ratio = (dorsal_bridge_width / total_bridge_width) * 100
+            ventral_bridge_ratio = (ventral_bridge_width / total_bridge_width) * 100
+        else:
+            dorsal_bridge_ratio = 0.0
+            ventral_bridge_ratio = 0.0
+
+        # Save the ratios to the measure DataFrame
+        self.measure_pd.loc[idx, 'dorsal_bridge_ratio [%]'] = dorsal_bridge_ratio
+        self.measure_pd.loc[idx, 'ventral_bridge_ratio [%]'] = ventral_bridge_ratio
+        printv(f'  Midsagittal dorsal bridge ratio: {dorsal_bridge_ratio:.2f} %',
+               self.verbose, type='info')
+        printv(f'  Midsagittal ventral bridge ratio: {ventral_bridge_ratio:.2f} %',
+               self.verbose, type='info')
+
     def _measure_interpolated_tissue_bridges(self, tissue_bridges_df, p_lst, idx):
         """
         Compute the interpolated tissue bridges. These bridges are computed from two sagittal slices, which are
@@ -367,7 +375,7 @@ class AnalyzeLesion:
         # Loop across unique axial slices (S-I direction) to interpolate the tissue bridges from the two sagittal
         # slices. Note that here, we get axial slices with the lesion only for the sagittal slices used for the
         # interpolation, i.e., not for all sagittal slices containing the lesion.
-        axial_slices = np.unique(tissue_bridges_df[tissue_bridges_df['sagittal_slice'].isin(self.interpolation_slices)]
+        axial_slices = np.unique(tissue_bridges_df[tissue_bridges_df['sagittal_slice'].isin(self.interpolation_slices_RPI)]
                                  ['axial_slice'])
 
         # If there are no axial slices, it means that the current lesion is not captured on the sagittal slices used
@@ -375,6 +383,7 @@ class AnalyzeLesion:
         if len(axial_slices) == 0:
             self.measure_pd.loc[idx, 'interpolated_dorsal_bridge_width [mm]'] = np.nan
             self.measure_pd.loc[idx, 'interpolated_ventral_bridge_width [mm]'] = np.nan
+            self.measure_pd.loc[idx, 'interpolated_total_bridge_width [mm]'] = np.nan
             return
 
         for axial_slice in axial_slices:
@@ -385,8 +394,8 @@ class AnalyzeLesion:
             dorsal_lookup = slice_data.set_index('sagittal_slice')['dorsal_bridge_width']
             ventral_lookup = slice_data.set_index('sagittal_slice')['ventral_bridge_width']
             # Get widths for the two sagittal slices. If there is no bridge for given slices, use 0.
-            dorsal_bridges = [dorsal_lookup.get(sag_slice, 0) for sag_slice in self.interpolation_slices]
-            ventral_bridges = [ventral_lookup.get(sag_slice, 0) for sag_slice in self.interpolation_slices]
+            dorsal_bridges = [dorsal_lookup.get(sag_slice, 0) for sag_slice in self.interpolation_slices_RPI]
+            ventral_bridges = [ventral_lookup.get(sag_slice, 0) for sag_slice in self.interpolation_slices_RPI]
             # Interpolate tissue bridges
             dorsal_bridge_interpolated = self._interpolate_values(*dorsal_bridges)
             ventral_bridge_interpolated = self._interpolate_values(*ventral_bridges)
@@ -399,10 +408,23 @@ class AnalyzeLesion:
         # Get minimum dorsal and ventral bridge widths
         min_interpolated_dorsal_bridge_width_mm = np.min(list(interpolated_dorsal_bridge_width_mm.values()))
         min_interpolated_ventral_bridge_width_mm = np.min(list(interpolated_ventral_bridge_width_mm.values()))
+        # Sum up the dorsal and ventral tissue bridges
+        interpolated_total_bridge_width_mm = (min_interpolated_dorsal_bridge_width_mm +
+                                              min_interpolated_ventral_bridge_width_mm)
 
         # Save the minimum tissue bridges
         self.measure_pd.loc[idx, 'interpolated_dorsal_bridge_width [mm]'] = min_interpolated_dorsal_bridge_width_mm
         self.measure_pd.loc[idx, 'interpolated_ventral_bridge_width [mm]'] = min_interpolated_ventral_bridge_width_mm
+        self.measure_pd.loc[idx, 'interpolated_total_bridge_width [mm]'] = interpolated_total_bridge_width_mm
+        printv(f'  Midsagittal dorsal tissue bridge width: '
+               f'{np.round(min_interpolated_dorsal_bridge_width_mm, 2)} mm',
+               self.verbose, type='info')
+        printv(f'  Midsagittal ventral tissue bridge width: '
+               f'{np.round(min_interpolated_ventral_bridge_width_mm, 2)} mm',
+               self.verbose, type='info')
+        printv(f'  Midsagittal total tissue bridge width: '
+               f'{np.round(interpolated_total_bridge_width_mm, 2)} mm',
+               self.verbose, type='info')
 
     def _measure_tissue_bridges(self, im_lesion_data, p_lst, idx):
         """
@@ -411,7 +433,7 @@ class AnalyzeLesion:
         (i.e., the spinal cord boundary) to the lesion boundary.
 
         NOTE: we compute the tissue bridges for all sagittal slices containing the lesion (i.e., including parasagittal
-        slices). Then, we compute also interpolated tissue bridges, see `_measure_interpolated_tissue_bridges`.
+         slices). Then, we compute also interpolated tissue bridges, see `_measure_interpolated_tissue_bridges`.
 
         Since we assume the input is in RPI orientation, then bridge widths are computed across the Y axis
         (AP axis), with dorsal == posterior (-Y) and ventral == anterior (+Y).
@@ -429,10 +451,6 @@ class AnalyzeLesion:
         # The orientation is assumed to be RPI (because we reoriented the image to RPI using orient2rpi())
         im_sc = Image(self.fname_sc)
         im_sc_data = im_sc.data
-
-        # Restrict the lesion mask to the spinal cord mask (from anatomical level, it does not make sense to have lesion
-        # outside the spinal cord mask)
-        im_lesion_data = im_lesion_data * im_sc_data
 
         # Get the dimensions of the lesion mask
         dim = im_lesion_data.shape
@@ -498,8 +516,10 @@ class AnalyzeLesion:
         # 3. Reset the index to make 'sagittal_slice' and 'axial_slice' as columns
         tissue_bridges_df.reset_index(inplace=True)
 
-        # Interpolated tissue bridges
+        # Compute interpolated tissue bridges
         self._measure_interpolated_tissue_bridges(tissue_bridges_df, p_lst, idx)
+        # Compute tissue bridge ratios
+        self._compute_tissue_bridge_ratio(idx)
 
         # Get slices of minimum dorsal and ventral tissue bridges for each sagittal slice
         # NOTE: we get minimum because tissue bridges are quantified as the width of spared tissue at the minimum
@@ -602,7 +622,7 @@ class AnalyzeLesion:
         """
         # Interpolate the currently processed lesion
         # NOTE: although we interpolate each lesion separately, the interpolation is always done for the same two
-        # sagittal slices (self.interpolation_slices) for all lesions. This ensures that we measure all lesions from
+        # sagittal slices (self.interpolation_slices_RPI) for all lesions. This ensures that we measure all lesions from
         # the same midsagittal slice (in this case, interpolated slice, of course).
         im_lesion_interpolated, nonzero_axial_slices = self._get_lesion_midsagittal_slice(im_lesion_data)
 
@@ -636,7 +656,7 @@ class AnalyzeLesion:
         """
         # Interpolate the currently processed lesion
         # NOTE: although we interpolate each lesion separately, the interpolation is always done for the same two
-        # sagittal slices (self.interpolation_slices) for all lesions. This ensures that we measure all lesions from
+        # sagittal slices (self.interpolation_slices_RPI) for all lesions. This ensures that we measure all lesions from
         # the same midsagittal slice (in this case, interpolated slice, of course).
         im_lesion_interpolated, nonzero_axial_slices = self._get_lesion_midsagittal_slice(im_lesion_data)
 
@@ -744,14 +764,13 @@ class AnalyzeLesion:
             self.distrib_matrix_dct[sheet_name][label_name] = \
                 self.distrib_matrix_dct[sheet_name][column_names_to_sum].sum(axis=1)
 
-        # Add the total row
-        self.distrib_matrix_dct[sheet_name] = self.distrib_matrix_dct[sheet_name].append(
-            self.distrib_matrix_dct[sheet_name].sum(numeric_only=True, axis=0),
-            ignore_index=True
-        )
-        self.distrib_matrix_dct[sheet_name].iloc[
-            -1, self.distrib_matrix_dct[sheet_name].columns.get_loc('row')
-        ] = f'total % (all {self.row_name})'
+        # Add the total row to the end
+        total_row = self.distrib_matrix_dct[sheet_name].sum(numeric_only=True)
+        total_row['row'] = f'total % (all {self.row_name})'
+        self.distrib_matrix_dct[sheet_name] = pd.concat([
+            self.distrib_matrix_dct[sheet_name],
+            total_row.to_frame().T
+        ])
 
     def __regroup_per_tracts(self, vol_dct, tracts):
         res_mask = [vol_dct[t][0] for t in vol_dct if t in tracts]
@@ -798,6 +817,11 @@ class AnalyzeLesion:
     def measure(self):
         im_lesion = Image(self.fname_label)
         im_lesion_data = im_lesion.data
+
+        # Restrict the lesion mask to the spinal cord mask, as lesions should not occur outside the cord
+        if self.fname_sc is not None:
+            im_lesion_data = im_lesion_data * Image(self.fname_sc).data
+
         p_lst = im_lesion.dim[4:7]  # voxel size
 
         label_lst = [label for label in np.unique(im_lesion_data) if label]  # lesion label IDs list
@@ -844,7 +868,11 @@ class AnalyzeLesion:
                 atlas_data_dct[tract_id] = img_cur_copy.data
                 del img_cur
 
-        # Get two sagittal slices for interpolation (based on the center of mass of the largest lesion)
+        # Get two sagittal slices for interpolation based on the center of mass of the largest lesion. As we need all
+        # lesions (to compute the center of mass of the largest lesion), we call the function here and not in the for
+        # loop below.
+        # Note: The function checks if the spinal cord segmentation is provided, if not, only the volume of each lesion
+        #  is computed (to determine the largest lesion) and the rest of the function is skipped.
         self.get_midsagittal_slice(im_lesion_data, label_lst, p_lst)
 
         # iteration across each lesion to measure statistics
@@ -853,13 +881,17 @@ class AnalyzeLesion:
             printv('\nMeasures on lesion #' + str(lesion_label) + '...', self.verbose, 'normal')
 
             label_idx = self.measure_pd[self.measure_pd.label == lesion_label].index
-            # For the lesion length and diameter, we need the spinal cord segmentation for angle correction
+            # For the lesion length and diameter, we need the spinal cord segmentation for angle correction.
             # For the axial damage ratio, we need the spinal cord segmentation to compute the ratio between lesion area
-            # and spinal cord area
+            # and spinal cord area.
             # For the tissue bridges, we need the spinal cord segmentation to compute the width of spared tissue ventral
-            # and dorsal to the spinal cord lesion
+            # and dorsal to the spinal cord lesion.
             if self.fname_sc is not None:
-                self.measure_pd.loc[label_idx, 'interpolated_midsagittal_slice'] = self.interpolated_midsagittal_slice
+                # The interpolated midsagittal slice is the same across all lesions, but for the clarity, we save it
+                # for each lesion (i.e., each row in the output XLSX file).
+                self.measure_pd.loc[label_idx, 'interpolated_midsagittal_slice'] = \
+                    rpi_slice_to_orig_orientation(im_lesion_data.shape, self.orientation,
+                                                  self.interpolated_midsagittal_slice_RPI, 0)
                 self._measure_length(im_lesion_data_cur, p_lst, label_idx)
                 self._measure_width(im_lesion_data_cur, p_lst, label_idx)
                 self._measure_diameter(im_lesion_data_cur, p_lst, label_idx)
@@ -926,8 +958,8 @@ class AnalyzeLesion:
         This function computes and stores:
             - volume for each lesion to determine the largest lesion.
         If the spinal cord mask is provided, the following variables are computed and stored:
-            - `self.interpolated_midsagittal_slice`: float, slice number corresponding to the interpolated midsagittal slice
-            - `self.interpolation_slices`: list, two sagittal slices used for interpolation
+            - `self.interpolated_midsagittal_slice_RPI`: float, interpolated midsagittal slice
+            - `self.interpolation_slices_RPI`: list, two sagittal slices used for interpolation
         Steps:
             1. Find lesion center of mass in superior-inferior axis (z direction). For example, 211.
             2. Define analysis range (2 axial slices above and below the lesion center of mass) around lesion center
@@ -992,13 +1024,18 @@ class AnalyzeLesion:
                 stored_x_coordinates.append(center_of_mass(spinal_cord_slice)[0])   # [0] --> R-L
         # 4. Calculate target position in right-left axis (x direction) for the interpolation (mean of spinal cord
         # center of mass (in the x-axis (R-L direction))
-        self.interpolated_midsagittal_slice = np.mean(stored_x_coordinates)    # e.g., for [8.6, 8.6, 8.9, 8.8, 9.6] --> 8.7
+        self.interpolated_midsagittal_slice_RPI = np.mean(stored_x_coordinates)    # e.g., for [8.6, 8.6, 8.9, 8.8, 9.6] --> 8.7
+        # Convert the interpolated midsagittal slice to the original orientation (just for printing)
+        interpolated_midsagittal_slice_orig_orientation = (
+            rpi_slice_to_orig_orientation(im_lesion_data.shape, self.orientation,
+                                          self.interpolated_midsagittal_slice_RPI, 0))
         printv(f'Interpolated midsagittal slice (same across lesions) = '
-               f'{round(self.interpolated_midsagittal_slice, 2)}', self.verbose, 'info')
+               f'{round(interpolated_midsagittal_slice_orig_orientation, 2)}', self.verbose, 'info')
+
         # 5. Interpolate the lesion
-        slice1 = int(np.floor(self.interpolated_midsagittal_slice))     # e.g., 8
-        slice2 = int(np.ceil(self.interpolated_midsagittal_slice))      # e.g., 9
-        self.interpolation_slices = [slice1, slice2]     # store it to be used for tissue bridges
+        slice1 = int(np.floor(self.interpolated_midsagittal_slice_RPI))     # e.g., 8
+        slice2 = int(np.ceil(self.interpolated_midsagittal_slice_RPI))      # e.g., 9
+        self.interpolation_slices_RPI = [slice1, slice2]     # store it to be used for tissue bridges
 
     def _interpolate_values(self, data1, data2):
         """
@@ -1009,7 +1046,7 @@ class AnalyzeLesion:
         :param data2: 2D numpy array (slice 2) or single int64 (tissue bridge for slice 2)
         :return: 2D numpy array (interpolated slice) or single float64 (interpolated tissue bridge)
         """
-        interpolation_factor = self.interpolated_midsagittal_slice - int(self.interpolated_midsagittal_slice)   # e.g., 8.7 - 8 = 0.7
+        interpolation_factor = self.interpolated_midsagittal_slice_RPI - int(self.interpolated_midsagittal_slice_RPI)   # e.g., 8.7 - 8 = 0.7
         return (1 - interpolation_factor) * data1 + interpolation_factor * data2
 
     def _get_lesion_midsagittal_slice(self, im_lesion_data):
@@ -1020,8 +1057,8 @@ class AnalyzeLesion:
         :return: list, axial slices that are nonzero in the interpolated midsagittal slice
         """
         # Interpolate the two sagittal slices; 3D --> 2D, dim=[AP, SI]
-        im_lesion_interpolated = self._interpolate_values(im_lesion_data[self.interpolation_slices[0], :, :],
-                                                          im_lesion_data[self.interpolation_slices[1], :, :])
+        im_lesion_interpolated = self._interpolate_values(im_lesion_data[self.interpolation_slices_RPI[0], :, :],
+                                                          im_lesion_data[self.interpolation_slices_RPI[1], :, :])
         # Fetch a list of axial slice numbers that are nonzero in the interpolated midsagittal slice
         nonzero_axial_slices = np.unique(np.where(im_lesion_interpolated)[1])  # [1] -> SI
 
@@ -1036,6 +1073,10 @@ class AnalyzeLesion:
 
         self.measure_pd['label'] = [label for label in np.unique(im_2save.data) if label]
         printv('Lesion count = ' + str(len(self.measure_pd['label'])), self.verbose, 'info')
+
+        # Exit the script if no lesion is found
+        if len(self.measure_pd['label']) == 0:
+            printv('ERROR: No lesion found in the input image.', self.verbose, 'error')  # exit code 1
 
     def _orient(self, fname, orientation):
         return Image(fname).change_orientation(orientation).save(fname, mutable=True)

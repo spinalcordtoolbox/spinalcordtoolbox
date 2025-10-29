@@ -5,19 +5,20 @@
 #
 # Copyright (c) 2020 Polytechnique Montreal <www.neuro.polymtl.ca>
 # License: see the file LICENSE
-
 # TODO: Add link to example image so users can decide wether their images look "close enough" to some of the proposed
 #  models (e.g., mice, etc.).
 # TODO: add test to make sure that all postprocessing flags match the core.DEFAULT dictionary items
 # TODO: Fetch default value (and display) depending on the model that is used.
 # TODO: accommodate multiclass segmentation
 
+from argparse import SUPPRESS, Action
 import json
 import os
 import sys
 import logging
 from typing import Sequence
-import textwrap
+from textwrap import dedent
+import functools
 
 from spinalcordtoolbox.reports import qc2
 from spinalcordtoolbox.image import splitext, Image, check_image_kind
@@ -33,177 +34,335 @@ models = LazyLoader("models", globals(), 'spinalcordtoolbox.deepseg.models')
 logger = logging.getLogger(__name__)
 
 
-def get_parser():
+class _TaskDeprecationAction(Action):
+    """
+    ArgParse action which, similar to help, terminates the program early if the user tries to use the old `-task`
+    syntax and prompts them to update their command with the new `deepseg task_name` syntax instead
+    """
+    def __init__(self,
+                 option_strings,
+                 dest=SUPPRESS,
+                 default=SUPPRESS,
+                 help=SUPPRESS):
+        # Slight modification of `_HelpAction` __init__, as this functions more-or-less identically
+        super(_TaskDeprecationAction, self).__init__(
+            option_strings=option_strings,
+            dest=dest,
+            default=default,
+            nargs='?',
+            metavar='TASK',
+            help=help)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        # If no task name was provided for some reason, use the metavar instead
+        if values is None:
+            values = self.metavar
+
+        # Print out an informative message for the user to help them transition to the new task
+        printv(dedent(f"""
+        The '-task' flag has been deprecated as of SCT version 7.0.
+        To resolve this, change your command from this:
+
+        > sct_deepseg -task {values} ...
+
+        To this:
+
+        > sct_deepseg {values} ...
+        """[1:]))  # noqa: E501 (line too long)
+        #   ^ This removes the implicit newline that `dedent` likes to add
+
+        # Stop parsing immediately
+        parser.exit()
+
+
+class _ListTaskDetailsAction(Action):
+    """
+    ArgParse action which, similar to help, terminates the program early if the user wants the tasks listed out for
+    them. Making this an action prevents some nasty side effects which might be caused by parsing other arguments.
+    """
+    def __init__(self,
+                 option_strings,
+                 dest=SUPPRESS,
+                 default=SUPPRESS,
+                 help=SUPPRESS):
+        # Slight modification of `_HelpAction` __init__, as this functions more-or-less identically
+        super(_ListTaskDetailsAction, self).__init__(
+            option_strings=option_strings,
+            dest=dest,
+            default=default,
+            nargs=0,
+            help=help)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        # Display the detailed task list
+        models.display_list_tasks()
+
+        # Stop parsing immediately
+        parser.exit()
+
+
+def get_parser(subparser_to_return=None):
+    # Initialize the top-level `sct_deepseg` argparser
     parser = SCTArgumentParser(
         description="Segment an anatomical structure or pathologies according to the specified deep learning model.",
+        usage=dedent("""
+        sct_deepseg TASK ...
+
+        Examples:
+            sct_deepseg spinalcord -h
+            sct_deepseg gm_mouse_t1 -install
+            sct_deepseg lesion_ms -i cMRI3712.nii.gz
+
+        View available tasks:
+            sct_deepseg -h
+            sct_deepseg -task-details
+        """[1:]),
         epilog=models.list_tasks_string()
     )
 
-    input_output = parser.add_argument_group("INPUT/OUTPUT")
-    input_output.add_argument(
-        "-i",
-        nargs="+",
-        help=f"Image to segment. Can be multiple images (separated with space)."
-             f"\n\nNote: If choosing `-task seg_ms_lesion_mp2rage`, then the input "
-             f"data must be cropped around the spinal cord. ({models.CROP_MESSAGE})",
-        metavar=Metavar.file)
-    input_output.add_argument(
-        "-c",
-        nargs="+",
-        help=textwrap.dedent("""
-            Contrast of the input. The `-c` option is only relevant for the following tasks:
-
-              - `seg_tumor-edema-cavity_t1-t2`: Specifies the contrast order of input images (e.g. `-c t1 t2`)
-
-            Because all other models have only a single input contrast, the `-c` option is ignored for them.
-        """),
-        choices=('t1', 't2', 't2star'),
-        metavar=Metavar.str)
-    input_output.add_argument(
-        "-o",
-        help="Output file name. In case of multi-class segmentation, class-specific suffixes will be added. By default,"
-             "the suffix specified in the packaged model will be added and output extension will be .nii.gz.",
-        metavar=Metavar.str)
-
-    seg = parser.add_argument_group('TASKS')
-    seg.add_argument(
+    # Hidden `-task` argument to help users transition to the command format
+    parser.add_argument(
         "-task",
-        nargs="+",
-        help="Task to perform. It could either be a pre-installed task, task that could be installed, or a custom task."
-             " To list available tasks, run: `sct_deepseg -list-tasks`. To use a custom task, indicate the path to the "
-             " packaged model. Models created with different frameworks ([ivadomed](https://ivadomed.org/), "
-             "[nnUNet](https://github.com/MIC-DKFZ/nnUNet), and [monai](https://monai.io)) are supported."
-             " More than one path can be indicated (separated with space) for cascaded application of the models.",
-        metavar=Metavar.str)
-    seg.add_argument(
-        "-list-tasks",
-        action='store_true',
+        action=_TaskDeprecationAction
+    )
+
+    optional = parser.optional_arggroup
+    optional.add_argument(
+        "-task-details",
+        action=_ListTaskDetailsAction,
         help="Display a list of tasks, along with detailed descriptions (including information on how the model was "
-             "trained, what data it was trained on, any performance evaluations, associated papers, etc.)")
-    seg.add_argument(
-        "-install", "-install-task",
-        help="Install models that are required for specified task.",
-        choices=list(models.TASKS.keys()))
-    seg.add_argument(
-        "-custom-url",
-        nargs="+",  # NB: `nargs="+"` won't work for installing custom ensemble models, but we no longer have any
-        help="URL(s) pointing to the `.zip` asset for a model release. This option can be used with `-install` to "
-             "install a specific version of a model. To use this option, navigate to the 'Releases' page of the model, "
-             "find release you wish to install, and right-click + copy the URL of the '.zip' listed under 'Assets'.\n"
-             "NB: For multi-model tasks, provide multiple URLs. For single models, just provide one URL.\n"
-             "Example:\n"
-             "'sct_deepseg -install seg_spinal_rootlets_t2w -custom-url "
-             "https://github.com/ivadomed/model-spinal-rootlets/releases/download/r20240523/model-spinal-rootlets_ventral_D106_r20240523.zip'\n"
-             "'sct_deepseg -i sub-amu01_T2w.nii.gz -task seg_spinal_rootlets_t2w'")
-
-    misc = parser.add_argument_group('PARAMETERS')
-    misc.add_argument(
-        "-thr",
-        type=float,
-        dest='binarize_prediction',
-        help="Binarize segmentation with specified threshold. Set to 0 for no thresholding (i.e., soft segmentation). "
-             "Default value is model-specific and was set during optimization "
-             "(more info at https://github.com/sct-pipeline/deepseg-threshold).",
-        metavar=Metavar.float,
-        default=None)
-    misc.add_argument(
-        "-r",
-        type=int,
-        help="Remove temporary files.",
-        choices=(0, 1),
-        default=1)
-    misc.add_argument(
-        "-largest",
-        dest='keep_largest',
-        type=int,
-        help="Keep the largest connected-objects from the output segmentation. Specify the number of objects to keep."
-             "To keep all objects, set to 0",
-        default=None)
-    misc.add_argument(
-        "-fill-holes",
-        type=int,
-        help="Fill small holes in the segmentation.",
-        choices=(0, 1),
-        default=None)
-    misc.add_argument(
-        "-remove-small",
-        type=str,
-        nargs="+",
-        help="Minimal object size to keep with unit (mm3 or vox). A single value can be provided or one value per "
-             "prediction class. Single value example: 1mm3, 5vox. Multiple values example: 10 20 10vox (remove objects "
-             "smaller than 10 voxels for class 1 and 3, and smaller than 20 voxels for class 2).",
-        default=None)
-
-    misc = parser.add_argument_group('MISC')
-    misc.add_argument(
-        '-qc',
-        metavar=Metavar.folder,
-        action=ActionCreateFolder,
-        help="The path where the quality control generated content will be saved."
-    )
-    misc.add_argument(
-        '-qc-dataset',
-        metavar=Metavar.str,
-        help="If provided, this string will be mentioned in the QC report as the dataset the process was run on."
-    )
-    misc.add_argument(
-        '-qc-subject',
-        metavar=Metavar.str,
-        help="If provided, this string will be mentioned in the QC report as the subject the process was run on."
-    )
-    misc.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
-    misc.add_argument(
-        "-h",
-        "--help",
+             "trained, what data it was trained on, and any performance evaluations, associated papers, etc. it may have)")
+    optional.add_argument(
+        "-h", "--help",
         action="help",
-        help="Show this help message and exit")
-    misc.add_argument(
-        "-qc-plane",
-        metavar=Metavar.str,
-        choices=('Axial', 'Sagittal'),
-        default='Axial',
-        help="Plane of the output QC. If Sagittal, it is highly recommended to provide the `-qc-seg` option, "
-             "as it will ensure the output QC is cropped to a reasonable field of view. "
-             "(Note: Sagittal view is not currently supported for rootlets/totalspineseg QC.)")
-    misc.add_argument(
-        "-qc-seg",
-        metavar=Metavar.file,
-        help=textwrap.dedent("""
-            Segmentation file to use for cropping the QC. This option is useful when you want to QC a region that is different from the output segmentation. For example, for lesion segmentation, it might be useful to provide a cord segmentation to expand the QC field of view to include the full cord, while also still excluding irrelevant tissue.
-            If not provided, the default behavior will depend on the `-qc-plane`:
-               - 'Axial': A sensibly chosen crop radius between 15-40 vox, depending on the resolution and segmentation type.
-               - 'Sagittal': The full image. (For very large images, this may cause a crash, so using `-qc-seg` is highly recommended.)
-        """)  # noqa: E501 (line too long)
+        help="Show this help message and exit."
     )
 
-    return parser
+    # Initialize the `subparsers` "special action object" that can be used to create subparsers
+    # See https://docs.python.org/3/library/argparse.html#sub-commands for more details.
+    parser_dict = {}
+    subparsers = parser.add_subparsers(help=dedent("""
+        Segmentation task to perform.
+            - To install a task, run `sct_deepseg TASK -install`
+            - To segment an image, run `sct_deepseg TASK -i input.nii.gz`
+            - To view additional options for a given task, run `sct_deepseg TASK -h`
+    """), metavar="TASK", dest="task")
+
+    # Generate 1 subparser per task, and add the following arguments to all subparsers
+    # Even if all subparsers share these arguments, it's better to duplicate them, since it allows for the usage:
+    #    `sct_deepseg TASK_NAME -i input.nii.gz`
+    # In other words, the arguments can come after the task name, which matches current usage. Otherwise, we would have
+    # to use the following usage instead, which feels weird when we're using subcommands:
+    #    `sct_deepseg -i input.nii.gz TASK_NAME`
+    for task_name, task_dict in models.TASKS.items():
+        # Store certain argument objects for later use (as we may want to suppress them for specific tasks)
+        task_args = {}
+
+        # Build up the description text in parts so dedent doesn't have a stroke
+        description_text = dedent(f"""
+            {task_dict["description"]}
+
+            {task_dict["long_description"]}
+
+            ## Reference\n
+        """)
+        if task_dict.get('citation', False):
+            description_text += f"{task_dict['citation']}\n\n"
+        description_text += f"Project URL: [{task_dict['url']}]({task_dict['url']})"
+
+        subparser = parser_dict[task_name] = subparsers.add_parser(
+            task_name,
+            description=description_text
+        )
+
+        input_output = subparser.add_argument_group("\nINPUT/OUTPUT")
+        task_args['-i'] = input_output.add_argument(
+            "-i",
+            nargs="+",
+            help="Image filename(s) to segment. If segmenting multiple files, separate filenames with a space.",
+            metavar=Metavar.file)
+        input_output.add_argument(
+            "-o",
+            help="Output file name. The chosen filename will be used as a base name, and model-specific suffixes will "
+                 "be added to the end depending on the type of output (e.g. '_cord.nii.gz', '_gm.nii.gz', etc.).",
+            metavar=Metavar.str)
+
+        seg = subparser.add_argument_group('\nTASKS')
+        seg.add_argument(
+            "-install",
+            help="Install models that are required for specified task.",
+            action="store_true")
+        seg.add_argument(
+            "-custom-url",
+            nargs="+",  # NB: `nargs="+"` won't work for installing custom ensemble models, but we no longer have any
+            # NB: For multi-model tasks, provide multiple URLs. For single models, just provide one URL.
+            #     We don't mention it in the help because we no longer have any multi-model tasks.
+            #     But, if we were to re-add a multi-model task one day, we could selectively amend this message.
+            help=f"URL(s) pointing to the `.zip` asset for a model release. This option can be used with `-install` to "
+                 f"install a specific version of a model. To use this option, navigate to the 'Releases' page of the model, "
+                 f"find release you wish to install, and right-click + copy the URL of the `.zip` listed under 'Assets'.\n"
+                 f"Example:\n"
+                 f"`sct_deepseg {task_name} -install -custom-url CUSTOM_URL`\n"
+                 f"`sct_deepseg {task_name} -i t2.nii.gz`")
+
+        params = subparser.add_argument_group('\nPARAMETERS')
+        thr_values = [models.MODELS[model_name]['thr'] for model_name in task_dict['models']]
+        task_args['-thr'] = params.add_argument(
+            "-thr",
+            type=float,
+            dest='binarize_prediction',
+            help=(f"Binarize segmentation with specified threshold. Set to 0 for no thresholding (i.e., soft segmentation). "
+                  f"Default value is '{thr_values}', and was chosen by experimentation "
+                  f"(more info at https://github.com/sct-pipeline/deepseg-threshold)."),
+            metavar=Metavar.float)
+        params.add_argument(
+            "-largest",
+            dest='keep_largest',
+            type=int,
+            default=0,
+            choices=(0, 1),
+            help="Keep the largest connected object from each output segmentation; if not set, all objects are kept.")
+        params.add_argument(
+            "-fill-holes",
+            type=int,
+            choices=(0, 1),
+            default=0,
+            help="If set, small holes in the segmentation will be filled in automatically."
+        )
+        params.add_argument(
+            "-remove-small",
+            type=str,
+            nargs="+",
+            help="Minimal object size to keep with unit (mm3 or vox). A single value can be provided or one value per "
+                 "prediction class. Single value example: 1mm3, 5vox. Multiple values example: 10 20 10vox (remove objects "
+                 "smaller than 10 voxels for class 1 and 3, and smaller than 20 voxels for class 2).")
+
+        misc = subparser.misc_arggroup
+        misc.add_argument(
+            '-qc',
+            metavar=Metavar.folder,
+            action=ActionCreateFolder,
+            help="The path where the quality control generated content will be saved."
+        )
+        misc.add_argument(
+            '-qc-dataset',
+            metavar=Metavar.str,
+            help="If provided, this string will be mentioned in the QC report as the dataset the process was run on."
+        )
+        misc.add_argument(
+            '-qc-subject',
+            metavar=Metavar.str,
+            help="If provided, this string will be mentioned in the QC report as the subject the process was run on."
+        )
+        task_args['-qc-plane'] = misc.add_argument(
+            "-qc-plane",
+            metavar=Metavar.str,
+            choices=('Axial', 'Sagittal'),
+            default='Axial',
+            help="Plane of the output QC. If Sagittal, it is highly recommended to provide the `-qc-seg` option, "
+                 "as it will ensure the output QC is cropped to a reasonable field of view.")
+        note_qc_seg = dedent("""
+
+            If `-qc-seg` is not provided, the default behavior will depend on the value of `-qc-plane`:
+              - 'Axial': Without '-qc-seg', a sensible crop radius between 15-40 vox will be automatically used, depending on the resolution and segmentation type.
+              - 'Sagittal': Without '-qc-seg', the full image will be displayed by default. (For very large images, this may cause a crash, so using `-qc-seg` is highly recommended.)
+        """)   # noqa: E501 (line too long)
+        task_args['-qc-seg'] = misc.add_argument(
+            "-qc-seg",
+            metavar=Metavar.file,
+            help="Segmentation file to use for cropping the QC. This option is useful when you want to QC a region "
+                 "that is different from the output segmentation. For example, it might be useful to provide a "
+                 "dilated cord segmentation to expand the QC field of view." + note_qc_seg
+        )
+
+        # Add common arguments
+        subparser.add_common_args()
+        subparser.add_tempfile_args()
+
+        # Add options that only apply to specific tasks
+        if task_name == 'tumor_edema_cavity_t1_t2':
+            input_output.add_argument(
+                "-c",
+                nargs="+",
+                help="Contrast of the input. Specifies the contrast order of input images (e.g. `-c t1 t2`)",
+                choices=('t1', 't2', 't2star'),
+                metavar=Metavar.str)
+        if task_name == 'totalspineseg':
+            params.add_argument(
+                "-step1-only",
+                type=int,
+                help="If set to '1', only Step 1 will be performed. If not provided, both steps will be run.\n"
+                     "- Step 1: Segments the spinal cord, spinal canal, vertebrae, and intervertebral discs (IVDs). Labels the IVDs, but vertebrae are left unlabeled.\n"
+                     "- Step 2: Fine-tunes the segmentation, applies labels to vertebrae, and segments the sacrum if present.\n"
+                     "More details on TotalSpineSeg's two models can be found here: https://github.com/neuropoly/totalspineseg/?tab=readme-ov-file#model-description",
+                choices=(0, 1),
+                default=0)
+        if task_name == 'lesion_ms':
+            # Add possibility of having soft segmentation for the lesion_ms task
+            params.add_argument(
+                "-soft-ms-lesion",
+                action="store_true",
+                help="If set, the model will output a soft segmentation (i.e. probability map) instead of a binary "
+                     "segmentation."
+            )
+            # Add possibility of segmenting on only 1 fold for quicker inference
+            params.add_argument(
+                "-single-fold",
+                action="store_true",
+                help="If set, only 1 fold will be used for inference instead of the full 5-fold ensemble. This will speed up inference, but may reduce segmentation quality."
+            )
+
+        # Add input cropping note specific to the `lesion_ms_mp2rage` task
+        if task_name == 'lesion_ms_mp2rage':
+            task_args['-i'].help += dedent(f"""
+
+            Note: For `lesion_ms_mp2rage`, the input
+            data must be cropped around the spinal cord.
+            ({models.CROP_MESSAGE})
+        """)
+
+        # Suppress arguments that are irrelevant for certain tasks
+        # - Sagittal view is not currently supported for rootlets/totalspineseg QC
+        #   This means that the `-qc-plane` argument (and the `-qc-seg` note) should be hidden for these tasks
+        tasks_without_sagittal_qc = ('rootlets', 'totalspineseg')
+        if task_name in tasks_without_sagittal_qc:
+            task_args['-qc-plane'].help = SUPPRESS
+            task_args['-qc-seg'].help = task_args['-qc-seg'].help.replace(note_qc_seg, "")
+
+        # - If none of the models for this task have a default threshold, then thresholding is not applicable.
+        if all(models.MODELS[model_name]['thr'] is None for model_name in task_dict['models']):
+            task_args['-thr'].help = SUPPRESS
+
+    if subparser_to_return:
+        return parser_dict[subparser_to_return]
+    else:
+        return parser
+
+
+# Define subparsers to be used in the "gallery of tasks" documentation for each task.
+# `sphinx-argparse` requires a function of no arguments that returns the parser, so here they are
+for task in models.TASKS.keys():
+    globals()[task] = functools.partial(get_parser, task)
 
 
 def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
+
+    # If the user called the command without arguments, display our help w/ an additional instructive message
+    if not (
+        hasattr(arguments, 'task_details')
+        or (arguments.task and arguments.install)
+        or (arguments.task and arguments.i)
+    ):
+        parser.error("You must specify either a task name + '-install', a task name + an image ('-i'), or "
+                     "'-task-details'.")
+
     verbose = arguments.v
     set_loglevel(verbose=verbose, caller_module_name=__name__)
 
-    if (arguments.list_tasks is False
-            and arguments.install is None
-            and (arguments.i is None or arguments.task is None)):
-        parser.error("You must specify either '-list-tasks', '-install-task', "
-                     "or both '-i' + '-task'.")
-
-    # Deal with task long description
-    if arguments.list_tasks:
-        models.display_list_tasks()
-
-    if arguments.install is not None:
-        models_to_install = models.TASKS[arguments.install]['models']
+    if arguments.install:
+        models_to_install = models.TASKS[arguments.task]['models']
         if arguments.custom_url:
             if len(arguments.custom_url) != len(models_to_install):
                 parser.error(f"Expected {len(models_to_install)} URL(s) for task {arguments.install}, "
@@ -220,29 +379,19 @@ def main(argv: Sequence[str]):
         if not os.path.isfile(file):
             parser.error("This file does not exist: {}".format(file))
 
-    # Verify if the task is part of the "official" tasks, or if it is pointing to paths containing custom models
-    if len(arguments.task) == 1 and arguments.task[0] in models.TASKS:
-        # Check if all input images are provided
-        required_contrasts = models.get_required_contrasts(arguments.task[0])
-        n_contrasts = len(required_contrasts)
-        # Get pipeline model names
-        name_models = models.TASKS[arguments.task[0]]['models']
-    else:
-        n_contrasts = len(arguments.i)
-        name_models = arguments.task
+    # Get pipeline model names
+    name_models = models.TASKS[arguments.task]['models']
 
-    # Check if all input images have been specified (only relevant for 'seg_tumor-edema-cavity_t1-t2')
-    # TODO: Fix contrast-related behavior as per https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4445
-    if 'seg_tumor-edema-cavity_t1-t2' in arguments.task[0] and len(arguments.i) != n_contrasts:
-        parser.error(
-            "{} input files found. Please provide all required input files for the task {}, i.e. contrasts: {}."
-            .format(len(arguments.i), arguments.task, ', '.join(required_contrasts)))
-
-    # Check modality order
-    if len(arguments.i) > 1 and arguments.c is None:
-        parser.error(
-            "Please specify the order in which you put the contrasts in the input images (-i) with flag -c, e.g., "
-            "-c t1 t2")
+    # Check if all input images and contrasts have been specified (only relevant for 'tumor-edema-cavity_t1-t2')
+    if arguments.task == 'tumor_edema_cavity_t1_t2':
+        required_contrasts = models.get_required_contrasts(arguments.task)
+        if len(arguments.i) != len(required_contrasts):
+            parser.error(
+                "{} input files found. Please provide all required input files for the task {}, i.e. contrasts: {}."
+                .format(len(arguments.i), arguments.task, ', '.join(required_contrasts)))
+        if len(arguments.c) != len(arguments.i):
+            parser.error(f"{len(arguments.i)} input files provided, but {len(arguments.c)} contrasts passed. "
+                         f"Number of contrasts should match the number of inputs.")
 
     # Run pipeline by iterating through the models
     fname_prior = None
@@ -269,9 +418,8 @@ def main(argv: Sequence[str]):
             if not models.is_valid(path_models):
                 parser.error("The input model is invalid: {}".format(path_models))
 
-        # Order input images (only relevant for 'seg_tumor-edema-cavity_t1-t2')
-        # TODO: Fix contrast-related behavior as per https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4445
-        if 'seg_tumor-edema-cavity_t1-t2' in arguments.task[0] and arguments.c is not None:
+        # Order input images (only relevant for 'tumor-edema-cavity_t1-t2')
+        if arguments.task == 'tumor_edema_cavity_t1_t2':
             input_filenames = []
             for required_contrast in models.MODELS[name_model]['contrasts']:
                 for provided_contrast, input_filename in zip(arguments.c, arguments.i):
@@ -280,7 +428,7 @@ def main(argv: Sequence[str]):
         else:
             input_filenames = arguments.i.copy()
 
-        if 'seg_sc_epi' in arguments.task[0]:
+        if arguments.task == 'sc_epi':
             for image in arguments.i:
                 image_shape = Image(image).data.shape
                 if len(image_shape) == 4:
@@ -292,7 +440,7 @@ def main(argv: Sequence[str]):
             model_type = models.check_model_software_type(path_models[0])  # NB: [0] -> Fetch first model from ensemble
         except ValueError:
             printv(f"Model type could not be determined. Directory '{path_model}' may be missing necessary files."
-                   f"Please redownload the model using `sct_deepseg -install-task` before continuing.", type="error")
+                   f"Please redownload the model using `sct_deepseg {arguments.task} -install` before continuing.", type="error")
 
         # Control GPU usage based on SCT-specific environment variable
         # NB: We use 'SCT_USE_GPU' as a "hidden option" to turn on GPU inference internally.
@@ -308,14 +456,36 @@ def main(argv: Sequence[str]):
         else:
             thr = (arguments.binarize_prediction if arguments.binarize_prediction is not None
                    else models.MODELS[name_model]['thr'])  # Default `thr` value stored in model dict
+            # Pass any "extra" kwargs defined only for specific models/tasks
+            extra_network_kwargs = {
+                arg_name: getattr(arguments, arg_name)
+                # "single_fold" -> used only by lesion_ms
+                for arg_name in ["single_fold"]
+                if hasattr(arguments, arg_name)
+            }
+            extra_inference_kwargs = {
+                arg_name: getattr(arguments, arg_name)
+                # "step1_only" -> used only by totalspineseg
+                # "soft_ms_lesion" -> used only by lesion_ms
+                for arg_name in ["step1_only", "soft_ms_lesion"]
+                if hasattr(arguments, arg_name)
+            }
+            # The MS lesion model is multifold, which requires turning on the "ensemble averaging" behavior
+            if arguments.task == 'lesion_ms':
+                extra_inference_kwargs['ensemble'] = True
+            # Run inference
             im_lst, target_lst = inference.segment_non_ivadomed(
                 path_model, model_type, input_filenames, thr,
                 # NOTE: contrast-agnostic nnunet model sometimes predicts pixels outside the cord, we want to
                 # set keep_largest object as the default behaviour when using this model
-                keep_largest=1 if arguments.task[0] == 'seg_sc_contrast_agnostic' else arguments.keep_largest,
+                keep_largest=1 if arguments.task == 'spinalcord' else arguments.keep_largest,
                 fill_holes_in_pred=arguments.fill_holes,
                 remove_small=arguments.remove_small,
-                use_gpu=use_gpu, remove_temp_files=arguments.r)
+                use_gpu=use_gpu, remove_temp_files=arguments.r,
+                # Pass any "extra" kwargs defined in task-specific subparsers
+                extra_network_kwargs=extra_network_kwargs,
+                extra_inference_kwargs=extra_inference_kwargs,
+            )
 
         # Delete intermediate outputs
         if fname_prior and os.path.isfile(fname_prior) and arguments.r:
@@ -377,18 +547,24 @@ def main(argv: Sequence[str]):
         # Models can have multiple input images -- create 1 QC report per input image.
         if len(output_filenames) == len(input_filenames):
             iterator = zip(input_filenames, output_filenames, [None] * len(input_filenames), qc_seg)
-        # Special case: totalspineseg which outputs 5 files per 1 input file
-        # Just use the 5th image ([4]) which represents the step2 output
-        elif arguments.task[0] == 'totalspineseg':
-            assert len(output_filenames) == 5 * len(input_filenames)
-            iterator = zip(input_filenames, output_filenames[4::5], [None] * len(input_filenames), qc_seg)
+        # Special case: totalspineseg which outputs 4-5 files per 1 input file
+        elif arguments.task == 'totalspineseg':
+            # `-step1-only: 1`: Use the 4th image ([3]) which represents the step1 output
+            if getattr(arguments, "step1_only") == 1:
+                assert len(output_filenames) == 4 * len(input_filenames)
+                output_filenames_qc = output_filenames[3::4]
+            # `-step1-only: 0`: Use the 5th image ([4]) which represents the step2 output
+            else:
+                assert len(output_filenames) == 5 * len(input_filenames)
+                output_filenames_qc = output_filenames[4::5]
+            iterator = zip(input_filenames, output_filenames_qc, [None] * len(input_filenames), qc_seg)
         # Other models typically have 2 outputs per input (e.g. SC + lesion), so use both segs
         else:
             assert len(output_filenames) == 2 * len(input_filenames)
             iterator = zip(input_filenames, output_filenames[0::2], output_filenames[1::2], qc_seg)
 
         # Create one QC report per input image, with one or two segs per image
-        species = 'mouse' if any(s in arguments.task[0] for s in ['mouse', 'mice']) else 'human'  # used for resampling
+        species = 'mouse' if 'mouse' in arguments.task else 'human'  # used for resampling
         for fname_in, fname_seg1, fname_seg2, fname_qc_seg in iterator:
             qc2.sct_deepseg(
                 fname_input=fname_in,

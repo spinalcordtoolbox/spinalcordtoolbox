@@ -12,7 +12,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.9'
+        python-version: '3.10'
     - name: Install dependencies
       run: pip install flake8
     # Note: flake8 picks up project-wide configuration options from 'setup.cfg' in SCT's root directory
@@ -24,7 +24,7 @@ jobs:
         set -eu -o pipefail
         git diff --name-only --diff-filter=d \
           --merge-base refs/remotes/origin/master -- \
-          | (grep '\.py$' || (($? == 1)) ) \
+          | { grep '\.py$' || (($? == 1)) ; } \
           | xargs --delimiter='\n' --no-run-if-empty flake8
 
     - name: Check shell scripts with shellcheck
@@ -33,14 +33,11 @@ jobs:
         severity: style
 
     # There's a daily check for _all_ links in check-broken-links.yml,
-    # so this only checks for new/changed links in the PR
+    #   so this only checks for links within changed files.
     - name: Check for broken links
       run: |
         set -eu -o pipefail
-        git diff origin/master... |
-          sed '/^diff.*CHANGES.md/,/^diff/ d' |
-          (grep '^+' || (($? == 1)) ) |
-          (grep -Eio '\b(https?)://[-a-z0-9+&@#/%?=~_|$!:,.;]*[a-z0-9+&@#/%=~_|$]' || (($? == 1)) ) |
-          sed 's/^/diff;/' |
-          xargs -rn 1 .github/workflows/check-url.sh
-        test ! -s invalid_urls.txt
+        git diff --name-only --diff-filter=d \
+          --merge-base refs/remotes/origin/master -- \
+          | { grep -E '\.(txt|md|py|rst)$' || (($? == 1)) ; } \
+          | xargs --delimiter='\n' .github/workflows/check-broken-links.sh

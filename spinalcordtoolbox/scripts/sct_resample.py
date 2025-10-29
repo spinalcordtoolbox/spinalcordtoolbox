@@ -41,14 +41,14 @@ def get_parser():
         description="Anisotropic resampling of 3D or 4D data."
     )
 
-    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         '-i',
         metavar=Metavar.file,
-        required=True,
         help="Image to resample. Can be 3D or 4D. (Cannot be 2D) Example: `dwi.nii.gz`"
     )
 
+    # TODO: Make these arguments implicitly mutually exclusive
     resample_types = parser.add_argument_group(
         "\nMETHOD TO SPECIFY NEW SIZE:\n"
         "Please choose only one of the 4 options"
@@ -84,13 +84,7 @@ def get_parser():
              "be used."
     )
 
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
-    optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit."
-    )
+    optional = parser.optional_arggroup
     optional.add_argument(
         '-x',
         choices=['nn', 'linear', 'spline'],
@@ -102,15 +96,9 @@ def get_parser():
         metavar=Metavar.file,
         help="Output file name. Example: `dwi_resampled.nii.gz`"
     )
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode"
-    )
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
 
     return parser
 

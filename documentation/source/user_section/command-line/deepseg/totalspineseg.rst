@@ -1,11 +1,9 @@
-
+.. _sct_deepseg_totalspineseg:
                 
 totalspineseg
 =============
                 
 .. argparse::
-   :ref: spinalcordtoolbox.scripts.sct_deepseg.get_parser
-   :prog: sct_deepseg -h
+   :ref: spinalcordtoolbox.scripts.sct_deepseg.totalspineseg
+   :prog: sct_deepseg totalspineseg
    :markdownhelp:
-   :noepilog:
-                

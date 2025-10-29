@@ -14,5 +14,6 @@ Each individual tutorial below is linked together as part of an overarching anal
    :maxdepth: 1
 
    registration-to-template/template-registration
+   registration-to-template/rootlets-based-registration
    registration-to-template/registering-additional-contrasts
    registration-to-template/lumbar-registration

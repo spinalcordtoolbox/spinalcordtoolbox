@@ -32,7 +32,7 @@ from spinalcordtoolbox.math import binarize
 from spinalcordtoolbox.utils.fs import (copy, extract_fname, check_file_exist, rmtree,
                                         cache_save, cache_signature, cache_valid, tmp_create)
 from spinalcordtoolbox.utils.shell import (SCTArgumentParser, ActionCreateFolder, Metavar, list_type,
-                                           printv, display_viewer_syntax)
+                                           parse_num_list_inv, printv, display_viewer_syntax)
 from spinalcordtoolbox.utils.sys import set_loglevel, init_sct, run_proc, __data_dir__, __version__
 import spinalcordtoolbox.image as msct_image
 import spinalcordtoolbox.labels as sct_labels
@@ -113,27 +113,19 @@ def get_parser():
         """)  # noqa: E501 (line too long)
     )
 
-    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         '-i',
         metavar=Metavar.file,
-        required=True,
         help="Input anatomical image. Example: `anat.nii.gz`"
     )
     mandatory.add_argument(
         '-s',
         metavar=Metavar.file,
-        required=True,
         help="Spinal cord segmentation. Example: `anat_seg.nii.gz`"
     )
 
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
-    optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit."
-    )
+    optional = parser.optional_arggroup
     optional.add_argument(
         '-s-template-id',
         metavar=Metavar.int,
@@ -175,9 +167,11 @@ def get_parser():
         '-lrootlet',
         metavar=Metavar.file,
         help=textwrap.dedent("""
-            Dorsal nerve rootlets segmentation. Example: `anat_rootlets.nii.gz`
-            Only labels within the range C2-C8 are supported. If labels outside this range are provided, they will be ignored.
-            Each value corresponds to the spinal level (e.g.: 2 for spinal level 2). If you are using more than 2 labels, all spinal levels covering the region of interest should be provided (e.g., if you are interested in levels C2 to C7, then you should provide spinal level labels 2,3,4,5,6,7).
+            Dorsal and ventral nerve rootlets segmentation. Example: `anat_rootlets.nii.gz`
+
+            Only labels within the range C2-Th1 (i.e., 2 to 9) are supported. If labels outside this range are provided, they will be ignored.
+            Each value corresponds to the spinal level (e.g.: 2 for spinal level C2, 8 for spinal level C8, 9 for spinal level Th1).
+            If you are using more than 2 labels, all spinal levels covering the region of interest should be provided (e.g., if you are interested in levels C2 to C7, then you should provide spinal level labels 2,3,4,5,6,7).
             By default, the rootlets labels will be used in 2 places:
 
               - step=0: The center of mass of each label will be used as landmarks for SI-axis slice alignment with the rootlets of the template.
@@ -274,23 +268,10 @@ def get_parser():
         metavar=Metavar.str,
         help="If provided, this string will be mentioned in the QC report as the subject the process was run on."
     )
-    optional.add_argument(
-        '-r',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1],
-        default=param.remove_temp_files,
-        help="Whether to remove temporary files. 0 = no, 1 = yes"
-    )
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode"
-    )
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
+    parser.add_tempfile_args()
 
     return parser
 
@@ -459,11 +440,13 @@ def main(argv: Sequence[str]):
     printv('\nCheck if provided labels are available in the template', verbose)
     image_label_template = Image(ftmp_template_label)
 
-    labels_template = image_label_template.getNonZeroCoordinates(sorting='value')
-    if labels[-1].value > labels_template[-1].value:
-        printv('ERROR: Wrong landmarks input. Labels must have correspondence in template space. \nLabel max '
-               'provided: ' + str(labels[-1].value) + '\nLabel max from template: ' +
-               str(labels_template[-1].value), verbose, 'error')
+    labels_set = set(coord.value for coord in labels)
+    labels_template = set(coord.value for coord in image_label_template.getNonZeroCoordinates())
+    if not labels_set.issubset(labels_template):
+        printv(f"ERROR: Wrong landmarks input. Labels must have correspondence in template space.\n"
+               f"Wrong labels provided: {parse_num_list_inv(list(labels_set - labels_template))}\n"
+               f"Available labels from template: {parse_num_list_inv(list(labels_template))}",
+               verbose, 'error')
 
     # if only one label is present, force affine transformation to be Tx,Ty,Tz only (no scaling)
     if len(labels) == 1:

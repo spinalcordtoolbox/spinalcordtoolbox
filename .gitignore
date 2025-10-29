@@ -40,12 +40,23 @@ spinalcordtoolbox/sentry_dsn.py
 unit_testing/*.csv
 unit_testing/*.nii.gz
 unit_testing/*.roi
+testing/*.json
 
 .vscode/settings.json
 test.sh
 sct_course-london19/
 sct_example_data/
 
+# Profiling output
+**/*.prof
+**/time_profiler_results.txt
+**/peak_memory.txt
+**/memory_snapshots.txt
+
 # Documentation
 documentation/build
 
+# Apptainer generated files
+/contrib/apptainer/*.sif
+/contrib/apptainer/*.tar.gz
+/contrib/apptainer/sct_apptainer_*/

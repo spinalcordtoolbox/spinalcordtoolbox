@@ -12,9 +12,23 @@ from spinalcordtoolbox.image import Image, compute_dice
 from spinalcordtoolbox.utils.sys import __sct_dir__
 from spinalcordtoolbox.utils.sys import sct_test_path
 from spinalcordtoolbox.scripts import sct_register_to_template, sct_apply_transfo
-from spinalcordtoolbox.labels import compute_mean_squared_error
 
 logger = logging.getLogger(__name__)
+
+
+def compute_distance(img: Image, ref: Image) -> list:
+    """Compute Euclidean distance between pairs of single-voxel point labels between two images."""
+    coordinates_input = {coord.value: np.array([coord.x, coord.y, coord.z])
+                         for coord in img.getNonZeroCoordinates()}
+    coordinates_ref = {coord.value: np.array([coord.x, coord.y, coord.z])
+                       for coord in ref.getNonZeroCoordinates()}
+
+    distances = []
+    shared_labels = coordinates_input.keys() & coordinates_ref.keys()
+    for label in shared_labels:
+        distances.append(np.linalg.norm(coordinates_input[label] - coordinates_ref[label]))
+
+    return distances
 
 
 @pytest.fixture(scope="module")
@@ -43,7 +57,7 @@ def labels_discs(tmp_path_factory):
     return file_out
 
 
-def test_sct_register_to_template_non_rpi_template(tmp_path, template_lpi):
+def test_sct_register_to_template_non_rpi_template(tmp_path, tmp_path_qc, template_lpi):
     """Test registration with option -ref subject when template is not RPI orientation, causing #3300."""
     # Run registration to template using the RPI template as input file
     sct_register_to_template.main(argv=['-i', sct_test_path('template', 'template', 'PAM50_small_t2.nii.gz'),
@@ -51,14 +65,15 @@ def test_sct_register_to_template_non_rpi_template(tmp_path, template_lpi):
                                         '-ldisc', sct_test_path('template', 'template', 'PAM50_small_label_disc.nii.gz'),
                                         '-c', 't2', '-t', template_lpi, '-ref', 'subject',
                                         '-param', 'step=1,type=seg,algo=centermass',
-                                        '-ofolder', str(tmp_path), '-r', '0', '-v', '2'])
+                                        '-ofolder', str(tmp_path), '-r', '0', '-v', '2',
+                                        '-qc', tmp_path_qc])
     img_orig = Image(sct_test_path('template', 'template', 'PAM50_small_t2.nii.gz'))
     img_reg = Image(str(tmp_path/'template2anat.nii.gz'))
     # Check if both images almost overlap. If they are right-left flipped, distance should be above threshold
     assert np.linalg.norm(img_orig.data - img_reg.data) < 1
 
 
-def test_sct_register_to_template_non_rpi_data(tmp_path, template_lpi):
+def test_sct_register_to_template_non_rpi_data(tmp_path, tmp_path_qc, template_lpi):
     """
     Test registration with option -ref subject when data is not RPI orientation.
     This test uses the temporary dataset created in test_sct_register_to_template_non_rpi_template().
@@ -69,7 +84,8 @@ def test_sct_register_to_template_non_rpi_data(tmp_path, template_lpi):
                                         '-ldisc', f'{template_lpi}/template/PAM50_small_label_disc.nii.gz',
                                         '-c', 't2', '-t', sct_test_path('template'), '-ref', 'subject',
                                         '-param', 'step=1,type=seg,algo=centermass',
-                                        '-ofolder', str(tmp_path), '-r', '0', '-v', '2'])
+                                        '-ofolder', str(tmp_path), '-r', '0', '-v', '2',
+                                        '-qc', tmp_path_qc])
     img_orig = Image(f'{template_lpi}/template/PAM50_small_t2.nii.gz')
     img_reg = Image(str(tmp_path/'template2anat.nii.gz'))
     # Check if both images almost overlap. If they are right-left flipped, distance should be above threshold
@@ -79,17 +95,18 @@ def test_sct_register_to_template_non_rpi_data(tmp_path, template_lpi):
 @pytest.mark.sct_testing
 @pytest.mark.parametrize("fname_gt, remaining_args", [
     (sct_test_path('template', 'template', 'PAM50_small_cord.nii.gz'),
-     ['-l', sct_test_path('t2', 'labels.nii.gz'), '-t', sct_test_path('template'), '-qc', 'qc-testing', '-param',
+     ['-l', sct_test_path('t2', 'labels.nii.gz'), '-t', sct_test_path('template'), '-param',
       'step=1,type=seg,algo=centermassrot,metric=MeanSquares:step=2,type=seg,algo=bsplinesyn,iter=5,metric=MeanSquares']),
     (os.path.join(__sct_dir__, 'data/PAM50/template/PAM50_cord.nii.gz'),
      ['-ldisc', sct_test_path('t2', 'labels.nii.gz'), '-ref', 'subject'])
 ])
-def test_sct_register_to_template_dice_coefficient_against_groundtruth(fname_gt, remaining_args, tmp_path):
+def test_sct_register_to_template_dice_coefficient_against_groundtruth(fname_gt, remaining_args, tmp_path, tmp_path_qc):
     """Run the CLI script and verify transformed images have expected attributes."""
     fname_seg = sct_test_path('t2', 't2_seg-manual.nii.gz')
     dice_threshold = 0.9
     sct_register_to_template.main(argv=['-i', sct_test_path('t2', 't2.nii.gz'),
-                                        '-s', fname_seg, '-ofolder', str(tmp_path)]
+                                        '-s', fname_seg, '-ofolder', str(tmp_path),
+                                        '-qc', tmp_path_qc]
                                   + remaining_args)
 
     # Straightening files are only generated for `-ref template`. They should *not* exist for `-ref subject`.
@@ -147,7 +164,7 @@ def test_sct_register_to_template_mismatched_xforms(tmp_path, caplog):
     assert "has different qform and sform matrices" in caplog.text
 
 
-def test_sct_register_to_template_more_than_2_labels(tmp_path, labels_discs):
+def test_sct_register_to_template_more_than_2_labels(tmp_path, tmp_path_qc, labels_discs):
     """
     Test registration with >2 labels. This test (and the custom disc label file) are needed because the existing
     `t2/labels.nii.gz` file only contains 2 labels. But, registration will be performed differently depending on
@@ -161,7 +178,8 @@ def test_sct_register_to_template_more_than_2_labels(tmp_path, labels_discs):
                                         '-t', sct_test_path('template'),
                                         '-param', 'step=1,type=seg,algo=centermassrot,metric=MeanSquares:'
                                                   'step=2,type=seg,algo=bsplinesyn,iter=0,metric=MeanSquares',
-                                        '-ofolder', str(tmp_path)])
+                                        '-ofolder', str(tmp_path),
+                                        '-qc', tmp_path_qc])
     # Apply transformation to source labels
     sct_apply_transfo.main(argv=['-i', labels_discs,
                                  '-d', str(tmp_path/'anat2template.nii.gz'),
@@ -169,14 +187,15 @@ def test_sct_register_to_template_more_than_2_labels(tmp_path, labels_discs):
                                  '-o', str(tmp_path/'labels_discs_reg.nii.gz'),
                                  '-x', 'label'])
     # Compute pairwise distance between the template label and the registered label, ie: compute distance between dest
-    # and src_reg for label of value '2', then '3', etc. and compute the mean square of all distances. The labels
-    # should be touching, hence the mean square should be 0.
+    # and src_reg for label of value '2', then '3', etc. The labels should be touching, hence distances should be no
+    # more than sqrt(3) i.e. 1 voxel diagonally in 3D space.
     im_label_dest = Image(sct_test_path('template', 'template', 'PAM50_small_label_disc.nii.gz'))
     im_label_src_reg = Image(str(tmp_path/'labels_discs_reg.nii.gz'))
-    assert compute_mean_squared_error(im_label_dest, im_label_src_reg) == 0
+    distances = compute_distance(im_label_dest, im_label_src_reg)
+    assert all(d < 3**0.5 for d in distances), "coordinates are greater than 1 voxel apart"
 
 
-def test_sct_register_to_template_rootlets(tmp_path):
+def test_sct_register_to_template_rootlets(tmp_path, tmp_path_qc):
     """
     Test registration with rootlets segmentation.
     """
@@ -187,7 +206,8 @@ def test_sct_register_to_template_rootlets(tmp_path):
                                         '-param', 'step=1,type=rootlet,algo=bsplinesyn,metric=CC:'
                                                   'step=2,type=seg,algo=centermassrot,metric=MeanSquares:'
                                                   'step=3,type=seg,algo=bsplinesyn,iter=0,metric=MeanSquares',
-                                        '-ofolder', str(tmp_path)])
+                                        '-ofolder', str(tmp_path),
+                                        '-qc', tmp_path_qc])
     # Apply transformation to source labels
     sct_apply_transfo.main(argv=['-i', sct_test_path('t2', 't2_seg-deepseg_rootlets-manual_midpoints.nii.gz'),
                                  '-d', str(tmp_path/'anat2template.nii.gz'),
@@ -195,9 +215,10 @@ def test_sct_register_to_template_rootlets(tmp_path):
                                  '-o', str(tmp_path/'t2_seg-deepseg_rootlets-manual_midpoints_reg.nii.gz'),
                                  '-x', 'label'])
     # Compute pairwise distance between the template label and the registered label, ie: compute distance between dest
-    # and src_reg for label of value '2', then '3', etc. and compute the mean square of all distances. The labels
-    # should be touching, hence the mean square should be 0.
+    # and src_reg for label of value '2', then '3', etc. The labels should be touching, hence distances should be no
+    # more than sqrt(3) i.e. 1 voxel diagonally in 3D space.
     im_label_dest = Image(sct_test_path('template', 'template', 'PAM50_small_rootlets_midpoints.nii.gz'))
     logger.info(tmp_path)
     im_label_src_reg = Image(str(tmp_path/'t2_seg-deepseg_rootlets-manual_midpoints_reg.nii.gz'))
-    assert compute_mean_squared_error(im_label_dest, im_label_src_reg) == 0
+    distances = compute_distance(im_label_dest, im_label_src_reg)
+    assert all(d < 3**0.5 for d in distances), "coordinates are greater than 1 voxel apart"

@@ -15,7 +15,6 @@ import multiprocessing as mp
 
 from ivadomed import inference as imed_inference
 from totalspineseg.inference import inference as tss_inference
-import nibabel as nib
 import numpy as np
 import torch
 from monai.transforms import SaveImage
@@ -28,6 +27,10 @@ from spinalcordtoolbox.deepseg_.postprocessing import keep_largest_object, fill_
 
 import spinalcordtoolbox.deepseg.monai as ds_monai
 import spinalcordtoolbox.deepseg.nnunet as ds_nnunet
+
+from spinalcordtoolbox.utils.sys import LazyLoader
+
+nib = LazyLoader("nib", globals(), "nibabel")
 
 logger = logging.getLogger(__name__)
 
@@ -108,7 +111,7 @@ def segment_and_average_volumes(model_paths, input_filenames, options, use_gpu=F
 
 
 def segment_non_ivadomed(path_model, model_type, input_filenames, threshold, keep_largest, fill_holes_in_pred,
-                         remove_small, use_gpu=False, remove_temp_files=True):
+                         remove_small, use_gpu=False, remove_temp_files=True, extra_network_kwargs=None, extra_inference_kwargs=None):
     # MONAI and NNUnet have similar structure, and so we use nnunet+inference functions with the same signature
     # NB: For TotalSpineSeg, we don't need to create the network ourselves
     if "totalspineseg" in path_model:
@@ -125,13 +128,13 @@ def segment_non_ivadomed(path_model, model_type, input_filenames, threshold, kee
     device = torch.device("cuda" if use_gpu else "cpu")
 
     # load model from checkpoint
-    net = create_net(path_model, device)
+    net = create_net(path_model, device, **extra_network_kwargs)
 
     im_lst, target_lst = [], []
     for fname_in in input_filenames:
         tmpdir = tmp_create(basename="sct_deepseg")
         # model may be multiclass, so the `inference` func should output a list of fnames and targets
-        fnames_out, targets = inference(path_img=fname_in, tmpdir=tmpdir, predictor=net, device=device)
+        fnames_out, targets = inference(path_img=fname_in, tmpdir=tmpdir, predictor=net, device=device, **extra_inference_kwargs)
         for fname_out, target in zip(fnames_out, targets):
             im_out = Image(fname_out)
             # Apply postprocessing (replicates existing functionality from ivadomed package)
@@ -141,11 +144,11 @@ def segment_non_ivadomed(path_model, model_type, input_filenames, threshold, kee
             if threshold:  # Default: None, but `-thr 0` will also turn off binarization
                 im_out.data = binarize(im_out.data, threshold)
             # 2. Keep the largest connected object
-            if keep_largest is not None:
+            if keep_largest != 0:
                 im_out.data[im_out.data < 0.001] = 0  # Replicates ivadomed's `@binarize_with_low_threshold`
                 im_out.data = keep_largest_object(im_out.data, x_cOm=None, y_cOm=None)
             # 3. Fill holes
-            if fill_holes_in_pred is not None:
+            if fill_holes_in_pred != 0:
                 im_out.data = fill_holes(im_out.data)
             # 4. Remove small objects
             if remove_small is not None:
@@ -216,9 +219,39 @@ def segment_monai(path_img, tmpdir, predictor, device: torch.device):
     return [fname_out], [target]
 
 
-def segment_nnunet(path_img, tmpdir, predictor, device: torch.device):
+def average_nnunet_predictions(pred, probabilities=False):
+    """
+    Compute an average prediction for multi-fold output of `nnunetv2`.
+
+    The averaging process will differ depending on whether `pred` contains probability maps or per-fold logits.
+    """
+    # If we saved the probabilities, `pred` is a tuple of (binary pred, prob map)
+    if probabilities:
+        _, prob_maps = pred
+        # In this case, pred is: pred[0] = list of softmax values per fold for class 0, pred[1] = list of softmax values per fold for class 1
+        ensembled_pred = np.zeros_like(prob_maps[0][1])
+        for prob_map in prob_maps:  # loop over folds
+            # The shape of the prob_map is (num_classes, z, y, x), so we keep only the non-background class (1)
+            # Similar to nnunet, the value of the soft max is the value of the probability map at class 1 if the value is greater than that of class 0
+            fold_pred = np.where(prob_map[1] > prob_map[0], prob_map[1], 0)
+            ensembled_pred += fold_pred
+        # Divide by number of folds to get the average
+        pred = ensembled_pred / len(prob_maps)
+        # We do not binarize the output, since we want the soft segmentation
+    else:
+        # We sum the elements of the list to get the ensembled output
+        ensembled_pred = np.sum(pred, axis=0)
+        # Divide by number of folds to get the average
+        pred = ensembled_pred / len(pred)
+        # Binarize the ensembled output at a low threshold to get the final segmentation
+        pred = binarize(pred, 0.5)
+    return pred
+
+
+def segment_nnunet(path_img, tmpdir, predictor, device: torch.device, ensemble=False, soft_ms_lesion=False):
     """
     This script is used to run inference on a single subject using a nnUNetV2 model.
+    For soft segmentation of MS lesions, set `soft_ms_lesion=True`. Output segmentation will be thresholded at 1e-3.
 
     Author: Jan Valosek, Naga Karthik
     Original script: https://github.com/ivadomed/model_seg_sci/blob/4184bc22ef7317b3de5f85dee28449d6f381c984/packaging/run_inference_single_subject.py
@@ -279,7 +312,14 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device):
         input_image=data,
         # The spacings also have to be reversed to match nnUNet's conventions.
         image_properties={'spacing': img_in.dim[6:3:-1]},
+        # Save the probability maps if specified
+        save_or_return_probabilities=soft_ms_lesion,
+        # If using a model ensemble, return the logits per fold so we can average them ourselves
+        return_logits_per_fold=True if ensemble else False
     )
+    # For the lesion_ms model, `pred` is a list of np.arrays, one per fold and needs averaging
+    if ensemble:
+        pred = average_nnunet_predictions(pred, probabilities=soft_ms_lesion)
     # Lastly, we undo the transpose to return the image from [z,y,x] (SimpleITK) to [x,y,z] (nibabel)
     pred = pred.transpose([2, 1, 0])
     img_out = img_in.copy()
@@ -312,6 +352,10 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device):
     elif sorted(labels.keys()) == ['sc']:
         targets = ["_seg"]
         outputs = [img_out]
+    # in the case of the lesion_ms model for soft labels, we don't want the binarization done afterwards
+    elif soft_ms_lesion:
+        targets = ["_msLesionSoft"]
+        outputs = [img_out]
     # for the other multiclass models (SCI lesion/SC, mouse GM/WM, etc.), save 1 image per label
     else:
         targets, outputs = [], []
@@ -338,7 +382,7 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device):
     return fnames_out, targets
 
 
-def segment_totalspineseg(path_img, tmpdir, predictor, device):
+def segment_totalspineseg(path_img, tmpdir, predictor, device, step1_only=False):
     # for totalspineseg, the 'predictor' is just the model path
     path_model = predictor
     # fetch the release subdirectory from the model path
@@ -375,9 +419,14 @@ def segment_totalspineseg(path_img, tmpdir, predictor, device):
         # Try to address stalling due to the use of concurrent.futures in totalspineseg
         max_workers=1,
         max_workers_nnunet=1,
+        # Optional argument to choose which models to run
+        step1_only=bool(step1_only)
     )
     fnames_out, targets = [], []
-    for output_dirname in ["step1_canal", "step1_cord", "step1_levels", "step1_output", "step2_output"]:
+    expected_outputs = ["step1_canal", "step1_cord", "step1_levels", "step1_output"]
+    if not step1_only:
+        expected_outputs.append("step2_output")
+    for output_dirname in expected_outputs:
         fnames_out.append(os.path.join(tmpdir_nnunet, output_dirname, os.path.basename(path_img)))
         targets.append(f"_{output_dirname}")
 

@@ -74,27 +74,19 @@ def get_parser():
         """),  # noqa: E501 (line too long)
     )
 
-    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         '-i',
         metavar=Metavar.file,
-        required=True,
         help="Image source. Example: `src.nii.gz`"
     )
     mandatory.add_argument(
         '-d',
         metavar=Metavar.file,
-        required=True,
         help="Image destination. Example: `dest.nii.gz`"
     )
 
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
-    optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit."
-    )
+    optional = parser.optional_arggroup
     optional.add_argument(
         '-iseg',
         metavar=Metavar.file,
@@ -221,9 +213,9 @@ def get_parser():
               f"  - rot_method {{pca, hog, pcahog}}: rotation method to be used with algo=centermassrot. If using hog "
               f"or pcahog, type should be set to imseg. Default={DEFAULT_PARAMREGMULTI.steps['1'].rot_method}\n"
               f"    * pca: approximate cord segmentation by an ellipse and finds it orientation using PCA's "
-              f"eigenvectors\n"
-              f"    * hog: finds the orientation using the symmetry of the image\n"
-              f"    * pcahog: tries method pca and if it fails, uses method hog.\n")
+              f"eigenvectors (use with `type=seg`)\n"
+              f"    * hog: finds the orientation using the symmetry of the image (use with `type=imseg`)\n"
+              f"    * pcahog: tries method pca and if it fails, uses method hog (use with `type=imseg`).\n")
     )
     optional.add_argument(
         '-identity',
@@ -245,9 +237,10 @@ def get_parser():
     )
     optional.add_argument(
         '-x',
-        choices=['nn', 'linear', 'spline'],
+        choices=['nn', 'linear', 'spline', 'label'],
         default='linear',
-        help="Final interpolation."
+        help="Interpolation method to use when applying the final warping field to the source/dest images. "
+             "(Refer to the help text for `sct_apply_transfo -x` for more details)."
     )
     optional.add_argument(
         '-ofolder',
@@ -272,23 +265,11 @@ def get_parser():
         metavar=Metavar.str,
         help="If provided, this string will be mentioned in the QC report as the subject the process was run on."
     )
-    optional.add_argument(
-        '-r',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1],
-        default=1,
-        help="Whether to remove temporary files. 0 = no, 1 = yes"
-    )
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode"
-    )
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
+    parser.add_tempfile_args()
+
     return parser
 
 

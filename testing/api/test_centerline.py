@@ -10,11 +10,13 @@ import nibabel as nib
 from spinalcordtoolbox.centerline.curve_fitting import bspline
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline, find_and_sort_coord
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.utils.sys import init_sct, sct_test_path, set_loglevel
+from spinalcordtoolbox.utils.sys import sct_test_path
 
-# Set logger to "DEBUG"
-init_sct()
-set_loglevel(verbose=2, caller_module_name=__name__)
+
+# Enforce that all tests in this suite use verbose logging
+pytestmark = pytest.mark.usefixtures("verbose_logging")
+
+
 # Separate setting for get_centerline. Set to 2 to save images ("DEBUG"), 0 otherwise ("INFO")
 VERBOSE = 0
 
@@ -97,10 +99,10 @@ im_ctl_zeroslice = [
 
 im_centerlines = [
     (dummy_centerline(size_arr=(41, 7, 9), subsampling=1, orientation='SAL'),
-     {'median': 0, 'rmse': 0.4, 'laplacian': 2},
+     {'median': 0, 'rmse': 0.4, 'laplacian': 2, 'norm': 3},
      {}),
     (dummy_centerline(size_arr=(41, 7, 9), pixdim=(0.5, 0.5, 10), subsampling=1, orientation='SAL'),
-     {'median': 0, 'rmse': 0.3, 'laplacian': 2},
+     {'median': 0, 'rmse': 0.3, 'laplacian': 2, 'norm': 3},
      {}),
     (dummy_centerline(size_arr=(9, 9, 9), subsampling=3),
      {'median': 0, 'rmse': 0.3, 'laplacian': 0.5, 'norm': 2},
@@ -118,7 +120,7 @@ im_centerlines = [
      {'median': 0, 'rmse': 0.8, 'laplacian': 70, 'norm': 14},
      {'exclude_nurbs': True}),
     (dummy_centerline(size_arr=(30, 20, 50), subsampling=3, dilate_ctl=2, orientation='AIL'),
-     {'median': 0, 'rmse': 0.25, 'laplacian': 0.2},
+     {'median': 0, 'rmse': 0.25, 'laplacian': 0.2, 'norm': 3},
      {}),
     (dummy_centerline(size_arr=(30, 20, 50), subsampling=5),
      {'median': 0, 'rmse': 0.3, 'laplacian': 0.5, 'norm': 3.6},
@@ -168,16 +170,18 @@ def test_get_centerline_polyfit_minmax(img_ctl, expected):
 @pytest.mark.parametrize('img_ctl,expected,params', im_centerlines)
 def test_get_centerline_polyfit(img_ctl, expected, params):
     """Test centerline fitting using polyfit"""
-    if 'exclude_polyfit':
+    if params.get('exclude_polyfit', False):
         return
     img, img_sub = [img_ctl[0].copy(), img_ctl[1].copy()]
     img_out, arr_out, arr_deriv_out, fit_results = get_centerline(
         img_sub, ParamCenterline(algo_fitting='polyfit', minmax=False), verbose=VERBOSE)
     assert np.median(find_and_sort_coord(img) - find_and_sort_coord(img_out)) == expected['median']
     assert np.max(np.absolute(np.diff(arr_deriv_out))) < expected['laplacian']
-    # check arr_out only if input orientation is RPI (because the output array is always in RPI)
-    if img.orientation == 'RPI':
-        assert np.linalg.norm(find_and_sort_coord(img) - arr_out) < expected['norm']
+    # sort `arr_out` to match the sorting from `find_and_sort_coord`
+    dim_si = [img.orientation.find(x) for x in ['I', 'S'] if img.orientation.find(x) != -1][0]
+    sort_indices = np.argsort(arr_out[dim_si])
+    arr_out_sorted = arr_out[:, sort_indices]
+    assert np.linalg.norm(find_and_sort_coord(img) - arr_out_sorted) < expected['norm']
 
 
 @pytest.mark.parametrize('img_ctl,expected,params', im_centerlines)
@@ -204,7 +208,7 @@ def test_get_centerline_linear(img_ctl, expected, params):
 @pytest.mark.parametrize('img_ctl,expected,params', im_centerlines)
 def test_get_centerline_nurbs(img_ctl, expected, params):
     """Test centerline fitting using nurbs"""
-    if 'exclude_nurbs':
+    if params.get('exclude_nurbs', False):
         return
     img, img_sub = [img_ctl[0].copy(), img_ctl[1].copy()]
     img_out, arr_out, arr_deriv_out, fit_results = get_centerline(

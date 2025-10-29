@@ -8,7 +8,7 @@ License: see the file LICENSE
 import logging
 
 import numpy as np
-from skimage.morphology import erosion, dilation, disk, ball, square, cube
+from skimage.morphology import erosion, dilation
 from skimage.filters import threshold_local, threshold_otsu, rank
 from scipy.ndimage import gaussian_filter, gaussian_laplace, label, generate_binary_structure
 
@@ -32,25 +32,51 @@ def _get_footprint(shape, size, dim):
     Create footprint (prev. terminology: structuring element) of desired shape and radius
 
     :param shape: str: Shape of the footprint. See available options below in the code
-    :param size: int: size of the element.
+    :param size: int or list[int]: size of the element.
+            Can be specified as 2 or 3 values (depending on the 2D/3D shape) for anisotropic images.
     :param dim: {0, 1, 2}: Dimension of the array which 2D structural element will be orthogonal to. For example, if
     you wish to apply a 2D disk kernel in the X-Y plane, leaving Z unaffected, parameters will be: shape=disk, dim=2.
     :return: numpy array: footprint
     """
-    # TODO: enable custom footprint
-    if shape == 'square':
-        footprint = square(size)
-    elif shape == 'cube':
-        footprint = cube(size)
-    elif shape == 'disk':
-        footprint = disk(size)
-    elif shape == 'ball':
-        footprint = ball(size)
-    else:
-        raise ValueError("This shape is not a valid entry: {}".format(shape))
+    dimensionality = {
+        'square': 2,
+        'disk': 2,
+        'cube': 3,
+        'ball': 3,
+    }
+    if shape not in dimensionality:
+        raise ValueError(f"This shape is not a valid entry: {shape}")
 
-    if not (len(footprint.shape) in [2, 3] and footprint.shape[0] == footprint.shape[1]):
-        raise ValueError("Invalid shape")
+    # normalize `size` to be a list or 2 or 3 ints, depending on the 2D/3D kernel
+    if isinstance(size, int):
+        size = [size]
+    if len(size) == 1:
+        size = list(size) * dimensionality[shape]
+    if len(size) != dimensionality[shape]:
+        raise ValueError(f"Invalid size for shape {shape}: {size}")
+
+    if shape == 'disk':
+        # ellipse equation is: ((x - center_x)/radius_x)**2 + ((y - center_y)/radius_y)**2 <= 1
+        # clearing denominators: ((x - center_x)*radius_y)**2 + ((y - center_y)*radius_x)**2 <= (radius_x*radius_y)**2
+        r_x, r_y = size
+        # the thin arrays fp_x and fp_y will be efficiently broadcast to a full rectangle by numpy
+        fp_x = ((r_y * np.arange(-r_x, r_x+1))**2).reshape((2*r_x+1, 1))
+        fp_y = ((r_x * np.arange(-r_y, r_y+1))**2).reshape((1, 2*r_y+1))
+        footprint = ((fp_x + fp_y) <= (r_x * r_y)**2).astype(np.uint8)
+    elif shape == 'ball':
+        # ellipsoid equation, after clearing denominators:
+        # ((x - center_x)*radius_y*radius_z)**2
+        # + ((y - center_y)*radius_x*radius_z)**2
+        # + ((z - center_z)*radius_x*radius_y)**2
+        # <= (radius_x*radius_y*radius_z)**2
+        r_x, r_y, r_z = size
+        fp_x = ((r_y * r_z * np.arange(-r_x, r_x+1))**2).reshape((2*r_x+1, 1, 1))
+        fp_y = ((r_x * r_z * np.arange(-r_y, r_y+1))**2).reshape((1, 2*r_y+1, 1))
+        fp_z = ((r_x * r_y * np.arange(-r_z, r_z+1))**2).reshape((1, 1, 2*r_z+1))
+        footprint = ((fp_x + fp_y + fp_z) <= (r_x * r_y * r_z)**2).astype(np.uint8)
+    else:
+        assert shape in ['square', 'cube']
+        footprint = np.ones(size, dtype=np.uint8)
 
     # If 2d kernel, replicate it along the specified dimension
     if len(footprint.shape) == 2:
@@ -97,8 +123,9 @@ def dilate(data, size, shape, dim=None, islabel=False):
     Dilate data using ball structuring element
 
     :param data: Image or numpy array: 2d or 3d array
-    :param size: int: If shape={'square', 'cube'}: Corresponds to the length of an edge (size=1 has no effect).\
+    :param size: int or list[int]: If shape={'square', 'cube'}: Corresponds to the length of an edge (size=1 has no effect).\
         If shape={'disk', 'ball'}: Corresponds to the radius, not including the center element (size=0 has no effect).
+        Can be specified as 2 or 3 values (depending on the 2D/3D shape) for anisotropic images.
     :param shape: {'square', 'cube', 'disk', 'ball'}
     :param dim: {0, 1, 2}: Dimension of the array which 2D structural element will be orthogonal to. For example, if\
     you wish to apply a 2D disk kernel in the X-Y plane, leaving Z unaffected, parameters will be: shape=disk, dim=2.
@@ -196,8 +223,9 @@ def erode(data, size, shape, dim=None):
     Dilate data using ball structuring element
 
     :param data: Image or numpy array: 2d or 3d array
-    :param size: int: If shape={'square', 'cube'}: Corresponds to the length of an edge (size=1 has no effect).\
-    If shape={'disk', 'ball'}: Corresponds to the radius, not including the center element (size=0 has no effect).
+    :param size: int or list[int]: If shape={'square', 'cube'}: Corresponds to the length of an edge (size=1 has no effect).\
+        If shape={'disk', 'ball'}: Corresponds to the radius, not including the center element (size=0 has no effect).
+        Can be specified as 2 or 3 values (depending on the 2D/3D shape) for anisotropic images.
     :param shape: {'square', 'cube', 'disk', 'ball'}
     :param dim: {0, 1, 2}: Dimension of the array which 2D structural element will be orthogonal to. For example, if\
     you wish to apply a 2D disk kernel in the X-Y plane, leaving Z unaffected, parameters will be: shape=disk, dim=2.

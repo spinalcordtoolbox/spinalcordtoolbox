@@ -14,9 +14,11 @@ import argparse
 import itertools
 
 from enum import Enum
+from functools import cached_property, partial
 
-from .sys import check_exe, printv, removesuffix, ANSIColors16
+from .sys import check_exe, printv, ANSIColors16
 from .fs import relpath_or_abspath
+from .profiling import TimeProfilingAction, MemoryTracingAction
 
 logger = logging.getLogger(__name__)
 
@@ -203,30 +205,27 @@ def _construct_itksnap_syntax(viewer, files, im_types):
 
 class SCTArgumentParser(argparse.ArgumentParser):
     """
-        Parser that centralizes initialization steps common across all SCT scripts.
-
-        TODO: Centralize `-v`, `-r`, and `-h` arguments here too, as they're copied
-              and pasted across all SCT scripts.
+    Parser that centralizes initialization steps common across all SCT scripts.
     """
-    def __init__(self, description, epilog=None, argument_default=None):
+    def __init__(self, **kwargs):
         super(SCTArgumentParser, self).__init__(
-            description=description,
-            epilog=epilog,
             formatter_class=SmartFormatter,
-            argument_default=argument_default,
             # Disable "add_help", because it won't properly add '-h' to our custom argument groups
             # (We use custom argument groups because of https://stackoverflow.com/a/24181138)
-            add_help=False
+            add_help=False,
+            # All arguments must be passed as keyword arguments (to encourage clarity at the caller level)
+            **kwargs
         )
 
         # Update "usage:" message to match how SCT scripts are actually called (no '.py')
-        self.prog = removesuffix(self.prog, ".py")
+        self.prog = self.prog.removesuffix(".py")
 
+    # == OVERRIDES == #
     def error(self, message):
         """
-            Overridden parent method. Ensures that help is printed when called with invalid args.
+        Overridden parent method. Ensures that help is printed when called with invalid args.
 
-            See https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3137.
+        See https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3137.
         """
         # Source: https://stackoverflow.com/a/4042861
         self.print_help(sys.stderr)
@@ -234,6 +233,130 @@ class SCTArgumentParser(argparse.ArgumentParser):
                              + f'\n{self.prog}: error: {message}\n\n'
                              + ANSIColors16.ResetAll)
         self.exit(2, message_formatted)
+
+    # == STANDARD ARGUMENT GROUPS == #
+    @cached_property
+    def mandatory_arggroup(self):
+        """
+        The "MANDATORY" argument group.
+
+        This should include arguments which are required for the CLI task to run.
+        """
+        mandatory = self.add_argument_group("MANDATORY ARGUMENTS")
+
+        # Force arguments in this group to be required via in-place function override
+        _f = partial(mandatory.add_argument, required=True)
+        mandatory.add_argument = _f
+
+        return mandatory
+
+    @cached_property
+    def optional_arggroup(self):
+        """
+        The "OPTIONAL" argument group.
+        This should include arguments relevant to the task (such as slice in the MRI), but not strictly required
+        by the user (i.e. they have a default value, or only enable optional functionality)
+        """
+        optional = self.add_argument_group("OPTIONAL ARGUMENTS")
+        return optional
+
+    @cached_property
+    def misc_arggroup(self):
+        """
+        The "MISC" argument group; should contain arguments which do not directly affect the CLI task, but will change
+        how the task is presented or logged to the user. The -h, -v, and -r arguments are placed here by default.
+        """
+        misc = self.add_argument_group("MISC ARGUMENTS")
+        return misc
+
+    # == COMMON ARGUMENT ADDITIONS == #
+    def add_common_args(self, arg_group=None):
+        """
+        Adds two universally used arguments to the provided argument group:
+            -h: The help flag. If present, displays help and terminates the program
+            -v: The verbosity flag. If present, increases the verbosity of the program's output
+
+        If no argument group is provided, the arguments are placed into the "MISC" argument group.
+        """
+        # If the user didn't specify an argument group, use the "MISC" group
+        if not arg_group:
+            arg_group = self.misc_arggroup
+
+        # Add the help flag
+        arg_group.add_argument(
+            "-h", "--help",
+            action="help",
+            help="Show this help message and exit."
+        )
+        # Add the verbosity flag # TODO update/deprecate to address Issue #2676
+        arg_group.add_argument(
+            '-v',
+            metavar=Metavar.int,
+            type=int,
+            choices=[0, 1, 2],
+            default=1,
+            # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
+            help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode."
+        )
+
+        # Add a flag which allows time-based profiling the profiler
+        arg_group.add_argument(
+            '-profile-time',
+            nargs='?',
+            metavar=Metavar.file,
+            action=TimeProfilingAction,
+            help=argparse.SUPPRESS
+            # TODO: Find a way to only show these "developer" util helpers in certain contexts
+            # help="Enables time-based profiling of the program, dumping the results to the specified file.\n"
+            #      "\n"
+            #      "If no file is specified, human-readable results are placed into a 'time_profiling_results.txt' "
+            #      f"document in the current directory ('{os.getcwd()}'). If the specified file is a `.prof` file, the "
+            #      "file will instead be in binary format, ready for use with common post-profiler utilities (such as "
+            #      "`snakeviz`)."
+        )
+        arg_group.add_argument(
+            '-trace-memory',
+            nargs='?',
+            metavar=Metavar.folder,
+            action=MemoryTracingAction,
+            help=argparse.SUPPRESS
+            # TODO: Find a way to only show these "developer" util helpers in certain contexts
+            # help="Enables memory tracing of the program.\n"
+            #      "\n"
+            #      "When active, a measure of the peak memory (in KiB) will be output to the file `peak_memory.txt`. "
+            #      "Optionally, developers can also modify the SCT code to add additional `snapshot_memory()` calls. "
+            #      "These calls will 'snapshot' the memory usage at that moment, saving the memory trace at that point "
+            #      "into a second file (`memory_snapshots.txt`).\n"
+            #      "\n"
+            #      f"By default, both outputs will be placed in the current directory ('{os.getcwd()}'). Optionally, you "
+            #      "may provide an alternative directory (`-trace-memory <dir_name>`), in which case all files will "
+            #      "be placed in that directory instead.\n"
+            #      "Note that this WILL incur an overhead to runtime, so it is generally advised that you do not run "
+            #      "this in conjunction with the time profiler or in time-sensitive contexts."
+        )
+
+        # Return the arg_group to allow for chained operations
+        return arg_group
+
+    def add_tempfile_args(self, arg_group=None):
+        """
+        Adds a single argument:
+            -r: The remove_temp flag. If present, denotes that temporary files should be removed after the program ends.
+
+        If no argument group is provided, the arguments are placed into the "MISC" argument group
+        """
+        # If the user didn't specify an argument group, use the "MISC" group
+        if not arg_group:
+            arg_group = self.misc_arggroup
+
+        # TODO: Change this to a flag, rather than a number
+        arg_group.add_argument(
+            "-r",
+            type=int,
+            help="Remove temporary files.",
+            default=1,
+            choices=(0, 1)
+        )
 
 
 class ActionCreateFolder(argparse.Action):
@@ -279,6 +402,25 @@ def list_type(delimiter, subtype, length=None):
     return list_typecast_func
 
 
+def positive_int_type(input_value):
+    """
+        Type function which can be used with argparse's `type` option. This
+        allows for more complex type parsing, enforcing the requirement of an
+        input integer to be positive.
+    """
+    try:
+        int_value = int(input_value)         # cast first to check for type errors
+        if int_value != float(input_value):  # allow "1" and "1.0" but not "1.5"
+            raise ValueError("non-integer number encountered")
+        if int_value < 0:
+            raise ValueError("negative integer encountered")
+        if int_value == 0:
+            raise ValueError("zero encountered")
+    except ValueError as e:
+        raise ValueError(f"expected positive integer, got {input_value}") from e
+    return int_value
+
+
 class Metavar(str, Enum):
     """
     This class is used to display intuitive input types via the metavar field of argparse
@@ -307,12 +449,15 @@ class SmartFormatter(argparse.ArgumentDefaultsHelpFormatter):
             logger.warning('Not able to fetch Terminal width. Using default: %s', self._width)
 
     def _get_help_string(self, action):
-        """Overrides the default _get_help_string method to skip writing the
-        '(default: )' text for arguments that have an empty default value."""
-        if action.default not in [None, "", [], (), {}]:
-            return super()._get_help_string(action)
-        else:
+        """
+        Forced the "default" to not be printed if it's a meaningless default (i.e. an empty string)
+        """
+        # Return immediately if no default was specified, or if this is a suppressed "help" flag
+        if action.default in [None, "", [], (), {}, '==SUPPRESS==']:
             return action.help
+
+        # Otherwise, format the string as-usual
+        return super()._get_help_string(action)
 
     def _fill_text(self, text, width, indent):
         """Overrides the default _fill_text method. It takes a single string

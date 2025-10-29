@@ -26,6 +26,34 @@ The following studies have used SCT:
 2025 
 ----
 
+-  Hernandez-Charpak *et al.* `Towards personalized mapping through lumbosacral spinal cord task fMRI <https://doi.org/10.1162/imag_a_00455>`_, **Imaging Neurosci.** 2025
+-  Fauziyya *et al.* `Magnetization transfer MRI (MT-MRI) detects white matter damage beyond the primary site of compression in degenerative cervical myelopathy using a novel semi-automated analysis <https://doi.org/10.1016/j.compbiomed.2025.111083>`_, **Comput. Biol. Med.** 2025
+-  Qi *et al.* `Structure Changes in the Cervical Spinal Cord and Brain in Children With Complete Thoracolumbar Spinal Cord Injury <https://doi.org/10.1177/15459683251369490>`_, **Neurorehabilit. Neural Repair** 2025
+-  Lobo *et al.* `Longitudinal Evaluation of Ataxia and Brain Structural Changes in RFC1-Related Disorder <https://doi.org/10.1002/mdc3.70344>`_, **Mov. Disord.** 2025
+-  Usuda *et al.* `Quantitative comparison of uncrossed corticospinal tracts arising from different cortical areas in humans <https://doi.org/10.1016/j.neures.2025.104954>`_, **Neuroscience Research** 2025
+-  Witt *et al.* `Leveling up: along-level diffusion tensor imaging in the spinal cord of multiple sclerosis patients <https://doi.org/10.3389/fnimg.2025.1599966>`_, **Front. Neuroimaging** 2025
+-  Khan *et al.* `Quantitative assessment of asymptomatic spinal cord compression using MRI: a multi-center study <https://doi.org/10.1007/s11357-025-01837-w>`_, **GeroScience** 2025
+-  Cappelle *et al.* `The value of manual MRI measurements of brain and spinal cord for daily clinical practice in Multiple Sclerosis subjects: a scoping review <https://doi.org/10.1016/j.msard.2025.106670>`_, **Mult. Scler. Relat. Disord.** 2025
+-  González-Salazar *et al.* `Spinal cord structural changes in SPG4: insights from a large cohort using advanced neuroimaging <https://doi.org/10.1007/s00415-025-13251-5>`_, **J. Neurol.** 2025
+-  Baker *et al.* `Cross-sectional relationships between spinal cord gray matter volume and pain in individuals with fibromyalgia and opioid use <https://doi.org/10.1038/s41598-025-13225-7>`_, **Sci. Rep.** 2025
+-  Krieger *et al.* `Depicting multiple sclerosis disease course using lesion parenchymal fraction: a quantified expression of the topographical model of multiple sclerosis. <https://doi.org/10.1093/braincomms/fcaf280>`_, **Brain Commun.** 2025
+-  Zibadinov *et al.* `Neuroimaging phenotype characterization of early aggressive and late severe multiple sclerosis: a case-control study <https://doi.org/10.1093/braincomms/fcaf254>`_, **Brain Commun.** 2025
+-  Witt *et al.* `Tract-Specific Analysis of Diffusion MRI at 3T Detects Cervical Spinal Cord Aberrations in Multiple Sclerosis <https://doi.org/10.1162/IMAG.a.72>`_, **Imaging Neurosci.** 2025
+-  Connor *et al.* `Reliability of SCIseg Automated Measurement of Midsagittal Tissue Bridges in Spinal Cord Injuries Using an External Dataset <https://doi.org/10.46292/sci25-00015>`_, **Top. Spinal Cord Inj. Rehabil.** 2025
+-  Schading-Sassenhausen *et al.* `Effect of corticospinal and reticulospinal tract damage on spastic muscle tone and mobility: a retrospective observational MRI study <https://doi.org/10.1016/j.ebiom.2025.105824>`_, **eBioMedicine** 2025
+-  Asteggiano *et al.* `Quantitative cervical cord MRI in spinal muscular atrophy: a sensitive imaging biomarker of disease evolution and treatment <https://doi.org/10.1007/s00415-025-13205-x>`_, **J. Neurol.** 2025
+-  David *et al.* `Progressive Remote Axonal Degeneration Following Spinal Cord Injury: A Histological and MRI Study <https://doi.org/10.1089/neur.2025.0011>`_, **Neurotrauma Rep.** 2025
+-  Cronin *et al.* `Comparing single-shot EPI and 2D-navigated, multi-shot EPI diffusion tensor imaging acquisitions in the lumbar spinal cord at 3T <https://doi.org/10.1016/j.mri.2025.110445>`_, **Magn. Reson. Imaging** 2025
+-  Piervincenzi *et al.* `Structural brain changes contributing to motor signs in pure hereditary spastic paraplegia type 4 <https://doi.org/10.1007/s00415-025-13155-4>`_, **J. Neurol.** 2025
+-  Witt *et al.* `Changes in Functional Connectivity in Relapsing-Remitting Multiple Sclerosis Spinal Cord Measured via Region-Based and Data-Driven Analyses <https://doi.org/10.1162/IMAG.a.51>`_, **Imaging Neuroscience** 2025
+-  Muhammad *et al.* `Semiautomated Pipeline Effectively Assesses Severity and Monitor Disease Progression in Compressed Spinal Cord of Degenerative Cervical Myelopathy Patients <https://doi.org/10.1227/neuprac.0000000000000138>`_, **Neurosurg. Pract.** 2025
+-  Jin *et al.* `Quantitative Study on Morphological Parameters of Healthy Cervical Spinal Cord Based on SCT <https://doi.org/10.12455/j.issn.1671-7104.240337>`_, **Chinese Journal of Medical Instrumentation** 2025
+-  Labounek *et al.* `Body size and intracranial volume interact with the structure of the central nervous system: A multi-center in vivo neuroimaging study <https://doi.org/10.1162/imag_a_00559>`_, **Imaging Neuroscience** 2025
+-  Bozhko *et al.* `Diffusion tensor imaging in the study of spinal tract degeneration after spinal cord injury: a prospective study <https://doi.org/10.22328/2079-5343-2025-16-1-66-73>`_, **Diagn. Radiol. Radiother.** 2025
+-  Wolmer *et al.* `Distinct patterns of cerebral and spinal pathology along the spectrum of ATXN2-related disorders <https://doi.org/10.1007/s00415-025-13037-9>`_, **J. Neurol.** 2025
+-  Ojha *et al.* `Clinical and MRI features contributing to the clinico-radiological dissociation in a large cohort of people with multiple sclerosis <https://doi.org/10.1007/s00415-025-12977-6>`_, **J. Neurol.** 2025
+-  Sadeghi-Adl *et al.* `Severity Classification of Pediatric Spinal Cord Injuries Using Structural MRI Measures and Deep Learning: A Comprehensive Analysis Across All Vertebral Levels <https://doi.org/10.3174/ajnr.A8770>`_, **AJNR Am. J. Neuroradiol.** 2025
+-  Bedard *et al.* `Normalizing spinal cord compression measures in degenerative cervical myelopathy <https://doi.org/10.1016/j.spinee.2025.03.012>`_, **Spine J.** 2025
 -  Solanky *et al.* `Evaluation of magnetic resonance spectroscopy total sodium concentration measures, and associations with microstructure and physical impairment in cervical myelopathy <https://doi.org/10.1038/s41598-025-91658-w>`_, **Sci. Rep.** 2025
 -  Azzimonti *et al.* `Cervical spinal cord gray matter damage predicts disability worsening in multiple sclerosis: a longitudinal study <https://doi.org/10.1007/s00415-025-12979-4>`_, **J. Neurol.** 2025
 -  Stroman *et al.* `Evidence of a persistent altered neural state in people with fibromyalgia syndrome during functional MRI studies and its relationship with pain and anxiety <https://doi.org/10.1371/journal.pone.0316672>`_, **PLoS One** 2025

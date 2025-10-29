@@ -12,7 +12,6 @@ import psutil
 from math import asin, cos, sin, acos
 
 import numpy as np
-from nibabel import load, Nifti1Image, aff2axcodes
 from scipy.ndimage import gaussian_filter, gaussian_filter1d, convolve
 from scipy.io import loadmat
 
@@ -30,6 +29,7 @@ from spinalcordtoolbox.scripts import sct_image
 os.environ['VXM_BACKEND'] = 'pytorch'
 os.environ['NEURITE_BACKEND'] = 'pytorch'
 
+nib = LazyLoader("nib", globals(), "nibabel")
 vxm = LazyLoader("vxm", globals(), "voxelmorph")
 torch = LazyLoader("torch", globals(), "torch")
 nil_image = LazyLoader("nil_image", globals(), "nilearn.image")
@@ -349,6 +349,7 @@ def register_rootlet(src, dest, step, ants_registration_params, metricSize, padd
     src_rootlet = src[1]
     dest_rootlet = dest[1]
     # Dilate rootlets masks:
+    # We use a ball of size 3 because rootlets labels aren't single-voxel point labels, so it is less necessary to use a large dilation factor (e.g. 5)
     src_mask = image.Image(dilate(image.Image(src_rootlet), size=3, shape='ball'), hdr=image.Image(src_rootlet).hdr).save(image.add_suffix(src_rootlet, '_dil'))
     src_mask = image.add_suffix(src_rootlet, '_dil')
     dest_mask = image.Image(dilate(image.Image(dest_rootlet), size=3, shape='ball'), hdr=image.Image(dest_rootlet).hdr).save(image.add_suffix(dest_rootlet, '_dil'))
@@ -442,17 +443,17 @@ def register_dl_multimodal_cascaded_reg(fname_src, fname_dest, fname_warp_forwar
 
     # Load data
     logger.info("\nLoad data to register...")
-    src_img = load(fname_src)
-    dest_img = load(fname_dest)
+    src_img = nib.load(fname_src)
+    dest_img = nib.load(fname_dest)
 
     # ---- Additional preprocessing steps ---- #
     # Scale the data between 0 and 1
     fx_img = dest_img.get_fdata()
     scaled_fx_img = (fx_img - np.min(fx_img)) / (np.max(fx_img) - np.min(fx_img))
-    scaled_fx_nii = Nifti1Image(scaled_fx_img, dest_img.affine)  # Can't be int64 (#4408)
+    scaled_fx_nii = nib.Nifti1Image(scaled_fx_img, dest_img.affine)  # Can't be int64 (#4408)
     mov_img = src_img.get_fdata()
     scaled_mov_img = (mov_img - np.min(mov_img)) / (np.max(mov_img) - np.min(mov_img))
-    scaled_mov_nii = Nifti1Image(scaled_mov_img, src_img.affine)  # Can't be int64 (#4408)
+    scaled_mov_nii = nib.Nifti1Image(scaled_mov_img, src_img.affine)  # Can't be int64 (#4408)
     # Ensure that the volumes can be used in the registration model
     # (size multiple of 16 because 4 encoder reducing the size by 2)
     fx_img_shape = scaled_fx_img.shape
@@ -518,7 +519,7 @@ def register_dl_multimodal_cascaded_reg(fname_src, fname_dest, fname_warp_forwar
     # Modify the warp data so it can be used with sct_apply_transfo()
     # (add a time dimension, change the sign of some axes and set the intent code to vector)
     orientation_conv = "LPS"
-    fx_im_orientation = list(aff2axcodes(fx_preproc_nii.affine))
+    fx_im_orientation = list(nib.aff2axcodes(fx_preproc_nii.affine))
     opposite_character = {'L': 'R', 'R': 'L',
                           'A': 'P', 'P': 'A',
                           'I': 'S', 'S': 'I'}
@@ -621,24 +622,34 @@ def register_slicewise(fname_src, fname_dest, paramreg=None, fname_mask='', warp
     # copy data to temp folder
     logger.info("\nCopy input data to temp folder...")
     if isinstance(fname_src, list):
+        fname_src_img, fname_src_seg = "src.nii", "src_seg.nii"
+        fname_dest_img, fname_dest_seg = "dest.nii", "dest_seg.nii"
         # TODO: swap 0 and 1 (to be consistent with the child function below)
         src_img = image.convert(image.Image(fname_src[0]))
-        src_img.save(os.path.join(path_tmp, "src.nii"), mutable=True, verbose=verbose)
+        src_img.save(os.path.join(path_tmp, fname_src_img), mutable=True, verbose=verbose)
 
         src_seg = image.convert(image.Image(fname_src[1]))
-        src_seg.save(os.path.join(path_tmp, "src_seg.nii"), mutable=True, verbose=verbose)
+        src_seg.save(os.path.join(path_tmp, fname_src_seg), mutable=True, verbose=verbose)
 
         dest_img = image.convert(image.Image(fname_dest[0]))
-        dest_img.save(os.path.join(path_tmp, "dest.nii"), mutable=True, verbose=verbose)
+        dest_img.save(os.path.join(path_tmp, fname_dest_img), mutable=True, verbose=verbose)
 
         dest_seg = image.convert(image.Image(fname_dest[1]))
-        dest_seg.save(os.path.join(path_tmp, "dest_seg.nii"), mutable=True, verbose=verbose)
+        dest_seg.save(os.path.join(path_tmp, fname_dest_seg), mutable=True, verbose=verbose)
     else:
+        # FIXME: - If we receive only one image, we have no way of knowing if that image is `type=im` or `type=seg`
+        #          because that context isn't provided to this function.
+        #        - In theory, we could parse the file name for "_seg" to determine if it's a segmentation or not,
+        #          but perhaps this would be brittle (e.g. if the caller changes its naming conventions).
+        #        - So, we are forced to use the same filename for both possibilities (and hope the correct image was passed).
+        fname_src_img = fname_src_seg = "src.nii"
+        fname_dest_img = fname_dest_seg = "dest.nii"
+
         src_img = image.convert(image.Image(fname_src))
-        src_img.save(os.path.join(path_tmp, "src.nii"), mutable=True, verbose=verbose)
+        src_img.save(os.path.join(path_tmp, fname_src_img), mutable=True, verbose=verbose)
 
         dest_image = image.convert(image.Image(fname_dest))
-        dest_image.save(os.path.join(path_tmp, "dest.nii"), mutable=True, verbose=verbose)
+        dest_image.save(os.path.join(path_tmp, fname_dest_img), mutable=True, verbose=verbose)
 
     if fname_mask != '':
         mask_img = image.convert(image.Image(fname_mask))
@@ -656,11 +667,11 @@ def register_slicewise(fname_src, fname_dest, paramreg=None, fname_mask='', warp
         else:
             rot_method = paramreg.rot_method
         if rot_method in ['hog', 'pcahog']:
-            src_input = ['src_seg.nii', 'src.nii']
-            dest_input = ['dest_seg.nii', 'dest.nii']
-        else:
-            src_input = ['src.nii']
-            dest_input = ['dest.nii']
+            src_input = [fname_src_seg, fname_src_img]
+            dest_input = [fname_dest_seg, fname_dest_img]
+        else:  # rot_method = pca --> use segmentation only
+            src_input = [fname_src_seg]
+            dest_input = [fname_dest_seg]
         register2d_centermassrot(
             src_input, dest_input, paramreg=paramreg, fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out,
             rot_method=rot_method, filter_size=paramreg.filter_size, path_qc=path_qc, verbose=verbose,
@@ -668,8 +679,8 @@ def register_slicewise(fname_src, fname_dest, paramreg=None, fname_mask='', warp
 
     elif paramreg.algo == 'columnwise':
         # scaling R-L, then column-wise center of mass alignment and scaling
-        register2d_columnwise('src.nii',
-                              'dest.nii',
+        register2d_columnwise(fname_src_img,
+                              fname_dest_img,
                               fname_warp=warp_forward_out,
                               fname_warp_inv=warp_inverse_out,
                               verbose=verbose,
@@ -683,8 +694,8 @@ def register_slicewise(fname_src, fname_dest, paramreg=None, fname_mask='', warp
         algo_dic = {'translation': 'Translation', 'rigid': 'Rigid', 'affine': 'Affine', 'syn': 'SyN', 'bsplinesyn': 'BSplineSyN', 'centermass': 'centermass'}
         paramreg.algo = algo_dic[paramreg.algo]
         # run slicewise registration
-        register2d('src.nii',
-                   'dest.nii',
+        register2d(fname_src_img,
+                   fname_dest_img,
                    fname_mask=fname_mask,
                    fname_warp=warp_forward_out,
                    fname_warp_inv=warp_inverse_out,
@@ -742,7 +753,7 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
     nx, ny, nz, nt, px, py, pz, pt = image.Image(fname_dest[0]).dim
 
     logger.info(f"  matrix size: {str(nx)} x {str(ny)} x {str(nz)}")
-    logger.info(f"  voxel size: {str(px)}mm x {str(py)}mm x {str(nz)}mm")
+    logger.info(f"  voxel size: {str(px)}mm x {str(py)}mm x {str(pz)}mm")
 
     # Split source volume along z
     logger.info("\nSplit input segmentation...")
@@ -1444,7 +1455,7 @@ def generate_warping_field(fname_dest, warp_x, warp_y, fname_warp='warping_field
     data_warp[:, :, :, 0, 1] = -warp_y  # need to invert due to ITK conventions
 
     # save warping field
-    im_dest = load(fname_dest)
+    im_dest = nib.load(fname_dest)
     hdr_dest = im_dest.header
     hdr_warp = hdr_dest.copy()
     hdr_warp.set_intent('vector', (), '')

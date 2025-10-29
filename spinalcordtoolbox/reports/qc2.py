@@ -9,12 +9,12 @@ from contextlib import contextmanager
 import datetime
 from hashlib import md5
 import importlib.resources
-from importlib.abc import Traversable
 import itertools as it
 import json
 import logging
 import math
 from pathlib import Path
+import shutil
 from typing import Optional, Sequence
 
 import numpy as np
@@ -25,7 +25,7 @@ from spinalcordtoolbox.centerline.core import get_centerline, ParamCenterline
 from spinalcordtoolbox.cropping import ImageCropper, BoundingBox
 from spinalcordtoolbox.image import Image, rpi_slice_to_orig_orientation
 import spinalcordtoolbox.reports
-from spinalcordtoolbox.reports.assets._assets.py import refresh_qc_entries
+from spinalcordtoolbox.reports.assets.py import refresh_qc_entries
 from spinalcordtoolbox.resampling import resample_nib
 from spinalcordtoolbox.utils.shell import display_open
 from spinalcordtoolbox.utils.sys import __version__, list2cmdline, LazyLoader
@@ -40,10 +40,26 @@ mpl_colors = LazyLoader("mpl_colors", globals(), "matplotlib.colors")
 mpl_backend_agg = LazyLoader("mpl_backend_agg", globals(), "matplotlib.backends.backend_agg")
 mpl_patheffects = LazyLoader("mpl_patheffects", globals(), "matplotlib.patheffects")
 mpl_collections = LazyLoader("mpl_collections", globals(), "matplotlib.collections")
-mpl_plt = LazyLoader("mpl_plt", globals(), "matplotlib.pyplot")
 
 
 logger = logging.getLogger(__name__)
+
+# Clarify some constants that will control the width of the output images
+# (the height is automatically adjusted based on the aspect ratio of the image)
+# Notes:
+#   - This shouldn't ever need to be changed, since "target width" is related
+#     to the design of the QC report interface. The images are currently rendered
+#     at 1060px wide, so we should match that in the mosaic arrays we generate.
+#     NOTE: This will result in arrays smaller than 1060px wide, since mosaic
+#     grid wrapping won't exceed this value. But, a smaller visible mosaic is
+#     worth the trade-off of pixel accuracy when rendering the final image.
+#   - `matplotlib` uses inches/DPI to define the canvas. But, given we want
+#     a fixed output size, we can choose some arbitrary values for both.
+#     Presumably, choosing a different DPI value (and thus a different canvas
+#     size in inches) wouldn't change the output image at all. (Is this true?)
+TARGET_WIDTH_PIXL = 1060
+DPI = 300
+TARGET_WIDTH_INCH = TARGET_WIDTH_PIXL / DPI
 
 
 @contextmanager
@@ -107,27 +123,26 @@ def create_qc_entry(
         path_result = path_json / f'qc_{timestamp}.json'
         with path_result.open('w') as file_result:
             json.dump({
-                'cwd': str(Path.cwd()),
+                'path': str(Path.cwd()),
                 'cmdline': cmdline,
                 'command': command,
-                'sct_version': __version__,
+                'sctVersion': __version__,
                 'dataset': dataset,
                 'subject': subject,
                 'contrast': contrast,
-                'fname_in': path_input.name,
+                'inputFile': path_input.name,
                 'plane': plane,
-                'background_img': str(imgs_to_generate['path_background_img'].relative_to(path_qc)),
-                'overlay_img': str(imgs_to_generate['path_overlay_img'].relative_to(path_qc)),
-                'moddate': mod_date.strftime("%Y-%m-%d %H:%M:%S"),
+                'backgroundImage': str(imgs_to_generate['path_background_img'].relative_to(path_qc)),
+                'overlayImage': str(imgs_to_generate['path_overlay_img'].relative_to(path_qc)),
+                'date': mod_date.strftime("%Y-%m-%d %H:%M:%S"),
                 'rank': '',
                 'qc': '',
             }, file_result, indent=1)
 
         # Copy any missing QC assets
-        path_assets = importlib.resources.files(spinalcordtoolbox.reports) / 'assets'
         path_qc.mkdir(parents=True, exist_ok=True)
-        update_files(path_assets / '_assets', path_qc)
-
+        path_assets = importlib.resources.files(spinalcordtoolbox.reports) / 'assets'
+        shutil.copytree(path_assets, path_qc, dirs_exist_ok=True, ignore=shutil.ignore_patterns('__pycache__', '__init__.py'))
         # Inject the JSON QC entries into the index.html file
         path_index_html = refresh_qc_entries.main(path_qc)
 
@@ -135,26 +150,35 @@ def create_qc_entry(
     display_open(file=str(path_index_html), message="To see the results in a browser")
 
 
-def update_files(resource: Traversable, destination: Path):
+def add_slice_numbers(ax, num_slices, patch_size, margin: int = 2):
     """
-    Make sure that an up-to-date copy of `resource` exists at `destination`,
-    by creating or updating files and directories recursively.
+    Overlay slice indices onto an Axial mosaic.
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        Axes containing a single imshow of the mosaic.
+    num_slices : int
+        Total number of axial slices (dim 0 of the original volume).
+    patch_size : int
+        The size (in pixels) of each square cell in the mosaic;
+        in our code each cell is cropped to radius*2, so patch_size = radius[0]*2.
     """
-    if resource.name in ['__pycache__']:
-        return  # skip this one
-    path = destination / resource.name
-    if resource.is_dir():
-        path.mkdir(exist_ok=True)
-        for sub_resource in resource.iterdir():
-            update_files(sub_resource, path)
-    elif resource.is_file():
-        new_content = resource.read_bytes()
-        old_content = path.read_bytes() if path.is_file() else None
-        if new_content != old_content:
-            path.write_bytes(new_content)
-    else:
-        # Some weird kind of resource? Ignore it
-        pass
+    # Get the mosaic array we just plotted
+    img_arr = ax.get_images()[0].get_array()
+    n_cols = int(img_arr.shape[1] // patch_size)
+    for i in range(1, num_slices):  # skip 0
+        row = i // n_cols
+        col = i % n_cols
+        # top-left inside each tile
+        x = col * patch_size + margin
+        y = row * patch_size + margin
+        txt = ax.text(x, y, str(i), ha='left', va='top', color='yellow', fontsize=4)
+        # give it a thin black outline for readability
+        txt.set_path_effects([
+            mpl_patheffects.Stroke(linewidth=1, foreground='black'),
+            mpl_patheffects.Normal()
+        ])
 
 
 def sct_register_multimodal(
@@ -175,7 +199,7 @@ def sct_register_multimodal(
 
     # Axial orientation, switch between two input images
     with create_qc_entry(
-        path_input=Path(fname_input).absolute(),
+        path_input=Path(fname_input).resolve(),
         path_qc=Path(path_qc),
         command=command,
         cmdline=list2cmdline(cmdline),
@@ -215,10 +239,8 @@ def sct_register_multimodal(
         # Generate the first QC report image
         img = equalize_histogram(mosaic(img_input, centers))
 
-        # For QC reports, axial mosaics will often have smaller height than width
-        # (e.g. WxH = 20x3 slice images). So, we want to reduce the fig height to match this.
-        # `size_fig` is in inches. So, dpi=300 --> 1500px, dpi=100 --> 500px, etc.
-        size_fig = [5, 5 * img.shape[0] / img.shape[1]]
+        # Fix the width to a specific size, and vary the height based on how many rows there are.
+        size_fig = [TARGET_WIDTH_INCH, TARGET_WIDTH_INCH * img.shape[0] / img.shape[1]]
 
         fig = mpl_figure.Figure()
         fig.set_size_inches(*size_fig, forward=True)
@@ -230,7 +252,7 @@ def sct_register_multimodal(
         ax.get_yaxis().set_visible(False)
         img_path = str(imgs_to_generate['path_background_img'])
         logger.debug('Save image %s', img_path)
-        fig.savefig(img_path, format='png', transparent=True, dpi=300)
+        fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
 
         # Generate the second QC report image
         img = equalize_histogram(mosaic(img_output, centers))
@@ -244,7 +266,7 @@ def sct_register_multimodal(
         ax.get_yaxis().set_visible(False)
         img_path = str(imgs_to_generate['path_overlay_img'])
         logger.debug('Save image %s', img_path)
-        fig.savefig(img_path, format='png', transparent=True, dpi=300)
+        fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
 
 
 def sct_deepseg(
@@ -267,7 +289,7 @@ def sct_deepseg(
     cmdline.extend(argv)
 
     with create_qc_entry(
-        path_input=Path(fname_input).absolute(),
+        path_input=Path(fname_input).resolve(),
         path_qc=Path(path_qc),
         command=command,
         cmdline=list2cmdline(cmdline),
@@ -276,14 +298,16 @@ def sct_deepseg(
         subject=subject,
     ) as imgs_to_generate:
         # Custom QC to handle multiclass segmentation outside the spinal cord
-        if "seg_spinal_rootlets_t2w" in argv:
-            sct_deepseg_spinal_rootlets_t2w(
+        if "rootlets" in argv:
+            sct_deepseg_spinal_rootlets(
                 imgs_to_generate, fname_input, fname_seg, fname_seg2, species,
-                radius=(23, 23))
+                radius=(23, 23), base_scaling=2.5,  # standard upscale to see rootlets detail
+                outline=True)  # add outlines (and labels) to highlight the difficult-to-see rootlets seg
         elif "totalspineseg" in argv:
-            sct_deepseg_spinal_rootlets_t2w(
+            sct_deepseg_spinal_rootlets(
                 imgs_to_generate, fname_input, fname_seg, fname_seg2, species,
-                radius=(40, 40))
+                radius=(40, 40), base_scaling=1.0,  # skip upscaling to get "big picture" view of all slices
+                outline=False)  # skip outlines (and labels) because the images will be too small to display them
         # Non-rootlets, axial/sagittal DeepSeg QC report
         elif plane == 'Axial':
             sct_deepseg_axial(
@@ -364,10 +388,8 @@ def sct_deepseg_axial(
     # Generate the first QC report image
     img = equalize_histogram(mosaic(img_input, centers, radius))
 
-    # For QC reports, axial mosaics will often have smaller height than width
-    # (e.g. WxH = 20x3 slice images). So, we want to reduce the fig height to match this.
-    # `size_fig` is in inches. So, dpi=300 --> 1500px, dpi=100 --> 500px, etc.
-    size_fig = [5, 5 * img.shape[0] / img.shape[1]]
+    # Fix the width to a specific size, and vary the height based on how many rows there are.
+    size_fig = [TARGET_WIDTH_INCH, TARGET_WIDTH_INCH * img.shape[0] / img.shape[1]]
 
     fig = mpl_figure.Figure()
     fig.set_size_inches(*size_fig, forward=True)
@@ -375,11 +397,12 @@ def sct_deepseg_axial(
     ax = fig.add_axes((0, 0, 1, 1))
     ax.imshow(img, cmap='gray', interpolation='none', aspect=1.0)
     add_orientation_labels(ax)
+    add_slice_numbers(ax, img_input.dim[0], radius[0] * 2)
     ax.get_xaxis().set_visible(False)
     ax.get_yaxis().set_visible(False)
     img_path = str(imgs_to_generate['path_background_img'])
     logger.debug('Save image %s', img_path)
-    fig.savefig(img_path, format='png', transparent=True, dpi=300)
+    fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
 
     # Generate the second QC report image
     fig = mpl_figure.Figure()
@@ -406,20 +429,21 @@ def sct_deepseg_axial(
     ax.get_yaxis().set_visible(False)
     img_path = str(imgs_to_generate['path_overlay_img'])
     logger.debug('Save image %s', img_path)
-    fig.savefig(img_path, format='png', transparent=True, dpi=300)
+    fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
 
 
-def sct_deepseg_spinal_rootlets_t2w(
+def sct_deepseg_spinal_rootlets(
     imgs_to_generate: dict[str, Path],
     fname_input: str,
     fname_seg_sc: str,
     fname_seg_lesion: Optional[str],
     species: str,
     radius: Sequence[int],
+    base_scaling: float = 2.5,  # scale up mosaic slices to make them more readable by default
     outline: bool = True
 ):
     """
-    Generate a QC report for `sct_deepseg -task seg_spinal_rootlets_t2w`.
+    Generate a QC report for `sct_deepseg rootlets`.
 
     This refactor is based off of the `listed_seg` method in qc.py, adapted to support multiple images.
     """
@@ -443,8 +467,13 @@ def sct_deepseg_spinal_rootlets_t2w(
     p_ratio = tuple(p_resample / p for p in p_original)
     radius = tuple(int(r * p) for r, p in zip(radius, p_ratio))
     # - One problem with this, however, is that if the crop radius ends up being smaller than the default, the QC will in turn be smaller as well.
-    #   So, to ensure that the QC is still readable, we scale up by an integer factor whenever the p_ratio is < 1
-    scale = int(math.ceil(1 / max(p_ratio)))  # e.g. 0.8mm human => p_ratio == 0.6/0.8 == 0.75; scale == 1/p_ratio == 1/0.75 == 1.33 => 2x scale
+    #   So, to ensure that the QC is still readable, we scale up whenever the p_ratio is < 1
+    scale = max((1 / ratio) for ratio in p_ratio)  # e.g. 0.8mm human => p_ratio == 0.6/0.8 == 0.75; scale == 1/p_ratio == 1/0.75 == 1.33
+    # - Note: `mosaic()` already has a base scaling factor of 2.5 (to help make the QC readable).
+    #          Since resolution-based scaling would overwrite this, we need to preserve the base scaling factor.
+    # - Note2: For `totalspineseg`, we actually _don't_ want to upscale by 2.5, so that's why `base_scaling` has
+    #          been parametrized, allowing per-QC customization.
+    scale *= base_scaling
     # - One other problem is that for anisotropic images, the aspect ratio won't be 1:1 between width/height.
     #   So, we use `aspect` to adjust the image via imshow, and `radius` to know where to place the text in x/y coords
     aspect = p_ratio[1] / p_ratio[0]
@@ -460,22 +489,20 @@ def sct_deepseg_spinal_rootlets_t2w(
     # Generate the first QC report image
     img = equalize_histogram(mosaic(img_input, centers, radius, scale))
 
-    # For QC reports, axial mosaics will often have smaller height than width
-    # (e.g. WxH = 20x3 slice images). So, we want to reduce the fig height to match this.
-    # `size_fig` is in inches. So, dpi=300 --> 1500px, dpi=100 --> 500px, etc.
-    size_fig = [5, 5 * (img.shape[0] / img.shape[1]) * aspect]
+    # Fix the width to a specific size, and vary the height based on how many rows there are.
+    size_fig = [TARGET_WIDTH_INCH, TARGET_WIDTH_INCH * (img.shape[0] / img.shape[1]) * aspect]
 
     fig = mpl_figure.Figure()
     fig.set_size_inches(*size_fig, forward=True)
     mpl_backend_agg.FigureCanvasAgg(fig)
     ax = fig.add_axes((0, 0, 1, 1))
     ax.imshow(img, cmap='gray', interpolation='none', aspect=aspect)
-    add_orientation_labels(ax, radius=tuple(r*scale for r in radius))
+    add_orientation_labels(ax, radius=tuple(r for r in radius))
     ax.get_xaxis().set_visible(False)
     ax.get_yaxis().set_visible(False)
     img_path = str(imgs_to_generate['path_background_img'])
     logger.debug('Save image %s', img_path)
-    fig.savefig(img_path, format='png', transparent=True, dpi=300)
+    fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
 
     # Generate the second QC report image
     fig = mpl_figure.Figure()
@@ -498,16 +525,19 @@ def sct_deepseg_spinal_rootlets_t2w(
                   alpha=1.0,
                   interpolation='none',
                   aspect=aspect)
+
+        # only display outlines and segmentation labels if opted into
+        # (in practice, this saves them from being added to the tiny totalspineseg QC)
         if outline:
+            add_segmentation_labels(ax, img, colors=colormaps[i].colors, radius=tuple(r for r in radius))
             # linewidth 0.5 is too thick, 0.25 is too thin
             plot_outlines(img, ax=ax, facecolor='none', edgecolor='black', linewidth=0.3)
-        add_segmentation_labels(ax, img, colors=colormaps[i].colors, radius=tuple(r*scale for r in radius))
 
     ax.get_xaxis().set_visible(False)
     ax.get_yaxis().set_visible(False)
     img_path = str(imgs_to_generate['path_overlay_img'])
     logger.debug('Save image %s', img_path)
-    fig.savefig(img_path, format='png', transparent=True, dpi=300)
+    fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
 
 
 def sct_deepseg_sagittal(
@@ -590,10 +620,8 @@ def sct_deepseg_sagittal(
     # Generate the first QC report image
     img = equalize_histogram(mosaic(img_input, centers, radius=radius))
 
-    # For QC reports, axial mosaics will often have smaller height than width
-    # (e.g. WxH = 20x3 slice images). So, we want to reduce the fig height to match this.
-    # `size_fig` is in inches. So, dpi=300 --> 1500px, dpi=100 --> 500px, etc.
-    size_fig = [5, 5 * img.shape[0] / img.shape[1]]
+    # Fix the width to a specific size, and vary the height based on how many rows there are.
+    size_fig = [TARGET_WIDTH_INCH, TARGET_WIDTH_INCH * img.shape[0] / img.shape[1]]
 
     fig = mpl_figure.Figure()
     fig.set_size_inches(*size_fig, forward=True)
@@ -605,7 +633,7 @@ def sct_deepseg_sagittal(
     ax.get_yaxis().set_visible(False)
     img_path = str(imgs_to_generate['path_background_img'])
     logger.debug('Save image %s', img_path)
-    fig.savefig(img_path, format='png', transparent=True, dpi=300)
+    fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
 
     # Generate the second QC report image
     fig = mpl_figure.Figure()
@@ -632,14 +660,14 @@ def sct_deepseg_sagittal(
     ax.get_yaxis().set_visible(False)
     img_path = str(imgs_to_generate['path_overlay_img'])
     logger.debug('Save image %s', img_path)
-    fig.savefig(img_path, format='png', transparent=True, dpi=300)
+    fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
 
 
 def sct_analyze_lesion(
     fname_input: str,
     fname_label: str,
     fname_sc: str,
-    measure_pd: pd.DataFrame,
+    measure_pd: 'pd.DataFrame',
     argv: Sequence[str],
     path_qc: str,
     dataset: Optional[str],
@@ -654,7 +682,7 @@ def sct_analyze_lesion(
 
     # Axial orientation, switch between one anat image and 1-2 seg images
     with create_qc_entry(
-        path_input=Path(fname_input).absolute(),
+        path_input=Path(fname_input).resolve(),
         path_qc=Path(path_qc),
         command=command,
         cmdline=list2cmdline(cmdline),
@@ -673,7 +701,9 @@ def sct_analyze_lesion(
         orig_orientation = im_lesion.orientation
         im_lesion.change_orientation("RPI")
         im_lesion_data = im_lesion.data
-        label_lst = [label for label in np.unique(im_lesion.data) if label]
+        # Restrict the lesion mask to the spinal cord mask, as lesions should not occur outside the cord
+        im_lesion_data = im_lesion_data * im_sc_data
+        label_lst = [label for label in np.unique(im_lesion_data) if label]
 
         # Get the total number of lesions; this will represent the number of rows in the figure. For example, if we have
         # 2 lesions, we will have two rows. One row per lesion.
@@ -689,6 +719,9 @@ def sct_analyze_lesion(
 
         #  Create a figure
         #  The figure has one row per lesion and one column per sagittal slice containing the lesion
+        # TODO: This report breaks the assumption that the width is fixed in pixel size
+        #       The figure could be very wide horizontally, which wouldn't work with the "new QC"
+        #       See: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4887
         fig, axes = mpl_plt.subplots(num_of_lesions,
                                      num_of_sag_slices,
                                      figsize=(num_of_sag_slices * 5, num_of_lesions * 5))
@@ -703,10 +736,6 @@ def sct_analyze_lesion(
             # now "labeled" meaning that different lesions have different values, e.g., 1, 2, 3
             # As we are looping across lesions, we get the lesion mask for the current lesion label
             im_label_data_cur = im_lesion_data == lesion_label
-            # Restrict the lesion mask to the spinal cord mask (from anatomical level, it does not make sense to have
-            # lesion outside the spinal cord mask)
-            # Note for `im_sc_data != 0`: Nonzero -> True | Zero -> False; we use this in case of soft SC
-            im_label_data_cur = np.logical_and(im_lesion_data == lesion_label, im_sc_data != 0)
 
             # Loop across sagittal slices
             for idx_col, sagittal_slice in enumerate(range(min_sag_slice, max_sag_slice + 1)):
@@ -752,20 +781,22 @@ def sct_analyze_lesion(
                 # If the key exists, it means that we have tissue bridges for the current lesion and sagittal slice
                 if idx_row < len(measure_pd):
                     col_name_dorsal = f"slice_{int(sagittal_slice)}_dorsal_bridge_width [mm]"
-                    dorsal_bridge_width_mm = measure_pd[col_name_dorsal][idx_row]
-                    if col_name_dorsal in measure_pd.columns and not pd.isna(dorsal_bridge_width_mm):
-                        axes[idx_row, idx_col].text(min(np.where(slice_lesion)[0]) - 3,
-                                                    min(np.where(slice_lesion)[1]),
-                                                    f'Dorsal bridge\n{np.round(dorsal_bridge_width_mm, 2)} mm',
-                                                    color='red', fontsize=12, ha='left', va='bottom')
+                    if col_name_dorsal in measure_pd.columns:
+                        dorsal_bridge_width_mm = measure_pd[col_name_dorsal][idx_row]
+                        if not pd.isna(dorsal_bridge_width_mm):
+                            axes[idx_row, idx_col].text(min(np.where(slice_lesion)[0]) - 3,
+                                                        min(np.where(slice_lesion)[1]),
+                                                        f'Dorsal bridge\n{np.round(dorsal_bridge_width_mm, 2)} mm',
+                                                        color='red', fontsize=12, ha='left', va='bottom')
 
                     col_name_ventral = f"slice_{int(sagittal_slice)}_ventral_bridge_width [mm]"
-                    ventral_bridge_width_mm = measure_pd[col_name_ventral][idx_row]
-                    if col_name_ventral in measure_pd.columns and not pd.isna(ventral_bridge_width_mm):
-                        axes[idx_row, idx_col].text(max(np.where(slice_lesion)[0]) + 3,
-                                                    min(np.where(slice_lesion)[1]),
-                                                    f'Ventral bridge\n{np.round(ventral_bridge_width_mm, 2)} mm',
-                                                    color='red', fontsize=12, ha='right', va='bottom')
+                    if col_name_ventral in measure_pd.columns:
+                        ventral_bridge_width_mm = measure_pd[col_name_ventral][idx_row]
+                        if not pd.isna(ventral_bridge_width_mm):
+                            axes[idx_row, idx_col].text(max(np.where(slice_lesion)[0]) + 3,
+                                                        min(np.where(slice_lesion)[1]),
+                                                        f'Ventral bridge\n{np.round(ventral_bridge_width_mm, 2)} mm',
+                                                        color='red', fontsize=12, ha='right', va='bottom')
 
                 # Swap x-axis to anterior-posterior (from the current posterior-anterior), so that ventral tissue
                 # bridges are on the left and dorsal tissue bridges on the right
@@ -794,7 +825,7 @@ def inf_nan_fill(A: np.ndarray):
             A[valid])
 
 
-def mosaic(img: Image, centers: np.ndarray, radius: tuple[int, int] = (15, 15), scale: int = 1):
+def mosaic(img: Image, centers: np.ndarray, radius: tuple[int, int] = (15, 15), scale: float = 2.5):
     """
     Arrange the slices of `img` into a grid of images.
 
@@ -803,8 +834,14 @@ def mosaic(img: Image, centers: np.ndarray, radius: tuple[int, int] = (15, 15), 
 
     If `img` has N slices, then `centers` should have shape (N, 2).
     """
-    # Fit as many slices as possible in each row of 600 pixels
-    num_col = math.floor(600 / (2*radius[0]*scale))
+    # Note: This function used to hardcode a max row width of 600 pixels
+    #       In practice, because the canvas size is fixed to 1500 pixels, this
+    #       resulted in a permanent upscaling by 2.5x when saving the image.
+    #       To make things clearer, we now use a variable.
+    max_row_width = TARGET_WIDTH_PIXL / scale
+
+    # Fit as many slices as possible in each row
+    num_col = math.floor(max_row_width / (2*radius[0]))
 
     # Center and crop each axial slice
     cropped = []
@@ -815,21 +852,21 @@ def mosaic(img: Image, centers: np.ndarray, radius: tuple[int, int] = (15, 15), 
             center[i] = min(slice.shape[i] - radius[i], center[i])  # Check far edge first
             center[i] = max(radius[i],                  center[i])  # Then check 0 edge last
         # Add a margin before cropping, in case the center is still too close to one of the edges
-        # Also, use Kronecker product to scale each block in multiples
-        cropped.append(np.kron(np.pad(slice, [[r] for r in radius])[
+        cropped.append(np.pad(slice, [[r] for r in radius])[
             center[0]:center[0] + 2*radius[0],
             center[1]:center[1] + 2*radius[1],
-        ], np.ones((scale, scale))))
+        ])
 
     # Pad the list with empty arrays, to get complete rows of num_col
-    empty = np.zeros((2*radius[0]*scale, 2*radius[1]*scale))
+    empty = np.zeros((2*radius[0], 2*radius[1]))
     cropped.extend([empty] * (-len(cropped) % num_col))
 
     # Arrange the images into a grid
     return np.block([cropped[i:i+num_col] for i in range(0, len(cropped), num_col)])
 
 
-def add_orientation_labels(ax: mpl_axes.Axes, radius: tuple[int, int] = (15, 15), letters: tuple[str, str, str, str] = ('A', 'P', 'L', 'R')):
+def add_orientation_labels(ax: 'mpl_axes.Axes', radius: tuple[int, int] = (15, 15),
+                           letters: tuple[str, str, str, str] = ('A', 'P', 'L', 'R')):
     """
     Add orientation labels (A, P, L, R) to a figure, yellow with a black outline.
     """
@@ -849,7 +886,7 @@ def add_orientation_labels(ax: mpl_axes.Axes, radius: tuple[int, int] = (15, 15)
         ])
 
 
-def add_segmentation_labels(ax: mpl_axes.Axes, seg_mosaic: np.ndarray, colors: list[str],
+def add_segmentation_labels(ax: 'mpl_axes.Axes', seg_mosaic: np.ndarray, colors: list[str],
                             radius: tuple[int, int] = (15, 15)):
     """
     Add labels corresponding to the value of the segmentation for each slice in the mosaic.
@@ -907,7 +944,7 @@ def equalize_histogram(img: np.ndarray):
     return np.array(c * (max_ - min_) + min_, dtype=img.dtype)
 
 
-def plot_outlines(img: np.ndarray, ax: mpl_axes.Axes, **kwargs):
+def plot_outlines(img: np.ndarray, ax: 'mpl_axes.Axes', **kwargs):
     """
     Draw the outlines of every equal-value area of a 2D Numpy array with Matplotlib.
 
@@ -1086,6 +1123,8 @@ def crop_with_mask(img_to_crop, img_ref, pad=3, max_slices=None):
     the segmentation spans more slices than `max_slices`, then no padding will occur. Instead,
     all slices containing the segmentation will be used (to preserve the segmentation).
     """
+    if not np.count_nonzero(img_ref.data):
+        raise ValueError("The mask image is empty. Cannot crop using an empty mask. Check the input (e.g. '-qc-seg').")
     # QC images are reoriented to SAL (axial) or RSP (sagittal) such that axis=0 is always the slice index
     axis = 0
     # get extents of segmentation used for cropping
@@ -1124,12 +1163,12 @@ def get_max_axial_radius(img):
     """
     # In Axial plane, the radius is the maximum width/height of the spinal cord mask dilated by 20% or 15, whichever is larger.
     dilation = 1.2
-    default = 15
-    heights = [np.max(np.where(slice)[0]) - np.min(np.where(slice)[0]) if np.sum(slice) > 0 else 0 for slice in img.data]
-    widths = [np.max(np.where(slice)[1]) - np.min(np.where(slice)[1]) if np.sum(slice) > 0 else 0 for slice in img.data]
-    heights = [(h * dilation)//2 for h in heights]
-    widths = [(w * dilation)//2 for w in widths]
-    return max(default, max(heights)), max(default, max(widths))
+    radius_default = 15
+    heights = [np.max(np.where(slc)[0]) - np.min(np.where(slc)[0]) if np.sum(slc) > 0 else 0 for slc in img.data]
+    widths = [np.max(np.where(slc)[1]) - np.min(np.where(slc)[1]) if np.sum(slc) > 0 else 0 for slc in img.data]
+    radii_h = [int((h * dilation)//2) for h in heights]
+    radii_w = [int((w * dilation)//2) for w in widths]
+    return max(radius_default, max(radii_h)), max(radius_default, max(radii_w))
 
 
 def get_max_sagittal_radius(img):

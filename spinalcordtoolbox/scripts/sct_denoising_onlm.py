@@ -10,7 +10,6 @@ from time import time
 from typing import Sequence
 
 import numpy as np
-import nibabel as nib
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.utils.fs import extract_fname
@@ -18,6 +17,7 @@ from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel, LazyLoad
 from spinalcordtoolbox.utils.shell import Metavar, SCTArgumentParser, display_viewer_syntax
 
 nlmeans = LazyLoader("nlmeans", globals(), "dipy.denoise.nlmeans")
+nib = LazyLoader("nib", globals(), "nibabel")
 
 
 # DEFAULT PARAMETERS
@@ -41,25 +41,17 @@ def get_parser():
                     'Engineering and Technology, 2011). The implementation is based on Dipy (https://dipy.org/).'
     )
 
-    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         "-i",
-        default=None,
-        required=True,
         help="Input NIFTI image to be denoised. Example: `image_input.nii.gz`",
         metavar=Metavar.file,
     )
 
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
-    optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit")
+    optional = parser.optional_arggroup
     optional.add_argument(
         "-p",
-        help='Type of assumed noise distribution. Default is: Rician.',
-        required=False,
+        help='Type of assumed noise distribution.',
         choices=("Rician", "Gaussian"),
         default="Rician")
     optional.add_argument(
@@ -67,9 +59,8 @@ def get_parser():
         type=int,
         help="Threshold value for what to be considered as noise. "
              "The standard deviation of the noise is calculated for values below this limit. "
-             "Not relevant if `-std` value is precised. Default: `80`.",
+             "Not relevant if `-std` value is precised.",
         metavar=Metavar.int,
-        required=False,
         default="80")
     optional.add_argument(
         "-std",
@@ -81,22 +72,11 @@ def get_parser():
     optional.add_argument(
         "-o",
         help="Name of the output NIFTI image.",
-        metavar=Metavar.str,
-        default=None)
-    optional.add_argument(
-        "-r",
-        help="Remove temporary files. Specify 0 to get access to temporary files.",
-        type=int,
-        choices=(0, 1),
-        default=1)
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
+        metavar=Metavar.str)
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
+    parser.add_tempfile_args()
 
     return parser
 

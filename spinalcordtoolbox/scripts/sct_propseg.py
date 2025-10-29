@@ -19,12 +19,14 @@ from scipy.ndimage import label, center_of_mass
 
 from spinalcordtoolbox.image import Image, add_suffix, zeros_like, convert
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, set_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, set_loglevel, LazyLoader
 from spinalcordtoolbox.utils.fs import tmp_create, rmtree, extract_fname, mv, copy
 from spinalcordtoolbox.centerline import optic
 from spinalcordtoolbox.reports.qc import generate_qc
 
 from spinalcordtoolbox.scripts import sct_image
+
+nib = LazyLoader("nib", globals(), "nibabel")
 
 logger = logging.getLogger(__name__)
 
@@ -175,32 +177,24 @@ def get_parser():
         )
     )
 
-    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         '-i',
         metavar=Metavar.file,
-        required=True,
-        help="Input image. Example: ti.nii.gz"
+        help="Input image. Example: `ti.nii.gz`"
     )
     mandatory.add_argument(
         '-c',
         choices=['t1', 't2', 't2s', 'dwi'],
-        required=True,
         help="Type of image contrast. If your contrast is not in the available options (t1, t2, t2s, dwi), use "
              "t1 (cord bright / CSF dark) or t2 (cord dark / CSF bright)"
     )
 
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
-    optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit."
-    )
+    optional = parser.optional_arggroup
     optional.add_argument(
         '-o',
         metavar=Metavar.file,
-        help='Output filename. Example: spinal_seg.nii.gz '
+        help='Output filename. Example: `spinal_seg.nii.gz`'
         )
     optional.add_argument(
         '-ofolder',
@@ -219,23 +213,6 @@ def get_parser():
         metavar=Metavar.int,
         type=int,
         help="Up limit of the propagation. Default is the highest slice of the image."
-    )
-    optional.add_argument(
-        '-r',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1],
-        default=1,
-        help="Whether to remove temporary files. 0 = no, 1 = yes"
-    )
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode"
     )
     optional.add_argument(
         '-mesh',
@@ -394,6 +371,10 @@ def get_parser():
              "isct_propseg."
     )
 
+    # Arguments which implement shared functionality
+    parser.add_common_args()
+    parser.add_tempfile_args()
+
     return parser
 
 
@@ -404,7 +385,6 @@ def func_rescale_header(fname_data, rescale_factor, verbose=0):
     :param rescale_factor:
     :return: fname_data_rescaled
     """
-    import nibabel as nib
     img = nib.load(fname_data)
     # get qform
     qform = img.header.get_qform()
@@ -669,8 +649,8 @@ def main(argv: Sequence[str]):
     if sys.platform.startswith("win32"):
         # This isn't *really* a parsing error, but it feels a little more official to display the help with this error
         parser.error("`sct_propseg` is not currently supported on native Windows installations. \n\n"
-                     "For spinal cord segmentation, please migrate to the new and improved `sct_deepseg_sc` tool, "
-                     "or consider using WSL to install SCT instead.\n\n"
+                     "For spinal cord segmentation, please migrate to the new and improved `sct_deepseg spinalcord` "
+                     "tool, or consider using WSL to install SCT instead.\n\n"
                      "For further updates on `sct_propseg` Windows support, please visit:\n"
                      "https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3694")
     arguments = parser.parse_args(argv)

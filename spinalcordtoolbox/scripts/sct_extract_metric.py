@@ -20,10 +20,12 @@ import numpy as np
 
 from spinalcordtoolbox.metadata import read_label_file
 from spinalcordtoolbox.aggregate_slicewise import check_labels, extract_metric, save_as_csv, Metric, LabelStruc
-from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.image import Image, add_suffix
+from spinalcordtoolbox.centerline.core import get_centerline
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, list_type, parse_num_list, display_open
 from spinalcordtoolbox.utils.sys import init_sct, printv, __data_dir__, set_loglevel
-from spinalcordtoolbox.utils.fs import check_file_exist, extract_fname, get_absolute_path
+from spinalcordtoolbox.utils.fs import check_file_exist, extract_fname, get_absolute_path, TempFolder
+from spinalcordtoolbox.scripts import sct_maths
 
 
 class Param:
@@ -79,21 +81,14 @@ def get_parser():
             "s`ct_extract_metric -i mtr.nii.gz -f "
             "my_mask.nii.gz -z 1:4 -method wa`")
     )
-    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         '-i',
         metavar=Metavar.file,
-        required=True,
         help="Image file to extract metrics from. Example: `FA.nii.gz`"
     )
 
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
-    optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit."
-    )
+    optional = parser.optional_arggroup
     optional.add_argument(
         '-f',
         metavar=Metavar.folder,
@@ -185,8 +180,8 @@ def get_parser():
         '-vert',
         metavar=Metavar.str,
         default=param_default.vertebral_levels,
-        help="Vertebral levels to compute the metrics across. Example: 2:9 for C2 to T2. If you also specify a range of "
-             "slices with flag `-z`, the intersection between the specified slices and vertebral levels will be "
+        help="Vertebral levels to compute the metrics across. Example: `2:9` for C2 to T2. If you also specify a range "
+             "of slices with flag `-z`, the intersection between the specified slices and vertebral levels will be "
              "considered."
     )
     optional.add_argument(
@@ -209,15 +204,6 @@ def get_parser():
 
             Please note that this flag needs to be used with the -vert option.
         """),
-    )
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode"
     )
 
     advanced = parser.add_argument_group("FOR ADVANCED USERS")
@@ -270,6 +256,10 @@ def get_parser():
         default='0',
         help='Whether to discard voxels with negative value when computing metrics statistics. 0 = no, 1 = yes'
     )
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
+    parser.add_tempfile_args()
 
     return parser
 
@@ -366,9 +356,34 @@ def main(argv: Sequence[str]):
         labels_tmp[i_label] = np.expand_dims(im_label.data, 3)  # TODO: generalize to 2D input label
     labels = np.concatenate(labels_tmp[:], 3)  # labels: (x,y,z,label)
     # Load vertebral levels
-    if not levels:
+    temp_folder = None
+    if os.path.isfile(fname_vert_level):
+        # Extract centerline of vertebral levels
+        im_vertlevel = Image(fname_vert_level)
+        # Binarize vertebral levels before getting centerline
+        im_vertlevel_bin = im_vertlevel.copy()
+        im_vertlevel_bin.data[im_vertlevel_bin.data > 0] = 1
+        # Create temp path for outputs
+        temp_folder = TempFolder(basename="optic-detect-centerline")
+        path_temp = temp_folder.get_path()
+        # Extract centerline from segmentation
+        im_centerline, _, _, _ = get_centerline(im_vertlevel_bin)
+        fname_ctl = os.path.join(path_temp, add_suffix(os.path.basename(fname_vert_level), '_ctl'))
+        im_centerline.save(fname_ctl)
+        fname_ctl_levels = os.path.join(path_temp, add_suffix(os.path.basename(fname_vert_level), '_ctl_levels'))
+        # Mask the centerline with the vertebral levels
+        sct_maths.main(argv=['-i', fname_ctl, '-mul', fname_vert_level, '-o', fname_ctl_levels])
+        # Use levels on centerline instead
+        fname_vert_level = fname_ctl_levels
+    else:
+        # The severity of a missing vertlevel file depends on if levels was passed
+        message_type = 'error' if levels else 'warning'
+        message = ("Cannot aggregate by vert level." if levels else
+                   "Vert level information will not be displayed.")
+        printv(f"Vertebral level file {fname_vert_level} does not exist. {message} "
+               f"To use vertebral level information, you may need to run "
+               f"`sct_warp_template` to generate the appropriate level file in your working directory.", type=message_type)
         fname_vert_level = None
-
     # Get dimensions of data and labels
     nx, ny, nz = data.data.shape
     nx_atlas, ny_atlas, nz_atlas, nt_atlas = labels.shape
@@ -402,6 +417,9 @@ def main(argv: Sequence[str]):
 
         save_as_csv(agg_metric, fname_output, fname_in=fname_data, append=append_csv)
         append_csv = True  # when looping across labels, need to append results in the same file
+    if arguments.r and temp_folder is not None:
+        printv("\nRemove temporary files...", verbose)
+        temp_folder.cleanup()
     display_open(fname_output)
 
 

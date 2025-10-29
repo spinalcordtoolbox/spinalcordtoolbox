@@ -24,14 +24,16 @@ import logging
 from typing import Sequence
 
 from scipy.ndimage import center_of_mass
-import nibabel as nib
+
 import numpy as np
 
 from spinalcordtoolbox.image import Image, zeros_like, compute_cross_corr_3d
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, __data_dir__, set_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, __data_dir__, set_loglevel, LazyLoader
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, copy, rmtree
 from spinalcordtoolbox.scripts import sct_crop_image
+
+nib = LazyLoader("nib", globals(), "nibabel")
 
 logger = logging.getLogger(__name__)
 
@@ -47,39 +49,31 @@ def get_parser():
                     'position. If the PMJ is not detected, nothing is output.'
     )
 
-    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
         "-i",
-        required=True,
         metavar=Metavar.file,
         help='Input image. Example: `t2.nii.gz`',
     )
     mandatory.add_argument(
         "-c",
         choices=("t1", "t2"),
-        required=True,
         help="Type of image contrast, if your contrast is not in the available options (t1, t2), "
              "use t1 (cord bright/ CSF dark) or t2 (cord dark / CSF bright)",
     )
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
-    optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit")
+
+    optional = parser.optional_arggroup
     optional.add_argument(
         "-s",
         metavar=Metavar.file,
         help='SC segmentation or centerline mask. '
              'Provide this mask helps the detection of the PMJ by indicating the position of the SC '
-             'in the Right-to-Left direction. Example: `t2_seg.nii.gz`',
-        required=False)
+             'in the Right-to-Left direction. Example: `t2_seg.nii.gz`')
     optional.add_argument(
         "-ofolder",
         metavar=Metavar.folder,
         help='Output folder. Example: `My_Output_Folder`',
-        action=ActionCreateFolder,
-        required=False)
+        action=ActionCreateFolder)
     optional.add_argument(
         '-o',
         metavar=Metavar.file,
@@ -87,8 +81,7 @@ def get_parser():
     optional.add_argument(
         '-qc',
         metavar=Metavar.str,
-        help='The path where the quality control generated content will be saved.',
-        default=None)
+        help='The path where the quality control generated content will be saved.')
     optional.add_argument(
         '-qc-dataset',
         metavar=Metavar.str,
@@ -97,21 +90,10 @@ def get_parser():
         '-qc-subject',
         metavar=Metavar.str,
         help='If provided, this string will be mentioned in the QC report as the subject the process was run on.')
-    optional.add_argument(
-        "-r",
-        type=int,
-        help="Remove temporary files.",
-        required=False,
-        default=1,
-        choices=(0, 1))
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
+    parser.add_tempfile_args()
 
     return parser
 

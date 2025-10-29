@@ -123,7 +123,13 @@ jobs:
     container: debian:10
     steps:
       - name: Dependencies
-        run: |  # NB: libgl1-mesa-dev is needed for PyQT testing (https://stackoverflow.com/q/33085297/7584115)
+        # NB: libgl1-mesa-dev is needed for PyQT testing (https://stackoverflow.com/q/33085297/7584115)
+        # NB: We echo "archive.debian.org" to address https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4105
+        run: |  
+          echo "deb http://archive.debian.org/debian/ buster main non-free contrib" > /etc/apt/sources.list
+          echo "deb-src http://archive.debian.org/debian/ buster main non-free contrib" >> /etc/apt/sources.list
+          echo "deb http://archive.debian.org/debian-security/ buster/updates main non-free contrib" >> /etc/apt/sources.list
+          echo "deb-src http://archive.debian.org/debian-security/ buster/updates main non-free contrib" >> /etc/apt/sources.list
           apt update && apt install -y libglib2.0-0 libgl1-mesa-dev procps gcc git curl libgl1-mesa-dev
       - uses: actions/checkout@v4
       - name: Install SCT
@@ -224,6 +230,12 @@ jobs:
       - name: Run pytest test suite
         run: |
           ./.ci.sh -t
+      - name: Upload QC
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Pytest QC (${{ runner.os }})
+          path: "/tmp/pytest-of-runner/pytest-current/qc-report-current"
 
   ubuntu-22_04:
     name: Ubuntu 24.04 (Noble Numbat)
@@ -284,6 +296,28 @@ jobs:
         run: |
           ./.ci.sh -t
 
+  macos-15:
+    name: macOS 15.0 (Sequoia)
+    # TODO: when actions supports using ${{env}} in job.*.if and not just job.*.steps.*.if, use this:
+    #if: ${{ env.NIGHTLY }}
+    # in the meantime, copy-paste this:
+    if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
+    runs-on: macos-15
+    steps:
+      - name: Dependencies
+        run: |
+          # github runners come with dev-tools pre-installed
+      - uses: actions/checkout@v4
+      - name: Install SCT
+        run: |
+          ./.ci.sh -i
+      - name: Check dependencies
+        run: |
+          ./.ci.sh -c
+      - name: Run pytest test suite
+        run: |
+          ./.ci.sh -t
+
   windows-wsl-ubuntu-24_04:
     # with the help of https://github.com/marketplace/actions/setup-wsl
     name: WSL [Ubuntu 24.04]
@@ -291,15 +325,19 @@ jobs:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
     if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
-    runs-on: windows-2019
+    runs-on: windows-2025
     defaults:
       run:
         shell: wsl-bash {0} # https://github.com/marketplace/actions/setup-wsl#default-shell
     steps:
-    - uses: Vampire/setup-wsl@v3
+    - uses: Vampire/setup-wsl@v5
       with:
         # other WSL container choices at: https://github.com/marketplace/actions/setup-wsl#distribution
         distribution: Ubuntu-24.04
+        # SCT currently recommends using a WSL1 environment. (https://spinalcordtoolbox.com/stable/user_section/installation/windows.html#basic-installation-no-gui)
+        # However, this is only because GitHub Actions didn't support WSL2 at the time of writing. In theory, WSL2
+        # could be adopted with some trial and error: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4914
+        wsl-version: 1
     - name: Use unix line endings
       shell: bash
       run: |
@@ -345,15 +383,19 @@ jobs:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
     if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
-    runs-on: windows-2019
+    runs-on: windows-2025
     defaults:
       run:
         shell: wsl-bash {0} # https://github.com/marketplace/actions/setup-wsl#default-shell
     steps:
-    - uses: Vampire/setup-wsl@v3
+    - uses: Vampire/setup-wsl@v5
       with:
         # other WSL container choices at: https://github.com/marketplace/actions/setup-wsl#distribution
         distribution: Ubuntu-22.04
+        # SCT currently recommends using a WSL1 environment. (https://spinalcordtoolbox.com/stable/user_section/installation/windows.html#basic-installation-no-gui)
+        # However, this is only because GitHub Actions didn't support WSL2 at the time of writing. In theory, WSL2
+        # could be adopted with some trial and error: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4914
+        wsl-version: 1
     - name: Use unix line endings
       shell: bash
       run: |
@@ -392,9 +434,10 @@ jobs:
         cd ~/spinalcordtoolbox
         ./.ci.sh -t
 
-  windows-native-2022:
-    name: Windows (Native) 2022
-    runs-on: windows-2022
+
+  windows-native-2025:
+    name: Windows (Native) 2025
+    runs-on: windows-2025
     defaults:
       run:
         shell: cmd
@@ -431,13 +474,9 @@ jobs:
       run: sct_testing
 
 
-  windows-native-2019:
-    name: Windows (Native)
-    # TODO: when actions supports using ${{env}} in job.*.if and not just job.*.steps.*.if, use this:
-    #if: ${{ env.NIGHTLY }}
-    # in the meantime, copy-paste this:
-    if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
-    runs-on: windows-2019
+  windows-native-2022:
+    name: Windows (Native) 2022
+    runs-on: windows-2022
     defaults:
       run:
         shell: cmd

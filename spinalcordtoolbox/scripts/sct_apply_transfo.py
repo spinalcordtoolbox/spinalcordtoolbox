@@ -14,10 +14,13 @@ import functools
 from typing import Sequence
 import textwrap
 
+import numpy as np
+
 from spinalcordtoolbox.image import Image, generate_output_file, add_suffix
 from spinalcordtoolbox.cropping import ImageCropper
 from spinalcordtoolbox.math import dilate
 from spinalcordtoolbox.labels import cubic_to_point
+from spinalcordtoolbox.resampling import resample_nib
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, get_interpolation, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, set_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, rmtree, extract_fname, copy
@@ -32,29 +35,27 @@ def get_parser():
         description='Apply transformations. This function is a wrapper for antsApplyTransforms (ANTs).'
     )
 
-    mandatoryArguments = parser.add_argument_group("MANDATORY ARGUMENTS")
-    mandatoryArguments.add_argument(
+    mandatory = parser.mandatory_arggroup
+    mandatory.add_argument(
         "-i",
-        required=True,
-        help='Input image. Example: t2.nii.gz',
+        help='Input image. Example: `t2.nii.gz`',
         metavar=Metavar.file,
     )
-    mandatoryArguments.add_argument(
+    mandatory.add_argument(
         "-d",
-        required=True,
-        help='Destination image. Example: out.nii.gz',
+        help='Destination image. For warping input images, the destination image defines the spacing, origin, size, '
+             'and direction of the output warped image. Example: `dest.nii.gz`',
         metavar=Metavar.file,
     )
-    mandatoryArguments.add_argument(
+    mandatory.add_argument(
         "-w",
         nargs='+',
-        required=True,
         help='Transformation(s), which can be warping fields (nifti image) or affine transformation matrix (text '
              'file). Separate with space. Example: `warp1.nii.gz warp2.nii.gz`',
         metavar=Metavar.file,
     )
 
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
+    optional = parser.optional_arggroup
     optional.add_argument(
         "-winv",
         help='Affine transformation(s) listed in flag -w which should be inverted before being used. Note that this '
@@ -64,21 +65,22 @@ def get_parser():
         metavar=Metavar.file,
         default=[])
     optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit")
-    optional.add_argument(
         "-crop",
-        help="Crop Reference. 0: no reference, 1: sets background to 0, 2: use normal background.",
-        required=False,
+        help="Crop the output image using the extents of the warping field.\n"
+             " - 0: no cropping (WARNING: may result in duplicated output if the destination image's FOV is "
+             "      larger than the FOV of the warping field)\n"
+             " - 1: crop using a rectangular bounding box around the warping field (setting outside voxels to 0)\n"
+             " - 2: crop using a rectangular bounding box around the warping field (changing the size of the output "
+             "      image)\n"
+             " - 3: mask the output image (setting outside voxels to 0) using the warping field directly instead of "
+             "      using a rectangular bounding box around the warping field. Useful if Option 1 does not zero out "
+             "      enough voxels.",
         type=int,
         default=0,
-        choices=(0, 1, 2))
+        choices=(0, 1, 2, 3))
     optional.add_argument(
         "-o",
-        help='Registered source. Example: dest.nii.gz',
-        required=False,
+        help='Filename to use for the output image (i.e. the transformed image). Example: `out.nii.gz`',
         metavar=Metavar.file)
     optional.add_argument(
         "-x",
@@ -87,24 +89,12 @@ def get_parser():
 
             Note: The `label` method is a special interpolation method designed for single-voxel labels (e.g. disc labels used as registration landmarks, compression labels, etc.). This method is necessary because classical interpolation may corrupt the values of single-voxel labels, or cause them to disappear entirely. The function works by dilating each label, applying the transformation using nearest neighbour interpolation, then extracting the center-of-mass of each transformed 'blob' to get a single-voxel output label. Because the output is a single-voxel label, the `-x label` method is not appropriate for multi-voxel labeled segmentations (such as spinal cord or lesion masks).
         """),  # noqa: E501 (line too long)
-        required=False,
         default='spline',
         choices=('nn', 'linear', 'spline', 'label'))
-    optional.add_argument(
-        "-r",
-        help="""Remove temporary files.""",
-        required=False,
-        type=int,
-        default=1,
-        choices=(0, 1))
-    optional.add_argument(
-        '-v',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1, 2],
-        default=1,
-        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
+
+    # Arguments which implement shared functionality
+    parser.add_common_args()
+    parser.add_tempfile_args()
 
     return parser
 
@@ -236,8 +226,8 @@ class Transform:
                 printv("\nDilate labels before warping...", verbose)
                 path_tmp = tmp_create(basename="apply-transfo-3d-label")
                 fname_dilated_labels = os.path.join(path_tmp, "dilated_data.nii")
-                # dilate points
-                dilate(Image(fname_src), 3, 'ball', islabel=True).save(fname_dilated_labels)
+                # dilate points (NB: 'ball' of size <5 can result in lost labels for single-voxel labels, see #4863)
+                dilate(Image(fname_src), 5, 'ball', islabel=True).save(fname_dilated_labels)
                 fname_src = fname_dilated_labels
 
             printv("\nApply transformation and resample to destination space...", verbose)
@@ -335,17 +325,16 @@ class Transform:
         warping_field = fname_warp_list_invert[-1]
         # If the last transformation is not an affine transfo, we need to compute the matrix space of the concatenated
         # warping field
-        if not isLastAffine and crop_reference in [1, 2]:
+        if not isLastAffine and crop_reference in [1, 2, 3]:
             printv('Last transformation is not affine.')
+            img_out = Image(fname_out)
+            # Extract only the first n dims of the warping field by creating a dummy image with the correct shape
+            img_warp = Image(warping_field)
+            warp_shape = img_warp.data.shape[:int(dim)]  # dim = {'2', '3', '4'}
+            img_warp_ndim = Image(np.ones(warp_shape), hdr=img_warp.hdr)
             if crop_reference in [1, 2]:
-                # Extract only the first ndim of the warping field
-                img_warp = Image(warping_field)
-                if dim == '2':
-                    img_warp_ndim = Image(img_src.data[:, :], hdr=img_warp.hdr)
-                elif dim in ['3', '4']:
-                    img_warp_ndim = Image(img_src.data[:, :, :], hdr=img_warp.hdr)
                 # Set zero to everything outside the warping field
-                cropper = ImageCropper(Image(fname_out))
+                cropper = ImageCropper(img_out)
                 cropper.get_bbox_from_ref(img_warp_ndim)
                 if crop_reference == 1:
                     printv('Cropping strategy is: keep same matrix size, put 0 everywhere around warping field')
@@ -354,7 +343,12 @@ class Transform:
                     printv('Cropping strategy is: crop around warping field (the size of warping field will '
                            'change)')
                     img_out = cropper.crop()
-                img_out.save(fname_out)
+            elif crop_reference == 3:
+                # Resample the warping field mask (in reference coordinates) into the space of the image to be cropped
+                img_ref_r = resample_nib(img_warp_ndim, image_dest=img_out, interpolation='nn', mode='constant')
+                # Simply mask the output image instead of doing a bounding-box-based crop
+                img_out.data = img_out.data * img_ref_r.data
+            img_out.save(fname_out)
 
 
 # MAIN

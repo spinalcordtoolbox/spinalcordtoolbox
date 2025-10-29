@@ -7,8 +7,9 @@ import tempfile
 import nibabel
 import csv
 
-from spinalcordtoolbox.scripts import sct_process_segmentation
+from spinalcordtoolbox.scripts import sct_process_segmentation, sct_image
 from spinalcordtoolbox.utils.sys import sct_test_path
+from spinalcordtoolbox.image import add_suffix
 
 logger = logging.getLogger(__name__)
 
@@ -33,11 +34,12 @@ def dummy_3d_pmj_label():
     return filename
 
 
-def test_sct_process_segmentation_check_pmj(dummy_3d_mask_nib, dummy_3d_pmj_label, tmp_path):
+def test_sct_process_segmentation_check_pmj(dummy_3d_mask_nib, dummy_3d_pmj_label, tmp_path, tmp_path_qc):
     """ Run sct_process_segmentation with -pmj, -pmj-distance and -pmj-extent and check the results"""
     filename = str(tmp_path / 'tmp_file_out.csv')
     sct_process_segmentation.main(argv=['-i', dummy_3d_mask_nib, '-pmj', dummy_3d_pmj_label,
-                                        '-pmj-distance', '8', '-pmj-extent', '4', '-o', filename])
+                                        '-pmj-distance', '8', '-pmj-extent', '4', '-o', filename,
+                                        '-qc', tmp_path_qc, '-qc-image', dummy_3d_mask_nib])
     with open(filename, "r") as csvfile:
         reader = csv.DictReader(csvfile, delimiter=',')
         row = next(reader)
@@ -47,11 +49,50 @@ def test_sct_process_segmentation_check_pmj(dummy_3d_mask_nib, dummy_3d_pmj_labe
         assert row['SUM(length)'] == '4.0'
 
 
-def test_sct_process_segmentation_check_pmj_perslice(dummy_3d_mask_nib, dummy_3d_pmj_label, tmp_path):
+def test_sct_process_segmentation_check_pmj_reoriented(dummy_3d_mask_nib, dummy_3d_pmj_label, tmp_path, tmp_path_qc):
+    """
+    Make sure that the results are the same regardless of the input orientation.
+
+    This should never really fail, since `sct_process_segmentation` reorients to RPI prior to processing,
+    but it will hopefully act as a canary for #4622, since PMJ CSA calls `get_centerline` in two different places.
+    """
+    # Note down filenames for easier iteration
+    fname_dict = {
+        "rpi": {
+            "i": dummy_3d_mask_nib,
+            "pmj": dummy_3d_pmj_label,
+            "out": str(tmp_path / 'csa_rpi.csv'),
+        },
+        "sal": {
+            "i": add_suffix(dummy_3d_mask_nib, suffix='_sal'),
+            "pmj": add_suffix(dummy_3d_pmj_label, suffix='_sal'),
+            "out": str(tmp_path / 'csa_sal.csv'),
+        }
+    }
+    # Create duplicate images, reoriented to SAL
+    sct_image.main(argv=["-setorient", "SAL", "-i", fname_dict['rpi']["i"], "-o", fname_dict['sal']["i"]])
+    sct_image.main(argv=["-setorient", "SAL", "-i", fname_dict['rpi']["pmj"], "-o", fname_dict['sal']["pmj"]])
+    # Run sct_process_segmentation on both sets of images, then compare results
+    results = []
+    for fnames in fname_dict.values():
+        sct_process_segmentation.main(argv=['-i', fnames["i"], '-pmj', fnames["i"], '-o', fnames["out"],
+                                            '-pmj-distance', '8', '-pmj-extent', '4',
+                                            '-qc', tmp_path_qc, '-qc-image', dummy_3d_mask_nib])
+        with open(fnames["out"], "r") as csvfile:
+            reader = csv.DictReader(csvfile, delimiter=',')
+            results.append(next(reader))
+    # Check that the results are the same
+    for key in results[0].keys():
+        if key not in ['Timestamp', 'SCT Version', "Filename"]:
+            assert results[0][key] == results[1][key]
+
+
+def test_sct_process_segmentation_check_pmj_perslice(dummy_3d_mask_nib, dummy_3d_pmj_label, tmp_path, tmp_path_qc):
     """ Run sct_process_segmentation with -pmj, -perslice and check the results"""
     filename = str(tmp_path / 'tmp_file_out.csv')
     sct_process_segmentation.main(argv=['-i', dummy_3d_mask_nib, '-pmj', dummy_3d_pmj_label,
-                                        '-perslice', '1', '-o', filename])
+                                        '-perslice', '1', '-o', filename,
+                                        '-qc', tmp_path_qc, '-qc-image', dummy_3d_mask_nib])
     with open(filename, "r") as csvfile:
         reader = csv.DictReader(csvfile, delimiter=',')
         rows = list(reader)
@@ -129,6 +170,32 @@ def test_sct_process_segmentation_check_normalize_PAM50_missing_vertfile(tmp_pat
         sct_process_segmentation.main(argv=['-i', sct_test_path('t2', 't2_seg-manual.nii.gz'), '-normalize-PAM50', '1',
                                             '-perslice', '1', '-o', filename])
         assert e.value.code == 2
+
+
+def test_sct_process_segmentation_check_both_discfile_vertfile(tmp_path):
+    """ Run sct_process_segmentation with -vertfile and -discfile"""
+    filename = str(tmp_path / 'tmp_file_out.csv')
+    with pytest.raises(SystemExit) as e:
+        sct_process_segmentation.main(argv=['-i', sct_test_path('t2', 't2_seg-manual.nii.gz'),
+                                            '-vertfile', sct_test_path('t2', 't2_seg-manual_labeled.nii.gz'),
+                                            '-discfile', sct_test_path('t2', 'labels.nii.gz'), '-o', filename])
+        assert e.value.code == 2
+
+
+def test_sct_process_segmentation_check_discfile(tmp_path):
+    """ Run sct_process_segmentation with -vertfile and -discfile"""
+    filename = str(tmp_path / 'tmp_file_out.csv')
+    sct_process_segmentation.main(argv=['-i', sct_test_path('t2', 't2_seg-manual.nii.gz'),
+                                        '-vert', '1:10', '-perslice', '1',
+                                        '-discfile', sct_test_path('t2', 'labels.nii.gz'), '-o', filename])
+    with open(filename, "r") as csvfile:
+        reader = csv.DictReader(csvfile, delimiter=',')
+        rows = list(reader)
+        row = rows[10]
+        assert row['Slice (I->S)'] == '10'
+        assert row['DistancePMJ'] == ''
+        assert row['VertLevel'] == '3'
+        assert float(row['MEAN(area)']) == pytest.approx(78.58643257836141)
 
 
 @pytest.mark.sct_testing

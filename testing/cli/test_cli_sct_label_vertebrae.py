@@ -14,33 +14,29 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.mark.sct_testing
-def test_sct_label_vertebrae_consistent_disc(tmp_path):
+def test_sct_label_vertebrae_consistent_disc(tmp_path, tmp_path_qc):
     """Check that all expected output labeled discs exist"""
     fname_ref = sct_test_path('t2', 'labels.nii.gz')
     sct_label_vertebrae.main(argv=['-i', sct_test_path('t2', 't2.nii.gz'),
                                    '-s', sct_test_path('t2', 't2_seg-manual.nii.gz'),
-                                   '-c', 't2', '-discfile', fname_ref, '-ofolder', str(tmp_path)])
+                                   '-c', 't2', '-discfile', fname_ref, '-ofolder', str(tmp_path),
+                                   '-qc', tmp_path_qc])
     ref = Image(fname_ref)
     pred = Image(os.path.join(tmp_path, 't2_seg-manual_labeled_discs.nii.gz'))
     fp, fn = check_missing_label(pred, ref)
     assert fp == []
     assert fn == []
 
-    # Ensure that the straightening files are correctly generated in the output directory
-    for file in ["straightening.cache", "straight_ref.nii.gz",
-                 "warp_straight2curve.nii.gz", "warp_curve2straight.nii.gz"]:
-        assert os.path.isfile(tmp_path/file)
-
 
 @pytest.mark.sct_testing
-def test_sct_label_vertebrae_initfile_qc_no_checks():
+def test_sct_label_vertebrae_initfile_qc_no_checks(tmp_path_qc):
     """Run the CLI script without checking results.
     TODO: Check the results. (This test replaces the 'sct_testing' test, which did not implement any checks.)"""
     sct_label_vertebrae.main(argv=['-i', sct_test_path('t2', 't2.nii.gz'),
                                    '-s', sct_test_path('t2', 't2_seg-manual.nii.gz'),
                                    '-c', 't2',
                                    '-initfile', sct_test_path('t2', 'init_label_vertebrae.txt'),
-                                   '-t', sct_test_path('template'), '-qc', 'testing-qc'])
+                                   '-t', sct_test_path('template'), '-qc', tmp_path_qc])
 
 
 def test_sct_label_vertebrae_initz_error():
@@ -123,7 +119,7 @@ def test_sct_label_vertebrae_initial_disc_too_low(capsys, tmp_path):
     assert 'Initial disc is not in template.' in capsys.readouterr().out
 
 
-def test_sct_label_vertebrae_clean_labels(tmp_path):
+def test_sct_label_vertebrae_clean_labels(tmp_path, tmp_path_qc):
     im_seg = Image(sct_test_path('t2', 't2_seg-manual.nii.gz'))
     dice_score = {}
     for i in [0, 1, 2]:
@@ -132,7 +128,8 @@ def test_sct_label_vertebrae_clean_labels(tmp_path):
                                   '-c', 't2',
                                   '-initz', '40,3',
                                   '-clean-labels', str(i),
-                                  '-ofolder', str(tmp_path/str(i))])
+                                  '-ofolder', str(tmp_path/str(i)),
+                                  '-qc', tmp_path_qc])
         im_labeled_seg = Image(str(tmp_path/str(i)/'t2_seg-manual_labeled.nii.gz'))
         # binarization (because labels are 2.0, 3.0, 4.0)
         im_labeled_seg.data = im_labeled_seg.data > 0.5
@@ -142,7 +139,7 @@ def test_sct_label_vertebrae_clean_labels(tmp_path):
     assert dice_score[1] >= dice_score[0]
 
 
-def test_sct_label_vertebrae_disc_discontinuity_center_of_mass_error(tmp_path, caplog):
+def test_sct_label_vertebrae_disc_discontinuity_center_of_mass_error(tmp_path, tmp_path_qc, caplog):
     # Generate a discontinuity next to an intervertebral disc
     t2_seg = Image(sct_test_path('t2', 't2_seg-manual.nii.gz'))
     t2_seg.data[:, 16, :] = 0
@@ -152,5 +149,5 @@ def test_sct_label_vertebrae_disc_discontinuity_center_of_mass_error(tmp_path, c
     # Ensure the discontinuity is detected and an interpolated centerline is used instead
     sct_label_vertebrae.main(['-i', sct_test_path('t2', 't2.nii.gz'), '-s', path_out, '-c', 't2',
                               '-initfile', sct_test_path('t2', 'init_label_vertebrae.txt'),
-                              '-ofolder', str(tmp_path)])
+                              '-ofolder', str(tmp_path), '-qc', tmp_path_qc])
     assert "Using interpolated centerline" in caplog.text
