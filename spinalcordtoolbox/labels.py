@@ -10,6 +10,8 @@ from typing import Sequence, Tuple
 
 import numpy as np
 from scipy.ndimage import center_of_mass
+# For some notes about using KDTrees for nearest-point searches, see for example:
+# https://www.colorado.edu/amath/sites/default/files/attached-files/k-d_trees_and_knn_searches.pdf
 from scipy.spatial import KDTree
 
 from spinalcordtoolbox.image import Image, zeros_like
@@ -537,17 +539,3 @@ def project_centerline(img: Image, ref: Image) -> Image:
     out.data[tuple(projected_pix.T)] = ref.data[tuple(labels_pix.T)]
 
     return out
-
-
-def project_point_on_line(point, line):
-    """
-    Project the input point on the referenced line by finding the minimal distance
-
-    :param point: coordinates of a point and its value: point = numpy.array([x y z])
-    :param line: list of points coordinates which composes the line
-    :returns: closest coordinate to the referenced point on the line: projected_point = numpy.array([X Y Z])
-    """
-    # Calculate distances between the referenced point and the line then keep the closest point
-    dist = np.sum((line - point) ** 2, axis=1)
-
-    return line[np.argmin(dist)]
