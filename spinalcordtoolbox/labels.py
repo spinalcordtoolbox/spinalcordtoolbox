@@ -225,58 +225,46 @@ def label_regions_from_reference(img: Image, ref: Image, centerline: bool = Fals
     :param centerline: boolean, if True the centerline is returned instead of the segmentation (default to false)
     :returns: segmentation image with vertebral levels labelized
     """
+    # The centerline of the segmentation, with one point for each S-I slice.
+    centerline_pix = get_centerline(img, space='pix')[1].T.astype(int)  # shape (N, 3), int
+    centerline_phys = img.transfo_pix2phys(centerline_pix, mode='absolute')  # shape (N, 3), float
 
-    og_img_orientation = img.orientation
-    if og_img_orientation != "RPI":
-        img.change_orientation("RPI")
+    # Prepare to compute, for several points, the centerline index which is closest in physical space.
+    centerline_tree = KDTree(centerline_phys)
 
-    og_ref_orientation = ref.orientation
-    if og_ref_orientation != "RPI":
-        ref.change_orientation("RPI")
+    # The label coordinates.
+    labels_pix = np.argwhere(ref.data)  # shape (L, 3), int
+    labels_phys = ref.transfo_pix2phys(labels_pix, mode='absolute')  # shape (L, 3), float
+    # The corresponding label values.
+    labels_values = ref.data[tuple(labels_pix.T)]  # shape (L,), arbitrary dtype
+    # The closest centerline index for each label voxel.
+    _, labels_indices = centerline_tree.query(labels_phys)  # shape (L,), int
 
-    out = zeros_like(img)
+    # Sort everything by increasing centerline index
+    sorter = np.argsort(labels_indices)
+    labels_pix = labels_pix[sorter]
+    labels_phys = labels_phys[sorter]
+    labels_values = labels_values[sorter]
+    labels_indices = labels_indices[sorter]
+    del sorter
 
-    # Fetch resolution
-    nx, ny, nz, nt, px, py, pz, pt = img.dim
+    # Add a label for above the top-most label
+    labels_values = list(labels_values)
+    labels_values.append(labels_values[-1] - 1)
+    labels_values = np.array(labels_values)
 
-    # Extract centerline from segmentation
-    _, arr_ctl, _, _ = get_centerline(img)
-    centerline_arr = arr_ctl.T
-    centerline_real = centerline_arr*np.array([px, py, pz])
-
+    # The region we want to label.
     if centerline:
-        coordinates_input = np.concatenate((centerline_arr, np.ones((centerline_arr.shape[0], 1))), axis=1)
+        region_pix = centerline_pix
     else:
-        coordinates_input = img.getNonZeroCoordinates()
+        region_pix = np.argwhere(img.data)  # shape (R, 3), int
+    region_phys = img.transfo_pix2phys(region_pix, mode='absolute')  # shape (R, 3), float
+    # The closest centerline index for each region voxel.
+    _, region_indices = centerline_tree.query(region_phys)
 
-    # Extract reference coordinates
-    coordinates_ref = ref.getNonZeroCoordinates(sorting='z', reverse_coord=True)
-
-    # for all points in the segmentation project on the centerline and compare the `z` coordinate to the appropriate vertebral level
-    for x, y, z, _ in coordinates_input:
-        x_real, y_real, z_real = x * px, y * py, z * pz
-        projection_real = project_point_on_line(point=np.array([x_real, y_real, z_real]), line=centerline_real)
-        projection = projection_real / np.array([px, py, pz])
-        _, _, z_proj = np.rint(projection).astype(int)
-        # case 1: `z` is above the top-most disc label
-        if z_proj > coordinates_ref[0].z:
-            out.data[int(x), int(y), int(z)] = coordinates_ref[0].value - 1
-        # case 2: `z` is at or below the bottom-most disc label
-        elif z_proj <= coordinates_ref[-1].z:
-            out.data[int(x), int(y), int(z)] = coordinates_ref[-1].value
-        # case 3: `z` is between two disc labels, so find the correct vertebral level
-        else:
-            for j in range(len(coordinates_ref) - 1):
-                if coordinates_ref[j + 1].z < z_proj <= coordinates_ref[j].z:
-                    out.data[int(x), int(y), int(z)] = coordinates_ref[j].value
-
-    # Set back the original orientation
-    if img.orientation != og_img_orientation:
-        img.change_orientation(og_img_orientation)
-        out.change_orientation(og_img_orientation)
-
-    if ref.orientation != og_ref_orientation:
-        ref.change_orientation(og_ref_orientation)
+    # Put the right label values at these coordinates.
+    out = zeros_like(img)
+    out.data[tuple(region_pix.T)] = labels_values[np.searchsorted(labels_indices, region_indices)]
 
     return out
 
