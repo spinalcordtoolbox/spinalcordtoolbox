@@ -166,7 +166,7 @@ def add_slice_numbers(ax, num_slices, radius, margin: int = 2, reverse=False):
         Margin (in pixels) from the top-left corner of each cell to place the text.
     reverse : bool
         Whether to reverse the slice numbering (for SI-flipped images). If false, slice 0 is
-        at the top-left, otherwise slice 0 is at the bottom-left.
+        at the top-left, otherwise slice 0 is at the bottom-right.
     """
     # Get the mosaic array we just plotted
     img_arr = ax.get_images()[0].get_array()
