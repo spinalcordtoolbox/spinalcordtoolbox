@@ -455,11 +455,11 @@ def main(argv: Sequence[str]):
             # Use the projected disc labels to extract a labeled centerline from the input segmentation
             ctl_projected = label_regions_from_reference(Image(path_tmp_seg), discs_projected, centerline=True)
             ctl_projected.save(add_suffix(path_tmp_vert_level, '_projected_centerline'), mutable=True)
+            # If requested, save the projected centerline to the same directory as the input discfile
+            if verbose == 2:
+                copy(ctl_projected.absolutepath, os.path.dirname(os.path.abspath(fname_vert_level)))
             # Overwrite the input argument so that the labeled centerline (in the tmpdir) is used from now on
             fname_vert_level = ctl_projected.absolutepath
-            # If requested, save the projected centerline to the output directory
-            if verbose == 2:
-                copy(fname_vert_level, os.path.dirname(file_out))
 
     perlevel = bool(arguments.perlevel)
     slices = arguments.z
