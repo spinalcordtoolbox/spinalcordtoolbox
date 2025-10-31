@@ -242,31 +242,30 @@ def label_regions_from_reference(img: Image, ref: Image, centerline: bool = Fals
     # The closest centerline index for each label voxel.
     _, labels_indices = centerline_tree.query(labels_phys)  # shape (L,), int
 
-    # Sort everything by increasing centerline index
+    # Sort the labels by increasing centerline index to get the region cutoffs
+    # We need one more region value for above the top-most label:
+    # labels_values = [   5   4   3   2   ]
+    # region_values = [ 5 | 4 | 3 | 2 | 1 ]
     sorter = np.argsort(labels_indices)
-    labels_pix = labels_pix[sorter]
-    labels_phys = labels_phys[sorter]
-    labels_values = labels_values[sorter]
-    labels_indices = labels_indices[sorter]
-    del sorter
+    region_values = labels_values[sorter]  # temporary shape (L,)
+    region_values = np.append(region_values, region_values[-1] - 1)  # final shape (L+1,)
+    region_indices = labels_indices[sorter]  # shape (L,), int
 
-    # Add a label for above the top-most label
-    labels_values = list(labels_values)
-    labels_values.append(labels_values[-1] - 1)
-    labels_values = np.array(labels_values)
-
-    # The region we want to label.
+    # The part of the image we want to split into labelled regions.
     if centerline:
-        region_pix = centerline_pix
+        segmentation_pix = centerline_pix
     else:
-        region_pix = np.argwhere(img.data)  # shape (R, 3), int
-    region_phys = img.transfo_pix2phys(region_pix, mode='absolute')  # shape (R, 3), float
-    # The closest centerline index for each region voxel.
-    _, region_indices = centerline_tree.query(region_phys)
+        segmentation_pix = np.argwhere(img.data)  # shape (R, 3), int
+    segmentation_phys = img.transfo_pix2phys(segmentation_pix, mode='absolute')  # shape (R, 3), float
+    # The closest centerline index for each segmentation voxel.
+    _, segmentation_indices = centerline_tree.query(segmentation_phys)
 
     # Put the right label values at these coordinates.
     out = zeros_like(img)
-    out.data[tuple(region_pix.T)] = labels_values[np.searchsorted(labels_indices, region_indices)]
+    # Map segmentation indices to region indices...
+    segmentation_regions = np.searchsorted(region_indices, segmentation_indices)
+    # ...then map them to region values.
+    out.data[tuple(segmentation_pix.T)] = region_values[segmentation_regions]
 
     return out
 
