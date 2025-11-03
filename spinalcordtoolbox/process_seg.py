@@ -369,7 +369,7 @@ def _properties2d(seg, dim, iz, angle_hog=None, verbose=1):
     seg_crop_r_rotated = _rotate_segmentation_by_angle(seg_crop_r, -region.orientation)
 
     # Measure diameters along AP and RL axes in the rotated segmentation
-    rotated_properties = _measure_rotated_diameters(seg_crop_r, seg_crop_r_rotated, dim, region.orientation,
+    rotated_properties = _measure_ap_diameter(seg_crop_r, seg_crop_r_rotated, dim, region.orientation,
                                                     iz, properties, verbose)
     # Update the properties dictionary with the rotated properties
     properties.update(rotated_properties)
@@ -462,10 +462,10 @@ def _rotate_segmentation_by_angle(seg_crop_r, angle):
     return seg_crop_r_rotated
 
 
-def _measure_rotated_diameters(seg_crop_r, seg_crop_r_rotated, dim, angle, iz, properties, verbose):
+def _measure_ap_diameter(seg_crop_r, seg_crop_r_rotated, dim, angle, iz, properties, verbose):
     """
-    Measure the AP and RL diameters in the rotated segmentation.
-    This function counts the number of pixels along the AP and RL axes in the rotated segmentation and converts them
+    Measure the AP diameter in the rotated segmentation.
+    This function counts the number of pixels along the AP axis in the rotated segmentation and converts them
     to physical dimensions using the provided pixel size.
 
     :param seg_crop_r: Original cropped segmentation (used only for plotting).
