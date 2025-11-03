@@ -450,21 +450,28 @@ def main(argv: Sequence[str]):
 
     # Vertfile exists, so pre-process it if it's a `-discfile`
     else:
-        # Project discs labels to centerline for discfile
         if arguments.discfile is not None:
             if arguments.centerline is not None:
                 fname_centerline = arguments.centerline
             else:
                 fname_centerline = fname_segmentation
-            discs_projected = project_centerline(img=Image(fname_centerline), ref=Image(fname_vert_level))
+            # Copy the input files to the tempdir
             temp_folder = TempFolder(basename="process-segmentation")
-            path_tmp = temp_folder.get_path()
-            discs_projected.save(os.path.join(path_tmp, add_suffix(fname_vert_level, '_projected')))
-            ctl_projected = label_regions_from_reference(Image(fname_segmentation), discs_projected, centerline=True)
-            fname_vert_level = os.path.join(path_tmp, add_suffix(fname_vert_level, '_projected_centerline'))
-            ctl_projected.save(fname_vert_level)
+            path_tmp_seg = temp_folder.copy_from(fname_segmentation)
+            path_tmp_ctl = (temp_folder.copy_from(fname_centerline) if arguments.centerline
+                            else path_tmp_seg)
+            path_tmp_vert_level = temp_folder.copy_from(fname_vert_level)
+            # Project discs labels onto centerline
+            discs_projected = project_centerline(Image(path_tmp_ctl), Image(path_tmp_vert_level))
+            discs_projected.save(add_suffix(path_tmp_vert_level, '_projected'), mutable=True)
+            # Use the projected disc labels to extract a labeled centerline from the input segmentation
+            ctl_projected = label_regions_from_reference(Image(path_tmp_seg), discs_projected, centerline=True)
+            ctl_projected.save(add_suffix(path_tmp_vert_level, '_projected_centerline'), mutable=True)
+            # If requested, save the projected centerline to the same directory as the input discfile
             if verbose == 2:
-                copy(fname_vert_level, os.path.dirname(file_out))
+                copy(ctl_projected.absolutepath, os.path.dirname(os.path.abspath(fname_vert_level)))
+            # Overwrite the input argument so that the labeled centerline (in the tmpdir) is used from now on
+            fname_vert_level = ctl_projected.absolutepath
 
     perlevel = bool(arguments.perlevel)
     slices = arguments.z
