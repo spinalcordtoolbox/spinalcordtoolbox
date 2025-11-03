@@ -498,7 +498,7 @@ def _measure_rotated_diameters(seg_crop_r, seg_crop_r_rotated, dim, angle, iz, p
 
         # Use centroid for AP diameter
         extent_avg = 30  # extent of 3 mm (because seg was resampled to 0.1mm) used for averaging the minimum (to account for noise)
-        indices = np.array([i for i in range(rl0_r - extent_avg//2, rl0_r + extent_avg//2 + 1)])
+        indices = np.array([i for i in range(rl0_r - extent_avg//2, rl0_r + extent_avg//2)])
         # Ensure indices are within the segmentation bounds
         indices = indices[(indices >= 0) & (indices < seg_crop_r_rotated.shape[0])]
         ap_pixels = np.sum(seg_crop_r_rotated[indices, :], axis=1).mean()
