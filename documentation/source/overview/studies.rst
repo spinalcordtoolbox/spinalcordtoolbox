@@ -26,6 +26,7 @@ The following studies have used SCT:
 2025 
 ----
 
+-  St-Onge *et al.* `Parkinson’s disease in the spinal cord: an exploratory study to establish T2*w, MTR and diffusion-weighted imaging metric values <https://doi.org/10.1162/IMAG.a.1015>`_, **Imaging Neurosci.** 2025
 -  Schlienger *et al.* `Mapping Human Proprioceptive Projections of Upper Limb Muscles Through Spinal Cord fMRI <https://doi.org/10.1002/hbm.70386>`_, **Hum. Brain Mapp.** 2025
 -  Wang *et al.* `The role of pain catastrophizing in modulating irritable bowel syndrome symptoms through brain-spinal cord integration <https://doi.org/10.1016/j.metrad.2025.100187>`_, **Meta-Radiol.** 2025
 -  Wei *et al.* `CoSpine open access simultaneous cortico-spinal fMRI database of thermal pain and motor tasks <https://doi.org/10.1038/s41597-025-05982-x>`_, **Sci. Data** 2025
