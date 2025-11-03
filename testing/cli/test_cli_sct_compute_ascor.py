@@ -50,7 +50,7 @@ def test_sct_process_segmentation_check_discfile_perslice(tmp_path, t2_canal_seg
         assert row['VertLevel'] == '3'
         assert float(row['aSCOR']) == pytest.approx(0.44901418259799436)
 
-        
+
 def test_sct_process_segmentation_check_discfile_perlevel(tmp_path, t2_canal_seg, t2_disc_labels):
     """Run sct_compute_ascor with `-discfile` and `-perlevel` args."""
     filename = str(tmp_path / 'tmp_file_out.csv')
@@ -65,7 +65,7 @@ def test_sct_process_segmentation_check_discfile_perlevel(tmp_path, t2_canal_seg
         rows = list(reader)
         # Ensure that the VertLevel column contains all expected levels
         assert sorted([row['VertLevel'] for row in rows]) == [str(lvl) for lvl in range(start, stop + 1)]
- 
+
 
 def test_sct_process_segmentation_shape_mismatch(tmp_path, t2_canal_seg):
     """ Run sct_compute_ascor with a shape mismatch between spinal cord and canal segmentations"""
