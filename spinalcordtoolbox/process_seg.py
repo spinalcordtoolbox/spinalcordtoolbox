@@ -523,7 +523,7 @@ def _measure_rotated_diameters(seg_crop_r, seg_crop_r_rotated, dim, angle, iz, p
 def _calculate_symmetry(seg_crop_r_rotated, centroid, dim, iz=None, verbose=1):
     """
     Compute symmetry metrics by flipping the segmentation along the RL and AP axes and comparing with the original.
-    Calculates Dice coefficient, symmetric difference, and Hausdorff distance for both axes.
+    Calculates Dice coefficient, symmetric difference, and Hausdorff distance for both axes. See figure in https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4958#issue-3212203682 for details.
     :param seg_crop_r_rotated: Rotated segmentation (after applying angle) used to measure diameters. seg.shape[0] --> RL; seg.shape[1] --> PA
     :param centroid: (y, x) coordinates of the centroid in the upsampled image space.
     :param dim: [px, py] pixel dimensions in mm.
