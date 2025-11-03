@@ -89,9 +89,8 @@ def compute_shape(segmentation, angle_correction=True, centerline_path=None, par
         missing_slices = sorted(set(range(min_z_index, max_z_index + 1)).difference(deriv.keys()))
         if missing_slices:
             raise ValueError(
-                "The provided angle correction centerline does not cover slice(s) "
-                f"{parse_num_list_inv(missing_slices)} of the input mask. Please "
-                "supply a more extensive '-angle-corr-centerline', or disable angle "
+                f"The provided centerline does not cover slice(s) {parse_num_list_inv(missing_slices)} "
+                "of the input mask. Please supply a '-centerline' covering all the slices, or disable angle "
                 "correction ('-angle-corr 0')."
             ) from None
 
