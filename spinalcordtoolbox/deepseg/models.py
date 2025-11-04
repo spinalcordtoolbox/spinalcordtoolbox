@@ -37,6 +37,7 @@ MODELS = {
         ],
         "description": "Cord segmentation model on mouse MRI. Data from University of Queensland.",
         "contrasts": ["t1"],
+        "framework": "ivadomed",
         "thr": 0.0,  # Only for display in argparse help (postprocessing.binarize_prediction is not present in model json)
         "default": False,
     },
@@ -47,6 +48,7 @@ MODELS = {
         ],
         "description": "Gray matter segmentation model on mouse MRI. Data from University of Queensland.",
         "contrasts": ["t1"],
+        "framework": "ivadomed",
         "thr": 0.0,  # Only for display in argparse help (postprocessing.binarize_prediction is not present in model json)
         "default": False,
     },
@@ -56,6 +58,7 @@ MODELS = {
         ],
         "description": "Cord tumor segmentation model, trained on T2-weighted contrast.",
         "contrasts": ["t2"],
+        "framework": "ivadomed",
         "thr": 0.5,  # Only for display in argparse help (mirrors postprocessing.binarize_prediction, which is 0.5 in model json)
         "default": False,
     },
@@ -65,6 +68,7 @@ MODELS = {
         ],
         "description": "Cord localisation model, trained on T2-weighted images with tumor.",
         "contrasts": ["t2"],
+        "framework": "ivadomed",
         "thr": 0.5,  # Only for display in argparse help (mirrors postprocessing.binarize_prediction, which is 0.5 in model json)
         "default": False,
     },
@@ -74,6 +78,7 @@ MODELS = {
         ],
         "description": "Multiclass cord tumor segmentation model.",
         "contrasts": ["t2", "t1"],
+        "framework": "ivadomed",
         "thr": 0.5,  # Only for display in argparse help (mirrors postprocessing.binarize_prediction, which is 0.5 in model json)
         "default": False,
     },
@@ -83,6 +88,7 @@ MODELS = {
         ],
         "description": "Grey/white matter seg on exvivo human T2w.",
         "contrasts": ["t2"],
+        "framework": "ivadomed",
         "thr": 0.0,  # Only for display in argparse help (postprocessing.binarize_prediction is not present in model json)
         "default": False,
     },
@@ -93,6 +99,7 @@ MODELS = {
         "description": "SC/GM multiclass segmentation on T2*-w contrast at 7T. The model was created by N.J. Laines Medina, "
                        "V. Callot and A. Le Troter at CRMBM-CEMEREM Aix-Marseille University, France",
         "contrasts": ["t2star"],
+        "framework": "ivadomed",
         "thr": 0.5,  # Only for display in argparse help (mirrors postprocessing.binarize_prediction, which is 0.5 in model json)
         "default": False,
     },
@@ -102,6 +109,7 @@ MODELS = {
         ],
         "description": "Lumbar SC segmentation on T2w contrast with 3D UNet",
         "contrasts": ["t2"],
+        "framework": "ivadomed",
         "thr": 0.5,  # Only for display in argparse help (mirrors postprocessing.binarize_prediction, which is 0.5 in model json)
         "default": False,
     },
@@ -124,6 +132,7 @@ MODELS = {
         ],
         "description": "Spinal cord segmentation agnostic to MRI contrasts",
         "contrasts": ["any"],
+        "framework": "nnunetv2",
         "thr": None,  # We're now using an nnUNet model, which does not need a threshold
         "default": True,
     },
@@ -133,6 +142,7 @@ MODELS = {
         ],
         "description": "Intramedullary SCI lesion and cord segmentation in T2w MRI",
         "contrasts": ["t2"],
+        "framework": "nnunetv2",
         "thr": None,  # Images are already binarized when splitting into sc-seg + lesion-seg
         "default": False,
     },
@@ -142,6 +152,7 @@ MODELS = {
         ],
         "description": "Segmentation of spinal nerve rootlets for T2w and MP2RAGE contrasts (T1w-INV1, T1w-INV2, and UNIT1) using nnUNet",
         "contrasts": ["t2", "UNIT1", "T1w-INV1", "T1w-INV2"],
+        "framework": "nnunetv2",
         "thr": None,  # Multiclass rootlets model (1.0, 2.0, 3.0...) -> no thresholding
         "default": False,
     },
@@ -151,6 +162,7 @@ MODELS = {
          ],
          "description": "White and grey matter segmentation on T1-weighted exvivo mouse spinal cord using nnUNet",
          "contrasts": ["t1"],
+         "framework": "nnunetv2",
          "thr": None,  # Images are already binarized when splitting into gm-seg and wm-seg
          "default": False,
      },
@@ -160,6 +172,7 @@ MODELS = {
          ],
          "description": "Spinal cord segmentation for EPI data (single 3D volume)",
          "contrasts": ["bold"],
+         "framework": "nnunetv2",
          "thr": None,  # Images are already binarized
          "default": False,
      },
@@ -169,6 +182,7 @@ MODELS = {
          ],
          "description": "Segmentation of spinal cord MS lesions on MP2RAGE UNIT1 contrast",
          "contrasts": ["UNIT1"],
+         "framework": "nnunetv2",
          "thr": None,  # Images are already binarized
          "default": False,
      },
@@ -178,6 +192,7 @@ MODELS = {
         ],
         "description": "Intramedullary MS lesion and spinal cord segmentation in Axial T2w MRI",
         "contrasts": ["t2"],
+        "framework": "nnunetv2",
         "thr": None,  # Images are already binarized when splitting into sc-seg + lesion-seg
         "default": False,
     },
@@ -191,6 +206,7 @@ MODELS = {
          },
          "description": "Segmentation of spinal cord MS lesions",
          "contrasts": ["any"],
+         "framework": "nnunetv2",
          "thr": None,  # Images are already binarized
          "default": False,
      },
@@ -200,6 +216,7 @@ MODELS = {
         ],
         "description": "Segmentation of spinal canal on T2w contrast",
         "contrasts": ["t2"],
+        "framework": "nnunetv2",
         "thr": None,  # Images are already binarized
         "default": False,
     },
@@ -211,6 +228,7 @@ MODELS = {
                       if meta.startswith('Dataset')]),
          "description": "Instance segmentation of vertebrae, intervertebral discs (IVDs), spinal cord, and spinal canal on multi-contrasts MRI scans.",
          "contrasts": ["any"],
+         "framework": "nnunetv2",
          "thr": None,  # Images are already binarized
          "default": False,
      },
@@ -220,6 +238,7 @@ MODELS = {
         ],
         "description": "Segmentation of spinal cord gray matter on any region and contrast MRI",
         "contrasts": ["any"],
+        "framework": "nnunetv2",
         "thr": None,
         "default": False,
      },

@@ -236,12 +236,6 @@ def get_parser(subparser_to_return=None):
             help="Minimal object size to keep with unit (mm3 or vox). A single value can be provided or one value per "
                  "prediction class. Single value example: 1mm3, 5vox. Multiple values example: 10 20 10vox (remove objects "
                  "smaller than 10 voxels for class 1 and 3, and smaller than 20 voxels for class 2).")
-        params.add_argument(
-            "-test-time-aug",
-            action='store_true',
-            help="Perform test-time augmentation (TTA) by flipping the input image along all axes and averaging the "
-                 "resulting predictions. Only implemented for non-ivadomed models (e.g., nnUNet, etc.). "
-        )
 
         misc = subparser.misc_arggroup
         misc.add_argument(
@@ -286,6 +280,13 @@ def get_parser(subparser_to_return=None):
         subparser.add_tempfile_args()
 
         # Add options that only apply to specific tasks
+        if all(models.MODELS[model_name]['framework'] == "nnunetv2" for model_name in task_dict['models']):
+            # Test time augmentation is an nnUNet-specific feature (`use_mirroring=True` internally)
+            params.add_argument(
+                "-test-time-aug",
+                action='store_true',
+                help="Perform test-time augmentation (TTA) by flipping the input image along all axes and averaging the "
+                     "resulting predictions.")
         if task_name == 'tumor_edema_cavity_t1_t2':
             input_output.add_argument(
                 "-c",
@@ -459,11 +460,6 @@ def main(argv: Sequence[str]):
             im_lst, target_lst = inference.segment_and_average_volumes(path_models, input_filenames, use_gpu=use_gpu,
                                                                        options={**vars(arguments),
                                                                                 "fname_prior": fname_prior})
-            if arguments.test_time_aug:
-                raise NotImplementedError(
-                    "Test-time augmentation is not implemented for ivadomed models. "
-                    "Remove the `-test-time-aug` option."
-                )
         else:
             thr = (arguments.binarize_prediction if arguments.binarize_prediction is not None
                    else models.MODELS[name_model]['thr'])  # Default `thr` value stored in model dict
