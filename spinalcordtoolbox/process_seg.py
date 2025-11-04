@@ -53,7 +53,6 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
                      'angle_RL',
                      'diameter_AP',
                      'diameter_AP_ellipse',
-                     'diameter_RL',
                      'diameter_RL_ellipse',
                      'eccentricity',
                      'orientation_abs',
@@ -357,7 +356,7 @@ def _properties2d(seg, dim, iz, angle_hog=None, verbose=1):
     properties = {
         'area': area,
         'diameter_AP_ellipse': diameter_AP,
-        'diameter_RL': diameter_RL,
+        'diameter_RL_ellipse': diameter_RL,
         'centroid': region.centroid,        # Why do we store this? It is not used in the code.
         'eccentricity': region.eccentricity,
         'orientation_abs': orientation,     # in degrees
