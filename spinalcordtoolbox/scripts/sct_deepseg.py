@@ -280,8 +280,10 @@ def get_parser(subparser_to_return=None):
         subparser.add_tempfile_args()
 
         # Add options that only apply to specific tasks
-        if all(models.MODELS[model_name]['framework'] == "nnunetv2" for model_name in task_dict['models']):
+        is_nnunet = all(models.MODELS[model_name]['framework'] == "nnunetv2" for model_name in task_dict['models'])
+        if is_nnunet and task_name != 'totalspineseg':
             # Test time augmentation is an nnUNet-specific feature (`use_mirroring=True` internally)
+            # But, the totalspineseg package doesn't support this argument (yet), so skip it
             params.add_argument(
                 "-test-time-aug",
                 action='store_true',
