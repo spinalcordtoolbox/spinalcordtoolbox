@@ -467,7 +467,8 @@ def main(argv: Sequence[str]):
             extra_network_kwargs = {
                 arg_name: getattr(arguments, arg_name)
                 # "single_fold" -> used only by lesion_ms
-                for arg_name in ["single_fold"]
+                # "test_time_aug" -> used only by nnunetv2 models
+                for arg_name in ["single_fold", "test_time_aug"]
                 if hasattr(arguments, arg_name)
             }
             extra_inference_kwargs = {
@@ -489,7 +490,6 @@ def main(argv: Sequence[str]):
                 fill_holes_in_pred=arguments.fill_holes,
                 remove_small=arguments.remove_small,
                 use_gpu=use_gpu, remove_temp_files=arguments.r,
-                test_time_aug=arguments.test_time_aug,
                 # Pass any "extra" kwargs defined in task-specific subparsers
                 extra_network_kwargs=extra_network_kwargs,
                 extra_inference_kwargs=extra_inference_kwargs,
