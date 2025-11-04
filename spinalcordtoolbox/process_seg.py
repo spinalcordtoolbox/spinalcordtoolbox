@@ -53,7 +53,7 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
                      'angle_RL',
                      'diameter_AP',
                      'diameter_AP_ellipse',
-                     'diameter_RL_ellipse',
+                     'diameter_RL',
                      'eccentricity',
                      'orientation_abs',
                      'orientation',
@@ -356,7 +356,7 @@ def _properties2d(seg, dim, iz, angle_hog=None, verbose=1):
     properties = {
         'area': area,
         'diameter_AP_ellipse': diameter_AP,
-        'diameter_RL_ellipse': diameter_RL,
+        'diameter_RL': diameter_RL,
         'centroid': region.centroid,        # Why do we store this? It is not used in the code.
         'eccentricity': region.eccentricity,
         'orientation_abs': orientation,     # in degrees
@@ -511,7 +511,7 @@ def _measure_ap_diameter(seg_crop_r, seg_crop_r_rotated, dim, angle, iz, propert
 
         # Debug plotting
         if verbose == 2:
-            _debug_plotting_hog(angle, ap0_r, ap_diameter, dim, iz, properties, rl0_r, properties["diameter_RL_ellipse"],
+            _debug_plotting_hog(angle, ap0_r, ap_diameter, dim, iz, properties, rl0_r, properties["diameter_RL"],
                                 seg_crop_r_rotated, seg_crop_r, coord_ap)
 
     return result
@@ -842,7 +842,7 @@ def _debug_plotting_hog(angle_hog, ap0_r, ap_diameter, dim, iz, properties, rl0_
         ellipse = Ellipse(
             (x0, y0),
             width=properties['diameter_AP_ellipse'] / dim[0],
-            height=properties['diameter_RL_ellipse'] / dim[1],
+            height=properties['diameter_RL'] / dim[1],
             angle=properties['orientation']*180.0/math.pi,
             edgecolor='orange',
             facecolor='none',
@@ -871,7 +871,7 @@ def _debug_plotting_hog(angle_hog, ap0_r, ap_diameter, dim, iz, properties, rl0_
               head_width=1, label=f'HOG angle = {angle_hog * 180 / math.pi:.1f}°')  # convert to degrees
     # Add AP and RL diameters from the original segmentation obtained using skimage.regionprops
     radius_ap = (properties['diameter_AP_ellipse'] / dim[0]) * 0.5
-    radius_rl = (properties['diameter_RL_ellipse'] / dim[1]) * 0.5
+    radius_rl = (properties['diameter_RL'] / dim[1]) * 0.5
     dx_ap = radius_ap * np.cos(properties['orientation'])
     dy_ap = radius_ap * np.sin(properties['orientation'])
     dx_rl = radius_rl * -np.sin(properties['orientation'])
@@ -879,7 +879,7 @@ def _debug_plotting_hog(angle_hog, ap0_r, ap_diameter, dim, iz, properties, rl0_
     ax1.plot([x0 - dx_ap, x0 + dx_ap], [y0 - dy_ap, y0 + dy_ap], color='blue', linestyle='--', linewidth=2,
              label=f'AP diameter (skimage.regionprops) = {properties["diameter_AP_ellipse"]:.2f} mm')
     ax1.plot([x0 - dx_rl, x0 + dx_rl], [y0 - dy_rl, y0 + dy_rl], color='blue', linestyle='solid', linewidth=2,
-             label=f'RL diameter (skimage.regionprops) = {properties["diameter_RL_ellipse"]:.2f} mm')
+             label=f'RL diameter (skimage.regionprops) = {properties["diameter_RL"]:.2f} mm')
     # Add A, P, R, L labels
     _add_labels(ax1)
 

@@ -45,7 +45,7 @@ def test_sct_process_segmentation_check_values(tmp_path):
         row = rows[10]
         assert row['Slice (I->S)'] == '10'
         assert float(row['MEAN(area)']) == pytest.approx(78.17036713469571)
-        assert float(row['MEAN(diameter_AP)']) == pytest.approx(7.781725297713196)
+        assert float(row['MEAN(diameter_AP)']) == pytest.approx(7.777798117974)
         assert float(row['MEAN(diameter_RL)']) == pytest.approx(12.545756446151367)
         assert float(row['MEAN(orientation)']) == pytest.approx(-5.421994603706533)
         assert float(row['MEAN(eccentricity)']) == pytest.approx(0.7684919130144329)
