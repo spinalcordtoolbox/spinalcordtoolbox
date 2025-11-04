@@ -17,7 +17,8 @@ if TYPE_CHECKING:
     import torch
 
 
-def create_nnunet_from_plans(path_model, device: 'torch.device', single_fold: bool = False, test_time_aug=False) -> nnUNetPredictor:
+def create_nnunet_from_plans(path_model, device: 'torch.device', single_fold: bool = False,
+                             test_time_aug: bool = False) -> nnUNetPredictor:
     """
     When creating the nnunet for the `lesion_ms` model, if you want quicker inference using only a single fold
     (instead of the full 5-fold ensemble), set `single_fold=True`.
