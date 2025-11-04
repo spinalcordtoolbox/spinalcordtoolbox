@@ -47,11 +47,12 @@ nnunet_plans = {
 }
 
 
-def create_nnunet_from_plans(path_model, device: torch.device):
+def create_nnunet_from_plans(path_model, device: torch.device, test_time_aug=False):
     """
     Adapted from nnUNet's source code:
     https://github.com/MIC-DKFZ/nnUNet/blob/master/nnunetv2/utilities/get_network_from_plans.py#L9
 
+    test_time_aug is not used here, but kept as arg to for consistency with create_nnunet_from_plans for nnunet
     """
     plans = nnunet_plans
     num_input_channels = 1

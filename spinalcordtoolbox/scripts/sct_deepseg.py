@@ -236,6 +236,12 @@ def get_parser(subparser_to_return=None):
             help="Minimal object size to keep with unit (mm3 or vox). A single value can be provided or one value per "
                  "prediction class. Single value example: 1mm3, 5vox. Multiple values example: 10 20 10vox (remove objects "
                  "smaller than 10 voxels for class 1 and 3, and smaller than 20 voxels for class 2).")
+        params.add_argument(
+            "-test-time-aug",
+            action='store_true',
+            help="Perform test-time augmentation (TTA) by flipping the input image along all axes and averaging the "
+                 "resulting predictions. Only implemented for non-ivadomed models (e.g., nnUNet, etc.). "
+        )
 
         misc = subparser.misc_arggroup
         misc.add_argument(
@@ -453,6 +459,11 @@ def main(argv: Sequence[str]):
             im_lst, target_lst = inference.segment_and_average_volumes(path_models, input_filenames, use_gpu=use_gpu,
                                                                        options={**vars(arguments),
                                                                                 "fname_prior": fname_prior})
+            if arguments.test_time_aug:
+                raise NotImplementedError(
+                    "Test-time augmentation is not implemented for ivadomed models. "
+                    "Remove the `-test-time-aug` option."
+                )
         else:
             thr = (arguments.binarize_prediction if arguments.binarize_prediction is not None
                    else models.MODELS[name_model]['thr'])  # Default `thr` value stored in model dict
@@ -482,6 +493,7 @@ def main(argv: Sequence[str]):
                 fill_holes_in_pred=arguments.fill_holes,
                 remove_small=arguments.remove_small,
                 use_gpu=use_gpu, remove_temp_files=arguments.r,
+                test_time_aug=arguments.test_time_aug,
                 # Pass any "extra" kwargs defined in task-specific subparsers
                 extra_network_kwargs=extra_network_kwargs,
                 extra_inference_kwargs=extra_inference_kwargs,
