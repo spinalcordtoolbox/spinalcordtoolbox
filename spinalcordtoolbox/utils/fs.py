@@ -13,9 +13,6 @@ import tempfile
 import datetime
 import logging
 from pathlib import Path
-from contextlib import contextmanager
-
-import portalocker
 
 from .sys import printv
 
