@@ -7,7 +7,6 @@ License: see the file LICENSE
 
 from contextlib import contextmanager
 import datetime
-from hashlib import md5
 import importlib.resources
 import itertools as it
 import json
@@ -18,6 +17,8 @@ import shutil
 from typing import Optional, Sequence
 
 import numpy as np
+import portalocker
+from portalocker import Lock, LockFlags
 from scipy.ndimage import center_of_mass
 import skimage.exposure
 
@@ -29,7 +30,6 @@ from spinalcordtoolbox.reports.assets.py import refresh_qc_entries
 from spinalcordtoolbox.resampling import resample_nib
 from spinalcordtoolbox.utils.shell import display_open
 from spinalcordtoolbox.utils.sys import __version__, list2cmdline, LazyLoader
-from spinalcordtoolbox.utils.fs import mutex
 
 pd = LazyLoader("pd", globals(), "pandas")
 mpl_plt = LazyLoader("mpl_plt", globals(), "matplotlib.pyplot")
@@ -114,13 +114,23 @@ def create_qc_entry(
         if not path.exists():
             raise FileNotFoundError(f"Required QC image '{img_type}' was not found at the expected path: '{path}'")
 
-    # Use mutex to ensure that we're only generating shared QC assets using one process at a time
-    realpath = path_qc.resolve()
-    with mutex(f"sct_qc-{realpath.name}-{md5(str(realpath).encode('utf-8')).hexdigest()}"):
-        # Create a json file for the new QC report entry
-        path_json = path_qc / '_json'
+    # Define where the JSON entry should be saved
+    path_json = path_qc / '_json'
+    path_result = path_json / f'qc_{timestamp}.json'
+
+    # Create a mutex for the QC file to avoid a race condition if multiple files try to write simultaneously
+    qc_mutex = portalocker.BoundedSemaphore(
+        maximum=1,  # Mutually exclusive access
+        name=str(path_qc.resolve()),  # Lock the directory itself
+        timeout=60,  # Wait up to 60 seconds for the directory to become free again
+        check_interval=0.1  # Check every 1/10th of a second
+    )
+    try:
+        # Attempt to acquire the lock and save the QC entry
+        qc_mutex.acquire()
+
+        # Create the JSON file for this new QC entry (as well as its containing directory, if needed)
         path_json.mkdir(parents=True, exist_ok=True)
-        path_result = path_json / f'qc_{timestamp}.json'
         with path_result.open('w') as file_result:
             json.dump({
                 'path': str(Path.cwd()),
@@ -146,8 +156,20 @@ def create_qc_entry(
         # Inject the JSON QC entries into the index.html file
         path_index_html = refresh_qc_entries.main(path_qc)
 
-    logger.info('Successfully generated the QC results in %s', str(path_result))
-    display_open(file=str(path_index_html), message="To see the results in a browser")
+        # Log that the QC was written successfully
+        logger.info('Successfully generated the QC results in %s', str(path_result))
+
+        # Prompt the user to view the results in the browser
+        display_open(file=str(path_index_html), message="To see the results in a browser")
+    # Regardless of whether hte
+    except Exception as e:
+        # Log that an error occurred during QC generation
+        logger.info('Failed to write QC results in %s', str(path_result))
+        # Re-raise the error for debugging purposes
+        raise e
+    finally:
+        # No matter what happens, release the directory lock after its over
+        qc_mutex.release()
 
 
 def add_slice_numbers(ax, num_slices, radius, margin: int = 2, reverse=False):

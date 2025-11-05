@@ -262,24 +262,3 @@ def relpath_or_abspath(child_path, parent_path):
         return abspath.relative_to(parent_path)
     except ValueError:
         return abspath
-
-
-@contextmanager
-def mutex(name):
-    """
-    Use a bounded semaphore as a mutex to prevent parallel processes from running.
-
-    portalocker.BoundedSemaphore is very similar to threading.BoundedSemaphore,
-    but works across multiple processes and across multiple operating systems. So,
-    we can spawn multiple processes using `sct_run_batch`, while still ensuring
-    that we create QC reports sequentially (without mangling the output files).
-
-    We use a mutex over a lock because the mutex doesn't depend on the destination
-    of the locked files, which allows us to avoid locking on e.g. NFS-mounted drives.
-    """
-    semaphore = portalocker.BoundedSemaphore(maximum=1, name=name, timeout=60, check_interval=0.1)
-    semaphore.acquire()
-    try:
-        yield semaphore
-    finally:
-        semaphore.release()
