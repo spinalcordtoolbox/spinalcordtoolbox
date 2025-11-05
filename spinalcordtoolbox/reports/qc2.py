@@ -17,8 +17,7 @@ import shutil
 from typing import Optional, Sequence
 
 import numpy as np
-import portalocker
-from portalocker import Lock, LockFlags
+from portalocker import BoundedSemaphore
 from scipy.ndimage import center_of_mass
 import skimage.exposure
 
@@ -119,7 +118,7 @@ def create_qc_entry(
     path_result = path_json / f'qc_{timestamp}.json'
 
     # Create a mutex for the QC file to avoid a race condition if multiple files try to write simultaneously
-    qc_mutex = portalocker.BoundedSemaphore(
+    qc_mutex = BoundedSemaphore(
         maximum=1,  # Mutually exclusive access
         name=str(path_qc.resolve()),  # Lock the directory itself
         timeout=60,  # Wait up to 60 seconds for the directory to become free again
