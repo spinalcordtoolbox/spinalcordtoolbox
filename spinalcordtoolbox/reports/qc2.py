@@ -6,6 +6,7 @@ License: see the file LICENSE
 """
 
 from contextlib import AbstractContextManager, contextmanager
+from dataclasses import dataclass
 import datetime
 from hashlib import md5
 import importlib.resources
@@ -159,7 +160,7 @@ def reorient_grid(
     np.ndarray,  # reoriented affine, of shape (4, 4)
 ]:
     """
-    Reorient a sampling grid to the given orientation.
+    Reorient a nifti sampling grid to the given orientation.
     """
     opposite = dict(zip("RASLPI", "LPIRAS"))  # SCT and nibabel use opposite conventions
     ornt = nib_orientations.ornt_transform(
@@ -185,7 +186,7 @@ def rescale_grid(
     np.ndarray,  # rescaled affine, of shape (4, 4)
 ]:
     """
-    Rescale a sampling grid to the given resolution for each axis.
+    Rescale a nifti sampling grid to the given resolution for each axis.
 
     No rescaling is done for an axis if the requested resolution is `None`.
     """
@@ -204,263 +205,300 @@ def rescale_grid(
     return tuple(shape), affine
 
 
-def get_slices(
-    img: Image,  # 3D image to sample from
-    shape: tuple[int, int],  # output slice shape
-    affine: np.ndarray,  # output affine of shape (4, 4)
-    offsets: np.ndarray,  # list of offsets, of shape (N, 3)
-    order: int,  # interpolation order, can be [0, 1, 2, 3, 4, 5]
-) -> list[np.ndarray]:
+@dataclass(frozen=True)
+class SlicingSpec:
     """
-    Get several slices of the same shape from a single image by resampling.
+    Specs for extracting one or more 2D slices in the same way from multiple 3D images.
 
-    The offsets are measured in output voxels, and can be fractional.
+    affine:
+        A numpy array of shape=(4, 4) and dtype=np.float64, as returned by
+        `nib.Nifti1Header.get_best_affine()`. This matrix gives the conversion
+        between voxel coordinates (i, j, k), which are non-negative integers,
+        and physical coordinates (x, y, z), which are floating point numbers:
+
+            [ x ]   [ * * * | * ]   [ i ]
+            [ y ]   [ * * * | * ]   [ j ]
+            [ z ] = [ * * * | * ] @ [ k ]
+            [---]   [-------+---]   [---]
+            [ 1 ]   [ 0 0 0 | 1 ]   [ 1 ]
+
+        The first column gives the step size and direction (in physical space)
+        for taking a 1-voxel step from i to i+1. The second and third columns
+        are the same for j to j+1, or k to k+1. The last column gives the
+        physical coordinates of the (0, 0, 0) voxel. The last row is fixed.
+
+        The 2D slices to be extracted are all parallel to the (j, k) plane.
+
+    offsets:
+        An ordered dict of slice labels and slice offsets for the 2D slices
+        to be extracted. Each slice offset is a numpy array of shape=(3,)
+        and dtype=np.float64, and gives voxel coordinates (i, j, k) for a
+        corner of a slice to be extracted. Even though they are in voxel space,
+        these coordinates are allowed to be negative or fractional.
+
+        The insertion order of items in the dict controls the position of each
+        slice in the generated mosaic.
+
+    shape:
+        The (height, width) size of each 2D slice to be extracted. The height
+        is measured in voxels in the j direction, and the width is measured
+        in voxels in the k direction.
+
+    axis_labels:
+        Two pairs of strings used to display orientation labels:
+
+            ((up == -j direction, down == +j direction),
+             (left == -k direction, right == +k direction))
+
+        Used for the top-left tile in a mosaic.
     """
-    # To fill regions outside of the image with zeros,
-    # while avoiding sharp cutoffs around the edges.
-    mode = "grid-constant"
 
-    voxel_to_voxel = np.linalg.inv(img.affine).dot(affine)
-    matrix = voxel_to_voxel[:3, :3]
-    origin = voxel_to_voxel[:3, 3]
+    affine: np.ndarray  # shape=(4, 4)
+    offsets: dict[str, np.ndarray]  # each shape=(3,), insertion order is important
+    shape: tuple[int, int]  # 2D shape of all output slices
+    axis_labels: tuple[tuple[str, str], tuple[str, str]]  # ((top, bottom), (left, right))
 
-    if order > 1:
-        # Doing this prefilter step outside of the loop is crucial for performance
-        data_filtered = ndimage.spline_filter(img.data, order=order, mode=mode)
-    else:
-        data_filtered = img.data.astype(np.float64)
-    return [
-        ndimage.affine_transform(
-            data_filtered,
-            matrix=matrix,
-            offset=(origin + matrix.dot(offset)),
-            output_shape=(1, *shape),
-            order=order,
-            mode=mode,
-            prefilter=False,
-        )[0]
-        for offset in offsets
-    ]
+    def get_slices(
+        self,
+        img: Image,  # 3D image to sample from
+        order: int,  # interpolation order, can be [0, 1, 2, 3, 4, 5]
+    ) -> dict[str, np.ndarray]:  # shape=self.shape
+        """
+        Get several slices of the same shape from a single image by resampling.
 
+        The offsets are measured in output voxels, and can be fractional.
+        """
+        # To fill regions outside of the image with zeros,
+        # while avoiding sharp cutoffs around the edges.
+        mode = "grid-constant"
 
-def get_axial_slicing_specs(
-    img_input: Image,
-    img_seg: Image,
-    p_resample: float = 0.6,
-    size: int = 30,
-) -> tuple[
-    tuple[str, str, str, str],  # orientation_labels
-    list[str],  # slice_labels
-    tuple[int, int],  # shape
-    np.ndarray,  # affine, of shape (4, 4)
-    np.ndarray,  # offsets, of shape (N, 3)
-]:
-    """
-    Generate a resampling grid for each axial slice of the input image.
+        voxel_to_voxel = np.linalg.inv(img.affine).dot(self.affine)
+        matrix = voxel_to_voxel[:3, :3]
+        origin = voxel_to_voxel[:3, 3]
 
-    The input image is first re-oriented to SAL, then each S-I slice is:
-    - resampled isotropically to `p_resample` millimeters,
-    - individually centered around its center of mass in the segmentation,
-    - cropped to a rectangle of `size` voxels.
-
-    The resulting `shape`, `affine`, `offsets` can be passed to `get_slices`
-    to extract the same slices from any nifti image.
-
-    The slices are returned in S-I order (index 0 is Superior), regardless of
-    the original input image orientation, for consistency when generating
-    mosaics. The returned `slice_labels` can be displayed as slice numbers
-    from the original image orientation.
-
-    Returns:
-    1. The appropriate orientation labels for a mosaic.
-    2. The list of slice numbers from the original input image orientation.
-    3. The single slice shape `(size, size)`.
-    4. The resampling affine, of shape (4, 4).
-    5. The resampling offsets, as a numpy array of shape (N, 3).
-    """
-    # Standardize to SAL with a fixed resolution for each AL slice
-    shape, affine = img_input.data.shape, img_input.affine
-    shape, affine = reorient_grid(shape, affine, "SAL")
-    shape, affine = rescale_grid(shape, affine, [None, p_resample, p_resample])
-
-    # Resample the segmentation to the current voxel grid,
-    # so that we can compute each slice's center of mass
-    nx, ny, nz = shape
-    shape = (ny, nz)
-    offsets = np.array([[x, 0, 0] for x in range(nx)], dtype=np.float64)
-    slices_seg = get_slices(img_seg, shape, affine, offsets, order=1)
-
-    # Recenter each slice around its center of mass, and interpolate missing
-    # slices. Note that the coordinates may be fractional, which is fine.
-    for x, slice_seg in enumerate(slices_seg):
-        offsets[x, 1:3] = ndimage.center_of_mass(slice_seg)
-    inf_nan_fill(offsets[:, 1])
-    inf_nan_fill(offsets[:, 2])
-
-    # Crop to the desired size
-    shape = (size, size)
-    offsets[:, 1:3] -= (size - 1) / 2
-
-    # The slice labels in the original orientation of the input image
-    slice_labels = [str(x) for x in range(nx)]
-    if "I" in img_input.orientation:
-        slice_labels.reverse()
-
-    orientation_labels = ("A", "P", "L", "R")
-    return orientation_labels, slice_labels, shape, affine, offsets
-
-
-def get_sagittal_slicing_specs(
-    img_input: Image,
-    img_seg: Image,
-    p_resample: float = 0.6,
-) -> tuple[
-    tuple[str, str, str, str],  # orientation_labels
-    list[str],  # slice_labels
-    tuple[int, int],  # shape
-    np.ndarray,  # affine, of shape (4, 4)
-    np.ndarray,  # offsets, of shape (N, 3)
-]:
-    """
-    Generate a resampling grid for sagittal slices of the input image.
-
-    The input image is first re-oriented to RSP, then each R-L slice is:
-    - resampled isotropically to `p_resample` millimeters;
-    - centered in the P-A direction around the segmentation center of mass;
-    - cropped in the P-A direction to the larger of:
-      - 110% the maximum width of the segmentation, or
-      - 50% of the total image;
-    - untouched in the S-I direction.
-
-    Any slices that are more than 2 slices away from the segmentation are
-    also dropped.
-
-    The resulting `shape`, `affine`, `offsets` can be passed to `get_slices`
-    to extract the same slices from any nifti image.
-
-    The slices are returned in R-L order (index 0 is Right), regardless of
-    the original input image orientation, for consistency when generating
-    mosaics. The returned `slice_labels` can be displayed as slice numbers
-    from the original image orientation.
-
-    Returns:
-    1. The appropriate orientation labels for a mosaic.
-    2. The list of slice numbers from the original input image orientation.
-    3. The single slice shape as a pair of integers.
-    4. The resampling affine, of shape (4, 4).
-    5. The resampling offsets, as a numpy array of shape (N, 3).
-    """
-    # Standardize to RSP with a fixed resolution for each SP slice
-    shape, affine = img_input.data.shape, img_input.affine
-    shape, affine = reorient_grid(shape, affine, "RSP")
-    shape, affine = rescale_grid(shape, affine, [None, p_resample, p_resample])
-
-    # Resample the segmentation to the current voxel grid,
-    # so that we can compute each slice's center of mass
-    nx, ny, nz = shape
-    shape = (ny, nz)
-    offsets = np.array([[x, 0, 0] for x in range(nx)], dtype=np.float64)
-    slices_seg = get_slices(img_seg, shape, affine, offsets, order=1)
-
-    # Check which slices contain the segmentation, and compute their P-A width
-    width = {}
-    for x, slice_seg in enumerate(slices_seg):
-        [columns] = slice_seg.any(axis=0).nonzero()
-        if columns.size != 0:
-            width[x] = int(columns.max()) - int(columns.min()) + 1
-    if not width:
-        raise ValueError("The mask image is empty. Cannot crop using an empty mask. Check the input (e.g. '-qc-seg').")
-
-    # Compute the cropping bounds in the R-L direction
-    x_min = max(0, min(width.keys())-2)
-    x_max = min(nx-1, max(width.keys())+2)
-
-    # Compute the cropping width in the P-A direction
-    z_width = math.ceil(max(0.5*nz, 1.1*max(width.values())))
-
-    # Recenter the relevant slices in the P-A direction
-    shape = (ny, z_width)
-    offsets = np.array(
-        [
-            [x, 0, ndimage.center_of_mass(slices_seg[x])[1]]
-            for x in range(x_min, x_max+1)
-        ],
-        dtype=np.float64,
-    )
-    inf_nan_fill(offsets[:, 2])
-    offsets[:, 2] -= (z_width - 1) / 2
-
-    # The slice labels in the original orientation of the input image
-    slice_labels = [str(x) for x in range(nx)]
-    if "L" in img_input.orientation:
-        slice_labels.reverse()
-    slice_labels = slice_labels[x_min:x_max+1]
-
-    orientation_labels = ("S", "I", "P", "A")
-    return orientation_labels, slice_labels, shape, affine, offsets
-
-
-def generate_mosaic(
-    img: Image,
-    orientation_labels: tuple[str, str, str, str],
-    slice_labels: list[str],
-    shape: tuple[int, int],
-    affine: np.ndarray,
-    offsets: np.ndarray,
-    path: Path,
-):
-    """
-    Extract slices from an image and draw them as a mosaic, with labels.
-    """
-    # Make a numpy array of the right shape to hold the mosaic
-    num_col = max(math.floor(424 / shape[1]), 1)  # TODO: TARGET_WIDTH_PIXL / scale
-    num_row = math.ceil(len(slice_labels) / num_col)
-    canvas = np.zeros((num_row * shape[0], num_col * shape[1]))
-    patches = [
-        (slice(x, x + shape[0]), slice(y, y + shape[1]))
-        for x in range(0, canvas.shape[0], shape[0])
-        for y in range(0, canvas.shape[1], shape[1])
-    ]
-
-    # Initialize the figure
-    fig = mpl_figure.Figure(
-        figsize=(canvas.shape[1]*2.5/DPI, canvas.shape[0]*2.5/DPI),
-        dpi=DPI,
-    )
-    mpl_backend_agg.FigureCanvasAgg(fig)
-    ax = fig.add_axes((0, 0, 1, 1))
-    ax.xaxis.set_visible(False)
-    ax.yaxis.set_visible(False)
-
-    # Extract image slices and insert them in the mosaic
-    img_slices = get_slices(img, shape, affine, offsets, order=2)
-    for patch, data in zip(patches, img_slices):
-        canvas[patch] = data
-    ax.imshow(equalize_histogram(canvas), cmap='gray', interpolation='none', aspect=1.0)
-
-    # Add orientation labels in the first tile,
-    # and slice labels in the other tiles.
-    text_args = dict(
-        color='yellow',
-        fontsize=4,
-        path_effects=[
-            mpl_patheffects.Stroke(linewidth=1, foreground='black'),
-            mpl_patheffects.Normal(),
-        ],
-    )
-    for i, (patch, label) in enumerate(zip(patches, slice_labels)):
-        top, bottom, _ = patch[0].indices(canvas.shape[0])
-        left, right, _ = patch[1].indices(canvas.shape[1])
-        if i == 0:
-            ax.text((left + right) / 2, top, orientation_labels[0], ha='center', va='top', **text_args)
-            ax.text((left + right) / 2, bottom, orientation_labels[1], ha='center', va='bottom', **text_args)
-            ax.text(left, (top + bottom) / 2, orientation_labels[2], ha='left', va='center', **text_args)
-            ax.text(right, (top + bottom) / 2, orientation_labels[3], ha='right', va='center', **text_args)
+        if order > 1:
+            # Doing this prefilter step outside of the loop is crucial for performance
+            data_filtered = ndimage.spline_filter(img.data, order=order, mode=mode)
         else:
-            ax.text(left, top, label, ha='left', va='top', **text_args)
+            data_filtered = img.data.astype(np.float64)
+        return {
+            slice_label: ndimage.affine_transform(
+                data_filtered,
+                matrix=matrix,
+                offset=(origin + matrix.dot(offset)),
+                output_shape=(1, *self.shape),
+                order=order,
+                mode=mode,
+                prefilter=False,
+            )[0]
+            for slice_label, offset in self.offsets.items()
+        }
 
-    # Save the figure as a png
-    fig.savefig(str(path), format='png', transparent=True)
+    @staticmethod
+    def full_axial(img: Image, p_resample: float = 0.6) -> 'SlicingSpec':
+        """
+        A slicing spec to extract full axial slices.
+
+        The field of view is given by `img`.
+        The number of slices is the same as `img` in the S-I axis,
+        but the other two axes are resampled to `p_resample` mm.
+        The slice labels correspond to the original orientation of `img`,
+        but the output slices are always ordered and oriented in "SAL".
+        """
+        # Standardize to SAL with a fixed resolution for each AL slice.
+        shape, affine = img.data.shape, img.affine
+        shape, affine = reorient_grid(shape, affine, "SAL")
+        shape, affine = rescale_grid(shape, affine, [None, p_resample, p_resample])
+
+        # Split up the 3D image shape into a number of slices and a 2D slice shape.
+        num_slices, shape = shape[0], shape[1:3]
+
+        # The slice labels in the original orientation of the input image.
+        slice_labels = [str(i) for i in range(num_slices)]
+        if "I" in img.orientation:
+            slice_labels.reverse()
+
+        return SlicingSpec(
+            affine=affine,
+            offsets={
+                label: np.array([i, 0, 0], dtype=np.float64)
+                for i, label in enumerate(slice_labels)
+            },
+            shape=shape,
+            axis_labels=(("A", "P"), ("L", "R")),
+        )
+
+    def center_patches(
+        self, seg: Image, shape: tuple[int, int] = (30, 30)
+    ) -> 'SlicingSpec':
+        """
+        A re-centered and cropped slicing spec, meant for axial views.
+
+        Each slice is individually centered around the center of mass of the
+        given segmentation before being cropped (in both axes).
+        """
+        # Recenter each slice around its center of mass, and interpolate missing
+        # slices. We use a single (N, 3) array so that we can inf_nan_fill.
+        offsets = np.array(list(self.offsets.values()))
+        slices_seg = self.get_slices(seg, order=1)
+        for offset, slice_seg in zip(offsets, slices_seg.values()):
+            offset[1:3] += ndimage.center_of_mass(slice_seg)
+        inf_nan_fill(offsets[:, 1])
+        inf_nan_fill(offsets[:, 2])
+
+        # Take into account the size of the cropping rectangle.
+        offsets[:, 1:3] -= (np.array(shape) - 1) / 2
+
+        return SlicingSpec(
+            affine=self.affine,
+            offsets=dict(zip(self.offsets.keys(), offsets)),
+            shape=shape,  # new shape
+            axis_labels=self.axis_labels,
+        )
+
+    @staticmethod
+    def full_sagittal(img: Image, p_resample: float = 0.6) -> 'SlicingSpec':
+        """
+        A slicing spec to extract full sagittal slices.
+
+        The field of view is given by `img`.
+        The number of slices is the same as `img` in the R-L axis,
+        but the other two axes are resampled to `p_resample` mm.
+        The slice labels correspond to the original orientation of `img`,
+        but the output slices are always ordered and oriented in "RSP".
+        """
+        # Standardize to RSP with a fixed resolution for each SP slice.
+        shape, affine = img.data.shape, img.affine
+        shape, affine = reorient_grid(shape, affine, "RSP")
+        shape, affine = rescale_grid(shape, affine, [None, p_resample, p_resample])
+
+        # Split up the 3D image shape into a number of slices and a 2D slice shape.
+        num_slices, shape = shape[0], shape[1:3]
+
+        # The slice labels in the original orientation of the input image.
+        slice_labels = [str(i) for i in range(num_slices)]
+        if "L" in img.orientation:
+            slice_labels.reverse()
+
+        return SlicingSpec(
+            affine=affine,
+            offsets={
+                label: np.array([i, 0, 0], dtype=np.float64)
+                for i, label in enumerate(slice_labels)
+            },
+            shape=shape,
+            axis_labels=(("S", "I"), ("P", "A")),
+        )
+
+    def center_columns(self, seg: Image) -> 'SlicingSpec':
+        """
+        A re-centered and cropped slicing spec, meant for sagittal views.
+
+        Each slice is individually centered in the last axis around the center
+        of mass of the given segmentation. It is also cropped in the last axis
+        to the larger of:
+        - 110% of the maximum width of the segmentation, or
+        - 50% of the total image.
+
+        Any slices that are more than 2 slices away from the segmentation are
+        also dropped.
+        """
+        # Check which slices contain the segmentation, and compute their width.
+        slices_seg = self.get_slices(seg, order=1)
+        width = {}
+        for i, slice_seg in enumerate(slices_seg.values()):
+            [columns] = slice_seg.any(axis=0).nonzero()
+            if columns.size != 0:
+                width[i] = int(columns.max()) - int(columns.min()) + 1
+        if not width:
+            raise ValueError("The mask image is empty. Cannot crop using an empty mask. Check the input (e.g. '-qc-seg').")
+
+        # Compute the target slice width.
+        shape = (
+            self.shape[0],  # the full image height
+            math.ceil(max(
+                1.1 * max(width.values()),  # 110% of the segmentation width
+                0.5 * self.shape[1],  # 50% of the full image width
+            )),
+        )
+
+        # Drop slices that are far from the segmentation.
+        slice_min = max(0, min(width.keys()) - 2)
+        slice_max = min(len(slices_seg) - 1, max(width.keys()) + 2)
+        offsets_dict = dict(list(self.offsets.items())[slice_min:slice_max+1])
+
+        # Re-center each remaining slice.
+        for slice_label, offset in offsets_dict.items():
+            offset[2] += ndimage.center_of_mass(slices_seg[slice_label])[1]
+
+        # Take into account the cropping width.
+        offsets_array = np.array(list(offsets_dict.values()))
+        inf_nan_fill(offsets_array[:, 2])
+        offsets_array[:, 2] -= (shape[1] - 1) / 2
+        offsets_dict = dict(zip(offsets_dict.keys(), offsets_array))
+
+        return SlicingSpec(
+            affine=self.affine,
+            offsets=offsets_dict,  # new offsets
+            shape=shape,  # new shape
+            axis_labels=self.axis_labels,
+        )
+
+    def generate_mosaic(self, img: Image, path: Path, scale: float = 2.5):
+        """
+        Extract slices from an image and save the result as a png.
+        """
+        # Make a numpy array of the right shape to hold the mosaic
+        num_col = max(math.floor(TARGET_WIDTH_PIXL / scale / self.shape[1]), 1)
+        num_row = math.ceil(len(self.offsets) / num_col)
+        canvas = np.zeros((num_row * self.shape[0], num_col * self.shape[1]))
+        patches = [
+            (slice(x, x + self.shape[0]), slice(y, y + self.shape[1]))
+            for x in range(0, canvas.shape[0], self.shape[0])
+            for y in range(0, canvas.shape[1], self.shape[1])
+        ]
+
+        # Initialize the figure
+        fig = mpl_figure.Figure(
+            # figsize is (width, height) but canvas shape is (height, width)
+            figsize=(canvas.shape[1] * scale / DPI, canvas.shape[0] * scale / DPI),
+            dpi=DPI,
+        )
+        mpl_backend_agg.FigureCanvasAgg(fig)
+        ax = fig.add_axes((0, 0, 1, 1))
+        ax.xaxis.set_visible(False)
+        ax.yaxis.set_visible(False)
+
+        # Extract image slices and insert them in the mosaic
+        img_slices = self.get_slices(img, order=2)
+        for patch, data in zip(patches, img_slices.values()):
+            canvas[patch] = data
+        ax.imshow(equalize_histogram(canvas), cmap='gray', interpolation='none')
+
+        # Add orientation labels in the first tile,
+        # and slice labels in the other tiles.
+        text_args = dict(
+            color='yellow',
+            fontsize=4,
+            path_effects=[
+                mpl_patheffects.Stroke(linewidth=1, foreground='black'),
+                mpl_patheffects.Normal(),
+            ],
+        )
+        for i, (patch, slice_label) in enumerate(zip(patches, img_slices.keys())):
+            top, bottom, _ = patch[0].indices(canvas.shape[0])
+            left, right, _ = patch[1].indices(canvas.shape[1])
+            if i == 0:
+                ((top_label, bottom_label), (left_label, right_label)) = self.axis_labels
+                ax.text((left + right) / 2, top, top_label, ha='center', va='top', **text_args)
+                ax.text((left + right) / 2, bottom, bottom_label, ha='center', va='bottom', **text_args)
+                ax.text(left, (top + bottom) / 2, left_label, ha='left', va='center', **text_args)
+                ax.text(right, (top + bottom) / 2, right_label, ha='right', va='center', **text_args)
+            else:
+                ax.text(left, top, slice_label, ha='left', va='top', **text_args)
+
+        # Save the figure as a png
+        fig.savefig(str(path), format='png', transparent=True)
 
 
 def scratch(
@@ -494,13 +532,15 @@ def scratch(
         img_output = Image(fname_output)
         img_seg = Image(fname_seg)
 
-        slicing_specs = {
-            'Axial':    get_axial_slicing_specs,
-            'Sagittal': get_sagittal_slicing_specs,
-        }[plane](img_input, img_seg, p_resample)
+        if plane == 'Axial':
+            slicing_spec = SlicingSpec.full_axial(img_input, p_resample).center_patches(img_seg)
+        elif plane == 'Sagittal':
+            slicing_spec = SlicingSpec.full_sagittal(img_input, p_resample).center_columns(img_seg)
+        else:
+            raise ValueError(f"Invalid {plane=}")
 
-        generate_mosaic(img_input, *slicing_specs, imgs_to_generate['path_background_img'])
-        generate_mosaic(img_output, *slicing_specs, imgs_to_generate['path_overlay_img'])
+        slicing_spec.generate_mosaic(img_input, imgs_to_generate['path_background_img'])
+        slicing_spec.generate_mosaic(img_output, imgs_to_generate['path_overlay_img'])
 
 
 def add_slice_numbers(ax, num_slices, patch_size, margin: int = 2):
