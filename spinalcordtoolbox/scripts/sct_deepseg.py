@@ -351,36 +351,25 @@ def main(argv: Sequence[str]):
 
     # If the user called the command without arguments, display our help w/ an additional instructive message
     if not (
-        hasattr(arguments, 'task_details')
-        or (arguments.task and arguments.install)
-        or (arguments.task and arguments.i)
+        arguments.task and (arguments.install or arguments.i)
     ):
-        parser.error("You must specify either a task name + '-install', a task name + an image ('-i'), or "
-                     "'-task-details'.")
+        parser.error(
+            "You must specify either a task name + '-install', "
+            "a task name + an image (with '-i'), "
+            "or '-task-details' (which lists all available tasks).")
 
     verbose = arguments.v
     set_loglevel(verbose=verbose, caller_module_name=__name__)
 
+    # If we were asked to install the requisite models, install and end immediately
     if arguments.install:
-        models_to_install = models.TASKS[arguments.task]['models']
-        if arguments.custom_url:
-            if len(arguments.custom_url) != len(models_to_install):
-                parser.error(f"Expected {len(models_to_install)} URL(s) for task {arguments.install}, "
-                             f"but got {len(arguments.custom_url)} URL(s) instead.")
-            for name_model, custom_url in zip(models_to_install, arguments.custom_url):
-                models.install_model(name_model, custom_url)
-        else:
-            for name_model in models_to_install:
-                models.install_model(name_model)
-        exit(0)
+        models.install_task_models(arguments.task, arguments.custom_url)
+        return
 
-    # Deal with input/output
+    # Ensure a valid input file was provided
     for file in arguments.i:
         if not os.path.isfile(file):
             parser.error("This file does not exist: {}".format(file))
-
-    # Get pipeline model names
-    name_models = models.TASKS[arguments.task]['models']
 
     # Check if all input images and contrasts have been specified (only relevant for 'tumor-edema-cavity_t1-t2')
     if arguments.task == 'tumor_edema_cavity_t1_t2':
@@ -392,6 +381,9 @@ def main(argv: Sequence[str]):
         if len(arguments.c) != len(arguments.i):
             parser.error(f"{len(arguments.i)} input files provided, but {len(arguments.c)} contrasts passed. "
                          f"Number of contrasts should match the number of inputs.")
+
+    # Get pipeline model names
+    name_models = models.TASKS[arguments.task]['models']
 
     # Run pipeline by iterating through the models
     fname_prior = None

@@ -16,6 +16,8 @@ import glob
 from pathlib import Path
 from importlib.metadata import metadata
 
+from portalocker import BoundedSemaphore
+
 from spinalcordtoolbox import download
 from spinalcordtoolbox.utils.sys import stylize, __deepseg_dir__, LazyLoader
 
@@ -612,12 +614,31 @@ def folder(name_model):
     return os.path.join(__deepseg_dir__, name_model)
 
 
-def install_model(name_model, custom_url=None):
+def install_task_models(task_name: str, custom_urls: list[str] = None):
+    # Get the list of models we need to install for this task
+    models_to_install = TASKS[task_name]['models']
+
+    # If we have custom URLs, ensure we have as many as the task needs
+    if custom_urls is not None:
+        if (n_provided := len(custom_urls)) != (n_required := len(models_to_install)):
+            raise ValueError(
+                f"Expected {n_required} URL(s) for task '{task_name}', but got {n_provided} URL(s) instead."
+            )
+        # Install each model in turn
+        for name_model, custom_url in zip(models_to_install, custom_urls):
+            install_model(name_model, custom_url)
+    # Otherwise, check if we already have a model installed and use that
+    else:
+        for name_model in models_to_install:
+            install_model(name_model)
+
+
+def install_model(name_model: str, custom_url: str|list = None):
     """
     Download and install specified model under SCT installation dir.
 
-    :param name: str: Name of model.
-    :return: None
+    :param name_model: Name of the model.
+    :param custom_url: A custom URL to download the model from. If not provided, uses the model default URL(s)
     """
     logger.info("\nINSTALLING MODEL: {}".format(name_model))
     url_field = MODELS[name_model]['url'] if not custom_url else [custom_url]  # [] -> mimic a list of mirror URLs
