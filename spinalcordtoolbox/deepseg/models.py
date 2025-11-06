@@ -16,8 +16,6 @@ import glob
 from pathlib import Path
 from importlib.metadata import metadata
 
-from portalocker import BoundedSemaphore
-
 from spinalcordtoolbox import download
 from spinalcordtoolbox.utils.sys import stylize, __deepseg_dir__, LazyLoader
 
