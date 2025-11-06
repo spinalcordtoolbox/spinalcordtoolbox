@@ -12,6 +12,7 @@ import itertools as it
 import json
 import logging
 import math
+from hashlib import md5
 from pathlib import Path
 import shutil
 from typing import Optional, Sequence
@@ -118,9 +119,16 @@ def create_qc_entry(
     path_result = path_json / f'qc_{timestamp}.json'
 
     # Create a mutex for the QC file to avoid a race condition if multiple files try to write simultaneously
+    # KO, MB, and JN: The hash here is required to sanitize the path name. Otherwise, special characters for the OS
+    #   (i.e. slashes) being present  can result in "orphaned" paths, due to how PortaLocker works; under the
+    #   hood it creates a "lock" file to track the semaphore's state, and references that when determining whether a
+    #   process can acquire it or not. As this creation is NOT sanitized (using a raw 'PathLib' query), we need to do
+    #   the sanitization ourselves.
+    qc_mutex_hash = md5(str(path_qc.resolve()).encode('utf-8')).hexdigest()
+    qc_mutex_key = f"sct_qc-{path_qc.name}-{qc_mutex_hash}"
     qc_mutex = BoundedSemaphore(
         maximum=1,  # Mutually exclusive access
-        name=str(path_qc.resolve()),  # Lock the directory itself
+        name=qc_mutex_key,  # "Lock" the directory (represented with a hash)
         timeout=60,  # Wait up to 60 seconds for the directory to become free again
         check_interval=0.1  # Check every 1/10th of a second
     )
