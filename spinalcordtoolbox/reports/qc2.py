@@ -150,7 +150,7 @@ def create_qc_entry(
     display_open(file=str(path_index_html), message="To see the results in a browser")
 
 
-def add_slice_numbers(ax, num_slices, patch_size, margin: int = 2):
+def add_slice_numbers(ax, num_slices, radius, margin: int = 2, reverse=False):
     """
     Overlay slice indices onto an Axial mosaic.
 
@@ -160,20 +160,28 @@ def add_slice_numbers(ax, num_slices, patch_size, margin: int = 2):
         Axes containing a single imshow of the mosaic.
     num_slices : int
         Total number of axial slices (dim 0 of the original volume).
-    patch_size : int
-        The size (in pixels) of each square cell in the mosaic;
-        in our code each cell is cropped to radius*2, so patch_size = radius[0]*2.
+    radius : (int, int)
+        The size (in pixels) of the x/y radii of each square cell in the mosaic.
+    margin : int
+        Margin (in pixels) from the top-left corner of each cell to place the text.
+    reverse : bool
+        Whether to reverse the slice numbering (for SI-flipped images). If false, slice 0 is
+        at the top-left, otherwise slice 0 is at the bottom-right.
     """
     # Get the mosaic array we just plotted
     img_arr = ax.get_images()[0].get_array()
-    n_cols = int(img_arr.shape[1] // patch_size)
-    for i in range(1, num_slices):  # skip 0
+    patch_size = [2*r for r in radius]
+    n_cols = int(img_arr.shape[1] // patch_size[1])
+    slice_range = list(range(1, num_slices))  # skip 0
+    for i in slice_range:
         row = i // n_cols
         col = i % n_cols
         # top-left inside each tile
-        x = col * patch_size + margin
-        y = row * patch_size + margin
-        txt = ax.text(x, y, str(i), ha='left', va='top', color='yellow', fontsize=4)
+        x = col * patch_size[1] + margin
+        y = row * patch_size[0] + margin
+        # if there was an SI flip, then the label should be reverse
+        label = str(i) if not reverse else str((num_slices - 1) - i)
+        txt = ax.text(x, y, label, ha='left', va='top', color='yellow', fontsize=4)
         # give it a thin black outline for readability
         txt.set_path_effects([
             mpl_patheffects.Stroke(linewidth=1, foreground='black'),
@@ -311,7 +319,8 @@ def sct_deepseg(
         # Non-rootlets, axial/sagittal DeepSeg QC report
         elif plane == 'Axial':
             sct_deepseg_axial(
-                imgs_to_generate, fname_input, fname_seg, fname_seg2, species, fname_qc_seg)
+                imgs_to_generate, fname_input, fname_seg, fname_seg2, species, fname_qc_seg,
+                radius=(27, 27) if "sc_canal_t2" in argv else (15, 15))
         else:
             assert plane == 'Sagittal', (f"`plane` must be either 'Axial' "
                                          f"or 'Sagittal', but got {plane}")
@@ -326,6 +335,7 @@ def sct_deepseg_axial(
     fname_seg_lesion: Optional[str],
     species: str,
     fname_qc_seg: Optional[str],
+    radius: Sequence[int]
 ):
     """
     Generate a QC report for sct_deepseg, with varied colormaps depending on the type of segmentation.
@@ -337,7 +347,9 @@ def sct_deepseg_axial(
     #        use the old qc.py method "_make_QC_image_for_3d_volumes" for generating the background img.
     # Resample images slice by slice
     p_resample = {'human': 0.6, 'mouse': 0.1}[species]
-    img_input = Image(fname_input).change_orientation('SAL')
+    img_input = Image(fname_input)
+    orientation_orig = img_input.orientation
+    img_input = img_input.change_orientation('SAL')
     img_seg_sc = Image(fname_seg_sc).change_orientation('SAL')
     img_seg_lesion = Image(fname_seg_lesion).change_orientation('SAL') if fname_seg_lesion else None
     img_qc_seg = Image(fname_qc_seg).change_orientation('SAL') if fname_qc_seg else None
@@ -383,7 +395,7 @@ def sct_deepseg_axial(
     inf_nan_fill(centers[:, 1])
 
     # If -qc-seg is available, use it to generate the radius
-    radius = get_max_axial_radius(img_qc_seg) if fname_qc_seg else (15, 15)
+    radius = get_max_axial_radius(img_qc_seg) if fname_qc_seg else radius
 
     # Generate the first QC report image
     img = equalize_histogram(mosaic(img_input, centers, radius))
@@ -396,8 +408,8 @@ def sct_deepseg_axial(
     mpl_backend_agg.FigureCanvasAgg(fig)
     ax = fig.add_axes((0, 0, 1, 1))
     ax.imshow(img, cmap='gray', interpolation='none', aspect=1.0)
-    add_orientation_labels(ax)
-    add_slice_numbers(ax, img_input.dim[0], radius[0] * 2)
+    add_orientation_labels(ax, radius=radius)
+    add_slice_numbers(ax, img_input.dim[0], radius=radius, reverse=("I" in orientation_orig))
     ax.get_xaxis().set_visible(False)
     ax.get_yaxis().set_visible(False)
     img_path = str(imgs_to_generate['path_background_img'])
@@ -841,7 +853,7 @@ def mosaic(img: Image, centers: np.ndarray, radius: tuple[int, int] = (15, 15), 
     max_row_width = TARGET_WIDTH_PIXL / scale
 
     # Fit as many slices as possible in each row
-    num_col = math.floor(max_row_width / (2*radius[0]))
+    num_col = math.floor(max_row_width / (2*radius[1]))
 
     # Center and crop each axial slice
     cropped = []
@@ -1168,7 +1180,8 @@ def get_max_axial_radius(img):
     widths = [np.max(np.where(slc)[1]) - np.min(np.where(slc)[1]) if np.sum(slc) > 0 else 0 for slc in img.data]
     radii_h = [int((h * dilation)//2) for h in heights]
     radii_w = [int((w * dilation)//2) for w in widths]
-    return max(radius_default, max(radii_h)), max(radius_default, max(radii_w))
+    max_radius = max([radius_default] + radii_h + radii_w)
+    return max_radius, max_radius
 
 
 def get_max_sagittal_radius(img):
