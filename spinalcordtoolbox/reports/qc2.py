@@ -119,7 +119,7 @@ def create_qc_entry(
     path_result = path_json / f'qc_{timestamp}.json'
 
     # Create a mutex for the QC file to avoid a race condition if multiple files try to write simultaneously
-    # KO, MB, and JN: The hash here is required to sanitize the path name. Otherwise, special characters for the OS
+    # KO, MGP, and JN: The hash here is required to sanitize the path name. Otherwise, special characters for the OS
     #   (i.e. slashes) being present  can result in "orphaned" paths, due to how PortaLocker works; under the
     #   hood it creates a "lock" file to track the semaphore's state, and references that when determining whether a
     #   process can acquire it or not. As this creation is NOT sanitized (using a raw 'PathLib' query), we need to do
