@@ -631,7 +631,7 @@ def install_task_models(task_name: str, custom_urls: list[str] = None):
             install_model(name_model)
 
 
-def install_model(name_model: str, custom_url: str|list = None):
+def install_model(name_model: str, custom_url: str | list = None):
     """
     Download and install specified model under SCT installation dir.
 
