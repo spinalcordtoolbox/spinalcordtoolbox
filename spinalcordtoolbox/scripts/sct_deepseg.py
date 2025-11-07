@@ -288,7 +288,9 @@ def get_parser(subparser_to_return=None):
                 "-test-time-aug",
                 action='store_true',
                 help="Perform test-time augmentation (TTA) by flipping the input image along all axes and averaging the "
-                     "resulting predictions.")
+                     "resulting predictions.\n"
+                     "Note: The time it takes to run the model will increase due to the additional predictions."
+            )
         if task_name == 'tumor_edema_cavity_t1_t2':
             input_output.add_argument(
                 "-c",
