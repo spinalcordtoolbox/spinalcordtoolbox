@@ -5,7 +5,6 @@ Copyright (c) 2019 Polytechnique Montreal <www.neuro.polymtl.ca>
 License: see the file LICENSE
 """
 
-import os
 import math
 import platform
 import numpy as np
@@ -13,9 +12,6 @@ from skimage import measure, transform
 import skimage
 from scipy.ndimage import map_coordinates, gaussian_filter1d
 import logging
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
-from matplotlib.figure import Figure
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.aggregate_slicewise import Metric
@@ -24,6 +20,11 @@ from spinalcordtoolbox.resampling import resample_nib
 from spinalcordtoolbox.registration.algorithms import compute_pca, find_angle_hog
 from spinalcordtoolbox.utils.shell import parse_num_list_inv
 from spinalcordtoolbox.utils.sys import sct_progress_bar
+
+from spinalcordtoolbox.process_seg_debug import (
+    create_regularized_hog_angle_plot, create_ap_diameter_plots,
+    create_quadrant_area_plots, create_symmetry_plots
+)
 
 # NB: We use a threshold to check if an array is empty, instead of checking if it's exactly 0. This is because
 # resampling can change 0 -> ~0 (e.g. 1e-16). See: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3402
@@ -250,18 +251,10 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
         # Apply Gaussian filter to regularize the angles
         angle_hog_regularized = gaussian_filter1d(angle_hog_array, filter_size)
         if verbose == 2:
-            plt.figure(figsize=(10, 6))
-            plt.plot(z_indices_array, 180 * angle_hog_array / np.pi, 'ob', label='Original HOG angles')
-            plt.plot(z_indices_array, 180 * angle_hog_regularized / np.pi, 'r', linewidth=2, label='Regularized HOG angles')
-            plt.grid()
-            plt.xlabel('z slice')
-            plt.ylabel('Angle (deg)')
-            plt.title(f"Regularized HOG angle estimation (filter_size: {filter_size})")
-            plt.legend()
-            fname_out = os.path.join('process_seg_regularize_hog_rotation.png')
-            plt.savefig(fname_out, dpi=300)
-            plt.close()
-            logging.info(f"Saved regularized HOG angles visualization to: {fname_out}")
+            create_regularized_hog_angle_plot(
+                z_indices_array, filter_size,
+                angle_hog_array, angle_hog_regularized
+            )
 
         # Now compute shape properties using the regularized angles
         for i, iz in enumerate(z_indices_array):
@@ -511,8 +504,8 @@ def _measure_ap_diameter(seg_crop_r, seg_crop_r_rotated, dim, angle, iz, propert
 
         # Debug plotting
         if verbose == 2:
-            _debug_plotting_hog(angle, ap0_r, ap_diameter, dim, iz, properties, rl0_r, properties["diameter_RL"],
-                                seg_crop_r_rotated, seg_crop_r, coord_ap)
+            create_ap_diameter_plots(angle, ap0_r, ap_diameter, dim, iz, properties, rl0_r, properties["diameter_RL"],
+                                     seg_crop_r_rotated, seg_crop_r, coord_ap)
 
     return result
 
@@ -558,7 +551,6 @@ def _calculate_symmetry(seg_crop_r_rotated, centroid, dim, iz=None, verbose=1):
 
     # Compute Hausdorff distance as additional metric
     hausdorff_distance_AP = skimage.metrics.hausdorff_distance(seg_crop_r_rotated_cut > 0.5, seg_crop_r_flipped_AP > 0.5) * dim[0]
-    coords_AP = skimage.metrics.hausdorff_pair(seg_crop_r_rotated_cut > 0.5, seg_crop_r_flipped_AP > 0.5)  # For debug plots
 
     # Create an empty array for flipped version of RL axis
     seg_crop_r_flipped_RL = np.zeros_like(seg_crop_r_rotated)
@@ -581,7 +573,6 @@ def _calculate_symmetry(seg_crop_r_rotated, centroid, dim, iz=None, verbose=1):
 
     # Compute Hausdorff distance as additional metric
     hausdorff_distance_RL = skimage.metrics.hausdorff_distance(seg_crop_r_rotated_cut_RL > 0.5, seg_crop_r_flipped_RL > 0.5) * dim[0]
-    coords_RL = skimage.metrics.hausdorff_pair(seg_crop_r_rotated_cut_RL > 0.5, seg_crop_r_flipped_RL > 0.5)
 
     symmetry_metrics = {
         'symmetry_dice_RL': symmetry_dice_RL,
@@ -594,46 +585,12 @@ def _calculate_symmetry(seg_crop_r_rotated, centroid, dim, iz=None, verbose=1):
 
     # Create a debug plot
     if verbose == 2:
-        plt.figure(figsize=(8, 6))
-        plt.subplot(1, 2, 1)
-        plt.imshow(seg_crop_r_rotated > 0.5, cmap='gray', vmin=0, vmax=0.1, alpha=1)
-        plt.imshow(seg_crop_r_rotated_cut_RL > 0.5, cmap='Reds', vmin=0, vmax=0.1, alpha=0.7)
-        plt.imshow(seg_crop_r_flipped_RL > 0.5, cmap='Blues', vmin=0, vmax=0.1, alpha=0.6)
-        plt.plot(x0, y0, 'go', markersize=5, label='Centroid')
-        if coords_RL is not None and len(coords_RL) == 2:
-            (y1, x1), (y2, x2) = coords_RL
-            ax2 = plt.gca()
-            ax2.plot([x1, x2], [y1, y2], 'y-', linewidth=2, label='Hausdorff distance')
-            ax2.plot([x1, x2], [y1, y2], 'yo', markersize=5)
-        # plt.title('RL dice')
-        plt.axis('off')
-        plt.subplot(1, 2, 2)
-        plt.imshow(seg_crop_r_rotated > 0.5, cmap='gray', vmin=0, vmax=0.1, alpha=1)
-        plt.imshow(seg_crop_r_rotated_cut > 0.5, cmap='Reds', vmin=0, vmax=0.1, alpha=0.7)
-        plt.imshow(seg_crop_r_flipped_AP > 0.5, cmap='Blues', vmin=0, vmax=0.1, alpha=0.4)
-        plt.plot(x0, y0, 'go', markersize=5, label='Centroid')
-
-        # Plot Hausdorff pair points and line for AP dice
-        if coords_AP is not None and len(coords_AP) == 2:
-            (y1, x1), (y2, x2) = coords_AP
-            ax2 = plt.gca()
-            ax2.plot([x1, x2], [y1, y2], 'y-', linewidth=2, label='Hausdorff distance')
-            ax2.plot([x1, x2], [y1, y2], 'yo', markersize=5)
-        # plt.title('AP dice')
-        plt.axis('off')
-        # Move the legend outside of the subplots
-        plt.legend(loc='lower center', bbox_to_anchor=(-0.1, -0.1), ncol=2)
-        plt.suptitle(
-            f'Symmetry Dice RL: {symmetry_dice_RL:.3f}, AP: {symmetry_dice_AP:.3f}\n'
-            f'Hausdorff RL (mm): {hausdorff_distance_RL:.3f}, AP: {hausdorff_distance_AP:.3f}\n'
-            f'Symmetric diff RL (mm²): {symmetric_difference_RL:.3f}, AP: {symmetric_difference_AP:.3f}'
+        create_symmetry_plots(
+            seg_crop_r_rotated, centroid,
+            seg_crop_r_rotated_cut, seg_crop_r_rotated_cut_RL,
+            seg_crop_r_flipped_RL, seg_crop_r_flipped_AP,
+            symmetry_metrics, iz
         )
-        if not os.path.exists('debug_figures_symmetry'):
-            os.makedirs('debug_figures_symmetry')
-        fname_out = os.path.join('debug_figures_symmetry', f'process_seg_symmetry_dice_z{iz:03d}.png')
-        plt.savefig(fname_out, dpi=300)
-        plt.close()
-        logging.info(f"Saved symmetry Dice visualization to: {fname_out}")
 
     return symmetry_metrics
 
@@ -699,218 +656,11 @@ def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, floa
         'area_quadrant_anterior_left': np.sum(image_crop_r[ant_l_mask]) * pixel_area_mm2
     }
 
-    # Calculate AP and RL symmetry
-    left_area = quadrant_areas.get('area_quadrant_anterior_left', 0) + quadrant_areas.get('area_quadrant_posterior_left', 0)
-    right_area = quadrant_areas.get('area_quadrant_anterior_right', 0) + quadrant_areas.get('area_quadrant_posterior_right', 0)
-    anterior_area = quadrant_areas.get('area_quadrant_anterior_left', 0) + quadrant_areas.get('area_quadrant_anterior_right', 0)
-    posterior_area = quadrant_areas.get('area_quadrant_posterior_left', 0) + quadrant_areas.get('area_quadrant_posterior_right', 0)
-
-    # """"DEBUG
     if verbose == 2:
-        def _add_diameter_lines(ax, centroid, diameter_AP, diameter_RL, orientation_rad, dim):
-            """
-            Helper function to add diameter lines to a matplotlib axis.
-            """
-            y0, x0 = centroid
-
-            radius_ap = (diameter_AP / dim[0]) * 0.5
-            radius_rl = (diameter_RL / dim[1]) * 0.5
-
-            dx_ap = radius_ap * np.cos(orientation_rad)
-            dy_ap = radius_ap * np.sin(orientation_rad)
-            dx_rl = radius_rl * -np.sin(orientation_rad)
-            dy_rl = radius_rl * np.cos(orientation_rad)
-
-            ax.plot([x0 - dx_ap, x0 + dx_ap], [y0 - dy_ap, y0 + dy_ap], 'r--', linewidth=2, label='AP diameter')
-            ax.plot([x0 - dx_rl, x0 + dx_rl], [y0 - dy_rl, y0 + dy_rl], 'b--', linewidth=2, label='RL diameter')
-
-            # Add centroid
-            ax.plot(x0, y0, '.g', markersize=15)
-
-        def _setup_axis(ax, title, xlabel='y\nPosterior-Anterior (PA)', ylabel='x\nLeft-Right (LR)'):
-            """
-            Helper function to set up common axis properties.
-            """
-            ax.grid()
-            ax.set_xlabel(xlabel)
-            ax.set_ylabel(ylabel)
-            ax.set_title(title)
-
-        # Create masks for halves (combining quadrants)
-        right_mask = post_r_mask | ant_r_mask  # Right half (posterior + anterior right)
-        left_mask = post_l_mask | ant_l_mask   # Left half (posterior + anterior left)
-        anterior_mask = ant_r_mask | ant_l_mask  # Anterior half (right + left anterior)
-        posterior_mask = post_r_mask | post_l_mask  # Posterior half (right + left posterior)
-
-        # Calculate areas for halves
-        right_area = quadrant_areas['area_quadrant_posterior_right'] + quadrant_areas['area_quadrant_anterior_right']
-        left_area = quadrant_areas['area_quadrant_posterior_left'] + quadrant_areas['area_quadrant_anterior_left']
-        anterior_area = quadrant_areas['area_quadrant_anterior_right'] + quadrant_areas['area_quadrant_anterior_left']
-        posterior_area = quadrant_areas['area_quadrant_posterior_right'] + quadrant_areas['area_quadrant_posterior_left']
-
-        # Create figure with 1x3 subplots
-        fig = Figure(figsize=(18, 6))
-        FigureCanvas(fig)
-
-        # ---------------------------------
-        # Plot 1: Quadrants
-        # ---------------------------------
-        ax1 = fig.add_subplot(1, 3, 1)
-
-        # Plot each quadrant mask with a different color
-        ax1.imshow(np.where(post_r_mask, image_crop_r, np.nan), cmap='Reds', vmin=0, vmax=1, alpha=1)
-        ax1.imshow(np.where(ant_r_mask, image_crop_r, np.nan), cmap='Blues', vmin=0, vmax=1, alpha=1)
-        ax1.imshow(np.where(post_l_mask, image_crop_r, np.nan), cmap='Greens', vmin=0, vmax=1, alpha=1)
-        ax1.imshow(np.where(ant_l_mask, image_crop_r, np.nan), cmap='Purples', vmin=0, vmax=1, alpha=1)
-
-        ax1.imshow(image_crop_r > 0.5, cmap='gray', interpolation='nearest', vmin=0, vmax=1, alpha=.4)
-
-        _add_diameter_lines(ax1, centroid, diameter_AP, diameter_RL, orientation_rad, dim, )
-        _setup_axis(ax1, 'Quadrants')
-        offset = 20  # pixel offset from centroid for annotation placement
-        ax1.text(x0 - offset, y0 - offset, f"PR:\n{quadrant_areas['area_quadrant_posterior_right']:.2f} mm²", color='red',
-                 fontsize=10, ha='center', va='bottom', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
-        ax1.text(x0 + offset, y0 - offset, f"AR:\n{quadrant_areas['area_quadrant_anterior_right']:.2f} mm²", color='blue',
-                 fontsize=10, ha='center', va='bottom', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
-        ax1.text(x0 - offset, y0 + offset, f"PL:\n{quadrant_areas['area_quadrant_posterior_left']:.2f} mm²", color='green',
-                 fontsize=10, ha='center', va='top', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
-        ax1.text(x0 + offset, y0 + offset, f"AL:\n{quadrant_areas['area_quadrant_anterior_left']:.2f} mm²", color='purple',
-                 fontsize=10, ha='center', va='top', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
-        ax1.legend(loc='upper right')
-
-        # ---------------------------------
-        # Plot 2: Right-Left Symmetry
-        # ---------------------------------
-        ax2 = fig.add_subplot(1, 3, 2)
-
-        # Plot each half with a different color
-        ax2.imshow(np.where(right_mask, image_crop_r, np.nan), cmap='Reds', vmin=0, vmax=1, alpha=1, label='Right')
-        ax2.imshow(np.where(left_mask, image_crop_r, np.nan), cmap='Blues', vmin=0, vmax=1, alpha=1, label='Left')
-        ax2.imshow(image_crop_r > 0.5, cmap='gray', interpolation='nearest', vmin=0, vmax=1, alpha=.4)
-
-        _add_diameter_lines(ax2, centroid, diameter_AP, diameter_RL, orientation_rad, dim)
-        # _add_ellipse(ax2, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale)
-        _setup_axis(ax2, 'Right-Left Symmetry')
-        ax2.text(x0, y0 - offset, f"Right:\n{right_area:.2f} mm²", color='red', fontsize=10, ha='center', va='center', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
-        ax2.text(x0, y0 + offset, f"Left:\n{left_area:.2f} mm²", color='blue', fontsize=10, ha='center', va='center', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
-
-        # ---------------------------------
-        # Plot 3: Anterior-Posterior Symmetry
-        # ---------------------------------
-        ax3 = fig.add_subplot(1, 3, 3)
-
-        # Plot each half with a different color
-        ax3.imshow(np.where(anterior_mask, image_crop_r, np.nan), cmap='Greens', vmin=0, vmax=1, alpha=1, label='Anterior')
-        ax3.imshow(np.where(posterior_mask, image_crop_r, np.nan), cmap='Purples', vmin=0, vmax=1, alpha=1, label='Posterior')
-        ax3.imshow(image_crop_r > 0.5, cmap='gray', interpolation='nearest', vmin=0, vmax=1, alpha=.4)
-
-        _add_diameter_lines(ax3, centroid, diameter_AP, diameter_RL, orientation_rad, dim)
-        # _add_ellipse(ax3, centroid, diameter_AP, diameter_RL, orientation_rad, dim, upscale)
-        _setup_axis(ax3, 'Anterior-Posterior Symmetry')
-        ax3.text(x0 - offset, y0, f"Posterior:\n{posterior_area:.2f} mm²", color='purple',
-                 fontsize=10, ha='center', va='center', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
-        ax3.text(x0 + offset, y0, f"Anterior:\n{anterior_area:.2f} mm²", color='green',
-                 fontsize=10, ha='center', va='center', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
-
-        # Save figure
-        os.makedirs('debug_figures_area_quadrants', exist_ok=True)
-        fig.tight_layout()
-        fig.savefig(f'debug_figures_area_quadrants/cord_quadrant_tmp_fig_slice_{iz:03d}.png', dpi=150)
-        # """
+        create_quadrant_area_plots(
+            image_crop_r, centroid, orientation_deg, dim,
+            ant_r_mask, ant_l_mask, post_r_mask, post_l_mask, quadrant_areas,
+            diameter_AP, diameter_RL, iz,
+        )
 
     return quadrant_areas
-
-
-def _debug_plotting_hog(angle_hog, ap0_r, ap_diameter, dim, iz, properties, rl0_r, rl_diameter,
-                        rotated_bin, seg_crop_r, coord_ap):
-    """
-    """
-    def _add_labels(ax):
-        """Add A, P, R, L labels"""
-        bbox_params = dict(facecolor='black', alpha=1)
-        ax.text(ap0_r, seg_crop_r.shape[0] * 0.95, 'L', color='white', fontsize=12, ha='center', va='center',
-                bbox=bbox_params, alpha=0.8)
-        ax.text(seg_crop_r.shape[1] * 0.95, rl0_r, 'A', color='white', fontsize=12, ha='center', va='center',
-                bbox=bbox_params, alpha=0.8)
-        ax.text(ap0_r, seg_crop_r.shape[0] * 0.05, 'R', color='white', fontsize=12, ha='center', va='center',
-                bbox=bbox_params, alpha=0.8)
-        ax.text(seg_crop_r.shape[1] * 0.05, rl0_r, 'P', color='white', fontsize=12, ha='center', va='center',
-                bbox=bbox_params, alpha=0.8)
-
-    def _add_ellipse(ax, x0, y0):
-        """Add an ellipse to the plot."""
-        ellipse = Ellipse(
-            (x0, y0),
-            width=properties['diameter_AP_ellipse'] / dim[0],
-            height=properties['diameter_RL'] / dim[1],
-            angle=properties['orientation']*180.0/math.pi,
-            edgecolor='orange',
-            facecolor='none',
-            linewidth=2,
-            label="Ellipse fitted using skimage.regionprops, angle: {:.2f}".format(-properties['orientation']*180.0/math.pi)
-        )
-        ax.add_patch(ellipse)
-
-    # Plot the original and rotated segmentation
-    import matplotlib.pyplot as plt
-    from matplotlib.patches import Ellipse
-    fig = plt.figure(figsize=(6, 8))
-    ax1 = fig.add_subplot(111)
-    # 1. Original segmentation
-    seg_crop_r_bin = np.array(seg_crop_r > 0.5, dtype='uint8')  # binarize the original segmentation
-    ax1.imshow(seg_crop_r_bin, cmap='gray', alpha=0.6, label='Original Segmentation')
-    # ax1.imshow(seg_crop_r_bin, cmap='Reds', alpha=1, label='Original Segmentation', vmin=0, vmax=1.3)
-    # Add ellipse fitted using skimage.regionprops
-    _, _, [y0, x0] = compute_pca(seg_crop_r)
-    # Center of mass in the original segmentation
-    ax1.plot(x0, y0, 'ko', markersize=10, label='Original Segmentation Center of Mass')
-    _add_ellipse(ax1, x0, y0)
-    # Draw AP and RL axes through the center of mass of the original segmentation
-    ax1.arrow(ap0_r, rl0_r, np.sin(angle_hog + (90 * math.pi / 180)) * 25,
-              np.cos(angle_hog + (90 * math.pi / 180)) * 25, color='black', width=0.1,
-              head_width=1, label=f'HOG angle = {angle_hog * 180 / math.pi:.1f}°')  # convert to degrees
-    # Add AP and RL diameters from the original segmentation obtained using skimage.regionprops
-    radius_ap = (properties['diameter_AP_ellipse'] / dim[0]) * 0.5
-    radius_rl = (properties['diameter_RL'] / dim[1]) * 0.5
-    dx_ap = radius_ap * np.cos(properties['orientation'])
-    dy_ap = radius_ap * np.sin(properties['orientation'])
-    dx_rl = radius_rl * -np.sin(properties['orientation'])
-    dy_rl = radius_rl * np.cos(properties['orientation'])
-    ax1.plot([x0 - dx_ap, x0 + dx_ap], [y0 - dy_ap, y0 + dy_ap], color='blue', linestyle='--', linewidth=2,
-             label=f'AP diameter (skimage.regionprops) = {properties["diameter_AP_ellipse"]:.2f} mm')
-    ax1.plot([x0 - dx_rl, x0 + dx_rl], [y0 - dy_rl, y0 + dy_rl], color='blue', linestyle='solid', linewidth=2,
-             label=f'RL diameter (skimage.regionprops) = {properties["diameter_RL"]:.2f} mm')
-    # Add A, P, R, L labels
-    _add_labels(ax1)
-
-    # 2. Rotated segmentation by angle_hog
-    ax1.imshow(rotated_bin, cmap='Reds', alpha=0.8, label='Rotated Segmentation')
-    # Center of mass
-    ax1.plot(ap0_r, rl0_r, 'bo', markersize=10, label='Rotated Segmentation Center of Mass')
-    rotated_bin_bin = np.array(rotated_bin > 0.5, dtype='uint8')  # binarize the rotated segmentation
-    right = np.nonzero(rotated_bin_bin[:, ap0_r])[0][0]
-    left = np.nonzero(rotated_bin_bin[:, ap0_r])[0][-1]
-    if rotated_bin_bin[coord_ap, :].size > 0 and np.any(rotated_bin_bin[coord_ap, :]):
-        anterior = np.nonzero(rotated_bin_bin[coord_ap, :])[0][0]
-        posterior = np.nonzero(rotated_bin_bin[coord_ap, :])[0][-1]
-    else:
-        anterior = posterior = np.nan
-    ax1.plot([anterior, posterior], [coord_ap, coord_ap], color='red', linestyle='--', linewidth=2,
-             label=f'AP Diameter (rotated segmentation) = {ap_diameter:.2f} mm, coord_ap={coord_ap}')
-    ax1.plot([ap0_r, ap0_r], [left, right], color='red', linestyle='solid', linewidth=2,
-             label=f'RL Diameter (rotated segmentation) = {rl_diameter:.2f} mm')
-
-    # Plot horizontal and vertical grid lines
-    ax1.grid(which='both', color='gray', linestyle='--', linewidth=0.5, alpha=0.5)
-    ax1.legend(loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=1, framealpha=1.0, fontsize=8)
-    ax1.set_title(f'Slice {iz}\nOriginal segmentation and Segmentation rotated by HOG angle')
-
-    plt.tight_layout()
-    # plt.show()
-    # Save the figure
-    if not os.path.exists('debug_figures_diameters'):
-        os.makedirs('debug_figures_diameters')
-    fname_out = os.path.join('debug_figures_diameters', f'slice_{iz}.png')
-    fig.savefig(fname_out, dpi=300, bbox_inches='tight')
-    plt.close(fig)  # Close the figure to free up memory
-    print(f'Saved debug figure for slice {iz} with segmentation properties to {fname_out}')
