@@ -71,7 +71,7 @@ def create_qc_entry(
     plane: str,
     dataset: Optional[str],
     subject: Optional[str],
-    image_extension: str = 'png',
+    image_extension: str = 'webp',
 ):
     """
     Generate a new QC report entry.
@@ -260,7 +260,7 @@ def sct_register_multimodal(
         ax.get_yaxis().set_visible(False)
         img_path = str(imgs_to_generate['path_background_img'])
         logger.debug('Save image %s', img_path)
-        fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
+        fig.savefig(img_path, format='webp', transparent=True, dpi=DPI)
 
         # Generate the second QC report image
         img = equalize_histogram(mosaic(img_output, centers))
@@ -274,7 +274,7 @@ def sct_register_multimodal(
         ax.get_yaxis().set_visible(False)
         img_path = str(imgs_to_generate['path_overlay_img'])
         logger.debug('Save image %s', img_path)
-        fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
+        fig.savefig(img_path, format='webp', transparent=True, dpi=DPI)
 
 
 def sct_deepseg(
@@ -414,7 +414,7 @@ def sct_deepseg_axial(
     ax.get_yaxis().set_visible(False)
     img_path = str(imgs_to_generate['path_background_img'])
     logger.debug('Save image %s', img_path)
-    fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
+    fig.savefig(img_path, format='webp', transparent=True, dpi=DPI)
 
     # Generate the second QC report image
     fig = mpl_figure.Figure()
@@ -441,7 +441,7 @@ def sct_deepseg_axial(
     ax.get_yaxis().set_visible(False)
     img_path = str(imgs_to_generate['path_overlay_img'])
     logger.debug('Save image %s', img_path)
-    fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
+    fig.savefig(img_path, format='webp', transparent=True, dpi=DPI)
 
 
 def sct_deepseg_spinal_rootlets(
@@ -514,7 +514,7 @@ def sct_deepseg_spinal_rootlets(
     ax.get_yaxis().set_visible(False)
     img_path = str(imgs_to_generate['path_background_img'])
     logger.debug('Save image %s', img_path)
-    fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
+    fig.savefig(img_path, format='webp', transparent=True, dpi=DPI)
 
     # Generate the second QC report image
     fig = mpl_figure.Figure()
@@ -549,7 +549,7 @@ def sct_deepseg_spinal_rootlets(
     ax.get_yaxis().set_visible(False)
     img_path = str(imgs_to_generate['path_overlay_img'])
     logger.debug('Save image %s', img_path)
-    fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
+    fig.savefig(img_path, format='webp', transparent=True, dpi=DPI)
 
 
 def sct_deepseg_sagittal(
@@ -645,7 +645,7 @@ def sct_deepseg_sagittal(
     ax.get_yaxis().set_visible(False)
     img_path = str(imgs_to_generate['path_background_img'])
     logger.debug('Save image %s', img_path)
-    fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
+    fig.savefig(img_path, format='webp', transparent=True, dpi=DPI)
 
     # Generate the second QC report image
     fig = mpl_figure.Figure()
@@ -672,7 +672,7 @@ def sct_deepseg_sagittal(
     ax.get_yaxis().set_visible(False)
     img_path = str(imgs_to_generate['path_overlay_img'])
     logger.debug('Save image %s', img_path)
-    fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
+    fig.savefig(img_path, format='webp', transparent=True, dpi=DPI)
 
 
 def sct_analyze_lesion(

@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 
 class QcImage:
     """
-    Class used to create a .png file from a 2d image produced by the class "Slice"
+    Class used to create a .webp file from a 2d image produced by the class "Slice"
     """
     _color_bin_green = ["#ffffff", "#00ff00"]
     _color_bin_red = ["#ffffff", "#ff0000"]
@@ -417,7 +417,7 @@ class QcImage:
         logger.info('Saving gif %s', gif_out_path)
         ani.save(gif_out_path, writer=writer, dpi=self.dpi)
 
-    def _save(self, fig, img_path, format='png', bbox_inches='tight', pad_inches=0.00, dpi=300):
+    def _save(self, fig, img_path, format='webp', bbox_inches='tight', pad_inches=0.00, dpi=300):
         """
         Save the current figure into an image.
 
