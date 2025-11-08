@@ -270,8 +270,7 @@ class Mutex(portalocker.BoundedSemaphore):
     General purpose mutex (mutually exclusive semaphore) with a tweaks to
     make it safer, more consistent, and easier to use within SCT. Namely:
 
-    * Implicitly sanitizes the file used by the Mutex within the file system to ensure
-        it won't create orphaned directories (or worse)
+    * Implicitly sanitizes the key used by the Mutex to prevent unintended side effects
     * Its "maximum" is enforced to be 1, as required of a mutex.
     * Can be used as a context manager, ensuring it is released after use.
     * If provided, can log a message when it starts waiting to acquire its lock.
