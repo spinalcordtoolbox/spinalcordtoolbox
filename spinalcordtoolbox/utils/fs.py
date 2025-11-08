@@ -4,17 +4,15 @@ Filesystem related helpers and utilities
 Copyright (c) 2020 Polytechnique Montreal <www.neuro.polymtl.ca>
 License: see the file LICENSE
 """
-import pathlib
-import sys
+import datetime
 import io
+import logging
 import os
 import shutil
+import sys
 import tempfile
-import datetime
-import logging
 from hashlib import md5
 from pathlib import Path
-from contextlib import contextmanager
 
 import portalocker
 
@@ -356,7 +354,8 @@ class Mutex(portalocker.BoundedSemaphore):
             super().acquire(0, check_interval, fail_when_locked=False)
 
             # If we have the lock, return here: we already have the lock!
-            if self.lock is not None: return self.lock
+            if self.lock is not None:
+                return self.lock
 
             # Otherwise, print a message before proceeding to regular lock acquisition.
             printv(self.waiting_msg)

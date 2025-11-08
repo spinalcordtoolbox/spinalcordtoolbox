@@ -7,7 +7,6 @@ License: see the file LICENSE
 
 from contextlib import contextmanager
 import datetime
-from hashlib import md5
 import importlib.resources
 import itertools as it
 import json
