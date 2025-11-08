@@ -20,6 +20,7 @@ from typing import Sequence
 from textwrap import dedent
 import functools
 
+from spinalcordtoolbox.deepseg.models import find_and_install_models
 from spinalcordtoolbox.reports import qc2
 from spinalcordtoolbox.image import splitext, Image, check_image_kind
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax, ActionCreateFolder
@@ -361,10 +362,14 @@ def main(argv: Sequence[str]):
     verbose = arguments.v
     set_loglevel(verbose=verbose, caller_module_name=__name__)
 
-    # If we were asked to install the requisite models, install and end immediately
+    # If the 'install' flag is set, force a (re-)install and end here
     if arguments.install:
-        models.install_task_models(arguments.task, arguments.custom_url)
+        for name_model in models.get_models_for_task(arguments.task):
+            models.install_model(name_model)
         return
+
+    # Find (and, if needed, install or update) the models associated with the requested task
+    name_models = find_and_install_models(arguments.task, arguments.custom_url)
 
     # Ensure a valid input file was provided
     for file in arguments.i:
@@ -382,33 +387,13 @@ def main(argv: Sequence[str]):
             parser.error(f"{len(arguments.i)} input files provided, but {len(arguments.c)} contrasts passed. "
                          f"Number of contrasts should match the number of inputs.")
 
-    # Get pipeline model names
-    name_models = models.TASKS[arguments.task]['models']
-
     # Run pipeline by iterating through the models
     fname_prior = None
     output_filenames = None
     for name_model in name_models:
-        # Check if this is an official model
-        if name_model in list(models.MODELS.keys()):
-            # If it is, check if it is installed
-            path_model = models.folder(name_model)
-            path_models = models.find_model_folder_paths(path_model)
-            if not models.is_valid(path_models):
-                printv("Model {} is not installed. Installing it now...".format(name_model))
-                models.install_model(name_model)
-                path_models = models.find_model_folder_paths(path_model)  # Re-parse to find newly downloaded folders
-            # Check folder version file ('{path_model}/source.json')
-            elif not models.is_up_to_date(path_model):
-                printv("Model {} is out of date. Re-installing it now...".format(name_model))
-                models.install_model(name_model)
-                path_models = models.find_model_folder_paths(path_model)  # Re-parse to find newly downloaded folders
-        # If it is not, check if this is a path to a valid model
-        else:
-            path_model = os.path.abspath(name_model)
-            path_models = models.find_model_folder_paths(path_model)
-            if not models.is_valid(path_models):
-                parser.error("The input model is invalid: {}".format(path_models))
+        # Setup
+        path_model = models.folder(name_model)
+        path_models = models.find_model_folder_paths(path_model)
 
         # Order input images (only relevant for 'tumor-edema-cavity_t1-t2')
         if arguments.task == 'tumor_edema_cavity_t1_t2':
