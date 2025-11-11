@@ -348,8 +348,8 @@ class Mutex(portalocker.BoundedSemaphore):
         able to acquire the lock.
         """
         # If we have a message on miss, do a very short acquisition attempt first
-        timeout = timeout if timeout else self.timeout
-        check_interval = check_interval if check_interval else self.check_interval
+        timeout = timeout if timeout is not None else self.timeout
+        check_interval = check_interval if check_interval is not None else self.check_interval
         if self.waiting_msg and timeout > check_interval:
             super().acquire(0, check_interval, fail_when_locked=False)
 
