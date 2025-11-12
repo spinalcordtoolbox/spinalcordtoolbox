@@ -318,6 +318,53 @@ def test_sct_analyze_lesion_with_template(dummy_lesion, tmp_path, tmp_path_qc):
         assert os.path.isfile(tmp_path / f"{fname}{suffix}")
 
 
+# Each tuple represents the starting coordinates (x, y, z) and dimensions (width, height, depth) of a dummy lesion
+@pytest.mark.parametrize("dummy_lesion", [
+    ([(24, 47, 18), (20, 1, 20)])   # large square-like single-slice lesion covering entire SC cross-section --> the lesion is restricted to the cord by sct_analyze_lesion
+], indirect=["dummy_lesion"])
+def test_sct_analyze_lesion_with_template_complete_lesion(dummy_lesion, tmp_path, tmp_path_qc):
+    """
+    Complete lesion spanning the entire spinal cord cross-section.
+    WM and GM PAM50 regions should be fully occupied by the lesion (i.e., 100% coverage).
+    """
+    # prep the template for use with `-f` argument of sct_analyze_lesion
+    sct_register_to_template.main(argv=['-i', sct_test_path('t2', 't2.nii.gz'),
+                                        '-s', sct_test_path('t2', 't2_seg-manual.nii.gz'),
+                                        '-l', sct_test_path('t2', 'labels.nii.gz'),
+                                        '-t', sct_test_path('template'),
+                                        '-ofolder', str(tmp_path),
+                                        '-qc', tmp_path_qc])
+    sct_warp_template.main(argv=['-d', sct_test_path('t2', 't2.nii.gz'),
+                                 '-w', str(tmp_path/'warp_template2anat.nii.gz'),
+                                 '-a', '1',  # TODO: add "small" atlas
+                                 '-t', sct_test_path('template'),
+                                 '-ofolder', str(tmp_path),
+                                 '-qc', tmp_path_qc])
+    template_path = tmp_path / 'template'
+    shutil.copy(template_path / "PAM50_small_levels.nii.gz",
+                template_path / "PAM50_levels.nii.gz")  # Rename to comply with sct_analyze_lesion expectations
+    (tmp_path / 'atlas').mkdir()  # make a dummy atlas folder to avoid errors due to expected folder
+
+    path_seg = sct_test_path("t2", "t2_seg-manual.nii.gz")
+    # Run the analysis on the dummy lesion file
+    path_lesion, _ = dummy_lesion
+    sct_analyze_lesion.main(argv=['-m', path_lesion,
+                                  '-s', path_seg,
+                                  '-f', str(tmp_path),
+                                  '-perslice', str(1),
+                                  '-ofolder', str(tmp_path),
+                                  '-qc', tmp_path_qc])
+    _, fname, _ = extract_fname(path_lesion)
+    for suffix in ['_analysis.pkl', '_analysis.xlsx', '_label.nii.gz']:
+        assert os.path.isfile(tmp_path / f"{fname}{suffix}")
+
+    # Load analysis results from pickled pandas.Dataframe
+    with open(tmp_path/f"{fname}_analysis.pkl", 'rb') as f:
+        measurements = pickle.load(f)['ROI_occupied_by_lesion']
+
+    # TODO: once the "small" atlas is available, add a test to check that the WM and GM regions are fully occupied by the lesion
+
+
 @pytest.mark.sct_testing
 def test_sct_analyze_lesion_no_lesion_found(tmp_path, tmp_path_qc):
     """Test that the script exits when no lesion is found in the input image."""

@@ -13,9 +13,11 @@ import textwrap
 
 import numpy as np
 from skimage.measure import label
-from scipy.ndimage import center_of_mass
+from scipy.ndimage import center_of_mass, distance_transform_edt
+from scipy.stats import norm
 
 from spinalcordtoolbox.image import Image, rpi_slice_to_orig_orientation
+from spinalcordtoolbox.math import smooth
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
 from spinalcordtoolbox.metadata import read_label_file
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
@@ -690,6 +692,40 @@ class AnalyzeLesion:
         self.measure_pd.loc[idx, 'max_equivalent_diameter [mm]'] = diameter_cur
         printv('  Max. equivalent diameter: ' + str(np.round(diameter_cur, 2)) + ' mm', self.verbose, type='info')
 
+    def __soften_lesion(self, im_mask_data):
+        """
+        Soften the lesion mask to account for partial volume effects (PVE).
+        The softening is done over 2D axial slices.
+        :param im_mask_data: 3D numpy array, binary mask of the currently processed lesion
+        :return: 3D numpy array, softened lesion mask
+        """
+
+        # bin_mask_volume = np.sum(im_mask_data)
+
+        # Exact Euclidean distance transform (EDT) over 2D axial slices
+        d = np.zeros(im_mask_data.shape)
+        for slice in range(im_mask_data.shape[2]):
+            lesion = im_mask_data[:, :, slice]
+            dist_out = distance_transform_edt(lesion == 0)
+            dist_in = distance_transform_edt(lesion == 1)
+            d_slice = dist_out - dist_in  # negative inside the mask
+            d[:, :, slice] = d_slice
+
+        # Gaussian CDF (Cumulative distribution function) over 2D axial slices
+        soft_mask = np.zeros(im_mask_data.shape)
+        num_of_pix = 1
+        sigma = 0.39 * num_of_pix  # voxel units (0.39 ≈ 1 voxel: ~2.56 STDs span the 10-90% range, so 1/2.56 ≈ 0.39)
+
+        for slice in range(im_mask_data.shape[2]):
+            d_slice = d[:, :, slice]
+            soft_mask[:, :, slice] = norm.cdf(-d_slice / sigma)
+
+        # soft_mask_volume = np.sum(soft_mask)
+        # # Rescale to get the same total volume as the original binary mask
+        # soft_mask = soft_mask * (bin_mask_volume / soft_mask_volume)
+
+        return soft_mask
+
     def ___pve_weighted_avg(self, im_mask_data, im_atlas_data):
         return im_mask_data * im_atlas_data
 
@@ -698,6 +734,30 @@ class AnalyzeLesion:
         image_out = np.zeros_like(image)
         image_out[indices] = image[indices]
         return image_out
+
+    def _get_vertebral_level_for_slice(self, im_vert_data, slice_idx):
+        """
+        Get the most common vertebral level for a given slice.
+        For slices with overlapping vertebral levels, the most common level (based on the number of voxels) is returned.
+
+        :param im_vert_data: 3D numpy array containing vertebral level labels
+        :param slice_idx: int, slice index in the z-direction
+        :return: int or str, vertebral level or 'N/A' if no level found
+        """
+        if slice_idx >= im_vert_data.shape[2]:
+            return 'N/A'
+
+        # Get all vertebral level values in this slice (excluding 0)
+        slice_data = im_vert_data[:, :, slice_idx]
+        unique_levels, counts = np.unique(slice_data[slice_data > 0], return_counts=True)
+        # Example: [289 272], [5 6] means that level 5 has 289 voxels and level 6 has 272 voxels in this slice
+
+        if len(unique_levels) == 0:
+            return 'N/A'
+
+        # Return the most common vertebral level in this slice
+        most_common_idx = np.argmax(counts)
+        return int(unique_levels[most_common_idx])
 
     def __relative_ROIvol_in_mask(self, im_mask_data, im_atlas_roi_data, p_lst, indices_to_keep):
         #
@@ -713,6 +773,7 @@ class AnalyzeLesion:
         #           - p_lst - type=list of float
         #           - indices_to_keep - type=(anything that can be used to index numpy arrays)
         #                               anything outside this mask will be set to 0
+        #                               These indices correspond to either a slice or a vertebral level
         #
         im_atlas_roi_data = self.__keep_only_indices(im_atlas_roi_data, indices_to_keep)
         im_mask_data = self.__keep_only_indices(im_mask_data, indices_to_keep)
@@ -724,8 +785,21 @@ class AnalyzeLesion:
         return vol_mask_roi_wa, vol_tot_roi
 
     def _measure_eachLesion_distribution(self, lesion_id, atlas_data, im_vert, im_lesion, p_lst):
+        """the lesion is the reference (the percentage of the lesion in each region)"""
         sheet_name = 'lesion#' + str(lesion_id) + '_distribution'
-        self.distrib_matrix_dct[sheet_name] = pd.DataFrame.from_dict({'row': [str(v) for v in self.rows.keys()]})
+
+        # Create the initial DataFrame with row column
+        df_data = {'row': [str(v) for v in self.rows.keys()]}
+
+        # Add vertebral level column when using per-slice analysis
+        if self.row_name == "slice":
+            vert_levels = []
+            for slice_idx in self.rows.keys():
+                vert_level = self._get_vertebral_level_for_slice(im_vert, slice_idx)
+                vert_levels.append(vert_level)
+            df_data['vert_level'] = vert_levels
+
+        self.distrib_matrix_dct[sheet_name] = pd.DataFrame.from_dict(df_data)
 
         # initialized to 0 for each vertebral level and each PAM50 tract
         for tract_id in atlas_data:
@@ -733,6 +807,13 @@ class AnalyzeLesion:
 
         vol_mask_tot = 0.0  # vol tot of this lesion through the vertebral levels and PAM50 tracts
         im_vert_and_lesion = im_vert * im_lesion  # to check which vertebral levels have lesions
+
+        # Soften the lesion to account for PVE
+        im_lesion = self.__soften_lesion(im_mask_data=im_lesion)
+
+        # # Simple Gaussian smoothing
+        # im_lesion = smooth(im_lesion, sigmas=[0.5, 0.5, 0])  # sigma corresponding to half the voxel size
+
         # Loop over slices or vertebral levels
         for row, indices_to_keep in sct_progress_bar(self.rows.items(), unit=self.row_name,
                                                      desc="  Computing lesion distribution (volume values)"):
@@ -778,7 +859,7 @@ class AnalyzeLesion:
         return np.sum(res_mask) * 100.0 / np.sum(res_tot)
 
     def _measure_totLesion_distribution(self, im_lesion, atlas_data, im_vert, p_lst):
-
+        """the region is the reference (the percentage of the region affected by the lesion)"""
         sheet_name = 'ROI_occupied_by_lesion'
         total_row = f'total % (all {self.row_name})'
         rows_with_total = {
@@ -786,13 +867,55 @@ class AnalyzeLesion:
             # numpy array index equivalent to [:, :, :]
             total_row: (slice(None), slice(None), slice(None)),
         }
-        self.distrib_matrix_dct[sheet_name] = pd.DataFrame.from_dict({'row': [str(r) for r in rows_with_total]})
+
+        # Create the initial DataFrame with row column
+        df_data = {'row': [str(r) for r in rows_with_total]}
+
+        # Add vertebral level column when using per-slice analysis
+        if self.row_name == "slice":
+            vert_levels = []
+            for row_key in rows_with_total.keys():
+                if row_key == total_row:
+                    vert_levels.append('Total')
+                else:
+                    vert_level = self._get_vertebral_level_for_slice(im_vert, row_key)
+                    vert_levels.append(vert_level)
+            df_data['vert_level'] = vert_levels
+
+        self.distrib_matrix_dct[sheet_name] = pd.DataFrame.from_dict(df_data)
 
         # initialized to 0 for each vertebral level and each PAM50 tract
         for tract_id in atlas_data:
             self.distrib_matrix_dct[sheet_name][f"PAM50_{tract_id:02}"] = [0] * len(rows_with_total)
 
+        # Compute volume of the original lesion
+        vol_bin_lesion = np.sum(im_lesion) * p_lst[0] * p_lst[1] * p_lst[2]
+        # Save volume into a text file
+        fname_vol_lesion_txt = os.path.join(self.wrk_dir, self.fname_mask.replace('.nii.gz', '-CDF_2D_sigma1.txt'))
+        with open(fname_vol_lesion_txt, 'w') as f:
+            f.write(f'Volume of the binary lesion: {vol_bin_lesion:.4f} mm³\n')
+
+        # Soften the lesion to account for PVE
+        im_lesion = self.__soften_lesion(im_mask_data=im_lesion)
+
+        # # Simple Gaussian smoothing
+        # im_lesion = smooth(im_lesion, sigmas=[0.5, 0.5, 0])  # sigma corresponding to half the voxel size
+
+        # Save the soft lesion
+        img_smoothed_lesion = Image(self.fname_label)
+        img_smoothed_lesion.data = im_lesion
+        fname_smoothed_lesion = os.path.join(self.wrk_dir, self.fname_mask.replace('.nii.gz', '-CDF_2D_sigma1.nii.gz'))
+        img_smoothed_lesion.save(fname_smoothed_lesion)
+        printv(f'  Soft lesion saved as: {fname_smoothed_lesion}', self.verbose, type='info')
+
         im_vert_and_lesion = im_vert * im_lesion  # to check which vertebral levels have lesions
+
+        # Compute volume of the soft lesion
+        vol_soft_lesion = np.sum(im_lesion) * p_lst[0] * p_lst[1] * p_lst[2]
+        # Save volume into the same text file
+        with open(fname_vol_lesion_txt, 'a') as f:
+            f.write(f'Volume of the soft lesion: {vol_soft_lesion:.4f} mm³\n')
+
         # loop over slices/vertlevels
         for row, indices_to_keep in sct_progress_bar(rows_with_total.items(), unit=self.row_name,
                                                      desc="  Computing ROI distribution for all lesions"):
@@ -834,6 +957,7 @@ class AnalyzeLesion:
             if os.path.isfile(self.path_levels):
                 img_vert = Image(self.path_levels)
                 im_vert_data = img_vert.data
+                # Per-level atlas-based analysis
                 if self.row_name == "vert":
                     # list of vertebral levels available in the input image
                     # precompute the list of indices for each vertebral level
@@ -842,6 +966,7 @@ class AnalyzeLesion:
                         vert: np.where(im_vert_data == vert)
                         for vert in np.unique(im_vert_data) if vert
                     }
+                # Per-slice atlas-based analysis (`-perslice 1` input arg)
                 else:
                     assert self.row_name == "slice"
                     # Keep the same vert image, but uses slices instead
@@ -874,6 +999,14 @@ class AnalyzeLesion:
         # Note: The function checks if the spinal cord segmentation is provided, if not, only the volume of each lesion
         #  is computed (to determine the largest lesion) and the rest of the function is skipped.
         self.get_midsagittal_slice(im_lesion_data, label_lst, p_lst)
+
+        # Restrict the atlas to the spinal cord mask, since we assume that lesions occur only within the spinal cord.
+        # In cases of complete traumatic SCI (i.e., lesions fully occupying the spinal cord cross-section), any atlas
+        # regions extending beyond the spinal cord could yield <100% values for __relative_ROIvol_in_mask. But a fully
+        # occupied spinal cord by the lesion should correspond to 100% values.
+        if self.path_template is not None and self.fname_sc is not None:
+            atlas_data_dct = {tract_id: atlas_data * Image(self.fname_sc).data
+                              for tract_id, atlas_data in atlas_data_dct.items()}
 
         # iteration across each lesion to measure statistics
         for lesion_label in label_lst:
