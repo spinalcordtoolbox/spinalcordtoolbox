@@ -26,6 +26,12 @@ The following studies have used SCT:
 2025 
 ----
 
+-  St-Onge *et al.* `Parkinson’s disease in the spinal cord: an exploratory study to establish T2*w, MTR and diffusion-weighted imaging metric values <https://doi.org/10.1162/IMAG.a.1015>`_, **Imaging Neurosci.** 2025
+-  Schlienger *et al.* `Mapping Human Proprioceptive Projections of Upper Limb Muscles Through Spinal Cord fMRI <https://doi.org/10.1002/hbm.70386>`_, **Hum. Brain Mapp.** 2025
+-  Wang *et al.* `The role of pain catastrophizing in modulating irritable bowel syndrome symptoms through brain-spinal cord integration <https://doi.org/10.1016/j.metrad.2025.100187>`_, **Meta-Radiol.** 2025
+-  Wei *et al.* `CoSpine open access simultaneous cortico-spinal fMRI database of thermal pain and motor tasks <https://doi.org/10.1038/s41597-025-05982-x>`_, **Sci. Data** 2025
+-  Cronin *et al.* `Relaxation-compensated chemical exchange saturation transfer MRI in the cervical spinal cord at 3T: An application in multiple sclerosis <https://doi.org/10.1016/j.ynirp.2025.100298>`_, **Neuroimage Rep.** 2025
+-  Hernandez-Charpak *et al.* `Towards personalized mapping through lumbosacral spinal cord task fMRI <https://doi.org/10.1162/imag_a_00455>`_, **Imaging Neurosci.** 2025
 -  Fauziyya *et al.* `Magnetization transfer MRI (MT-MRI) detects white matter damage beyond the primary site of compression in degenerative cervical myelopathy using a novel semi-automated analysis <https://doi.org/10.1016/j.compbiomed.2025.111083>`_, **Comput. Biol. Med.** 2025
 -  Qi *et al.* `Structure Changes in the Cervical Spinal Cord and Brain in Children With Complete Thoracolumbar Spinal Cord Injury <https://doi.org/10.1177/15459683251369490>`_, **Neurorehabilit. Neural Repair** 2025
 -  Lobo *et al.* `Longitudinal Evaluation of Ataxia and Brain Structural Changes in RFC1-Related Disorder <https://doi.org/10.1002/mdc3.70344>`_, **Mov. Disord.** 2025

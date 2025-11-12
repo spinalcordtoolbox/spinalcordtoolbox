@@ -280,6 +280,17 @@ def get_parser(subparser_to_return=None):
         subparser.add_tempfile_args()
 
         # Add options that only apply to specific tasks
+        is_nnunet = all(models.MODELS[model_name]['framework'] == "nnunetv2" for model_name in task_dict['models'])
+        if is_nnunet and task_name != 'totalspineseg':
+            # Test time augmentation is an nnUNet-specific feature (`use_mirroring=True` internally)
+            # But, the totalspineseg package doesn't support this argument (yet), so skip it
+            params.add_argument(
+                "-test-time-aug",
+                action='store_true',
+                help="Perform test-time augmentation (TTA) by flipping the input image along all axes and averaging the "
+                     "resulting predictions.\n"
+                     "Note: The time it takes to run the model will increase due to the additional predictions."
+            )
         if task_name == 'tumor_edema_cavity_t1_t2':
             input_output.add_argument(
                 "-c",
@@ -297,6 +308,20 @@ def get_parser(subparser_to_return=None):
                      "More details on TotalSpineSeg's two models can be found here: https://github.com/neuropoly/totalspineseg/?tab=readme-ov-file#model-description",
                 choices=(0, 1),
                 default=0)
+        if task_name == 'lesion_ms':
+            # Add possibility of having soft segmentation for the lesion_ms task
+            params.add_argument(
+                "-soft-ms-lesion",
+                action="store_true",
+                help="If set, the model will output a soft segmentation (i.e. probability map) instead of a binary "
+                     "segmentation."
+            )
+            # Add possibility of segmenting on only 1 fold for quicker inference
+            params.add_argument(
+                "-single-fold",
+                action="store_true",
+                help="If set, only 1 fold will be used for inference instead of the full 5-fold ensemble. This will speed up inference, but may reduce segmentation quality."
+            )
 
         # Add input cropping note specific to the `lesion_ms_mp2rage` task
         if task_name == 'lesion_ms_mp2rage':
@@ -442,6 +467,25 @@ def main(argv: Sequence[str]):
         else:
             thr = (arguments.binarize_prediction if arguments.binarize_prediction is not None
                    else models.MODELS[name_model]['thr'])  # Default `thr` value stored in model dict
+            # Pass any "extra" kwargs defined only for specific models/tasks
+            extra_network_kwargs = {
+                arg_name: getattr(arguments, arg_name)
+                # "single_fold" -> used only by lesion_ms
+                # "test_time_aug" -> used only by nnunetv2 models
+                for arg_name in ["single_fold", "test_time_aug"]
+                if hasattr(arguments, arg_name)
+            }
+            extra_inference_kwargs = {
+                arg_name: getattr(arguments, arg_name)
+                # "step1_only" -> used only by totalspineseg
+                # "soft_ms_lesion" -> used only by lesion_ms
+                for arg_name in ["step1_only", "soft_ms_lesion"]
+                if hasattr(arguments, arg_name)
+            }
+            # The MS lesion model is multifold, which requires turning on the "ensemble averaging" behavior
+            if arguments.task == 'lesion_ms':
+                extra_inference_kwargs['ensemble'] = True
+            # Run inference
             im_lst, target_lst = inference.segment_non_ivadomed(
                 path_model, model_type, input_filenames, thr,
                 # NOTE: contrast-agnostic nnunet model sometimes predicts pixels outside the cord, we want to
@@ -451,9 +495,8 @@ def main(argv: Sequence[str]):
                 remove_small=arguments.remove_small,
                 use_gpu=use_gpu, remove_temp_files=arguments.r,
                 # Pass any "extra" kwargs defined in task-specific subparsers
-                extra_inference_kwargs={arg_name: getattr(arguments, arg_name)
-                                        for arg_name in ["step1_only"]  # Used only by totalspineseg
-                                        if hasattr(arguments, arg_name)}
+                extra_network_kwargs=extra_network_kwargs,
+                extra_inference_kwargs=extra_inference_kwargs,
             )
 
         # Delete intermediate outputs

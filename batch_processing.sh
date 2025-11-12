@@ -121,8 +121,8 @@ sct_warp_template -d t2s.nii.gz -w warp_template2t2s.nii.gz
 # Subtract GM segmentation from cord segmentation to obtain WM segmentation
 sct_maths -i t2s_seg.nii.gz -sub t2s_gmseg.nii.gz -o t2s_wmseg.nii.gz
 # Compute cross-sectional area of the gray and white matter between C2 and C5
-sct_process_segmentation -i t2s_wmseg.nii.gz -vert 2:5 -perlevel 1 -o csa_wm.csv -angle-corr-centerline t2s_seg.nii.gz
-sct_process_segmentation -i t2s_gmseg.nii.gz -vert 2:5 -perlevel 1 -o csa_gm.csv -angle-corr-centerline t2s_seg.nii.gz
+sct_process_segmentation -i t2s_wmseg.nii.gz -vert 2:5 -perlevel 1 -o csa_wm.csv -centerline t2s_seg.nii.gz
+sct_process_segmentation -i t2s_gmseg.nii.gz -vert 2:5 -perlevel 1 -o csa_gm.csv -centerline t2s_seg.nii.gz
 # OPTIONAL: Update template registration using information from gray matter segmentation
 # # <<<
 # # Register WM/GM template to WM/GM seg

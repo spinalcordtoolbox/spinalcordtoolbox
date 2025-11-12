@@ -103,6 +103,11 @@ def main(argv: Sequence[str]):
                          f" and canal segmentation [{img_canal.data.shape}]). "
                          f"Please verify that your spinal cord and canal segmentations were done in the same space.")
 
+    # If `-centerline` has not been passed, specify it ourselves (to ensure that a consistent centerline is used for both segmentations)
+    if '-centerline' not in process_seg_argv:
+        printv("No `-centerline` provided. A centerline will be computed from `-i-SC` and used for both SC and canal.", verbose, 'info')
+        process_seg_argv.extend(['-centerline', fname_sc_seg])
+
     # Run sct_process_segmentation twice: 1) SC seg 2) canal seg
     temp_folder = TempFolder(basename="process-segmentation")
     path_tmp = temp_folder.get_path()

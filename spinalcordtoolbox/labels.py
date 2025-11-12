@@ -10,6 +10,9 @@ from typing import Sequence, Tuple
 
 import numpy as np
 from scipy.ndimage import center_of_mass
+# For some notes about using KDTrees for nearest-point searches, see for example:
+# https://www.colorado.edu/amath/sites/default/files/attached-files/k-d_trees_and_knn_searches.pdf
+from scipy.spatial import KDTree
 
 from spinalcordtoolbox.image import Image, zeros_like
 from spinalcordtoolbox.types import Coordinate
@@ -224,52 +227,45 @@ def label_regions_from_reference(img: Image, ref: Image, centerline: bool = Fals
     :param centerline: boolean, if True the centerline is returned instead of the segmentation (default to false)
     :returns: segmentation image with vertebral levels labelized
     """
+    # The centerline of the segmentation, with one point for each S-I slice.
+    centerline_pix = get_centerline(img, space='pix')[1].T.astype(int)  # shape (N, 3), int
+    centerline_phys = img.transfo_pix2phys(centerline_pix, mode='absolute')  # shape (N, 3), float
 
-    og_img_orientation = img.orientation
-    if og_img_orientation != "RPI":
-        img.change_orientation("RPI")
+    # Prepare to compute, for several points, the centerline index which is closest in physical space.
+    centerline_tree = KDTree(centerline_phys)
 
-    og_ref_orientation = ref.orientation
-    if og_ref_orientation != "RPI":
-        ref.change_orientation("RPI")
+    # The label coordinates.
+    labels_pix = np.argwhere(ref.data)  # shape (L, 3), int
+    labels_phys = ref.transfo_pix2phys(labels_pix, mode='absolute')  # shape (L, 3), float
+    # The corresponding label values.
+    labels_values = ref.data[tuple(labels_pix.T)]  # shape (L,), arbitrary dtype
+    # The closest centerline index for each label voxel.
+    _, labels_indices = centerline_tree.query(labels_phys)  # shape (L,), int
 
-    out = zeros_like(img)
+    # Sort the labels by increasing centerline index to get the region cutoffs
+    # We need one more region value for above the top-most label:
+    # labels_values = [   5   4   3   2   ]
+    # region_values = [ 5 | 4 | 3 | 2 | 1 ]
+    sorter = np.argsort(labels_indices)
+    region_values = labels_values[sorter]  # temporary shape (L,)
+    region_values = np.append(region_values, region_values[-1] - 1)  # final shape (L+1,)
+    region_indices = labels_indices[sorter]  # shape (L,), int
 
-    # Extract centerline from segmentation
-    _, arr_ctl, _, _ = get_centerline(img)
-    centerline_arr = arr_ctl.T
-
+    # The part of the image we want to split into labelled regions.
     if centerline:
-        coordinates_input = np.concatenate((centerline_arr, np.ones((centerline_arr.shape[0], 1))), axis=1)
+        segmentation_pix = centerline_pix
     else:
-        coordinates_input = img.getNonZeroCoordinates()
+        segmentation_pix = np.argwhere(img.data)  # shape (R, 3), int
+    segmentation_phys = img.transfo_pix2phys(segmentation_pix, mode='absolute')  # shape (R, 3), float
+    # The closest centerline index for each segmentation voxel.
+    _, segmentation_indices = centerline_tree.query(segmentation_phys)
 
-    # Extract reference coordinates
-    coordinates_ref = ref.getNonZeroCoordinates(sorting='value')
-
-    # for all points in the segmentation project on the centerline and compare the `z` coordinate to the appropriate vertebral level
-    for x, y, z, _ in coordinates_input:
-        projection = project_point_on_line(point=np.array([x, y, z]), line=centerline_arr)
-        _, _, z_proj = np.rint(projection).astype(int)
-        # case 1: `z` is above the top-most disc label
-        if z_proj > coordinates_ref[0].z:
-            out.data[int(x), int(y), int(z)] = coordinates_ref[0].value - 1
-        # case 2: `z` is at or below the bottom-most disc label
-        elif z_proj <= coordinates_ref[-1].z:
-            out.data[int(x), int(y), int(z)] = coordinates_ref[-1].value
-        # case 3: `z` is between two disc labels, so find the correct vertebral level
-        else:
-            for j in range(len(coordinates_ref) - 1):
-                if coordinates_ref[j + 1].z < z_proj <= coordinates_ref[j].z:
-                    out.data[int(x), int(y), int(z)] = coordinates_ref[j].value
-
-    # Set back the original orientation
-    if img.orientation != og_img_orientation:
-        img.change_orientation(og_img_orientation)
-        out.change_orientation(og_img_orientation)
-
-    if ref.orientation != og_ref_orientation:
-        ref.change_orientation(og_ref_orientation)
+    # Put the right label values at these coordinates.
+    out = zeros_like(img)
+    # Map segmentation indices to region indices...
+    segmentation_regions = np.searchsorted(region_indices, segmentation_indices)
+    # ...then map them to region values.
+    out.data[tuple(segmentation_pix.T)] = region_values[segmentation_regions]
 
     return out
 
@@ -518,64 +514,27 @@ def project_centerline(img: Image, ref: Image) -> Image:
     :param ref: reference labels
     :returns: image with the new projected labels on the centerline
     """
+    # The centerline of the segmentation, with one point for each S-I slice.
+    centerline_phys = get_centerline(img, space='phys')[1].T  # shape (N, 3), float
 
-    # Checking orientation
-    og_img_orientation = img.orientation
-    if img.orientation != "RPI":
-        img.change_orientation("RPI")
+    # The label coordinates, in the same physical space.
+    labels_pix = np.argwhere(ref.data)  # shape (L, 3), int
+    labels_phys = ref.transfo_pix2phys(labels_pix, mode='absolute')  # shape (L, 3), float
 
-    og_ref_orientation = ref.orientation
-    if ref.orientation != "RPI":
-        ref.change_orientation("RPI")
+    # For each label voxel, the centerline index which is closest in physical space.
+    _, indices = KDTree(centerline_phys).query(labels_phys)  # shape (L,), int
 
-    # Checking input dimensions
-    if img.data.shape != ref.data.shape:
-        raise ShapeMismatchError(
-            "Input image and referenced labels should have the same dimension",
-            img=img.data.shape,
-            ref=ref.data.shape)
+    # Check for collisions
+    if len(set(indices)) != len(indices):
+        logger.warning("Two labels were projected on the same coordinate")
 
-    # Extract centerline from segmentation
-    _, arr_ctl, _, _ = get_centerline(img)
-    centerline = arr_ctl.T
+    # Go from centerline indices back to voxel coordinates in the segmentation image.
+    projected_phys = centerline_phys[indices]  # shape (L, 3), float
+    projected_pix = img.transfo_phys2pix(projected_phys)  # shape (L, 3), int
+    projected_pix = projected_pix.clip(0, np.array(img.data.shape) - 1)
 
-    # Extract referenced coordinates
-    coordinates_ref = ref.getNonZeroCoordinates(sorting='value')
-
-    # Create the output image
-    out = zeros_like(ref)
-
-    # Compute the shortest distance for each referenced points on the centerline
-    for x, y, z, value in coordinates_ref:
-        projection = project_point_on_line(point=np.array([x, y, z]), line=centerline)
-        x, y, z = np.rint(projection).astype(int)
-        if out.data[x, y, z] != 0:
-            if out.data[x, y, z] == value:
-                logger.warning("Two labels with the same value were projected on the same coordinate")
-            else:
-                # overwrite with the highest value because referenced points are sorted
-                logger.warning("Two labels were projected on the same coordinate, the highest value was kept")
-        out.data[x, y, z] = value
-
-    if out.orientation != og_img_orientation:
-        img.change_orientation(og_img_orientation)
-
-    if ref.orientation != og_ref_orientation:
-        ref.change_orientation(og_ref_orientation)
-        out.change_orientation(og_ref_orientation)
+    # Put the projected label values at these coordinates.
+    out = zeros_like(img)
+    out.data[tuple(projected_pix.T)] = ref.data[tuple(labels_pix.T)]
 
     return out
-
-
-def project_point_on_line(point, line):
-    """
-    Project the input point on the referenced line by finding the minimal distance
-
-    :param point: coordinates of a point and its value: point = numpy.array([x y z])
-    :param line: list of points coordinates which composes the line
-    :returns: closest coordinate to the referenced point on the line: projected_point = numpy.array([X Y Z])
-    """
-    # Calculate distances between the referenced point and the line then keep the closest point
-    dist = np.sum((line - point) ** 2, axis=1)
-
-    return line[np.argmin(dist)]
