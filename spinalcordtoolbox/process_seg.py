@@ -156,8 +156,7 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
                                                   order=1,
                                                   )
             if image is not None:
-                current_patch_im = current_patch_im.astype(np.float64)
-                current_patch_im_scaled = transform.warp(current_patch_im,
+                current_patch_im_scaled = transform.warp(current_patch_im.astype(np.float64),
                                                          tform.inverse,
                                                          output_shape=current_patch_im.shape,
                                                          order=1,
