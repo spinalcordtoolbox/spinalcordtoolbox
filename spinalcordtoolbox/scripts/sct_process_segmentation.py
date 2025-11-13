@@ -123,6 +123,7 @@ def get_parser(ascor=False):
         mandatory.add_argument(
             '-i',
             metavar=Metavar.file,
+            type=get_absolute_path,
             help="Mask to compute morphometrics from. Could be binary or weighted. E.g., spinal cord segmentation."
                  "Example: seg.nii.gz"
         )
@@ -262,6 +263,7 @@ def get_parser(ascor=False):
         '-symmetry',
         metavar=Metavar.file,
         default=None,
+        type=get_absolute_path,
         help="Input image used to compute spinal cord orientation (using HOG method)."
              "Example: t2.nii.gz"
     )
@@ -417,8 +419,8 @@ def main(argv: Sequence[str]):
     # Initialization
     group_funcs = (('MEAN', func_wa), ('STD', func_std))  # functions to perform when aggregating metrics along S-I
 
-    fname_segmentation = get_absolute_path(arguments.i)
-    fname_image = get_absolute_path(arguments.symmetry) if arguments.symmetry is not None else None
+    fname_segmentation = arguments.i
+    fname_image = arguments.symmetry
 
     file_out = os.path.abspath(arguments.o)
     append = bool(arguments.append)
