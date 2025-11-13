@@ -29,6 +29,22 @@ from spinalcordtoolbox.process_seg_debug import (
 # NB: We use a threshold to check if an array is empty, instead of checking if it's exactly 0. This is because
 # resampling can change 0 -> ~0 (e.g. 1e-16). See: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3402
 NEAR_ZERO_THRESHOLD = 1e-6
+KEYS_DEFAULT = ['area',
+                'angle_AP',
+                'angle_RL',
+                'diameter_AP',
+                'diameter_AP_ellipse',
+                'diameter_RL',
+                'eccentricity',
+                'orientation',
+                'solidity',
+                'length'
+                ]
+KEYS_HOG = ['centermass_x', 'centermass_y', 'angle_hog']
+KEYS_QUADRANT = ['area_quadrant_anterior_left', 'area_quadrant_anterior_right', 'area_quadrant_posterior_left',
+                 'area_quadrant_posterior_right']
+KEYS_SYMMETRY = ['symmetry_dice_RL', 'symmetry_hausdorff_RL', 'symmetry_difference_RL', 'symmetry_dice_AP',
+                 'symmetry_hausdorff_AP', 'symmetry_difference_AP']
 
 
 def compute_shape(segmentation, image=None, angle_correction=True, centerline_path=None, param_centerline=None,
@@ -49,45 +65,15 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
     :return fit_results: class centerline.core.FitResults()
     """
     # List of properties that are always available
-    property_list = ['area',
-                     'angle_AP',
-                     'angle_RL',
-                     'diameter_AP',
-                     'diameter_AP_ellipse',
-                     'diameter_RL',
-                     'eccentricity',
-                     'orientation_abs',
-                     'orientation',
-                     'solidity',
-                     'length'
-                     ]
+    property_list = KEYS_DEFAULT
 
     im_seg = Image(segmentation).change_orientation('RPI')
     # Check if the input image is provided (i.e., image is not None)
     if image is not None:
         # HOG-related properties that are only available when image (`sct_process_segmentation -i`) is provided
         # TODO: consider whether to use this workaround or include the columns even when image is not provided and use NaN
-        hog_properties = ['centermass_x',
-                          'centermass_y',
-                          'angle_hog']
-        # Add quadrant area properties
-        quadrant_keys = [
-            'area_quadrant_anterior_left',
-            'area_quadrant_anterior_right',
-            'area_quadrant_posterior_left',
-            'area_quadrant_posterior_right',
-        ]
-        # Add symmetry properties
-        symmetry_keys = [
-            'symmetry_dice_RL',
-            'symmetry_hausdorff_RL',
-            'symmetry_difference_RL',
-            'symmetry_dice_AP',
-            'symmetry_hausdorff_AP',
-            'symmetry_difference_AP',
-        ]
         # Add HOG-related properties and symmetry to the property list when image is provided
-        property_list = property_list[:1] + hog_properties + quadrant_keys + symmetry_keys + property_list[1:]
+        property_list = property_list[:1] + KEYS_HOG + KEYS_QUADRANT + KEYS_SYMMETRY + property_list[1:]
 
         im = Image(image).change_orientation('RPI')
         # Make sure the input image and segmentation have the same dimensions
@@ -352,7 +338,6 @@ def _properties2d(seg, dim, iz, angle_hog=None, verbose=1):
         'diameter_RL': diameter_RL,
         'centroid': region.centroid,        # Why do we store this? It is not used in the code.
         'eccentricity': region.eccentricity,
-        'orientation_abs': orientation,     # in degrees
         'orientation': -region.orientation,  # in radians
         'solidity': solidity,  # convexity measure
     }
