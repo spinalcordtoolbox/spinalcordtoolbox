@@ -288,7 +288,8 @@ def test_sct_analyze_lesion_matches_expected_dummy_lesion_measurements_without_s
 @pytest.mark.parametrize("dummy_lesion", [
     ([(29, 0, 25), (4, 15, 3)])
 ], indirect=["dummy_lesion"])
-def test_sct_analyze_lesion_with_template(dummy_lesion, tmp_path, tmp_path_qc):
+@pytest.mark.parametrize("perslice", ['0', '1'])
+def test_sct_analyze_lesion_with_template(dummy_lesion, perslice, tmp_path, tmp_path_qc):
     # prep the template for use with `-f` argument of sct_analyze_lesion
     sct_register_to_template.main(argv=['-i', sct_test_path('t2', 't2.nii.gz'),
                                         '-s', sct_test_path('t2', 't2_seg-manual.nii.gz'),
@@ -311,6 +312,7 @@ def test_sct_analyze_lesion_with_template(dummy_lesion, tmp_path, tmp_path_qc):
     path_lesion, _ = dummy_lesion
     sct_analyze_lesion.main(argv=['-m', path_lesion,
                                   '-f', str(tmp_path),
+                                  '-perslice', perslice,
                                   '-ofolder', str(tmp_path),
                                   '-qc', tmp_path_qc])
     _, fname, _ = extract_fname(path_lesion)

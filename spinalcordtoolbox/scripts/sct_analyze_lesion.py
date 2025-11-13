@@ -699,6 +699,33 @@ class AnalyzeLesion:
         image_out[indices] = image[indices]
         return image_out
 
+    def _get_vertebral_level_for_slice(self, slice_idx, im_vert_data):
+        """
+        Get the most common vertebral level for a given slice.
+        For slices with overlapping vertebral levels, the most common level (based on the number of voxels) is returned.
+
+        :param im_vert_data: 3D numpy array containing vertebral level labels
+        :param slice_idx: int, slice index in the z-direction
+        :return: int or str, vertebral level or 'N/A' if no level found
+        """
+        # check if slice_idx is an integer (if not, return nothing e.g. for 'Total' rows)
+        if not str(slice_idx).isdigit():
+            return ''
+        slice_idx = int(slice_idx)
+        # check if slice_idx is within bounds
+        if slice_idx >= im_vert_data.shape[2]:
+            return 'N/A'
+        slice_data = im_vert_data[:, :,  slice_idx]
+        # ensure that the slice contains vert labels
+        if not (slice_data > 0).any():
+            return 'N/A'
+
+        # Get all vertebral level values in this slice (excluding 0)
+        # Example: [289 272], [5 6] means that level 5 has 289 voxels and level 6 has 272 voxels in this slice
+        unique_levels, counts = np.unique(slice_data[slice_data > 0], return_counts=True)
+        # Return the most common vertebral level in this slice
+        return int(unique_levels[np.argmax(counts)])
+
     def __relative_ROIvol_in_mask(self, im_mask_data, im_atlas_roi_data, p_lst, indices_to_keep):
         #
         #   Goal:
@@ -713,6 +740,7 @@ class AnalyzeLesion:
         #           - p_lst - type=list of float
         #           - indices_to_keep - type=(anything that can be used to index numpy arrays)
         #                               anything outside this mask will be set to 0
+        #                               These indices correspond to either a slice or a vertebral level
         #
         im_atlas_roi_data = self.__keep_only_indices(im_atlas_roi_data, indices_to_keep)
         im_mask_data = self.__keep_only_indices(im_mask_data, indices_to_keep)
@@ -724,8 +752,15 @@ class AnalyzeLesion:
         return vol_mask_roi_wa, vol_tot_roi
 
     def _measure_eachLesion_distribution(self, lesion_id, atlas_data, im_vert, im_lesion, p_lst):
+        """the lesion is the reference (the percentage of the lesion in each region)"""
         sheet_name = 'lesion#' + str(lesion_id) + '_distribution'
-        self.distrib_matrix_dct[sheet_name] = pd.DataFrame.from_dict({'row': [str(v) for v in self.rows.keys()]})
+
+        # Create the initial DataFrame with row column
+        df_data = pd.DataFrame.from_dict({'row': [str(r) for r in self.rows.keys()]})
+        # Add vertebral level column when using per-slice analysis
+        if self.row_name == "slice":
+            df_data['vert_level'] = df_data['row'].apply(self._get_vertebral_level_for_slice, im_vert_data=im_vert)
+        self.distrib_matrix_dct[sheet_name] = df_data
 
         # initialized to 0 for each vertebral level and each PAM50 tract
         for tract_id in atlas_data:
@@ -778,7 +813,7 @@ class AnalyzeLesion:
         return np.sum(res_mask) * 100.0 / np.sum(res_tot)
 
     def _measure_totLesion_distribution(self, im_lesion, atlas_data, im_vert, p_lst):
-
+        """the region is the reference (the percentage of the region affected by the lesion)"""
         sheet_name = 'ROI_occupied_by_lesion'
         total_row = f'total % (all {self.row_name})'
         rows_with_total = {
@@ -786,7 +821,13 @@ class AnalyzeLesion:
             # numpy array index equivalent to [:, :, :]
             total_row: (slice(None), slice(None), slice(None)),
         }
-        self.distrib_matrix_dct[sheet_name] = pd.DataFrame.from_dict({'row': [str(r) for r in rows_with_total]})
+
+        # Create the initial DataFrame with row column
+        df_data = pd.DataFrame.from_dict({'row': [str(r) for r in rows_with_total]})
+        # Add vertebral level column when using per-slice analysis
+        if self.row_name == "slice":
+            df_data['vert_level'] = df_data['row'].apply(self._get_vertebral_level_for_slice, im_vert_data=im_vert)
+        self.distrib_matrix_dct[sheet_name] = df_data
 
         # initialized to 0 for each vertebral level and each PAM50 tract
         for tract_id in atlas_data:
@@ -834,6 +875,7 @@ class AnalyzeLesion:
             if os.path.isfile(self.path_levels):
                 img_vert = Image(self.path_levels)
                 im_vert_data = img_vert.data
+                # Per-level atlas-based analysis
                 if self.row_name == "vert":
                     # list of vertebral levels available in the input image
                     # precompute the list of indices for each vertebral level
@@ -842,6 +884,7 @@ class AnalyzeLesion:
                         vert: np.where(im_vert_data == vert)
                         for vert in np.unique(im_vert_data) if vert
                     }
+                # Per-slice atlas-based analysis (`-perslice 1` input arg)
                 else:
                     assert self.row_name == "slice"
                     # Keep the same vert image, but uses slices instead
