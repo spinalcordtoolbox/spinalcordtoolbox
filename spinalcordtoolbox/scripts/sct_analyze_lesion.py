@@ -699,7 +699,7 @@ class AnalyzeLesion:
         image_out[indices] = image[indices]
         return image_out
 
-    def _get_vertebral_level_for_slice(self, im_vert_data, slice_idx):
+    def _get_vertebral_level_for_slice(self, slice_idx, im_vert_data):
         """
         Get the most common vertebral level for a given slice.
         For slices with overlapping vertebral levels, the most common level (based on the number of voxels) is returned.
@@ -753,17 +753,11 @@ class AnalyzeLesion:
         sheet_name = 'lesion#' + str(lesion_id) + '_distribution'
 
         # Create the initial DataFrame with row column
-        df_data = {'row': [str(v) for v in self.rows.keys()]}
-
+        df_data = pd.DataFrame.from_dict({'row': [str(r) for r in self.rows.keys()]})
         # Add vertebral level column when using per-slice analysis
         if self.row_name == "slice":
-            vert_levels = []
-            for slice_idx in self.rows.keys():
-                vert_level = self._get_vertebral_level_for_slice(im_vert, slice_idx)
-                vert_levels.append(vert_level)
-            df_data['vert_level'] = vert_levels
-
-        self.distrib_matrix_dct[sheet_name] = pd.DataFrame.from_dict(df_data)
+            df_data['vert_level'] = df_data['row'].apply(self._get_vertebral_level_for_slice, im_vert_data=im_vert)
+        self.distrib_matrix_dct[sheet_name] = df_data
 
         # initialized to 0 for each vertebral level and each PAM50 tract
         for tract_id in atlas_data:
@@ -826,20 +820,11 @@ class AnalyzeLesion:
         }
 
         # Create the initial DataFrame with row column
-        df_data = {'row': [str(r) for r in rows_with_total]}
-
+        df_data = pd.DataFrame.from_dict({'row': [str(r) for r in rows_with_total]})
         # Add vertebral level column when using per-slice analysis
         if self.row_name == "slice":
-            vert_levels = []
-            for row_key in rows_with_total.keys():
-                if row_key == total_row:
-                    vert_levels.append('Total')
-                else:
-                    vert_level = self._get_vertebral_level_for_slice(im_vert, row_key)
-                    vert_levels.append(vert_level)
-            df_data['vert_level'] = vert_levels
-
-        self.distrib_matrix_dct[sheet_name] = pd.DataFrame.from_dict(df_data)
+            df_data['vert_level'] = df_data['row'].apply(self._get_vertebral_level_for_slice, im_vert_data=im_vert)
+        self.distrib_matrix_dct[sheet_name] = df_data
 
         # initialized to 0 for each vertebral level and each PAM50 tract
         for tract_id in atlas_data:
