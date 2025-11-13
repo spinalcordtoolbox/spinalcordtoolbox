@@ -38,7 +38,7 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
     The segmentation could be binary or weighted for partial volume [0,1].
 
     :param segmentation: input segmentation. Could be either an Image or a file name.
-    :param image: input image. Could be either an Image or a file name.
+    :param image: input image. Could be either an Image or a file name. Note that the image is necessary to turn on HOG/symmetry-based metrics
     :param angle_correction:
     :param centerline_path: path to image file to be used as a centerline for computing angle correction.
     :param param_centerline: see centerline.core.ParamCenterline()
