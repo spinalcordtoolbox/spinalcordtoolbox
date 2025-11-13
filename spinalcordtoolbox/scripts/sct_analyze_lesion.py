@@ -715,18 +715,16 @@ class AnalyzeLesion:
         # check if slice_idx is within bounds
         if slice_idx >= im_vert_data.shape[2]:
             return 'N/A'
-
-        # Get all vertebral level values in this slice (excluding 0)
-        slice_data = im_vert_data[:, :, slice_idx]
-        unique_levels, counts = np.unique(slice_data[slice_data > 0], return_counts=True)
-        # Example: [289 272], [5 6] means that level 5 has 289 voxels and level 6 has 272 voxels in this slice
-
-        if len(unique_levels) == 0:
+        slice_data = im_vert_data[:, :,  slice_idx]
+        # ensure that the slice contains vert labels
+        if not (slice_data > 0).any():
             return 'N/A'
 
+        # Get all vertebral level values in this slice (excluding 0)
+        # Example: [289 272], [5 6] means that level 5 has 289 voxels and level 6 has 272 voxels in this slice
+        unique_levels, counts = np.unique(slice_data[slice_data > 0], return_counts=True)
         # Return the most common vertebral level in this slice
-        most_common_idx = np.argmax(counts)
-        return int(unique_levels[most_common_idx])
+        return int(unique_levels[np.argmax(counts)])
 
     def __relative_ROIvol_in_mask(self, im_mask_data, im_atlas_roi_data, p_lst, indices_to_keep):
         #
