@@ -163,7 +163,7 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
                                                          )
         else:
             current_patch_scaled = current_patch
-            current_patch_im_scaled = current_patch_im if current_patch_im is not None else None
+            current_patch_im_scaled = current_patch_im
             angle_AP_rad, angle_RL_rad = 0.0, 0.0
 
         # Store basic properties and angles to be used later after regularization
