@@ -20,6 +20,7 @@ from typing import Sequence
 from textwrap import dedent
 import functools
 
+from spinalcordtoolbox.deepseg.models import find_and_install_models
 from spinalcordtoolbox.reports import qc2
 from spinalcordtoolbox.image import splitext, Image, check_image_kind
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax, ActionCreateFolder
@@ -362,36 +363,29 @@ def main(argv: Sequence[str]):
 
     # If the user called the command without arguments, display our help w/ an additional instructive message
     if not (
-        hasattr(arguments, 'task_details')
-        or (arguments.task and arguments.install)
-        or (arguments.task and arguments.i)
+        arguments.task and (arguments.install or arguments.i)
     ):
-        parser.error("You must specify either a task name + '-install', a task name + an image ('-i'), or "
-                     "'-task-details'.")
+        parser.error(
+            "You must specify either a task name + '-install', "
+            "a task name + an image (with '-i'), "
+            "or '-task-details' (which lists all available tasks).")
 
     verbose = arguments.v
     set_loglevel(verbose=verbose, caller_module_name=__name__)
 
+    # If the 'install' flag is set, force a (re-)install and end here
     if arguments.install:
-        models_to_install = models.TASKS[arguments.task]['models']
-        if arguments.custom_url:
-            if len(arguments.custom_url) != len(models_to_install):
-                parser.error(f"Expected {len(models_to_install)} URL(s) for task {arguments.install}, "
-                             f"but got {len(arguments.custom_url)} URL(s) instead.")
-            for name_model, custom_url in zip(models_to_install, arguments.custom_url):
-                models.install_model(name_model, custom_url)
-        else:
-            for name_model in models_to_install:
-                models.install_model(name_model)
-        exit(0)
+        for name_model in models.get_models_for_task(arguments.task):
+            models.install_model(name_model)
+        return
 
-    # Deal with input/output
+    # Find (and, if needed, install or update) the models associated with the requested task
+    name_models = find_and_install_models(arguments.task, arguments.custom_url)
+
+    # Ensure a valid input file was provided
     for file in arguments.i:
         if not os.path.isfile(file):
             parser.error("This file does not exist: {}".format(file))
-
-    # Get pipeline model names
-    name_models = models.TASKS[arguments.task]['models']
 
     # Check if all input images and contrasts have been specified (only relevant for 'tumor-edema-cavity_t1-t2')
     if arguments.task == 'tumor_edema_cavity_t1_t2':
@@ -408,26 +402,9 @@ def main(argv: Sequence[str]):
     fname_prior = None
     output_filenames = None
     for name_model in name_models:
-        # Check if this is an official model
-        if name_model in list(models.MODELS.keys()):
-            # If it is, check if it is installed
-            path_model = models.folder(name_model)
-            path_models = models.find_model_folder_paths(path_model)
-            if not models.is_valid(path_models):
-                printv("Model {} is not installed. Installing it now...".format(name_model))
-                models.install_model(name_model)
-                path_models = models.find_model_folder_paths(path_model)  # Re-parse to find newly downloaded folders
-            # Check folder version file ('{path_model}/source.json')
-            elif not models.is_up_to_date(path_model):
-                printv("Model {} is out of date. Re-installing it now...".format(name_model))
-                models.install_model(name_model)
-                path_models = models.find_model_folder_paths(path_model)  # Re-parse to find newly downloaded folders
-        # If it is not, check if this is a path to a valid model
-        else:
-            path_model = os.path.abspath(name_model)
-            path_models = models.find_model_folder_paths(path_model)
-            if not models.is_valid(path_models):
-                parser.error("The input model is invalid: {}".format(path_models))
+        # Setup
+        path_model = models.folder(name_model)
+        path_models = models.find_model_folder_paths(path_model)
 
         # Order input images (only relevant for 'tumor-edema-cavity_t1-t2')
         if arguments.task == 'tumor_edema_cavity_t1_t2':
