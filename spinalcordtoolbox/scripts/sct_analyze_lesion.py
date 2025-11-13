@@ -708,6 +708,11 @@ class AnalyzeLesion:
         :param slice_idx: int, slice index in the z-direction
         :return: int or str, vertebral level or 'N/A' if no level found
         """
+        # check if slice_idx is an integer (if not, return nothing e.g. for 'Total' rows)
+        if not str(slice_idx).isdigit():
+            return ''
+        slice_idx = int(slice_idx)
+        # check if slice_idx is within bounds
         if slice_idx >= im_vert_data.shape[2]:
             return 'N/A'
 
