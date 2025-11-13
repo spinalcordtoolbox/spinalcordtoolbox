@@ -140,7 +140,7 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
         # Special check for the edge case when segmentation has only a single pixel (e.g., in the lumbar region),
         # in this case we skip the slice as we cannot compute PCA
         # Change Nan for zeros to avoid problems in PCA computation
-        if np.count_nonzero(current_patch) <= 1/0.1:  # equivalent to np.sum(current_patch) <= 1 after resampling
+        if np.count_nonzero(current_patch) * pr <= 1:
             logging.warning(f'Skipping slice {iz} as the segmentation contains only a single pixel.')
             continue
 
@@ -178,7 +178,7 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
         if image is not None:
             # compute PCA and get center or mass based on segmentation; centermass_src: [RL, AP] (assuming RPI orientation)
             # Check for empty slice
-            if np.count_nonzero(current_patch_scaled) <= 1/0.1:  # equivalent to np.sum(current_patch_scaled) <= 1 after resampling
+            if np.count_nonzero(current_patch_scaled) * pr <= 1:
                 logging.warning(f'Skipping slice {iz} as the segmentation contains only a single pixel.')
                 continue
             z_indices.append(iz)
