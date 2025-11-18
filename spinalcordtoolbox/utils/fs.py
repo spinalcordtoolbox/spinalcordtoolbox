@@ -4,16 +4,15 @@ Filesystem related helpers and utilities
 Copyright (c) 2020 Polytechnique Montreal <www.neuro.polymtl.ca>
 License: see the file LICENSE
 """
-
-import sys
+import datetime
 import io
+import logging
 import os
 import shutil
+import sys
 import tempfile
-import datetime
-import logging
+from hashlib import md5
 from pathlib import Path
-from contextlib import contextmanager
 
 import portalocker
 
@@ -264,22 +263,111 @@ def relpath_or_abspath(child_path, parent_path):
         return abspath
 
 
-@contextmanager
-def mutex(name):
+class Mutex(portalocker.BoundedSemaphore):
     """
-    Use a bounded semaphore as a mutex to prevent parallel processes from running.
+    General purpose mutex (mutually exclusive semaphore) with a tweaks to
+    make it safer, more consistent, and easier to use within SCT. Namely:
 
-    portalocker.BoundedSemaphore is very similar to threading.BoundedSemaphore,
-    but works across multiple processes and across multiple operating systems. So,
-    we can spawn multiple processes using `sct_run_batch`, while still ensuring
-    that we create QC reports sequentially (without mangling the output files).
+    * Implicitly sanitizes the key used by the Mutex to prevent unintended side effects
+    * Its "maximum" is enforced to be 1, as required of a mutex.
+    * Can be used as a context manager, ensuring it is released after use.
+    * If provided, can log a message when it starts waiting to acquire its lock.
 
-    We use a mutex over a lock because the mutex doesn't depend on the destination
-    of the locked files, which allows us to avoid locking on e.g. NFS-mounted drives.
+    Use instances of this class to ensure that processes run in parallel will not
+    create race conditions when they try to access something another process is currently
+    modifying (i.e. when writing to a shared log/QC directory).
+
+    :param key: The key this Mutex will check against. If multiple mutexes share the same key,
+        they will share access rights, even if run in different processes on the same machine.
+    :param directory: Where the files used to track the mutex will be placed.
+    :param timeout: How long (in seconds) the Mutex should wait when trying to acquire its corresponding
+        lock before failing.
+    :param check_interval: How often (in seconds) the Mutex should try to acquire the lock while it waits.
+    :param fail_when_locked: Whether to throw an exception if the Mutex fails to acquire the lock within
+        the timeout period.
+    :param waiting_msg: Message to display when waiting to acquire the lock. If None, no message will print.
     """
-    semaphore = portalocker.BoundedSemaphore(maximum=1, name=name, timeout=60, check_interval=0.1)
-    semaphore.acquire()
-    try:
-        yield semaphore
-    finally:
-        semaphore.release()
+    def __init__(
+        self,
+        key: str,
+        directory: str = tempfile.gettempdir(),
+        timeout: float | None = 5,  # 5 seconds
+        check_interval: float | None = 0.25,  # Every quarter second
+        fail_when_locked: bool | None = True,
+        waiting_msg: str = None
+    ):
+        # Run a (slightly constrained) version of the super-class's constructor
+        super().__init__(
+            name=key,
+            directory=directory,
+            timeout=timeout,
+            check_interval=check_interval,
+            fail_when_locked=fail_when_locked,
+            # ALWAYS MUTUALLY EXCLUSIVE
+            maximum=1
+        )
+
+        # Message to print if the lock is not immediately acquired.
+        self.waiting_msg = waiting_msg
+
+        # Hashed version of our name to sanitize it
+        self.hashed_name = md5(self.name.encode('utf-8')).hexdigest()
+
+    def __setattr__(self, key, value):
+        # Block setting the "maximum" value to anything other than 1
+        if key == "maximum" and value != 1:
+            raise ValueError("A mutex cannot allow more than 1 process to hold the lock!")
+        # Otherwise, proceed normally
+        super().__setattr__(key, value)
+
+    def __enter__(self):
+        # Notify the user if they are using a non-failing Mutex as a context manager that we
+        #   are potentially overriding their intent; see rationale below.
+        if not self.fail_when_locked:
+            print(logger.warning(
+                f"LoggingMutex '{self.name}' being run in 'fail_when_locked=True' mode to ensure "
+                f"that code within the Python context will not run without lock acquisition."
+            ))
+        # Ensure that the context init will fail if we don't acquire the lock;
+        #   otherwise the context could proceed while another process holds the
+        #   lock, defeating the whole point of a mutex.
+        self.acquire(fail_when_locked=True)
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        # Release ourselves when leaving a context
+        self.release()
+
+    def acquire(
+        self,
+        timeout: float | None = None,
+        check_interval: float | None = None,
+        fail_when_locked: bool | None = None,
+    ) -> portalocker.Lock | None:
+        """
+        Same as super-class implementation, but logs a message if it wasn't immediately
+        able to acquire the lock.
+        """
+        # If we have a message on miss, do a very short acquisition attempt first
+        timeout = timeout if timeout is not None else self.timeout
+        check_interval = check_interval if check_interval is not None else self.check_interval
+        if self.waiting_msg and timeout > check_interval:
+            super().acquire(0, check_interval, fail_when_locked=False)
+
+            # If we have the lock, return here: we already have the lock!
+            if self.lock is not None:
+                return self.lock
+
+            # Otherwise, print a message before proceeding to regular lock acquisition.
+            printv(self.waiting_msg)
+
+        # Attempt to acquire the lock as normal
+        return super().acquire(timeout, check_interval, fail_when_locked)
+
+    def get_filename(self, number: int) -> Path:
+        """
+        Returns a pointing to a file which uses our hashed name,
+        rather than using our name in its raw form. This ensures
+        path access and creation is sanitized preventing difficult
+        to debug (and potentially destructive) side effects.
+        """
+        return Path(self.directory) / f"{self.hashed_name}_{number}.lock"

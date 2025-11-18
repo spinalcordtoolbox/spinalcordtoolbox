@@ -7,7 +7,6 @@ License: see the file LICENSE
 
 from contextlib import contextmanager
 import datetime
-from hashlib import md5
 import importlib.resources
 import itertools as it
 import json
@@ -29,7 +28,7 @@ from spinalcordtoolbox.reports.assets.py import refresh_qc_entries
 from spinalcordtoolbox.resampling import resample_nib
 from spinalcordtoolbox.utils.shell import display_open
 from spinalcordtoolbox.utils.sys import __version__, list2cmdline, LazyLoader
-from spinalcordtoolbox.utils.fs import mutex
+from spinalcordtoolbox.utils.fs import Mutex
 
 pd = LazyLoader("pd", globals(), "pandas")
 mpl_plt = LazyLoader("mpl_plt", globals(), "matplotlib.pyplot")
@@ -115,8 +114,10 @@ def create_qc_entry(
             raise FileNotFoundError(f"Required QC image '{img_type}' was not found at the expected path: '{path}'")
 
     # Use mutex to ensure that we're only generating shared QC assets using one process at a time
-    realpath = path_qc.resolve()
-    with mutex(f"sct_qc-{realpath.name}-{md5(str(realpath).encode('utf-8')).hexdigest()}"):
+    mutex_key = str(path_qc.resolve())
+    waiting_msg = f"QC path '{mutex_key}' is being modified by another process; waiting for it to complete..."
+    # Wait up to 1 minute (60 seconds) to acquire the mutex.
+    with Mutex(mutex_key, timeout=60, check_interval=0.1, waiting_msg=waiting_msg):
         # Create a json file for the new QC report entry
         path_json = path_qc / '_json'
         path_json.mkdir(parents=True, exist_ok=True)

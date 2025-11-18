@@ -16,8 +16,11 @@ import glob
 from pathlib import Path
 from importlib.metadata import metadata
 
+import portalocker.exceptions
+
 from spinalcordtoolbox import download
-from spinalcordtoolbox.utils.sys import stylize, __deepseg_dir__, LazyLoader
+from spinalcordtoolbox.utils.fs import Mutex
+from spinalcordtoolbox.utils.sys import stylize, __deepseg_dir__, LazyLoader, printv
 
 tss_init = LazyLoader("tss_init", globals(), 'totalspineseg.init_inference')
 
@@ -631,54 +634,245 @@ def folder(name_model):
     return os.path.join(__deepseg_dir__, name_model)
 
 
-def install_model(name_model, custom_url=None):
+def get_models_for_task(task_name):
+    """
+    "Getter" method, to reduce need to access the dictionary directly
+    """
+    # Check that the requested task exists
+    if task_name not in TASKS.keys():
+        raise ValueError(
+            f"Task '{task_name}' is not a valid task within the current SCT installation. "
+            f"Please check your spelling and try again."
+        )
+    return TASKS[task_name]['models']
+
+
+def find_and_install_models(task_name: str, custom_urls: list[str] = None) -> list[str]:
+    """
+    Find (and, if necessary, install) any models which are needed for this task.
+
+    :param task_name: The name of the task to install.
+    :param custom_urls: URLs pointing to custom paths to download the model files from.
+    :return: A list of strings containing the models found (and possibly installed) by this function.
+    """
+    # Get the list of models we need to install for this task
+    models_to_check = get_models_for_task(task_name)
+
+    # If we have custom URLs, ensure we have as many as the task needs
+    if custom_urls is not None:
+        if (n_provided := len(custom_urls)) != (n_required := len(models_to_check)):
+            raise ValueError(
+                f"Expected {n_required} URL(s) for task '{task_name}', but got {n_provided} URL(s) instead."
+            )
+        # Find and install each model in turn w/ its custom URL
+        for name_model, custom_url in zip(models_to_check, custom_urls):
+            _install_if_needed(name_model, custom_url)
+    else:
+        # Find and install each model in turn
+        for name_model in models_to_check:
+            _install_if_needed(name_model)
+
+    # Once done, return the list of model names for further use
+    return models_to_check
+
+
+def get_model_install_mutex(name_model: str):
+    """
+    Shortcut to generate a Mutex for a model being installed
+    """
+    return Mutex(key=f"{name_model}_install", timeout=3600, check_interval=0.5)
+
+
+def get_model_check_mutex(name_model: str):
+    """
+    Shortcut to generate a Mutex for a model being checked
+    """
+    return Mutex(key=f"{name_model}_check", timeout=3600, check_interval=0.1)
+
+
+def _install_if_needed(name_model: str, custom_url: str | list = None):
+    """
+    Performs several checks of the model, (re-)installing the model if:
+     * It doesn't exist
+     * It uses a different custom URL
+     * It's out-of-date
+     * It's otherwise malformed
+    """
+    # If the model isn't an official one, bypass normal checks and try using it is a model directory
+    if name_model not in MODELS.keys():
+        model_path = Path(name_model)
+        if not model_path.exists():
+            raise ValueError(
+                f"Cannot use model '{name_model}', as it is neither an officially supported model "
+                f"or a directory to a custom model directory."
+            )
+        model_paths = find_model_folder_paths(str(model_path.resolve()))
+        if not is_valid(model_paths):
+            raise ValueError(
+                f"Cannot use model '{name_model}', as its contents are not formatted in a way that"
+                f"SCT can understand."
+            )
+        # End checks here
+        return
+
+    # Get the path to where our model should be
+    model_folder = folder(name_model)
+    # TODO: Refactor this package to use Pathlib so we can avoid stuff like this
+    model_path = Path(str(model_folder))
+
+    # If the path doesn't exist, install it and end here
+    if not model_path.exists():
+        install_model(name_model, custom_url)
+        return
+
+    # Ensure only one process can run checks (and potentially initiate a model installation) at a time
+    with get_model_check_mutex(name_model):
+        # Mutex for detecting whether the model is being (re-)installed
+        install_mutex = get_model_install_mutex(name_model)
+        install_mutex.waiting_msg = \
+            f"Model '{name_model}' is being modified by another process; waiting for it to complete..."
+
+        # Check if the mutex is already acquired by another process
+        # KO: This is EXTREMELY poor Mutex practice! We're doing things this way for a few reasons:
+        #   1. With this check, we can now conditionally prevent different processes from using
+        #       models they didn't specify themselves, repeatedly downloading the same model,
+        #       or repeatedly downloading a faulty model.
+        #   2. This check also allows us to better inform the user of what each process is doing
+        #       and why.
+        #   3. We have two failsafes in place to mitigate the risks; the `get_model_check_mutex`
+        #       (which only allows one process to do this risky operation at a time), and another
+        #       within `install_model` which terminates the SCT if it detects another processes
+        #       is trying to install the same model at the same time.
+        try:
+            install_was_in_process = install_mutex.acquire(timeout=0, fail_when_locked=False)
+        finally:
+            install_mutex.release()
+
+        # If the model was already being installed by another process, perform some additional checks
+        if install_was_in_process is None:
+            # Wait for the other process to complete before running our checks
+            with install_mutex:
+                pass
+
+        # Get the source data and folders for the currently installed model
+        with open(model_path / "source.json", 'r') as fp:
+            json_data = json.load(fp)
+        model_folders = find_model_folder_paths(model_folder)
+        print(model_folders)
+
+        # If we had to wait for an installation, check that the model installed by the other process
+        #  matches our own specifications, and is itself valid within SCT.
+        if install_was_in_process is None:
+            # If we're custom, and they're not (or vice versa), raise an error
+            if json_data['custom'] != (custom_url is not None):
+                raise NotImplementedError(
+                    "Process model mismatch; one process used custom URLs while the other did not.\n\n"
+                    "SCT does not currently support multiples versions of the same model concurrently. "
+                    "To prevent repeated downloading of the same model and/or unpredictable behaviour "
+                    "caused by race conditions, this process was terminated."
+                )
+            # If we're both custom, but the URLs don't match, raise an error
+            elif json_data['custom'] and (json_data['model_urls'] != custom_url):
+                raise NotImplementedError(
+                    "Process model mismatch; another process used different custom URLs.\n\n"
+                    "SCT does not currently support multiples versions of the same model concurrently. "
+                    "To prevent repeated downloading of the same model and/or unpredictable behaviour "
+                    "caused by race conditions, this process was terminated."
+                )
+            # If the installed model was invalid, raise an error
+            elif not is_valid(model_folders):
+                raise ValueError(
+                    "The model installed by another process was invalid. Terminating here to avoid"
+                    "downloading the same invalid model files a second time."
+                )
+        # If not, and we have a custom URL, check that it matches the currently installed model's
+        elif custom_url is not None:
+            with open(model_path / "source.json", 'r') as fp:
+                json_data = json.load(fp)
+            # If it doesn't, install using the new URL
+            # TODO: Implement a better test for this specific case; current URL handling is very scuffed
+            if json_data.get('model_urls') != [custom_url]:
+                printv(f"Installed model for '{name_model}' used a different source URL. Installing custom variant now...")
+                install_model(name_model, custom_url)
+                return
+        # Check if the model is malformed
+        elif not is_valid(model_folders):
+            printv(f"Model '{name_model}' was malformed. Re-installing it now...")
+            install_model(name_model, custom_url)
+        # Check if the model is out of date
+        elif not is_up_to_date(model_folder):
+            printv(f"Model '{name_model}' was out of date. Re-installing it now...")
+            install_model(name_model, custom_url)
+
+
+def install_model(name_model: str, custom_url: str | list = None):
     """
     Download and install specified model under SCT installation dir.
 
-    :param name: str: Name of model.
-    :return: None
+    :param name_model: Name of the model.
+    :param custom_url: A custom URL to download the model from. If not provided, uses the model default URL(s)
     """
-    logger.info("\nINSTALLING MODEL: {}".format(name_model))
-    url_field = MODELS[name_model]['url'] if not custom_url else [custom_url]  # [] -> mimic a list of mirror URLs
-    # List of mirror URLs corresponding to a single model
-    if isinstance(url_field, list):
-        model_urls = url_field
-        # Make sure to preserve the internal folder structure for nnUNet-based models (to allow re-use with 3D Slicer)
-        urls_used = download.install_data(model_urls, folder(name_model), dirs_to_preserve=("nnUNetTrainer",))
-    # Dict of lists, with each list corresponding to a different model seed for ensembling
-    else:
-        if not isinstance(url_field, dict):
-            raise ValueError("Invalid url field in MODELS")
-        # totalspineseg handles data downloading itself, so just pass the urls along
-        if name_model == 'totalspineseg':
-            tss_init.init_inference(data_path=Path(folder(name_model)), quiet=False, dict_urls=url_field,
-                                    store_export=False)  # Avoid having duplicate .zip files stored on disk
-            urls_used = url_field
+    # Build and acquire the model's installation mutex
+    install_mutex = get_model_install_mutex(name_model)
+    install_mutex.timeout = 0  # Do not wait at all to acquire the mutex
+
+    try:
+        # Acquire the mutex
+        install_mutex.acquire()
+
+        # Notify the user we're now installing the model
+        logger.info("\nINSTALLING MODEL: {}".format(name_model))
+        url_field = MODELS[name_model]['url'] if not custom_url else [custom_url]  # [] -> mimic a list of mirror URLs
+
+        # List of mirror URLs corresponding to a single model
+        if isinstance(url_field, list):
+            model_urls = url_field
+            # Make sure to preserve the internal folder structure for nnUNet-based models (to allow re-use with 3D Slicer)
+            urls_used = download.install_data(model_urls, folder(name_model), dirs_to_preserve=("nnUNetTrainer",))
+
+        # Dict of lists, with each list corresponding to a different model seed for ensembling
         else:
-            urls_used = {}
-            for seed_name, model_urls in url_field.items():
-                # For the ms_lesion model, we need to regroup the folds together
-                # For lesion_ms, we can extract all the folds to the same `nnunetTrainer` directory
-                if name_model == "model_seg_ms_lesion":
-                    target_directory = folder(name_model)
-                    dirs_to_preserve = ("nnUNetTrainer",)
-                # For other multi-seed models, create subfolders for each seed
-                else:
-                    target_directory = folder(os.path.join(name_model, seed_name))
-                    dirs_to_preserve = ()
-                logger.info(f"\nInstalling '{seed_name}'...")
-                urls_used[seed_name] = download.install_data(model_urls, target_directory, keep=True,
-                                                             dirs_to_preserve=dirs_to_preserve)
-    # Write `source.json` (for model provenance / updating)
-    source_dict = {
-        'model_name': name_model,
-        'model_urls': urls_used,
-        # NB: If a custom URL is used, then it would just get overwritten as "out of date" when running the task
-        #     So, we add a flag to tell `sct_deepseg` *not* to reinstall the model if a custom URL was used.
-        'custom': bool(custom_url)
-    }
-    with open(os.path.join(folder(name_model), "source.json"), "w") as fp:
-        json.dump(source_dict, fp, indent=4)
+            if not isinstance(url_field, dict):
+                raise ValueError("Invalid url field in MODELS")
+            # totalspineseg handles data downloading itself, so just pass the urls along
+            if name_model == 'totalspineseg':
+                tss_init.init_inference(data_path=Path(folder(name_model)), quiet=False, dict_urls=url_field,
+                                        store_export=False)  # Avoid having duplicate .zip files stored on disk
+                urls_used = url_field
+            else:
+                urls_used = {}
+                for seed_name, model_urls in url_field.items():
+                    # For the ms_lesion model, we need to regroup the folds together
+                    # For lesion_ms, we can extract all the folds to the same `nnunetTrainer` directory
+                    if name_model == "model_seg_ms_lesion":
+                        target_directory = folder(name_model)
+                        dirs_to_preserve = ("nnUNetTrainer",)
+                    # For other multi-seed models, create subfolders for each seed
+                    else:
+                        target_directory = folder(os.path.join(name_model, seed_name))
+                        dirs_to_preserve = ()
+                    logger.info(f"\nInstalling '{seed_name}'...")
+                    urls_used[seed_name] = download.install_data(model_urls, target_directory, keep=True,
+                                                                 dirs_to_preserve=dirs_to_preserve)
+
+        # Write `source.json` (for model provenance / updating)
+        source_dict = {
+            'model_name': name_model,
+            'model_urls': urls_used,
+            # NB: If a custom URL is used, then it would just get overwritten as "out of date" when running the task
+            #     So, we add a flag to tell `sct_deepseg` *not* to reinstall the model if a custom URL was used.
+            'custom': bool(custom_url)
+        }
+        with open(os.path.join(folder(name_model), "source.json"), "w") as fp:
+            json.dump(source_dict, fp, indent=4)
+    except portalocker.exceptions.AlreadyLocked:
+        raise RuntimeError(
+            f"Another process is either installing or validating the model '{name_model}' already. "
+            f"Terminating to avoid race conditions and/or unintended model usage in parallel processes."
+        )
+    finally:
+        # Always release the mutex when this process ends
+        install_mutex.release()
 
 
 def install_default_models():
