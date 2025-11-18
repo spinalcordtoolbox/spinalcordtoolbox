@@ -33,6 +33,7 @@ from spinalcordtoolbox.utils.sys import init_sct, set_loglevel
 from spinalcordtoolbox.utils.shell import (SCTArgumentParser, Metavar, ActionCreateFolder, list_type, positive_int_type,
                                            display_viewer_syntax)
 from spinalcordtoolbox.reports.qc import generate_qc
+from spinalcordtoolbox.mocoDL.inference import run_mocoDL
 
 
 def get_parser():
@@ -161,6 +162,12 @@ def get_parser():
         metavar=Metavar.str,
         help="If provided, this string will be mentioned in the QC report as the subject the process was run on."
     )
+    optional.add_argument(
+        '-mocodl',
+        action='store_true',
+        help="Use deep learning–based motion correction (DenseRigidNet) with pre-trained best checkpoint." 
+             "Mask along spinal cord and Target (reference) are required for this algorithm."
+    )
 
     # Arguments which implement shared functionality
     parser.add_common_args()
@@ -203,8 +210,21 @@ def main(argv: Sequence[str]):
     if not (is_qc_none == is_seg_none):
         parser.error("Both '-qc' and '-qc-seg' are required in order to generate a QC report.")
 
-    # run moco
-    fname_output_image = moco_wrapper(param)
+    # Run moco
+    if arguments.mocodl:
+        if run_mocoDL is None:
+            raise ImportError("mocoDL module not found. Please ensure SCT was installed with mocoDL support.")
+
+        fname_output_image = run_mocoDL(
+            input_path=param.fname_data,
+            mask_path=param.fname_mask,
+            ofolder=param.path_out,
+            ref_path=param.fname_ref,
+            mode = "dmri"
+        )
+    else:
+        # Run SCT-based motion correction
+        fname_output_image = moco_wrapper(param)
 
     set_loglevel(verbose, caller_module_name=__name__)  # moco_wrapper changes verbose to 0, see issue #3341
 
