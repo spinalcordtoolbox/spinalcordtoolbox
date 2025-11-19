@@ -61,6 +61,10 @@ The table below lists the references for :ref:`sct_deepseg` sub-tasks which have
     * - :ref:`sct_deepseg_lesion_sci_t2`
       - Karthik, Enamundram Naga, *et al.* "`SCIsegV2: A Universal Tool for Segmentation of Intramedullary Lesions in Spinal Cord Injury. <https://link.springer.com/chapter/10.1007/978-3-031-82007-6_19>`__" **International Workshop on Applications of Medical AI** (2025).
     * - :ref:`sct_deepseg_lesion_ms_mp2rage`
+      - Medina, Nilser *et al.* "`Automatic Multiple Sclerosis Lesion Segmentation in the Spinal Cord on 3T and 7T MP2RAGE images. <https://archive.ismrm.org/2025/0625.html>`__ **ISMRM 2025** (2025).
+    * - :ref:`sct_deepseg_rootlets` (v7.0 and above)
+      - Krejčí, Katerina, *et al.* "`RootletSeg: Deep learning method for spinal rootlets segmentation across MRI contrasts. <https://doi.org/10.48550/arXiv.2509.16255>`__" **arXiv preprint arXiv:2509.16255** (2025).
+    * - :ref:`sct_deepseg_rootlets` (v6.5 and below)
       - Valošek, Jan, *et al.* "`Automatic segmentation of the spinal cord nerve rootlets. <https://direct.mit.edu/imag/article/doi/10.1162/imag_a_00218/122601>`__" **Imaging Neuroscience** 2 (2024): 1-14.
     * - :ref:`sct_deepseg_tumor_edema_cavity_t1_t2`
       - Lemay, Andreanne, *et al.* "`Automatic multiclass intramedullary spinal cord tumor segmentation on MRI with deep learning. <https://doi.org/10.1016/j.nicl.2021.102766>`__" **NeuroImage: Clinical** 31 (2021): 102766.
