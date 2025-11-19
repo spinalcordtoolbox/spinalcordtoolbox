@@ -85,6 +85,10 @@ The table below provides individual references for novel methods used in SCT's :
 
    * - Command line script
      - References
+   * - :ref:`sct_compute_compression`
+     - Bédard *et al.* "`Normalizing spinal cord compression measures in degenerative cervical myelopathy <https://www.sciencedirect.com/science/article/pii/S1529943025001597>`__, **Spine J.** 2025
+   * - :ref:`sct_compute_compression` ``-normalize-hc``
+     - Valošek J *et al.* `A database of the healthy human spinal cord morphometry in the PAM50 template space <https://doi.org/10.1162/imag_a_00075>`__. **Imaging Neuroscience** 2024; 2 1–15.
    * - :ref:`sct_deepseg_gm`
      - Perone *et al.* "`Spinal cord gray matter segmentation using deep dilated convolutions. <https://www.nature.com/articles/s41598-018-24304-3>`__" **Sci Rep** 2018.
    * - :ref:`sct_deepseg_sc` / :ref:`sct_deepseg_lesion`
