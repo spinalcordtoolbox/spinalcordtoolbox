@@ -97,6 +97,8 @@ The table below provides individual references for novel methods used in SCT's :
      - Gros *et al.* "`Automatic segmentation of the spinal cord and intramedullary multiple sclerosis lesions with convolutional neural networks. <https://www.sciencedirect.com/science/article/pii/S1053811918319578>`__" **Neuroimage** 2019.
    * - :ref:`sct_get_centerline`
      - Gros *et al.* "`Automatic spinal cord localization, robust to MRI contrasts using global curve optimization. <https://www.sciencedirect.com/science/article/pii/S136184151730186X>`__" **Med Image Anal** 2018.
+   * - :ref:`sct_image` ``-stitch``
+     - Lavdis I, Glocker B *et al.* `Machine learning in whole-body MRI: experiences and challenges from an applied study using multicentre data <https://doi.org/10.1016/j.crad.2019.01.012>`__ **Clinical Radiology** 2019.
    * - :ref:`sct_label_vertebrae`
      - Ullmann *et al.* "`Automatic labeling of vertebral levels using a robust template-based approach. <https://onlinelibrary.wiley.com/doi/10.1155/2014/719520>`__" **Int J Biomed Imaging** 2014.
    * - :ref:`sct_process_segmentation` ``-pmj`` / ``-normalize``
