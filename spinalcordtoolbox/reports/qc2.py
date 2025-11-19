@@ -252,47 +252,28 @@ class SlicingSpec:
 
         Used for the top-left tile in a mosaic.
     """
+    # ----------------------------------------------------------------
+    # Mandatory fields
+    # ----------------------------------------------------------------
+    # This is enforced by the default @dataclass __init__ method,
+    # which should be considered an "internal" method. Instead of
+    # creating instances directly with SlicingSpec(...), users of this
+    # class should use one of the factory functions below.
 
     affine: np.ndarray  # shape=(4, 4)
     offsets: dict[str, np.ndarray]  # each shape=(3,), insertion order is important
     shape: tuple[int, int]  # 2D shape of all output slices
     axis_labels: tuple[tuple[str, str], tuple[str, str]]  # ((top, bottom), (left, right))
 
-    def get_slices(
-        self,
-        img: Image,  # 3D image to sample from
-        order: int,  # interpolation order, can be [0, 1, 2, 3, 4, 5]
-    ) -> dict[str, np.ndarray]:  # shape=self.shape
-        """
-        Get several slices of the same shape from a single image by resampling.
-
-        The offsets are measured in output voxels, and can be fractional.
-        """
-        # To fill regions outside of the image with zeros,
-        # while avoiding sharp cutoffs around the edges.
-        mode = "grid-constant"
-
-        voxel_to_voxel = np.linalg.inv(img.affine).dot(self.affine)
-        matrix = voxel_to_voxel[:3, :3]
-        origin = voxel_to_voxel[:3, 3]
-
-        if order > 1:
-            # Doing this prefilter step outside of the loop is crucial for performance
-            data_filtered = ndimage.spline_filter(img.data, order=order, mode=mode)
-        else:
-            data_filtered = img.data.astype(np.float64)
-        return {
-            slice_label: ndimage.affine_transform(
-                data_filtered,
-                matrix=matrix,
-                offset=(origin + matrix.dot(offset)),
-                output_shape=(1, *self.shape),
-                order=order,
-                mode=mode,
-                prefilter=False,
-            )[0]
-            for slice_label, offset in self.offsets.items()
-        }
+    # ----------------------------------------------------------------
+    # Factory functions
+    # ----------------------------------------------------------------
+    # This is the normal way for users of this class to create
+    # instances, instead of calling SlicingSpec(...) directly.
+    # After using a factory function, the transformer methods below
+    # can be used to adjust the resulting SlicingSpec.
+    # They are @staticmethod, so they can be called with, for example:
+    # SlicingSpec.full_axial(...)
 
     @staticmethod
     def full_axial(img: Image, p_resample: float = 0.6) -> 'SlicingSpec':
@@ -305,9 +286,42 @@ class SlicingSpec:
         The slice labels correspond to the original orientation of `img`,
         but the output slices are always ordered and oriented in "SAL".
         """
-        # Standardize to SAL with a fixed resolution for each AL slice.
+        return SlicingSpec.full_oriented(img, "SAL", p_resample)
+
+    @staticmethod
+    def full_sagittal(img: Image, p_resample: float = 0.6) -> 'SlicingSpec':
+        """
+        A slicing spec to extract full sagittal slices.
+
+        The field of view is given by `img`.
+        The number of slices is the same as `img` in the R-L axis,
+        but the other two axes are resampled to `p_resample` mm.
+        The slice labels correspond to the original orientation of `img`,
+        but the output slices are always ordered and oriented in "RSP".
+        """
+        return SlicingSpec.full_oriented(img, "RSP", p_resample)
+
+    @staticmethod
+    def full_oriented(img: Image, orientation: str, p_resample: float) -> 'SlicingSpec':
+        """
+        A slicing spec to extract full slices in a given orientation.
+
+        The meaning of the `orientation` argument is that:
+        - The first axis is perpendicular to the 2D slices produced.
+        - The second axis is the "up" direction for the 2D slices produced.
+        - The third axis is the "left" direction for the 2D slices produced.
+
+        Each output slice is resampled to `p_resample` mm.
+
+        The slice labels match the original orientation of `img`,
+        but their ordering matches the requested orientation.
+        """
+        # For axis labels.
+        opposite = dict(zip("RASLPI", "LPIRAS"))
+
+        # Reorient and rescale.
         shape, affine = img.data.shape, img.affine
-        shape, affine = reorient_grid(shape, affine, "SAL")
+        shape, affine = reorient_grid(shape, affine, orientation)
         shape, affine = rescale_grid(shape, affine, [None, p_resample, p_resample])
 
         # Split up the 3D image shape into a number of slices and a 2D slice shape.
@@ -315,7 +329,7 @@ class SlicingSpec:
 
         # The slice labels in the original orientation of the input image.
         slice_labels = [str(i) for i in range(num_slices)]
-        if "I" in img.orientation:
+        if opposite[orientation[0]] in img.orientation:
             slice_labels.reverse()
 
         return SlicingSpec(
@@ -325,11 +339,21 @@ class SlicingSpec:
                 for i, label in enumerate(slice_labels)
             },
             shape=shape,
-            axis_labels=(("A", "P"), ("L", "R")),
+            axis_labels=tuple(
+                (letter, opposite[letter])
+                for letter in orientation[1:3]
+            ),
         )
 
+    # ----------------------------------------------------------------
+    # Transformer methods
+    # ----------------------------------------------------------------
+    # These methods take an existing SlicingSpec, and produce a new
+    # SlicingSpec. For example, they can be used to center and crop
+    # slices around a segmentation, or to drop some slices entirely.
+
     def center_patches(
-        self, seg: Image, shape: tuple[int, int] = (30, 30)
+        self: 'SlicingSpec', seg: Image, shape: tuple[int, int] = (30, 30)
     ) -> 'SlicingSpec':
         """
         A re-centered and cropped slicing spec, meant for axial views.
@@ -356,41 +380,7 @@ class SlicingSpec:
             axis_labels=self.axis_labels,
         )
 
-    @staticmethod
-    def full_sagittal(img: Image, p_resample: float = 0.6) -> 'SlicingSpec':
-        """
-        A slicing spec to extract full sagittal slices.
-
-        The field of view is given by `img`.
-        The number of slices is the same as `img` in the R-L axis,
-        but the other two axes are resampled to `p_resample` mm.
-        The slice labels correspond to the original orientation of `img`,
-        but the output slices are always ordered and oriented in "RSP".
-        """
-        # Standardize to RSP with a fixed resolution for each SP slice.
-        shape, affine = img.data.shape, img.affine
-        shape, affine = reorient_grid(shape, affine, "RSP")
-        shape, affine = rescale_grid(shape, affine, [None, p_resample, p_resample])
-
-        # Split up the 3D image shape into a number of slices and a 2D slice shape.
-        num_slices, shape = shape[0], shape[1:3]
-
-        # The slice labels in the original orientation of the input image.
-        slice_labels = [str(i) for i in range(num_slices)]
-        if "L" in img.orientation:
-            slice_labels.reverse()
-
-        return SlicingSpec(
-            affine=affine,
-            offsets={
-                label: np.array([i, 0, 0], dtype=np.float64)
-                for i, label in enumerate(slice_labels)
-            },
-            shape=shape,
-            axis_labels=(("S", "I"), ("P", "A")),
-        )
-
-    def center_columns(self, seg: Image) -> 'SlicingSpec':
+    def center_columns(self: 'SlicingSpec', seg: Image) -> 'SlicingSpec':
         """
         A re-centered and cropped slicing spec, meant for sagittal views.
 
@@ -444,7 +434,51 @@ class SlicingSpec:
             axis_labels=self.axis_labels,
         )
 
-    def generate_mosaic(self, img: Image, path: Path, scale: float = 2.5):
+    # ----------------------------------------------------------------
+    # Consumer methods
+    # ----------------------------------------------------------------
+    # These methods use an existing SlicingSpec to produce some other
+    # result.
+
+    def get_slices(
+        self: 'SlicingSpec',
+        img: Image,  # 3D image to sample from
+        order: int,  # interpolation order, can be [0, 1, 2, 3, 4, 5]
+    ) -> dict[str, np.ndarray]:  # shape=self.shape
+        """
+        Get several slices of the same shape from a single image by resampling.
+
+        The offsets are measured in output voxels, and can be fractional.
+        """
+        # To fill regions outside of the image with zeros,
+        # while avoiding sharp cutoffs around the edges.
+        mode = "grid-constant"
+
+        voxel_to_voxel = np.linalg.inv(img.affine).dot(self.affine)
+        matrix = voxel_to_voxel[:3, :3]
+        origin = voxel_to_voxel[:3, 3]
+
+        if order > 1:
+            # Doing this prefilter step outside of the loop is crucial for performance
+            data_filtered = ndimage.spline_filter(img.data, order=order, mode=mode)
+        else:
+            data_filtered = img.data.astype(np.float64)
+        return {
+            slice_label: ndimage.affine_transform(
+                data_filtered,
+                matrix=matrix,
+                offset=(origin + matrix.dot(offset)),
+                output_shape=(1, *self.shape),
+                order=order,
+                mode=mode,
+                prefilter=False,
+            )[0]
+            for slice_label, offset in self.offsets.items()
+        }
+
+    def generate_mosaic(
+        self: 'SlicingSpec', img: Image, path: Path, scale: float = 2.5
+    ):
         """
         Extract slices from an image and save the result as a png.
         """
