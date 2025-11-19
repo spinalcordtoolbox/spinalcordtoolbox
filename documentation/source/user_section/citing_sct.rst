@@ -103,6 +103,8 @@ The table below provides individual references for novel methods used in SCT's :
      - Ullmann *et al.* "`Automatic labeling of vertebral levels using a robust template-based approach. <https://onlinelibrary.wiley.com/doi/10.1155/2014/719520>`__" **Int J Biomed Imaging** 2014.
    * - :ref:`sct_process_segmentation` ``-pmj`` / ``-normalize``
      - Bédard S, Cohen-Adad J. "`Automatic measure and normalization of spinal cord cross-sectional area using the pontomedullary junction. <https://doi.org/10.3389/fnimg.2022.1031253>`__" **Frontiers in Neuroimaging** 2022.
+   * - :ref:`sct_process_segmentation` ``-normalize-PAM50``
+     - Valošek J, Bédard S, *et al.* "`A database of the healthy human spinal cord morphometry in the PAM50 template space. <https://doi.org/10.1162/imag_a_00075>`__". **Imaging Neuroscience** 2024; 2 1–15.
    * - :ref:`sct_propseg`
      - De Leener *et al.* "`Robust, accurate and fast automatic segmentation of the spinal cord. <https://www.ncbi.nlm.nih.gov/pubmed/24780696>`__" **Neuroimage** 2014.
    * - :ref:`sct_propseg` ``-CSF``
