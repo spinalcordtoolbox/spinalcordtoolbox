@@ -89,6 +89,8 @@ The table below provides individual references for novel methods used in SCT's :
      - Bédard *et al.* "`Normalizing spinal cord compression measures in degenerative cervical myelopathy <https://www.sciencedirect.com/science/article/pii/S1529943025001597>`__, **Spine J.** 2025
    * - :ref:`sct_compute_compression` ``-normalize-hc``
      - Valošek J *et al.* `A database of the healthy human spinal cord morphometry in the PAM50 template space <https://doi.org/10.1162/imag_a_00075>`__. **Imaging Neuroscience** 2024; 2 1–15.
+   * - :ref:`sct_detect_compression`
+     - Horáková M *et al.* "`Semi-automated detection of cervical spinal cord compression with the Spinal Cord Toolbox <https://qims.amegroups.org/article/view/88416/html>`__ **QIMS Vol 12, No 4** 2022.
    * - :ref:`sct_deepseg_gm`
      - Perone *et al.* "`Spinal cord gray matter segmentation using deep dilated convolutions. <https://www.nature.com/articles/s41598-018-24304-3>`__" **Sci Rep** 2018.
    * - :ref:`sct_deepseg_sc` / :ref:`sct_deepseg_lesion`
@@ -107,6 +109,8 @@ The table below provides individual references for novel methods used in SCT's :
      - De Leener B, Fonov VS, Louis Collins D, Callot V, Stikov N, Cohen-Adad J. "`PAM50: Unbiased multimodal template of the brainstem and spinal cord aligned with the ICBM152 space. <https://www.sciencedirect.com/science/article/pii/S1053811917308686>`__" **Neuroimage** 2017.
    * - :ref:`sct_register_multimodal` / :ref:`sct_register_to_template` ``--param algo=slicereg``
      - Cohen-Adad *et al.* "`Slice-by-slice regularized registration for spinal cord MRI: SliceReg. <https://www.dropbox.com/s/v3bb3etbq4gb1l1/cohenadad_ismrm15_slicereg.pdf?dl=0>`__" **Proc ISMRM** 2015.
+   * - :ref:`sct_register_multimodal` / :ref:`sct_register_to_template` ``--param algo=dl``
+     - Beal *et al.* "`Contrast-agnostic deep learning–based registration pipeline: Validation in spinal cord multimodal MRI data. <https://doi.org/10.52294/f662441d-2678-4683-8a8c-6ad7be2c4b29>`__" **Aperture Neuro** 2023.
    * - :ref:`sct_straighten_spinalcord`
      - De Leener B *et al.* "`Topologically-preserving straightening of spinal cord MRI. <https://www.ncbi.nlm.nih.gov/pubmed/28130805>`__" **J Magn Reson Imaging** 2017.
 
