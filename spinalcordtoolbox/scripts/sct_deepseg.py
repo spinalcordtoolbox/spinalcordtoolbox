@@ -298,7 +298,7 @@ def get_parser(subparser_to_return=None):
                 help="Contrast of the input. Specifies the contrast order of input images (e.g. `-c t1 t2`)",
                 choices=('t1', 't2', 't2star'),
                 metavar=Metavar.str)
-        if task_name == 'totalspineseg':
+        if task_name == 'spine': # totalspineseg
             params.add_argument(
                 "-label-vert",
                 type=int,
@@ -331,9 +331,9 @@ def get_parser(subparser_to_return=None):
         """)
 
         # Suppress arguments that are irrelevant for certain tasks
-        # - Sagittal view is not currently supported for rootlets/totalspineseg QC
+        # - Sagittal view is not currently supported for rootlets/spine QC
         #   This means that the `-qc-plane` argument (and the `-qc-seg` note) should be hidden for these tasks
-        tasks_without_sagittal_qc = ('rootlets', 'totalspineseg')
+        tasks_without_sagittal_qc = ('rootlets', 'spine')
         if task_name in tasks_without_sagittal_qc:
             task_args['-qc-plane'].help = SUPPRESS
             task_args['-qc-seg'].help = task_args['-qc-seg'].help.replace(note_qc_seg, "")
@@ -475,7 +475,7 @@ def main(argv: Sequence[str]):
             }
             extra_inference_kwargs = {
                 arg_name: getattr(arguments, arg_name)
-                # "step1_only" -> used only by totalspineseg
+                # "label_vert" -> used only by spine
                 # "soft_ms_lesion" -> used only by lesion_ms
                 for arg_name in ["label_vert", "soft_ms_lesion"]
                 if hasattr(arguments, arg_name)
