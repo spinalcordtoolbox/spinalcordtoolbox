@@ -382,7 +382,7 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device, ensemble=F
     return fnames_out, targets
 
 
-def segment_totalspineseg(path_img, tmpdir, predictor, device, step1_only=False):
+def segment_totalspineseg(path_img, tmpdir, predictor, device, label_vert=False):
     # for totalspineseg, the 'predictor' is just the model path
     path_model = predictor
     # fetch the release subdirectory from the model path
@@ -420,6 +420,7 @@ def segment_totalspineseg(path_img, tmpdir, predictor, device, step1_only=False)
         max_workers=1,
         max_workers_nnunet=1,
         # Optional argument to choose which models to run
+        step1_only=bool(not label_vert),
         keep_only=['step1_levels', 'step1_output'] if not label_vert else ['step1_levels', 'step1_canal', 'step1_cord', 'step2_output'],
     fnames_out, targets = [], []
     expected_outputs = ["step1_canal", "step1_cord", "step1_levels", "step1_output"]

@@ -300,11 +300,9 @@ def get_parser(subparser_to_return=None):
                 metavar=Metavar.str)
         if task_name == 'totalspineseg':
             params.add_argument(
-                "-step1-only",
+                "-label-vert",
                 type=int,
-                help="If set to '1', only Step 1 will be performed. If not provided, both steps will be run.\n"
-                     "- Step 1: Segments the spinal cord, spinal canal, vertebrae, and intervertebral discs (IVDs). Labels the IVDs, but vertebrae are left unlabeled.\n"
-                     "- Step 2: Fine-tunes the segmentation, applies labels to vertebrae, and segments the sacrum if present.\n"
+                help="If set to '1', give each vertebrae in the spine segmentations a unique label (e.g. C1: 11 C2: 12 etc.). "
                      "More details on TotalSpineSeg's two models can be found here: https://github.com/neuropoly/totalspineseg/?tab=readme-ov-file#model-description",
                 choices=(0, 1),
                 default=0)
@@ -479,7 +477,7 @@ def main(argv: Sequence[str]):
                 arg_name: getattr(arguments, arg_name)
                 # "step1_only" -> used only by totalspineseg
                 # "soft_ms_lesion" -> used only by lesion_ms
-                for arg_name in ["step1_only", "soft_ms_lesion"]
+                for arg_name in ["label_vert", "soft_ms_lesion"]
                 if hasattr(arguments, arg_name)
             }
             # The MS lesion model is multifold, which requires turning on the "ensemble averaging" behavior
