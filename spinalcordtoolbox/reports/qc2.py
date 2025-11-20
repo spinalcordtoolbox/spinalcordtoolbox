@@ -531,10 +531,11 @@ class SlicingSpec:
         fig.savefig(str(path), format='png', transparent=True)
 
 
-def sct_register_multimodal(
+def sct_register(
     fname_input: str,
     fname_output: str,
     fname_seg: str,
+    command: str,
     argv: Sequence[str],
     path_qc: str,
     dataset: str | None,
@@ -542,11 +543,10 @@ def sct_register_multimodal(
     p_resample: float | None = 0.6,
 ):
     """
-    Generate a QC report for sct_register_multimodal.
+    Generate a QC report for sct_register_multimodal or sct_register_to_template.
 
     Axial orientation, switch between input and output images.
     """
-    command = 'sct_register_multimodal'
     cmdline = [command]
     cmdline.extend(argv)
 

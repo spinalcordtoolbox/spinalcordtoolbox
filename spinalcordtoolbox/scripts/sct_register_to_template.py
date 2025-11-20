@@ -26,7 +26,7 @@ from spinalcordtoolbox.registration.landmarks import register_landmarks
 from spinalcordtoolbox.metadata import get_file_label
 from spinalcordtoolbox.image import Image, add_suffix, generate_output_file
 from spinalcordtoolbox.centerline.core import ParamCenterline
-from spinalcordtoolbox.reports.qc import generate_qc
+from spinalcordtoolbox.reports import qc2
 from spinalcordtoolbox.resampling import resample_file
 from spinalcordtoolbox.math import binarize
 from spinalcordtoolbox.utils.fs import (copy, extract_fname, check_file_exist, rmtree,
@@ -48,7 +48,6 @@ class Param:
         self.padding = 10  # this field is needed in the function register@sct_register_multimodal
         self.verbose = 1  # verbose
         self.path_template = os.path.join(__data_dir__, 'PAM50')
-        self.path_qc = None
         self.zsubsample = '0.25'
         self.rot_src = None
         self.rot_dest = None
@@ -255,7 +254,6 @@ def get_parser():
         '-qc',
         metavar=Metavar.folder,
         action=ActionCreateFolder,
-        default=param.path_qc,
         help="The path where the quality control generated content will be saved."
     )
     optional.add_argument(
@@ -309,8 +307,6 @@ def main(argv: Sequence[str]):
         path_output = arguments.ofolder
     else:
         path_output = ''
-
-    param.path_qc = arguments.qc
 
     path_template = arguments.t
     contrast_template = arguments.c
@@ -835,12 +831,17 @@ def main(argv: Sequence[str]):
     elapsed_time = time.time() - start_time
     printv('\nFinished! Elapsed time: ' + str(int(np.round(elapsed_time))) + 's', verbose)
 
-    qc_dataset = arguments.qc_dataset
-    qc_subject = arguments.qc_subject
-    if param.path_qc is not None:
-        generate_qc(fname_data, fname_in2=fname_template2anat, fname_seg=fname_seg, args=argv,
-                    path_qc=os.path.abspath(param.path_qc), dataset=qc_dataset, subject=qc_subject,
-                    process='sct_register_to_template')
+    if arguments.qc is not None:
+        qc2.sct_register(
+            fname_input=fname_data,
+            fname_output=fname_template2anat,
+            fname_seg=fname_seg,
+            command='sct_register_to_template',
+            argv=argv,
+            path_qc=os.path.abspath(arguments.qc),
+            dataset=arguments.qc_dataset,
+            subject=arguments.qc_subject,
+        )
     display_viewer_syntax([fname_data, fname_template2anat], verbose=verbose)
     display_viewer_syntax([fname_template, fname_anat2template], verbose=verbose)
 

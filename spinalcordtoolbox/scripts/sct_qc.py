@@ -112,16 +112,17 @@ def main(argv: Sequence[str]):
     if arguments.p == 'sct_deepseg_lesion' and arguments.plane is None:
         parser.error('Please provide the plane of the output QC with `-plane`')
 
-    if arguments.p == 'sct_register_multimodal':
+    if arguments.p in ['sct_register_multimodal', 'sct_register_to_template']:
         p_resample = (
             {} if arguments.resample is None else  # use the report's default
             dict(p_resample=None) if arguments.resample == 0 else  # explicitly turn it off
             dict(p_resample=arguments.resample)
         )
-        qc2.sct_register_multimodal(
+        qc2.sct_register(
             fname_input=arguments.i,
             fname_output=arguments.d,
             fname_seg=arguments.s,
+            command=arguments.p,
             argv=argv,
             path_qc=arguments.qc,
             dataset=arguments.qc_dataset,
