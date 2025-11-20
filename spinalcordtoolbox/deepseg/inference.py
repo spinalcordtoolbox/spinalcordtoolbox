@@ -420,8 +420,7 @@ def segment_totalspineseg(path_img, tmpdir, predictor, device, step1_only=False)
         max_workers=1,
         max_workers_nnunet=1,
         # Optional argument to choose which models to run
-        step1_only=bool(step1_only)
-    )
+        keep_only=['step1_levels', 'step1_output'] if not label_vert else ['step1_levels', 'step1_canal', 'step1_cord', 'step2_output'],
     fnames_out, targets = [], []
     expected_outputs = ["step1_canal", "step1_cord", "step1_levels", "step1_output"]
     if not step1_only:
