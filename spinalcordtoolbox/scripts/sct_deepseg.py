@@ -559,7 +559,7 @@ def main(argv: Sequence[str]):
         # Models can have multiple input images -- create 1 QC report per input image.
         if len(output_filenames) == len(input_filenames):
             iterator = zip(input_filenames, output_filenames, [None] * len(input_filenames), qc_seg)
-        # Special case: spine which outputs 4-5 files per 1 input file
+        # Special case: spine which outputs 2-4 files per 1 input file
         elif arguments.task == 'spine':
             # `-label-vert: 1`: Use the 4th image ([3]) which represents the step2 output
             if getattr(arguments, "label_vert") == 1:
