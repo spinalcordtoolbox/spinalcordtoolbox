@@ -422,12 +422,23 @@ def segment_totalspineseg(path_img, tmpdir, predictor, device, label_vert=False)
         # Optional argument to choose which models to run
         step1_only=bool(not label_vert),
         keep_only=['step1_levels', 'step1_output'] if not label_vert else ['step1_levels', 'step1_canal', 'step1_cord', 'step2_output'],
+    )
+
+    name_remapping = {
+        "step1_canal": "totalspineseg_canal",
+        "step1_cord": "totalspineseg_cord",
+        "step1_levels": "totalspineseg_discs",
+        "step1_output": "totalspineseg_all",
+        "step2_output": "totalspineseg_all",
+    }
     fnames_out, targets = [], []
-    expected_outputs = ["step1_canal", "step1_cord", "step1_levels", "step1_output"]
-    if not step1_only:
-        expected_outputs.append("step2_output")
+    expected_outputs = ["step1_levels"]
+    if label_vert:
+        expected_outputs += ["step2_output", "step1_canal", "step1_cord"]
+    else:
+        expected_outputs += ["step1_output"]
     for output_dirname in expected_outputs:
         fnames_out.append(os.path.join(tmpdir_nnunet, output_dirname, os.path.basename(path_img)))
-        targets.append(f"_{output_dirname}")
+        targets.append(f"_{name_remapping[output_dirname]}")
 
     return fnames_out, targets
