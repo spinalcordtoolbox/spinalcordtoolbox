@@ -302,7 +302,9 @@ def get_parser(subparser_to_return=None):
             params.add_argument(
                 "-label-vert",
                 type=int,
-                help="If set to '1', give each vertebrae in the spine segmentations a unique label (e.g. C1: 11 C2: 12 etc.). "
+                help="If set to '1', run a second model that applies a unique label to each individual vertebrae in "
+                     "the spine segmentation (e.g. C1: 11 C2: 12 etc.). "
+                     "If not specified, all segmented vertebrae will have the same value (FIXME -- what value?), which is faster to compute if you only need e.g. disc labels."
                      "More details on TotalSpineSeg's two models can be found here: https://github.com/neuropoly/totalspineseg/?tab=readme-ov-file#model-description",
                 choices=(0, 1),
                 default=0)
