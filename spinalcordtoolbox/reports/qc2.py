@@ -253,12 +253,10 @@ class SlicingSpec:
         Used for the top-left tile in a mosaic.
     """
     # ----------------------------------------------------------------
-    # Mandatory fields
+    # Dataclass fields
     # ----------------------------------------------------------------
-    # This is enforced by the default @dataclass __init__ method,
-    # which should be considered an "internal" method. Instead of
-    # creating instances directly with SlicingSpec(...), users of this
-    # class should use one of the factory functions below.
+    # The default @dataclass __init__ method, used internally by the
+    # SlicingSpec factory functions, always assigns a value to these.
 
     affine: np.ndarray  # shape=(4, 4)
     offsets: dict[str, np.ndarray]  # each shape=(3,), insertion order is important
@@ -269,11 +267,8 @@ class SlicingSpec:
     # Factory functions
     # ----------------------------------------------------------------
     # This is the normal way for users of this class to create
-    # instances, instead of calling SlicingSpec(...) directly.
-    # After using a factory function, the transformer methods below
-    # can be used to adjust the resulting SlicingSpec.
-    # They are @staticmethod, so they can be called with, for example:
-    # SlicingSpec.full_axial(...)
+    # instances. They are @staticmethod, so they are called as:
+    # SlicingSpec.full_axial(...) etc.
 
     @staticmethod
     def full_axial(img: Image, p_resample: float = 0.6) -> 'SlicingSpec':
@@ -348,9 +343,10 @@ class SlicingSpec:
     # ----------------------------------------------------------------
     # Transformer methods
     # ----------------------------------------------------------------
-    # These methods take an existing SlicingSpec, and produce a new
-    # SlicingSpec. For example, they can be used to center and crop
-    # slices around a segmentation, or to drop some slices entirely.
+    # These methods can be called on an existing SlicingSpec, to
+    # produce a new SlicingSpec. For example, they can be used to
+    # center and crop slices around a segmentation, or to drop some
+    # slices entirely.
 
     def center_patches(
         self: 'SlicingSpec', seg: Image, shape: tuple[int, int] = (30, 30)
@@ -437,8 +433,8 @@ class SlicingSpec:
     # ----------------------------------------------------------------
     # Consumer methods
     # ----------------------------------------------------------------
-    # These methods use an existing SlicingSpec to produce some other
-    # result.
+    # These methods are called on an existing SlicingSpec to produce
+    # some other result.
 
     def get_slices(
         self: 'SlicingSpec',
