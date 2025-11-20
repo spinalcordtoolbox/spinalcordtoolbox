@@ -565,7 +565,7 @@ TASKS = {
          'models': ['model_seg_canal_t2w'],
          'citation': None
          },
-    'totalspineseg':
+    'spine':
         {'description': 'Intervertebral discs labeling and vertebrae segmentation',
          'long_description': 'TotalSpineSeg is a tool for automatic instance segmentation of all vertebrae, intervertebral discs (IVDs), '
                              'spinal cord, and spinal canal in MRI images. It is robust to various MRI contrasts, acquisition orientations, '

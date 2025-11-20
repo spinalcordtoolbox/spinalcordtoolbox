@@ -281,7 +281,7 @@ def get_parser(subparser_to_return=None):
 
         # Add options that only apply to specific tasks
         is_nnunet = all(models.MODELS[model_name]['framework'] == "nnunetv2" for model_name in task_dict['models'])
-        if is_nnunet and task_name != 'totalspineseg':
+        if is_nnunet and task_name != 'spine':  # totalspineseg
             # Test time augmentation is an nnUNet-specific feature (`use_mirroring=True` internally)
             # But, the totalspineseg package doesn't support this argument (yet), so skip it
             params.add_argument(
