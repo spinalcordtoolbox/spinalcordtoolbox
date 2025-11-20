@@ -281,7 +281,7 @@ def get_parser(subparser_to_return=None):
 
         # Add options that only apply to specific tasks
         is_nnunet = all(models.MODELS[model_name]['framework'] == "nnunetv2" for model_name in task_dict['models'])
-        if is_nnunet and task_name != 'totalspineseg':
+        if is_nnunet and task_name != 'spine':  # totalspineseg
             # Test time augmentation is an nnUNet-specific feature (`use_mirroring=True` internally)
             # But, the totalspineseg package doesn't support this argument (yet), so skip it
             params.add_argument(
@@ -298,13 +298,13 @@ def get_parser(subparser_to_return=None):
                 help="Contrast of the input. Specifies the contrast order of input images (e.g. `-c t1 t2`)",
                 choices=('t1', 't2', 't2star'),
                 metavar=Metavar.str)
-        if task_name == 'totalspineseg':
+        if task_name == 'spine':  # totalspineseg
             params.add_argument(
-                "-step1-only",
+                "-label-vert",
                 type=int,
-                help="If set to '1', only Step 1 will be performed. If not provided, both steps will be run.\n"
-                     "- Step 1: Segments the spinal cord, spinal canal, vertebrae, and intervertebral discs (IVDs). Labels the IVDs, but vertebrae are left unlabeled.\n"
-                     "- Step 2: Fine-tunes the segmentation, applies labels to vertebrae, and segments the sacrum if present.\n"
+                help="If set to '1', run a second model that applies a unique label to each individual vertebrae in "
+                     "the spine segmentation (e.g. C1: 11 C2: 12 etc.). "
+                     "If not specified, all segmented vertebrae will have the same value (FIXME -- what value?), which is faster to compute if you only need e.g. disc labels."
                      "More details on TotalSpineSeg's two models can be found here: https://github.com/neuropoly/totalspineseg/?tab=readme-ov-file#model-description",
                 choices=(0, 1),
                 default=0)
@@ -333,9 +333,9 @@ def get_parser(subparser_to_return=None):
         """)
 
         # Suppress arguments that are irrelevant for certain tasks
-        # - Sagittal view is not currently supported for rootlets/totalspineseg QC
+        # - Sagittal view is not currently supported for rootlets/spine QC
         #   This means that the `-qc-plane` argument (and the `-qc-seg` note) should be hidden for these tasks
-        tasks_without_sagittal_qc = ('rootlets', 'totalspineseg')
+        tasks_without_sagittal_qc = ('rootlets', 'spine')
         if task_name in tasks_without_sagittal_qc:
             task_args['-qc-plane'].help = SUPPRESS
             task_args['-qc-seg'].help = task_args['-qc-seg'].help.replace(note_qc_seg, "")
@@ -477,9 +477,9 @@ def main(argv: Sequence[str]):
             }
             extra_inference_kwargs = {
                 arg_name: getattr(arguments, arg_name)
-                # "step1_only" -> used only by totalspineseg
+                # "label_vert" -> used only by spine
                 # "soft_ms_lesion" -> used only by lesion_ms
-                for arg_name in ["step1_only", "soft_ms_lesion"]
+                for arg_name in ["label_vert", "soft_ms_lesion"]
                 if hasattr(arguments, arg_name)
             }
             # The MS lesion model is multifold, which requires turning on the "ensemble averaging" behavior
@@ -559,16 +559,16 @@ def main(argv: Sequence[str]):
         # Models can have multiple input images -- create 1 QC report per input image.
         if len(output_filenames) == len(input_filenames):
             iterator = zip(input_filenames, output_filenames, [None] * len(input_filenames), qc_seg)
-        # Special case: totalspineseg which outputs 4-5 files per 1 input file
-        elif arguments.task == 'totalspineseg':
-            # `-step1-only: 1`: Use the 4th image ([3]) which represents the step1 output
-            if getattr(arguments, "step1_only") == 1:
+        # Special case: spine which outputs 2-4 files per 1 input file
+        elif arguments.task == 'spine':
+            # `-label-vert: 1`: Use the 4th image ([3]) which represents the step2 output
+            if getattr(arguments, "label_vert") == 1:
                 assert len(output_filenames) == 4 * len(input_filenames)
                 output_filenames_qc = output_filenames[3::4]
-            # `-step1-only: 0`: Use the 5th image ([4]) which represents the step2 output
+            # `-label-vert: 0`: Use the 2nd image ([1]) which represents the step1 output
             else:
-                assert len(output_filenames) == 5 * len(input_filenames)
-                output_filenames_qc = output_filenames[4::5]
+                assert len(output_filenames) == 2 * len(input_filenames)
+                output_filenames_qc = output_filenames[1::2]
             iterator = zip(input_filenames, output_filenames_qc, [None] * len(input_filenames), qc_seg)
         # Other models typically have 2 outputs per input (e.g. SC + lesion), so use both segs
         else:
