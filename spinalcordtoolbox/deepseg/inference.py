@@ -421,12 +421,10 @@ def segment_totalspineseg(path_img, tmpdir, predictor, device, label_vert=False)
         max_workers_nnunet=1,
         # Optional argument to choose which models to run
         step1_only=bool(not label_vert),
-        keep_only=['step1_levels', 'step1_output'] if not label_vert else ['step1_levels', 'step1_canal', 'step1_cord', 'step2_output'],
+        keep_only=['step1_levels', 'step1_output'] if not label_vert else ['step1_levels', 'step2_output'],
     )
 
     name_remapping = {
-        "step1_canal": "totalspineseg_canal",
-        "step1_cord": "totalspineseg_cord",
         "step1_levels": "totalspineseg_discs",
         "step1_output": "totalspineseg_all",
         "step2_output": "totalspineseg_all",
@@ -434,7 +432,7 @@ def segment_totalspineseg(path_img, tmpdir, predictor, device, label_vert=False)
     fnames_out, targets = [], []
     expected_outputs = ["step1_levels"]
     if label_vert:
-        expected_outputs += ["step2_output", "step1_canal", "step1_cord"]
+        expected_outputs += ["step2_output"]
     else:
         expected_outputs += ["step1_output"]
     for output_dirname in expected_outputs:
