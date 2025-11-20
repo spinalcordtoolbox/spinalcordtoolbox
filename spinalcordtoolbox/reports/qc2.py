@@ -271,7 +271,7 @@ class SlicingSpec:
     # SlicingSpec.full_axial(...) etc.
 
     @staticmethod
-    def full_axial(img: Image, p_resample: float = 0.6) -> 'SlicingSpec':
+    def full_axial(img: Image, p_resample: float) -> 'SlicingSpec':
         """
         A slicing spec to extract full axial slices.
 
@@ -284,7 +284,7 @@ class SlicingSpec:
         return SlicingSpec.full_oriented(img, "SAL", p_resample)
 
     @staticmethod
-    def full_sagittal(img: Image, p_resample: float = 0.6) -> 'SlicingSpec':
+    def full_sagittal(img: Image, p_resample: float) -> 'SlicingSpec':
         """
         A slicing spec to extract full sagittal slices.
 
@@ -531,29 +531,31 @@ class SlicingSpec:
         fig.savefig(str(path), format='png', transparent=True)
 
 
-def scratch(
+def sct_register_multimodal(
     fname_input: str,
     fname_output: str,
     fname_seg: str,
     argv: Sequence[str],
     path_qc: str,
-    dataset: Optional[str],
-    subject: Optional[str],
-    p_resample: float,
-    plane: Optional[str] = 'Axial'
+    dataset: str | None,
+    subject: str | None,
+    p_resample: float | None = 0.6,
 ):
-    """Scratch"""
+    """
+    Generate a QC report for sct_register_multimodal.
+
+    Axial orientation, switch between input and output images.
+    """
     command = 'sct_register_multimodal'
     cmdline = [command]
     cmdline.extend(argv)
 
-    # Axial orientation, switch between two input images
     with create_qc_entry(
         path_input=Path(fname_input).resolve(),
         path_qc=Path(path_qc),
         command=command,
         cmdline=list2cmdline(cmdline),
-        plane=plane,
+        plane='Axial',
         dataset=dataset,
         subject=subject,
     ) as imgs_to_generate:
@@ -562,12 +564,7 @@ def scratch(
         img_output = Image(fname_output)
         img_seg = Image(fname_seg)
 
-        if plane == 'Axial':
-            slicing_spec = SlicingSpec.full_axial(img_input, p_resample).center_patches(img_seg)
-        elif plane == 'Sagittal':
-            slicing_spec = SlicingSpec.full_sagittal(img_input, p_resample).center_columns(img_seg)
-        else:
-            raise ValueError(f"Invalid {plane=}")
+        slicing_spec = SlicingSpec.full_axial(img_input, p_resample).center_patches(img_seg)
 
         slicing_spec.generate_mosaic(img_input, imgs_to_generate['path_background_img'])
         slicing_spec.generate_mosaic(img_output, imgs_to_generate['path_overlay_img'])
@@ -610,94 +607,6 @@ def add_slice_numbers(ax, num_slices, radius, margin: int = 2, reverse=False):
             mpl_patheffects.Stroke(linewidth=1, foreground='black'),
             mpl_patheffects.Normal()
         ])
-
-
-def sct_register_multimodal(
-    fname_input: str,
-    fname_output: str,
-    fname_seg: str,
-    argv: Sequence[str],
-    path_qc: str,
-    dataset: Optional[str],
-    subject: Optional[str],
-):
-    """
-    Generate a QC report for sct_register_multimodal.
-    """
-    command = 'sct_register_multimodal'
-    cmdline = [command]
-    cmdline.extend(argv)
-
-    # Axial orientation, switch between two input images
-    with create_qc_entry(
-        path_input=Path(fname_input).resolve(),
-        path_qc=Path(path_qc),
-        command=command,
-        cmdline=list2cmdline(cmdline),
-        plane='Axial',
-        dataset=dataset,
-        subject=subject,
-    ) as imgs_to_generate:
-
-        # Resample images slice by slice
-        p_resample = 0.6
-        logger.info('Resample images to %fx%f mm', p_resample, p_resample)
-        img_input = Image(fname_input).change_orientation('SAL')
-        img_input = resample_nib(
-            image=img_input,
-            new_size=[img_input.dim[4], p_resample, p_resample],
-            new_size_type='mm',
-            interpolation='spline',
-        )
-        img_output = resample_nib(
-            image=Image(fname_output).change_orientation('SAL'),
-            image_dest=img_input,
-            interpolation='spline',
-        )
-        img_seg = resample_nib(
-            image=Image(fname_seg).change_orientation('SAL'),
-            image_dest=img_input,
-            interpolation='linear',
-        )
-        img_seg.data = (img_seg.data > 0.5) * 1
-
-        # Each slice is centered on the segmentation
-        logger.info('Find the center of each slice')
-        centers = np.array([ndimage.center_of_mass(slice) for slice in img_seg.data])
-        inf_nan_fill(centers[:, 0])
-        inf_nan_fill(centers[:, 1])
-
-        # Generate the first QC report image
-        img = equalize_histogram(mosaic(img_input, centers))
-
-        # Fix the width to a specific size, and vary the height based on how many rows there are.
-        size_fig = [TARGET_WIDTH_INCH, TARGET_WIDTH_INCH * img.shape[0] / img.shape[1]]
-
-        fig = mpl_figure.Figure()
-        fig.set_size_inches(*size_fig, forward=True)
-        mpl_backend_agg.FigureCanvasAgg(fig)
-        ax = fig.add_axes((0, 0, 1, 1))
-        ax.imshow(img, cmap='gray', interpolation='none', aspect=1.0)
-        add_orientation_labels(ax)
-        ax.get_xaxis().set_visible(False)
-        ax.get_yaxis().set_visible(False)
-        img_path = str(imgs_to_generate['path_background_img'])
-        logger.debug('Save image %s', img_path)
-        fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
-
-        # Generate the second QC report image
-        img = equalize_histogram(mosaic(img_output, centers))
-        fig = mpl_figure.Figure()
-        fig.set_size_inches(*size_fig, forward=True)
-        mpl_backend_agg.FigureCanvasAgg(fig)
-        ax = fig.add_axes((0, 0, 1, 1), label='0')
-        ax.imshow(img, cmap='gray', interpolation='none', aspect=1.0)
-        add_orientation_labels(ax)
-        ax.get_xaxis().set_visible(False)
-        ax.get_yaxis().set_visible(False)
-        img_path = str(imgs_to_generate['path_overlay_img'])
-        logger.debug('Save image %s', img_path)
-        fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
 
 
 def sct_deepseg(

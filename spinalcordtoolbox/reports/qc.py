@@ -474,7 +474,7 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
     # Get QC specifics based on SCT process
     # Axial orientation, switch between two input images
     stretch_contrast = True
-    if process in ['sct_register_multimodal', 'sct_register_to_template']:
+    if process in ['sct_register_to_template']:
         plane = 'Axial'
         im_list = [Image(fname_in1), Image(fname_in2), Image(fname_seg)]
         action_list = [QcImage.no_seg_seg]

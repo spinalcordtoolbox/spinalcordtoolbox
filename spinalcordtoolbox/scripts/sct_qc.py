@@ -11,6 +11,7 @@ from typing import Sequence
 import textwrap
 
 from spinalcordtoolbox.reports.qc import generate_qc
+from spinalcordtoolbox.reports import qc2
 from spinalcordtoolbox.utils.sys import init_sct, list2cmdline, __sct_dir__, set_loglevel
 from spinalcordtoolbox.utils.shell import SCTArgumentParser
 
@@ -111,9 +112,13 @@ def main(argv: Sequence[str]):
     if arguments.p == 'sct_deepseg_lesion' and arguments.plane is None:
         parser.error('Please provide the plane of the output QC with `-plane`')
 
-    if arguments.p == 'scratch':
-        from spinalcordtoolbox.reports.qc2 import scratch
-        scratch(
+    if arguments.p == 'sct_register_multimodal':
+        p_resample = (
+            {} if arguments.resample is None else  # use the report's default
+            dict(p_resample=None) if arguments.resample == 0 else  # explicitly turn it off
+            dict(p_resample=arguments.resample)
+        )
+        qc2.sct_register_multimodal(
             fname_input=arguments.i,
             fname_output=arguments.d,
             fname_seg=arguments.s,
@@ -121,9 +126,7 @@ def main(argv: Sequence[str]):
             path_qc=arguments.qc,
             dataset=arguments.qc_dataset,
             subject=arguments.qc_subject,
-            p_resample=(0.6 if arguments.resample is None else arguments.resample),
-            # quick hack to reuse `-plane` to test axial/sagittal scratch QCs
-            plane=arguments.plane.capitalize() if arguments.plane is not None else 'Axial'
+            **p_resample,
         )
     else:
         generate_qc(fname_in1=arguments.i,
