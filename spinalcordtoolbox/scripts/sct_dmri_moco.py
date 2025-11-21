@@ -102,6 +102,11 @@ def get_parser():
              '(nonbinary, [0, 1]), and it will be binarized at 0.5. Example: `dmri_mask.nii.gz`',
     )
     optional.add_argument(
+        '-ref',
+        metavar=Metavar.file,
+        help="Reference volume for motion correction, e.g., mean DWI or mean b=0 volume."
+    )
+    optional.add_argument(
         '-param',
         metavar=Metavar.list,
         type=list_type(',', str),
@@ -192,6 +197,8 @@ def main(argv: Sequence[str]):
     param.bval_min = arguments.bvalmin
     param.group_size = arguments.g
     param.fname_mask = arguments.m
+    if arguments.ref is not None:
+        param.fname_ref = arguments.ref
     param.interp = arguments.x
     param.path_out = arguments.ofolder
     param.remove_temp_files = arguments.r
