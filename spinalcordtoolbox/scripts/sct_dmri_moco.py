@@ -170,8 +170,8 @@ def get_parser():
     optional.add_argument(
         '-mocodl',
         action='store_true',
-        help="Use deep learning–based motion correction (DenseRigidNet) with pre-trained best checkpoint." 
-             "Mask along spinal cord and Target (reference) are required for this algorithm."
+        help="Use deep learning–based motion correction (DenseRigidNet) with best-weights checkpoint. "
+             "Requires both -m mask and -ref reference."
     )
 
     # Arguments which implement shared functionality
@@ -223,11 +223,13 @@ def main(argv: Sequence[str]):
             raise ImportError("mocoDL module not found. Please ensure SCT was installed with mocoDL support.")
 
         fname_output_image = run_mocoDL(
-            input_path=param.fname_data,
-            mask_path=param.fname_mask,
+            fname_data=param.fname_data,
+            fname_mask=param.fname_mask,
             ofolder=param.path_out,
-            ref_path=param.fname_ref,
-            mode = "dmri"
+            fname_ref=param.fname_ref,
+            fname_bvecs=param.fname_bvecs,
+            fname_bvals=param.fname_bvals,
+            mode="dmri"
         )
     else:
         # Run SCT-based motion correction
