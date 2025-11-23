@@ -112,12 +112,12 @@ def run_mocoDL(fname_data, fname_mask, ofolder, mode="fmri", fname_ref=None, fna
 
     sharpened[mask_np == 0] = mov_np[mask_np == 0]
 
-    voxel = header.get_zooms()[:3]
+    sx, sy, sz = header.get_zooms()[:3]
     disp = np.zeros((H, W, D, T, 3), dtype=np.float32)
     for t in range(T):
         for d in range(D):
-            disp[..., d, t, 0] = Tx[d, t] * voxel[0]
-            disp[..., d, t, 1] = Ty[d, t] * voxel[1]
+            disp[..., d, t, 0] = -Tx[d, t] * sx
+            disp[..., d, t, 1] = -Ty[d, t] * sy
             disp[..., d, t, 2] = 0.0
 
     matched = np.zeros_like(sharpened)
