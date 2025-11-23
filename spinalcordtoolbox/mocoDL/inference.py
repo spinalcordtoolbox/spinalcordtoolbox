@@ -166,16 +166,16 @@ def run_mocoDL(fname_data, fname_mask, ofolder, mode="fmri", fname_ref=None, fna
     disp5D_img = nib.Nifti1Image(disp, affine, header)
     disp5D_img.header.set_intent('vector', (), '')
     nib.save(disp5D_img, tmp_disp5D)
-    generate_output_file(tmp_disp5D, add_suffix(fname_moco, "_dispfield-5D"))
+    generate_output_file(tmp_disp5D, add_suffix(fname_moco, "_dispfield-all"))
 
-    # Save per-timepoint displacement fields (raw style is OK)
+    # Save per-timepoint displacement fields
     disp_dir = os.path.join(ofolder, "dispfield")
     os.makedirs(disp_dir, exist_ok=True)
     for t in tqdm(range(T), desc="Saving displacement fields"):
         disp_t = disp[..., t, :]
         disp_img = nib.Nifti1Image(disp_t, affine, header)
         disp_img.header.set_intent('vector', (), '')
-        nib.save(disp_img, os.path.join(disp_dir, f"{base_output}_t{t:04d}.nii.gz"))
+        nib.save(disp_img, os.path.join(disp_dir, f"warp_t{t:04d}.nii.gz"))
 
     print(f"[mocoDL] Outputs saved in: {ofolder}")
     return fname_moco
