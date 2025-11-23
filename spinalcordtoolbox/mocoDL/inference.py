@@ -15,6 +15,7 @@ from spinalcordtoolbox.image import add_suffix, generate_output_file
 from spinalcordtoolbox.scripts import sct_dmri_separate_b0_and_dwi
 from spinalcordtoolbox.mocoDL.model import DenseRigidReg, RigidWarp
 
+
 def run_mocoDL(fname_data, fname_mask, ofolder, mode="fmri", fname_ref=None, fname_bvals=None, fname_bvecs=None):
     """
         Deep-learning motion correction (DenseRigidNet) for dMRI/fMRI.
@@ -77,8 +78,8 @@ def run_mocoDL(fname_data, fname_mask, ofolder, mode="fmri", fname_ref=None, fna
     model.warp = RigidWarp(mode="bilinear")
 
     moving = torch.from_numpy(mov_np).unsqueeze(0).unsqueeze(0).to(device)
-    fixed  = torch.from_numpy(fix_np).unsqueeze(0).unsqueeze(0).to(device)
-    mask   = torch.from_numpy(mask_np).unsqueeze(0).unsqueeze(0).to(device)
+    fixed = torch.from_numpy(fix_np).unsqueeze(0).unsqueeze(0).to(device)
+    mask = torch.from_numpy(mask_np).unsqueeze(0).unsqueeze(0).to(device)
 
     # Run inference
     print("[mocoDL] Starting inference...")

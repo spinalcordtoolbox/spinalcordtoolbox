@@ -17,6 +17,7 @@ from spinalcordtoolbox.utils.shell import (SCTArgumentParser, Metavar, ActionCre
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.mocoDL.inference import run_mocoDL
 
+
 def get_parser():
     # initialize parameters
     # TODO: create a class ParamFmriMoco which inheritates from ParamMoco
@@ -189,7 +190,7 @@ def main(argv: Sequence[str]):
             fname_mask=param.fname_mask,
             ofolder=param.path_out,
             fname_ref=param.fname_ref,
-            mode = "fmri"
+            mode="fmri"
         )
     else:
         # Run SCT-based motion correction

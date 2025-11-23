@@ -11,6 +11,7 @@ import torch.nn as nn
 import pytorch_lightning as pl
 import torch.nn.functional as F
 
+
 # -----------------------------
 # Some helper function
 # -----------------------------
@@ -26,6 +27,7 @@ def _get_fixed_t(fixed: torch.Tensor, t: int) -> torch.Tensor:
         return fixed[..., t].contiguous()
     raise ValueError(f"Unexpected fixed ndim={fixed.ndim}")
 
+
 def normalize_volume(x, mask, pmin=1, pmax=99, eps=1e-6):
     """
     Normalizes intensity inside mask to 0–1 range using percentile scaling.
@@ -37,6 +39,7 @@ def normalize_volume(x, mask, pmin=1, pmax=99, eps=1e-6):
     lo = torch.quantile(vals, pmin/100)
     hi = torch.quantile(vals, pmax/100)
     return ((x - lo) / (hi - lo + eps)).clamp(0, 1) * m
+
 
 # -----------------------------
 # Dense Block and Layer
@@ -58,10 +61,11 @@ class DenseBlock(nn.Module):
         self.block = nn.ModuleList(layers)
 
     def forward(self, x):
-        for l in self.block:
-            out = l(x)
+        for lenght in self.block:
+            out = lenght(x)
             x = torch.cat([x, out], dim=1)
         return x
+
 
 # -----------------------------
 # DenseNet
@@ -103,13 +107,14 @@ class DenseNetRegressorSliceWise(nn.Module):
         x = self.conv_in(x)
         for b in self.blocks:
             x = b(x)
-        x = x.mean(dim=(2,3))           # (B, C, D')
+        x = x.mean(dim=(2, 3))           # (B, C, D')
         theta = self.conv_out(x)        # (B, 2, D')
 
         s = torch.nn.functional.softplus(self.shift_scale) + 1e-4
         Ty = torch.tanh(theta[:, 0:1, :]) * (self.max_vox_shift * s)
         Tx = torch.tanh(theta[:, 1:2, :]) * (self.max_vox_shift * s)
         return torch.cat([Tx, Ty], dim=1)
+
 
 # -----------------------------
 # Warp Function
@@ -162,6 +167,7 @@ class RigidWarp(nn.Module):
         )
         warped = warped_2d.view(B, D, C, H, W).permute(0, 2, 3, 4, 1).contiguous()  # (B,C,H,W,D)
         return warped
+
 
 # -----------------------------
 # Main Model
