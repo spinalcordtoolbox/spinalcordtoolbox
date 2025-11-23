@@ -280,6 +280,17 @@ def get_parser(subparser_to_return=None):
         subparser.add_tempfile_args()
 
         # Add options that only apply to specific tasks
+        is_nnunet = all(models.MODELS[model_name]['framework'] == "nnunetv2" for model_name in task_dict['models'])
+        if is_nnunet and task_name != 'totalspineseg':
+            # Test time augmentation is an nnUNet-specific feature (`use_mirroring=True` internally)
+            # But, the totalspineseg package doesn't support this argument (yet), so skip it
+            params.add_argument(
+                "-test-time-aug",
+                action='store_true',
+                help="Perform test-time augmentation (TTA) by flipping the input image along all axes and averaging the "
+                     "resulting predictions.\n"
+                     "Note: The time it takes to run the model will increase due to the additional predictions."
+            )
         if task_name == 'tumor_edema_cavity_t1_t2':
             input_output.add_argument(
                 "-c",
@@ -460,7 +471,8 @@ def main(argv: Sequence[str]):
             extra_network_kwargs = {
                 arg_name: getattr(arguments, arg_name)
                 # "single_fold" -> used only by lesion_ms
-                for arg_name in ["single_fold"]
+                # "test_time_aug" -> used only by nnunetv2 models
+                for arg_name in ["single_fold", "test_time_aug"]
                 if hasattr(arguments, arg_name)
             }
             extra_inference_kwargs = {
