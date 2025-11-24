@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Sep 1 2025
-@author: Nontharat Tucksinapinunchai
-
-DenseRigidNet: DenseNet-based Rigid Motion Correction for dMRI/fMRI
-"""
+#!/usr/bin/env python
+#
+# DL-based motion correction for dMRI/fMRI
+#
+# Copyright (c) 2025 Polytechnique Montreal <www.neuro.polymtl.ca>
+# License: see the file LICENSE
 
 import torch
 import torch.nn as nn
