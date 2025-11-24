@@ -1,7 +1,9 @@
-# -*- coding: utf-8 -*-
-"""
-Inference script used to generate the motion-corrected 4D volumes from DenseRigid model.
-"""
+#!/usr/bin/env python
+#
+# Inference of DL-based motion correction for dMRI/fMRI
+#
+# Copyright (c) 2025 Polytechnique Montreal <www.neuro.polymtl.ca>
+# License: see the file LICENSE
 
 import os
 import torch
