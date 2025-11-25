@@ -220,7 +220,7 @@ MODELS = {
         "thr": None,  # Images are already binarized
         "default": False,
     },
-    "totalspineseg": {
+    "spine": {
          # NB: Rather than hardcoding the URLs ourselves, use the URLs from the totalspineseg package.
          # This means that when the totalspineseg package is updated, the URLs will be too, thus triggering
          # a re-installation of the model URLs

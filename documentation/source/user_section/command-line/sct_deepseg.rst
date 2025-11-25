@@ -125,7 +125,7 @@ Other structures
 .. |rootlets| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/spinal_rootlets_t2.png
    :target: deepseg/rootlets.html
 
-.. |totalspineseg| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/totalspineseg.png
+.. |spine| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/totalspineseg.png
    :target: deepseg/totalspineseg.html
 
 Multiple structures may be segmented by running the following sample command:
@@ -142,7 +142,7 @@ You can replace "``rootlets``" with any of the task names in the table below to 
    :widths: 25 25 25
 
    * - |rootlets| ``rootlets``
-     - |totalspineseg| ``totalspineseg``
+     - |spine| ``spine``
      - |sc_canal_t2| ``sc_canal_t2``
 
 .. |sc_canal_t2| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/spinal_canal_t2.png
@@ -206,4 +206,4 @@ If you absolutely require these models, you can downgrade to version of SCT list
    deepseg/tumor_t2
    deepseg/rootlets
    deepseg/sc_canal_t2
-   deepseg/totalspineseg
+   deepseg/spine
