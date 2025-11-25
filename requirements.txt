@@ -18,7 +18,6 @@ h5py!=3.15.0
 # but we only need that for training models. Our users only need CPU.
 --extra-index-url https://download.pytorch.org/whl/cpu # append_to_freeze
 ivadomed
-lightning
 matplotlib
 # `matplotlib-inline` is an optional package that comes with `jupyter` for use with the '%matplotlib inline' directive.
 # However, if the user runs `jupyter` from a separate environment and sets '%matplotlib inline', then SCT's
@@ -57,7 +56,6 @@ onnxruntime>=1.7.0,!=1.16.0,<1.22.0
 # onnx==[1.16.2,1.17.0,1.18.0] all cause errors for Python 3.9 + Windows (https://github.com/onnx/onnx/issues/6267#issuecomment-2877327002)
 # 1.17.0 can partially work as long as SCT doesn't import it, but this is flaky.
 onnx<1.16.2
-opencv-python
 pandas
 portalocker
 psutil
