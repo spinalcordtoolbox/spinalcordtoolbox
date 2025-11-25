@@ -114,7 +114,7 @@ def segment_non_ivadomed(path_model, model_type, input_filenames, threshold, kee
                          remove_small, use_gpu=False, remove_temp_files=True, extra_network_kwargs=None, extra_inference_kwargs=None):
     # MONAI and NNUnet have similar structure, and so we use nnunet+inference functions with the same signature
     # NB: For TotalSpineSeg, we don't need to create the network ourselves
-    if "totalspineseg" in path_model:
+    if "spine" in path_model:
         def create_net(pm, _): return pm  # just echo `path_model` back as 'net'
         inference = segment_totalspineseg
     elif model_type == "monai":
