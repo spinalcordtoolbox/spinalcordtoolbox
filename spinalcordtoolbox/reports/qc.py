@@ -473,15 +473,8 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
 
     # Get QC specifics based on SCT process
     stretch_contrast = True
-    # Axial orientation, switch between two input images and color bar and mean value in spinal cord
-    if process in ['sct_fmri_compute_tsnr']:
-        plane = 'Axial'
-        stretch_contrast = False
-        im_list = [Image(fname_in1), Image(fname_in2), Image(fname_seg)]
-        action_list = [QcImage.no_seg_seg]
-        def qcslice_layout(x): return x.mosaic()[:2]
     # Axial orientation, switch between the image and the segmentation
-    elif process in ['sct_propseg', 'sct_deepseg_sc', 'sct_deepseg_gm']:
+    if process in ['sct_propseg', 'sct_deepseg_sc', 'sct_deepseg_gm']:
         plane = 'Axial'
         im_list = [Image(fname_in1), Image(fname_seg)]
         action_list = [QcImage.listed_seg]

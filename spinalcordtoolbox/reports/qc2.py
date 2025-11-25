@@ -472,41 +472,81 @@ class SlicingSpec:
             for slice_label, offset in self.offsets.items()
         }
 
-    def generate_mosaic(
-        self: 'SlicingSpec', img: Image, path: Path, scale: float = 2.5
-    ):
+    def get_mosaic(self: 'SlicingSpec', **kwargs) -> 'Mosaic':
         """
-        Extract slices from an image and save the result as a png.
+        Get a mosaic that can hold the result of `self.get_slices`.
         """
-        # Make a numpy array of the right shape to hold the mosaic
-        num_col = max(math.floor(TARGET_WIDTH_PIXL / scale / self.shape[1]), 1)
-        num_row = math.ceil(len(self.offsets) / num_col)
-        canvas = np.zeros((num_row * self.shape[0], num_col * self.shape[1]))
-        patches = [
-            (slice(x, x + self.shape[0]), slice(y, y + self.shape[1]))
-            for x in range(0, canvas.shape[0], self.shape[0])
-            for y in range(0, canvas.shape[1], self.shape[1])
-        ]
+        return Mosaic(self.shape, list(self.offsets.keys()), self.axis_labels, **kwargs)
 
-        # Initialize the figure
-        fig = mpl_figure.Figure(
+
+class Mosaic:
+    """
+    Convenience methods for rendering several 2D slices into a grid of images.
+
+    The caller is expected to manipulate `self.fig` and/or `self.ax` directly
+    before calling `self.save(path)`.
+    """
+    canvas: np.ndarray  # The data array for the entire mosaic.
+    tiles: dict[str, tuple[slice, slice]]  # The canvas coordinates for each slice label.
+    axis_labels: tuple[tuple[str, str], tuple[str, str]]  # ((top, bottom), (left, right))
+
+    fig: 'mpl_figure.Figure'
+    ax: 'mpl_axes.Axes'
+
+    def __init__(
+        self,
+        shape: tuple[int, int],  # (height, width) of each tile
+        slice_labels: list[str],
+        axis_labels: tuple[tuple[str, str], tuple[str, str]],  # ((top, bottom), (left, right))
+        *,  # keyword-only arguments after this
+        rect: tuple[float, float, float, float] = (0, 0, 1, 1),  # passed to Figure.add_axes()
+        scale: float = 2.5,
+    ):
+        # Make a canvas of the right size to hold all the tiles.
+        num_col = max(math.floor(TARGET_WIDTH_PIXL / scale / shape[1]), 1)
+        num_row = math.ceil(len(slice_labels) / num_col)
+        self.canvas = np.zeros((num_row * shape[0], num_col * shape[1]))
+
+        # Compute the canvas coordinates for each slice label.
+        self.tiles = dict(zip(slice_labels, [
+            (slice(x, x + shape[0]), slice(y, y + shape[1]))
+            for x in range(0, self.canvas.shape[0], shape[0])
+            for y in range(0, self.canvas.shape[1], shape[1])
+        ], strict=False))
+
+        # Save the axis labels for displaying later.
+        self.axis_labels = axis_labels
+
+        # Initialize the Figure and the Axes for rendering the mosaic later.
+        self.fig = mpl_figure.Figure(
             # figsize is (width, height) but canvas shape is (height, width)
-            figsize=(canvas.shape[1] * scale / DPI, canvas.shape[0] * scale / DPI),
+            figsize=(self.canvas.shape[1] * scale / DPI, self.canvas.shape[0] * scale / DPI),
             dpi=DPI,
         )
-        mpl_backend_agg.FigureCanvasAgg(fig)
-        ax = fig.add_axes((0, 0, 1, 1))
-        ax.xaxis.set_visible(False)
-        ax.yaxis.set_visible(False)
+        mpl_backend_agg.FigureCanvasAgg(self.fig)
+        self.ax = self.fig.add_axes(rect)
+        self.ax.xaxis.set_visible(False)
+        self.ax.yaxis.set_visible(False)
 
-        # Extract image slices and insert them in the mosaic
-        img_slices = self.get_slices(img, order=2)
-        for patch, data in zip(patches, img_slices.values()):
-            canvas[patch] = data
-        ax.imshow(equalize_histogram(canvas), cmap='gray', interpolation='none')
+    def insert_slices(self, slices: dict[str, np.ndarray]):
+        """
+        Insert 2D slices into the canvas based on their slice labels.
 
-        # Add orientation labels in the first tile,
-        # and slice labels in the other tiles.
+        Note that this doesn't render them to `self.ax`, so that the caller
+        can post-process `self.canvas` (for example, with `equalize_histogram`)
+        and has full control of `self.ax.imshow(self.canvas, ...)`.
+        """
+        for slice_label, data in slices.items():
+            self.canvas[self.tiles[slice_label]] = data
+
+    def add_labels(self):
+        """
+        Add axis labels and slice labels to the mosaic figure.
+
+        Axis labels are added to the first tile, and slice labels are added to
+        the other tiles.
+        """
+        # Rendering options for all the labels.
         text_args = dict(
             color='yellow',
             fontsize=4,
@@ -515,20 +555,24 @@ class SlicingSpec:
                 mpl_patheffects.Normal(),
             ],
         )
-        for i, (patch, slice_label) in enumerate(zip(patches, img_slices.keys())):
-            top, bottom, _ = patch[0].indices(canvas.shape[0])
-            left, right, _ = patch[1].indices(canvas.shape[1])
-            if i == 0:
+        for tile_num, (slice_label, coords) in enumerate(self.tiles.items()):
+            # Get real coordinates from the `slice` objects.
+            top, bottom, _ = coords[0].indices(self.canvas.shape[0])
+            left, right, _ = coords[1].indices(self.canvas.shape[1])
+            if tile_num == 0:
+                # Axis labels for the first tile.
                 ((top_label, bottom_label), (left_label, right_label)) = self.axis_labels
-                ax.text((left + right) / 2, top, top_label, ha='center', va='top', **text_args)
-                ax.text((left + right) / 2, bottom, bottom_label, ha='center', va='bottom', **text_args)
-                ax.text(left, (top + bottom) / 2, left_label, ha='left', va='center', **text_args)
-                ax.text(right, (top + bottom) / 2, right_label, ha='right', va='center', **text_args)
+                self.ax.text((left + right) / 2, top, top_label, ha='center', va='top', **text_args)
+                self.ax.text((left + right) / 2, bottom, bottom_label, ha='center', va='bottom', **text_args)
+                self.ax.text(left, (top + bottom) / 2, left_label, ha='left', va='center', **text_args)
+                self.ax.text(right, (top + bottom) / 2, right_label, ha='right', va='center', **text_args)
             else:
-                ax.text(left, top, slice_label, ha='left', va='top', **text_args)
+                # Slice labels for the other tiles.
+                self.ax.text(left, top, slice_label, ha='left', va='top', **text_args)
 
-        # Save the figure as a png
-        fig.savefig(str(path), format='png', transparent=True)
+    def save(self, path: Path):
+        """Save the final figure."""
+        self.fig.savefig(str(path), format='png', transparent=True)
 
 
 def sct_register(
@@ -566,8 +610,87 @@ def sct_register(
 
         slicing_spec = SlicingSpec.full_axial(img_input, p_resample).center_patches(img_seg)
 
-        slicing_spec.generate_mosaic(img_input, imgs_to_generate['path_background_img'])
-        slicing_spec.generate_mosaic(img_output, imgs_to_generate['path_overlay_img'])
+        for img, path in [
+            (img_input, imgs_to_generate['path_background_img']),
+            (img_output, imgs_to_generate['path_overlay_img']),
+        ]:
+            mosaic = slicing_spec.get_mosaic()
+            mosaic.insert_slices(slicing_spec.get_slices(img, order=2))
+            mosaic.canvas = equalize_histogram(mosaic.canvas)
+            mosaic.ax.imshow(mosaic.canvas, cmap='gray', interpolation='none')
+            mosaic.add_labels()
+            mosaic.save(path)
+
+
+def sct_fmri_compute_tsnr(
+    fname_input: str,
+    fname_output: str,
+    fname_seg: str,
+    argv: Sequence[str],
+    path_qc: str,
+    dataset: str | None,
+    subject: str | None,
+    p_resample: float | None = 0.6,
+):
+    """
+    Generate a QC report for sct_fmri_compute_tsnr.
+
+    Axial orientation, switch between two input images, with color bar and
+    mean value in spinal cord.
+    """
+    command = 'sct_fmri_compute_tsnr'
+    cmdline = [command]
+    cmdline.extend(argv)
+
+    with create_qc_entry(
+        path_input=Path(fname_input).resolve(),
+        path_qc=Path(path_qc),
+        command=command,
+        cmdline=list2cmdline(cmdline),
+        plane='Axial',
+        dataset=dataset,
+        subject=subject,
+    ) as imgs_to_generate:
+
+        img_input = Image(fname_input)
+        img_output = Image(fname_output)
+        img_seg = Image(fname_seg)
+
+        slicing_spec = SlicingSpec.full_axial(img_input, p_resample).center_patches(img_seg)
+
+        slices_input = slicing_spec.get_slices(img_input, order=2)
+        slices_output = slicing_spec.get_slices(img_output, order=2)
+
+        all_slices = list(slices_input.values())
+        all_slices.extend(slices_output.values())
+        vmin = int(np.min(all_slices))
+        vmax = int(np.max(all_slices)) - 2
+
+        for corner_label, slices, path in [
+            ("1", slices_input, imgs_to_generate['path_background_img']),
+            ("2", slices_output, imgs_to_generate['path_overlay_img']),
+        ]:
+            mosaic = slicing_spec.get_mosaic(rect=(0, 0, 0.93, 1))
+            mosaic.insert_slices(slices)
+            axes_image = mosaic.ax.imshow(
+                mosaic.canvas,
+                cmap='seismic',
+                norm=mpl_colors.Normalize(vmin, vmax),
+                interpolation='none',
+            )
+            colorbar = mosaic.fig.colorbar(
+                axes_image,
+                cax=mosaic.ax.inset_axes([1.005, 0.07, 0.011, 0.86]),
+                orientation='vertical',
+                pad=0.01,
+                shrink=0.5,
+                aspect=1,
+                ticks=[vmin, vmax],
+            )
+            colorbar.ax.tick_params(labelsize=5, length=2, pad=1.7)
+            mosaic.ax.text(1.5, 6, corner_label, color='white', size=3.25)
+            mosaic.add_labels()
+            mosaic.save(path)
 
 
 def add_slice_numbers(ax, num_slices, radius, margin: int = 2, reverse=False):
