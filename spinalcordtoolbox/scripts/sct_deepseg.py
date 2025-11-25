@@ -530,27 +530,27 @@ def main(argv: Sequence[str]):
             im_seg.save(fname_seg)
             output_filenames.append(fname_seg)
 
+            # write JSON sidecar file
+            source_path = os.path.join(path_model, "source.json")
+            if os.path.isfile(source_path):
+                with open(source_path, "r") as fp:
+                    source_dict = json.load(fp)
+            sidecar_json = {
+                'GeneratedBy': [
+                    {
+                        "Name": f"spinalcordtoolbox: sct_deepseg {' '.join(os.path.basename(arg) for arg in argv)}",
+                        "Version": __version__,
+                        "CodeURL": f"https://github.com/spinalcordtoolbox/spinalcordtoolbox/"
+                                f"blob/{_git_info()[1].strip('*')}/spinalcordtoolbox/scripts/sct_deepseg.py",
+                        "ModelURL": source_dict["model_urls"],
+                    }
+                ]
+            }
+            with open(splitext(fname_seg)[0] + ".json", "w") as fp:
+                json.dump(sidecar_json, fp, indent=4)
+
         # Use the result of the current model as additional input of the next model
         fname_prior = fname_seg
-
-        # write JSON sidecar file
-        source_path = os.path.join(path_model, "source.json")
-        if os.path.isfile(source_path):
-            with open(source_path, "r") as fp:
-                source_dict = json.load(fp)
-        sidecar_json = {
-            'GeneratedBy': [
-                {
-                    "Name": f"spinalcordtoolbox: sct_deepseg {' '.join(os.path.basename(arg) for arg in argv)}",
-                    "Version": __version__,
-                    "CodeURL": f"https://github.com/spinalcordtoolbox/spinalcordtoolbox/"
-                               f"blob/{_git_info()[1].strip('*')}/spinalcordtoolbox/scripts/sct_deepseg.py",
-                    "ModelURL": source_dict["model_urls"],
-                }
-            ]
-        }
-        with open(splitext(fname_seg)[0] + ".json", "w") as fp:
-            json.dump(sidecar_json, fp, indent=4)
 
     if arguments.qc is not None:
         # If `arguments.qc_seg is None`, each entry will be treated as an
