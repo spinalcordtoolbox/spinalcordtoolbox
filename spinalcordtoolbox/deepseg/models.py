@@ -571,7 +571,7 @@ TASKS = {
                              'spinal cord, and spinal canal in MRI images. It is robust to various MRI contrasts, acquisition orientations, '
                              'and resolutions. The model used in TotalSpineSeg is based on nnU-Net as the backbone for training and inference.',
          'url': 'https://github.com/neuropoly/totalspineseg',
-         'models': ['totalspineseg'],
+         'models': ['spine'],
          'citation': None
          },
     'lesion_ms_axial_t2':
