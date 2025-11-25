@@ -68,17 +68,9 @@ class QcImage:
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
 
-    def no_seg_seg(self, mask, ax, cmap='gray', norm=None, colorbar=False, text=None):
+    def no_seg_seg(self, mask, ax):
         """Create figure with image overlay. Notably used by sct_registration_to_template"""
-        img = ax.imshow(mask, cmap=cmap, norm=norm, interpolation=self.interpolation, aspect=self.aspect_mask)
-        if colorbar:
-            # Fetch the internal axis + associated figure
-            cax = ax.inset_axes([1.005, 0.07, 0.011, 0.86])
-            fig = ax.get_figure()
-            # Add a colorbar to our figure, and
-            cbar = fig.colorbar(img, cax=cax, orientation='vertical', pad=0.01, shrink=0.5, aspect=1, ticks=[norm.vmin, norm.vmax])
-            cbar.ax.tick_params(labelsize=5, length=2, pad=1.7)
-            ax.text(1.5, 6, text, color='white', size=3.25)
+        ax.imshow(mask, cmap='gray', interpolation=self.interpolation, aspect=self.aspect_mask)
         self._add_orientation_label(ax)
 
         # If Axial, overlay slice numbers in the top‐left of each tile
@@ -227,8 +219,7 @@ class QcImage:
         :return:
         """
 
-        if self._stretch_contrast:
-            img = self._func_stretch_contrast(img)
+        img = self._equalize_histogram(img)
 
         # NB: `size_fig` is in inches. So, when size_fig == 5", then: dpi=300 --> 1500px, dpi=100 --> 500px, etc.
         size_fig = [
@@ -249,18 +240,8 @@ class QcImage:
         fig = mpl_figure.Figure()
         fig.set_size_inches(size_fig[0], size_fig[1], forward=True)
         mpl_backend_agg.FigureCanvasAgg(fig)
-        kwargs = {}
-        ax_dim = (0, 0, 1, 1)
-        if self.process == 'sct_fmri_compute_tsnr':
-            vmin = min(int(np.amin(img)), int(np.amin(mask)))
-            vmax = max(int(np.amax(img)), int(np.amax(mask[0]))) - 2
-            kwargs['norm'] = mpl_colors.Normalize(vmin=vmin, vmax=vmax)
-            kwargs['cmap'] = 'seismic'
-            kwargs['colorbar'] = True
-            kwargs['text'] = 1
-            ax_dim = (0, 0, 0.93, 1)
-        ax = fig.add_axes(ax_dim)
-        QcImage.no_seg_seg(self, img, ax, **kwargs)
+        ax = fig.add_axes((0, 0, 1, 1))
+        QcImage.no_seg_seg(self, img, ax)
 
         logger.info(str(imgs_to_generate['path_background_img']))
         self._save(fig, str(imgs_to_generate['path_background_img']), dpi=self.dpi)
@@ -270,13 +251,11 @@ class QcImage:
         mpl_backend_agg.FigureCanvasAgg(fig)
         for i, action in enumerate(self.action_list):
             logger.debug('Action List %s', action.__name__)
-            if self._stretch_contrast and action.__name__ in ("no_seg_seg",):
+            if action.__name__ in ("no_seg_seg",):
                 logger.debug("Mask type %s" % mask[i].dtype)
-                mask[i] = self._func_stretch_contrast(mask[i])
-            if self.process == 'sct_fmri_compute_tsnr':
-                kwargs['text'] = kwargs['text'] + 1
-            ax = fig.add_axes(ax_dim, label=str(i))
-            action(self, mask[i], ax, **kwargs)
+                mask[i] = self._equalize_histogram(mask[i])
+            ax = fig.add_axes((0, 0, 1, 1), label=str(i))
+            action(self, mask[i], ax)
         self._save(fig, str(imgs_to_generate['path_overlay_img']), dpi=self.dpi)
 
     def _make_QC_image_for_4d_volumes(self, images_after_moco, images_before_moco, imgs_to_generate):
@@ -289,23 +268,12 @@ class QcImage:
         """
 
         size_fig = [5, 10 * images_after_moco[0].shape[0] / images_after_moco[0].shape[1] + 0.5]
-        if self._stretch_contrast:
-            for i in range(len(images_after_moco)):
-                images_after_moco[i] = self._func_stretch_contrast(images_after_moco[i])
-                images_before_moco[i] = self._func_stretch_contrast(images_before_moco[i])
+        for i in range(len(images_after_moco)):
+            images_after_moco[i] = self._equalize_histogram(images_after_moco[i])
+            images_before_moco[i] = self._equalize_histogram(images_before_moco[i])
 
         self._generate_and_save_gif(images_before_moco, images_after_moco, imgs_to_generate, size_fig)
         self._generate_and_save_gif(images_before_moco, images_after_moco, imgs_to_generate, size_fig, is_mask=True)
-
-    def _func_stretch_contrast(self, img):
-        if self._stretch_contrast_method == "equalized":
-            return self._equalize_histogram(img)
-        else:  # stretch_contrast_method == "contrast_stretching":
-            return self._stretch_intensity_levels(img)
-
-    def _stretch_intensity_levels(self, img):
-        p2, p98 = np.percentile(img, (2, 98))
-        return skimage.exposure.rescale_intensity(img, in_range=(p2, p98))
 
     def _equalize_histogram(self, img):
         """
@@ -472,7 +440,6 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
                                    Tuple[List[List[np.ndarray]], List[Tuple[int, int]]]]]
 
     # Get QC specifics based on SCT process
-    stretch_contrast = True
     # Axial orientation, switch between the image and the segmentation
     if process in ['sct_propseg', 'sct_deepseg_sc', 'sct_deepseg_gm']:
         plane = 'Axial'
@@ -602,11 +569,6 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
     qc_image.interpolation = 'none'
     qc_image.action_list = action_list
     qc_image.process = process
-    qc_image._stretch_contrast = stretch_contrast
-    qc_image._stretch_contrast_method = 'equalized'
-    if 'equalized' not in ['equalized', 'contrast_stretching']:
-        raise ValueError("Unrecognized stretch_contrast_method: {}.".format('equalized'),
-                         "Try 'equalized' or 'contrast_stretching'")
     qc_image._fps = fps
     qc_image._draw_text = draw_text
     qc_image._path_custom_labels = path_custom_labels
