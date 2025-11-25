@@ -77,7 +77,7 @@ custom_label_json = {
 def totalspineseg_labels(tmp_path_factory):
     # Generate the labeling using totalspineseg
     tmp_path = tmp_path_factory.mktemp("totalspineseg_labels")
-    sct_deepseg.main(argv=["totalspineseg",
+    sct_deepseg.main(argv=["spine",
                            "-i", sct_test_path('t2', 't2.nii.gz'),
                            "-o", os.path.join(tmp_path, "totalspineseg.nii.gz")])
     return os.path.join(tmp_path, "totalspineseg_step2_output.nii.gz")
