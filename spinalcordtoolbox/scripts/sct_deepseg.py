@@ -561,15 +561,8 @@ def main(argv: Sequence[str]):
             iterator = zip(input_filenames, output_filenames, [None] * len(input_filenames), qc_seg)
         # Special case: spine which outputs 2-4 files per 1 input file
         elif arguments.task == 'spine':
-            # `-label-vert: 1`: Use the 4th image ([3]) which represents the step2 output
-            if getattr(arguments, "label_vert") == 1:
-                assert len(output_filenames) == 4 * len(input_filenames)
-                output_filenames_qc = output_filenames[3::4]
-            # `-label-vert: 0`: Use the 2nd image ([1]) which represents the step1 output
-            else:
-                assert len(output_filenames) == 2 * len(input_filenames)
-                output_filenames_qc = output_filenames[1::2]
-            iterator = zip(input_filenames, output_filenames_qc, [None] * len(input_filenames), qc_seg)
+            assert len(output_filenames) == 2 * len(input_filenames)
+            iterator = zip(input_filenames * 2, output_filenames, [None] * 2, qc_seg * 2)
         # Other models typically have 2 outputs per input (e.g. SC + lesion), so use both segs
         else:
             assert len(output_filenames) == 2 * len(input_filenames)
