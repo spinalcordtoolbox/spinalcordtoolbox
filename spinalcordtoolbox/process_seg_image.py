@@ -95,12 +95,6 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
     # Initialize dictionary of property_list, with 1d array of nan (default value if no property for a given slice).
     shape_properties = {key: np.full(nz, np.nan, dtype=np.double) for key in property_list}
 
-    # Initialize lists to store slice indices and angles
-    z_indices = []
-    angle_hog_values = []
-    centermass_values = []
-    current_patches = {}
-
     fit_results = None
 
     if angle_correction:
@@ -128,11 +122,12 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
             ) from None
 
     # Loop across z and compute shape analysis
+    current_tforms = {}
+    current_patches = {}
     for iz in sct_progress_bar(range(min_z_index, max_z_index + 1), unit='iter', unit_scale=False, desc="Compute shape analysis",
                                ncols=80):
         # Extract 2D patch
         current_patch = im_segr.data[:, :, iz]
-        current_patch_im = im_r.data[:, :, iz]
         if angle_correction:
             # Extract tangent vector to the centerline (i.e. its derivative)
             tangent_vect = np.array([deriv[iz][0] * px, deriv[iz][1] * py, pz])
@@ -150,14 +145,8 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
                                                   output_shape=current_patch.shape,
                                                   order=1,
                                                   )
-            current_patch_im_scaled = transform.warp(current_patch_im.astype(np.float64),
-                                                     tform.inverse,
-                                                     output_shape=current_patch_im.shape,
-                                                     order=1,
-                                                     )
         else:
             current_patch_scaled = current_patch
-            current_patch_im_scaled = current_patch_im
             angle_AP_rad, angle_RL_rad = 0.0, 0.0
 
         # Compute shape properties for this slice
@@ -170,6 +159,33 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
             # Loop across properties and assign values for function output
             for property_name in property_list:
                 shape_properties[property_name][iz] = shape_property.get(property_name, np.nan)
+
+        # Store the patches and transforms to use later after regularization
+        current_tforms[iz] = tform if angle_correction else None
+        current_patches[iz] = {
+            'patch': current_patch_scaled,
+            'angle_AP_rad': angle_AP_rad,
+            'angle_RL_rad': angle_RL_rad
+        }
+
+    # Initialize lists to store slice indices and angles
+    z_indices = []
+    angle_hog_values = []
+    centermass_values = []
+    for iz in sct_progress_bar(range(min_z_index, max_z_index + 1), unit='iter', unit_scale=False, desc="Compute shape analysis",
+                               ncols=80):
+        # Extract 2D patch
+        current_patch_scaled = current_patches[iz]['patch']
+        current_patch_im = im_r.data[:, :, iz]
+        if angle_correction:
+            tform = current_tforms[iz]
+            current_patch_im_scaled = transform.warp(current_patch_im.astype(np.float64),
+                                                     tform.inverse,
+                                                     output_shape=current_patch_im.shape,
+                                                     order=1,
+                                                     )
+        else:
+            current_patch_im_scaled = current_patch_im
 
         # compute PCA and get center or mass based on segmentation; centermass_src: [RL, AP] (assuming RPI orientation)
         # Check for empty slice
@@ -187,12 +203,6 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
 
         angle_hog_values.append(angle_hog)
         centermass_values.append(centermass_src)
-        # Store the patches to use later after regularization
-        current_patches[iz] = {
-            'patch': current_patch_scaled,
-            'angle_AP_rad': angle_AP_rad,
-            'angle_RL_rad': angle_RL_rad
-        }
 
         shape_property = _properties2d(current_patch_scaled, [px, py], iz, angle_hog=angle_hog, verbose=verbose)
         if shape_property is not None:
