@@ -126,7 +126,7 @@ Other structures
    :target: deepseg/rootlets.html
 
 .. |spine| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/totalspineseg.png
-   :target: deepseg/totalspineseg.html
+   :target: deepseg/spine.html
 
 Multiple structures may be segmented by running the following sample command:
 
