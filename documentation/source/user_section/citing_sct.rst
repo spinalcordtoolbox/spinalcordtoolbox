@@ -115,6 +115,8 @@ The table below provides individual references for novel methods used in SCT's :
      - Cohen-Adad *et al.* "`Slice-by-slice regularized registration for spinal cord MRI: SliceReg. <https://www.dropbox.com/s/v3bb3etbq4gb1l1/cohenadad_ismrm15_slicereg.pdf?dl=0>`__" **Proc ISMRM** 2015.
    * - :ref:`sct_register_multimodal` / :ref:`sct_register_to_template` ``--param algo=dl``
      - Beal *et al.* "`Contrast-agnostic deep learning–based registration pipeline: Validation in spinal cord multimodal MRI data. <https://doi.org/10.52294/f662441d-2678-4683-8a8c-6ad7be2c4b29>`__" **Aperture Neuro** 2023.
+   * - :ref:`sct_register_to_template` ``--lrootlet``
+     - Bédard *et al.* "`Rootlets-based registration to the PAM50 spinal cord template <https://doi.org/10.1162/IMAG.a.123>`__" **Imaging Neuroscience** 2025.
    * - :ref:`sct_straighten_spinalcord`
      - De Leener B *et al.* "`Topologically-preserving straightening of spinal cord MRI. <https://www.ncbi.nlm.nih.gov/pubmed/28130805>`__" **J Magn Reson Imaging** 2017.
 
