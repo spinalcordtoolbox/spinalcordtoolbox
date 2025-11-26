@@ -205,7 +205,7 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
 
                 # Loop across properties and assign values for function output
                 for property_name in property_list:
-                    shape_properties[property_name][iz] = shape_property[property_name]
+                    shape_properties[property_name][iz] = shape_property.get(property_name, np.nan)
             else:
                 logging.warning(f'\nNo properties for slice: {iz}')
 

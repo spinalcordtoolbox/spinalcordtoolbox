@@ -135,7 +135,7 @@ def compute_shape(segmentation, angle_correction=True, centerline_path=None, par
             shape_property['length'] = pz / (np.cos(angle_AP_rad) * np.cos(angle_RL_rad))
             # Loop across properties and assign values for function output
             for property_name in property_list:
-                shape_properties[property_name][iz] = shape_property[property_name]
+                shape_properties[property_name][iz] = shape_property.get(property_name, np.nan)
 
     metrics = {}
     for key, value in shape_properties.items():
