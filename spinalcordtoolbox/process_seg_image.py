@@ -184,30 +184,27 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
         }
 
         # Compute shape properties for this slice
-        if filter_size < 0:  # TODO and regularization term filter_size < 0
-            shape_property = _properties2d(current_patch_scaled, [px, py], iz, angle_hog=angle_hog, verbose=verbose)
-            # If regularization is disabled or no image is provided,
-            # loop through stored patches and compute properties the regular way
-            if shape_property is not None:
-                # Add custom fields
-                shape_property['angle_AP'] = angle_AP_rad * 180.0 / math.pi     # convert to degrees
-                shape_property['angle_RL'] = angle_RL_rad * 180.0 / math.pi     # convert to degrees
-                shape_property['length'] = pz / (np.cos(angle_AP_rad) * np.cos(angle_RL_rad))
+        shape_property = _properties2d(current_patch_scaled, [px, py], iz, angle_hog=angle_hog, verbose=verbose)
+        if shape_property is not None:
+            # Add custom fields
+            shape_property['angle_AP'] = angle_AP_rad * 180.0 / math.pi     # convert to degrees
+            shape_property['angle_RL'] = angle_RL_rad * 180.0 / math.pi     # convert to degrees
+            shape_property['length'] = pz / (np.cos(angle_AP_rad) * np.cos(angle_RL_rad))
 
-                # Get the index of the current slice in our stored arrays
-                idx = z_indices.index(iz)
-                angle_hog = angle_hog_values[idx]
-                centermass_src = centermass_values[idx]
-                # Add custom fields
-                shape_property['centermass_x'] = centermass_src[0]
-                shape_property['centermass_y'] = centermass_src[1]
-                shape_property['angle_hog'] = -angle_hog * 180.0 / math.pi     # degrees, and change sign to match negative if left rotation
+            # Get the index of the current slice in our stored arrays
+            idx = z_indices.index(iz)
+            angle_hog = angle_hog_values[idx]
+            centermass_src = centermass_values[idx]
+            # Add custom fields
+            shape_property['centermass_x'] = centermass_src[0]
+            shape_property['centermass_y'] = centermass_src[1]
+            shape_property['angle_hog'] = -angle_hog * 180.0 / math.pi     # degrees, and change sign to match negative if left rotation
 
-                # Loop across properties and assign values for function output
-                for property_name in property_list:
-                    shape_properties[property_name][iz] = shape_property.get(property_name, np.nan)
-            else:
-                logging.warning(f'\nNo properties for slice: {iz}')
+            # Loop across properties and assign values for function output
+            for property_name in property_list:
+                shape_properties[property_name][iz] = shape_property.get(property_name, np.nan)
+        else:
+            logging.warning(f'\nNo properties for slice: {iz}')
 
     # Apply regularization to HOG angles along the z-axis if filter_size > 0
     # The code snippet below is taken from algorithms.register2d_centermassrot -- maybe it could be extracted into a
