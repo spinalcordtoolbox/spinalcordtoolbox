@@ -64,31 +64,26 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
     :return metrics: Dict of class Metric(). If a metric cannot be calculated, its value will be nan.
     :return fit_results: class centerline.core.FitResults()
     """
-    # List of properties that are always available
-    property_list = KEYS_DEFAULT
+    # HOG-related properties that are only available when image (`sct_process_segmentation -i`) is provided
+    # TODO: consider whether to use this workaround or include the columns even when image is not provided and use NaN
+    # Add HOG-related properties and symmetry to the property list when image is provided
+    property_list = KEYS_DEFAULT[:1] + KEYS_HOG + KEYS_QUADRANT + KEYS_SYMMETRY + KEYS_DEFAULT[1:]
 
     im_seg = Image(segmentation).change_orientation('RPI')
-    # Check if the input image is provided (i.e., image is not None)
-    if image is not None:
-        # HOG-related properties that are only available when image (`sct_process_segmentation -i`) is provided
-        # TODO: consider whether to use this workaround or include the columns even when image is not provided and use NaN
-        # Add HOG-related properties and symmetry to the property list when image is provided
-        property_list = property_list[:1] + KEYS_HOG + KEYS_QUADRANT + KEYS_SYMMETRY + property_list[1:]
-
-        im = Image(image).change_orientation('RPI')
-        # Make sure the input image and segmentation have the same dimensions
-        if im_seg.dim[:3] != im.dim[:3]:
-            raise ValueError(
-                f"The input segmentation image ({im_seg.path}) and the input image ({im.path}) do not have the same "
-                f"dimensions. Please provide images with the same dimensions."
-            )
+    im = Image(image).change_orientation('RPI')
+    # Make sure the input image and segmentation have the same dimensions
+    if im_seg.dim[:3] != im.dim[:3]:
+        raise ValueError(
+            f"The input segmentation image ({im_seg.path}) and the input image ({im.path}) do not have the same "
+            f"dimensions. Please provide images with the same dimensions."
+        )
 
     # Getting image dimensions. x, y and z respectively correspond to RL, PA and IS.
     nx, ny, nz, nt, px, py, pz, pt = im_seg.dim
     pr = 0.1   # we use a fixed value to be independent from the input image resolution
     # Resample to isotropic resolution in the axial plane. Use the minimum pixel dimension as target dimension.
     im_segr = resample_nib(im_seg, new_size=[pr, pr, pz], new_size_type='mm', interpolation='linear')
-    im_r = resample_nib(im, new_size=[pr, pr, pz], new_size_type='mm', interpolation='linear') if image is not None else None
+    im_r = resample_nib(im, new_size=[pr, pr, pz], new_size_type='mm', interpolation='linear')
 
     # Update dimensions from resampled image.
     nx, ny, nz, nt, px, py, pz, pt = im_segr.dim
@@ -137,7 +132,7 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
                                ncols=80):
         # Extract 2D patch
         current_patch = im_segr.data[:, :, iz]
-        current_patch_im = im_r.data[:, :, iz] if image is not None else None
+        current_patch_im = im_r.data[:, :, iz]
         if angle_correction:
             # Extract tangent vector to the centerline (i.e. its derivative)
             tangent_vect = np.array([deriv[iz][0] * px, deriv[iz][1] * py, pz])
@@ -155,45 +150,41 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
                                                   output_shape=current_patch.shape,
                                                   order=1,
                                                   )
-            if image is not None:
-                current_patch_im_scaled = transform.warp(current_patch_im.astype(np.float64),
-                                                         tform.inverse,
-                                                         output_shape=current_patch_im.shape,
-                                                         order=1,
-                                                         )
+            current_patch_im_scaled = transform.warp(current_patch_im.astype(np.float64),
+                                                     tform.inverse,
+                                                     output_shape=current_patch_im.shape,
+                                                     order=1,
+                                                     )
         else:
             current_patch_scaled = current_patch
             current_patch_im_scaled = current_patch_im
             angle_AP_rad, angle_RL_rad = 0.0, 0.0
 
-        # Store basic properties and angles to be used later after regularization
-        if image is not None:
-            # compute PCA and get center or mass based on segmentation; centermass_src: [RL, AP] (assuming RPI orientation)
-            # Check for empty slice
-            if np.count_nonzero(current_patch_scaled) * pr <= 1:
-                logging.warning(f'Skipping slice {iz} as the segmentation contains only a single pixel.')
-                continue
-            z_indices.append(iz)
-            coord_src, pca_src, centermass_src = compute_pca(current_patch_scaled)
-            # Finds the angle of the image
-            # TODO: explore different sigma values for the HOG method, i.e., the influence how far away pixels will vote for the orientation.
-            # TODO: double-check if sigma is in voxel or mm units.
-            # TODO: do we want to use the same sigma for all slices? As the spinal cord sizes vary across the z-axis.
-            angle_hog, conf_src = find_angle_hog(current_patch_im_scaled, centermass_src,
-                                                 px, py, angle_range=40)    # 40 is taken from registration.algorithms.register2d_centermassrot
+        # compute PCA and get center or mass based on segmentation; centermass_src: [RL, AP] (assuming RPI orientation)
+        # Check for empty slice
+        if np.count_nonzero(current_patch_scaled) * pr <= 1:
+            logging.warning(f'Skipping slice {iz} as the segmentation contains only a single pixel.')
+            continue
+        z_indices.append(iz)
+        coord_src, pca_src, centermass_src = compute_pca(current_patch_scaled)
+        # Finds the angle of the image
+        # TODO: explore different sigma values for the HOG method, i.e., the influence how far away pixels will vote for the orientation.
+        # TODO: double-check if sigma is in voxel or mm units.
+        # TODO: do we want to use the same sigma for all slices? As the spinal cord sizes vary across the z-axis.
+        angle_hog, conf_src = find_angle_hog(current_patch_im_scaled, centermass_src,
+                                             px, py, angle_range=40)    # 40 is taken from registration.algorithms.register2d_centermassrot
 
-            angle_hog_values.append(angle_hog)
-            centermass_values.append(centermass_src)
-            # Store the patches to use later after regularization
-            current_patches[iz] = {
-                'patch': current_patch_scaled,
-                'angle_AP_rad': angle_AP_rad,
-                'angle_RL_rad': angle_RL_rad
-            }
-        else:
-            angle_hog = None
+        angle_hog_values.append(angle_hog)
+        centermass_values.append(centermass_src)
+        # Store the patches to use later after regularization
+        current_patches[iz] = {
+            'patch': current_patch_scaled,
+            'angle_AP_rad': angle_AP_rad,
+            'angle_RL_rad': angle_RL_rad
+        }
+
         # Compute shape properties for this slice
-        if image is None or filter_size < 0:  # TODO and regularization term filter_size < 0
+        if filter_size < 0:  # TODO and regularization term filter_size < 0
             shape_property = _properties2d(current_patch_scaled, [px, py], iz, angle_hog=angle_hog, verbose=verbose)
             # If regularization is disabled or no image is provided,
             # loop through stored patches and compute properties the regular way
@@ -202,27 +193,26 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
                 shape_property['angle_AP'] = angle_AP_rad * 180.0 / math.pi     # convert to degrees
                 shape_property['angle_RL'] = angle_RL_rad * 180.0 / math.pi     # convert to degrees
                 shape_property['length'] = pz / (np.cos(angle_AP_rad) * np.cos(angle_RL_rad))
+
+                # Get the index of the current slice in our stored arrays
+                idx = z_indices.index(iz)
+                angle_hog = angle_hog_values[idx]
+                centermass_src = centermass_values[idx]
+                # Add custom fields
+                shape_property['centermass_x'] = centermass_src[0]
+                shape_property['centermass_y'] = centermass_src[1]
+                shape_property['angle_hog'] = -angle_hog * 180.0 / math.pi     # degrees, and change sign to match negative if left rotation
+
                 # Loop across properties and assign values for function output
-
-                if image is not None:
-                    # Get the index of the current slice in our stored arrays
-                    idx = z_indices.index(iz)
-                    angle_hog = angle_hog_values[idx]
-                    centermass_src = centermass_values[idx]
-                    # Add custom fields
-                    shape_property['centermass_x'] = centermass_src[0]
-                    shape_property['centermass_y'] = centermass_src[1]
-                    shape_property['angle_hog'] = -angle_hog * 180.0 / math.pi     # degrees, and change sign to match negative if left rotation
-
-                    # Loop across properties and assign values for function output
                 for property_name in property_list:
                     shape_properties[property_name][iz] = shape_property[property_name]
             else:
                 logging.warning(f'\nNo properties for slice: {iz}')
+
     # Apply regularization to HOG angles along the z-axis if filter_size > 0
     # The code snippet below is taken from algorithms.register2d_centermassrot -- maybe it could be extracted into a
     # function and reused
-    if image is not None and filter_size > 0 and len(z_indices) > 0:
+    if filter_size > 0 and len(z_indices) > 0:
         # Convert lists to numpy arrays
         z_indices_array = np.array(z_indices)
         angle_hog_array = np.array(angle_hog_values)
@@ -354,6 +344,7 @@ def _properties2d(seg, dim, iz, angle_hog=None, verbose=1):
         properties.update(quadrant_areas)
         symmetry_metrics = _calculate_symmetry(seg_crop_r_rotated_hog, region.centroid, iz=iz, dim=dim, verbose=verbose)
         properties.update(symmetry_metrics)
+
     return properties
 
 
