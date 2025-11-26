@@ -9,18 +9,22 @@ import math
 import platform
 import numpy as np
 from skimage import measure, transform
-from scipy.ndimage import map_coordinates
+import skimage
+from scipy.ndimage import map_coordinates, gaussian_filter1d
 import logging
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.aggregate_slicewise import Metric
 from spinalcordtoolbox.centerline.core import get_centerline
 from spinalcordtoolbox.resampling import resample_nib
-from spinalcordtoolbox.registration.algorithms import compute_pca
+from spinalcordtoolbox.registration.algorithms import compute_pca, find_angle_hog
 from spinalcordtoolbox.utils.shell import parse_num_list_inv
 from spinalcordtoolbox.utils.sys import sct_progress_bar
 
-from spinalcordtoolbox.process_seg_debug import create_ap_diameter_plots
+from spinalcordtoolbox.process_seg_debug import (
+    create_regularized_hog_angle_plot, create_ap_diameter_plots,
+    create_quadrant_area_plots, create_symmetry_plots
+)
 
 # NB: We use a threshold to check if an array is empty, instead of checking if it's exactly 0. This is because
 # resampling can change 0 -> ~0 (e.g. 1e-16). See: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3402
@@ -36,27 +40,44 @@ KEYS_DEFAULT = ['area',
                 'solidity',
                 'length'
                 ]
+KEYS_HOG = ['centermass_x', 'centermass_y', 'angle_hog']
+KEYS_QUADRANT = ['area_quadrant_anterior_left', 'area_quadrant_anterior_right', 'area_quadrant_posterior_left',
+                 'area_quadrant_posterior_right']
+KEYS_SYMMETRY = ['symmetry_dice_RL', 'symmetry_hausdorff_RL', 'symmetry_difference_RL', 'symmetry_dice_AP',
+                 'symmetry_hausdorff_AP', 'symmetry_difference_AP']
 
 
-def compute_shape(segmentation, angle_correction=True, centerline_path=None, param_centerline=None,
-                  verbose=1, remove_temp_files=1):
+def compute_shape(segmentation, image=None, angle_correction=True, centerline_path=None, param_centerline=None,
+                  verbose=1, remove_temp_files=1, filter_size=5):
     """
     Compute morphometric measures of the spinal cord in the transverse (axial) plane from the segmentation.
     The segmentation could be binary or weighted for partial volume [0,1].
 
     :param segmentation: input segmentation. Could be either an Image or a file name.
+    :param image: input image. Could be either an Image or a file name. Note that the image is necessary to turn on HOG/symmetry-based metrics
     :param angle_correction:
     :param centerline_path: path to image file to be used as a centerline for computing angle correction.
     :param param_centerline: see centerline.core.ParamCenterline()
     :param verbose:
     :param remove_temp_files: int: Whether to remove temporary files. 0 = no, 1 = yes.
+    :param filter_size: int: size of the gaussian filter for regularization along z for rotation angle. 0: no regularization
     :return metrics: Dict of class Metric(). If a metric cannot be calculated, its value will be nan.
     :return fit_results: class centerline.core.FitResults()
     """
-    # List of properties that are always available
-    property_list = KEYS_DEFAULT
+    property_list = (KEYS_DEFAULT if image is None else
+                     # HOG-related properties that are only available when image (`sct_process_segmentation -i`) is provided
+                     # TODO: consider whether to use this workaround or include the columns even when image is not provided and use NaN
+                     KEYS_DEFAULT[:1] + KEYS_HOG + KEYS_QUADRANT + KEYS_SYMMETRY + KEYS_DEFAULT[1:])
 
     im_seg = Image(segmentation).change_orientation('RPI')
+    if image is not None:
+        im = Image(image).change_orientation('RPI')
+        # Make sure the input image and segmentation have the same dimensions
+        if im_seg.dim[:3] != im.dim[:3]:
+            raise ValueError(
+                f"The input segmentation image ({im_seg.path}) and the input image ({im.path}) do not have the same "
+                f"dimensions. Please provide images with the same dimensions."
+            )
 
     # Getting image dimensions. x, y and z respectively correspond to RL, PA and IS.
     nx, ny, nz, nt, px, py, pz, pt = im_seg.dim
@@ -101,6 +122,8 @@ def compute_shape(segmentation, angle_correction=True, centerline_path=None, par
             ) from None
 
     # Loop across z and compute shape analysis
+    current_tforms = {}
+    current_patches = {}
     for iz in sct_progress_bar(range(min_z_index, max_z_index + 1), unit='iter', unit_scale=False, desc="Compute shape analysis",
                                ncols=80):
         # Extract 2D patch
@@ -137,6 +160,31 @@ def compute_shape(segmentation, angle_correction=True, centerline_path=None, par
             for property_name in property_list:
                 shape_properties[property_name][iz] = shape_property.get(property_name, np.nan)
 
+        # Store the patches and transforms to use later after regularization
+        current_tforms[iz] = tform if angle_correction else None
+        current_patches[iz] = {
+            'patch': current_patch_scaled,
+            'angle_AP_rad': angle_AP_rad,
+            'angle_RL_rad': angle_RL_rad
+        }
+
+    # Compute image-based shape properties
+    if image is not None:
+        im_r = resample_nib(im, new_size=[pr, pr, pz], new_size_type='mm', interpolation='linear')
+        shape_properties_image = compute_shape_image(
+            im_r, nz, px, py, pz, pr, min_z_index, max_z_index, property_list,
+            current_patches, current_tforms, angle_correction, filter_size, verbose
+        )
+        for property_name in shape_properties_image.keys():
+            # Note from JN: Many of the properties computed in the "image" portion are actually identical
+            # to the non-image properties computed. We should take a closer look at the `compute_shape_image`
+            # logic to make sure we're not unnecessarily duplicating work. This logging is just a dbuegging aid for now.
+            if np.array_equal(shape_properties[property_name], shape_properties_image[property_name]):
+                if verbose == 2:
+                    logging.debug(f"{property_name}: Image-based property is identical to seg-based property.")
+            else:
+                shape_properties[property_name] = shape_properties_image[property_name]
+
     metrics = {}
     for key, value in shape_properties.items():
         # Making sure all entries added to metrics have results
@@ -147,7 +195,106 @@ def compute_shape(segmentation, angle_correction=True, centerline_path=None, par
     return metrics, fit_results
 
 
-def _properties2d(seg, dim, iz, verbose=1):
+def compute_shape_image(im_r, nz, px, py, pz, pr, min_z_index, max_z_index, property_list,
+                        current_patches, current_tforms, angle_correction, filter_size, verbose):
+    # Initialize empty dictionary to store shape properties
+    shape_properties = {key: np.full(nz, np.nan, dtype=np.double) for key in property_list}
+
+    # Initialize lists to store slice indices and angles
+    z_indices = []
+    angle_hog_values = []
+    centermass_values = []
+    for iz in sct_progress_bar(range(min_z_index, max_z_index + 1), unit='iter', unit_scale=False, desc="Compute shape analysis",
+                               ncols=80):
+        # Extract 2D patch
+        current_patch_scaled = current_patches[iz]['patch']
+        current_patch_im = im_r.data[:, :, iz]
+        if angle_correction:
+            tform = current_tforms[iz]
+            current_patch_im_scaled = transform.warp(current_patch_im.astype(np.float64),
+                                                     tform.inverse,
+                                                     output_shape=current_patch_im.shape,
+                                                     order=1,
+                                                     )
+        else:
+            current_patch_im_scaled = current_patch_im
+
+        # compute PCA and get center or mass based on segmentation; centermass_src: [RL, AP] (assuming RPI orientation)
+        # Check for empty slice
+        if np.count_nonzero(current_patch_scaled) * pr <= 1:
+            logging.warning(f'Skipping slice {iz} as the segmentation contains only a single pixel.')
+            continue
+        z_indices.append(iz)
+        coord_src, pca_src, centermass_src = compute_pca(current_patch_scaled)
+        # Finds the angle of the image
+        # TODO: explore different sigma values for the HOG method, i.e., the influence how far away pixels will vote for the orientation.
+        # TODO: double-check if sigma is in voxel or mm units.
+        # TODO: do we want to use the same sigma for all slices? As the spinal cord sizes vary across the z-axis.
+        angle_hog, conf_src = find_angle_hog(current_patch_im_scaled, centermass_src,
+                                             px, py, angle_range=40)    # 40 is taken from registration.algorithms.register2d_centermassrot
+
+        angle_hog_values.append(angle_hog)
+        centermass_values.append(centermass_src)
+
+        shape_property = _properties2d(current_patch_scaled, [px, py], iz, angle_hog=angle_hog, verbose=verbose)
+        if shape_property is not None:
+            # Get the index of the current slice in our stored arrays
+            idx = z_indices.index(iz)
+            angle_hog = angle_hog_values[idx]
+            centermass_src = centermass_values[idx]
+            # Add custom fields
+            shape_properties['centermass_x'][iz] = shape_property['centermass_x'] = centermass_src[0]
+            shape_properties['centermass_y'][iz] = shape_property['centermass_y'] = centermass_src[1]
+            shape_properties['angle_hog'][iz] = shape_property['angle_hog'] = -angle_hog * 180.0 / math.pi     # degrees, and change sign to match negative if left rotation
+        else:
+            logging.warning(f'\nNo properties for slice: {iz}')
+
+    # Apply regularization to HOG angles along the z-axis if filter_size > 0
+    # The code snippet below is taken from algorithms.register2d_centermassrot -- maybe it could be extracted into a
+    # function and reused
+    if filter_size > 0 and len(z_indices) > 0:
+        # Convert lists to numpy arrays
+        z_indices_array = np.array(z_indices)
+        angle_hog_array = np.array(angle_hog_values)
+        # Apply Gaussian filter to regularize the angles
+        angle_hog_regularized = gaussian_filter1d(angle_hog_array, filter_size)
+        if verbose == 2:
+            create_regularized_hog_angle_plot(
+                z_indices_array, filter_size,
+                angle_hog_array, angle_hog_regularized
+            )
+
+        # Now compute shape properties using the regularized angles
+        for i, iz in enumerate(z_indices_array):
+            current_patch_scaled = current_patches[iz]['patch']
+            angle_AP_rad = current_patches[iz]['angle_AP_rad']
+            angle_RL_rad = current_patches[iz]['angle_RL_rad']
+            angle_hog = angle_hog_regularized[i]
+
+            # Get centermass for this slice
+            centermass_src = centermass_values[i]
+
+            # Compute shape properties with regularized angle_hog
+            shape_property = _properties2d(current_patch_scaled, [px, py], iz, angle_hog=angle_hog, verbose=verbose)
+
+            if shape_property is not None:
+                # Add custom fields
+                shape_property['centermass_x'] = centermass_src[0]
+                shape_property['centermass_y'] = centermass_src[1]
+                shape_property['angle_hog'] = -angle_hog * 180.0 / math.pi     # degrees, and change sign to match negative if left rotation
+                shape_property['angle_AP'] = angle_AP_rad * 180.0 / math.pi     # convert to degrees
+                shape_property['angle_RL'] = angle_RL_rad * 180.0 / math.pi     # convert to degrees
+                shape_property['length'] = pz / (np.cos(angle_AP_rad) * np.cos(angle_RL_rad))
+                # Loop across properties and assign values for function output
+                for property_name in property_list:
+                    shape_properties[property_name][iz] = shape_property[property_name]
+            else:
+                logging.warning(f'\nNo properties for slice: {iz}')
+
+    return shape_properties
+
+
+def _properties2d(seg, dim, iz, angle_hog=None, verbose=1):
     """
     Compute shape property of the input 2D segmentation. Accounts for partial volume information.
     :param seg: 2D input segmentation in uint8 or float (weighted for partial volume) that has a single object. seg.shape[0] --> RL; seg.shape[1] --> PA
@@ -220,6 +367,17 @@ def _properties2d(seg, dim, iz, verbose=1):
     properties.update(rotated_properties)
     properties['orientation'] = -properties['orientation'] * 180.0 / math.pi  # convert to degrees
 
+    if angle_hog is not None:
+        # If angle_hog is provided, rotate the segmentation by this angle to align with AP/RL axes, and use for symmetry assessment
+        seg_crop_r_rotated_hog = _rotate_segmentation_by_angle(seg_crop_r, angle_hog)
+        # Compute quadrant areas and RL and AP symmetry
+        quadrant_areas = compute_quadrant_areas(seg_crop_r_rotated_hog, region.centroid, orientation_deg=0,
+                                                area=area, diameter_AP=diameter_AP, diameter_RL=diameter_RL,
+                                                dim=dim, iz=iz, verbose=verbose)
+        # Update the properties dictionary with the rotated properties
+        properties.update(quadrant_areas)
+        symmetry_metrics = _calculate_symmetry(seg_crop_r_rotated_hog, region.centroid, iz=iz, dim=dim, verbose=verbose)
+        properties.update(symmetry_metrics)
     return properties
 
 
@@ -351,3 +509,159 @@ def _measure_ap_diameter(seg_crop_r, seg_crop_r_rotated, dim, angle, iz, propert
                                      seg_crop_r_rotated, seg_crop_r, coord_ap)
 
     return result
+
+
+def _calculate_symmetry(seg_crop_r_rotated, centroid, dim, iz=None, verbose=1):
+    """
+    Compute symmetry metrics by flipping the segmentation along the RL and AP axes and comparing with the original.
+    Calculates Dice coefficient, symmetric difference, and Hausdorff distance for both axes.
+    See figure in https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4958#issue-3212203682 for details.
+    :param seg_crop_r_rotated: Rotated segmentation (after applying angle) used to measure diameters. seg.shape[0] --> RL; seg.shape[1] --> PA
+    :param centroid: (y, x) coordinates of the centroid in the upsampled image space.
+    :param dim: [px, py] pixel dimensions in mm.
+    :param iz: Optional slice index for debug plotting.
+    :param verbose: Verbosity level for debug plotting.
+    :return: symmetry_metrics: Dictionary with symmetry metrics for RL and AP axes.
+    """
+    y0, x0 = centroid
+    y0 = int(round(y0))
+    x0 = int(round(x0))
+    # Create an empty array for flipped version of AP axis
+    seg_crop_r_flipped_AP = np.zeros_like(seg_crop_r_rotated)
+
+    # Get bounding box of the segmentation (on the cropped segmentation, not the full one)
+    coords = np.argwhere(seg_crop_r_rotated > 0)
+    # Center of segmentation along RL axis (x)
+
+    # Flip around segmentation center
+    for y, x in coords[:, :2]:
+        x_mirror = 2 * x0 - x
+        if 0 <= x_mirror < seg_crop_r_rotated.shape[1]:
+            seg_crop_r_flipped_AP[y, x_mirror] = seg_crop_r_rotated[y, x]
+    # Erase half of the segmentation to avoid bias
+    seg_crop_r_flipped_AP[:, :x0] = 0
+    seg_crop_r_rotated_cut = np.copy(seg_crop_r_rotated)
+    seg_crop_r_rotated_cut[:, :x0] = 0
+    # Compute the intersection and union for the Dice coefficient
+    intersection_AP = np.sum(seg_crop_r_rotated_cut * seg_crop_r_flipped_AP)
+    union_AP = np.sum(seg_crop_r_rotated_cut) + np.sum(seg_crop_r_flipped_AP)
+
+    # Compute the Dice coefficient
+    symmetry_dice_AP = 2 * intersection_AP / union_AP if union_AP > 0 else 0
+    symmetric_difference_AP = (union_AP - (2*intersection_AP)) * dim[0] * dim[1]
+
+    # Compute Hausdorff distance as additional metric
+    hausdorff_distance_AP = skimage.metrics.hausdorff_distance(seg_crop_r_rotated_cut > 0.5, seg_crop_r_flipped_AP > 0.5) * dim[0]
+
+    # Create an empty array for flipped version of RL axis
+    seg_crop_r_flipped_RL = np.zeros_like(seg_crop_r_rotated)
+
+    # Flip around segmentation center (RL axis)
+    for y, x in coords[:, :2]:
+        y_mirror = 2 * y0 - y
+        if 0 <= y_mirror < seg_crop_r_rotated.shape[0]:
+            seg_crop_r_flipped_RL[y_mirror, x] = seg_crop_r_rotated[y, x]
+    seg_crop_r_flipped_RL[:y0, :] = 0
+    seg_crop_r_rotated_cut_RL = np.copy(seg_crop_r_rotated)
+    seg_crop_r_rotated_cut_RL[:y0, :] = 0
+    # Compute the intersection and union for the Dice coefficient
+    intersection_RL = np.sum(seg_crop_r_rotated_cut_RL * seg_crop_r_flipped_RL)
+    union_RL = np.sum(seg_crop_r_rotated_cut_RL) + np.sum(seg_crop_r_flipped_RL)
+
+    # Compute the Dice coefficient
+    symmetry_dice_RL = 2 * intersection_RL / union_RL if union_RL > 0 else 0
+    symmetric_difference_RL = (union_RL - (2*intersection_RL)) * dim[0] * dim[1]
+
+    # Compute Hausdorff distance as additional metric
+    hausdorff_distance_RL = skimage.metrics.hausdorff_distance(seg_crop_r_rotated_cut_RL > 0.5, seg_crop_r_flipped_RL > 0.5) * dim[0]
+
+    symmetry_metrics = {
+        'symmetry_dice_RL': symmetry_dice_RL,
+        'symmetry_dice_AP': symmetry_dice_AP,
+        'symmetry_hausdorff_RL': hausdorff_distance_RL,
+        'symmetry_hausdorff_AP': hausdorff_distance_AP,
+        'symmetry_difference_RL': symmetric_difference_RL,
+        'symmetry_difference_AP': symmetric_difference_AP,
+    }
+
+    # Create a debug plot
+    if verbose == 2:
+        create_symmetry_plots(
+            seg_crop_r_rotated, centroid,
+            seg_crop_r_rotated_cut, seg_crop_r_rotated_cut_RL,
+            seg_crop_r_flipped_RL, seg_crop_r_flipped_AP,
+            symmetry_metrics, iz
+        )
+
+    return symmetry_metrics
+
+
+def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, float], orientation_deg: float,
+                           area: float, diameter_AP: float, diameter_RL: float,
+                           dim: list[float], iz: int, verbose=1) -> tuple[dict, dict]:
+    """
+    Compute the cross-sectional area of the four spinal cord quadrants in the axial plane.
+    Also calculates the symmetry of the spinal cord in the right-left (RL) and anterior-posterior (AP) directions.
+    The function rotates the coordinate system based on the spinal cord orientation and
+    partitions the segmentation into four quadrants: posterior right, anterior right,
+    posterior left, and anterior left. It then calculates the area of each quadrant in mm².
+    :param image_crop_r: 2D upsampled non-binary (due to the angle correction) segmentation mask of the spinal cord.
+    :param centroid: (y, x) coordinates of the centroid in the upsampled image space.
+    :param orientation_deg: Orientation angle of the spinal cord in degrees (from regionprops).
+    :param area: Total area of the spinal cord in mm² (used for symmetry calculations).
+    :param diameter_AP: AP diameter of the spinal cord in mm (used for debug plots).
+    :param diameter_RL: RL diameter of the spinal cord in mm (used for debug plots).
+    :param dim: [px, py] pixel dimensions in mm. X,Y respectively correspond to AP, RL.
+    :param iz: Slice index used for filename in debug plot.
+    :return: quadrant_areas (dict)
+        quadrant_areas is a dictionary with the area in mm² for each quadrant:
+                 {
+                    'area_quadrant_posterior_right': float,
+                    'area_quadrant_anterior_right': float,
+                    'area_quadrant_posterior_left': float,
+                    'area_quadrant_anterior_left': float
+                 }
+    """
+    y0, x0 = centroid
+    orientation_rad = np.radians(orientation_deg)
+    rows, cols = image_crop_r.shape
+    Y, X = np.mgrid[0:rows, 0:cols]
+
+    # Translate coordinate grid to centroid
+    Xc = X - x0
+    Yc = Y - y0
+
+    # Rotate coordinates to align with AP/RL axes
+    # This rotation is needed to accurately define anatomical quadrants.
+    # Without the rotation, quadrants would be based on image axes (top/bottom/left/right) rather than true anatomical
+    # orientation (posterior/anterior/left/right) resulting in unprecise area calculations whenever the spinal cord is
+    # not perfectly aligned with the image axes.
+    # TODO remove this rotation as the segmentation is already rotated
+    Xr = Xc * np.cos(-orientation_rad) - Yc * np.sin(-orientation_rad)
+    Yr = Xc * np.sin(-orientation_rad) + Yc * np.cos(-orientation_rad)
+
+    # Apply quadrant masks - use the intensity values directly to account for the mask softness
+    post_r_mask = (Yr < 0) & (Xr < 0)    # Posterior Right
+    ant_r_mask = (Yr < 0) & (Xr >= 0)    # Anterior Right
+    post_l_mask = (Yr >= 0) & (Xr < 0)   # Posterior Left
+    ant_l_mask = (Yr >= 0) & (Xr >= 0)   # Anterior Left
+
+    # Calculate physical area in mm²
+    pixel_area_mm2 = (dim[0] * dim[1])
+
+    # Sum areas for each quadrant - multiply by intensity values to account for the mask softness
+    quadrant_areas = {
+        'area_quadrant_posterior_right': np.sum(image_crop_r[post_r_mask]) * pixel_area_mm2,
+        'area_quadrant_anterior_right': np.sum(image_crop_r[ant_r_mask]) * pixel_area_mm2,
+        'area_quadrant_posterior_left': np.sum(image_crop_r[post_l_mask]) * pixel_area_mm2,
+        'area_quadrant_anterior_left': np.sum(image_crop_r[ant_l_mask]) * pixel_area_mm2
+    }
+
+    if verbose == 2:
+        create_quadrant_area_plots(
+            image_crop_r, centroid, orientation_deg, dim,
+            ant_r_mask, ant_l_mask, post_r_mask, post_l_mask, quadrant_areas,
+            diameter_AP, diameter_RL, iz,
+        )
+
+    return quadrant_areas
