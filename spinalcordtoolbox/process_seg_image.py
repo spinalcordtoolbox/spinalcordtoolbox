@@ -168,6 +168,36 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
             'angle_RL_rad': angle_RL_rad
         }
 
+    # Compute image-based shape properties
+    shape_properties_image = compute_shape_image(
+        im_r, nz, px, py, pz, pr, min_z_index, max_z_index, property_list,
+        current_patches, current_tforms, angle_correction, filter_size, verbose
+    )
+    for property_name in shape_properties_image.keys():
+        # Note from JN: Many of the properties computed in the "image" portion are actually identical
+        # to the non-image properties computed. We should take a closer look at the `compute_shape_image`
+        # logic to make sure we're not unnecessarily duplicating work. This logging is just a dbuegging aid for now.
+        if np.array_equal(shape_properties[property_name], shape_properties_image[property_name]):
+            if verbose == 2:
+                logging.debug(f"{property_name}: Image-based property is identical to seg-based property.")
+        else:
+            shape_properties[property_name] = shape_properties_image[property_name]
+
+    metrics = {}
+    for key, value in shape_properties.items():
+        # Making sure all entries added to metrics have results
+        value = np.array(value)
+        if value.size > 0:
+            metrics[key] = Metric(data=value, label=key)
+
+    return metrics, fit_results
+
+
+def compute_shape_image(im_r, nz, px, py, pz, pr, min_z_index, max_z_index, property_list,
+                        current_patches, current_tforms, angle_correction, filter_size, verbose):
+    # Initialize empty dictionary to store shape properties
+    shape_properties = {key: np.full(nz, np.nan, dtype=np.double) for key in property_list}
+
     # Initialize lists to store slice indices and angles
     z_indices = []
     angle_hog_values = []
@@ -258,14 +288,8 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
                     shape_properties[property_name][iz] = shape_property[property_name]
             else:
                 logging.warning(f'\nNo properties for slice: {iz}')
-    metrics = {}
-    for key, value in shape_properties.items():
-        # Making sure all entries added to metrics have results
-        value = np.array(value)
-        if value.size > 0:
-            metrics[key] = Metric(data=value, label=key)
 
-    return metrics, fit_results
+    return shape_properties
 
 
 def _properties2d(seg, dim, iz, angle_hog=None, verbose=1):
