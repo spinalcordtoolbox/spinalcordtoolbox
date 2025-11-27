@@ -89,6 +89,10 @@ def test_segment_nifti_binary_seg(fname_image, fname_seg_manual, fname_out, task
     if 'sc_' in task:
         # TODO: Replace the "general" testing of these arguments with specific tests with specific input data
         args.extend(['-largest', '1', '-fill-holes', '1', '-remove-small', '5mm3'])
+    # try out `use_mirroring` for `lesion_ms` model only (due to longer inference time)
+    # based on https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4995#issuecomment-3410672883
+    if task == 'lesion_ms':
+        args.extend(['-test-time-aug'])
     sct_deepseg.main(argv=args)
     # Make sure output file exists
     assert os.path.isfile(fname_out)
@@ -165,21 +169,21 @@ def t2_ax_sc_seg():
      None,
      []),
     (sct_test_path('t2', 't2.nii.gz'),
-     [None, None, None, None, None],
+     [None, None],
      't2_deepseg.nii.gz',
-     ["_step1_canal", "_step1_cord", "_step1_levels", "_step1_output", "_step2_output"],
-     'totalspineseg',
+     ["_totalspineseg_discs", "_totalspineseg_all"],
+     'spine',
      0,
      None,
      []),
     (sct_test_path('t2', 't2.nii.gz'),
-     [None, None, None, None, None],
+     [None, None],
      't2_deepseg.nii.gz',
-     ["_step1_canal", "_step1_cord", "_step1_levels", "_step1_output"],
-     'totalspineseg',
+     ["_totalspineseg_discs", "_totalspineseg_all"],
+     'spine',
      0,
      None,
-     ["-step1-only", "1"]),
+     ["-label-vert", "1"]),
 ])
 def test_segment_nifti_multiclass(fname_image, fnames_seg_manual, fname_out, suffixes, task, thr, expected_dice,
                                   extra_args, tmp_path, tmp_path_qc):

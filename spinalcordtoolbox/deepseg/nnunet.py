@@ -17,7 +17,8 @@ if TYPE_CHECKING:
     import torch
 
 
-def create_nnunet_from_plans(path_model, device: 'torch.device', single_fold: bool = False) -> nnUNetPredictor:
+def create_nnunet_from_plans(path_model, device: 'torch.device', single_fold: bool = False,
+                             test_time_aug: bool = False) -> nnUNetPredictor:
     """
     When creating the nnunet for the `lesion_ms` model, if you want quicker inference using only a single fold
     (instead of the full 5-fold ensemble), set `single_fold=True`.
@@ -54,7 +55,7 @@ def create_nnunet_from_plans(path_model, device: 'torch.device', single_fold: bo
     predictor = nnUNetPredictor(
         tile_step_size=tile_step_size,  # changing it from 0.5 to 0.9 makes inference faster
         use_gaussian=True,  # applies gaussian noise and gaussian blur
-        use_mirroring=False,  # test time augmentation by mirroring on all axes
+        use_mirroring=test_time_aug,  # test time augmentation by mirroring on all axes
         perform_everything_on_device=False,
         device=device,
         verbose=False,

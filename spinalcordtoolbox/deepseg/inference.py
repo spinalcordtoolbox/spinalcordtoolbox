@@ -114,7 +114,7 @@ def segment_non_ivadomed(path_model, model_type, input_filenames, threshold, kee
                          remove_small, use_gpu=False, remove_temp_files=True, extra_network_kwargs=None, extra_inference_kwargs=None):
     # MONAI and NNUnet have similar structure, and so we use nnunet+inference functions with the same signature
     # NB: For TotalSpineSeg, we don't need to create the network ourselves
-    if "totalspineseg" in path_model:
+    if "spine" in path_model:
         def create_net(pm, _): return pm  # just echo `path_model` back as 'net'
         inference = segment_totalspineseg
     elif model_type == "monai":
@@ -382,7 +382,7 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device, ensemble=F
     return fnames_out, targets
 
 
-def segment_totalspineseg(path_img, tmpdir, predictor, device, step1_only=False):
+def segment_totalspineseg(path_img, tmpdir, predictor, device, label_vert=False):
     # for totalspineseg, the 'predictor' is just the model path
     path_model = predictor
     # fetch the release subdirectory from the model path
@@ -420,14 +420,23 @@ def segment_totalspineseg(path_img, tmpdir, predictor, device, step1_only=False)
         max_workers=1,
         max_workers_nnunet=1,
         # Optional argument to choose which models to run
-        step1_only=bool(step1_only)
+        step1_only=bool(not label_vert),
+        keep_only=['step1_levels', 'step1_output'] if not label_vert else ['step1_levels', 'step2_output'],
     )
+
+    name_remapping = {
+        "step1_levels": "totalspineseg_discs",
+        "step1_output": "totalspineseg_all",
+        "step2_output": "totalspineseg_all",
+    }
     fnames_out, targets = [], []
-    expected_outputs = ["step1_canal", "step1_cord", "step1_levels", "step1_output"]
-    if not step1_only:
-        expected_outputs.append("step2_output")
+    expected_outputs = ["step1_levels"]
+    if label_vert:
+        expected_outputs += ["step2_output"]
+    else:
+        expected_outputs += ["step1_output"]
     for output_dirname in expected_outputs:
         fnames_out.append(os.path.join(tmpdir_nnunet, output_dirname, os.path.basename(path_img)))
-        targets.append(f"_{output_dirname}")
+        targets.append(f"_{name_remapping[output_dirname]}")
 
     return fnames_out, targets
