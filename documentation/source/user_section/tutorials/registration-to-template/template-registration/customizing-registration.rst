@@ -84,7 +84,9 @@ The flag ``-ref`` lets you select the destination for registration: either the t
 The ``-ldisc`` argument
 ***********************
 
-This argument is used to specify disc labels, rather than vertebral body labels. Vertebral body labels work well if you are only interested in a relatively small region (e.g. C2 —> C7). However, there are two main cases where you would want to instead use ``-ldisc``:
+This argument is used to specify disc labels, rather than vertebral body labels. ``-ldisc`` has a few notable advantages over the using mid-vertebral labels:
 
 :Large field of view: If your volume spans a large superior-inferior length (e.g., C2 —> L1), the linear scaling between your subject and the template might produce inaccurate vertebral level matching between C2 and L1. In that case, you might prefer to rely on all intervertebral discs for a more accurate registration.
 :Tiny field of view: Conversely, if you have a very small field of view (e.g., covering only C3/C4), you can create a unique label at disc C3/C4 (value=4) and use ``-ldisc`` for registration. In that case, a single translation (no scaling) will be performed between the template and the subject.
+
+Disc labels can be created using :ref:`sct_deepseg_spine`.
