@@ -76,6 +76,9 @@ The flag ``-ref`` lets you select the destination for registration: either the t
 :``-ref template``: The subject will be registered to the template space, causing the anatomical image to be straightened. This method should be used by default.
 :``-ref subject``: With this setting, the template will be registered to the subject space (which does not require straightening). Use this approach if your image is acquired axially with highly anisotropic resolution (e.g. 0.7x0.7x5mm), because the straightening step can produce through-plane interpolation errors for thick slices.
 
+.. note::
+   ``-ref subject`` is only compatible with 1 or 2 landmark labels, because ``-ref subject`` uses a rigid (affine) transformation, but 3+ labels will result in a non-affine transformation.
+
 ----
 
 The ``-ldisc`` argument
@@ -85,6 +88,3 @@ This argument is used to specify disc labels, rather than vertebral body labels.
 
 :Large field of view: If your volume spans a large superior-inferior length (e.g., C2 —> L1), the linear scaling between your subject and the template might produce inaccurate vertebral level matching between C2 and L1. In that case, you might prefer to rely on all intervertebral discs for a more accurate registration.
 :Tiny field of view: Conversely, if you have a very small field of view (e.g., covering only C3/C4), you can create a unique label at disc C3/C4 (value=4) and use ``-ldisc`` for registration. In that case, a single translation (no scaling) will be performed between the template and the subject.
-
-.. note::
-   If more than 2 labels are provided, ``-ldisc`` is not compatible with ``-ref subject``. For more information, please see the help: sct_register_to_template -h
