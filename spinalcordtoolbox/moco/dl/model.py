@@ -7,8 +7,7 @@
 
 import torch
 import torch.nn as nn
-import pytorch_lightning as pl
-import torch.nn.functional as F
+from monai.networks.blocks import Warp
 
 
 # -----------------------------
@@ -120,58 +119,44 @@ class DenseNetRegressorSliceWise(nn.Module):
 # -----------------------------
 class RigidWarp(nn.Module):
     """
-    Apply rigid 2D transformation (Tx, Ty) slice-wise. Each slice is translated independently in-plane.
+    Slice-wise rigid warp using MONAI's Warp (voxel-unit flow).
     """
-    def __init__(self, mode: str = "bilinear"):
+    def __init__(self, mode="bilinear", padding_mode="border"):
         super().__init__()
-        self.mode = mode
+        self.warper = Warp(mode=mode, padding_mode=padding_mode)
+
+    def build_field(self, Tx, Ty, vol):
+        """
+        Args:
+            Tx, Ty: (B,1,D) voxel shifts
+            vol: (B,1,H,W,D)
+        Returns:
+            flow: (B,3,H,W,D) voxel-unit displacement field
+        """
+        B, C, H, W, D = vol.shape
+
+        # Expand slice-wise translations Tx, Ty into full 3D displacement field
+        # Tx_field: (B,1,H,W,D)
+        Tx_field = Tx[:, :, None, None, :].expand(B, 1, H, W, D)
+        Ty_field = Ty[:, :, None, None, :].expand(B, 1, H, W, D)
+        Tz_field = torch.zeros_like(Tx_field)
+
+        return torch.cat([Tx_field, Ty_field, Tz_field], dim=1)
 
     def forward(self, vol, Tx, Ty):
-        assert vol.ndim == 5, "vol must be (B,C,H,W,D)"
-        B, C, H, W, D = vol.shape
-        device = vol.device
-        dtype = vol.dtype
-
-        # (B,1,D) -> (B,D)
-        Tx = Tx.view(B, D)
-        Ty = Ty.view(B, D)
-
-        # Build base 2D grid (sampling grid) in [-1,1], shape (H,W,2)
-        yy, xx = torch.meshgrid(
-            torch.linspace(-1, 1, H, device=device, dtype=dtype),
-            torch.linspace(-1, 1, W, device=device, dtype=dtype),
-            indexing="ij"
-        )
-        base = torch.stack([xx, yy], dim=-1)  # (H,W,2)
-
-        # Expand to (B,D,H,W,2)
-        base = base.view(1, 1, H, W, 2).expand(B, D, H, W, 2)
-
-        # Normalize translations to grid units [-1,1]
-        txn = (2.0 * Tx / max(W - 1, 1)).view(B, D, 1, 1, 1)  # (B,D,1,1,1)
-        tyn = (2.0 * Ty / max(H - 1, 1)).view(B, D, 1, 1, 1)
-
-        grid = base.clone()
-        grid[..., 0] += txn[..., 0]  # x += Tx
-        grid[..., 1] += tyn[..., 0]  # y += Ty
-
-        # Reshape for 2D grid_sample
-        grid_2d = grid.view(B * D, H, W, 2)  # (B*D,H,W,2)
-        vol_2d = vol.permute(0, 4, 1, 2, 3).reshape(B * D, C, H, W)  # (B*D,C,H,W)
-
-        # Warping
-        warped_2d = F.grid_sample(
-            vol_2d, grid_2d,
-            mode=self.mode, padding_mode="border", align_corners=True
-        )
-        warped = warped_2d.view(B, D, C, H, W).permute(0, 2, 3, 4, 1).contiguous()  # (B,C,H,W,D)
-        return warped
+        """
+        vol: (B,1,H,W,D)
+        Tx,Ty: (B,1,D)
+        """
+        flow = self.build_field(Tx, Ty, vol)
+        warped = self.warper(vol, flow)     # MONAI Warp does the 3D spatial transform
+        return warped, flow
 
 
 # -----------------------------
 # Main Model
 # -----------------------------
-class DenseRigidReg(pl.LightningModule):
+class DenseRigidReg(nn.Module):
     """
     Main PyTorch Lightning module for DenseNet-based rigid motion correction.
     """
@@ -191,7 +176,7 @@ class DenseRigidReg(pl.LightningModule):
                 Tx_all, Ty_all: (B,1,D,T)
             """
         B, _, H, W, D, T = moving.shape
-        warped_list, Tx_list, Ty_list = [], [], []
+        warped_list, flow_list, Tx_list, Ty_list = [], [], [], []
 
         for t in range(T):
             mov_t = moving[..., t]
@@ -207,16 +192,18 @@ class DenseRigidReg(pl.LightningModule):
             Ty = theta[:, 0:1, :]
             Tx = theta[:, 1:2, :]
 
-            warped = self.warp(mov_t, Tx, Ty)
-            warped_list.append(warped)
+            warped_t, flow_t = self.warp(mov_t, Tx, Ty)
+            warped_list.append(warped_t)
+            flow_list.append(flow_t)
             Tx_list.append(Tx)
             Ty_list.append(Ty)
 
             # cleanup
-            del mov_t, fix_t, mov_norm_ds, fix_norm_ds, x, theta
+            del mov_t, fix_t, mov_norm_ds, fix_norm_ds, x, theta, warped_t, flow_t
             torch.cuda.empty_cache()
 
         warped_all = torch.stack(warped_list, dim=-1)
+        flow_all = torch.stack(flow_list, dim=-1)  # (B,H,W,D,3,T)
         Tx_all = torch.stack(Tx_list, dim=-1)  # (B,1,D,T)
         Ty_all = torch.stack(Ty_list, dim=-1)
-        return warped_all, Tx_all, Ty_all
+        return warped_all, flow_all, Tx_all, Ty_all
