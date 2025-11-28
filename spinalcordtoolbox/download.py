@@ -162,6 +162,14 @@ DATASET_DICT = {
         "download_type": "Templates",
         "default": True,
     },
+    "moco-dl_models": {
+        "mirrors": [
+            "https://github.com/ivadomed/moco-dl/releases/download/r20251127/models.zip"
+        ],
+        "default_location": os.path.join(__sct_dir__, "data", "moco-dl_models"),
+        "download_type": "Models",
+        "default": True,
+    },
 }
 
 
