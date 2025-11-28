@@ -28,11 +28,12 @@ import os
 from typing import Sequence
 import textwrap
 
-from spinalcordtoolbox.moco import ParamMoco, moco_wrapper
+from spinalcordtoolbox.moco.moco import ParamMoco, moco_wrapper
 from spinalcordtoolbox.utils.sys import init_sct, set_loglevel
 from spinalcordtoolbox.utils.shell import (SCTArgumentParser, Metavar, ActionCreateFolder, list_type, positive_int_type,
                                            display_viewer_syntax)
 from spinalcordtoolbox.reports.qc import generate_qc
+from spinalcordtoolbox.moco.dl.inference import moco_dl
 
 
 def get_parser():
@@ -101,6 +102,11 @@ def get_parser():
              '(nonbinary, [0, 1]), and it will be binarized at 0.5. Example: `dmri_mask.nii.gz`',
     )
     optional.add_argument(
+        '-ref',
+        metavar=Metavar.file,
+        help="Reference volume for motion correction, e.g., mean DWI or mean b=0 volume."
+    )
+    optional.add_argument(
         '-param',
         metavar=Metavar.list,
         type=list_type(',', str),
@@ -161,6 +167,12 @@ def get_parser():
         metavar=Metavar.str,
         help="If provided, this string will be mentioned in the QC report as the subject the process was run on."
     )
+    optional.add_argument(
+        '-dl',
+        action='store_true',
+        help="Use deep learning–based motion correction (DenseRigidNet) with best-weights checkpoint. "
+             "Requires both -m mask and -ref reference."
+    )
 
     # Arguments which implement shared functionality
     parser.add_common_args()
@@ -185,6 +197,8 @@ def main(argv: Sequence[str]):
     param.bval_min = arguments.bvalmin
     param.group_size = arguments.g
     param.fname_mask = arguments.m
+    if arguments.ref is not None:
+        param.fname_ref = arguments.ref
     param.interp = arguments.x
     param.path_out = arguments.ofolder
     param.remove_temp_files = arguments.r
@@ -203,8 +217,51 @@ def main(argv: Sequence[str]):
     if not (is_qc_none == is_seg_none):
         parser.error("Both '-qc' and '-qc-seg' are required in order to generate a QC report.")
 
-    # run moco
-    fname_output_image = moco_wrapper(param)
+    # Run moco
+    if arguments.dl:
+        if moco_dl is None:
+            raise ImportError("mocoDL module not found. Please ensure SCT was installed with mocoDL support.")
+
+        if arguments.m is None:
+            parser.error(
+                "The '-m' mask argument is required when using -dl.\n"
+                "DL module requires a spinal cord mask for motion correction."
+            )
+        if arguments.ref is None:
+            print("[WARNING] No -ref provided. DL module will use the first volume (t=0) of input as reference.")
+
+        # check raw arguments instead of comparing to defaults
+        raw_args = argv[:]
+        forbidden = []
+        if "-bvalmin" in raw_args:
+            forbidden.append("-bvalmin")
+        if "-g" in raw_args:
+            forbidden.append("-g")
+        if "-x" in raw_args:
+            forbidden.append("-x")
+        if any(arg.startswith("-param") for arg in raw_args):
+            forbidden.append("-param")
+
+        if forbidden:
+            parser.error(
+                "The following options cannot be used together with -dl (DL-based motion correction): "
+                + ", ".join(forbidden) +
+                "\nDL module does not support b-value threshold (-bvalmin), grouping (-g), interpolation selection (-x), "
+                "or advanced parameters (-param)."
+            )
+
+        fname_output_image = moco_dl(
+            fname_data=param.fname_data,
+            fname_mask=param.fname_mask,
+            ofolder=param.path_out,
+            fname_ref=param.fname_ref,
+            fname_bvecs=param.fname_bvecs,
+            fname_bvals=param.fname_bvals,
+            mode="dmri"
+        )
+    else:
+        # Run SCT-based motion correction
+        fname_output_image = moco_wrapper(param)
 
     set_loglevel(verbose, caller_module_name=__name__)  # moco_wrapper changes verbose to 0, see issue #3341
 
