@@ -668,9 +668,23 @@ run bash "$TMP_DIR/miniforge.sh" -p "$SCT_DIR/$PYTHON_DIR" -b -f
 find "$SCT_DIR/$PYTHON_DIR" -type f -exec touch {} +
 
 # create conda environment
-print info "Creating conda environment..."
 # NB: We use an absolute path (-p) rather than a relative name (-n) to better isolate the conda environment
-python/bin/conda create -y -p "$SCT_DIR/$PYTHON_DIR/envs/venv_sct" python=3.10
+print info "Creating conda environment..."
+if [[ $OS == linux ]]; then
+  # NB: Package-specific notes:
+  #   - `libstdcxx-ng`: Ensure that packaged GLIBC version is up to date (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3927#issuecomment-1298616317)
+  #   - `libffi`: Ensure that libffi isn't linked incorrectly (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3927#issuecomment-1573896770)
+  #   - `xorg-libxinerama`: Ensure that PyQt5 has the correct dependencies on Ubuntu (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3925)
+  python/bin/conda create -y -p "$SCT_DIR/$PYTHON_DIR/envs/venv_sct" -c conda-forge python=3.10 libstdcxx-ng libffi xorg-libxinerama
+  # NB: We also need to copy the necessary dependencies to a separate subfolder that we add to LD_LIBRARY_PATH in compat/launcher.py
+  #     We do this to avoid exposing the full `lib/` directory, which can cause conflicts with system libraries.
+  #     This should copy 1 .so file and 2 symlinks, but the symlinks are relative, so copying them to a separate folder should be OK.
+  #     Related issue: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4971
+  mkdir "$SCT_DIR/$PYTHON_DIR/envs/venv_sct/sct_ld_library_path/"
+  cp "$SCT_DIR/$PYTHON_DIR/envs/venv_sct/lib/libxcb-xinerama.so."* "$SCT_DIR/$PYTHON_DIR/envs/venv_sct/sct_ld_library_path/"
+else
+  python/bin/conda create -y -p "$SCT_DIR/$PYTHON_DIR/envs/venv_sct" -c conda-forge python=3.10
+fi
 
 # Reapply the touch fix to avoid `pip` connection issues on WSL
 find "$SCT_DIR/$PYTHON_DIR" -type f -exec touch {} +
@@ -680,28 +694,6 @@ find "$SCT_DIR/$PYTHON_DIR" -type f -exec touch {} +
 # * Issue details: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3067
 # * Fix details: https://github.com/conda/conda/issues/7173#issuecomment-980496682
 echo "include-system-site-packages = false" > "$SCT_DIR/$PYTHON_DIR/envs/venv_sct/pyvenv.cfg"
-
-# activate miniforge
-# shellcheck disable=SC1091
-source python/etc/profile.d/conda.sh
-set +u #disable safeties, for conda is not written to their standard.
-conda activate "$SCT_DIR/$PYTHON_DIR/envs/venv_sct"
-set -u # reactivate safeties
-
-if [[ $OS == linux ]]; then
-  # Ensure that packaged GLIBC version is up to date (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3927#issuecomment-1298616317)
-  conda install -y -c conda-forge libstdcxx-ng
-  # Ensure that libffi isn't linked incorrectly (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3927#issuecomment-1573896770)
-  conda install -y -c conda-forge libffi
-  # Ensure that PyQt5 has the correct dependencies on Ubuntu (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3925)
-  # NB: We also need to copy the necessary dependencies to a separate subfolder that we add to LD_LIBRARY_PATH in compat/launcher.py
-  #     We do this to avoid exposing the full `lib/` directory, which can cause conflicts with system libraries.
-  #     This should copy 1 .so file and 2 symlinks, but the symlinks are relative, so copying them to a separate folder should be OK.
-  #     Related issue: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4971
-  conda install -y -c conda-forge xorg-libxinerama
-  mkdir "$SCT_DIR/$PYTHON_DIR/envs/venv_sct/sct_ld_library_path/"
-  cp "$SCT_DIR/$PYTHON_DIR/envs/venv_sct/lib/libxcb-xinerama.so."* "$SCT_DIR/$PYTHON_DIR/envs/venv_sct/sct_ld_library_path/"
-fi
 
 # Skip pip==21.2 to avoid dependency resolver issue (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3593)
 python/envs/venv_sct/bin/python -m pip install -U "pip!=21.2.*"
@@ -780,10 +772,6 @@ python/envs/venv_sct/bin/python -c 'import spinalcordtoolbox.deepseg.models; spi
 # ----------------------------------------------------------------------------------------------------------------------
 # Validate installation
 # ----------------------------------------------------------------------------------------------------------------------
-
-# conda is only for a sandbox; users don't use it,
-# so neither should our post-install tests
-conda deactivate >/dev/null 2>&1
 
 # In case of previous SCT installation (4.0.0-beta.1 or before), remove sct_env declaration in bashrc
 if [[ -e "$RC_FILE_PATH" ]]; then
