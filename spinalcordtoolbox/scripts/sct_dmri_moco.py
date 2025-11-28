@@ -28,12 +28,12 @@ import os
 from typing import Sequence
 import textwrap
 
-from spinalcordtoolbox.moco import ParamMoco, moco_wrapper
+from spinalcordtoolbox.moco.moco import ParamMoco, moco_wrapper
 from spinalcordtoolbox.utils.sys import init_sct, set_loglevel
 from spinalcordtoolbox.utils.shell import (SCTArgumentParser, Metavar, ActionCreateFolder, list_type, positive_int_type,
                                            display_viewer_syntax)
 from spinalcordtoolbox.reports.qc import generate_qc
-from spinalcordtoolbox.mocoDL.inference import run_mocoDL
+from spinalcordtoolbox.moco.dl.inference import moco_dl
 
 
 def get_parser():
@@ -168,7 +168,7 @@ def get_parser():
         help="If provided, this string will be mentioned in the QC report as the subject the process was run on."
     )
     optional.add_argument(
-        '-mocodl',
+        '-dl',
         action='store_true',
         help="Use deep learning–based motion correction (DenseRigidNet) with best-weights checkpoint. "
              "Requires both -m mask and -ref reference."
@@ -218,11 +218,39 @@ def main(argv: Sequence[str]):
         parser.error("Both '-qc' and '-qc-seg' are required in order to generate a QC report.")
 
     # Run moco
-    if arguments.mocodl:
-        if run_mocoDL is None:
+    if arguments.dl:
+        if moco_dl is None:
             raise ImportError("mocoDL module not found. Please ensure SCT was installed with mocoDL support.")
 
-        fname_output_image = run_mocoDL(
+        if arguments.m is None:
+            parser.error(
+                "The '-m' mask argument is required when using -dl.\n"
+                "DL module requires a spinal cord mask for motion correction."
+            )
+        if arguments.ref is None:
+            print("[WARNING] No -ref provided. DL module will use the first volume (t=0) of input as reference.")
+
+        # check raw arguments instead of comparing to defaults
+        raw_args = argv[:]
+        forbidden = []
+        if "-bvalmin" in raw_args:
+            forbidden.append("-bvalmin")
+        if "-g" in raw_args:
+            forbidden.append("-g")
+        if "-x" in raw_args:
+            forbidden.append("-x")
+        if any(arg.startswith("-param") for arg in raw_args):
+            forbidden.append("-param")
+
+        if forbidden:
+            parser.error(
+                "The following options cannot be used together with -dl (DL-based motion correction): "
+                + ", ".join(forbidden) +
+                "\nDL module does not support b-value threshold (-bvalmin), grouping (-g), interpolation selection (-x), "
+                "or advanced parameters (-param)."
+            )
+
+        fname_output_image = moco_dl(
             fname_data=param.fname_data,
             fname_mask=param.fname_mask,
             ofolder=param.path_out,
