@@ -181,7 +181,7 @@ def get_parser(ascor=False):
         '-discfile',
         metavar=Metavar.str,
         help=textwrap.dedent("""
-            File with single-voxel labels identifying the intervertebral discs generated with sct_deepseg totalspineseg or sct_label_utils.
+            File with single-voxel labels identifying the intervertebral discs generated with sct_deepseg spine or sct_label_utils.
             Used with `-vert` to aggregate metrics within vertebral levels. Disc labels will be projected onto the spinal
             cord to identify vertebral levels.
             Example: ./label/template/PAM50_label_disc.nii.gz
