@@ -5,15 +5,17 @@
 # Copyright (c) 2025 Polytechnique Montreal <www.neuro.polymtl.ca>
 # License: see the file LICENSE
 
-import torch
-import torch.nn as nn
-from monai.networks.blocks import Warp
+from spinalcordtoolbox.utils.sys import LazyLoader
+
+torch = LazyLoader("torch", globals(), "torch")
+nn = LazyLoader("nn", globals(), "torch.nn")
+monai_blocks = LazyLoader("monai_blocks", globals(), "monai.networks.blocks")
 
 
 # -----------------------------
 # Some helper function
 # -----------------------------
-def _get_fixed_t(fixed: torch.Tensor, t: int) -> torch.Tensor:
+def _get_fixed_t(fixed: "torch.Tensor", t: int) -> "torch.Tensor":
     """
     Return fixed volume (B,1,H,W,D) at time t, supporting both 3D fixed (fMRI) and 4D fixed (dMRI).
     """
@@ -123,7 +125,7 @@ class RigidWarp(nn.Module):
     """
     def __init__(self, mode="bilinear", padding_mode="border"):
         super().__init__()
-        self.warper = Warp(mode=mode, padding_mode=padding_mode)
+        self.warper = monai_blocks.Warp(mode=mode, padding_mode=padding_mode)
 
     def build_field(self, Tx, Ty, vol):
         """

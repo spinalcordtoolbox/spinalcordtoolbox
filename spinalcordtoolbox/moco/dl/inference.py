@@ -6,18 +6,19 @@
 # License: see the file LICENSE
 
 import os
-import torch
 import textwrap
 import numpy as np
-import nibabel as nib
 
 from tqdm import tqdm
-from skimage.exposure import match_histograms
 from spinalcordtoolbox.math import smooth
 from spinalcordtoolbox.image import add_suffix, generate_output_file
 from spinalcordtoolbox.scripts import sct_dmri_separate_b0_and_dwi
-from spinalcordtoolbox.utils.sys import sct_dir_local_path
+from spinalcordtoolbox.utils.sys import sct_dir_local_path, LazyLoader
 from spinalcordtoolbox.moco.dl.model import DenseRigidReg, RigidWarp
+
+nib = LazyLoader("nib", globals(), "nibabel")
+torch = LazyLoader("torch", globals(), "torch")
+ski_exposure = LazyLoader("ski_exposure", globals(), "skimage.exposure")
 
 
 def moco_dl(fname_data, fname_mask, ofolder, mode="fmri", fname_ref=None, fname_bvals=None, fname_bvecs=None):
@@ -117,7 +118,7 @@ def moco_dl(fname_data, fname_mask, ofolder, mode="fmri", fname_ref=None, fname_
 
     matched = np.zeros_like(sharpened)
     for t in range(T):
-        matched[..., t] = match_histograms(sharpened[..., t], mov_np[..., t])
+        matched[..., t] = ski_exposure.match_histograms(sharpened[..., t], mov_np[..., t])
 
     # Save Moco output
     base_output = add_suffix(os.path.basename(fname_data), "_mocoDL")
