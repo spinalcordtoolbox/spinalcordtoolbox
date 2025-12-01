@@ -51,14 +51,9 @@ def moco_dl(fname_data, fname_mask, ofolder, mode="fmri", fname_ref=None, fname_
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     os.makedirs(ofolder, exist_ok=True)
 
-    if mode == "fmri":
-        ckpt_name = "fmri.ckpt"
-    elif mode == "dmri":
-        ckpt_name = "dmri.ckpt"
-
-    ckpt_path = sct_dir_local_path("data", "moco-dl_models", ckpt_name)
+    ckpt_path = sct_dir_local_path("data", "moco-dl_models", f"{mode}.ckpt")
     if not os.path.exists(ckpt_path):
-        raise FileNotFoundError(f"[mocoDL] Checkpoint not found: {ckpt_path}")
+        raise FileNotFoundError(f"[moco-dl] Checkpoint not found: {ckpt_path}")
 
     print("\n[INFO] Running DL-based motion correction (DenseRigidNet)...\n")
     # Display parameter summary
