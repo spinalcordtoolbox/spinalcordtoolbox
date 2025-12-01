@@ -9,7 +9,6 @@ import os
 import textwrap
 import numpy as np
 
-from tqdm import tqdm
 from spinalcordtoolbox.math import smooth
 from spinalcordtoolbox.image import add_suffix, generate_output_file, Image
 from spinalcordtoolbox.scripts import sct_dmri_separate_b0_and_dwi
@@ -106,10 +105,13 @@ def moco_dl(fname_data, fname_mask, ofolder, mode="fmri", fname_ref=None, fname_
     mask = torch.from_numpy(mask_np).unsqueeze(0).unsqueeze(0).to(device)
 
     # Run inference
+    start_time = time.time()
     print("[moco-dl] Starting inference...")
-    for _ in tqdm(range(1), desc="Running model"):
-        with torch.no_grad():
-            warped, flow, Tx, Ty = model(moving, fixed, mask)
+    with torch.no_grad():
+        warped, flow, Tx, Ty = model(moving, fixed, mask)
+
+    inference_time = time.time() - start_time
+    print(f"Inference time: {inference_time:.2f} sec")
 
     warped = warped.squeeze().cpu().numpy()  # (H,W,D,T)
     flow = flow.squeeze().cpu().numpy()
@@ -199,7 +201,8 @@ def moco_dl(fname_data, fname_mask, ofolder, mode="fmri", fname_ref=None, fname_
     disp_dir = os.path.join(ofolder, "dispfield")
     os.makedirs(disp_dir, exist_ok=True)
 
-    for t in tqdm(range(T), desc="Saving displacement fields"):
+    print("[moco-dl] Saving displacement fields per timepoint...")
+    for t in range(T):
         disp_t = disp5D[..., t, :]  # (H,W,D,3)
         im_disp_t = Image(disp_t, hdr=header)
         im_disp_t.hdr.set_data_shape(disp_t.shape)
