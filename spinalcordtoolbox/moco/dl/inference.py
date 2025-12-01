@@ -21,6 +21,29 @@ torch = LazyLoader("torch", globals(), "torch")
 ski_exposure = LazyLoader("ski_exposure", globals(), "skimage.exposure")
 
 
+def check_dl_args(argv):
+    # mask (-m) is mandatory for DL module
+    if "-m" not in argv:
+        raise ValueError("[moco-dl] Missing required argument: -m <mask>. A spinal cord mask is required for DL-based motion correction.")
+
+    if "-ref" not in argv:
+        print("[WARNING] No -ref provided. DL module will use the first volume (t=0) of input as reference.")
+
+    # check if the raw user arguments contain any forbidden args
+    forbidden = []
+    for forbidden_arg in ["-g", "-x", "-param", "-bvalmin"]:
+        if any(arg == forbidden_arg for arg in argv):
+            forbidden.append(forbidden_arg)
+
+    if forbidden:
+        raise ValueError(
+            "The following options cannot be used together with -dl (DL-based motion correction): "
+            + ", ".join(forbidden)
+            + "\nDL module does not support b-value threshold (-bvalmin), grouping (-g), "
+              "final interpolation (-x), or advanced ANTs parameters (-param)."
+        )
+
+
 def moco_dl(fname_data, fname_mask, ofolder, mode="fmri", fname_ref=None, fname_bvals=None, fname_bvecs=None):
     """
         Deep-learning motion correction (DenseRigidNet) for dMRI/fMRI.
