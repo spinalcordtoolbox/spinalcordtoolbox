@@ -33,7 +33,7 @@ from spinalcordtoolbox.utils.sys import init_sct, set_loglevel
 from spinalcordtoolbox.utils.shell import (SCTArgumentParser, Metavar, ActionCreateFolder, list_type, positive_int_type,
                                            display_viewer_syntax)
 from spinalcordtoolbox.reports.qc import generate_qc
-from spinalcordtoolbox.moco.dl.inference import moco_dl
+from spinalcordtoolbox.moco.dl.inference import moco_dl, check_dl_args
 
 
 def get_parser():
@@ -219,36 +219,10 @@ def main(argv: Sequence[str]):
 
     # Run moco
     if arguments.dl:
-        if moco_dl is None:
-            raise ImportError("mocoDL module not found. Please ensure SCT was installed with mocoDL support.")
-
-        if arguments.m is None:
-            parser.error(
-                "The '-m' mask argument is required when using -dl.\n"
-                "DL module requires a spinal cord mask for motion correction."
-            )
-        if arguments.ref is None:
-            print("[WARNING] No -ref provided. DL module will use the first volume (t=0) of input as reference.")
-
-        # check raw arguments instead of comparing to defaults
-        raw_args = argv[:]
-        forbidden = []
-        if "-bvalmin" in raw_args:
-            forbidden.append("-bvalmin")
-        if "-g" in raw_args:
-            forbidden.append("-g")
-        if "-x" in raw_args:
-            forbidden.append("-x")
-        if any(arg.startswith("-param") for arg in raw_args):
-            forbidden.append("-param")
-
-        if forbidden:
-            parser.error(
-                "The following options cannot be used together with -dl (DL-based motion correction): "
-                + ", ".join(forbidden) +
-                "\nDL module does not support b-value threshold (-bvalmin), grouping (-g), interpolation selection (-x), "
-                "or advanced parameters (-param)."
-            )
+        try:
+            check_dl_args(argv)
+        except ValueError as e:
+            raise parser.error(str(e))
 
         fname_output_image = moco_dl(
             fname_data=param.fname_data,
