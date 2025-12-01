@@ -6,6 +6,7 @@
 # License: see the file LICENSE
 
 import os
+import time
 import textwrap
 import numpy as np
 
@@ -82,14 +83,7 @@ def moco_dl(fname_data, fname_mask, ofolder, mode="fmri", fname_ref=None, fname_
         ref_img.change_orientation('RPI')
         ref_np = ref_img.data.astype(np.float32)
     else:
-        raise ValueError("[moco-dl] Spinal cord mask is required.")
-
-    if fname_ref:
-        fix_img, fix_np = load_nifti(fname_ref)
-    else:
-        # print("[moco-dl] No reference provided — will use first volume (t=0) of moving data.")
-        fix_np = mov_np[..., 0]
-        fix_np = np.repeat(fix_np[..., None], mov_np.shape[-1], axis=-1)
+        ref_np = mov_np[..., 0]
 
     # Load DL model
     print(f"[moco-dl] Loading checkpoint: {ckpt_path}")
@@ -101,7 +95,7 @@ def moco_dl(fname_data, fname_mask, ofolder, mode="fmri", fname_ref=None, fname_
     model.warp = RigidWarp(mode="bilinear")
 
     moving = torch.from_numpy(mov_np).unsqueeze(0).unsqueeze(0).to(device)
-    fixed = torch.from_numpy(fix_np).unsqueeze(0).unsqueeze(0).to(device)
+    fixed = torch.from_numpy(ref_np).unsqueeze(0).unsqueeze(0).to(device)
     mask = torch.from_numpy(mask_np).unsqueeze(0).unsqueeze(0).to(device)
 
     # Run inference
@@ -131,7 +125,7 @@ def moco_dl(fname_data, fname_mask, ofolder, mode="fmri", fname_ref=None, fname_
                 sharpened[..., d, t] = img_warped
                 continue
 
-            raw_smooth = smooth(img_raw, sigmas=[0.5, 0.5])
+            raw_smooth = smooth(img_raw.astype(np.float32), sigmas=[0.5, 0.5])
             texture = img_raw - raw_smooth
             out = img_warped + 1.2 * texture
             lo, hi = np.percentile(img_raw[mask_slice > 0], [0.5, 99.5])
@@ -140,7 +134,10 @@ def moco_dl(fname_data, fname_mask, ofolder, mode="fmri", fname_ref=None, fname_
 
     matched = np.zeros_like(sharpened)
     for t in range(T):
-        matched[..., t] = ski_exposure.match_histograms(sharpened[..., t], mov_np[..., t])
+        matched[..., t] = ski_exposure.match_histograms(
+            sharpened[..., t].astype(np.float32),
+            mov_np[..., t].astype(np.float32)
+        )
 
     # Save Moco output
     tmp_main = os.path.join(ofolder, "tmp_mocoDL.nii.gz")
@@ -210,5 +207,5 @@ def moco_dl(fname_data, fname_mask, ofolder, mode="fmri", fname_ref=None, fname_
         im_disp_t.affine = affine
         im_disp_t.save(os.path.join(disp_dir, f"warp_t{t:04d}.nii.gz"))
 
-    print(f"[moco-dl] Outputs saved in: {ofolder}")
+    print(f"[moco-dl] Outputs saved in: {os.path.abspath(ofolder)}")
     return fname_moco
