@@ -11,12 +11,11 @@ import numpy as np
 
 from tqdm import tqdm
 from spinalcordtoolbox.math import smooth
-from spinalcordtoolbox.image import add_suffix, generate_output_file
+from spinalcordtoolbox.image import add_suffix, generate_output_file, Image
 from spinalcordtoolbox.scripts import sct_dmri_separate_b0_and_dwi
 from spinalcordtoolbox.utils.sys import sct_dir_local_path, LazyLoader
 from spinalcordtoolbox.moco.dl.model import DenseRigidReg, RigidWarp
 
-nib = LazyLoader("nib", globals(), "nibabel")
 torch = LazyLoader("torch", globals(), "torch")
 ski_exposure = LazyLoader("ski_exposure", globals(), "skimage.exposure")
 
@@ -69,17 +68,20 @@ def moco_dl(fname_data, fname_mask, ofolder, mode="fmri", fname_ref=None, fname_
         bvals (dmri only):     {fname_bvals if fname_bvals else 'None'}
     """))
 
-    # Load NIfTI data
-    def load_nifti(p):
-        img = nib.load(p)
-        return img, img.get_fdata().astype(np.float32)
-
-    # Check required inputs
-    mov_img, mov_np = load_nifti(fname_data)
+    # Load image
+    mov_img = Image(fname_data)
+    mov_img.change_orientation('RPI')
+    mov_np = mov_img.data.astype(np.float32)
     affine, header = mov_img.affine, mov_img.header
 
-    if fname_mask:
-        mask_img, mask_np = load_nifti(fname_mask)
+    mask_img = Image(fname_mask)
+    mask_img.change_orientation('RPI')
+    mask_np = mask_img.data.astype(np.float32)
+
+    if fname_ref:
+        ref_img = Image(fname_ref)
+        ref_img.change_orientation('RPI')
+        ref_np = ref_img.data.astype(np.float32)
     else:
         raise ValueError("[moco-dl] Spinal cord mask is required.")
 
@@ -139,11 +141,13 @@ def moco_dl(fname_data, fname_mask, ofolder, mode="fmri", fname_ref=None, fname_
         matched[..., t] = ski_exposure.match_histograms(sharpened[..., t], mov_np[..., t])
 
     # Save Moco output
-    base_output = add_suffix(os.path.basename(fname_data), "_mocoDL")
-    fname_moco_out = os.path.join(ofolder, base_output)
     tmp_main = os.path.join(ofolder, "tmp_mocoDL.nii.gz")
-    nib.save(nib.Nifti1Image(matched, affine, header), tmp_main)
-    fname_moco = generate_output_file(tmp_main, fname_moco_out)
+    im_main = Image(matched, hdr=header).save(tmp_main)
+    im_main.affine = affine
+    im_main.save(tmp_main)
+
+    base_output = add_suffix(fname_data, "_mocoDL")
+    fname_moco = generate_output_file(tmp_main, os.path.join(ofolder, base_output))
 
     # Save mean output
     print("[moco-dl] Computing time-averaged output volume...")
@@ -159,7 +163,7 @@ def moco_dl(fname_data, fname_mask, ofolder, mode="fmri", fname_ref=None, fname_
     else:
         mean_vol = np.mean(matched, axis=3)
         tmp_mean = os.path.join(ofolder, "tmp_mean.nii.gz")
-        nib.save(nib.Nifti1Image(mean_vol, affine, header), tmp_mean)
+        Image(mean_vol, hdr=header).save(tmp_mean)
         generate_output_file(tmp_mean, add_suffix(fname_moco, "_mean"))
 
     # Save Tx, Ty, and displacement fields
@@ -168,10 +172,13 @@ def moco_dl(fname_data, fname_mask, ofolder, mode="fmri", fname_ref=None, fname_
     Tx_img_path_tmp = os.path.join(ofolder, "tmp_Tx.nii.gz")
     Ty_img_path_tmp = os.path.join(ofolder, "tmp_Ty.nii.gz")
 
-    nib.save(nib.Nifti1Image(Tx[np.newaxis, np.newaxis, ...], affine, header),
-             Tx_img_path_tmp)
-    nib.save(nib.Nifti1Image(Ty[np.newaxis, np.newaxis, ...], affine, header),
-             Ty_img_path_tmp)
+    im_Tx = Image(Tx[np.newaxis, np.newaxis, ...], hdr=header)
+    im_Tx.hdr.set_data_shape(im_Tx.data.shape)
+    im_Tx.save(Tx_img_path_tmp)
+    im_Ty = Image(Ty[np.newaxis, np.newaxis, ...], hdr=header)
+    im_Ty.hdr.set_data_shape(im_Ty.data.shape)
+    im_Ty.save(Ty_img_path_tmp)
+
     generate_output_file(Tx_img_path_tmp, add_suffix(fname_moco, "_Tx"))
     generate_output_file(Ty_img_path_tmp, add_suffix(fname_moco, "_Ty"))
 
@@ -179,9 +186,13 @@ def moco_dl(fname_data, fname_mask, ofolder, mode="fmri", fname_ref=None, fname_
     print("[moco-dl] Saving displacement fields...")
     disp5D = np.moveaxis(flow, 0, -1)  # (H,W,D,T,3)
     tmp_disp5D = os.path.join(ofolder, "tmp_dispfield5D.nii.gz")
-    disp_img = nib.Nifti1Image(disp5D, affine, header)
-    disp_img.header.set_intent('vector', (), '')
-    nib.save(disp_img, tmp_disp5D)
+
+    im_disp5D = Image(disp5D, hdr=header)
+    im_disp5D.hdr.set_data_shape(disp5D.shape)
+    im_disp5D.hdr.set_intent('vector', (), '')
+    im_disp5D.affine = affine
+    im_disp5D.save(tmp_disp5D)
+
     generate_output_file(tmp_disp5D, add_suffix(fname_moco, "_dispfield-all"))
 
     # Save per-timepoint displacement fields
@@ -190,9 +201,11 @@ def moco_dl(fname_data, fname_mask, ofolder, mode="fmri", fname_ref=None, fname_
 
     for t in tqdm(range(T), desc="Saving displacement fields"):
         disp_t = disp5D[..., t, :]  # (H,W,D,3)
-        img_t = nib.Nifti1Image(disp_t, affine, header)
-        img_t.header.set_intent('vector', (), '')
-        nib.save(img_t, os.path.join(disp_dir, f"warp_t{t:04d}.nii.gz"))
+        im_disp_t = Image(disp_t, hdr=header)
+        im_disp_t.hdr.set_data_shape(disp_t.shape)
+        im_disp_t.hdr.set_intent('vector', (), '')
+        im_disp_t.affine = affine
+        im_disp_t.save(os.path.join(disp_dir, f"warp_t{t:04d}.nii.gz"))
 
     print(f"[moco-dl] Outputs saved in: {ofolder}")
     return fname_moco
