@@ -256,14 +256,10 @@ def _properties_image(im_r, nz, px, py, pz, pr, min_z_index, max_z_index, proper
         angle_hog_regularized = angle_hog_values
 
     # Now compute shape properties using the new angles
-    for i, iz in enumerate(z_indices):
+    for iz, angle_hog, centermass_src in zip(z_indices, angle_hog_regularized, centermass_values):
         current_patch_scaled = current_patches[iz]['patch']
         angle_AP_rad = current_patches[iz]['angle_AP_rad']
         angle_RL_rad = current_patches[iz]['angle_RL_rad']
-        angle_hog = angle_hog_regularized[i]
-
-        # Get centermass for this slice
-        centermass_src = centermass_values[i]
 
         # Compute shape properties with regularized angle_hog
         shape_property = _properties2d(current_patch_scaled, [px, py], iz, angle_hog=angle_hog, verbose=verbose)
