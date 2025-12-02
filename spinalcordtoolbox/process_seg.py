@@ -242,8 +242,6 @@ def _properties_image(im_r, nz, px, py, pz, pr, min_z_index, max_z_index, proper
         centermass_values.append(centermass_src)
 
     # Apply regularization to HOG angles along the z-axis if filter_size > 0
-    # The code snippet below is taken from algorithms.register2d_centermassrot -- maybe it could be extracted into a
-    # function and reused
     if filter_size > 0 and len(z_indices) > 0:
         angle_hog_regularized = gaussian_filter1d(np.array(angle_hog_values), filter_size)
         if verbose == 2:
