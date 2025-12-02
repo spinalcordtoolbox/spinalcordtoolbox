@@ -298,6 +298,7 @@ def main(argv: Sequence[str]):
         qc2.sct_label_utils(
             fname_input=input_filename,
             fname_seg=output_fname,
+            command='sct_label_utils',
             argv=argv,
             path_qc=os.path.abspath(arguments.qc),
             dataset=arguments.qc_dataset,

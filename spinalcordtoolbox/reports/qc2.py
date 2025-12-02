@@ -717,6 +717,7 @@ def sct_fmri_compute_tsnr(
 def sct_label_vertebrae(
     fname_input: str,
     fname_seg: str,
+    command: str,
     argv: Sequence[str],
     path_qc: str,
     dataset: str | None,
@@ -730,7 +731,6 @@ def sct_label_vertebrae(
 
     Sagittal orientation, wavy single slice, display vertebral labels.
     """
-    command = 'sct_label_vertebrae'
     cmdline = [command]
     cmdline.extend(argv)
 
@@ -835,6 +835,7 @@ def sct_label_vertebrae(
 def sct_label_utils(
     fname_input: str,
     fname_seg: str,
+    command: str,
     argv: Sequence[str],
     path_qc: str,
     dataset: str | None,
@@ -846,7 +847,6 @@ def sct_label_utils(
 
     Sagittal orientation, wavy single slice, with posterior labels.
     """
-    command = 'sct_label_utils'
     cmdline = [command]
     cmdline.extend(argv)
 

@@ -478,6 +478,7 @@ def main(argv: Sequence[str]):
         qc2.sct_label_vertebrae(
             fname_input=fname_in,
             fname_seg=fname_seg_labeled,
+            command='sct_label_vertebrae',
             argv=argv,
             path_qc=os.path.abspath(arguments.qc),
             dataset=arguments.qc_dataset,

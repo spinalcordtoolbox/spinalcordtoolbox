@@ -23,7 +23,7 @@ import functools
 from spinalcordtoolbox.reports import qc2
 from spinalcordtoolbox.image import splitext, Image, check_image_kind
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax, ActionCreateFolder
-from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel, __version__, _git_info
+from spinalcordtoolbox.utils.sys import init_sct, printv, __sct_dir__, set_loglevel, __version__, _git_info
 from spinalcordtoolbox.utils.sys import LazyLoader
 
 cuda = LazyLoader("cuda", globals(), 'torch.cuda')
@@ -553,36 +553,59 @@ def main(argv: Sequence[str]):
         fname_prior = fname_seg
 
     if arguments.qc is not None:
-        # If `arguments.qc_seg is None`, each entry will be treated as an
-        # empty file with the same size as the corresponding input image
-        qc_seg = [arguments.qc_seg] * len(input_filenames)
-        # Models can have multiple input images -- create 1 QC report per input image.
-        if len(output_filenames) == len(input_filenames):
-            iterator = zip(input_filenames, output_filenames, [None] * len(input_filenames), qc_seg)
-        # Special case: spine which outputs 2-4 files per 1 input file
-        elif arguments.task == 'spine':
-            assert len(output_filenames) == 2 * len(input_filenames)
-            iterator = zip(input_filenames * 2, output_filenames, [None] * 2, qc_seg * 2)
-        # Other models typically have 2 outputs per input (e.g. SC + lesion), so use both segs
-        else:
-            assert len(output_filenames) == 2 * len(input_filenames)
-            iterator = zip(input_filenames, output_filenames[0::2], output_filenames[1::2], qc_seg)
-
-        # Create one QC report per input image, with one or two segs per image
-        species = 'mouse' if 'mouse' in arguments.task else 'human'  # used for resampling
-        for fname_in, fname_seg1, fname_seg2, fname_qc_seg in iterator:
-            qc2.sct_deepseg(
-                fname_input=fname_in,
-                fname_seg=fname_seg1,
-                fname_seg2=fname_seg2,
-                species=species,
+        if arguments.task == 'spine':
+            common_args = dict(
+                command='sct_deepseg',
                 argv=argv,
                 path_qc=os.path.abspath(arguments.qc),
                 dataset=arguments.qc_dataset,
                 subject=arguments.qc_subject,
-                plane=arguments.qc_plane,
-                fname_qc_seg=fname_qc_seg
             )
+            path_custom_labels = os.path.join(
+                __sct_dir__, 'spinalcordtoolbox', 'reports',
+                f'totalspineseg_{"step2" if arguments.label_vert else "step1"}_regions.json',
+            )
+            for fname_input, fname_discs, fname_all in zip(
+                input_filenames, output_filenames[0::2], output_filenames[1::2]
+            ):
+                qc2.sct_label_utils(
+                    fname_input=fname_input,
+                    fname_seg=fname_discs,
+                    **common_args,
+                )
+                qc2.sct_label_vertebrae(
+                    fname_input=fname_input,
+                    fname_seg=fname_all,
+                    path_custom_labels=path_custom_labels,
+                    **common_args,
+                )
+        else:
+            # If `arguments.qc_seg is None`, each entry will be treated as an
+            # empty file with the same size as the corresponding input image
+            qc_seg = [arguments.qc_seg] * len(input_filenames)
+            # Models can have multiple input images -- create 1 QC report per input image.
+            if len(output_filenames) == len(input_filenames):
+                iterator = zip(input_filenames, output_filenames, [None] * len(input_filenames), qc_seg)
+            # Other models typically have 2 outputs per input (e.g. SC + lesion), so use both segs
+            else:
+                assert len(output_filenames) == 2 * len(input_filenames)
+                iterator = zip(input_filenames, output_filenames[0::2], output_filenames[1::2], qc_seg)
+
+            # Create one QC report per input image, with one or two segs per image
+            species = 'mouse' if 'mouse' in arguments.task else 'human'  # used for resampling
+            for fname_in, fname_seg1, fname_seg2, fname_qc_seg in iterator:
+                qc2.sct_deepseg(
+                    fname_input=fname_in,
+                    fname_seg=fname_seg1,
+                    fname_seg2=fname_seg2,
+                    species=species,
+                    argv=argv,
+                    path_qc=os.path.abspath(arguments.qc),
+                    dataset=arguments.qc_dataset,
+                    subject=arguments.qc_subject,
+                    plane=arguments.qc_plane,
+                    fname_qc_seg=fname_qc_seg
+                )
 
     images = [arguments.i[0]]
     im_types = ['anat']
