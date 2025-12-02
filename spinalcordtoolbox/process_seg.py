@@ -243,14 +243,9 @@ def _properties_image(im_r, nz, px, py, pz, pr, min_z_index, max_z_index, proper
 
         shape_property = _properties2d(current_patch_scaled, [px, py], iz, angle_hog=angle_hog, verbose=verbose)
         if shape_property is not None:
-            # Get the index of the current slice in our stored arrays
-            idx = z_indices.index(iz)
-            angle_hog = angle_hog_values[idx]
-            centermass_src = centermass_values[idx]
-            # Add custom fields
-            shape_properties['centermass_x'][iz] = shape_property['centermass_x'] = centermass_src[0]
-            shape_properties['centermass_y'][iz] = shape_property['centermass_y'] = centermass_src[1]
-            shape_properties['angle_hog'][iz] = shape_property['angle_hog'] = -angle_hog * 180.0 / math.pi     # degrees, and change sign to match negative if left rotation
+            shape_properties['centermass_x'][iz] = centermass_src[0]
+            shape_properties['centermass_y'][iz] = centermass_src[1]
+            shape_properties['angle_hog'][iz] = -angle_hog * 180.0 / math.pi     # degrees, and change sign to match negative if left rotation
         else:
             logging.warning(f'\nNo properties for slice: {iz}')
 
