@@ -141,7 +141,7 @@ def moco_dl(fname_data, fname_mask, ofolder, mode="fmri", fname_ref=None, fname_
 
     # Save Moco output
     tmp_main = os.path.join(ofolder, "tmp_mocoDL.nii.gz")
-    im_main = Image(matched, hdr=header).save(tmp_main)
+    im_main = Image(matched, hdr=header)
     im_main.affine = affine
     im_main.save(tmp_main)
 
