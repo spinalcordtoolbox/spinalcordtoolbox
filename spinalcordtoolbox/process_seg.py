@@ -245,22 +245,18 @@ def _properties_image(im_r, nz, px, py, pz, pr, min_z_index, max_z_index, proper
     # The code snippet below is taken from algorithms.register2d_centermassrot -- maybe it could be extracted into a
     # function and reused
     if filter_size > 0 and len(z_indices) > 0:
-        # Convert lists to numpy arrays
-        z_indices_array = np.array(z_indices)
-        angle_hog_array = np.array(angle_hog_values)
-        # Apply Gaussian filter to regularize the angles
-        angle_hog_regularized = gaussian_filter1d(angle_hog_array, filter_size)
+        angle_hog_regularized = gaussian_filter1d(np.array(angle_hog_values), filter_size)
         if verbose == 2:
             create_regularized_hog_angle_plot(
-                z_indices_array, filter_size,
-                angle_hog_array, angle_hog_regularized
+                np.array(z_indices), filter_size,
+                np.array(angle_hog_values), angle_hog_regularized
             )
     # If filter_size <= 0, then just use the original angles
     else:
         angle_hog_regularized = angle_hog_values
 
     # Now compute shape properties using the new angles
-    for i, iz in enumerate(z_indices_array):
+    for i, iz in enumerate(z_indices):
         current_patch_scaled = current_patches[iz]['patch']
         angle_AP_rad = current_patches[iz]['angle_AP_rad']
         angle_RL_rad = current_patches[iz]['angle_RL_rad']
