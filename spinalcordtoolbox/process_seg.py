@@ -210,8 +210,13 @@ def _properties_image(im_r, nz, px, py, pz, pr, min_z_index, max_z_index, proper
     centermass_values = []
     for iz in sct_progress_bar(range(min_z_index, max_z_index + 1), unit='iter', unit_scale=False, desc="Compute shape analysis",
                                ncols=80):
-        # Extract 2D patch
+        # Skip any slices with empty segmentations
         current_patch_scaled = current_patches[iz]['patch']
+        if np.count_nonzero(current_patch_scaled) * pr <= 1:
+            logging.warning(f'Skipping slice {iz} as the segmentation contains only a single pixel.')
+            continue
+
+        # Apply angle correction transformation to the anatomical image slice
         current_patch_im = im_r.data[:, :, iz]
         if angle_correction:
             tform = current_tforms[iz]
@@ -224,11 +229,6 @@ def _properties_image(im_r, nz, px, py, pz, pr, min_z_index, max_z_index, proper
             current_patch_im_scaled = current_patch_im
 
         # compute PCA and get center or mass based on segmentation; centermass_src: [RL, AP] (assuming RPI orientation)
-        # Check for empty slice
-        if np.count_nonzero(current_patch_scaled) * pr <= 1:
-            logging.warning(f'Skipping slice {iz} as the segmentation contains only a single pixel.')
-            continue
-        z_indices.append(iz)
         coord_src, pca_src, centermass_src = compute_pca(current_patch_scaled)
         # Finds the angle of the image
         # TODO: explore different sigma values for the HOG method, i.e., the influence how far away pixels will vote for the orientation.
@@ -237,6 +237,7 @@ def _properties_image(im_r, nz, px, py, pz, pr, min_z_index, max_z_index, proper
         angle_hog, conf_src = find_angle_hog(current_patch_im_scaled, centermass_src,
                                              px, py, angle_range=40)    # 40 is taken from registration.algorithms.register2d_centermassrot
 
+        z_indices.append(iz)
         angle_hog_values.append(angle_hog)
         centermass_values.append(centermass_src)
 
