@@ -41,7 +41,7 @@ KEYS_DEFAULT = ['area',
                 'length'
                 ]
 KEYS_HOG = ['centermass_x', 'centermass_y', 'angle_hog']
-KEYS_QUADRANT = ['area_quadrant_anterior_left', 'area_quadrant_anterior_right', 
+KEYS_QUADRANT = ['area_quadrant_anterior_left', 'area_quadrant_anterior_right',
                  'area_quadrant_posterior_left', 'area_quadrant_posterior_right']
 KEYS_SYMMETRY = ['symmetry_dice_RL', 'symmetry_hausdorff_RL', 'symmetry_difference_RL',
                  'symmetry_dice_AP', 'symmetry_hausdorff_AP', 'symmetry_difference_AP']
