@@ -28,7 +28,7 @@ import spinalcordtoolbox.reports
 from spinalcordtoolbox.reports.assets.py import refresh_qc_entries
 from spinalcordtoolbox.resampling import resample_nib
 from spinalcordtoolbox.utils.shell import display_open
-from spinalcordtoolbox.utils.sys import __version__, list2cmdline, LazyLoader
+from spinalcordtoolbox.utils.sys import __version__, list2cmdline, LazyLoader, __sct_dir__
 from spinalcordtoolbox.utils.fs import mutex
 
 pd = LazyLoader("pd", globals(), "pandas")
@@ -430,6 +430,27 @@ class SlicingSpec:
             axis_labels=self.axis_labels,
         )
 
+    def center_lines(self: 'SlicingSpec', seg: Image) -> 'SlicingSpec':
+        """
+        A re-centered and cropped slicing spec, meant to transform a full axial
+        slicing spec into a collection of single-line slices which can be
+        arranged into a single wavy mid-sagittal image.
+        """
+        # Recenter each slice around its center of mass, and interpolate missing
+        # slices. We use a single (N, 3) array so that we can inf_nan_fill.
+        offsets = np.array(list(self.offsets.values()))
+        slices_seg = self.get_slices(seg, order=1)
+        for offset, slice_seg in zip(offsets, slices_seg.values()):
+            offset[2] += ndimage.center_of_mass(slice_seg)[1]
+        inf_nan_fill(offsets[:, 2])
+
+        return SlicingSpec(
+            affine=self.affine,
+            offsets=dict(zip(self.offsets.keys(), offsets)),
+            shape=(self.shape[0], 1),  # crop to a single line
+            axis_labels=self.axis_labels,
+        )
+
     # ----------------------------------------------------------------
     # Consumer methods
     # ----------------------------------------------------------------
@@ -691,6 +712,124 @@ def sct_fmri_compute_tsnr(
             mosaic.ax.text(1.5, 6, corner_label, color='white', size=3.25)
             mosaic.add_labels()
             mosaic.save(path)
+
+
+def sct_label_vertebrae(
+    fname_input: str,
+    fname_seg: str,
+    argv: Sequence[str],
+    path_qc: str,
+    dataset: str | None,
+    subject: str | None,
+    path_custom_labels: str,
+    draw_text: bool = True,
+    p_resample: float | None = 0.6,
+):
+    """
+    Generate a QC report for sct_label_vertebrae.
+
+    Sagittal orientation, wavy single slice, display vertebral labels.
+    """
+    command = 'sct_label_vertebrae'
+    cmdline = [command]
+    cmdline.extend(argv)
+
+    with create_qc_entry(
+        path_input=Path(fname_input).resolve(),
+        path_qc=Path(path_qc),
+        command=command,
+        cmdline=list2cmdline(cmdline),
+        plane='Sagittal',
+        dataset=dataset,
+        subject=subject,
+    ) as imgs_to_generate:
+
+        img_input = Image(fname_input)
+        img_labels = Image(fname_seg)
+
+        # A version of img_labels with only 0-1 values, for center-of-mass computations.
+        img_seg = img_labels.copy()
+        img_seg.data = (img_seg.data != 0)
+
+        # Take a single mid-sagittal line from each axial slice to compose a 2D image.
+        slicing_spec = SlicingSpec.full_axial(img_input, p_resample).center_lines(img_seg)
+
+        # Quadratic resampling for the actual image.
+        slices_input = slicing_spec.get_slices(img_input, order=2)
+        data_input = np.array([s[:, 0] for s in slices_input.values()])
+
+        # Nearest-neighbour resampling for the segmentation labels.
+        slices_labels = slicing_spec.get_slices(img_labels, order=0)
+        data_labels = np.array([s[:, 0] for s in slices_labels.values()])
+
+        # Aspect ratio, since the thickness of axial slices may not be == p_resample.
+        p_height = next(
+            p for p, letter in zip(
+                img_input.dim[4:7],
+                img_input.orientation,
+            )
+            if letter in 'SI'
+        )
+        aspect = (data_input.shape[0] * p_height) / (data_input.shape[1] * p_resample)
+
+        # Draw the actual image on the background.
+        # figsize is (width, height) in inches
+        fig = mpl_figure.Figure(figsize=(5, 5*aspect), dpi=100)
+        mpl_backend_agg.FigureCanvasAgg(fig)
+        ax = fig.add_axes((0, 0, 1, 1))
+        ax.xaxis.set_visible(False)
+        ax.yaxis.set_visible(False)
+        ax.imshow(data_input, cmap='gray', interpolation='none', aspect='auto')
+        fig.savefig(str(imgs_to_generate['path_background_img']), format='png', transparent=True)
+
+        # Draw the label regions and text in the overlay.
+        # figsize is (width, height) in inches
+        fig = mpl_figure.Figure(figsize=(5, 5*aspect), dpi=100)
+        mpl_backend_agg.FigureCanvasAgg(fig)
+        ax = fig.add_axes((0, 0, 1, 1))
+        ax.xaxis.set_visible(False)
+        ax.yaxis.set_visible(False)
+
+        img = np.rint(np.ma.masked_where(data_labels <= 0, data_labels))
+        labels = np.unique(img[np.where(~img.mask)]).astype(int)  # get available labels
+        color_list = assign_label_colors_by_groups(labels)
+        ax.imshow(
+            img,
+            cmap=mpl_colors.ListedColormap(color_list),
+            interpolation='none',
+            alpha=1,
+            aspect='auto',
+        )
+
+        if draw_text:
+            # Get the mapping between voxel values and text labels
+            try:
+                dict_labels = json.loads(Path(path_custom_labels).read_text())
+                if not isinstance(dict_labels, dict):
+                    raise ValueError("The JSON file should contain a single dictionary")
+                for label_text in dict_labels.values():
+                    if not isinstance(label_text, str):
+                        raise ValueError(f"Not a text label: {label_text!r}")
+                dict_labels = {int(label_num): label_text for label_num, label_text in dict_labels.items()}
+            except ValueError as e:
+                example = Path(__sct_dir__) / 'spinalcordtoolbox' / 'reports' / 'sct_label_vertebrae_regions.json'
+                raise ValueError(f"Invalid format for custom labels, see {example} for an example. ({e})")
+
+            # Add the text labels
+            for label_num in labels:
+                if label_num in dict_labels:
+                    # NB: We need to subtract `min` to convert the label value into an index for the color list
+                    label_color = color_list[label_num - labels.min()]
+                    # Position the label text
+                    y, x = ndimage.center_of_mass(img == label_num)
+                    x += img.shape[1] / 25
+                    # Draw text with a shadow
+                    label_text = dict_labels[label_num]
+                    ax.text(x, y, label_text, color=label_color, clip_on=True).set_path_effects(
+                        [mpl_patheffects.Stroke(linewidth=2, foreground='black'), mpl_patheffects.Normal()]
+                    )
+
+        fig.savefig(str(imgs_to_generate['path_overlay_img']), format='png', transparent=True)
 
 
 def add_slice_numbers(ax, num_slices, radius, margin: int = 2, reverse=False):

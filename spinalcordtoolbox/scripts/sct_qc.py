@@ -41,8 +41,7 @@ def get_parser():
         choices=('sct_propseg', 'sct_deepseg_sc', 'sct_deepseg_gm', 'sct_deepseg_lesion',
                  'sct_register_multimodal', 'sct_register_to_template', 'sct_warp_template',
                  'sct_label_vertebrae', 'sct_detect_pmj', 'sct_label_utils', 'sct_get_centerline',
-                 'sct_fmri_moco', 'sct_dmri_moco', 'sct_image_stitch', 'sct_fmri_compute_tsnr',
-                 'scratch'))
+                 'sct_fmri_moco', 'sct_dmri_moco', 'sct_image_stitch', 'sct_fmri_compute_tsnr'))
 
     optional = parser.optional_arggroup
     optional.add_argument(
@@ -123,7 +122,7 @@ def main(argv: Sequence[str]):
         subject=arguments.qc_subject,
     )
     if arguments.resample is None:
-        pass  # Use the report's default
+        assert 'p_resample' not in kwargs  # Use the report's default
     elif arguments.resample == 0:
         kwargs['p_resample'] = None  # Explicitly turn it off
     else:
@@ -133,6 +132,13 @@ def main(argv: Sequence[str]):
         qc2.sct_register(command=arguments.p, **kwargs)
     elif arguments.p == 'sct_fmri_compute_tsnr':
         qc2.sct_fmri_compute_tsnr(**kwargs)
+    elif arguments.p == 'sct_label_vertebrae':
+        del kwargs['fname_output']  # not used by this report
+        qc2.sct_label_vertebrae(
+            draw_text=bool(arguments.text_labels),
+            path_custom_labels=arguments.custom_labels,
+            **kwargs
+        )
     else:
         generate_qc(fname_in1=arguments.i,
                     fname_in2=arguments.d,
@@ -146,8 +152,7 @@ def main(argv: Sequence[str]):
                     process=arguments.p,
                     fps=arguments.fps,
                     p_resample=arguments.resample,
-                    draw_text=bool(arguments.text_labels),
-                    path_custom_labels=arguments.custom_labels)
+                    )
 
 
 if __name__ == "__main__":
