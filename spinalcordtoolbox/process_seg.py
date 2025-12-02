@@ -64,10 +64,11 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
     :return metrics: Dict of class Metric(). If a metric cannot be calculated, its value will be nan.
     :return fit_results: class centerline.core.FitResults()
     """
-    property_list = (KEYS_DEFAULT if image is None else
-                     # HOG-related properties that are only available when image (`sct_process_segmentation -i`) is provided
-                     # TODO: consider whether to use this workaround or include the columns even when image is not provided and use NaN
-                     KEYS_DEFAULT[:1] + KEYS_HOG + KEYS_QUADRANT + KEYS_SYMMETRY + KEYS_DEFAULT[1:])
+    property_list = KEYS_DEFAULT
+    # HOG-related properties that are only available when image (`sct_process_segmentation -i`) is provided
+    property_list_image = KEYS_HOG + KEYS_QUADRANT + KEYS_SYMMETRY
+    if image is not None:
+        property_list = property_list[:1] + property_list_image + property_list[1:]
 
     im_seg = Image(segmentation).change_orientation('RPI')
     if image is not None:
@@ -172,18 +173,10 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
     if image is not None:
         im_r = resample_nib(im, new_size=[pr, pr, pz], new_size_type='mm', interpolation='linear')
         shape_properties_image = _properties_image(
-            im_r, nz, px, py, pz, pr, min_z_index, max_z_index, property_list,
+            im_r, nz, px, py, pz, pr, min_z_index, max_z_index, property_list_image,
             current_patches, current_tforms, angle_correction, filter_size, verbose
         )
-        for property_name in shape_properties_image.keys():
-            # Note from JN: Many of the properties computed in the "image" portion are actually identical
-            # to the non-image properties computed. We should take a closer look at the `compute_shape_image`
-            # logic to make sure we're not unnecessarily duplicating work. This logging is just a dbuegging aid for now.
-            if np.array_equal(shape_properties[property_name], shape_properties_image[property_name]):
-                if verbose == 2:
-                    logging.debug(f"{property_name}: Image-based property is identical to seg-based property.")
-            else:
-                shape_properties[property_name] = shape_properties_image[property_name]
+        shape_properties.update(shape_properties_image)
 
     metrics = {}
     for key, value in shape_properties.items():
