@@ -139,6 +139,9 @@ def main(argv: Sequence[str]):
             path_custom_labels=arguments.custom_labels,
             **kwargs
         )
+    elif arguments.p == 'sct_label_utils':
+        del kwargs['fname_output']  # not used by this report
+        qc2.sct_label_utils(**kwargs)
     else:
         generate_qc(fname_in1=arguments.i,
                     fname_in2=arguments.d,

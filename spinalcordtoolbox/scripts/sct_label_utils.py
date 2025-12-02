@@ -22,7 +22,7 @@ import numpy as np
 import spinalcordtoolbox.labels as sct_labels
 from spinalcordtoolbox.image import Image, zeros_like
 from spinalcordtoolbox.types import Coordinate
-from spinalcordtoolbox.reports.qc import generate_qc
+from spinalcordtoolbox.reports import qc2
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 from spinalcordtoolbox.utils.shell import (ActionCreateFolder, Metavar, SCTArgumentParser,
                                            display_viewer_syntax, list_type, parse_num_list)
@@ -295,9 +295,14 @@ def main(argv: Sequence[str]):
     display_viewer_syntax([input_filename, output_fname], verbose=verbose)
 
     if arguments.qc is not None:
-        generate_qc(fname_in1=input_filename, fname_seg=output_fname, args=argv,
-                    path_qc=os.path.abspath(arguments.qc), dataset=arguments.qc_dataset,
-                    subject=arguments.qc_subject, process='sct_label_utils')
+        qc2.sct_label_utils(
+            fname_input=input_filename,
+            fname_seg=output_fname,
+            argv=argv,
+            path_qc=os.path.abspath(arguments.qc),
+            dataset=arguments.qc_dataset,
+            subject=arguments.qc_subject,
+        )
 
 
 def display_voxel(img: Image, verbose: int = 1) -> Sequence[Coordinate]:

@@ -84,24 +84,6 @@ class QcImage:
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
 
-    def label_utils(self, mask, ax):
-        """Create figure with red label. Common scenario."""
-        img = np.full_like(mask, np.nan)
-        ax.imshow(img, cmap='gray', alpha=0, aspect=float(self.aspect_mask))
-        non_null_vox = np.where(mask > 0)
-        coord_labels = list(zip(non_null_vox[0], non_null_vox[1]))
-        logger.debug(coord_labels)
-        # compute horizontal offset based on the resolution of the mask
-        horiz_offset = mask.shape[1] / 50
-        for coord in coord_labels:
-            ax.plot(coord[1], coord[0], 'o', color='lime', markersize=5)
-            label_text = ax.text(coord[1] + horiz_offset, coord[0], str(round(mask[coord[0], coord[1]])), color='lime',
-                                 fontsize=15, verticalalignment='center', clip_on=True)
-            label_text.set_path_effects([mpl_patheffects.Stroke(linewidth=2, foreground='black'),
-                                         mpl_patheffects.Normal()])
-        ax.get_xaxis().set_visible(False)
-        ax.get_yaxis().set_visible(False)
-
     def highlight_pmj(self, mask, ax):
         """Hook to show a rectangle where PMJ is on the slice"""
         y, x = np.where(mask == 50)
@@ -417,15 +399,6 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
         im_list = [Image(fname_in1), Image(fname_in2), Image(fname_seg)]
         action_list = [QcImage.grid]
         def qcslice_layout(x): return x.mosaics_through_time()
-    #  Sagittal orientation, display posterior labels
-    elif process in ['sct_label_utils']:
-        plane = 'Sagittal'
-        p_resample_default = None
-        dpi = 100  # bigger picture is needed for this special case, hence reduce dpi
-        # projected_image = projected(Image(fname_seg))
-        im_list = [Image(fname_in1), Image(fname_seg)]
-        action_list = [QcImage.label_utils]
-        def qcslice_layout(x): return x.single()
     # Sagittal orientation, display PMJ box
     elif process in ['sct_detect_pmj']:
         plane = 'Sagittal'

@@ -832,6 +832,96 @@ def sct_label_vertebrae(
         fig.savefig(str(imgs_to_generate['path_overlay_img']), format='png', transparent=True)
 
 
+def sct_label_utils(
+    fname_input: str,
+    fname_seg: str,
+    argv: Sequence[str],
+    path_qc: str,
+    dataset: str | None,
+    subject: str | None,
+    p_resample: float | None = 0.6,
+):
+    """
+    Generate a QC report for sct_label_utils.
+
+    Sagittal orientation, wavy single slice, with posterior labels.
+    """
+    command = 'sct_label_utils'
+    cmdline = [command]
+    cmdline.extend(argv)
+
+    with create_qc_entry(
+        path_input=Path(fname_input).resolve(),
+        path_qc=Path(path_qc),
+        command=command,
+        cmdline=list2cmdline(cmdline),
+        plane='Sagittal',
+        dataset=dataset,
+        subject=subject,
+    ) as imgs_to_generate:
+
+        img_input = Image(fname_input)
+        img_labels = Image(fname_seg)
+
+        # A version of img_labels with only 0-1 values, for center-of-mass computations.
+        img_seg = img_labels.copy()
+        img_seg.data = (img_seg.data != 0)
+
+        # Take a single mid-sagittal line from each axial slice to compose a 2D image.
+        slicing_spec = SlicingSpec.full_axial(img_input, p_resample).center_lines(img_seg)
+
+        # Quadratic resampling for the actual image.
+        slices_input = slicing_spec.get_slices(img_input, order=2)
+        data_input = equalize_histogram(np.array([s[:, 0] for s in slices_input.values()]))
+
+        # Nearest-neighbour resampling for the segmentation labels.
+        slices_labels = slicing_spec.get_slices(img_labels, order=0)
+        data_labels = np.array([s[:, 0] for s in slices_labels.values()])
+
+        # Aspect ratio, since the thickness of axial slices may not be == p_resample.
+        p_height = next(
+            p for p, letter in zip(
+                img_input.dim[4:7],
+                img_input.orientation,
+            )
+            if letter in 'SI'
+        )
+        aspect = (data_input.shape[0] * p_height) / (data_input.shape[1] * p_resample)
+
+        # Draw the actual image on the background.
+        # figsize is (width, height) in inches
+        fig = mpl_figure.Figure(figsize=(5, 5*aspect), dpi=100)
+        mpl_backend_agg.FigureCanvasAgg(fig)
+        ax = fig.add_axes((0, 0, 1, 1))
+        ax.xaxis.set_visible(False)
+        ax.yaxis.set_visible(False)
+        ax.imshow(data_input, cmap='gray', interpolation='none', aspect='auto')
+        fig.savefig(str(imgs_to_generate['path_background_img']), format='png', transparent=True)
+
+        # Draw the label voxels and text in the overlay.
+        # figsize is (width, height) in inches
+        fig = mpl_figure.Figure(figsize=(5, 5*aspect), dpi=100)
+        mpl_backend_agg.FigureCanvasAgg(fig)
+        ax = fig.add_axes((0, 0, 1, 1))
+        ax.xaxis.set_visible(False)
+        ax.yaxis.set_visible(False)
+
+        ax.imshow(np.full_like(data_labels, np.nan), cmap='gray', alpha=0, aspect='auto')
+        non_null_vox = np.nonzero(data_labels > 0)
+        horiz_offset = data_labels.shape[1] / 50
+        for y, x, val in zip(*non_null_vox, data_labels[non_null_vox]):
+            ax.plot(x, y, 'o', color='lime', markersize=5)
+            ax.text(
+                x + horiz_offset, y, str(round(val)), color='lime',
+                fontsize=15, verticalalignment='center', clip_on=True,
+            ).set_path_effects([
+                mpl_patheffects.Stroke(linewidth=2, foreground='black'),
+                mpl_patheffects.Normal(),
+            ])
+
+        fig.savefig(str(imgs_to_generate['path_overlay_img']), format='png', transparent=True)
+
+
 def add_slice_numbers(ax, num_slices, radius, margin: int = 2, reverse=False):
     """
     Overlay slice indices onto an Axial mosaic.
