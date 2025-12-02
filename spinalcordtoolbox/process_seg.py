@@ -241,14 +241,6 @@ def _properties_image(im_r, nz, px, py, pz, pr, min_z_index, max_z_index, proper
         angle_hog_values.append(angle_hog)
         centermass_values.append(centermass_src)
 
-        shape_property = _properties2d(current_patch_scaled, [px, py], iz, angle_hog=angle_hog, verbose=verbose)
-        if shape_property is not None:
-            shape_properties['centermass_x'][iz] = centermass_src[0]
-            shape_properties['centermass_y'][iz] = centermass_src[1]
-            shape_properties['angle_hog'][iz] = -angle_hog * 180.0 / math.pi     # degrees, and change sign to match negative if left rotation
-        else:
-            logging.warning(f'\nNo properties for slice: {iz}')
-
     # Apply regularization to HOG angles along the z-axis if filter_size > 0
     # The code snippet below is taken from algorithms.register2d_centermassrot -- maybe it could be extracted into a
     # function and reused
@@ -263,33 +255,36 @@ def _properties_image(im_r, nz, px, py, pz, pr, min_z_index, max_z_index, proper
                 z_indices_array, filter_size,
                 angle_hog_array, angle_hog_regularized
             )
+    # If filter_size <= 0, then just use the original angles
+    else:
+        angle_hog_regularized = angle_hog_values
 
-        # Now compute shape properties using the regularized angles
-        for i, iz in enumerate(z_indices_array):
-            current_patch_scaled = current_patches[iz]['patch']
-            angle_AP_rad = current_patches[iz]['angle_AP_rad']
-            angle_RL_rad = current_patches[iz]['angle_RL_rad']
-            angle_hog = angle_hog_regularized[i]
+    # Now compute shape properties using the new angles
+    for i, iz in enumerate(z_indices_array):
+        current_patch_scaled = current_patches[iz]['patch']
+        angle_AP_rad = current_patches[iz]['angle_AP_rad']
+        angle_RL_rad = current_patches[iz]['angle_RL_rad']
+        angle_hog = angle_hog_regularized[i]
 
-            # Get centermass for this slice
-            centermass_src = centermass_values[i]
+        # Get centermass for this slice
+        centermass_src = centermass_values[i]
 
-            # Compute shape properties with regularized angle_hog
-            shape_property = _properties2d(current_patch_scaled, [px, py], iz, angle_hog=angle_hog, verbose=verbose)
+        # Compute shape properties with regularized angle_hog
+        shape_property = _properties2d(current_patch_scaled, [px, py], iz, angle_hog=angle_hog, verbose=verbose)
 
-            if shape_property is not None:
-                # Add custom fields
-                shape_property['centermass_x'] = centermass_src[0]
-                shape_property['centermass_y'] = centermass_src[1]
-                shape_property['angle_hog'] = -angle_hog * 180.0 / math.pi     # degrees, and change sign to match negative if left rotation
-                shape_property['angle_AP'] = angle_AP_rad * 180.0 / math.pi     # convert to degrees
-                shape_property['angle_RL'] = angle_RL_rad * 180.0 / math.pi     # convert to degrees
-                shape_property['length'] = pz / (np.cos(angle_AP_rad) * np.cos(angle_RL_rad))
-                # Loop across properties and assign values for function output
-                for property_name in property_list:
-                    shape_properties[property_name][iz] = shape_property[property_name]
-            else:
-                logging.warning(f'\nNo properties for slice: {iz}')
+        if shape_property is not None:
+            # Add custom fields
+            shape_property['centermass_x'] = centermass_src[0]
+            shape_property['centermass_y'] = centermass_src[1]
+            shape_property['angle_hog'] = -angle_hog * 180.0 / math.pi     # degrees, and change sign to match negative if left rotation
+            shape_property['angle_AP'] = angle_AP_rad * 180.0 / math.pi     # convert to degrees
+            shape_property['angle_RL'] = angle_RL_rad * 180.0 / math.pi     # convert to degrees
+            shape_property['length'] = pz / (np.cos(angle_AP_rad) * np.cos(angle_RL_rad))
+            # Loop across properties and assign values for function output
+            for property_name in property_list:
+                shape_properties[property_name][iz] = shape_property[property_name]
+        else:
+            logging.warning(f'\nNo properties for slice: {iz}')
 
     return shape_properties
 
