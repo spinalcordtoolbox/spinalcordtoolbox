@@ -756,7 +756,7 @@ def sct_label_vertebrae(
 
         # Quadratic resampling for the actual image.
         slices_input = slicing_spec.get_slices(img_input, order=2)
-        data_input = np.array([s[:, 0] for s in slices_input.values()])
+        data_input = equalize_histogram(np.array([s[:, 0] for s in slices_input.values()]))
 
         # Nearest-neighbour resampling for the segmentation labels.
         slices_labels = slicing_spec.get_slices(img_labels, order=0)
