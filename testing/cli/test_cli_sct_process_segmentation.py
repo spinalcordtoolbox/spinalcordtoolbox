@@ -213,12 +213,13 @@ def test_sct_process_segmentation_check_discfile(tmp_path):
         assert float(row['MEAN(area)']) == pytest.approx(78.17036713469571)
 
 
-def test_sct_process_segmentation_anat_properties(tmp_path):
+def test_sct_process_segmentation_anat_properties(tmp_path, tmp_path_qc):
     """ Run sct_process_segmentation with -anat and check the symmetry results"""
     filename = str(tmp_path / 'tmp_file_out.csv')
     sct_process_segmentation.main(argv=['-i', sct_test_path('t2', 't2_seg-manual.nii.gz'),
                                         '-vert', '1:10', '-perslice', '1',
-                                        '-discfile', sct_test_path('t2', 'labels.nii.gz'), '-anat', sct_test_path('t2', 't2.nii.gz'), '-o', filename])
+                                        '-discfile', sct_test_path('t2', 'labels.nii.gz'), '-anat', sct_test_path('t2', 't2.nii.gz'), '-o', filename,
+                                        '-qc', str(tmp_path_qc)])
     with open(filename, "r") as csvfile:
         reader = csv.DictReader(csvfile, delimiter=',')
         rows = list(reader)
