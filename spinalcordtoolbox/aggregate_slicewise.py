@@ -33,11 +33,11 @@ KEYS_DEFAULT = ['area',
                 'orientation',
                 'solidity',
                 'length'
-                ]  # TODO: duplicated from process_seg.py 
+                ]  # TODO: duplicated from process_seg.py
 KEYS_QUADRANT = ['area_quadrant_anterior_left', 'area_quadrant_anterior_right',
-                 'area_quadrant_posterior_left', 'area_quadrant_posterior_right']  # TODO: duplicated from process_seg.py 
+                 'area_quadrant_posterior_left', 'area_quadrant_posterior_right']  # TODO: duplicated from process_seg.py
 KEYS_SYMMETRY = ['symmetry_dice_RL', 'symmetry_hausdorff_RL', 'symmetry_difference_RL',
-                 'symmetry_dice_AP', 'symmetry_hausdorff_AP', 'symmetry_difference_AP']  # TODO: duplicated from process_seg.py 
+                 'symmetry_dice_AP', 'symmetry_hausdorff_AP', 'symmetry_difference_AP']  # TODO: duplicated from process_seg.py
 
 
 class Metric:
