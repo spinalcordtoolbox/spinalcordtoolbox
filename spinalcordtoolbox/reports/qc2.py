@@ -403,7 +403,7 @@ def add_angle_lines(ax, num_slices, metrics, angle_type, radius: tuple[int, int]
             # TODO: figure out why the link below flip the angle sign only for src_hog but not for dest_hog
             ax.text(x_mosaic + radius[0] * 0.2, y_mosaic - radius[1] * 0.3,  # upper right corner
                     f'{angle_deg:.1f}°', color='red', fontsize=3,
-                    path_effects=[mpl_patheffects.withStroke(linewidth=0.5, foreground='white')])
+                    path_effects=[mpl_patheffects.withStroke(linewidth=0.75, foreground='black')])
 
 
 def sct_deepseg(
