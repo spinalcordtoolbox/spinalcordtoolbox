@@ -249,8 +249,6 @@ def _properties_image(im_r, nz, px, py, pz, pr, min_z_index, max_z_index, proper
     # Now compute shape properties using the new angles
     for iz, angle_hog, centermass_src in zip(z_indices, angle_hog_regularized, centermass_values):
         current_patch_scaled = current_patches[iz]['patch']
-        angle_AP_rad = current_patches[iz]['angle_AP_rad']
-        angle_RL_rad = current_patches[iz]['angle_RL_rad']
 
         # Compute shape properties with regularized angle_hog
         shape_property = _properties2d(current_patch_scaled, [px, py], iz, angle_hog=angle_hog, verbose=verbose)
@@ -260,9 +258,6 @@ def _properties_image(im_r, nz, px, py, pz, pr, min_z_index, max_z_index, proper
             shape_property['centermass_x'] = centermass_src[0]
             shape_property['centermass_y'] = centermass_src[1]
             shape_property['angle_hog'] = -angle_hog * 180.0 / math.pi     # degrees, and change sign to match negative if left rotation
-            shape_property['angle_AP'] = angle_AP_rad * 180.0 / math.pi     # convert to degrees
-            shape_property['angle_RL'] = angle_RL_rad * 180.0 / math.pi     # convert to degrees
-            shape_property['length'] = pz / (np.cos(angle_AP_rad) * np.cos(angle_RL_rad))
             # Loop across properties and assign values for function output
             for property_name in property_list:
                 shape_properties[property_name][iz] = shape_property[property_name]
