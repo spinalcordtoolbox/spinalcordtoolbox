@@ -616,7 +616,7 @@ def main(argv: Sequence[str]):
             else:
                 parser.error('-qc-image is required to display QC report.')
         else:
-            logger.warning('QC report only available for PMJ-based CSA. QC report not generated.')
+            logger.warning('QC report only available for -pmj or -anat flags. QC report not generated.')
 
     # Create QC report for the HOG angle
     if arguments.qc is not None:
