@@ -51,7 +51,7 @@ The table below lists the references for :ref:`sct_deepseg` sub-tasks which have
     * - DeepSeg Task
       - References
     * - :ref:`sct_deepseg_spinalcord`
-      - Bédard S *et al.* "`Towards contrast-agnostic soft segmentation of the spinal cord. <https://www.sciencedirect.com/science/article/pii/S1361841525000210>`__" **Medical Image Analysis** (2025): 103473.
+      - Bédard S, Karthik EN *et al.* "`Towards contrast-agnostic soft segmentation of the spinal cord. <https://www.sciencedirect.com/science/article/pii/S1361841525000210>`__" **Medical Image Analysis** (2025): 103473.
     * - :ref:`sct_deepseg_sc_epi`
       - Banerjee R *et al.* "`EPISeg: Automated segmentation of the spinal cord on echo planar images using open-access multi-center data. <https://www.biorxiv.org/content/10.1101/2025.01.07.631402v2.abstract>`__" **bioRxiv** (2025): 2025-01.
     * - :ref:`sct_deepseg_gm_sc_7t_t2star`
@@ -59,7 +59,7 @@ The table below lists the references for :ref:`sct_deepseg` sub-tasks which have
     * - :ref:`sct_deepseg_gm_wm_mouse_t1`
       - Cohen-Adad J "`Segmentation model of ex vivo mouse spinal cord white and gray matter (v0.5). <https://doi.org/10.5281/zenodo.10819207>`__" **Zenodo** (2024).
     * - :ref:`sct_deepseg_lesion_sci_t2`
-      - Karthik EN *et al.* "`SCIsegV2: A Universal Tool for Segmentation of Intramedullary Lesions in Spinal Cord Injury. <https://link.springer.com/chapter/10.1007/978-3-031-82007-6_19>`__" **International Workshop on Applications of Medical AI** (2025).
+      - Karthik EN, Valošek J *et al.* "`SCIsegV2: A Universal Tool for Segmentation of Intramedullary Lesions in Spinal Cord Injury. <https://link.springer.com/chapter/10.1007/978-3-031-82007-6_19>`__" **International Workshop on Applications of Medical AI** (2025).
     * - :ref:`sct_deepseg_lesion_ms_mp2rage`
       - Medina N *et al.* "`Automatic Multiple Sclerosis Lesion Segmentation in the Spinal Cord on 3T and 7T MP2RAGE images. <https://archive.ismrm.org/2025/0625.html>`__ **ISMRM 2025** (2025).
     * - :ref:`sct_deepseg_rootlets` (v7.0 and above)
@@ -86,9 +86,9 @@ The table below provides individual references for novel methods used in SCT's :
    * - Command line script
      - References
    * - :ref:`sct_compute_compression`
-     - Bédard S *et al.* "`Normalizing spinal cord compression measures in degenerative cervical myelopathy <https://www.sciencedirect.com/science/article/pii/S1529943025001597>`__, **Spine J.** 2025
+     - Bédard S, Valošek J *et al.* "`Normalizing spinal cord compression measures in degenerative cervical myelopathy <https://www.sciencedirect.com/science/article/pii/S1529943025001597>`__, **Spine J.** 2025
    * - :ref:`sct_compute_compression` ``-normalize-hc``
-     - Valošek J *et al.* `A database of the healthy human spinal cord morphometry in the PAM50 template space <https://doi.org/10.1162/imag_a_00075>`__. **Imaging Neuroscience** 2024; 2 1–15.
+     - Valošek J, Bédard S *et al.* `A database of the healthy human spinal cord morphometry in the PAM50 template space <https://doi.org/10.1162/imag_a_00075>`__. **Imaging Neuroscience** 2024; 2 1–15.
    * - :ref:`sct_detect_compression`
      - Horáková M *et al.* "`Semi-automated detection of cervical spinal cord compression with the Spinal Cord Toolbox <https://qims.amegroups.org/article/view/88416/html>`__ **QIMS Vol 12, No 4** 2022.
    * - :ref:`sct_deepseg_gm`
