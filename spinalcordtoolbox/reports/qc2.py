@@ -135,7 +135,7 @@ def create_qc_entry(
                 'plane': plane,
                 'backgroundImage': str(imgs_to_generate['path_background_img'].relative_to(path_qc)),
                 'overlayImage': str(imgs_to_generate['path_overlay_img'].relative_to(path_qc)),
-                'date': mod_date.strftime("%Y-%m-%d %H:%M:%S"),
+                'date': mod_date.strftime("%Y-%m-%d %H:%M:%S.%f"),
                 'rank': '',
                 'qc': '',
             }, file_result, indent=1)
