@@ -79,6 +79,12 @@ jobs:
           name: Batch Processing QC (${{ matrix.os }})
           path: "qc_example_data"
 
+      - name: "Upload CSV files for easier batch_processing.sh updating"
+        uses: actions/upload-artifact@v4
+        with:
+          name: Batch Processing CSV files (${{ matrix.os }})
+          path: data/sct_example_data/**/*.csv
+
       - name: Validate new results
         run: |
           # Auto-pass macOS as it would fail due to https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3194
