@@ -430,11 +430,13 @@ class SlicingSpec:
             axis_labels=self.axis_labels,
         )
 
-    def center_lines(self: 'SlicingSpec', seg: Image) -> 'SlicingSpec':
+    def composite_sagittal(self: 'SlicingSpec', seg: Image) -> 'SlicingSpec':
         """
-        A re-centered and cropped slicing spec, meant to transform a full axial
-        slicing spec into a collection of single-line slices which can be
-        arranged into a single wavy mid-sagittal image.
+        Construct a composite 2D sagittal image out of axial slices (one
+        row from each axial slice), similarly to `sct_flatten_sagittal`.
+        (For each axial slice, the center of mass is used to identify the
+        midsagittal row. The individual rows can then be stitched together
+        to build a composite midsagittal 2D image.)
         """
         # Recenter each slice around its center of mass, and interpolate missing
         # slices. We use a single (N, 3) array so that we can inf_nan_fill.
@@ -752,7 +754,7 @@ def sct_label_vertebrae(
         img_seg.data = (img_seg.data != 0)
 
         # Take a single mid-sagittal line from each axial slice to compose a 2D image.
-        slicing_spec = SlicingSpec.full_axial(img_input, p_resample).center_lines(img_seg)
+        slicing_spec = SlicingSpec.full_axial(img_input, p_resample).composite_sagittal(img_seg)
 
         # Quadratic resampling for the actual image.
         slices_input = slicing_spec.get_slices(img_input, order=2)
@@ -875,7 +877,7 @@ def sct_label_utils(
         img_seg.data = (img_seg.data != 0)
 
         # Take a single mid-sagittal line from each axial slice to compose a 2D image.
-        slicing_spec = SlicingSpec.full_axial(img_input, p_resample).center_lines(img_seg)
+        slicing_spec = SlicingSpec.full_axial(img_input, p_resample).composite_sagittal(img_seg)
 
         # Quadratic resampling for the actual image.
         slices_input = slicing_spec.get_slices(img_input, order=2)
