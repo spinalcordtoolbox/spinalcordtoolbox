@@ -727,6 +727,7 @@ def sct_label_vertebrae(
     path_custom_labels: str,
     draw_text: bool = True,
     p_resample: float | None = None,
+    offset_text: bool = True,
 ):
     """
     Generate a QC report for sct_label_vertebrae.
@@ -831,7 +832,8 @@ def sct_label_vertebrae(
                     label_color = color_list[label_num - labels.min()]
                     # Position the label text
                     y, x = ndimage.center_of_mass(img == label_num)
-                    x += img.shape[1] / 25
+                    if offset_text:
+                        x += img.shape[1] / 25
                     # Draw text with a shadow
                     label_text = dict_labels[label_num]
                     ax.text(x, y, label_text, color=label_color, clip_on=True).set_path_effects(

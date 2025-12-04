@@ -577,6 +577,7 @@ def main(argv: Sequence[str]):
                     fname_input=fname_input,
                     fname_seg=fname_all,
                     path_custom_labels=path_custom_labels,
+                    offset_text=False,
                     **common_args,
                 )
         else:
