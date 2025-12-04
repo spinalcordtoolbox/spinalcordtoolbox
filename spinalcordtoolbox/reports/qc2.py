@@ -704,7 +704,7 @@ def sct_fmri_compute_tsnr(
             )
             colorbar = mosaic.fig.colorbar(
                 axes_image,
-                cax=mosaic.ax.inset_axes([1.005, 0.07, 0.011, 0.86]),
+                cax=mosaic.ax.inset_axes([1.01, 0.07, 0.011, 0.86]),
                 orientation='vertical',
                 pad=0.01,
                 shrink=0.5,
