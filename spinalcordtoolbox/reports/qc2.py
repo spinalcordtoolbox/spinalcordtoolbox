@@ -687,8 +687,12 @@ def sct_fmri_compute_tsnr(
         # Quadratic resampling gives a sharper image, but it may extrapolate
         # beyond the original min/max values. We want the colorbar tick marks
         # to reflect the true range of the original images.
-        vmin = int(np.nanmin([img_input.data, img_output.data]))
-        vmax = int(np.nanmax([img_input.data, img_output.data]))
+        linear_values = [
+            *slicing_spec.get_slices(img_input, order=1).values(),
+            *slicing_spec.get_slices(img_output, order=1).values(),
+        ]
+        vmin = int(np.nanmin(linear_values))
+        vmax = int(np.nanmax(linear_values))
 
         for corner_label, slices, path in [
             ("1", slices_input, imgs_to_generate['path_background_img']),
