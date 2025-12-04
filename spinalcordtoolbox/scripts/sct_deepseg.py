@@ -280,6 +280,17 @@ def get_parser(subparser_to_return=None):
         subparser.add_tempfile_args()
 
         # Add options that only apply to specific tasks
+        is_nnunet = all(models.MODELS[model_name]['framework'] == "nnunetv2" for model_name in task_dict['models'])
+        if is_nnunet and task_name != 'spine':  # totalspineseg
+            # Test time augmentation is an nnUNet-specific feature (`use_mirroring=True` internally)
+            # But, the totalspineseg package doesn't support this argument (yet), so skip it
+            params.add_argument(
+                "-test-time-aug",
+                action='store_true',
+                help="Perform test-time augmentation (TTA) by flipping the input image along all axes and averaging the "
+                     "resulting predictions.\n"
+                     "Note: The time it takes to run the model will increase due to the additional predictions."
+            )
         if task_name == 'tumor_edema_cavity_t1_t2':
             input_output.add_argument(
                 "-c",
@@ -287,13 +298,13 @@ def get_parser(subparser_to_return=None):
                 help="Contrast of the input. Specifies the contrast order of input images (e.g. `-c t1 t2`)",
                 choices=('t1', 't2', 't2star'),
                 metavar=Metavar.str)
-        if task_name == 'totalspineseg':
+        if task_name == 'spine':  # totalspineseg
             params.add_argument(
-                "-step1-only",
+                "-label-vert",
                 type=int,
-                help="If set to '1', only Step 1 will be performed. If not provided, both steps will be run.\n"
-                     "- Step 1: Segments the spinal cord, spinal canal, vertebrae, and intervertebral discs (IVDs). Labels the IVDs, but vertebrae are left unlabeled.\n"
-                     "- Step 2: Fine-tunes the segmentation, applies labels to vertebrae, and segments the sacrum if present.\n"
+                help="If set to '1', run a second model that applies a unique label to each individual vertebrae in "
+                     "the spine segmentation (e.g. C1: 11 C2: 12 etc.). "
+                     "If not specified, all segmented vertebrae will have the same value (50), which is faster to compute if you only need e.g. disc labels. "
                      "More details on TotalSpineSeg's two models can be found here: https://github.com/neuropoly/totalspineseg/?tab=readme-ov-file#model-description",
                 choices=(0, 1),
                 default=0)
@@ -322,9 +333,9 @@ def get_parser(subparser_to_return=None):
         """)
 
         # Suppress arguments that are irrelevant for certain tasks
-        # - Sagittal view is not currently supported for rootlets/totalspineseg QC
+        # - Sagittal view is not currently supported for rootlets/spine QC
         #   This means that the `-qc-plane` argument (and the `-qc-seg` note) should be hidden for these tasks
-        tasks_without_sagittal_qc = ('rootlets', 'totalspineseg')
+        tasks_without_sagittal_qc = ('rootlets', 'spine')
         if task_name in tasks_without_sagittal_qc:
             task_args['-qc-plane'].help = SUPPRESS
             task_args['-qc-seg'].help = task_args['-qc-seg'].help.replace(note_qc_seg, "")
@@ -460,14 +471,15 @@ def main(argv: Sequence[str]):
             extra_network_kwargs = {
                 arg_name: getattr(arguments, arg_name)
                 # "single_fold" -> used only by lesion_ms
-                for arg_name in ["single_fold"]
+                # "test_time_aug" -> used only by nnunetv2 models
+                for arg_name in ["single_fold", "test_time_aug"]
                 if hasattr(arguments, arg_name)
             }
             extra_inference_kwargs = {
                 arg_name: getattr(arguments, arg_name)
-                # "step1_only" -> used only by totalspineseg
+                # "label_vert" -> used only by spine
                 # "soft_ms_lesion" -> used only by lesion_ms
-                for arg_name in ["step1_only", "soft_ms_lesion"]
+                for arg_name in ["label_vert", "soft_ms_lesion"]
                 if hasattr(arguments, arg_name)
             }
             # The MS lesion model is multifold, which requires turning on the "ensemble averaging" behavior
@@ -518,27 +530,27 @@ def main(argv: Sequence[str]):
             im_seg.save(fname_seg)
             output_filenames.append(fname_seg)
 
+            # write JSON sidecar file
+            source_path = os.path.join(path_model, "source.json")
+            if os.path.isfile(source_path):
+                with open(source_path, "r") as fp:
+                    source_dict = json.load(fp)
+            sidecar_json = {
+                'GeneratedBy': [
+                    {
+                        "Name": f"spinalcordtoolbox: sct_deepseg {' '.join(os.path.basename(arg) for arg in argv)}",
+                        "Version": __version__,
+                        "CodeURL": f"https://github.com/spinalcordtoolbox/spinalcordtoolbox/"
+                                f"blob/{_git_info()[1].strip('*')}/spinalcordtoolbox/scripts/sct_deepseg.py",
+                        "ModelURL": source_dict["model_urls"],
+                    }
+                ]
+            }
+            with open(splitext(fname_seg)[0] + ".json", "w") as fp:
+                json.dump(sidecar_json, fp, indent=4)
+
         # Use the result of the current model as additional input of the next model
         fname_prior = fname_seg
-
-        # write JSON sidecar file
-        source_path = os.path.join(path_model, "source.json")
-        if os.path.isfile(source_path):
-            with open(source_path, "r") as fp:
-                source_dict = json.load(fp)
-        sidecar_json = {
-            'GeneratedBy': [
-                {
-                    "Name": f"spinalcordtoolbox: sct_deepseg {' '.join(os.path.basename(arg) for arg in argv)}",
-                    "Version": __version__,
-                    "CodeURL": f"https://github.com/spinalcordtoolbox/spinalcordtoolbox/"
-                               f"blob/{_git_info()[1].strip('*')}/spinalcordtoolbox/scripts/sct_deepseg.py",
-                    "ModelURL": source_dict["model_urls"],
-                }
-            ]
-        }
-        with open(splitext(fname_seg)[0] + ".json", "w") as fp:
-            json.dump(sidecar_json, fp, indent=4)
 
     if arguments.qc is not None:
         # If `arguments.qc_seg is None`, each entry will be treated as an
@@ -547,17 +559,10 @@ def main(argv: Sequence[str]):
         # Models can have multiple input images -- create 1 QC report per input image.
         if len(output_filenames) == len(input_filenames):
             iterator = zip(input_filenames, output_filenames, [None] * len(input_filenames), qc_seg)
-        # Special case: totalspineseg which outputs 4-5 files per 1 input file
-        elif arguments.task == 'totalspineseg':
-            # `-step1-only: 1`: Use the 4th image ([3]) which represents the step1 output
-            if getattr(arguments, "step1_only") == 1:
-                assert len(output_filenames) == 4 * len(input_filenames)
-                output_filenames_qc = output_filenames[3::4]
-            # `-step1-only: 0`: Use the 5th image ([4]) which represents the step2 output
-            else:
-                assert len(output_filenames) == 5 * len(input_filenames)
-                output_filenames_qc = output_filenames[4::5]
-            iterator = zip(input_filenames, output_filenames_qc, [None] * len(input_filenames), qc_seg)
+        # Special case: spine which outputs 2-4 files per 1 input file
+        elif arguments.task == 'spine':
+            assert len(output_filenames) == 2 * len(input_filenames)
+            iterator = zip(input_filenames * 2, output_filenames, [None] * 2, qc_seg * 2)
         # Other models typically have 2 outputs per input (e.g. SC + lesion), so use both segs
         else:
             assert len(output_filenames) == 2 * len(input_filenames)

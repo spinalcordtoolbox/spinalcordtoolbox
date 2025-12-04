@@ -201,8 +201,7 @@ rem Create and activate miniforge environment to install SCT into
 echo:
 echo ### Using Conda to create virtual environment...
 python\Scripts\conda create -y -p python\envs\venv_sct python=3.10 || goto error
-CALL python\Scripts\activate.bat python\envs\venv_sct || goto error
-echo Virtual environment created and activated successfully!
+echo Virtual environment created successfully!
 
 rem Install SCT and its requirements
 if exist requirements-freeze.txt (
@@ -267,6 +266,5 @@ echo   --^> https://forum.spinalcordmri.org/c/sct
 if "%cached_errorlevel%"=="" set cached_errorlevel=0
 popd
 where deactivate >nul 2>&1
-if %errorlevel% EQU 0 call conda deactivate
 PAUSE
 exit /b %cached_errorlevel%

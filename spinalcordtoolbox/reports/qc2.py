@@ -440,7 +440,7 @@ def sct_deepseg(
                 imgs_to_generate, fname_input, fname_seg, fname_seg2, species,
                 radius=(23, 23), base_scaling=2.5,  # standard upscale to see rootlets detail
                 outline=True)  # add outlines (and labels) to highlight the difficult-to-see rootlets seg
-        elif "totalspineseg" in argv:
+        elif "spine" in argv:
             sct_deepseg_spinal_rootlets(
                 imgs_to_generate, fname_input, fname_seg, fname_seg2, species,
                 radius=(40, 40), base_scaling=1.0,  # skip upscaling to get "big picture" view of all slices
@@ -612,7 +612,7 @@ def sct_deepseg_spinal_rootlets(
     scale = max((1 / ratio) for ratio in p_ratio)  # e.g. 0.8mm human => p_ratio == 0.6/0.8 == 0.75; scale == 1/p_ratio == 1/0.75 == 1.33
     # - Note: `mosaic()` already has a base scaling factor of 2.5 (to help make the QC readable).
     #          Since resolution-based scaling would overwrite this, we need to preserve the base scaling factor.
-    # - Note2: For `totalspineseg`, we actually _don't_ want to upscale by 2.5, so that's why `base_scaling` has
+    # - Note2: For `spine`, we actually _don't_ want to upscale by 2.5, so that's why `base_scaling` has
     #          been parametrized, allowing per-QC customization.
     scale *= base_scaling
     # - One other problem is that for anisotropic images, the aspect ratio won't be 1:1 between width/height.
