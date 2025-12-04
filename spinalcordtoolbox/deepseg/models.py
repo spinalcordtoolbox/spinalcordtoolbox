@@ -220,7 +220,7 @@ MODELS = {
         "thr": None,  # Images are already binarized
         "default": False,
     },
-    "totalspineseg": {
+    "spine": {
          # NB: Rather than hardcoding the URLs ourselves, use the URLs from the totalspineseg package.
          # This means that when the totalspineseg package is updated, the URLs will be too, thus triggering
          # a re-installation of the model URLs
@@ -565,13 +565,13 @@ TASKS = {
          'models': ['model_seg_canal_t2w'],
          'citation': None
          },
-    'totalspineseg':
+    'spine':
         {'description': 'Intervertebral discs labeling and vertebrae segmentation',
          'long_description': 'TotalSpineSeg is a tool for automatic instance segmentation of all vertebrae, intervertebral discs (IVDs), '
                              'spinal cord, and spinal canal in MRI images. It is robust to various MRI contrasts, acquisition orientations, '
                              'and resolutions. The model used in TotalSpineSeg is based on nnU-Net as the backbone for training and inference.',
          'url': 'https://github.com/neuropoly/totalspineseg',
-         'models': ['totalspineseg'],
+         'models': ['spine'],
          'citation': None
          },
     'lesion_ms_axial_t2':
@@ -650,7 +650,7 @@ def install_model(name_model, custom_url=None):
         if not isinstance(url_field, dict):
             raise ValueError("Invalid url field in MODELS")
         # totalspineseg handles data downloading itself, so just pass the urls along
-        if name_model == 'totalspineseg':
+        if name_model == 'spine':
             tss_init.init_inference(data_path=Path(folder(name_model)), quiet=False, dict_urls=url_field,
                                     store_export=False)  # Avoid having duplicate .zip files stored on disk
             urls_used = url_field
