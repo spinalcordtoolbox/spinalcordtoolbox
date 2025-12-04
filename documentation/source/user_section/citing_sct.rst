@@ -109,6 +109,8 @@ The table below provides individual references for novel methods used in SCT's :
      - De Leener B *et al.* "`Robust, accurate and fast automatic segmentation of the spinal cord. <https://www.ncbi.nlm.nih.gov/pubmed/24780696>`__" **Neuroimage** 2014.
    * - :ref:`sct_propseg` ``-CSF``
      - De Leener B *et al.* "`Automatic segmentation of the spinal cord and spinal canal coupled with vertebral labeling. <https://www.ncbi.nlm.nih.gov/pubmed/26011879>`__" **IEEE Transactions on Medical Imaging** 2015.
+   * - :ref:`sct_qc`
+     - Valošek J, Cohen-Adad J "`Reproducible Spinal Cord Quantitative MRI Analysis with the Spinal Cord Toolbox <Magn. Reson. Med. Sci.>`__" **Magn. Reson. Med. Sci.** 2024.
    * - :ref:`sct_register_multimodal` / :ref:`sct_register_to_template`
      - De Leener B, Fonov VS, Louis Collins D, Callot V, Stikov N, Cohen-Adad J "`PAM50: Unbiased multimodal template of the brainstem and spinal cord aligned with the ICBM152 space. <https://www.sciencedirect.com/science/article/pii/S1053811917308686>`__" **Neuroimage** 2017.
    * - :ref:`sct_register_multimodal` / :ref:`sct_register_to_template` ``--param algo=slicereg``
