@@ -724,7 +724,7 @@ def sct_label_vertebrae(
     subject: str | None,
     path_custom_labels: str,
     draw_text: bool = True,
-    p_resample: float | None = 0.6,
+    p_resample: float | None = None,
 ):
     """
     Generate a QC report for sct_label_vertebrae.
@@ -770,7 +770,14 @@ def sct_label_vertebrae(
             )
             if letter in 'SI'
         )
-        aspect = (data_input.shape[0] * p_height) / (data_input.shape[1] * p_resample)
+        p_width = p_resample if p_resample is not None else next(
+            p for p, letter in zip(
+                img_input.dim[4:7],
+                img_input.orientation,
+            )
+            if letter in 'AP'
+        )
+        aspect = (data_input.shape[0] * p_height) / (data_input.shape[1] * p_width)
 
         # Draw the actual image on the background.
         # figsize is (width, height) in inches
@@ -840,7 +847,7 @@ def sct_label_utils(
     path_qc: str,
     dataset: str | None,
     subject: str | None,
-    p_resample: float | None = 0.6,
+    p_resample: float | None = None,
 ):
     """
     Generate a QC report for sct_label_utils.
@@ -886,7 +893,14 @@ def sct_label_utils(
             )
             if letter in 'SI'
         )
-        aspect = (data_input.shape[0] * p_height) / (data_input.shape[1] * p_resample)
+        p_width = p_resample if p_resample is not None else next(
+            p for p, letter in zip(
+                img_input.dim[4:7],
+                img_input.orientation,
+            )
+            if letter in 'AP'
+        )
+        aspect = (data_input.shape[0] * p_height) / (data_input.shape[1] * p_width)
 
         # Draw the actual image on the background.
         # figsize is (width, height) in inches
