@@ -23,6 +23,23 @@ from spinalcordtoolbox.utils.sys import __version__
 from spinalcordtoolbox.utils.shell import parse_num_list_inv
 
 
+KEYS_DEFAULT = ['area',
+                'angle_AP',
+                'angle_RL',
+                'diameter_AP',
+                'diameter_AP_ellipse',
+                'diameter_RL',
+                'eccentricity',
+                'orientation',
+                'solidity',
+                'length'
+                ]  # TODO: duplicated from process_seg.py
+KEYS_QUADRANT = ['area_quadrant_anterior_left', 'area_quadrant_anterior_right',
+                 'area_quadrant_posterior_left', 'area_quadrant_posterior_right']  # TODO: duplicated from process_seg.py
+KEYS_SYMMETRY = ['symmetry_dice_RL', 'symmetry_hausdorff_RL', 'symmetry_difference_RL',
+                 'symmetry_dice_AP', 'symmetry_hausdorff_AP', 'symmetry_difference_AP']  # TODO: duplicated from process_seg.py
+
+
 class Metric:
     """
     Class to include in dictionaries to associate data and label
@@ -555,15 +572,12 @@ def save_as_csv(agg_metric, fname_out, fname_in=None, append=False):
     :param append: Bool: Append results at the end of file (if exists) instead of overwrite.
     :return:
     """
-    # Item sorted in order for display in csv output
-    # list_item = ['VertLevel', 'Label', 'MEAN', 'WA', 'BIN', 'ML', 'MAP', 'STD', 'MAX']
-    # TODO: The thing below is ugly and needs to be fixed, but this is the only solution I found to order the columns
-    #  without refactoring the code with OrderedDict.
-    list_item = ['Label', 'Size [vox]', 'MEAN(area)', 'STD(area)', 'MEAN(angle_AP)', 'STD(angle_AP)', 'MEAN(angle_RL)',
-                 'STD(angle_RL)', 'MEAN(diameter_AP)', 'STD(diameter_AP)', 'MEAN(diameter_RL)', 'STD(diameter_RL)',
-                 'MEAN(eccentricity)', 'STD(eccentricity)', 'MEAN(orientation)', 'STD(orientation)',
-                 'MEAN(solidity)', 'STD(solidity)', 'SUM(length)', 'WA()', 'BIN()', 'ML()', 'MAP()', 'MEDIAN()',
-                 'STD()', 'MAX()']
+
+    list_item = ['Label', 'Size [vox]']
+    for k in (KEYS_DEFAULT + KEYS_QUADRANT + KEYS_SYMMETRY):
+        if k != 'length':  # `length` is added as `SUM()` later
+            list_item.extend([f"MEAN({k})", f"STD({k})"])
+    list_item.extend(['SUM(length)', 'WA()', 'BIN()', 'ML()', 'MAP()', 'MEDIAN()', 'STD()', 'MAX()'])
     # TODO: if append=True but file does not exist yet, raise warning and set append=False
     # write header (only if append=False)
     if not append or not os.path.isfile(fname_out):
