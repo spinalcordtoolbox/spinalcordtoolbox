@@ -369,6 +369,8 @@ class Image(object):
             # Original issue: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4689
             # Secondary issue caused by the "fix" for the first issue: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4744
 
+        self.affine = self.hdr.get_best_affine()
+
     @property
     def dim(self):
         return get_dimension(self)

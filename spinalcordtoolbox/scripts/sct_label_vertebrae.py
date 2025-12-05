@@ -19,10 +19,10 @@ from spinalcordtoolbox.vertebrae.core import (
     crop_labels)
 from spinalcordtoolbox.types import EmptyArrayError
 from spinalcordtoolbox.vertebrae.detect_c2c3 import detect_c2c3
-from spinalcordtoolbox.reports.qc import generate_qc
+from spinalcordtoolbox.reports import qc2
 from spinalcordtoolbox.labels import create_labels_along_segmentation
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, printv, __data_dir__, set_loglevel, __version__
+from spinalcordtoolbox.utils.sys import init_sct, printv, __data_dir__, __sct_dir__, set_loglevel, __version__
 from spinalcordtoolbox.utils.fs import tmp_create, cache_signature, cache_valid, cache_save, copy, extract_fname, rmtree
 from spinalcordtoolbox.math import threshold, laplacian
 import spinalcordtoolbox.labels as sct_labels
@@ -475,11 +475,16 @@ def main(argv: Sequence[str]):
 
     # Generate QC report
     if arguments.qc is not None:
-        path_qc = os.path.abspath(arguments.qc)
-        qc_dataset = arguments.qc_dataset
-        qc_subject = arguments.qc_subject
-        generate_qc(fname_in, fname_seg=fname_seg_labeled, args=argv, path_qc=os.path.abspath(path_qc),
-                    dataset=qc_dataset, subject=qc_subject, process='sct_label_vertebrae')
+        qc2.sct_label_vertebrae(
+            fname_input=fname_in,
+            fname_seg=fname_seg_labeled,
+            command='sct_label_vertebrae',
+            argv=argv,
+            path_qc=os.path.abspath(arguments.qc),
+            dataset=arguments.qc_dataset,
+            subject=arguments.qc_subject,
+            path_custom_labels=os.path.join(__sct_dir__, 'spinalcordtoolbox', 'reports', 'sct_label_vertebrae_regions.json'),
+        )
 
     display_viewer_syntax([fname_in, fname_seg_labeled], im_types=['anat', 'seg-labeled'], opacities=['1', '0.5'],
                           verbose=verbose)
