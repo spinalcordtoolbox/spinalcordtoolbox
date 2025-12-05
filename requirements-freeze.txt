@@ -130,7 +130,7 @@ threadpoolctl==3.6.0
 tifffile==2025.5.10
 timm==1.0.22
 tomli==2.3.0
-totalspineseg==20251124
+totalspineseg==20260129
 tqdm==4.67.1
 traceback2==1.4.0
 traitlets==5.14.3
