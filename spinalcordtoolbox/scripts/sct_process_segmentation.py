@@ -188,6 +188,16 @@ def get_parser(ascor=False):
         """),
     )
     optional.add_argument(
+        '-rootlet',
+        metavar=Metavar.str,
+        help=textwrap.dedent("""
+            Dorsal and ventral nerve rootlets segmentation. Example: `anat_rootlets.nii.gz`
+
+            Only labels within the range C2-Th1 (i.e., 2 to 9) are supported. If labels outside this range are provided, they will be ignored.
+            Each value corresponds to the spinal level (e.g.: 2 for spinal level C2, 8 for spinal level C8, 9 for spinal level Th1).
+        """),
+    )
+    optional.add_argument(
         '-perlevel',
         metavar=Metavar.int,
         type=int,
@@ -420,6 +430,8 @@ def main(argv: Sequence[str]):
     # make sure we have a valid VertLevel file (used for aggregation + VertLevel column)
     if arguments.vertfile is not None and arguments.discfile is not None:
         parser.error("Both '-vertfile' and '-discfile' were specified. Please only specify one of these options.")
+    elif arguments.rootlet is not None:
+        fname_vert_level = arguments.rootlet
     elif arguments.discfile is not None:
         fname_vert_level = arguments.discfile
     elif arguments.vertfile is not None:
