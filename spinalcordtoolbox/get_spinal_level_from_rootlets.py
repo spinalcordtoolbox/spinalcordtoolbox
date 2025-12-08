@@ -3,6 +3,8 @@ Functions to get spinal levels from rootlets segmentation
 
 Copyright (c) 2025 Polytechnique Montreal <www.neuro.polymtl.ca>
 License: see the file LICENSE
+
+Authors: Sandrine Bédard, Jan Valosek, Théo Matthieu
 """
 
 import os
