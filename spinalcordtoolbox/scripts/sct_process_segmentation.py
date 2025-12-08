@@ -26,6 +26,7 @@ from spinalcordtoolbox.aggregate_slicewise import aggregate_per_slice_or_level, 
 from spinalcordtoolbox.process_seg import compute_shape
 from spinalcordtoolbox.scripts import sct_maths
 from spinalcordtoolbox.csa_pmj import get_slices_for_pmj_distance
+from spinalcordtoolbox.get_spinal_level_from_rootlets import intersect_seg_and_rootlets, project_rootlets_to_segmentation
 from spinalcordtoolbox.metrics_to_PAM50 import interpolate_metrics
 from spinalcordtoolbox.centerline.core import ParamCenterline
 from spinalcordtoolbox.image import add_suffix, splitext, Image
@@ -484,7 +485,38 @@ def main(argv: Sequence[str]):
                 copy(ctl_projected.absolutepath, os.path.dirname(os.path.abspath(fname_vert_level)))
             # Overwrite the input argument so that the labeled centerline (in the tmpdir) is used from now on
             fname_vert_level = ctl_projected.absolutepath
+        elif arguments.rootlet is not None:
+            if arguments.centerline is not None:
+                fname_centerline = arguments.centerline
+            else:
+                fname_centerline = fname_segmentation
+            # Copy the input files to the tempdir
+            temp_folder = TempFolder(basename="process-segmentation")
+            path_tmp_seg = temp_folder.copy_from(fname_segmentation)
+            path_tmp_ctl = (temp_folder.copy_from(fname_centerline) if arguments.centerline
+                            else path_tmp_seg)
+            path_tmp_rootlet = temp_folder.copy_from(fname_vert_level)
 
+
+            dilate_size = 3 # TODO this should in mm or resample image to isotropic before dilating
+            im_intersect = intersect_seg_and_rootlets(path_tmp_seg, path_tmp_rootlet, dilate_size)
+            fname_intersect = add_suffix(path_tmp_rootlet, '_intersect')
+            im_intersect.save(fname_intersect, mutable=True)
+            # Get unique values in the rootlets segmentation larger than 0
+            im_rootlets = Image(path_tmp_rootlet).change_orientation('RPI')
+            rootlets_levels = np.unique(im_rootlets.data[np.where(im_rootlets.data > 0)])
+            print(rootlets_levels)
+
+            # Project the nerve rootlets intersection on the spinal cord segmentation to obtain spinal levels
+            fname_spinal_levels_ctl, fname_seg_projected = project_rootlets_to_segmentation(path_tmp_seg, path_tmp_rootlet, fname_intersect,
+                                                                rootlets_levels)
+            # Use the projected spinal levels to extract a labeled centerline from the input segmentation
+            if verbose == 2:
+                copy(fname_spinal_levels_ctl, os.path.dirname(os.path.abspath(fname_vert_level)))
+                copy(fname_intersect, os.path.dirname(os.path.abspath(fname_vert_level)))
+                copy(fname_seg_projected, os.path.dirname(os.path.abspath(fname_vert_level)))
+            # Overwrite the input argument so that the labeled centerline (in the tmpdir) is used from now on
+            fname_vert_level = fname_spinal_levels_ctl
     perlevel = bool(arguments.perlevel)
     slices = arguments.z
     perslice = bool(arguments.perslice)
