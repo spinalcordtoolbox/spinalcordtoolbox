@@ -496,9 +496,7 @@ def main(argv: Sequence[str]):
             path_tmp_ctl = (temp_folder.copy_from(fname_centerline) if arguments.centerline
                             else path_tmp_seg)
             path_tmp_rootlet = temp_folder.copy_from(fname_vert_level)
-
-
-            dilate_size = 3 #[mm]# TODO this should in mm or resample image to isotropic before dilating
+            dilate_size = 3  # [mm]
             im_intersect = intersect_seg_and_rootlets(path_tmp_seg, path_tmp_rootlet, dilate_size)
             fname_intersect = add_suffix(path_tmp_rootlet, '_intersect')
             im_intersect.save(fname_intersect, mutable=True)
@@ -509,7 +507,7 @@ def main(argv: Sequence[str]):
 
             # Project the nerve rootlets intersection on the spinal cord segmentation to obtain spinal levels
             fname_spinal_levels_ctl, fname_seg_projected = project_rootlets_to_segmentation(path_tmp_seg, path_tmp_rootlet, fname_intersect,
-                                                                rootlets_levels)
+                                                                                            rootlets_levels)
             # Use the projected spinal levels to extract a labeled centerline from the input segmentation
             if verbose == 2:
                 copy(fname_spinal_levels_ctl, os.path.dirname(os.path.abspath(fname_vert_level)))
