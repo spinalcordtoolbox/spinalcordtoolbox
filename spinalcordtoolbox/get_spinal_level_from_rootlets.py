@@ -29,6 +29,10 @@ def intersect_seg_and_rootlets(fname_seg, fname_rootlets, dilate_size):
     im_rootlets = Image(fname_rootlets).change_orientation('RPI')
     im_seg = Image(fname_seg).change_orientation('RPI')
 
+    # Convert dilate size from mm to pixels
+    nx, ny, nz, nt, px, py, pz, pt = im_seg.dim
+    dilate_size = int((dilate_size / px))
+
     # Dilate the SC segmentation using sct_maths
     fname_seg_dil = add_suffix(fname_seg, '_dil')
     os.system('sct_maths -i ' + im_seg.absolutepath + ' -o ' + fname_seg_dil + ' -dilate ' + str(dilate_size))

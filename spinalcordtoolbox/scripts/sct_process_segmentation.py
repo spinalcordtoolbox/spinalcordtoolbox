@@ -498,7 +498,7 @@ def main(argv: Sequence[str]):
             path_tmp_rootlet = temp_folder.copy_from(fname_vert_level)
 
 
-            dilate_size = 3 # TODO this should in mm or resample image to isotropic before dilating
+            dilate_size = 3 #[mm]# TODO this should in mm or resample image to isotropic before dilating
             im_intersect = intersect_seg_and_rootlets(path_tmp_seg, path_tmp_rootlet, dilate_size)
             fname_intersect = add_suffix(path_tmp_rootlet, '_intersect')
             im_intersect.save(fname_intersect, mutable=True)
