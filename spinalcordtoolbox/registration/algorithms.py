@@ -1548,8 +1548,8 @@ def find_angle_hog(image, centermass, px, py, angle_range=10):
     :param: image : 2D numpy array to find symmetry axis on
     :param: centermass: tuple of floats indicating the center of mass of the image
     :param: px, py, dimensions of the pixels in the x and y direction
-    :param: angle_range : float or None, in deg, the angle will be search in the range [-angle_range, angle_range], if None angle angle might be returned
-    :return: angle found and confidence score
+    :param: angle_range : float or None, in deg, the angle will be searched in the range [-angle_range, angle_range], if None any angle might be returned
+    :return: angle found (in rad) and confidence score
     """
 
     # param that can actually be tweeked to influence method performance :
@@ -1575,6 +1575,8 @@ def find_angle_hog(image, centermass, px, py, angle_range=10):
     grad_orient_histo = gradient_orientation_histogram(image, nb_bin=nb_bin, seg_weighted_mask=seg_weighted_mask)
 
     # Bins of the histogram :
+    # It is an array containing the central angle (in radians) for each bin of the orientation histogram, allowing you
+    # to map histogram indices to their corresponding angles.
     repr_hist = np.linspace(-(np.pi - 2 * np.pi / nb_bin), (np.pi - 2 * np.pi / nb_bin), nb_bin - 1)
 
     # Smoothing of the histogram, necessary to avoid digitization effects that will favor angles 0, 45, 90, -45, -90:

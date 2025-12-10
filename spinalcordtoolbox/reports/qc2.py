@@ -5,7 +5,8 @@ Copyright (c) 2023 Polytechnique Montreal <www.neuro.polymtl.ca>
 License: see the file LICENSE
 """
 
-from contextlib import contextmanager
+from contextlib import AbstractContextManager, contextmanager
+from dataclasses import dataclass
 import datetime
 from hashlib import md5
 import importlib.resources
@@ -18,7 +19,6 @@ import shutil
 from typing import Optional, Sequence
 
 import numpy as np
-from scipy.ndimage import center_of_mass
 import skimage.exposure
 
 from spinalcordtoolbox.centerline.core import get_centerline, ParamCenterline
@@ -28,8 +28,9 @@ import spinalcordtoolbox.reports
 from spinalcordtoolbox.reports.assets.py import refresh_qc_entries
 from spinalcordtoolbox.resampling import resample_nib
 from spinalcordtoolbox.utils.shell import display_open
-from spinalcordtoolbox.utils.sys import __version__, list2cmdline, LazyLoader
+from spinalcordtoolbox.utils.sys import __version__, list2cmdline, LazyLoader, __sct_dir__
 from spinalcordtoolbox.utils.fs import mutex
+from spinalcordtoolbox.aggregate_slicewise import Metric
 
 pd = LazyLoader("pd", globals(), "pandas")
 mpl_plt = LazyLoader("mpl_plt", globals(), "matplotlib.pyplot")
@@ -40,7 +41,8 @@ mpl_colors = LazyLoader("mpl_colors", globals(), "matplotlib.colors")
 mpl_backend_agg = LazyLoader("mpl_backend_agg", globals(), "matplotlib.backends.backend_agg")
 mpl_patheffects = LazyLoader("mpl_patheffects", globals(), "matplotlib.patheffects")
 mpl_collections = LazyLoader("mpl_collections", globals(), "matplotlib.collections")
-
+nib_orientations = LazyLoader("nib_orientations", globals(), "nibabel.orientations")
+ndimage = LazyLoader("ndimage", globals(), "scipy.ndimage")
 
 logger = logging.getLogger(__name__)
 
@@ -72,7 +74,7 @@ def create_qc_entry(
     dataset: Optional[str],
     subject: Optional[str],
     image_extension: str = 'png',
-):
+) -> AbstractContextManager[dict[str, Path]]:
     """
     Generate a new QC report entry.
 
@@ -134,7 +136,7 @@ def create_qc_entry(
                 'plane': plane,
                 'backgroundImage': str(imgs_to_generate['path_background_img'].relative_to(path_qc)),
                 'overlayImage': str(imgs_to_generate['path_overlay_img'].relative_to(path_qc)),
-                'date': mod_date.strftime("%Y-%m-%d %H:%M:%S"),
+                'date': mod_date.strftime("%Y-%m-%d %H:%M:%S.%f"),
                 'rank': '',
                 'qc': '',
             }, file_result, indent=1)
@@ -148,6 +150,800 @@ def create_qc_entry(
 
     logger.info('Successfully generated the QC results in %s', str(path_result))
     display_open(file=str(path_index_html), message="To see the results in a browser")
+
+
+def reorient_grid(
+    shape: tuple[int, int, int],  # image data array shape
+    affine: np.ndarray,  # image affine, of shape (4, 4)
+    orientation: str,  # for example, "SAL"
+) -> tuple[
+    tuple[int, int, int],  # reoriented shape
+    np.ndarray,  # reoriented affine, of shape (4, 4)
+]:
+    """
+    Reorient a nifti sampling grid to the given orientation.
+    """
+    opposite = dict(zip("RASLPI", "LPIRAS"))  # SCT and nibabel use opposite conventions
+    ornt = nib_orientations.ornt_transform(
+        nib_orientations.io_orientation(affine),
+        nib_orientations.axcodes2ornt(tuple(opposite[char] for char in orientation))
+    )
+
+    new_shape = [0, 0, 0]
+    for axis, new_axis in enumerate(ornt[:, 0]):
+        new_shape[int(new_axis)] = shape[axis]
+
+    new_affine = np.dot(affine, nib_orientations.inv_ornt_aff(ornt, shape))
+
+    return tuple(new_shape), new_affine
+
+
+def rescale_grid(
+    shape: tuple[int, int, int],  # image data array shape
+    affine: np.ndarray,  # image affine, of shape (4, 4)
+    resolution: list[float | None],  # desired resolution for each axis
+) -> tuple[
+    tuple[int, int, int],  # rescaled shape
+    np.ndarray,  # rescaled affine, of shape (4, 4)
+]:
+    """
+    Rescale a nifti sampling grid to the given resolution for each axis.
+
+    No rescaling is done for an axis if the requested resolution is `None`.
+    """
+    # Make a copy of the input before modifying it
+    shape = list(shape)
+    affine = np.array(affine)
+
+    old_resolution = np.linalg.norm(affine[:, :3], axis=0)
+
+    for axis, (old_res, new_res) in enumerate(zip(old_resolution, resolution)):
+        if new_res is not None:
+            affine[:, axis] *= new_res / old_res
+            # Round up to make sure we cover the original FOV entirely
+            shape[axis] = math.ceil(shape[axis] * old_res / new_res)
+
+    return tuple(shape), affine
+
+
+@dataclass(frozen=True)
+class SlicingSpec:
+    """
+    Specs for extracting one or more 2D slices in the same way from multiple 3D images.
+
+    affine:
+        A numpy array of shape=(4, 4) and dtype=np.float64, as returned by
+        `nib.Nifti1Header.get_best_affine()`. This matrix gives the conversion
+        between voxel coordinates (i, j, k), which are non-negative integers,
+        and physical coordinates (x, y, z), which are floating point numbers:
+
+            [ x ]   [ * * * | * ]   [ i ]
+            [ y ]   [ * * * | * ]   [ j ]
+            [ z ] = [ * * * | * ] @ [ k ]
+            [---]   [-------+---]   [---]
+            [ 1 ]   [ 0 0 0 | 1 ]   [ 1 ]
+
+        The first column gives the step size and direction (in physical space)
+        for taking a 1-voxel step from i to i+1. The second and third columns
+        are the same for j to j+1, or k to k+1. The last column gives the
+        physical coordinates of the (0, 0, 0) voxel. The last row is fixed.
+
+        The 2D slices to be extracted are all parallel to the (j, k) plane.
+
+    offsets:
+        An ordered dict of slice labels and slice offsets for the 2D slices
+        to be extracted. Each slice offset is a numpy array of shape=(3,)
+        and dtype=np.float64, and gives voxel coordinates (i, j, k) for a
+        corner of a slice to be extracted. Even though they are in voxel space,
+        these coordinates are allowed to be negative or fractional.
+
+        The insertion order of items in the dict controls the position of each
+        slice in the generated mosaic.
+
+    shape:
+        The (height, width) size of each 2D slice to be extracted. The height
+        is measured in voxels in the j direction, and the width is measured
+        in voxels in the k direction.
+
+    axis_labels:
+        Two pairs of strings used to display orientation labels:
+
+            ((up == -j direction, down == +j direction),
+             (left == -k direction, right == +k direction))
+
+        Used for the top-left tile in a mosaic.
+    """
+    # ----------------------------------------------------------------
+    # Dataclass fields
+    # ----------------------------------------------------------------
+    # The default @dataclass __init__ method, used internally by the
+    # SlicingSpec factory functions, always assigns a value to these.
+
+    affine: np.ndarray  # shape=(4, 4)
+    offsets: dict[str, np.ndarray]  # each shape=(3,), insertion order is important
+    shape: tuple[int, int]  # 2D shape of all output slices
+    axis_labels: tuple[tuple[str, str], tuple[str, str]]  # ((top, bottom), (left, right))
+
+    # ----------------------------------------------------------------
+    # Factory functions
+    # ----------------------------------------------------------------
+    # This is the normal way for users of this class to create
+    # instances. They are @staticmethod, so they are called as:
+    # SlicingSpec.full_axial(...) etc.
+
+    @staticmethod
+    def full_axial(img: Image, p_resample: float) -> 'SlicingSpec':
+        """
+        A slicing spec to extract full axial slices.
+
+        The field of view is given by `img`.
+        The number of slices is the same as `img` in the S-I axis,
+        but the other two axes are resampled to `p_resample` mm.
+        The slice labels correspond to the original orientation of `img`,
+        but the output slices are always ordered and oriented in "SAL".
+        """
+        return SlicingSpec.full_oriented(img, "SAL", p_resample)
+
+    @staticmethod
+    def full_sagittal(img: Image, p_resample: float) -> 'SlicingSpec':
+        """
+        A slicing spec to extract full sagittal slices.
+
+        The field of view is given by `img`.
+        The number of slices is the same as `img` in the R-L axis,
+        but the other two axes are resampled to `p_resample` mm.
+        The slice labels correspond to the original orientation of `img`,
+        but the output slices are always ordered and oriented in "RSP".
+        """
+        return SlicingSpec.full_oriented(img, "RSP", p_resample)
+
+    @staticmethod
+    def full_oriented(img: Image, orientation: str, p_resample: float) -> 'SlicingSpec':
+        """
+        A slicing spec to extract full slices in a given orientation.
+
+        The meaning of the `orientation` argument is that:
+        - The first axis is perpendicular to the 2D slices produced.
+        - The second axis is the "up" direction for the 2D slices produced.
+        - The third axis is the "left" direction for the 2D slices produced.
+
+        Each output slice is resampled to `p_resample` mm.
+
+        The slice labels match the original orientation of `img`,
+        but their ordering matches the requested orientation.
+        """
+        # For axis labels.
+        opposite = dict(zip("RASLPI", "LPIRAS"))
+
+        # Reorient and rescale.
+        shape, affine = img.data.shape, img.affine
+        shape, affine = reorient_grid(shape, affine, orientation)
+        shape, affine = rescale_grid(shape, affine, [None, p_resample, p_resample])
+
+        # Split up the 3D image shape into a number of slices and a 2D slice shape.
+        num_slices, shape = shape[0], shape[1:3]
+
+        # The slice labels in the original orientation of the input image.
+        slice_labels = [str(i) for i in range(num_slices)]
+        if opposite[orientation[0]] in img.orientation:
+            slice_labels.reverse()
+
+        return SlicingSpec(
+            affine=affine,
+            offsets={
+                label: np.array([i, 0, 0], dtype=np.float64)
+                for i, label in enumerate(slice_labels)
+            },
+            shape=shape,
+            axis_labels=tuple(
+                (letter, opposite[letter])
+                for letter in orientation[1:3]
+            ),
+        )
+
+    # ----------------------------------------------------------------
+    # Transformer methods
+    # ----------------------------------------------------------------
+    # These methods can be called on an existing SlicingSpec, to
+    # produce a new SlicingSpec. For example, they can be used to
+    # center and crop slices around a segmentation, or to drop some
+    # slices entirely.
+
+    def center_patches(
+        self: 'SlicingSpec', seg: Image, shape: tuple[int, int] = (30, 30)
+    ) -> 'SlicingSpec':
+        """
+        A re-centered and cropped slicing spec, meant for axial views.
+
+        Each slice is individually centered around the center of mass of the
+        given segmentation before being cropped (in both axes).
+        """
+        # Recenter each slice around its center of mass, and interpolate missing
+        # slices. We use a single (N, 3) array so that we can inf_nan_fill.
+        offsets = np.array(list(self.offsets.values()))
+        slices_seg = self.get_slices(seg, order=1)
+        for offset, slice_seg in zip(offsets, slices_seg.values()):
+            offset[1:3] += ndimage.center_of_mass(slice_seg)
+        inf_nan_fill(offsets[:, 1])
+        inf_nan_fill(offsets[:, 2])
+
+        # Take into account the size of the cropping rectangle.
+        offsets[:, 1:3] -= (np.array(shape) - 1) / 2
+
+        return SlicingSpec(
+            affine=self.affine,
+            offsets=dict(zip(self.offsets.keys(), offsets)),
+            shape=shape,  # new shape
+            axis_labels=self.axis_labels,
+        )
+
+    def center_columns(self: 'SlicingSpec', seg: Image) -> 'SlicingSpec':
+        """
+        A re-centered and cropped slicing spec, meant for sagittal views.
+
+        Each slice is individually centered in the last axis around the center
+        of mass of the given segmentation. It is also cropped in the last axis
+        to the larger of:
+        - 110% of the maximum width of the segmentation, or
+        - 50% of the total image.
+
+        Any slices that are more than 2 slices away from the segmentation are
+        also dropped.
+        """
+        # Check which slices contain the segmentation, and compute their width.
+        slices_seg = self.get_slices(seg, order=1)
+        width = {}
+        for i, slice_seg in enumerate(slices_seg.values()):
+            [columns] = slice_seg.any(axis=0).nonzero()
+            if columns.size != 0:
+                width[i] = int(columns.max()) - int(columns.min()) + 1
+        if not width:
+            raise ValueError("The mask image is empty. Cannot crop using an empty mask. Check the input (e.g. '-qc-seg').")
+
+        # Compute the target slice width.
+        shape = (
+            self.shape[0],  # the full image height
+            math.ceil(max(
+                1.1 * max(width.values()),  # 110% of the segmentation width
+                0.5 * self.shape[1],  # 50% of the full image width
+            )),
+        )
+
+        # Drop slices that are far from the segmentation.
+        slice_min = max(0, min(width.keys()) - 2)
+        slice_max = min(len(slices_seg) - 1, max(width.keys()) + 2)
+        offsets_dict = dict(list(self.offsets.items())[slice_min:slice_max+1])
+
+        # Re-center each remaining slice.
+        for slice_label, offset in offsets_dict.items():
+            offset[2] += ndimage.center_of_mass(slices_seg[slice_label])[1]
+
+        # Take into account the cropping width.
+        offsets_array = np.array(list(offsets_dict.values()))
+        inf_nan_fill(offsets_array[:, 2])
+        offsets_array[:, 2] -= (shape[1] - 1) / 2
+        offsets_dict = dict(zip(offsets_dict.keys(), offsets_array))
+
+        return SlicingSpec(
+            affine=self.affine,
+            offsets=offsets_dict,  # new offsets
+            shape=shape,  # new shape
+            axis_labels=self.axis_labels,
+        )
+
+    def composite_sagittal(self: 'SlicingSpec', seg: Image) -> 'SlicingSpec':
+        """
+        Construct a composite 2D sagittal image out of axial slices (one
+        row from each axial slice), similarly to `sct_flatten_sagittal`.
+        (For each axial slice, the center of mass is used to identify the
+        midsagittal row. The individual rows can then be stitched together
+        to build a composite midsagittal 2D image.)
+        """
+        # Recenter each slice around its center of mass, and interpolate missing
+        # slices. We use a single (N, 3) array so that we can inf_nan_fill.
+        offsets = np.array(list(self.offsets.values()))
+        slices_seg = self.get_slices(seg, order=1)
+        for offset, slice_seg in zip(offsets, slices_seg.values()):
+            offset[2] += ndimage.center_of_mass(slice_seg)[1]
+        inf_nan_fill(offsets[:, 2])
+
+        return SlicingSpec(
+            affine=self.affine,
+            offsets=dict(zip(self.offsets.keys(), offsets)),
+            shape=(self.shape[0], 1),  # crop to a single line
+            axis_labels=self.axis_labels,
+        )
+
+    # ----------------------------------------------------------------
+    # Consumer methods
+    # ----------------------------------------------------------------
+    # These methods are called on an existing SlicingSpec to produce
+    # some other result.
+
+    def get_slices(
+        self: 'SlicingSpec',
+        img: Image,  # 3D image to sample from
+        order: int,  # interpolation order, can be [0, 1, 2, 3, 4, 5]
+    ) -> dict[str, np.ndarray]:  # shape=self.shape
+        """
+        Get several slices of the same shape from a single image by resampling.
+
+        The offsets are measured in output voxels, and can be fractional.
+        """
+        # To fill regions outside of the image with zeros,
+        # while avoiding sharp cutoffs around the edges.
+        mode = "grid-constant"
+
+        voxel_to_voxel = np.linalg.inv(img.affine).dot(self.affine)
+        matrix = voxel_to_voxel[:3, :3]
+        origin = voxel_to_voxel[:3, 3]
+
+        if order > 1:
+            # Doing this prefilter step outside of the loop is crucial for performance
+            data_filtered = ndimage.spline_filter(img.data, order=order, mode=mode)
+        else:
+            data_filtered = img.data.astype(np.float64)
+        return {
+            slice_label: ndimage.affine_transform(
+                data_filtered,
+                matrix=matrix,
+                offset=(origin + matrix.dot(offset)),
+                output_shape=(1, *self.shape),
+                order=order,
+                mode=mode,
+                prefilter=False,
+            )[0]
+            for slice_label, offset in self.offsets.items()
+        }
+
+    def get_mosaic(self: 'SlicingSpec', **kwargs) -> 'Mosaic':
+        """
+        Get a mosaic that can hold the result of `self.get_slices`.
+        """
+        return Mosaic(self.shape, list(self.offsets.keys()), self.axis_labels, **kwargs)
+
+
+class Mosaic:
+    """
+    Convenience methods for rendering several 2D slices into a grid of images.
+
+    The caller is expected to manipulate `self.fig` and/or `self.ax` directly
+    before calling `self.save(path)`.
+    """
+    canvas: np.ndarray  # The data array for the entire mosaic.
+    tiles: dict[str, tuple[slice, slice]]  # The canvas coordinates for each slice label.
+    axis_labels: tuple[tuple[str, str], tuple[str, str]]  # ((top, bottom), (left, right))
+
+    fig: 'mpl_figure.Figure'
+    ax: 'mpl_axes.Axes'
+
+    def __init__(
+        self,
+        shape: tuple[int, int],  # (height, width) of each tile
+        slice_labels: list[str],
+        axis_labels: tuple[tuple[str, str], tuple[str, str]],  # ((top, bottom), (left, right))
+        *,  # keyword-only arguments after this
+        rect: tuple[float, float, float, float] = (0, 0, 1, 1),  # passed to Figure.add_axes()
+        scale: float = 2.5,
+    ):
+        # Make a canvas of the right size to hold all the tiles.
+        num_col = max(math.floor(TARGET_WIDTH_PIXL / scale / shape[1]), 1)
+        num_row = math.ceil(len(slice_labels) / num_col)
+        self.canvas = np.zeros((num_row * shape[0], num_col * shape[1]))
+
+        # Compute the canvas coordinates for each slice label.
+        self.tiles = dict(zip(slice_labels, [
+            (slice(x, x + shape[0]), slice(y, y + shape[1]))
+            for x in range(0, self.canvas.shape[0], shape[0])
+            for y in range(0, self.canvas.shape[1], shape[1])
+        ], strict=False))
+
+        # Save the axis labels for displaying later.
+        self.axis_labels = axis_labels
+
+        # Initialize the Figure and the Axes for rendering the mosaic later.
+        self.fig = mpl_figure.Figure(
+            # figsize is (width, height) but canvas shape is (height, width)
+            figsize=(self.canvas.shape[1] * scale / DPI, self.canvas.shape[0] * scale / DPI),
+            dpi=DPI,
+        )
+        mpl_backend_agg.FigureCanvasAgg(self.fig)
+        self.ax = self.fig.add_axes(rect)
+        self.ax.xaxis.set_visible(False)
+        self.ax.yaxis.set_visible(False)
+
+    def insert_slices(self, slices: dict[str, np.ndarray]):
+        """
+        Insert 2D slices into the canvas based on their slice labels.
+
+        Note that this doesn't render them to `self.ax`, so that the caller
+        can post-process `self.canvas` (for example, with `equalize_histogram`)
+        and has full control of `self.ax.imshow(self.canvas, ...)`.
+        """
+        for slice_label, data in slices.items():
+            self.canvas[self.tiles[slice_label]] = data
+
+    def add_labels(self):
+        """
+        Add axis labels and slice labels to the mosaic figure.
+
+        Axis labels are added to the first tile, and slice labels are added to
+        the other tiles.
+        """
+        # Rendering options for all the labels.
+        text_args = dict(
+            color='yellow',
+            fontsize=4,
+            path_effects=[
+                mpl_patheffects.Stroke(linewidth=1, foreground='black'),
+                mpl_patheffects.Normal(),
+            ],
+        )
+        for tile_num, (slice_label, coords) in enumerate(self.tiles.items()):
+            # Get real coordinates from the `slice` objects.
+            top, bottom, _ = coords[0].indices(self.canvas.shape[0])
+            left, right, _ = coords[1].indices(self.canvas.shape[1])
+            if tile_num == 0:
+                # Axis labels for the first tile.
+                ((top_label, bottom_label), (left_label, right_label)) = self.axis_labels
+                self.ax.text((left + right) / 2, top, top_label, ha='center', va='top', **text_args)
+                self.ax.text((left + right) / 2, bottom, bottom_label, ha='center', va='bottom', **text_args)
+                self.ax.text(left, (top + bottom) / 2, left_label, ha='left', va='center', **text_args)
+                self.ax.text(right, (top + bottom) / 2, right_label, ha='right', va='center', **text_args)
+            else:
+                # Slice labels for the other tiles.
+                self.ax.text(left, top, slice_label, ha='left', va='top', **text_args)
+
+    def save(self, path: Path):
+        """Save the final figure."""
+        self.fig.savefig(str(path), format='png', transparent=True)
+
+
+def sct_register(
+    fname_input: str,
+    fname_output: str,
+    fname_seg: str,
+    command: str,
+    argv: Sequence[str],
+    path_qc: str,
+    dataset: str | None,
+    subject: str | None,
+    p_resample: float | None = 0.6,
+):
+    """
+    Generate a QC report for sct_register_multimodal or sct_register_to_template.
+
+    Axial orientation, switch between input and output images.
+    """
+    cmdline = [command]
+    cmdline.extend(argv)
+
+    with create_qc_entry(
+        path_input=Path(fname_input).resolve(),
+        path_qc=Path(path_qc),
+        command=command,
+        cmdline=list2cmdline(cmdline),
+        plane='Axial',
+        dataset=dataset,
+        subject=subject,
+    ) as imgs_to_generate:
+
+        img_input = Image(fname_input)
+        img_output = Image(fname_output)
+        img_seg = Image(fname_seg)
+
+        slicing_spec = SlicingSpec.full_axial(img_input, p_resample).center_patches(img_seg)
+
+        for img, path in [
+            (img_input, imgs_to_generate['path_background_img']),
+            (img_output, imgs_to_generate['path_overlay_img']),
+        ]:
+            mosaic = slicing_spec.get_mosaic()
+            mosaic.insert_slices(slicing_spec.get_slices(img, order=2))
+            mosaic.canvas = equalize_histogram(mosaic.canvas)
+            mosaic.ax.imshow(mosaic.canvas, cmap='gray', interpolation='none')
+            mosaic.add_labels()
+            mosaic.save(path)
+
+
+def sct_fmri_compute_tsnr(
+    fname_input: str,
+    fname_output: str,
+    fname_seg: str,
+    argv: Sequence[str],
+    path_qc: str,
+    dataset: str | None,
+    subject: str | None,
+    p_resample: float | None = 0.6,
+):
+    """
+    Generate a QC report for sct_fmri_compute_tsnr.
+
+    Axial orientation, switch between two input images, with color bar and
+    mean value in spinal cord.
+    """
+    command = 'sct_fmri_compute_tsnr'
+    cmdline = [command]
+    cmdline.extend(argv)
+
+    with create_qc_entry(
+        path_input=Path(fname_input).resolve(),
+        path_qc=Path(path_qc),
+        command=command,
+        cmdline=list2cmdline(cmdline),
+        plane='Axial',
+        dataset=dataset,
+        subject=subject,
+    ) as imgs_to_generate:
+
+        img_input = Image(fname_input)
+        img_output = Image(fname_output)
+        img_seg = Image(fname_seg)
+
+        slicing_spec = SlicingSpec.full_axial(img_input, p_resample).center_patches(img_seg)
+
+        slices_input = slicing_spec.get_slices(img_input, order=2)
+        slices_output = slicing_spec.get_slices(img_output, order=2)
+
+        # Quadratic resampling gives a sharper image, but it may extrapolate
+        # beyond the original min/max values. We want the colorbar tick marks
+        # to reflect the true range of the original images.
+        linear_values = [
+            *slicing_spec.get_slices(img_input, order=1).values(),
+            *slicing_spec.get_slices(img_output, order=1).values(),
+        ]
+        vmin = int(np.nanmin(linear_values))
+        vmax = int(np.nanmax(linear_values))
+
+        for corner_label, slices, path in [
+            ("1", slices_input, imgs_to_generate['path_background_img']),
+            ("2", slices_output, imgs_to_generate['path_overlay_img']),
+        ]:
+            mosaic = slicing_spec.get_mosaic(rect=(0, 0, 0.93, 1))
+            mosaic.insert_slices(slices)
+            axes_image = mosaic.ax.imshow(
+                mosaic.canvas,
+                cmap='seismic',
+                norm=mpl_colors.Normalize(vmin, vmax),
+                interpolation='none',
+            )
+            colorbar = mosaic.fig.colorbar(
+                axes_image,
+                cax=mosaic.ax.inset_axes([1.01, 0.07, 0.011, 0.86]),
+                orientation='vertical',
+                pad=0.01,
+                shrink=0.5,
+                aspect=1,
+                ticks=[vmin, vmax],
+            )
+            colorbar.ax.tick_params(labelsize=5, length=2, pad=1.7)
+            mosaic.ax.text(1.5, 6, corner_label, color='white', size=3.25)
+            mosaic.add_labels()
+            mosaic.save(path)
+
+
+def sct_label_vertebrae(
+    fname_input: str,
+    fname_seg: str,
+    command: str,
+    argv: Sequence[str],
+    path_qc: str,
+    dataset: str | None,
+    subject: str | None,
+    path_custom_labels: str,
+    draw_text: bool = True,
+    p_resample: float | None = None,
+    offset_text: bool = True,
+):
+    """
+    Generate a QC report for sct_label_vertebrae.
+
+    Sagittal orientation, wavy single slice, display vertebral labels.
+    """
+    cmdline = [command]
+    cmdline.extend(argv)
+
+    with create_qc_entry(
+        path_input=Path(fname_input).resolve(),
+        path_qc=Path(path_qc),
+        command=command,
+        cmdline=list2cmdline(cmdline),
+        plane='Sagittal',
+        dataset=dataset,
+        subject=subject,
+    ) as imgs_to_generate:
+
+        img_input = Image(fname_input)
+        img_labels = Image(fname_seg)
+
+        # A version of img_labels with only 0-1 values, for center-of-mass computations.
+        img_seg = img_labels.copy()
+        img_seg.data = (img_seg.data != 0)
+
+        # Take a single mid-sagittal line from each axial slice to compose a 2D image.
+        slicing_spec = SlicingSpec.full_axial(img_input, p_resample).composite_sagittal(img_seg)
+
+        # Quadratic resampling for the actual image.
+        slices_input = slicing_spec.get_slices(img_input, order=2)
+        data_input = equalize_histogram(np.array([s[:, 0] for s in slices_input.values()]))
+
+        # Nearest-neighbour resampling for the segmentation labels.
+        slices_labels = slicing_spec.get_slices(img_labels, order=0)
+        data_labels = np.array([s[:, 0] for s in slices_labels.values()])
+
+        # Aspect ratio, since the thickness of axial slices may not be == p_resample.
+        p_height = next(
+            p for p, letter in zip(
+                img_input.dim[4:7],
+                img_input.orientation,
+            )
+            if letter in 'SI'
+        )
+        p_width = p_resample if p_resample is not None else next(
+            p for p, letter in zip(
+                img_input.dim[4:7],
+                img_input.orientation,
+            )
+            if letter in 'AP'
+        )
+        aspect = (data_input.shape[0] * p_height) / (data_input.shape[1] * p_width)
+
+        # Draw the actual image on the background.
+        # figsize is (width, height) in inches
+        fig = mpl_figure.Figure(figsize=(5, 5*aspect), dpi=100)
+        mpl_backend_agg.FigureCanvasAgg(fig)
+        ax = fig.add_axes((0, 0, 1, 1))
+        ax.xaxis.set_visible(False)
+        ax.yaxis.set_visible(False)
+        ax.imshow(data_input, cmap='gray', interpolation='none', aspect='auto')
+        fig.savefig(str(imgs_to_generate['path_background_img']), format='png', transparent=True)
+
+        # Draw the label regions and text in the overlay.
+        # figsize is (width, height) in inches
+        fig = mpl_figure.Figure(figsize=(5, 5*aspect), dpi=100)
+        mpl_backend_agg.FigureCanvasAgg(fig)
+        ax = fig.add_axes((0, 0, 1, 1))
+        ax.xaxis.set_visible(False)
+        ax.yaxis.set_visible(False)
+
+        img = np.rint(np.ma.masked_where(data_labels <= 0, data_labels))
+        labels = np.unique(img[np.where(~img.mask)]).astype(int)  # get available labels
+        color_list = assign_label_colors_by_groups(labels)
+        ax.imshow(
+            img,
+            cmap=mpl_colors.ListedColormap(color_list),
+            interpolation='none',
+            alpha=1,
+            aspect='auto',
+        )
+
+        if draw_text:
+            # Get the mapping between voxel values and text labels
+            try:
+                dict_labels = json.loads(Path(path_custom_labels).read_text())
+                if not isinstance(dict_labels, dict):
+                    raise ValueError("The JSON file should contain a single dictionary")
+                for label_text in dict_labels.values():
+                    if not isinstance(label_text, str):
+                        raise ValueError(f"Not a text label: {label_text!r}")
+                dict_labels = {int(label_num): label_text for label_num, label_text in dict_labels.items()}
+            except ValueError as e:
+                example = Path(__sct_dir__) / 'spinalcordtoolbox' / 'reports' / 'sct_label_vertebrae_regions.json'
+                raise ValueError(f"Invalid format for custom labels, see {example} for an example. ({e})")
+
+            # Add the text labels
+            for label_num in labels:
+                if label_num in dict_labels:
+                    # NB: We need to subtract `min` to convert the label value into an index for the color list
+                    label_color = color_list[label_num - labels.min()]
+                    # Position the label text
+                    y, x = ndimage.center_of_mass(img == label_num)
+                    if offset_text:
+                        x += img.shape[1] / 25
+                    # Draw text with a shadow
+                    label_text = dict_labels[label_num]
+                    ax.text(x, y, label_text, color=label_color, clip_on=True).set_path_effects(
+                        [mpl_patheffects.Stroke(linewidth=2, foreground='black'), mpl_patheffects.Normal()]
+                    )
+
+        fig.savefig(str(imgs_to_generate['path_overlay_img']), format='png', transparent=True)
+
+
+def sct_label_utils(
+    fname_input: str,
+    fname_seg: str,
+    command: str,
+    argv: Sequence[str],
+    path_qc: str,
+    dataset: str | None,
+    subject: str | None,
+    p_resample: float | None = None,
+):
+    """
+    Generate a QC report for sct_label_utils.
+
+    Sagittal orientation, wavy single slice, with posterior labels.
+    """
+    cmdline = [command]
+    cmdline.extend(argv)
+
+    with create_qc_entry(
+        path_input=Path(fname_input).resolve(),
+        path_qc=Path(path_qc),
+        command=command,
+        cmdline=list2cmdline(cmdline),
+        plane='Sagittal',
+        dataset=dataset,
+        subject=subject,
+    ) as imgs_to_generate:
+
+        img_input = Image(fname_input)
+        img_labels = Image(fname_seg)
+
+        # A version of img_labels with only 0-1 values, for center-of-mass computations.
+        img_seg = img_labels.copy()
+        img_seg.data = (img_seg.data != 0)
+
+        # Take a single mid-sagittal line from each axial slice to compose a 2D image.
+        slicing_spec = SlicingSpec.full_axial(img_input, p_resample).composite_sagittal(img_seg)
+
+        # Quadratic resampling for the actual image.
+        slices_input = slicing_spec.get_slices(img_input, order=2)
+        data_input = equalize_histogram(np.array([s[:, 0] for s in slices_input.values()]))
+
+        # Nearest-neighbour resampling for the segmentation labels.
+        slices_labels = slicing_spec.get_slices(img_labels, order=0)
+        data_labels = np.array([s[:, 0] for s in slices_labels.values()])
+
+        # Aspect ratio, since the thickness of axial slices may not be == p_resample.
+        p_height = next(
+            p for p, letter in zip(
+                img_input.dim[4:7],
+                img_input.orientation,
+            )
+            if letter in 'SI'
+        )
+        p_width = p_resample if p_resample is not None else next(
+            p for p, letter in zip(
+                img_input.dim[4:7],
+                img_input.orientation,
+            )
+            if letter in 'AP'
+        )
+        aspect = (data_input.shape[0] * p_height) / (data_input.shape[1] * p_width)
+
+        # Draw the actual image on the background.
+        # figsize is (width, height) in inches
+        fig = mpl_figure.Figure(figsize=(5, 5*aspect), dpi=100)
+        mpl_backend_agg.FigureCanvasAgg(fig)
+        ax = fig.add_axes((0, 0, 1, 1))
+        ax.xaxis.set_visible(False)
+        ax.yaxis.set_visible(False)
+        ax.imshow(data_input, cmap='gray', interpolation='none', aspect='auto')
+        fig.savefig(str(imgs_to_generate['path_background_img']), format='png', transparent=True)
+
+        # Draw the label voxels and text in the overlay.
+        # figsize is (width, height) in inches
+        fig = mpl_figure.Figure(figsize=(5, 5*aspect), dpi=100)
+        mpl_backend_agg.FigureCanvasAgg(fig)
+        ax = fig.add_axes((0, 0, 1, 1))
+        ax.xaxis.set_visible(False)
+        ax.yaxis.set_visible(False)
+
+        ax.imshow(np.full_like(data_labels, np.nan), cmap='gray', alpha=0, aspect='auto')
+        non_null_vox = np.nonzero(data_labels > 0)
+        horiz_offset = data_labels.shape[1] / 50
+        for y, x, val in zip(*non_null_vox, data_labels[non_null_vox]):
+            ax.plot(x, y, 'o', color='lime', markersize=5)
+            ax.text(
+                x + horiz_offset, y, str(round(val)), color='lime',
+                fontsize=15, verticalalignment='center', clip_on=True,
+            ).set_path_effects([
+                mpl_patheffects.Stroke(linewidth=2, foreground='black'),
+                mpl_patheffects.Normal(),
+            ])
+
+        fig.savefig(str(imgs_to_generate['path_overlay_img']), format='png', transparent=True)
 
 
 def add_slice_numbers(ax, num_slices, radius, margin: int = 2, reverse=False):
@@ -240,7 +1036,7 @@ def sct_register_multimodal(
 
         # Each slice is centered on the segmentation
         logger.info('Find the center of each slice')
-        centers = np.array([center_of_mass(slice) for slice in img_seg.data])
+        centers = np.array([ndimage.center_of_mass(slice) for slice in img_seg.data])
         inf_nan_fill(centers[:, 0])
         inf_nan_fill(centers[:, 1])
 
@@ -275,6 +1071,134 @@ def sct_register_multimodal(
         img_path = str(imgs_to_generate['path_overlay_img'])
         logger.debug('Save image %s', img_path)
         fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
+
+
+def sct_process_segmentation(
+        fname_input: str,
+        fname_seg: str,
+        metrics: dict[str, Metric],
+        argv: Sequence[str],
+        path_qc: str,
+        dataset: Optional[str],
+        subject: Optional[str],
+        angle_type: Optional[str] = 'angle_hog',
+):
+    """
+    Generate a QC report for sct_process_segmentation showing a line corresponding to the HOG angle
+    (obtained using spinalcordtoolbox.registration.algorithms.find_angle_hog)
+    """
+
+    command = 'sct_process_segmentation'
+    cmdline = [command]
+    cmdline.extend(argv)
+
+    # Axial orientation, switch between one anat image and one seg image
+    with create_qc_entry(
+        path_input=Path(fname_input).resolve(),
+        path_qc=Path(path_qc),
+        command=command,
+        cmdline=list2cmdline(cmdline),
+        plane='Axial',
+        dataset=dataset,
+        subject=subject,
+    ) as imgs_to_generate:
+
+        # Load the input images
+        img_input = Image(fname_input).change_orientation('SAL')
+        img_seg = Image(fname_seg).change_orientation('SAL')
+        # NOTE: We don't resample the image to 0.6mm iso as the angle_hog was computed on the original image
+        # TODO: consider slice by slice resampling (used e.g. in sct_deepseg_sagittal)
+
+        # Each slice is centered on the segmentation
+        logger.info('Find the center of each slice')
+        centers = np.array([ndimage.center_of_mass(slice) for slice in img_seg.data])
+        inf_nan_fill(centers[:, 0])
+        inf_nan_fill(centers[:, 1])
+
+        # If seg is available, use it to generate the radius
+        radius = get_max_axial_radius(img_seg) if fname_seg else (15, 15)
+        scale = 2.5  # we can consider increasing the number, then the mosaic can be zoomed in/out using the "Full size" button in the QC report
+
+        # Generate the first QC report image - background image
+        img = equalize_histogram(mosaic(img_input, centers, radius, scale=scale))
+        # Fix the width to a specific size, and vary the height based on how many rows there are.
+        size_fig = [TARGET_WIDTH_INCH, TARGET_WIDTH_INCH * img.shape[0] / img.shape[1]]
+        fig = mpl_figure.Figure()
+        fig.set_size_inches(*size_fig, forward=True)
+        mpl_backend_agg.FigureCanvasAgg(fig)
+        ax = fig.add_axes((0, 0, 1, 1))
+        ax.imshow(img, cmap='gray', interpolation='none', aspect=1.0)
+        add_orientation_labels(ax, radius=tuple(r for r in radius))
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+        img_path = str(imgs_to_generate['path_background_img'])
+        logger.debug('Save image %s', img_path)
+        fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
+
+        # Generate the second QC report image - overlay image with lines for HOG angles
+        fig = mpl_figure.Figure()
+        fig.set_size_inches(*size_fig, forward=True)
+        mpl_backend_agg.FigureCanvasAgg(fig)
+        ax = fig.add_axes((0, 0, 1, 1))
+        img_temp = img_seg.copy()
+        img_temp.data = np.full_like(img_seg.data, np.nan)
+        # Create empty axes for the mosaic
+        img = mosaic(img_temp, centers, radius=radius, scale=scale)
+        img = np.ma.masked_less_equal(img, 0)
+        img.set_fill_value(0)
+        ax.imshow(img, aspect=1.0)
+        # Plot HOG angle lines directly on the empty axes
+        add_angle_lines(ax, img_temp.dim[0], metrics, angle_type=angle_type, radius=radius, scale=scale)
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+        img_path = str(imgs_to_generate['path_overlay_img'])
+        logger.debug('Save image %s', img_path)
+        fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
+
+
+def add_angle_lines(ax, num_slices, metrics, angle_type, radius: tuple[int, int] = (15, 15), scale: float = 2.5):
+    """
+    Overlay HOG angle lines and add angle text onto an Axial mosaic.
+    """
+    num_col = math.floor(TARGET_WIDTH_PIXL / scale / (2 * radius[0]))
+    # Loop across axial slices
+    for i in range(num_slices):
+        # Calculate mosaic position
+        slice_index = num_slices - 1 - i  # I need to use this hacky workaround to go from RPI to SAL
+        row = slice_index // num_col
+        col = slice_index % num_col
+        # Center of mass
+        # Note 1: This is a bit hacky: I check metrics['centermass_x'] just to kwow if given slice contains the
+        #  cord seg, if so, then I plot the center of mass point based on the mosaic properties.
+        # Note 2: metrics['centermass_x'] and ['centermass_y'] seem to be the same as `centers`, but they are obtained differently:
+        #   - metrics['centermass_x'] and ['centermass_y'] are obtained using PCA via spinalcordtoolbox.registration.algorithms.compute_pca
+        #   - centers is obtained using scipy.ndimage.center_of_mass
+        #   For simplicity, I'm using directly the mosaic coordinates based on `centers`
+        x = metrics['centermass_x'].data[i] if 'centermass_x' in metrics else np.nan
+        y = metrics['centermass_y'].data[i] if 'centermass_y' in metrics else np.nan
+        if not np.isnan(x) and not np.isnan(y):
+            # Calculate center position within mosaic
+            x_mosaic = col * (2 * radius[0]) + radius[0]
+            y_mosaic = row * (2 * radius[1]) + radius[1]
+            # Uncomment the next line to plot the center of mass point
+            # ax.plot(x_mosaic, y_mosaic, 'o', color='red', markersize=1.0)
+        # HOG angle
+        angle_deg = metrics[angle_type].data[i] if angle_type in metrics else np.nan
+        if not np.isnan(angle_deg):
+            # Compute the end points of the line
+            x_start = x_mosaic - radius[0] / 2 * np.sin(-angle_deg * np.pi / 180)
+            y_start = y_mosaic - radius[1] / 2 * np.cos(-angle_deg * np.pi / 180)
+            x_end = x_mosaic + radius[0] / 2 * np.sin(-angle_deg * np.pi / 180)
+            y_end = y_mosaic + radius[1] / 2 * np.cos(-angle_deg * np.pi / 180)
+            # Plot the line
+            ax.plot([x_start, x_end], [y_start, y_end], '-', color='red', linewidth=0.7)
+            # Include the angle text in degrees
+            # Flip sign to match PCA convention
+            # See https://github.com/spinalcordtoolbox/spinalcordtoolbox/blob/ba30577e80a4e7387498820f0ff30b8965fbf2a4/spinalcordtoolbox/registration/algorithms.py#L834
+            # TODO: figure out why the link below flip the angle sign only for src_hog but not for dest_hog
+            ax.text(x_mosaic + radius[0] * 0.2, y_mosaic - radius[1] * 0.3,  # upper right corner
+                    f'{angle_deg:.1f}°', color='red', fontsize=3,
+                    path_effects=[mpl_patheffects.withStroke(linewidth=0.75, foreground='black')])
 
 
 def sct_deepseg(
@@ -390,7 +1314,7 @@ def sct_deepseg_axial(
     logger.info('Find the center of each slice')
     # Use the -qc-seg mask if available, otherwise use the spinal cord mask
     img_centers = img_qc_seg if fname_qc_seg else img_seg_sc
-    centers = np.array([center_of_mass(slice) for slice in img_centers.data])
+    centers = np.array([ndimage.center_of_mass(slice) for slice in img_centers.data])
     inf_nan_fill(centers[:, 0])
     inf_nan_fill(centers[:, 1])
 
@@ -494,7 +1418,7 @@ def sct_deepseg_spinal_rootlets(
     logger.info('Find the center of each slice')
     centerline_param = ParamCenterline(algo_fitting="optic", contrast="t2")
     img_centerline, _, _, _ = get_centerline(img_input, param=centerline_param)
-    centers = np.array([center_of_mass(slice) for slice in img_centerline.data])
+    centers = np.array([ndimage.center_of_mass(slice) for slice in img_centerline.data])
     inf_nan_fill(centers[:, 0])
     inf_nan_fill(centers[:, 1])
 
@@ -621,7 +1545,7 @@ def sct_deepseg_sagittal(
     # Use the -qc-seg mask if available to get crop radius (as well as the center of mass) for each slice
     if fname_qc_seg:
         radius = get_max_sagittal_radius(img_qc_seg)
-        centers = np.array([center_of_mass(slice) for slice in img_qc_seg.data])
+        centers = np.array([ndimage.center_of_mass(slice) for slice in img_qc_seg.data])
         inf_nan_fill(centers[:, 0])
         inf_nan_fill(centers[:, 1])
     # otherwise, if -qc-seg isn't provided, display the full sagittal slice and use the center of the uncropped image

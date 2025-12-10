@@ -1,2 +1,2 @@
 Timestamp,SCT Version,Filename,Slice (I->S),VertLevel,DistancePMJ,Label,Size [vox],MAP(),STD()
-2025-04-16 01:14:26,git-kjoa/deepseg_cleanup-db659bc487e2aeaec2368e3a18afc71a279ad07f*,SCT/data/sct_example_data/mt/mtr.nii.gz,4:17,2:5,,white matter,964.353002338327,54.4068382120365,4.52785956823403
+"2025-12-04 14:40:51","git-HEAD-8a59e3d645f82bdc0a2a632c51c5567baaca96e9","/home/runner/work/spinalcordtoolbox/spinalcordtoolbox/data/sct_example_data/mt/mtr.nii.gz","4:17","2:5","","white matter",964.3529895714804,54.406838543730174,4.527859396724482

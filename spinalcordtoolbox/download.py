@@ -50,7 +50,7 @@ DATASET_DICT = {
     },
     "sct_course_data": {
         "mirrors": [
-            "https://github.com/spinalcordtoolbox/sct_tutorial_data/archive/refs/tags/r20250916.zip",
+            "https://github.com/spinalcordtoolbox/sct_tutorial_data/archive/refs/tags/SCT-Course-20251208.zip",
         ],
         "default_location": os.path.join(__sct_dir__, "data", "sct_course_data"),
         "download_type": "SCT Course Files",
