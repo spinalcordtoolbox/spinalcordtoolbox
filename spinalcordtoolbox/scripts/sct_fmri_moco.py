@@ -10,11 +10,12 @@ import os
 from typing import Sequence
 import textwrap
 
-from spinalcordtoolbox.moco import ParamMoco, moco_wrapper
+from spinalcordtoolbox.moco.moco import ParamMoco, moco_wrapper
 from spinalcordtoolbox.utils.sys import init_sct, set_loglevel
 from spinalcordtoolbox.utils.shell import (SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax,
                                            list_type, positive_int_type)
 from spinalcordtoolbox.reports.qc import generate_qc
+from spinalcordtoolbox.moco.dl.inference import moco_dl, check_dl_args
 
 
 def get_parser():
@@ -31,6 +32,7 @@ def get_parser():
               - slice-wise regularized along z using polynomial function (`-param poly`). For more info about the method, type: `isct_antsSliceRegularizedRegistration`
               - masking (`-m`)
               - iterative averaging of target volume
+              - Optional DL-based motion correction (DenseRigidNet, via -mocodl)
 
             The outputs of the motion correction process are:
 
@@ -129,6 +131,12 @@ def get_parser():
         metavar=Metavar.str,
         help="If provided, this string will be mentioned in the QC report as the subject the process was run on."
     )
+    optional.add_argument(
+        '-dl',
+        action='store_true',
+        help="Use deep learning–based motion correction (DenseRigidNet) with best-weights checkpoint. "
+             "Requires both -m mask and -ref reference."
+    )
 
     # Arguments which implement shared functionality
     parser.add_common_args()
@@ -172,8 +180,23 @@ def main(argv: Sequence[str]):
     if not (is_qc_none == is_seg_none):
         parser.error("Both '-qc' and '-qc-seg' are required in order to generate a QC report.")
 
-    # run moco
-    fname_output_image = moco_wrapper(param)
+    # Run moco
+    if arguments.dl:
+        try:
+            check_dl_args(argv)
+        except ValueError as e:
+            raise parser.error(str(e))
+
+        fname_output_image = moco_dl(
+            fname_data=param.fname_data,
+            fname_mask=param.fname_mask,
+            ofolder=param.path_out,
+            fname_ref=param.fname_ref,
+            mode="fmri"
+        )
+    else:
+        # Run SCT-based motion correction
+        fname_output_image = moco_wrapper(param)
 
     set_loglevel(verbose, caller_module_name=__name__)  # moco_wrapper changes verbose to 0, see issue #3341
 
