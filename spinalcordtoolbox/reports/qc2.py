@@ -946,6 +946,19 @@ def sct_label_utils(
         fig.savefig(str(imgs_to_generate['path_overlay_img']), format='png', transparent=True)
 
 
+def sct_deepseb(
+    fname_input: str,
+    fname_seg: str,
+    argv: Sequence[str],
+    path_qc: str,
+    dataset: str | None,
+    subject: str | None,
+    p_resample: float | None = None,
+):
+    pass
+    # TODO seb
+
+
 def add_slice_numbers(ax, num_slices, radius, margin: int = 2, reverse=False):
     """
     Overlay slice indices onto an Axial mosaic.
