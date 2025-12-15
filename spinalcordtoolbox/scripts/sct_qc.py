@@ -41,7 +41,8 @@ def get_parser():
         choices=('sct_propseg', 'sct_deepseg_sc', 'sct_deepseg_gm', 'sct_deepseg_lesion',
                  'sct_register_multimodal', 'sct_register_to_template', 'sct_warp_template',
                  'sct_label_vertebrae', 'sct_detect_pmj', 'sct_label_utils', 'sct_get_centerline',
-                 'sct_fmri_moco', 'sct_dmri_moco', 'sct_image_stitch', 'sct_fmri_compute_tsnr'))
+                 'sct_fmri_moco', 'sct_dmri_moco', 'sct_image_stitch', 'sct_fmri_compute_tsnr',
+                 'sct_deepseb'))
 
     optional = parser.optional_arggroup
     optional.add_argument(
@@ -143,6 +144,8 @@ def main(argv: Sequence[str]):
     elif arguments.p == 'sct_label_utils':
         del kwargs['fname_output']  # not used by this report
         qc2.sct_label_utils(command=arguments.p, **kwargs)
+    elif arguments.p == 'sct_deepseb':
+        qc2.sct_deepseb(**kwargs)
     else:
         generate_qc(fname_in1=arguments.i,
                     fname_in2=arguments.d,
