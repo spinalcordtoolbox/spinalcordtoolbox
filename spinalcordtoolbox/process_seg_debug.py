@@ -8,14 +8,16 @@ License: see the file LICENSE
 import os
 import logging
 import math
-import matplotlib.pyplot as plt
-from matplotlib.patches import Ellipse
-from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
-from matplotlib.figure import Figure
 import numpy as np
 import skimage
 
 from spinalcordtoolbox.registration.algorithms import compute_pca
+from spinalcordtoolbox.utils.sys import LazyLoader
+
+plt = LazyLoader("plt", globals(), "matplotlib.pyplot")
+mpl_backend_agg = LazyLoader("mpl_backend_agg", globals(), "matplotlib.backends.backend_agg")
+mpl_figure = LazyLoader("mpl_figure", globals(), "matplotlib.figure")
+mpl_patches = LazyLoader("mpl_patches", globals(), "matplotlib.patches")
 
 
 def create_regularized_hog_angle_plot(
@@ -63,8 +65,8 @@ def create_quadrant_area_plots(
     posterior_mask = post_r_mask | post_l_mask  # Posterior half (right + left posterior)
 
     # Create figure with 1x3 subplots
-    fig = Figure(figsize=(18, 6))
-    FigureCanvas(fig)
+    fig = mpl_figure.Figure(figsize=(18, 6))
+    mpl_backend_agg.FigureCanvasAgg(fig)
 
     # ---------------------------------
     # Plot 1: Quadrants
@@ -181,7 +183,7 @@ def create_ap_diameter_plots(angle_hog, ap0_r, ap_diameter, dim, iz, properties,
 
     def _add_ellipse(ax, x0, y0):
         """Add an ellipse to the plot."""
-        ellipse = Ellipse(
+        ellipse = mpl_patches.Ellipse(
             (x0, y0),
             width=properties['diameter_AP_ellipse'] / dim[0],
             height=properties['diameter_RL'] / dim[1],

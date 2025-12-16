@@ -19,7 +19,6 @@ from warnings import warn
 from spinalcordtoolbox.utils.sys import stylize
 from time import sleep
 import numpy as np
-from matplotlib.ticker import MaxNLocator
 
 from spinalcordtoolbox.reports import qc2
 from spinalcordtoolbox.aggregate_slicewise import aggregate_per_slice_or_level, save_as_csv, func_wa, func_std, \
@@ -39,6 +38,7 @@ from spinalcordtoolbox.utils.shell import (ActionCreateFolder, Metavar, SCTArgum
 from spinalcordtoolbox.utils.sys import __data_dir__, LazyLoader
 
 pd = LazyLoader("pd", globals(), "pandas")
+mpl_ticker = LazyLoader("mpl_ticker", globals(), "matplotlib.ticker")
 
 logger = logging.getLogger(__name__)
 
@@ -369,7 +369,7 @@ def _make_figure(metric, fit_results):
         ax.grid(True)
         ax.set_ylabel('CSA [$mm^2$]')
         ax.set_xticklabels([])
-        ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+        ax.xaxis.set_major_locator(mpl_ticker.MaxNLocator(integer=True))
 
         ax = fig.add_subplot(312)
         ax.grid(True)
@@ -380,7 +380,7 @@ def _make_figure(metric, fit_results):
         ax.legend(['Rotation about AP axis', 'Rotation about RL axis'])
         ax.set_ylabel('Angle [$deg$]')
         ax.set_xticklabels([])
-        ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+        ax.xaxis.set_major_locator(mpl_ticker.MaxNLocator(integer=True))
 
         ax = fig.add_subplot(313)
         ax.grid(True)
@@ -400,7 +400,7 @@ def _make_figure(metric, fit_results):
         ax.plot(zref_list, yfit_list, 'r')
         ax.legend(['Fitted (RL)', 'Fitted (AP)'])
         ax.set_ylabel('Centerline [$vox$]')
-        ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+        ax.xaxis.set_major_locator(mpl_ticker.MaxNLocator(integer=True))
     else:
         ax = fig.add_subplot(111)
         ax.plot(z, csa, 'k')
