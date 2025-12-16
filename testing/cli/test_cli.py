@@ -42,7 +42,6 @@ def test_importing_scripts_avoids_expensive_modules(script):
         'nibabel',
         'nilearn',
         'pandas',
-        'scipy.ndimage',
         'scipy.signal',
         'scipy.stats',
         'sklearn',

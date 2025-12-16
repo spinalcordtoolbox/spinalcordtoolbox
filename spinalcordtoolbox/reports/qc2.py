@@ -20,6 +20,7 @@ from typing import Optional, Sequence
 
 import numpy as np
 import skimage.exposure
+from scipy import ndimage
 
 from spinalcordtoolbox.centerline.core import get_centerline, ParamCenterline
 from spinalcordtoolbox.cropping import ImageCropper, BoundingBox
@@ -42,7 +43,6 @@ mpl_backend_agg = LazyLoader("mpl_backend_agg", globals(), "matplotlib.backends.
 mpl_patheffects = LazyLoader("mpl_patheffects", globals(), "matplotlib.patheffects")
 mpl_collections = LazyLoader("mpl_collections", globals(), "matplotlib.collections")
 nib_orientations = LazyLoader("nib_orientations", globals(), "nibabel.orientations")
-ndimage = LazyLoader("ndimage", globals(), "scipy.ndimage")
 
 logger = logging.getLogger(__name__)
 

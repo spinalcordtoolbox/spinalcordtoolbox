@@ -20,6 +20,7 @@ from copy import deepcopy
 import numpy as np
 import pathlib
 from contrib import fslhd
+from scipy import ndimage
 
 import transforms3d.affines as affines
 
@@ -27,7 +28,6 @@ from spinalcordtoolbox.types import Coordinate
 from spinalcordtoolbox.utils.fs import extract_fname, mv, tmp_create
 from spinalcordtoolbox.utils.sys import run_proc, LazyLoader
 
-ndimage = LazyLoader("ndimage", globals(), "scipy.ndimage")
 nib = LazyLoader("nib", globals(), "nibabel")
 
 logger = logging.getLogger(__name__)
