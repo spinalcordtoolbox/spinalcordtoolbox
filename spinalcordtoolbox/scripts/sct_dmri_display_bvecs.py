@@ -9,15 +9,15 @@ import sys
 from typing import Sequence
 
 import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.lines import Line2D
-from matplotlib import cm
 
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel, LazyLoader
 from spinalcordtoolbox.utils.shell import Metavar, SCTArgumentParser
 
 fetcher = LazyLoader("fetcher", globals(), 'dipy.data.fetcher')
 pd = LazyLoader("pd", globals(), "pandas")
+mpl_plt = LazyLoader("mpl_plt", globals(), "matplotlib.pyplot")
+mpl_lines = LazyLoader("mpl_lines", globals(), "matplotlib.lines")
+mpl_cm = LazyLoader("mpl_cm", globals(), "matplotlib.cm")
 
 BZERO_THRESH = 0.0001  # b-zero threshold
 
@@ -53,12 +53,12 @@ def plot_2dscatter(fig_handle=None, subplot=None, x=None, y=None, xlabel='X', yl
         # if b=0, do not plot
         if not (abs(x[i]) < BZERO_THRESH and abs(x[i]) < BZERO_THRESH):
             ax.scatter(x[i], y[i], color=colors[bvals[i]], alpha=0.7)
-    # plt.axis('equal')
-    plt.xlabel(xlabel)
-    plt.ylabel(ylabel)
-    plt.xlim([-max(bvals), max(bvals)])
-    plt.ylim([-max(bvals), max(bvals)])
-    plt.grid()
+    # mpl_plt.axis('equal')
+    mpl_plt.xlabel(xlabel)
+    mpl_plt.ylabel(ylabel)
+    mpl_plt.xlim([-max(bvals), max(bvals)])
+    mpl_plt.ylim([-max(bvals), max(bvals)])
+    mpl_plt.grid()
 
 
 def create_custom_legend(fig, shell_colors, bvals):
@@ -76,15 +76,15 @@ def create_custom_legend(fig, shell_colors, bvals):
 
     # Create single custom legend for whole figure with several subplots
     # Loop across legend elements
-    lines = [Line2D([0], [0], color=color, marker='o', markersize=8, alpha=0.7, linestyle='')
+    lines = [mpl_lines.Line2D([0], [0], color=color, marker='o', markersize=8, alpha=0.7, linestyle='')
              for color in shell_colors.values()]
     labels = [f'b-values = {shell} (n = {bvals_per_shell[shell]})'
               for shell in shell_colors.keys()]
 
-    # Insert legend below subplots, NB - this line has to be run after the plt.tight_layout() which is called before
+    # Insert legend below subplots, NB - this line has to be run after the mpl_plt.tight_layout() which is called before
     # function call
     legend = fig.legend(lines, labels, loc='lower left', bbox_to_anchor=(0.1, 0),
-                        bbox_transform=plt.gcf().transFigure, ncol=3, fontsize=10)
+                        bbox_transform=mpl_plt.gcf().transFigure, ncol=3, fontsize=10)
     # Change box's frame color to black
     frame = legend.get_frame()
     frame.set_edgecolor('black')
@@ -117,7 +117,7 @@ def main(argv: Sequence[str]):
     # Set different color for each shell (bval)
     shell_colors = {}
     # Create iterator with different colors from brg palette
-    colors = iter(cm.nipy_spectral(np.linspace(0, 1, len(np.unique(bvals)))))
+    colors = iter(mpl_cm.nipy_spectral(np.linspace(0, 1, len(np.unique(bvals)))))
     for unique_bval in np.unique(bvals):
         # skip b=0
         if unique_bval < BZERO_THRESH:
@@ -147,7 +147,7 @@ def main(argv: Sequence[str]):
     n_dir_eff = len(bvecs_eff)
 
     # Display scatter plot
-    fig = plt.figure(facecolor='white', figsize=(9, 8))
+    fig = mpl_plt.figure(facecolor='white', figsize=(9, 8))
     fig.suptitle('Number of b=0: ' + str(n_b0) + ', Number of b!=0: ' + str(n_dir - n_b0) +
                  ', Number of effective directions (without duplicates): ' + str(n_dir_eff))
 
@@ -170,19 +170,19 @@ def main(argv: Sequence[str]):
     ax.set_xlabel('X')
     ax.set_ylabel('Y')
     ax.set_zlabel('Z')
-    plt.title('3D view (use mouse to rotate)')
-    plt.axis('on')
-    # plt.draw()
+    mpl_plt.title('3D view (use mouse to rotate)')
+    mpl_plt.axis('on')
+    # mpl_plt.draw()
 
-    plt.tight_layout()
+    mpl_plt.tight_layout()
     # add legend with b-values if bvals file was passed
     if arguments.bval is not None:
         create_custom_legend(fig, shell_colors, bvals)
 
     # Save image
     printv("Saving figure: bvecs.png\n")
-    plt.savefig('bvecs.png')
-    # plt.show()
+    mpl_plt.savefig('bvecs.png')
+    # mpl_plt.show()
 
 
 if __name__ == "__main__":
