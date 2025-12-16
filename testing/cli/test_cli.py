@@ -1,6 +1,8 @@
 # pytest unit tests for all cli scripts
 
 import pytest
+import sys
+import importlib
 from importlib.metadata import entry_points
 import subprocess
 
@@ -24,3 +26,50 @@ def test_calling_scripts_with_no_args_shows_usage(capsys, script):
     completed_process = subprocess.run([script], capture_output=True)
     assert completed_process.returncode == 2
     assert b'usage' in completed_process.stderr
+
+
+@pytest.mark.parametrize("script", scripts_to_test)
+def test_importing_scripts_avoids_expensive_modules(script):
+    """
+    Test that importing SCT's scripts does not import expensive modules like numpy or scipy.
+    This ensures that lazy loading is working correctly.
+    """
+    # NB: The list of expensive modules comes from the modules we're already lazy-loading. The thought process is that
+    #     if we're lazy-loading that module somewhere, we should do it everywhere consistently.
+    expensive_modules = [
+        'dipy',
+        'matplotlib',
+        'nibabel',
+        'nilearn',
+        'pandas',
+        'scipy.ndimage',
+        'scipy.signal',
+        'scipy.stats',
+        'sklearn',
+        'torch',
+        'voxelmorph',
+    ]
+
+    # Wipe `sys.modules` of expensive modules to force reimports
+    for m in list(sys.modules.keys()):
+        for em in expensive_modules:
+            if m.startswith(em):
+                del sys.modules[m]
+
+    # Import the script module
+    before = set(sys.modules.keys())
+    importlib.import_module(f"spinalcordtoolbox.scripts.{script}")
+    after = set(sys.modules.keys())
+
+    # Clear the imported modules to keep things clean for the next test
+    imported_modules = after - before
+    for im in imported_modules:
+        del sys.modules[im]
+
+    # Check that expensive modules are not in sys.modules
+    found_modules = []
+    for em in expensive_modules:
+        if any(im.startswith(em) for im in imported_modules):
+            found_modules.append(em)
+    if found_modules:
+        pytest.fail(f"Expensive modules found while importing {script}. Please lazy-load these modules: {found_modules}")
