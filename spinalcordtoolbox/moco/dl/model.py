@@ -5,11 +5,9 @@
 # Copyright (c) 2025 Polytechnique Montreal <www.neuro.polymtl.ca>
 # License: see the file LICENSE
 
-from spinalcordtoolbox.utils.sys import LazyLoader
-
-torch = LazyLoader("torch", globals(), "torch")
-nn = LazyLoader("nn", globals(), "torch.nn")
-monai_blocks = LazyLoader("monai_blocks", globals(), "monai.networks.blocks")
+import torch
+import torch.nn as nn
+from monai.networks.blocks import Warp
 
 
 # -----------------------------
@@ -125,7 +123,7 @@ class RigidWarp(nn.Module):
     """
     def __init__(self, mode="bilinear", padding_mode="border"):
         super().__init__()
-        self.warper = monai_blocks.Warp(mode=mode, padding_mode=padding_mode)
+        self.warper = Warp(mode=mode, padding_mode=padding_mode)
 
     def build_field(self, Tx, Ty, vol):
         """
