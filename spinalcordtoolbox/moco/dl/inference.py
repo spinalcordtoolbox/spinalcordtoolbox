@@ -13,7 +13,8 @@ import numpy as np
 from spinalcordtoolbox.math import smooth
 from spinalcordtoolbox.image import add_suffix, generate_output_file, Image
 from spinalcordtoolbox.scripts import sct_dmri_separate_b0_and_dwi
-from spinalcordtoolbox.utils.sys import sct_dir_local_path, LazyLoader
+from spinalcordtoolbox.utils.sys import sct_dir_local_path, LazyLoader, printv
+from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, rmtree
 
 torch = LazyLoader("torch", globals(), "torch")
 ski_exposure = LazyLoader("ski_exposure", globals(), "skimage.exposure")
@@ -43,12 +44,12 @@ def check_dl_args(argv):
         )
 
 
-def moco_dl(fname_data, fname_mask, ofolder, mode="fmri", fname_ref=None, fname_bvals=None, fname_bvecs=None):
+def moco_dl(fname_data, fname_mask, path_out, mode="fmri", fname_ref='', fname_bvals='', fname_bvecs=''):
     """
         Deep-learning motion correction (DenseRigidNet) for dMRI/fMRI.
     """
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    os.makedirs(ofolder, exist_ok=True)
+    os.makedirs(path_out, exist_ok=True)
 
     ckpt_path = sct_dir_local_path("data", "moco-dl_models", f"{mode}.ckpt")
     if not os.path.exists(ckpt_path):
@@ -60,7 +61,7 @@ def moco_dl(fname_data, fname_mask, ofolder, mode="fmri", fname_ref=None, fname_
         Input parameters (DL-based motion correction):
         ----------------------------------------------------
         Input file:            {fname_data}
-        Output folder:         {os.path.abspath(ofolder)}
+        Output folder:         {os.path.abspath(path_out)}
         Mode:                  {mode}
         Mask:                  {fname_mask if fname_mask else 'None'}
         Reference image:       {fname_ref if fname_ref else 'first volume of input (t=0)'}
@@ -68,22 +69,38 @@ def moco_dl(fname_data, fname_mask, ofolder, mode="fmri", fname_ref=None, fname_
         bvals (dmri only):     {fname_bvals if fname_bvals else 'None'}
     """))
 
-    # Load image
-    mov_img = Image(fname_data)
-    mov_img.change_orientation('RPI')
-    mov_np = mov_img.data.astype(np.float32)
-    affine, header = mov_img.affine, mov_img.header
+    # Create tmp folder
+    path_tmp = tmp_create(basename="moco-dl")
 
-    mask_img = Image(fname_mask)
-    mask_img.change_orientation('RPI')
-    mask_np = mask_img.data.astype(np.float32)
+    # Copying input data to tmp folder
+    printv("\nCopying input data to tmp folder...")
+    im_data = Image(fname_data)
+    affine, header = im_data.affine, im_data.header
+    im_data.save(os.path.join(path_tmp))
+    mov_img = Image(im_data).data.astype(np.float32)
+    if fname_mask != '':
+        im_mask = Image(fname_mask)
+        im_mask.save(os.path.join(path_tmp))
+        mask_img = Image(im_mask).data.astype(np.float32)
+    if fname_ref != '':
+        im_ref = Image(fname_ref)
+        im_ref.save(os.path.join(path_tmp))
+        ref_img = Image(im_ref).data.astype(np.float32)
+    if fname_bvals != '':
+        _, _, ext_bvals = extract_fname(fname_bvals)
+        file_bvals = f"bvals.{ext_bvals}"  # Use hardcoded name to avoid potential duplicate files when copying
+        copyfile(fname_bvals, os.path.join(path_tmp, file_bvals))
+        fname_bvals = file_bvals
+    if fname_bvecs != '':
+        _, _, ext_bvecs = extract_fname(fname_bvecs)
+        file_bvecs = f"bvecs.{ext_bvecs}"  # Use hardcoded name to avoid potential duplicate files when copying
+        copyfile(fname_bvecs, os.path.join(path_tmp, file_bvecs))
+        fname_bvecs = file_bvecs
 
-    if fname_ref:
-        ref_img = Image(fname_ref)
-        ref_img.change_orientation('RPI')
-        ref_np = ref_img.data.astype(np.float32)
-    else:
-        ref_np = mov_np[..., 0]
+    # Build absolute output path and go to tmp folder
+    curdir = os.getcwd()
+    path_out_abs = os.path.abspath(path_out)
+    os.chdir(path_tmp)
 
     # Load DL model
     print(f"[moco-dl] Loading checkpoint: {ckpt_path}")
@@ -94,9 +111,9 @@ def moco_dl(fname_data, fname_mask, ofolder, mode="fmri", fname_ref=None, fname_
     model.eval()
     model.warp = moco_dl_model.RigidWarp(mode="bilinear")
 
-    moving = torch.from_numpy(mov_np).unsqueeze(0).unsqueeze(0).to(device)
-    fixed = torch.from_numpy(ref_np).unsqueeze(0).unsqueeze(0).to(device)
-    mask = torch.from_numpy(mask_np).unsqueeze(0).unsqueeze(0).to(device)
+    moving = torch.from_numpy(mov_img).unsqueeze(0).unsqueeze(0).to(device)
+    fixed = torch.from_numpy(ref_img).unsqueeze(0).unsqueeze(0).to(device)
+    mask = torch.from_numpy(mask_img).unsqueeze(0).unsqueeze(0).to(device)
 
     # Run inference
     start_time = time.time()
@@ -118,8 +135,8 @@ def moco_dl(fname_data, fname_mask, ofolder, mode="fmri", fname_ref=None, fname_
     for t in range(T):
         for d in range(D):
             img_warped = warped[..., d, t]
-            img_raw = mov_np[..., d, t]
-            mask_slice = mask_np[..., d]
+            img_raw = mov_img[..., d, t]
+            mask_slice = mask_img[..., d]
 
             if np.count_nonzero(mask_slice) == 0:
                 sharpened[..., d, t] = img_warped
@@ -136,34 +153,25 @@ def moco_dl(fname_data, fname_mask, ofolder, mode="fmri", fname_ref=None, fname_
     for t in range(T):
         matched[..., t] = ski_exposure.match_histograms(
             sharpened[..., t].astype(np.float32),
-            mov_np[..., t].astype(np.float32)
+            mov_img[..., t].astype(np.float32)
         )
 
     # Save Moco output
-    tmp_main = os.path.join(ofolder, "tmp_mocoDL.nii.gz")
-    im_main = Image(matched, hdr=header)
-    im_main.affine = affine
-    im_main.save(tmp_main)
-
-    base_output = add_suffix(fname_data, "_mocoDL")
-    fname_moco = generate_output_file(tmp_main, os.path.join(ofolder, base_output))
+    im_moco = Image(matched, hdr=header)
+    im_moco.affine = affine
+    fname_moco_tmp = os.path.join(path_tmp, "mocoDL.nii.gz")
+    im_moco.save(fname_moco_tmp)
 
     # Save mean output
     print("[moco-dl] Computing time-averaged output volume...")
     if mode == "dmri":
-        args = ['-i', fname_moco, '-bvec', fname_bvecs, '-a', '1', '-v', '0']
+        args = ['-i', fname_moco_tmp, '-bvec', fname_bvecs, '-a', '1', '-v', '0']
         if fname_bvals:
             args += ['-bval', fname_bvals]
-
         _, fname_b0_mean, _, fname_dwi_mean = sct_dmri_separate_b0_and_dwi.main(argv=args)
-
-        generate_output_file(fname_b0_mean, add_suffix(fname_moco, "_b0_mean"))
-        generate_output_file(fname_dwi_mean, add_suffix(fname_moco, "_dwi_mean"))
     else:
-        mean_vol = np.mean(matched, axis=3)
-        tmp_mean = os.path.join(ofolder, "tmp_mean.nii.gz")
-        Image(mean_vol, hdr=header).save(tmp_mean)
-        generate_output_file(tmp_mean, add_suffix(fname_moco, "_mean"))
+        fname_moco_mean = add_suffix(fname_moco_tmp, '_mean')
+        im_moco.mean(dim=3).save(fname_moco_mean)
 
     # Save Tx, Ty, and displacement fields
     print("[moco-dl] Saving translation params...")
@@ -173,39 +181,46 @@ def moco_dl(fname_data, fname_mask, ofolder, mode="fmri", fname_ref=None, fname_
 
     im_Tx = Image(Tx[np.newaxis, np.newaxis, ...], hdr=header)
     im_Tx.hdr.set_data_shape(im_Tx.data.shape)
-    im_Tx.save(Tx_img_path_tmp)
+    tx_tmp = os.path.join(path_tmp, "Tx.nii.gz")
+    im_Tx.save(tx_tmp)
     im_Ty = Image(Ty[np.newaxis, np.newaxis, ...], hdr=header)
     im_Ty.hdr.set_data_shape(im_Ty.data.shape)
-    im_Ty.save(Ty_img_path_tmp)
-
-    generate_output_file(Tx_img_path_tmp, add_suffix(fname_moco, "_Tx"))
-    generate_output_file(Ty_img_path_tmp, add_suffix(fname_moco, "_Ty"))
+    ty_tmp = os.path.join(path_tmp, "Ty.nii.gz")
+    im_Ty.save(ty_tmp)
 
     # Save 5D dispfield
-    print("[moco-dl] Saving displacement fields...")
+    printv("\n[moco-dl] Saving displacement fields...")
     disp5D = np.moveaxis(flow, 0, -1)  # (H,W,D,T,3)
-    tmp_disp5D = os.path.join(ofolder, "tmp_dispfield5D.nii.gz")
-
     im_disp5D = Image(disp5D, hdr=header)
     im_disp5D.hdr.set_data_shape(disp5D.shape)
     im_disp5D.hdr.set_intent('vector', (), '')
     im_disp5D.affine = affine
-    im_disp5D.save(tmp_disp5D)
+    disp_tmp = os.path.join(path_tmp, "displacement-field.nii.gz")
+    im_disp5D.save(disp_tmp)
 
-    generate_output_file(tmp_disp5D, add_suffix(fname_moco, "_dispfield-all"))
+    # Generate output files
+    printv('\nGenerate output files...')
+    # motion corrected data
+    fname_moco = os.path.join(path_out_abs, add_suffix(os.path.basename(fname_data), "_mocoDL"))
+    generate_output_file(fname_moco_tmp, fname_moco)
+    # mean volume
+    if mode == "dmri":
+        generate_output_file(fname_b0_mean, add_suffix(fname_moco, "_b0_mean"))
+        generate_output_file(fname_dwi_mean, add_suffix(fname_moco, "_dwi_mean"))
+    else:
+        generate_output_file(fname_moco_mean, add_suffix(fname_moco, "_mean"))
+    # rigid translation parameter (Tx, Ty)
+    generate_output_file(tx_tmp, add_suffix(fname_moco, "_Tx"))
+    generate_output_file(ty_tmp, add_suffix(fname_moco, "_Ty"))
+    # 5D displacement field
+    generate_output_file(disp_tmp, add_suffix(fname_moco, "_dispfield"))
 
-    # Save per-timepoint displacement fields
-    disp_dir = os.path.join(ofolder, "dispfield")
-    os.makedirs(disp_dir, exist_ok=True)
+    # Delete temporary files
+    printv('\nDelete temporary files...')
+    rmtree(path_tmp)
 
-    print("[moco-dl] Saving displacement fields per timepoint...")
-    for t in range(T):
-        disp_t = disp5D[..., t, :]  # (H,W,D,3)
-        im_disp_t = Image(disp_t, hdr=header)
-        im_disp_t.hdr.set_data_shape(disp_t.shape)
-        im_disp_t.hdr.set_intent('vector', (), '')
-        im_disp_t.affine = affine
-        im_disp_t.save(os.path.join(disp_dir, f"warp_t{t:04d}.nii.gz"))
+    # come back to working directory
+    os.chdir(curdir)
 
-    print(f"[moco-dl] Outputs saved in: {os.path.abspath(ofolder)}")
+    printv(f"\n[moco-dl] Outputs saved in: {os.path.abspath(path_out)}")
     return fname_moco
