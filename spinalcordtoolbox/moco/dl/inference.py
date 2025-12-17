@@ -14,10 +14,10 @@ from spinalcordtoolbox.math import smooth
 from spinalcordtoolbox.image import add_suffix, generate_output_file, Image
 from spinalcordtoolbox.scripts import sct_dmri_separate_b0_and_dwi
 from spinalcordtoolbox.utils.sys import sct_dir_local_path, LazyLoader
-from spinalcordtoolbox.moco.dl.model import DenseRigidReg, RigidWarp
 
 torch = LazyLoader("torch", globals(), "torch")
 ski_exposure = LazyLoader("ski_exposure", globals(), "skimage.exposure")
+moco_dl_model = LazyLoader("moco_dl_model", globals(), "spinalcordtoolbox.moco.dl.model")
 
 
 def check_dl_args(argv):
@@ -87,12 +87,12 @@ def moco_dl(fname_data, fname_mask, ofolder, mode="fmri", fname_ref=None, fname_
 
     # Load DL model
     print(f"[moco-dl] Loading checkpoint: {ckpt_path}")
-    model = DenseRigidReg()
+    model = moco_dl_model.DenseRigidReg()
     state = torch.load(ckpt_path, map_location=device)
     model.load_state_dict(state["state_dict"])
     model = model.to(device)
     model.eval()
-    model.warp = RigidWarp(mode="bilinear")
+    model.warp = moco_dl_model.RigidWarp(mode="bilinear")
 
     moving = torch.from_numpy(mov_np).unsqueeze(0).unsqueeze(0).to(device)
     fixed = torch.from_numpy(ref_np).unsqueeze(0).unsqueeze(0).to(device)
