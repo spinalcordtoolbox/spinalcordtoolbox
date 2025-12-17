@@ -102,14 +102,17 @@ def project_rootlets_to_segmentation(fname_seg, fname_rootlets, fname_intersect,
     im_ctl_data = ctl_projected.data
     min_level = min(rootlets_levels)
     max_level = max(rootlets_levels)
-    im_ctl_data[:, :, :start_end_slices[max_level]['start']] = 0  # Set everything below to zero
+    # Find index of start and end slices of min and max levels on projected centerline,
+    # since with projection, they may have changed compared to original segmentation
+    max_level_start = np.min(np.where(im_ctl_data == max_level)[2])
+    im_ctl_data[:, :, :(max_level_start)] = 0  # Set everything below to zero
     im_ctl_data[:, :, start_end_slices[min_level]['end']:] = 0  # Set everything above to zero
     ctl_projected.data = im_ctl_data
     fname_ctl_projected = add_suffix(fname_rostral_com_add1, '_projected_centerline_masked')
     ctl_projected.save(fname_ctl_projected, mutable=True)
     # Do the same thing on seg_projected:
     im_seg_data = seg_projected.data
-    im_seg_data[:, :, :start_end_slices[max_level]['start']] = 0  # Set everything below to zero
+    im_seg_data[:, :, :(max_level_start)] = 0  # Set everything below to zero
     im_seg_data[:, :, start_end_slices[min_level]['end']:] = 0  # Set everything above to zero
     seg_projected.data = im_seg_data
     fname_seg_projected = add_suffix(fname_rostral_com_add1, '_projected_seg_masked')

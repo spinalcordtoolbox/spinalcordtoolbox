@@ -189,7 +189,7 @@ def get_parser(ascor=False):
         """),
     )
     optional.add_argument(
-        '-rootlet',
+        '-rootlet',  # TODO: consider adding QC report with spinal levels from rootlets
         metavar=Metavar.str,
         help=textwrap.dedent("""
             Dorsal and ventral nerve rootlets segmentation. Example: `anat_rootlets.nii.gz`
