@@ -24,10 +24,10 @@ moco_dl_model = LazyLoader("moco_dl_model", globals(), "spinalcordtoolbox.moco.d
 def check_dl_args(argv):
     # mask (-m) is mandatory for DL module
     if "-m" not in argv:
-        raise ValueError("[moco-dl] Missing required argument: -m <mask>. A spinal cord mask is required for DL-based motion correction.")
+        raise ValueError("\n[moco-dl] Missing required argument: -m <mask>. A spinal cord mask is required for DL-based motion correction.")
 
     if "-ref" not in argv:
-        print("[WARNING] No -ref provided. DL module will use the first volume (t=0) of input as reference.")
+        raise ValueError("\n[moco-dl] Missing required argument: -ref <reference>. A target image (3D or 4D) is required for DL-based motion correction.")
 
     # check if the raw user arguments contain any forbidden args
     forbidden = []
@@ -44,7 +44,7 @@ def check_dl_args(argv):
         )
 
 
-def moco_dl(fname_data, fname_mask, path_out, mode="fmri", fname_ref='', fname_bvals='', fname_bvecs=''):
+def moco_dl(fname_data, fname_mask='', fname_ref='', path_out='', mode="fmri", fname_bvals='', fname_bvecs=''):
     """
         Deep-learning motion correction (DenseRigidNet) for dMRI/fMRI.
     """
@@ -63,10 +63,10 @@ def moco_dl(fname_data, fname_mask, path_out, mode="fmri", fname_ref='', fname_b
         Input file:            {fname_data}
         Output folder:         {os.path.abspath(path_out)}
         Mode:                  {mode}
-        Mask:                  {fname_mask if fname_mask else 'None'}
-        Reference image:       {fname_ref if fname_ref else 'first volume of input (t=0)'}
-        bvecs (dmri only):     {fname_bvecs if fname_bvecs else 'None'}
-        bvals (dmri only):     {fname_bvals if fname_bvals else 'None'}
+        Mask:                  {fname_mask if fname_mask != '' else 'None'}
+        Reference image:       {fname_ref if fname_ref != '' else 'None'}
+        bvecs (dmri only):     {fname_bvecs}
+        bvals (dmri only):     {fname_bvals}
     """))
 
     # Create tmp folder

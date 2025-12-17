@@ -104,6 +104,7 @@ def get_parser():
     optional.add_argument(
         '-ref',
         metavar=Metavar.file,
+        default=param_default.fname_ref,
         help="Reference volume for motion correction, e.g., mean DWI or mean b=0 volume."
     )
     optional.add_argument(
@@ -197,8 +198,7 @@ def main(argv: Sequence[str]):
     param.bval_min = arguments.bvalmin
     param.group_size = arguments.g
     param.fname_mask = arguments.m
-    if arguments.ref is not None:
-        param.fname_ref = arguments.ref
+    param.fname_ref = arguments.ref
     param.interp = arguments.x
     param.path_out = arguments.ofolder
     param.remove_temp_files = arguments.r
@@ -227,7 +227,7 @@ def main(argv: Sequence[str]):
         fname_output_image = moco_dl(
             fname_data=param.fname_data,
             fname_mask=param.fname_mask,
-            ofolder=param.path_out,
+            path_out=param.path_out,
             fname_ref=param.fname_ref,
             fname_bvecs=param.fname_bvecs,
             fname_bvals=param.fname_bvals,

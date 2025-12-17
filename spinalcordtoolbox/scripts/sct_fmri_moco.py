@@ -62,12 +62,14 @@ def get_parser():
     optional.add_argument(
         '-m',
         metavar=Metavar.file,
+        default=param_default.fname_mask,
         help="Binary mask to limit voxels considered by the registration metric. You may also provide a softmask "
              "(nonbinary, [0, 1]), and it will be binarized at 0.5."
     )
     optional.add_argument(
         '-ref',
         metavar=Metavar.file,
+        default=param_default.fname_ref,
         help="Reference volume for motion correction, for example the mean fMRI volume."
     )
     optional.add_argument(
@@ -161,10 +163,8 @@ def main(argv: Sequence[str]):
     param.interp = arguments.x
     if arguments.g is not None:
         param.group_size = arguments.g
-    if arguments.m is not None:
-        param.fname_mask = arguments.m
-    if arguments.ref is not None:
-        param.fname_ref = arguments.ref
+    param.fname_mask = arguments.m
+    param.fname_ref = arguments.ref
     if arguments.param is not None:
         param.update(arguments.param)
     param.verbose = verbose
@@ -190,7 +190,7 @@ def main(argv: Sequence[str]):
         fname_output_image = moco_dl(
             fname_data=param.fname_data,
             fname_mask=param.fname_mask,
-            ofolder=param.path_out,
+            path_out=param.path_out,
             fname_ref=param.fname_ref,
             mode="fmri"
         )
