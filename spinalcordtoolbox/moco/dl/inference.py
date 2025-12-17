@@ -9,6 +9,7 @@ import os
 import time
 import textwrap
 import numpy as np
+from shutil import copyfile
 
 from spinalcordtoolbox.math import smooth
 from spinalcordtoolbox.image import add_suffix, generate_output_file, Image
@@ -53,11 +54,11 @@ def moco_dl(fname_data, fname_mask='', fname_ref='', path_out='', mode="fmri", f
 
     ckpt_path = sct_dir_local_path("data", "moco-dl_models", f"{mode}.ckpt")
     if not os.path.exists(ckpt_path):
-        raise FileNotFoundError(f"[moco-dl] Checkpoint not found: {ckpt_path}")
+        raise FileNotFoundError(f"\n[moco-dl] Checkpoint not found: {ckpt_path}")
 
-    print("\n[INFO] Running DL-based motion correction (DenseRigidNet)...\n")
+    printv("\n[INFO] Running DL-based motion correction (DenseRigidNet)...\n")
     # Display parameter summary
-    print(textwrap.dedent(f"""
+    printv(textwrap.dedent(f"""
         Input parameters (DL-based motion correction):
         ----------------------------------------------------
         Input file:            {fname_data}
@@ -103,7 +104,7 @@ def moco_dl(fname_data, fname_mask='', fname_ref='', path_out='', mode="fmri", f
     os.chdir(path_tmp)
 
     # Load DL model
-    print(f"[moco-dl] Loading checkpoint: {ckpt_path}")
+    printv(f"\n[moco-dl] Loading checkpoint: {ckpt_path}")
     model = moco_dl_model.DenseRigidReg()
     state = torch.load(ckpt_path, map_location=device)
     model.load_state_dict(state["state_dict"])
@@ -117,12 +118,12 @@ def moco_dl(fname_data, fname_mask='', fname_ref='', path_out='', mode="fmri", f
 
     # Run inference
     start_time = time.time()
-    print("[moco-dl] Starting inference...")
+    printv("\n[moco-dl] Starting inference...")
     with torch.no_grad():
         warped, flow, Tx, Ty = model(moving, fixed, mask)
 
     inference_time = time.time() - start_time
-    print(f"Inference time: {inference_time:.2f} sec")
+    printv(f"\nInference time: {inference_time:.2f} sec")
 
     warped = warped.squeeze().cpu().numpy()  # (H,W,D,T)
     flow = flow.squeeze().cpu().numpy()
@@ -163,7 +164,7 @@ def moco_dl(fname_data, fname_mask='', fname_ref='', path_out='', mode="fmri", f
     im_moco.save(fname_moco_tmp)
 
     # Save mean output
-    print("[moco-dl] Computing time-averaged output volume...")
+    printv("\n[moco-dl] Computing time-averaged output volume...")
     if mode == "dmri":
         args = ['-i', fname_moco_tmp, '-bvec', fname_bvecs, '-a', '1', '-v', '0']
         if fname_bvals:
@@ -174,11 +175,7 @@ def moco_dl(fname_data, fname_mask='', fname_ref='', path_out='', mode="fmri", f
         im_moco.mean(dim=3).save(fname_moco_mean)
 
     # Save Tx, Ty, and displacement fields
-    print("[moco-dl] Saving translation params...")
-
-    Tx_img_path_tmp = os.path.join(ofolder, "tmp_Tx.nii.gz")
-    Ty_img_path_tmp = os.path.join(ofolder, "tmp_Ty.nii.gz")
-
+    printv("\n[moco-dl] Saving translation params...")
     im_Tx = Image(Tx[np.newaxis, np.newaxis, ...], hdr=header)
     im_Tx.hdr.set_data_shape(im_Tx.data.shape)
     tx_tmp = os.path.join(path_tmp, "Tx.nii.gz")
