@@ -32,7 +32,7 @@ def get_parser():
               - slice-wise regularized along z using polynomial function (`-param poly`). For more info about the method, type: `isct_antsSliceRegularizedRegistration`
               - masking (`-m`)
               - iterative averaging of target volume
-              - Optional DL-based motion correction (DenseRigidNet, via -mocodl)
+              - Optional DL-based motion correction (`-dl`)
 
             The outputs of the motion correction process are:
 
@@ -136,8 +136,14 @@ def get_parser():
     optional.add_argument(
         '-dl',
         action='store_true',
-        help="Use deep learning–based motion correction (DenseRigidNet) with best-weights checkpoint. "
-             "Requires both -m mask and -ref reference."
+        help="Use deep learning–based motion correction (DenseNet) with the best-weights checkpoint.\n"
+             "Requires both -m (binary spinal cord mask) and -ref (reference image).\n"
+             "  - The binary mask (3D) defines the spinal cord region used by the model to estimate motion within the mask. "
+             "It should be large enough to cover the full extent of the spinal cord in the image.\n"
+             "  - The reference image (3D) serves as the target to which all timepoints are aligned. "
+             "It is typically a representative or no-motion volume. "
+             "You may use the first volume or the mean volume of the input.\n"
+             "If either -m or -ref is not provided, the DL-based motion correction will fail."
     )
 
     # Arguments which implement shared functionality
