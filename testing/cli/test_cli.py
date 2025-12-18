@@ -28,8 +28,17 @@ def test_calling_scripts_with_no_args_shows_usage(capsys, script):
     assert b'usage' in completed_process.stderr
 
 
+@pytest.fixture
+def sandbox_modules():
+    """Fixture to keep sys.modules sandboxed by backing up and restoring its state."""
+    orig_modules = sys.modules.copy()
+    yield
+    sys.modules.clear()
+    sys.modules.update(orig_modules)
+
+
 @pytest.mark.parametrize("script", scripts_to_test)
-def test_importing_scripts_avoids_expensive_modules(script):
+def test_importing_scripts_avoids_expensive_modules(script, sandbox_modules):
     """
     Test that importing SCT's scripts does not import expensive modules like numpy or scipy.
     This ensures that lazy loading is working correctly.
@@ -60,12 +69,8 @@ def test_importing_scripts_avoids_expensive_modules(script):
     importlib.import_module(f"spinalcordtoolbox.scripts.{script}")
     after = set(sys.modules.keys())
 
-    # Clear the imported modules to keep things clean for the next test
-    imported_modules = after - before
-    for im in imported_modules:
-        del sys.modules[im]
-
     # Check that expensive modules are not in sys.modules
+    imported_modules = after - before
     found_modules = []
     for em in expensive_modules:
         if any(im.startswith(em) for im in imported_modules):
