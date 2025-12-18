@@ -1,5 +1,60 @@
 # Changelog
 
+## 7.2 (2025-11-28)
+[View detailed changelog](https://github.com/spinalcordtoolbox/spinalcordtoolbox/compare/7.1...7.2)
+
+**FEATURE**
+ - **sct_compute_ascor**: Add function to compute aSCOR. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/5007)
+ - **sct_deepseg**: Add new `-test-time-aug` flag for `nnunetv2` models to turn on `use_mirroring` behavior. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/5082)
+ - **sct_fmri_moco**: Allow specifying a reference scan as the registration target with new flag `-ref`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/5043)
+ - **sct_process_segmentation**: Update AP diameter to be based on rotated seg + add new `-anat` flag (for symmetry, quadrant area, and HOG angle properties). [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4958)
+ - **sct_run_batch**: Add new `-yml` arguments to include/exclude both subjects and files based on YAML lists. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/5030)
+
+**ENHANCEMENT**
+ - **sct_analyze_lesion**: Add `vert_level` column to `-f` output spreadsheet. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/5089)
+ - **sct_apply_transfo, sct_label_vertebrae, sct_register_multimodal**: Improve performance of `-x label` when applying a warping field to single-voxel point labels. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/5025)
+ - **sct_compute_ascor, sct_process_segmentation**: Update `-centerline` argument to allow for consistent `-discfile` projection (used in aSCOR script). [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/5075)
+ - **sct_deepseg**: Rework `totalspineseg` inference (rename task to `spine`, set `-step1-only` behavior as default, improve output filenames). [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/5097)
+ - Hide developer-specific arguments in argparse help. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/5035)
+
+**BUG**
+ - **sct_compute_ascor, sct_process_segmentation**: Update how `-discfile` intermediate images are saved (output directory, relative paths). [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/5074)
+ - **sct_deepseg, sct_qc**: Fix cropping and labeling for DeepSeg axial mosaic QC Reports. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/5069)
+ - **sct_process_segmentation**: Solve projection anomaly on anisotropic data. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/5067)
+ - **sct_register_multimodal**: Fix logging message to correctly print voxel size in `centermassrot` . [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/5022)
+ - Only create "detailed summary" test files in CI (and only when the directory exists). [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/5031)
+
+**INSTALLATION**
+ - **sct_deepseg**: Switch to `neuropoly` fork of `nnunetv2` to support multi-fold "custom trainer" version of `lesion_ms`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/5027)
+ - **sct_deepseg**: Pin `blosc2<3.9.0` to avoid failing PRs due to incompatibility wiht `numpy<2.0`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/5044)
+ - **sct_deepseg**: Make `spinalcord` a default model to solve `PyTorchStreamReader` error in `sct_run_batch`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/5076)
+ - Allow `blosc2>=3.9.1` due to re-added support for `numpy==1.26`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/5046)
+ - Restrict `numexpr!=2.14.0` and `h5py!=3.15.0` to address recent installation failures. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/5054)
+ - Avoid `libffi` bug by installing all of the `conda` packages from `conda-forge` in a single step. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/5102)
+
+**DOCUMENTATION**
+ - **sct_deepseg**: Added ref for `lesion_ms` ESMRMB 2025 model. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/5014)
+ - **sct_deepseg**: Update spinal rootlets model description. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/5019)
+ - **sct_deepseg**: Add citation for RootletSeg model in models.py. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/5032)
+ - **sct_dmri_moco, sct_fmri_moco**: Improve moco argparse usage for `-param {poly,iter}` (help descriptions) and `-g` (positive integer requirement). [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/5040)
+ - **sct_register_to_template**: Add tutorial for rootlets-based registration to template. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/5010)
+ - Replace PaperPile links with PubMed links in `pam50.rst` doc page. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/5018)
+ - Update "Citing SCT" page with missing references and better formatting. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/5095)
+ - Tweak `-ref subject`-related documentation for 3+ labels. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/5109)
+ - Update `sct_tutorial_data` links to point to the newest release (SCT Course 2025). [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/5114)
+ - Fix typos in MS lesion tutorial (`ms_lesion` -> `lesion_ms`). [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/5115)
+
+**REFACTORING**
+ - **sct_compute_ascor, sct_process_segmentation**: Clarify `ValueError` if the `-centerline` does not cover all the slices in the input mask. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/5077)
+ - **sct_deepseg, sct_fmri_compute_tsnr, sct_label_utils, sct_label_vertebrae, sct_qc, sct_register_multimodal, sct_register_to_template**: Refactor QC code for six scripts. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/5050)
+
+**CI**
+ - Refactor the broken link checker. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/5047)
+ - Replace deprecated macOS 13 runners with new `macos-15-intel` runners. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/5088)
+
+**GIT/GITHUB**
+ - Update pull request template to mention tests requirement (and improve readability). [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/5105)
+
 ## 7.1 (2025-08-15)
 [View detailed changelog](https://github.com/spinalcordtoolbox/spinalcordtoolbox/compare/7.0...7.1)
 
