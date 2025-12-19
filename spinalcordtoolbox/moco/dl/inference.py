@@ -54,7 +54,7 @@ def moco_dl(fname_data, fname_mask='', fname_ref='', path_out='', mode="fmri", f
 
     ckpt_path = sct_dir_local_path("data", "moco-dl_models", f"{mode}.ckpt")
     if not os.path.exists(ckpt_path):
-        raise FileNotFoundError(f"\n[moco-dl] Checkpoint not found: {ckpt_path}")
+        raise FileNotFoundError(f"\n[moco-dl] MocoDL models not found. Please install them using sct_download_data -d moco-dl_models.")
 
     printv("\n[INFO] Running DL-based motion correction (DenseRigidNet)...\n")
     # Display parameter summary
