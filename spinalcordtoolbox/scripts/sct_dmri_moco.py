@@ -179,7 +179,6 @@ def get_parser():
              "  - The reference image (3D) serves as the target to which all timepoints are aligned. "
              "It is typically a representative or no-motion volume. "
              "You may use the first volume or the mean volume of the input.\n"
-             "If either -m or -ref is not provided, the DL-based motion correction will fail."
     )
 
     # Arguments which implement shared functionality
