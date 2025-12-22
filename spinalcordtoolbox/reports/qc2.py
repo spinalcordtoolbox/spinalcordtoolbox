@@ -953,10 +953,48 @@ def sct_deepseb(
     path_qc: str,
     dataset: str | None,
     subject: str | None,
-    p_resample: float | None = None,
+    cmin: float | None,
+    cmax: float | None,
+    cbar: str | None,
 ):
-    pass
-    # TODO seb
+    """
+    Generate a QC report for quantitative images with optional vmin/vmax and colormap.
+    """
+    command = "sct_deepseb"
+    cmdline = [command]
+    cmdline.extend(argv)
+
+    with create_qc_entry(
+        path_input=Path(fname_input).resolve(),
+        path_qc=Path(path_qc),
+        command=command,
+        cmdline=list2cmdline(cmdline),
+        plane='Axial',
+        dataset=dataset,
+        subject=subject,
+    ) as imgs_to_generate:
+
+        img_input = Image(fname_input)
+        img_seg = Image(fname_seg)
+
+        # Center the axial slices and create mosaice
+        slicing_spec = SlicingSpec.full_axial(img_input, p_resample=None).center_patches(img_seg)
+   
+        mosaic = slicing_spec.get_mosaic()
+        mosaic.insert_slices(slicing_spec.get_slices(img_input, order=2)) # quadratic interpolation, 0 is for nearest-neighbor
+        mosaic.ax.imshow(mosaic.canvas, cmap=cbar, vmin=cmin, vmax=cmax, interpolation='none')
+        mosaic.add_labels()
+        # This shows the input image with colormap and vmin/vmax custom
+        mosaic.save(imgs_to_generate['path_background_img'])
+        
+        # nOW FOR the Segmentatino
+        mosaic = slicing_spec.get_mosaic()
+        mosaic.insert_slices(slicing_spec.get_slices(img_seg, order=1)) #  1 is for linear
+        mosaic.ax.imshow(mosaic.canvas, cmap = mpl_colors.ListedColormap(["#00ffff"]), alpha = 1.0, norm = mpl_colors.Normalize(vmin=0.5, vmax=1), interpolation='none')
+        mosaic.add_labels()
+        # This shows the input image with colormap and vmin/vmax custom
+        mosaic.save(imgs_to_generate['path_overlay_img'])
+
 
 
 def add_slice_numbers(ax, num_slices, radius, margin: int = 2, reverse=False):
@@ -1224,7 +1262,8 @@ def sct_deepseg(
     dataset: Optional[str],
     subject: Optional[str],
     plane: Optional[str],
-    fname_qc_seg: Optional[str],
+    fname_qc_s: str,
+    eg: Optional[str],
 ):
     """
     Generate a QC report for sct_deepseg, based on which task was used.

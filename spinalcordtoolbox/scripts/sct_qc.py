@@ -96,6 +96,26 @@ def get_parser():
         type=float,
         help='The number of frames per second for output gif images. Only useful for sct_fmri_moco and '
              'sct_dmri_moco.')
+# Begin S.R. edit
+    optional.add_argument(
+    '-cmin',
+    metavar = 'float',
+    type = float,
+    help = 'Minimum value for contrast in the qc'
+    )
+    optional.add_argument(
+    '-cmax',
+    metavar = 'float',
+    type = float,
+    help = 'Maximum value for contrast in the qc'
+    )
+    optional.add_argument(
+    '-cbar',
+    metavar = 'str',
+    type = str,
+    help = 'Colobar applied to the qc, select based on '
+    )
+# end S.R. edit
 
     # Arguments which implement shared functionality
     parser.add_common_args()
@@ -145,7 +165,8 @@ def main(argv: Sequence[str]):
         del kwargs['fname_output']  # not used by this report
         qc2.sct_label_utils(command=arguments.p, **kwargs)
     elif arguments.p == 'sct_deepseb':
-        qc2.sct_deepseb(**kwargs)
+        del kwargs['fname_output']
+        qc2.sct_deepseb(cmin=arguments.cmin, cmax=arguments.cmax, cbar=arguments.cbar, **kwargs)
     else:
         generate_qc(fname_in1=arguments.i,
                     fname_in2=arguments.d,
