@@ -1,6 +1,7 @@
 # pytest unit tests for spinalcordtoolbox.deepseg
 
 import os
+import shutil
 
 import pytest
 import warnings
@@ -8,7 +9,7 @@ from torch.serialization import SourceChangeWarning
 
 import spinalcordtoolbox as sct
 from spinalcordtoolbox.image import Image, compute_dice, add_suffix, check_image_kind
-from spinalcordtoolbox.utils.sys import sct_test_path
+from spinalcordtoolbox.utils.sys import sct_test_path, __deepseg_dir__
 import spinalcordtoolbox.deepseg.models
 
 from spinalcordtoolbox.scripts import sct_deepseg, sct_resample
@@ -35,6 +36,16 @@ def test_model_dict():
         assert 'url' in value
         assert 'description' in value
         assert 'default' in value
+
+
+@pytest.fixture()
+def cleanup_model_dirs():
+    """Fixture to clean up model directory after tests."""
+    model_dirs = os.listdir(__deepseg_dir__)
+    yield
+    new_dirs = set(os.listdir(__deepseg_dir__)) - set(model_dirs)
+    for dir_name in new_dirs:
+        shutil.rmtree(os.path.join(__deepseg_dir__, dir_name))
 
 
 @pytest.mark.parametrize('fname_image, fname_seg_manual, fname_out, task, thr, expected_dice', [
@@ -76,7 +87,7 @@ def test_model_dict():
      None),
 ])
 def test_segment_nifti_binary_seg(fname_image, fname_seg_manual, fname_out, task, thr, expected_dice,
-                                  tmp_path, tmp_path_qc):
+                                  tmp_path, tmp_path_qc, cleanup_model_dirs):
     """
     Test binary output (produced using values other than `-thr 0`) with sct_deepseg postprocessing CLI arguments.
     """
@@ -186,7 +197,7 @@ def t2_ax_sc_seg():
      ["-label-vert", "1"]),
 ])
 def test_segment_nifti_multiclass(fname_image, fnames_seg_manual, fname_out, suffixes, task, thr, expected_dice,
-                                  extra_args, tmp_path, tmp_path_qc):
+                                  extra_args, tmp_path, tmp_path_qc, cleanup_model_dirs):
     """
     Uses the locally-installed sct_testing_data
     """
@@ -215,7 +226,7 @@ def test_segment_nifti_multiclass(fname_image, fnames_seg_manual, fname_out, suf
 
 
 @pytest.mark.parametrize("qc_plane", ["Axial", "Sagittal"])
-def test_deepseg_with_cropped_qc(qc_plane, tmp_path, tmp_path_qc):
+def test_deepseg_with_cropped_qc(qc_plane, tmp_path, tmp_path_qc, cleanup_model_dirs):
     """
     Test that `-qc-seg` cropping works with both Axial and Sagittal QCs.
     """
