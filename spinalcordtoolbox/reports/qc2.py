@@ -976,24 +976,25 @@ def sct_deepseb(
 
         img_input = Image(fname_input)
         img_seg = Image(fname_seg)
+        img_seg.data = (img_seg.data > 0.5) * 1
 
         # Center the axial slices and create mosaice
         slicing_spec = SlicingSpec.full_axial(img_input, p_resample=None).center_patches(img_seg)
    
         mosaic = slicing_spec.get_mosaic()
-        mosaic.insert_slices(slicing_spec.get_slices(img_input, order=2)) # quadratic interpolation, 0 is for nearest-neighbor
+        mosaic.insert_slices(slicing_spec.get_slices(img_input, order=2)) # 2 for quadratic interpolation, 0 is for nearest-neighbor
         mosaic.ax.imshow(mosaic.canvas, cmap=cbar, vmin=cmin, vmax=cmax, interpolation='none')
         mosaic.add_labels()
         # This shows the input image with colormap and vmin/vmax custom
-        mosaic.save(imgs_to_generate['path_background_img'])
+        mosaic.save(imgs_to_generate['path_overlay_img'])
         
-        # nOW FOR the Segmentatino
+        # Now FOR the Segmentation
         mosaic = slicing_spec.get_mosaic()
-        mosaic.insert_slices(slicing_spec.get_slices(img_seg, order=1)) #  1 is for linear
-        mosaic.ax.imshow(mosaic.canvas, cmap = mpl_colors.ListedColormap(["#00ffff"]), alpha = 1.0, norm = mpl_colors.Normalize(vmin=0.5, vmax=1), interpolation='none')
+        mosaic.insert_slices(slicing_spec.get_slices(img_seg, order=0)) #  1 is for linear
+        mosaic.ax.imshow(mosaic.canvas, cmap = mpl_colors.ListedColormap(["#00ffff"]), alpha = 1.0, norm = mpl_colors.Normalize(vmin=0, vmax=1), interpolation='none')
         mosaic.add_labels()
         # This shows the input image with colormap and vmin/vmax custom
-        mosaic.save(imgs_to_generate['path_overlay_img'])
+        mosaic.save(imgs_to_generate['path_background_img'])
 
 
 
