@@ -1,7 +1,7 @@
 Hands-on: Using ``sct_deepseg`` on T2 data
 ##########################################
 
-The :ref:`sct_deepseg` script is designed as a replacement for both :ref:`sct_propseg` and :ref:`sct_deepseg_sc`. It provides access to specialized models created by created with various deep learning frameworks (`ivadomed <https://ivadomed.org/>`__, `nnUNet <https://github.com/MIC-DKFZ/nnUNet>`__, and `monai <https://monai.io>`__). New models are trained and released on a regular basis, with each new version of SCT providing additional models to choose from.
+The :ref:`sct_deepseg` script is designed as a replacement for both :ref:`sct_propseg` and :ref:`sct_deepseg_sc`. It provides access to specialized models created by created with various deep learning frameworks (`ivadomed <https://ivadomed.org/>`__, `nnUNet <https://github.com/MIC-DKFZ/nnUNet>`__, and `monai <https://project-monai.github.io/>`__). New models are trained and released on a regular basis, with each new version of SCT providing additional models to choose from.
 
 One such model is the "``spinalcord``" model. It is SCT's effort to create a contrast-agnostic segmentation tool that can be used on any type of image (T1, T2, T2*, etc.), in order to ensure consistent morphometric results between contrasts.
 
