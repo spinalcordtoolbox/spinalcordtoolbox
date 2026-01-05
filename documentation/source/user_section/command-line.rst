@@ -13,7 +13,7 @@ Segmentation
 ============
 
 - :ref:`sct_create_mask` - Create mask along z direction.
-- :ref:`sct_deepseg` - Segment anatomical structures or pathologies using deep learning models created with different frameworks (`ivadomed <https://ivadomed.org>`__,  `nnUNet <https://github.com/MIC-DKFZ/nnUNet>`__, `monai <https://monai.io>`__).
+- :ref:`sct_deepseg` - Segment anatomical structures or pathologies using deep learning models created with different frameworks (`ivadomed <https://ivadomed.org>`__,  `nnUNet <https://github.com/MIC-DKFZ/nnUNet>`__, `monai <https://project-monai.github.io/>`__).
 - :ref:`sct_deepseg_gm` - Segment spinal cord gray matter using deep learning.
 - :ref:`sct_get_centerline` - Extracts the spinal cord centerline.
 - :ref:`sct_propseg` - Segment spinal cord using propagation of deformation model (PropSeg).
