@@ -74,8 +74,9 @@ def cleanup_model_dirs():
      None,
      None),
 ])
+@pytest.mark.usefixtures(cleanup_model_dirs.__name__)
 def test_segment_nifti_binary_seg(fname_image, fname_seg_manual, fname_out, task, thr, expected_dice,
-                                  tmp_path, tmp_path_qc, cleanup_model_dirs):
+                                  tmp_path, tmp_path_qc):
     """
     Test binary output (produced using values other than `-thr 0`) with sct_deepseg postprocessing CLI arguments.
     """
@@ -184,8 +185,9 @@ def t2_ax_sc_seg():
      None,
      ["-label-vert", "1"]),
 ])
+@pytest.mark.usefixtures(cleanup_model_dirs.__name__)
 def test_segment_nifti_multiclass(fname_image, fnames_seg_manual, fname_out, suffixes, task, thr, expected_dice,
-                                  extra_args, tmp_path, tmp_path_qc, cleanup_model_dirs):
+                                  extra_args, tmp_path, tmp_path_qc):
     """
     Uses the locally-installed sct_testing_data
     """
@@ -214,7 +216,8 @@ def test_segment_nifti_multiclass(fname_image, fnames_seg_manual, fname_out, suf
 
 
 @pytest.mark.parametrize("qc_plane", ["Axial", "Sagittal"])
-def test_deepseg_with_cropped_qc(qc_plane, tmp_path, tmp_path_qc, cleanup_model_dirs):
+@pytest.mark.usefixtures(cleanup_model_dirs.__name__)
+def test_deepseg_with_cropped_qc(qc_plane, tmp_path, tmp_path_qc):
     """
     Test that `-qc-seg` cropping works with both Axial and Sagittal QCs.
     """
