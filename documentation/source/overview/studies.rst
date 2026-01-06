@@ -26,6 +26,8 @@ The following studies have used SCT:
 2025 
 ----
 
+-  Ganzetti *et al.* `SynSpine: an automated workflow for the generation of longitudinal spinal cord synthetic MRI data <https://doi.org/10.3389/fninf.2025.1649440>`_, **Front. Neuroinform.** 2025
+-  Rotem-Kohavi *et al.* `Building a library of acute traumatic spinal cord injury images across Canada: a retrospective cohort study protocol <https://doi.org/10.1136/bmjopen-2025-106818>`_, **BMJ Neurol. Open** 2025
 -  Lukas *et al.* `Optimization of cervical cord atrophy measurement using a real-world, multicentre dataset in multiple sclerosis <https://doi.org/10.3389/fneur.2025.1657484>`_, **Front. Neurol.** 2025
 -  Lin *et al.* `A corticospinal signature for interindividual pain sensitivity <https://doi.org/10.1038/s41467-025-67132-6>`_, **Nat. Commun.** 2025
 -  Kosa *et al.* `Longitudinal proteomic profiling of cerebrospinal fluid in untreated multiple sclerosis defines evolving disease biology <https://doi.org/10.1038/s41467-025-65154-8>`_, **Nat. Commun.** 2025
