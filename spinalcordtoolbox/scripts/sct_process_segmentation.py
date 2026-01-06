@@ -466,15 +466,16 @@ def main(argv: Sequence[str]):
     # Vertfile exists, so pre-process it if it's a `-discfile`
     else:
         if arguments.discfile is not None:
-            if arguments.centerline is not None:
-                fname_centerline = arguments.centerline
-            else:
-                fname_centerline = fname_segmentation
             # Copy the input files to the tempdir
             temp_folder = TempFolder(basename="process-segmentation")
             path_tmp_seg = temp_folder.copy_from(fname_segmentation)
-            path_tmp_ctl = (temp_folder.copy_from(fname_centerline) if arguments.centerline
-                            else path_tmp_seg)
+            # label the segmentation by default, mimicking the old `-vertfile` workflow
+            path_tmp_ctl = path_tmp_seg
+            # however, if a centerline file is provided by the user, label that instead
+            # we do this to ensure that consistent labeling is used for across multiple calls to
+            # sct_process_segmentation in tandem, for example for `sct_compute_ascor`
+            if arguments.centerline is not None:
+                path_tmp_ctl = temp_folder.copy_from(arguments.centerline)
             path_tmp_vert_level = temp_folder.copy_from(fname_vert_level)
             # Project discs labels onto centerline
             discs_projected = project_centerline(Image(path_tmp_ctl), Image(path_tmp_vert_level))
@@ -492,7 +493,7 @@ def main(argv: Sequence[str]):
     slices = arguments.z
     perslice = bool(arguments.perslice)
     angle_correction = bool(arguments.angle_corr)
-    centerline = arguments.centerline
+    fname_centerline = arguments.centerline
     param_centerline = ParamCenterline(
         algo_fitting=arguments.centerline_algo,
         smooth=arguments.centerline_smooth,
@@ -517,7 +518,7 @@ def main(argv: Sequence[str]):
     metrics, fit_results = compute_shape(fname_segmentation,
                                          fname_image,
                                          angle_correction=angle_correction,
-                                         centerline_path=centerline,
+                                         centerline_path=fname_centerline,
                                          param_centerline=param_centerline,
                                          verbose=verbose,
                                          remove_temp_files=arguments.r)
