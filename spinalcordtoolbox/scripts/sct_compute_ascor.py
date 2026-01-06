@@ -107,6 +107,10 @@ def main(argv: Sequence[str]):
     if '-centerline' not in process_seg_argv:
         printv("No `-centerline` provided. A centerline will be computed from `-i-SC` and used for both SC and canal.", verbose, 'info')
         process_seg_argv.extend(['-centerline', fname_sc_seg])
+    # If `-centerline-exclude-missing` has not been passed, specify it ourselves (to bypass errors for non-overlapping SC/canal masks)
+    if '-centerline-exclude-missing' not in process_seg_argv:
+        printv("No `-centerline-exclude-missing` provided. It will be set to `1` to restrict aSCOR to only overlapping slices.", verbose, 'info')
+        process_seg_argv.extend(['-centerline-exclude-missing', '1'])
 
     # Run sct_process_segmentation twice: 1) SC seg 2) canal seg
     temp_folder = TempFolder(basename="process-segmentation")
