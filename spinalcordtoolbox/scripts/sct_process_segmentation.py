@@ -242,6 +242,17 @@ def get_parser(ascor=False):
         help="Degree of smoothing for centerline fitting. Only use with `-centerline-algo {bspline, linear}`."
     )
     optional.add_argument(
+        '-centerline-exclude-missing',
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1],
+        default=0,
+        help="By default, an error will be thrown if `-centerline` does not completely cover the input segmentation. "
+             "Setting this flag to 1 will bypass the error, by skipping segmentation slices that aren't covered by "
+             "the centerline. Use with caution; sometimes it is preferable to manually correct the `-centerline` image "
+             "instead (so that the centerline covers all of the segmentation slices)."
+    )
+    optional.add_argument(
         '-pmj',
         metavar=Metavar.file,
         type=get_absolute_path,
@@ -493,17 +504,33 @@ def main(argv: Sequence[str]):
     slices = arguments.z
     perslice = bool(arguments.perslice)
     angle_correction = bool(arguments.angle_corr)
-    fname_centerline = arguments.centerline
-    param_centerline = ParamCenterline(
-        algo_fitting=arguments.centerline_algo,
-        smooth=arguments.centerline_smooth,
-        minmax=True)
     fname_pmj = arguments.pmj
     distance_pmj = arguments.pmj_distance
     extent_pmj = arguments.pmj_extent
     path_qc = arguments.qc
     qc_dataset = arguments.qc_dataset
     qc_subject = arguments.qc_subject
+
+    fname_centerline = arguments.centerline
+    param_centerline = ParamCenterline(
+        algo_fitting=arguments.centerline_algo,
+        smooth=arguments.centerline_smooth,
+        minmax=True)
+    # Exclude slices in segmentation where centerline is missing
+    if fname_centerline and arguments.centerline_exclude_missing:
+        temp_folder = TempFolder(basename="process-segmentation-modified-seg")
+        # NB: ensure modified tempdir segmentation will be used in later steps
+        fname_segmentation = temp_folder.copy_from(fname_segmentation)
+        im_seg = Image(fname_segmentation)
+        orig_orientation = im_seg.orientation
+        # find z slices in `im_ctl` that are empty (sum to 0)
+        im_ctl = Image(fname_centerline).change_orientation('RPI')
+        empty_slices = (im_ctl.data.sum(axis=(0, 1)) == 0)
+        # zero out slices in `im_seg` that are empty in `im_ctl`
+        im_seg.change_orientation('RPI')
+        im_seg.data[:, :, empty_slices] = 0
+        im_seg.change_orientation(orig_orientation)
+        im_seg.save(fname_segmentation)
 
     if normalize_pam50 and not perslice:
         parser.error("Option '-normalize-PAM50' requires option '-perslice 1'.")
@@ -524,8 +551,8 @@ def main(argv: Sequence[str]):
                                              verbose=verbose,
                                              remove_temp_files=arguments.r)
     except MissingSlicesError as e:
-        cli_msg = ("Please supply a '-centerline' covering all the slices, or disable angle "
-                   "correction ('-angle-corr 0').")
+        cli_msg = ("Please supply a '-centerline' covering all the slices, or specify '-centerline-exclude-missing 1' "
+                   "to skip processing the segmentation slices that are not covered by `-centerline`.")
         parser.error(f"{e}\n{cli_msg}")
 
     if normalize_pam50:
