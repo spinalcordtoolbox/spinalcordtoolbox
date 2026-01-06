@@ -3,7 +3,7 @@
 import pytest
 import logging
 
-from spinalcordtoolbox.scripts import sct_fmri_moco, sct_deepseg, sct_maths
+from spinalcordtoolbox.scripts import sct_fmri_moco, sct_deepseg, sct_maths, sct_create_mask
 from spinalcordtoolbox.utils.sys import sct_test_path
 
 logger = logging.getLogger(__name__)
@@ -26,6 +26,15 @@ def fmri_mean_seg(tmp_path_factory, tmp_path_qc, fmri_mean):
     path_out = str(tmp_path / 'fmri_mean_seg.nii.gz')
 
     sct_deepseg.main(argv=['spinalcord', '-i', fmri_mean, '-o', path_out, '-qc', str(tmp_path_qc)])
+    return path_out
+
+
+@pytest.fixture(scope='module')
+def fmri_mask(tmp_path_factory, fmri_mean, fmri_mean_seg):
+    """Mask image for testing."""
+    tmp_path = tmp_path_factory.mktemp('fmri_mask')
+    path_out = str(tmp_path / 'fmri_mask.nii.gz')
+    sct_create_mask.main(argv=['-i', fmri_mean, '-p', f'centerline,{fmri_mean_seg}', '-size', '35mm', '-o', path_out])
     return path_out
 
 
@@ -61,3 +70,12 @@ def test_sct_fmri_moco_invalid_group_values(tmp_path, tmp_path_qc, fmri_mean_seg
                                  '-ofolder', str(tmp_path),
                                  '-qc', tmp_path_qc, '-qc-seg', fmri_mean_seg])
     assert e.value.code == 2
+
+
+@pytest.mark.sct_testing
+def test_sct_fmri_moco_dl_no_checks(tmp_path_qc, fmri_mean, fmri_mask, tmp_path, fmri_mean_seg):
+    """Run the CLI script with '-m' and '-ref' option and using '-dl' algorithm."""
+    sct_fmri_moco.main(argv=['-i', sct_test_path('fmri', 'fmri.nii.gz'),
+                             '-ref', fmri_mean, '-m', fmri_mask, '-ofolder', str(tmp_path), '-dl',
+                             '-qc', tmp_path_qc, '-qc-seg', fmri_mean_seg])
+    # NB: We skip checking params because there are no output moco params from DL-module

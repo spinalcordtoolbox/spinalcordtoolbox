@@ -77,6 +77,17 @@ def test_sct_dmri_moco_with_mask_check_params(tmp_path, dmri_mask, tmp_path_qc, 
     assert allclose(lresults, lgroundtruth)
 
 
+@pytest.mark.sct_testing
+def test_sct_dmri_moco_dl_no_checks(tmp_path, dmri_mask, tmp_path_qc, dmri_mean_seg):
+    """Run the CLI script with '-m' and '-ref' option and using '-dl' algorithm."""
+    sct_dmri_moco.main(argv=['-i', sct_test_path('dmri', 'dmri.nii.gz'),
+                             '-bvec', sct_test_path('dmri', 'bvecs.txt'),
+                             '-ref', sct_test_path('dmri', 'dwi_mean.nii.gz'),
+                             '-m', dmri_mask, '-ofolder', str(tmp_path), '-dl',
+                             '-qc', tmp_path_qc, '-qc-seg', dmri_mean_seg])
+    # NB: We skip checking params because there are no output moco params from DL-module
+
+
 @pytest.fixture
 def dmri_ail_cropped(tmp_path):
     """Reorient image to sagittal for testing another orientation (and crop to save time)."""
