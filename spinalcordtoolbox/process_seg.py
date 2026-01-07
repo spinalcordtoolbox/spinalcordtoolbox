@@ -10,7 +10,7 @@ import platform
 import numpy as np
 from skimage import measure, transform
 import skimage
-from scipy.ndimage import map_coordinates, gaussian_filter1d
+from scipy.ndimage import map_coordinates, gaussian_filter1d, zoom
 import logging
 
 from spinalcordtoolbox.image import Image
@@ -84,8 +84,8 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
     nx, ny, nz, nt, px, py, pz, pt = im_seg.dim
     pr = 0.1   # we use a fixed value to be independent from the input image resolution
     # Resample to isotropic resolution in the axial plane. Use the minimum pixel dimension as target dimension.
-    im_segr = resample_nib(im_seg, new_size=[pr, pr, pz], new_size_type='mm', interpolation='linear')
-
+    #im_segr = resample_nib(im_seg, new_size=[pr, pr, pz], new_size_type='mm', interpolation='linear')
+    im_segr = im_seg
     # Update dimensions from resampled image.
     nx, ny, nz, nt, px, py, pz, pt = im_segr.dim
     # Extract min and max index in Z direction
@@ -300,7 +300,18 @@ def _properties2d(seg, dim, iz, angle_hog=None, verbose=1):
     # Use those bounding box coordinates to crop the segmentation (for faster processing)
     seg_crop = seg_norm[np.clip(minx-pad, 0, seg_bin.shape[0]): np.clip(maxx+pad, 0, seg_bin.shape[0]),
                         np.clip(miny-pad, 0, seg_bin.shape[1]): np.clip(maxy+pad, 0, seg_bin.shape[1])]
-    seg_crop_r = seg_crop
+    # Apply resampling to the cropped segmentation:
+    zoom_factors = (dim[0]/0.1, dim[1]/0.1)
+    seg_crop_r = zoom(seg_crop, zoom=zoom_factors, order=1)  # make pixel size isotropic
+    regions = measure.regionprops(np.array(seg_crop_r > 0.5, dtype='uint8'), intensity_image=seg_crop_r)
+    region = regions[0]
+    minx, miny, maxx, maxy = region.bbox
+    # Use those bounding box coordinates to crop the segmentation (for faster processing), again as zoom adds padding
+    seg_crop_r = seg_crop_r[np.clip(minx-pad, 0, seg_crop_r.shape[0]): np.clip(maxx+pad, 0, seg_crop_r.shape[0]),
+                            np.clip(miny-pad, 0, seg_crop_r.shape[1]): np.clip(maxy+pad, 0, seg_crop_r.shape[1])]
+    # Update dim to isotropic pixel size
+    dim = [0.1, 0.1]
+    # seg_crop_r = seg_crop
     # Binarize segmentation using threshold at 0.5 Necessary input for measure.regionprops
     seg_crop_r_bin = np.array(seg_crop_r > 0.5, dtype='uint8')
     # Get all closed binary regions from the segmentation (normally there is only one)
@@ -333,7 +344,7 @@ def _properties2d(seg, dim, iz, angle_hog=None, verbose=1):
     # Rotate the segmentation by the orientation to align with AP/RL axes
     seg_crop_r_rotated = _rotate_segmentation_by_angle(seg_crop_r, -region.orientation)
 
-    # Measure diameters along AP and RL axes in the rotated segmentation
+    # Measure diameters along AP in the rotated segmentation
     rotated_properties = _measure_ap_diameter(seg_crop_r, seg_crop_r_rotated, dim, region.orientation,
                                               iz, properties, verbose)
     # Update the properties dictionary with the rotated properties
