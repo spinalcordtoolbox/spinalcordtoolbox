@@ -247,10 +247,12 @@ def get_parser(ascor=False):
         type=int,
         choices=[0, 1],
         default=0,
-        help="By default, an error will be thrown if `-centerline` does not completely cover the input segmentation. "
-             "Setting this flag to 1 will bypass the error, by skipping segmentation slices that aren't covered by "
-             "the centerline. Use with caution; sometimes it is preferable to manually correct the `-centerline` image "
-             "instead (so that the centerline covers all of the segmentation slices)."
+        # For aSCOR computation, we don't need to display this argument since aSCOR will always turn this behavior on
+        help=(argparse.SUPPRESS if ascor else
+              "By default, an error will be thrown if `-centerline` does not completely cover the input segmentation. "
+              "Setting this flag to 1 will bypass the error, by skipping segmentation slices that aren't covered by "
+              "the centerline. Use with caution; sometimes it is preferable to manually correct the `-centerline` image "
+              "instead (so that the centerline covers all of the segmentation slices).")
     )
     optional.add_argument(
         '-pmj',
