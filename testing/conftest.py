@@ -244,7 +244,7 @@ def check_testing_data_integrity(files_checksums: Mapping[os.PathLike, str]):
             missing.append((fname, chksum))
 
     assert not changed
-    # assert not new
+    assert not new
     assert not missing
 
 
