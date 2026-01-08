@@ -40,9 +40,9 @@ logger = logging.getLogger(__name__)
         '-ref', sct_test_path('mt', 'mt0.nii.gz'),
     ], (60, 55, 52)),
 ])
-def test_sct_crop_image_output_has_expected_dimensions(path_in, path_out, remaining_args, expected_dim):
+def test_sct_crop_image_output_has_expected_dimensions(path_in, path_out, tmp_path, remaining_args, expected_dim):
     """Run the CLI script and verify cropped image has the expected dimensions."""
-    sct_crop_image.main(argv=['-i', path_in, '-o', path_out] + remaining_args)
+    sct_crop_image.main(argv=['-i', path_in, '-o', str(tmp_path / path_out)] + remaining_args)
     # The last 5 dimension values [nt, px, py, pz, pt] should remain the same, so grab them from the input image
     expected_dim += Image(path_in).dim[3:8]
     assert Image(path_out).dim == expected_dim
