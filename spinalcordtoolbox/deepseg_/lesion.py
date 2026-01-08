@@ -141,7 +141,7 @@ def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file
     else:
         file_ctr = None
     tmp_folder.chdir()
-    fname_in = im_image.absolutepath
+    fname_in = os.path.basename(im_image.absolutepath)
 
     # re-orient image to RPI
     logger.info("Reorient the image to RPI, if necessary...")
