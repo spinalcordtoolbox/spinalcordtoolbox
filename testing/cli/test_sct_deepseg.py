@@ -125,17 +125,21 @@ def test_segment_nifti_binary_seg(fname_image, fname_seg_manual, fname_out, task
                 )
 
 
-def t2_ax():
+@pytest.fixture(scope='session')
+def t2_ax(tmp_path_factory):
     """Generate an approximation of an axially-acquired T2w anat image using resampling."""
-    fname_out = os.path.abspath('t2_ax.nii.gz')
+    tmp_path = tmp_path_factory.mktemp('t2_ax')
+    fname_out = str(tmp_path / 't2_ax.nii.gz')
     sct_resample.main(argv=["-i", sct_test_path('t2', 't2.nii.gz'), "-o", fname_out,
                             "-mm", "0.8x3x0.8", "-x", "spline"])
     return fname_out
 
 
-def t2_ax_sc_seg():
+@pytest.fixture(scope='session')
+def t2_ax_sc_seg(tmp_path_factory):
     """Generate an approximation of an axially-acquired T2w segmentation using resampling."""
-    fname_out = os.path.abspath('t2_ax_sc_seg.nii.gz')
+    tmp_path = tmp_path_factory.mktemp('t2_ax')
+    fname_out = str(tmp_path / 't2_ax_sc_seg.nii.gz')
     sct_resample.main(argv=["-i", sct_test_path('t2', 't2_seg-manual.nii.gz'), "-o", fname_out,
                             "-mm", "0.8x3x0.8", "-x", "spline"])
     return fname_out
@@ -151,8 +155,8 @@ def t2_ax_sc_seg():
      0.5,
      0.95,
      []),
-    (t2_ax(),          # Generate axial images on the fly
-     [t2_ax_sc_seg(),  # Just test against SC ground truth, because the model generates SC segs well
+    ('t2_ax',          # FIXTURE: Generate axial images on the fly
+     ['t2_ax_sc_seg',  # FIXTURE: Just test against SC ground truth, because the model generates SC segs well
       None],           # The model performs poorly on our fake t2_ax() image, so skip evaluating on lesion seg
      't2_deepseg.nii.gz',
      ["_sc_seg", "_lesion_seg"],
@@ -187,7 +191,7 @@ def t2_ax_sc_seg():
 ])
 @pytest.mark.usefixtures(cleanup_model_dirs.__name__)
 def test_segment_nifti_multiclass(fname_image, fnames_seg_manual, fname_out, suffixes, task, thr, expected_dice,
-                                  extra_args, tmp_path, tmp_path_qc):
+                                  extra_args, tmp_path, tmp_path_qc, request):
     """
     Uses the locally-installed sct_testing_data
     """
@@ -197,6 +201,11 @@ def test_segment_nifti_multiclass(fname_image, fnames_seg_manual, fname_out, suf
     # More info here: https://github.com/spinalcordtoolbox/spinalcordtoolbox/wiki/Testing%253A-Datasets
     if "mouse" in task and not os.path.exists(fname_image):
         pytest.skip("Mouse data must be manually downloaded to run this test.")
+    # Fixtures can't be used in parametrization (https://stackoverflow.com/q/42014484)
+    # So, we have to evaluate the fixture (i.e. generate the axial images) at test-time
+    if "lesion_ms_axial_t2" in task:
+        fname_image = request.getfixturevalue(fname_image)
+        fnames_seg_manual = [request.getfixturevalue(fnames_seg_manual[0]), fnames_seg_manual[1]]
 
     fname_out = str(tmp_path / fname_out)
     sct_deepseg.main([task, '-i', fname_image, '-thr', str(thr), '-o', fname_out, '-qc', tmp_path_qc,
