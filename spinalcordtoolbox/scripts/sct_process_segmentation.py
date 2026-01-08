@@ -252,7 +252,7 @@ def get_parser(ascor=False):
               "By default, an error will be thrown if `-centerline` does not completely cover the input segmentation. "
               "Setting this flag to 1 will bypass the error, by skipping segmentation slices that aren't covered by "
               "the centerline. Use with caution; sometimes it is preferable to manually correct the `-centerline` image "
-              "instead (so that the centerline covers all of the segmentation slices).")
+              "instead (so that the `-centerline` image covers all of the segmentation slices).")
     )
     optional.add_argument(
         '-pmj',
