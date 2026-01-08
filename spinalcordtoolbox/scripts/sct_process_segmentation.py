@@ -23,7 +23,7 @@ import numpy as np
 from spinalcordtoolbox.reports import qc2
 from spinalcordtoolbox.aggregate_slicewise import aggregate_per_slice_or_level, save_as_csv, func_wa, func_std, \
     func_sum, merge_dict, normalize_csa
-from spinalcordtoolbox.process_seg import compute_shape
+from spinalcordtoolbox.process_seg import compute_shape, MissingSlicesError
 from spinalcordtoolbox.scripts import sct_maths
 from spinalcordtoolbox.csa_pmj import get_slices_for_pmj_distance
 from spinalcordtoolbox.metrics_to_PAM50 import interpolate_metrics
@@ -240,6 +240,19 @@ def get_parser(ascor=False):
         type=int,
         default=30,
         help="Degree of smoothing for centerline fitting. Only use with `-centerline-algo {bspline, linear}`."
+    )
+    optional.add_argument(
+        '-centerline-exclude-missing',
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1],
+        default=0,
+        # For aSCOR computation, we don't need to display this argument since aSCOR will always turn this behavior on
+        help=(argparse.SUPPRESS if ascor else
+              "By default, an error will be thrown if `-centerline` does not completely cover the input segmentation. "
+              "Setting this flag to 1 will bypass the error, by skipping segmentation slices that aren't covered by "
+              "the centerline. Use with caution; sometimes it is preferable to manually correct the `-centerline` image "
+              "instead (so that the `-centerline` image covers all of the segmentation slices).")
     )
     optional.add_argument(
         '-pmj',
@@ -466,15 +479,16 @@ def main(argv: Sequence[str]):
     # Vertfile exists, so pre-process it if it's a `-discfile`
     else:
         if arguments.discfile is not None:
-            if arguments.centerline is not None:
-                fname_centerline = arguments.centerline
-            else:
-                fname_centerline = fname_segmentation
             # Copy the input files to the tempdir
             temp_folder = TempFolder(basename="process-segmentation")
             path_tmp_seg = temp_folder.copy_from(fname_segmentation)
-            path_tmp_ctl = (temp_folder.copy_from(fname_centerline) if arguments.centerline
-                            else path_tmp_seg)
+            # label the segmentation by default, mimicking the old `-vertfile` workflow
+            path_tmp_ctl = path_tmp_seg
+            # however, if a centerline file is provided by the user, label that instead
+            # we do this to ensure that consistent labeling is used for across multiple calls to
+            # sct_process_segmentation in tandem, for example for `sct_compute_ascor`
+            if arguments.centerline is not None:
+                path_tmp_ctl = temp_folder.copy_from(arguments.centerline)
             path_tmp_vert_level = temp_folder.copy_from(fname_vert_level)
             # Project discs labels onto centerline
             discs_projected = project_centerline(Image(path_tmp_ctl), Image(path_tmp_vert_level))
@@ -492,17 +506,33 @@ def main(argv: Sequence[str]):
     slices = arguments.z
     perslice = bool(arguments.perslice)
     angle_correction = bool(arguments.angle_corr)
-    centerline = arguments.centerline
-    param_centerline = ParamCenterline(
-        algo_fitting=arguments.centerline_algo,
-        smooth=arguments.centerline_smooth,
-        minmax=True)
     fname_pmj = arguments.pmj
     distance_pmj = arguments.pmj_distance
     extent_pmj = arguments.pmj_extent
     path_qc = arguments.qc
     qc_dataset = arguments.qc_dataset
     qc_subject = arguments.qc_subject
+
+    fname_centerline = arguments.centerline
+    param_centerline = ParamCenterline(
+        algo_fitting=arguments.centerline_algo,
+        smooth=arguments.centerline_smooth,
+        minmax=True)
+    # Exclude slices in segmentation where centerline is missing
+    if fname_centerline and arguments.centerline_exclude_missing:
+        temp_folder = TempFolder(basename="process-segmentation-modified-seg")
+        # NB: ensure modified tempdir segmentation will be used in later steps
+        fname_segmentation = temp_folder.copy_from(fname_segmentation)
+        im_seg = Image(fname_segmentation)
+        orig_orientation = im_seg.orientation
+        # find z slices in `im_ctl` that are empty (sum to 0)
+        im_ctl = Image(fname_centerline).change_orientation('RPI')
+        empty_slices = (im_ctl.data.sum(axis=(0, 1)) == 0)
+        # zero out slices in `im_seg` that are empty in `im_ctl`
+        im_seg.change_orientation('RPI')
+        im_seg.data[:, :, empty_slices] = 0
+        im_seg.change_orientation(orig_orientation)
+        im_seg.save(fname_segmentation)
 
     if normalize_pam50 and not perslice:
         parser.error("Option '-normalize-PAM50' requires option '-perslice 1'.")
@@ -514,13 +544,19 @@ def main(argv: Sequence[str]):
     # update fields
     metrics_agg = {}
 
-    metrics, fit_results = compute_shape(fname_segmentation,
-                                         fname_image,
-                                         angle_correction=angle_correction,
-                                         centerline_path=centerline,
-                                         param_centerline=param_centerline,
-                                         verbose=verbose,
-                                         remove_temp_files=arguments.r)
+    try:
+        metrics, fit_results = compute_shape(fname_segmentation,
+                                             fname_image,
+                                             angle_correction=angle_correction,
+                                             centerline_path=fname_centerline,
+                                             param_centerline=param_centerline,
+                                             verbose=verbose,
+                                             remove_temp_files=arguments.r)
+    except MissingSlicesError as e:
+        cli_msg = ("Please supply a '-centerline' covering all the slices, or specify '-centerline-exclude-missing 1' "
+                   "to skip processing the segmentation slices that are not covered by `-centerline`.")
+        parser.error(f"{e}\n{cli_msg}")
+
     if normalize_pam50:
         fname_vert_level_PAM50 = os.path.join(__data_dir__, 'PAM50', 'template', 'PAM50_levels.nii.gz')
         metrics_native_space = metrics  # Save metrics in native space to use them for HOG angle QC
