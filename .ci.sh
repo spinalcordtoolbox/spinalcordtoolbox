@@ -49,9 +49,8 @@ check_dependencies() {
 run_tests() {
   activate_venv_sct
   # re-run failed tests, just in case something flaky has happened. if no failures, do nothing.
-  # pytest testing/api testing/cli || pytest --last-failed --last-failed-no-failures none
+  pytest testing/api testing/cli || pytest --last-failed --last-failed-no-failures none
   # NB: 'testing/batch_processing' is run by a separate CI workflow
-  pytest testing/cli/test_cli_sct_warp_template.py --profile
 }
 
 while getopts ":ict" opt; do
