@@ -27,6 +27,7 @@ def test_sct_get_centerline_output_file_exists(tmp_path, tmp_path_qc, space):
                                   '-qc', tmp_path_qc])
     for file in [sct_test_path('t2s', 't2s_centerline.nii.gz'), sct_test_path('t2s', 't2s_centerline.csv')]:
         assert os.path.exists(file)
+    assert False
 
 
 @pytest.mark.sct_testing
@@ -73,3 +74,5 @@ def test_sct_get_centerline_soft_sums_to_one_and_overlaps_with_bin(tmp_path, tmp
     max_coords_over_slices_bin = np.transpose(np.where(im_bin.data == max_over_slices_bin))
     # Test if the maximum are the same between soft and binary centerline for each slices
     assert (max_coords_over_slices_soft == max_coords_over_slices_bin).all()
+
+    raise ValueError("Intentional fail to check test output.")
