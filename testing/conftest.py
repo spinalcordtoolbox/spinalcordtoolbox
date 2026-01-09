@@ -14,6 +14,7 @@ import tempfile
 from glob import glob
 import json
 import csv
+from datetime import datetime
 
 import pytest
 from nibabel import Nifti1Header
@@ -58,7 +59,7 @@ def log_raw_to_file(msg):
 
 def pytest_runtest_setup(item):
     """Log the beginning of a test item to the log file (for GitHub Actions log grouping)."""
-    log_raw_to_file(f"::group::{item.nodeid}")
+    log_raw_to_file(f"::group::[{datetime.now():%Y-%m-%d %H:%M:%S}] {item.nodeid}")
 
 
 def pytest_runtest_teardown():
@@ -250,6 +251,8 @@ def checksum(fname: os.PathLike) -> str:
 
 
 def check_testing_data_integrity(files_checksums: Mapping[os.PathLike, str]):
+    log_raw_to_file("::group::'Data integrity' logging")
+
     changed = []
     new = []
     missing = []
@@ -278,6 +281,8 @@ def check_testing_data_integrity(files_checksums: Mapping[os.PathLike, str]):
     assert not changed
     # assert not new
     assert not missing
+
+    log_raw_to_file("::endgroup::")
 
 
 @pytest.fixture(scope="session")
