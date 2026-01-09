@@ -72,7 +72,6 @@ PyQt5-Qt5==5.15.2
 pystrum>=0.3
 pytest
 pytest-cov
-pytest-profiling
 requests
 requirements-parser
 scipy
