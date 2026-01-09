@@ -33,7 +33,7 @@ IN_GITHUB_ACTIONS = os.getenv("GITHUB_ACTIONS") == "true"
 
 def _gha_print(line: str) -> None:
     """Print a line to stdout to get around pytest's logging capture."""
-    sys.stdout.write("\n" + line + "\n")
+    sys.stdout.write("\n" + line)  # Ensure lines start at position 0
     sys.stdout.flush()
 
 
@@ -59,30 +59,37 @@ def pytest_collection_finish(session):
     session._total_tests = len(session.items)
 
 
-@pytest.hookimpl(hookwrapper=True)
-def pytest_runtest_setup(item):
-    """Perform actions that must be done prior to each test."""
-    session = item.session
+def pytest_report_teststatus(report, config):
+    """
+    Replace pytest's per-test terminal output and emit
+    GitHub Actions log groups instead.
+    """
+    if not IN_GITHUB_ACTIONS:
+        return None  # keep default behavior locally
 
-    if IN_GITHUB_ACTIONS:
+    session = report.session
+
+    # ---- SETUP PHASE: open group -----------------------------------------
+    if report.when == "setup" and report.passed:
         session._test_index += 1
-        total = session._total_tests
+
         current = session._test_index
+        total = session._total_tests
         percent = int((current / total) * 100)
 
         _gha_print(
-            f"::group::TEST {current}/{total} ({percent}%) — {item.nodeid}"
+            f"::group::TEST {current}/{total} ({percent}%) — {report.nodeid}"
         )
 
-    yield
+        # suppress pytest's own status line
+        return "", "", ""
 
-
-@pytest.hookimpl(hookwrapper=True)
-def pytest_runtest_teardown(item):
-    """Perform actions that must be done after each test."""
-    yield
-    if IN_GITHUB_ACTIONS:
+    # ---- CALL / TEARDOWN: close group ------------------------------------
+    if report.when in ("call", "teardown"):
         _gha_print("::endgroup::")
+        return "", "", ""
+
+    return None
 
 
 def pytest_sessionfinish():
