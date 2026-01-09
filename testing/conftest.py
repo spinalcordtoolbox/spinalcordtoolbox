@@ -40,6 +40,32 @@ def pytest_sessionstart():
         install_named_dataset('sct_testing_data', dest_folder=sct_test_path())
 
 
+def log_raw_to_file(msg):
+    """Utility function to log raw messages (without logging  prefix) to the root logger's file handler."""
+    # Get file handler for the root logger
+    root_logger = logging.getLogger()
+    file_handler = next((h for h in root_logger.handlers if isinstance(h, logging.FileHandler)), None)
+    if not file_handler:
+        return
+    # Temporarily set formatter to raw message
+    old_formatter = file_handler.formatter
+    file_handler.setFormatter(logging.Formatter('%(message)s'))
+    try:
+        logger.info(msg)
+    finally:
+        file_handler.setFormatter(old_formatter)
+
+
+def pytest_runtest_setup(item):
+    """Log the beginning of a test item to the log file (for GitHub Actions log grouping)."""
+    log_raw_to_file(f"\n::group::{item.nodeid}")
+
+
+def pytest_runtest_teardown():
+    """Log the end of a test item to the log file (for GitHub Actions log grouping)."""
+    log_raw_to_file("\n::endgroup::")
+
+
 def pytest_sessionfinish():
     """Perform actions that must be done after the test session."""
     # don't generate summary files locally, since they are time-consuming and delay local testing
