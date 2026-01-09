@@ -33,7 +33,7 @@ IN_GITHUB_ACTIONS = os.getenv("GITHUB_ACTIONS") == "true"
 
 def _gha_print(line: str) -> None:
     """Print a line to stdout to get around pytest's logging capture."""
-    sys.stdout.write(line + "\n")
+    sys.stdout.write("\n" + line + "\n")
     sys.stdout.flush()
 
 
