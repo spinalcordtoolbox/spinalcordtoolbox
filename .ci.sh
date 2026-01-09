@@ -48,7 +48,7 @@ check_dependencies() {
 
 run_tests() {
   activate_venv_sct
-  pytest testing/api testing/cli
+  sct_testing testing/api testing/cli
   # NB: 'testing/batch_processing' is run by a separate CI workflow
 }
 
