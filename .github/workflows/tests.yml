@@ -41,6 +41,8 @@ env:
     # Disable progress bars for less verbose output
     PIP_PROGRESS_BAR: "off"
     SCT_PROGRESS_BAR: "off"
+    # Write verbose pytest logs to a file
+    PYTEST_LOG_FILENAME: "pytest.log"
 
 jobs:
 
@@ -66,6 +68,9 @@ jobs:
       - name: Run pytest test suite
         run: |
           ./.ci.sh -t
+      - name: Show detailed pytest logs
+        run: |
+          cat pytest.log
 
   debian-rolling:
     name: Debian Rolling Release
@@ -89,6 +94,9 @@ jobs:
       - name: Run pytest test suite
         run: |
           ./.ci.sh -t
+      - name: Show detailed pytest logs
+        run: |
+          cat pytest.log
 
   debian-testing:
     name: Debian Testing
@@ -112,6 +120,9 @@ jobs:
       - name: Run pytest test suite
         run: |
           ./.ci.sh -t
+      - name: Show detailed pytest logs
+        run: |
+          cat pytest.log
 
   debian-10:
     name: Debian 10
@@ -141,6 +152,9 @@ jobs:
       - name: Run pytest test suite
         run: |
           ./.ci.sh -t
+      - name: Show detailed pytest logs
+        run: |
+          cat pytest.log
 
   debian-11:
     name: Debian 11
@@ -166,6 +180,9 @@ jobs:
       - name: Run pytest test suite
         run: |
           ./.ci.sh -t
+      - name: Show detailed pytest logs
+        run: |
+          cat pytest.log
 
   centos-8:
     name: CentOS Stream 8
@@ -196,6 +213,9 @@ jobs:
       - name: Run pytest test suite
         run: |
           ./.ci.sh -t
+      - name: Show detailed pytest logs
+        run: |
+          cat pytest.log
 
   centos-9:
     name: CentOS Stream 9
@@ -215,6 +235,9 @@ jobs:
       - name: Run pytest test suite
         run: |
           ./.ci.sh -t
+      - name: Show detailed pytest logs
+        run: |
+          cat pytest.log
 
   ubuntu-20_04:
     name: Ubuntu 22.04 (Jammy Jellyfish)
@@ -276,6 +299,9 @@ jobs:
       - name: Run pytest test suite
         run: |
           ./.ci.sh -t
+      - name: Show detailed pytest logs
+        run: |
+          cat pytest.log
 
   macos-15:
     name: macOS 15.0 (Sequoia)
@@ -298,6 +324,9 @@ jobs:
       - name: Run pytest test suite
         run: |
           ./.ci.sh -t
+      - name: Show detailed pytest logs
+        run: |
+          cat pytest.log
 
   macos-15-intel:
    name: macOS 15.0 (Sequoia, Intel)
@@ -317,6 +346,9 @@ jobs:
      - name: Run pytest test suite
        run: |
          ./.ci.sh -t
+     - name: Show detailed pytest logs
+       run: |
+         cat pytest.log
 
   windows-wsl-ubuntu-24_04:
     # with the help of https://github.com/marketplace/actions/setup-wsl
@@ -375,6 +407,9 @@ jobs:
         export GITHUB_REF_NAME="${{ github.ref_name }}"
         cd ~/spinalcordtoolbox
         ./.ci.sh -t
+    - name: Show detailed pytest logs
+      run: |
+        cat pytest.log
 
   windows-wsl-ubuntu-22_04:
     # with the help of https://github.com/marketplace/actions/setup-wsl
@@ -433,6 +468,9 @@ jobs:
         export GITHUB_REF_NAME="${{ github.ref_name }}"
         cd ~/spinalcordtoolbox
         ./.ci.sh -t
+    - name: Show detailed pytest logs
+      run: |
+        cat pytest.log
 
 
   windows-native-2025:
@@ -472,7 +510,10 @@ jobs:
       run: sct_check_dependencies
     - name: Run pytest test suite
       run: sct_testing
-
+    - name: Show detailed pytest logs
+      shell: bash
+      run: |
+         cat pytest.log
 
   windows-native-2022:
     name: Windows (Native) 2022
@@ -511,3 +552,7 @@ jobs:
       run: sct_check_dependencies
     - name: Run pytest test suite
       run: sct_testing
+    - name: Show detailed pytest logs
+      shell: bash
+      run: |
+        cat pytest.log
