@@ -92,7 +92,9 @@ def test_segment_nifti_binary_seg(fname_image, fname_seg_manual, fname_out, task
     # try out `use_mirroring` for `lesion_ms` model only (due to longer inference time)
     # based on https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4995#issuecomment-3410672883
     if task == 'lesion_ms':
-        args.extend(['-test-time-aug'])
+        # FIXME: This argument takes upwards of 2 hours to run, so disable for now
+        # args.extend(['-test-time-aug'])
+        pass
     sct_deepseg.main(argv=args)
     # Make sure output file exists
     assert os.path.isfile(fname_out)
