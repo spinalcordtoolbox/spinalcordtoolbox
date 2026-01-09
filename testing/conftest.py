@@ -31,13 +31,7 @@ logger = logging.getLogger(__name__)
 IN_GITHUB_ACTIONS = os.getenv("GITHUB_ACTIONS") == "true"
 
 
-def _gha_print(line: str) -> None:
-    """Print a line to stdout to get around pytest's logging capture."""
-    sys.stdout.write("\n" + line)  # Ensure lines start at position 0
-    sys.stdout.flush()
-
-
-def pytest_sessionstart(session):
+def pytest_sessionstart():
     """Perform actions that must be done prior to test collection."""
     # Use a non-interactive backend so that no GUI plots will interrupt the test suite.
     # (NB: We do this here to ensure it is set before `matplotlib` is first imported.)
@@ -49,45 +43,20 @@ def pytest_sessionstart(session):
         logger.info("Downloading sct test data")
         install_named_dataset('sct_testing_data', dest_folder=sct_test_path())
 
-    # Set an internval variable for tracking overall progress
-    session._test_index = 0
+
+def pytest_collection_modifyitems(items):
+    for item in items:
+        item._nodeid = "::group::" + item.nodeid
 
 
-def pytest_collection_finish(session):
-    """Perform actions that must be done after test collection."""
-    # Track to the total number of tests to be able to compute the progress
-    session._total_tests = len(session.items)
-
-
-def pytest_report_teststatus(report, config):
+def pytest_report_teststatus(report):
     """
-    Replace pytest's per-test terminal output and emit
-    GitHub Actions log groups instead.
+    Fully replace pytest's per-test terminal output with
+    GitHub Actions log groups.
     """
-    if not IN_GITHUB_ACTIONS:
-        return None  # keep default behavior locally
-
-    session = report.session
-
-    # ---- SETUP PHASE: open group -----------------------------------------
-    if report.when == "setup" and report.passed:
-        session._test_index += 1
-
-        current = session._test_index
-        total = session._total_tests
-        percent = int((current / total) * 100)
-
-        _gha_print(
-            f"::group::TEST {current}/{total} ({percent}%) — {report.nodeid}"
-        )
-
-        # suppress pytest's own status line
-        return "", "", ""
-
-    # ---- CALL / TEARDOWN: close group ------------------------------------
-    if report.when in ("call", "teardown"):
-        _gha_print("::endgroup::")
-        return "", "", ""
+    if report.when == "call":
+        sys.stdout.write("::endgroup::\n")
+        sys.stdout.flush()
 
     return None
 
