@@ -14,6 +14,7 @@ import tempfile
 from glob import glob
 import json
 import csv
+import sys
 
 import pytest
 from nibabel import Nifti1Header
@@ -27,7 +28,16 @@ from contrib.fslhd import generate_nifti_fields, generate_numpy_fields
 logger = logging.getLogger(__name__)
 
 
-def pytest_sessionstart():
+IN_GITHUB_ACTIONS = os.getenv("GITHUB_ACTIONS") == "true"
+
+
+def _gha_print(line: str) -> None:
+    """Print a line to stdout to get around pytest's logging capture."""
+    sys.stdout.write(line + "\n")
+    sys.stdout.flush()
+
+
+def pytest_sessionstart(session):
     """Perform actions that must be done prior to test collection."""
     # Use a non-interactive backend so that no GUI plots will interrupt the test suite.
     # (NB: We do this here to ensure it is set before `matplotlib` is first imported.)
@@ -38,6 +48,41 @@ def pytest_sessionstart():
     if not os.path.exists(sct_test_path()):
         logger.info("Downloading sct test data")
         install_named_dataset('sct_testing_data', dest_folder=sct_test_path())
+
+    # Set an internval variable for tracking overall progress
+    session._test_index = 0
+
+
+def pytest_collection_finish(session):
+    """Perform actions that must be done after test collection."""
+    # Track to the total number of tests to be able to compute the progress
+    session._total_tests = len(session.items)
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_setup(item):
+    """Perform actions that must be done prior to each test."""
+    session = item.session
+
+    if IN_GITHUB_ACTIONS:
+        session._test_index += 1
+        total = session._total_tests
+        current = session._test_index
+        percent = int((current / total) * 100)
+
+        _gha_print(
+            f"::group::TEST {current}/{total} ({percent}%) — {item.nodeid}"
+        )
+
+    yield
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_teardown(item):
+    """Perform actions that must be done after each test."""
+    yield
+    if IN_GITHUB_ACTIONS:
+        _gha_print("::endgroup::")
 
 
 def pytest_sessionfinish():
