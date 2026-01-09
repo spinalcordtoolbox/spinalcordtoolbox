@@ -58,7 +58,7 @@ def log_raw_to_file(msg):
 
 def pytest_runtest_setup(item):
     """Log the beginning of a test item to the log file (for GitHub Actions log grouping)."""
-    log_raw_to_file(f"\n::group::{item.nodeid}")
+    log_raw_to_file(f"::group::{item.nodeid}")
 
 
 def pytest_runtest_teardown():
@@ -71,6 +71,9 @@ def pytest_sessionfinish():
     # don't generate summary files locally, since they are time-consuming and delay local testing
     if "CI" not in os.environ:
         return
+
+    # log the beginning of the session finish to the log file (for GitHub Actions log grouping)
+    log_raw_to_file("::group::'Session finish' logging")
 
     # get the newest temporary path created by pytest
     pytest_tempdirs = glob(os.path.join(tempfile.gettempdir(), "pytest-of-*", "pytest-current"))
@@ -88,6 +91,9 @@ def pytest_sessionfinish():
             summary = {key: d for key, d in zip(keys, summary)}  # convert to dict-of-dicts
             with open(fname_out, 'w', newline='\n') as jsonfile:
                 json.dump(summary, jsonfile, indent=2)
+
+    # log the end of the session finish to the log file (for GitHub Actions log grouping)
+    log_raw_to_file("\n::endgroup::")
 
 
 def summarize_files_in_folder(folder, exclude=None):
