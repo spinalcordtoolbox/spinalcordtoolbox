@@ -69,6 +69,7 @@ jobs:
         run: |
           ./.ci.sh -t
       - name: Show detailed pytest logs
+        if: always()
         run: |
           cat pytest.log
 
@@ -95,6 +96,7 @@ jobs:
         run: |
           ./.ci.sh -t
       - name: Show detailed pytest logs
+        if: always()
         run: |
           cat pytest.log
 
@@ -121,6 +123,7 @@ jobs:
         run: |
           ./.ci.sh -t
       - name: Show detailed pytest logs
+        if: always()
         run: |
           cat pytest.log
 
@@ -153,6 +156,7 @@ jobs:
         run: |
           ./.ci.sh -t
       - name: Show detailed pytest logs
+        if: always()
         run: |
           cat pytest.log
 
@@ -181,6 +185,7 @@ jobs:
         run: |
           ./.ci.sh -t
       - name: Show detailed pytest logs
+        if: always()
         run: |
           cat pytest.log
 
@@ -214,6 +219,7 @@ jobs:
         run: |
           ./.ci.sh -t
       - name: Show detailed pytest logs
+        if: always()
         run: |
           cat pytest.log
 
@@ -236,6 +242,7 @@ jobs:
         run: |
           ./.ci.sh -t
       - name: Show detailed pytest logs
+        if: always()
         run: |
           cat pytest.log
 
@@ -300,6 +307,7 @@ jobs:
         run: |
           ./.ci.sh -t
       - name: Show detailed pytest logs
+        if: always()
         run: |
           cat pytest.log
 
@@ -325,6 +333,7 @@ jobs:
         run: |
           ./.ci.sh -t
       - name: Show detailed pytest logs
+        if: always()
         run: |
           cat pytest.log
 
@@ -347,6 +356,7 @@ jobs:
        run: |
          ./.ci.sh -t
      - name: Show detailed pytest logs
+       if: always()
        run: |
          cat pytest.log
 
@@ -408,6 +418,7 @@ jobs:
         cd ~/spinalcordtoolbox
         ./.ci.sh -t
     - name: Show detailed pytest logs
+      if: always()
       run: |
         cat pytest.log
 
@@ -469,6 +480,7 @@ jobs:
         cd ~/spinalcordtoolbox
         ./.ci.sh -t
     - name: Show detailed pytest logs
+      if: always()
       run: |
         cat pytest.log
 
@@ -511,6 +523,7 @@ jobs:
     - name: Run pytest test suite
       run: sct_testing
     - name: Show detailed pytest logs
+      if: always()
       shell: bash
       run: |
          cat pytest.log
@@ -553,6 +566,7 @@ jobs:
     - name: Run pytest test suite
       run: sct_testing
     - name: Show detailed pytest logs
+      if: always()
       shell: bash
       run: |
         cat pytest.log
