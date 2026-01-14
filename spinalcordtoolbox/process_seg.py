@@ -47,13 +47,6 @@ KEYS_SYMMETRY = ['symmetry_dice_RL', 'symmetry_hausdorff_RL', 'symmetry_differen
                  'symmetry_dice_AP', 'symmetry_hausdorff_AP', 'symmetry_difference_AP']
 
 
-class MissingSlicesError(ValueError):
-    """Raised when the provided centerline does not cover all slices of the input mask."""
-    def __init__(self, message, **slices):
-        self.slices = slices
-        super().__init__(f"{message}: {parse_num_list_inv(slices)}")
-
-
 def compute_shape(segmentation, image=None, angle_correction=True, centerline_path=None, param_centerline=None,
                   verbose=1, remove_temp_files=1, filter_size=5):
     """
@@ -123,9 +116,10 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
         # check for slices in the input mask not covered by the centerline
         missing_slices = sorted(set(range(min_z_index, max_z_index + 1)).difference(deriv.keys()))
         if missing_slices:
-            raise MissingSlicesError(
+            raise ValueError(
                 f"The provided centerline does not cover slice(s) {parse_num_list_inv(missing_slices)} "
-                "of the input mask."
+                "of the input mask. Cannot compute angle correction. Please fix the input images or disable angle "
+                "correction."
             )
 
     # Loop across z and compute shape analysis

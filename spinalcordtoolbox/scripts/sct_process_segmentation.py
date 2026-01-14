@@ -23,7 +23,7 @@ import numpy as np
 from spinalcordtoolbox.reports import qc2
 from spinalcordtoolbox.aggregate_slicewise import aggregate_per_slice_or_level, save_as_csv, func_wa, func_std, \
     func_sum, merge_dict, normalize_csa
-from spinalcordtoolbox.process_seg import compute_shape, MissingSlicesError
+from spinalcordtoolbox.process_seg import compute_shape
 from spinalcordtoolbox.scripts import sct_maths
 from spinalcordtoolbox.csa_pmj import get_slices_for_pmj_distance
 from spinalcordtoolbox.metrics_to_PAM50 import interpolate_metrics
@@ -544,19 +544,13 @@ def main(argv: Sequence[str]):
     # update fields
     metrics_agg = {}
 
-    try:
-        metrics, fit_results = compute_shape(fname_segmentation,
-                                             fname_image,
-                                             angle_correction=angle_correction,
-                                             centerline_path=fname_centerline,
-                                             param_centerline=param_centerline,
-                                             verbose=verbose,
-                                             remove_temp_files=arguments.r)
-    except MissingSlicesError as e:
-        cli_msg = ("Please supply a '-centerline' covering all the slices, or specify '-centerline-exclude-missing 1' "
-                   "to skip processing the segmentation slices that are not covered by `-centerline`.")
-        parser.error(f"{e}\n{cli_msg}")
-
+    metrics, fit_results = compute_shape(fname_segmentation,
+                                         fname_image,
+                                         angle_correction=angle_correction,
+                                         centerline_path=fname_centerline,
+                                         param_centerline=param_centerline,
+                                         verbose=verbose,
+                                         remove_temp_files=arguments.r)
     if normalize_pam50:
         fname_vert_level_PAM50 = os.path.join(__data_dir__, 'PAM50', 'template', 'PAM50_levels.nii.gz')
         metrics_native_space = metrics  # Save metrics in native space to use them for HOG angle QC
