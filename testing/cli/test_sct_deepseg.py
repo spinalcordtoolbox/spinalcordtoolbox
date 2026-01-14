@@ -155,9 +155,9 @@ def t2_ax_sc_seg(tmp_path_factory):
      0.5,
      0.95,
      []),
-    ('t2_ax',          # FIXTURE: Generate axial images on the fly
-     ['t2_ax_sc_seg',  # FIXTURE: Just test against SC ground truth, because the model generates SC segs well
-      None],           # The model performs poorly on our fake t2_ax() image, so skip evaluating on lesion seg
+    (t2_ax,          # Generate axial images on the fly
+     [t2_ax_sc_seg,  # Just test against SC ground truth, because the model generates SC segs well
+      None],         # The model performs poorly on our fake t2_ax() image, so skip evaluating on lesion seg
      't2_deepseg.nii.gz',
      ["_sc_seg", "_lesion_seg"],
      'lesion_ms_axial_t2',
@@ -204,8 +204,8 @@ def test_segment_nifti_multiclass(fname_image, fnames_seg_manual, fname_out, suf
     # Fixtures can't be used in parametrization (https://stackoverflow.com/q/42014484)
     # So, we have to evaluate the fixture (i.e. generate the axial images) at test-time
     if "lesion_ms_axial_t2" in task:
-        fname_image = request.getfixturevalue(fname_image)
-        fnames_seg_manual = [request.getfixturevalue(fnames_seg_manual[0]), fnames_seg_manual[1]]
+        fname_image = request.getfixturevalue(fname_image.__name__)
+        fnames_seg_manual[0] = request.getfixturevalue(fnames_seg_manual[0].__name__)
 
     fname_out = str(tmp_path / fname_out)
     sct_deepseg.main([task, '-i', fname_image, '-thr', str(thr), '-o', fname_out, '-qc', tmp_path_qc,
