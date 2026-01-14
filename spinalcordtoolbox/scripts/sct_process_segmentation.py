@@ -23,7 +23,7 @@ import numpy as np
 from spinalcordtoolbox.reports import qc2
 from spinalcordtoolbox.aggregate_slicewise import aggregate_per_slice_or_level, save_as_csv, func_wa, func_std, \
     func_sum, merge_dict, normalize_csa
-from spinalcordtoolbox.process_seg import compute_shape
+from spinalcordtoolbox.process_seg import compute_shape, get_missing_slices
 from spinalcordtoolbox.scripts import sct_maths
 from spinalcordtoolbox.csa_pmj import get_slices_for_pmj_distance
 from spinalcordtoolbox.metrics_to_PAM50 import interpolate_metrics
@@ -519,20 +519,29 @@ def main(argv: Sequence[str]):
         smooth=arguments.centerline_smooth,
         minmax=True)
     # Exclude slices in segmentation where centerline is missing
-    if fname_centerline and arguments.centerline_exclude_missing:
-        temp_folder = TempFolder(basename="process-segmentation-modified-seg")
-        # NB: ensure modified tempdir segmentation will be used in later steps
-        fname_segmentation = temp_folder.copy_from(fname_segmentation)
-        im_seg = Image(fname_segmentation)
-        orig_orientation = im_seg.orientation
-        # find z slices in `im_ctl` that are empty (sum to 0)
-        im_ctl = Image(fname_centerline).change_orientation('RPI')
-        empty_slices = (im_ctl.data.sum(axis=(0, 1)) == 0)
-        # zero out slices in `im_seg` that are empty in `im_ctl`
-        im_seg.change_orientation('RPI')
-        im_seg.data[:, :, empty_slices] = 0
-        im_seg.change_orientation(orig_orientation)
-        im_seg.save(fname_segmentation)
+    if angle_correction and fname_centerline:
+        im_seg, im_ctl = Image(fname_segmentation), Image(fname_centerline)
+        missing_slices = get_missing_slices(im=im_seg, im_mask=im_ctl)
+        if missing_slices:
+            # Default behavior: Raise an error
+            if not arguments.centerline_exclude_missing:
+                parser.error(f"The centerline image does not cover slice(s) '{missing_slices}' of the segmentation, "
+                             f"meaning that angle correction cannot be computed for these slices. To bypass this error, "
+                             f"you can:\n"
+                             f"  a. Set the flag `-centerline-exclude-missing 1` to exclude these slices from the analysis \n"
+                             f"  b. Set the flag `-angle-corr 0` to skip angle correction altogether for this analysis, or \n"
+                             f"  c. Provide a centerline image that fully covers the segmentation")
+            # Opt-in behavior: Set the missing slices to 0 in the segmentation
+            else:
+                logger.warning(f"The centerline image does not cover slice(s) '{missing_slices}' of the segmentation. "
+                               f"These slices will be excluded from the analysis.")
+                temp_folder = TempFolder(basename="process-segmentation-modified-seg")
+                fname_segmentation = temp_folder.copy_from(fname_segmentation)
+                orig_orientation = im_seg.orientation
+                im_seg = im_seg.change_orientation('RPI')
+                im_seg.data[:, :, missing_slices] = 0
+                im_seg.change_orientation(orig_orientation)
+                im_seg.save(fname_segmentation)
 
     if normalize_pam50 and not perslice:
         parser.error("Option '-normalize-PAM50' requires option '-perslice 1'.")
