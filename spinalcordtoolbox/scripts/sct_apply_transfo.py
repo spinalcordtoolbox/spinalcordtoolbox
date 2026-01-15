@@ -131,7 +131,7 @@ def isct_antsApplyTransforms(dimensionality,
     if 'NearestNeighbor' in interpolation_args:
         im_out.data = im_out.data.astype(dtype_in)
         im_out.hdr.set_data_dtype(dtype_in)
-        im_out.save(verbose=0)
+        im_out.save(mutable=True, verbose=0)
     # FIXME: Consider returning an `Image` type if the extra save/loads
     #        add significant overhead to `sct_apply_transfo`.
 
@@ -345,7 +345,7 @@ class Transform:
 
         # Only save at the end to avoid unnecessary save/load operations for large warped 4D images
         printv("Saving output image.", verbose)
-        img_out.save(fname_out)
+        img_out.save(fname_out, mutable=True)
 
 
 # MAIN
