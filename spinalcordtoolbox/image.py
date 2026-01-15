@@ -950,26 +950,37 @@ def concat_data(im_in_list: Sequence[Image] | Sequence[str], dim, pixdim=None, s
     # WARNING: calling concat_data in python instead of in command line causes a non-understood issue (results are
     # different with both options) from numpy import concatenate, expand_dims
 
+    # Figure out the shape of the final concatenated image
+    # FIXME: Currently we have to infer the final shape from the shape of a single volume.
+    #        However, there may also be a singleton axis along `dim` (as is common in concatenation).
+    #        This produces ambiguity in very specific cases, e.g.:
+    #            - [1, X, Y], dim=0: Concatenate 2D images to produce [N, X, Y]
+    #            - [1, X, Y], dim=0: Concatenate 3D images to produce [N, 1, X, Y]
+    #        Currently, this code always assumes the former case, which is likely the most common as we're
+    #        unlikely to encounter a 3D array with a singleton dimension. But, it is theoretically possible.
+    #        Fixing this would likely require explicitly requiring/excluding singleton axes (or adding a `shape` param)
+    im_in_first = Image(im_in_list[0])
+    arr_first = im_in_first.data
+    # Squeeze singleton dimension at `dim` to allow us to determine the correct shape via insertion
+    if len(arr_first.shape) >= (dim + 1) and arr_first.shape[dim] == 1:
+        arr_first = np.squeeze(arr_first, axis=dim)
+    shape = list(arr_first.shape)
+    shape.insert(dim, len(im_in_list))
+
     # Preallocate the array in memory (to allow us to replace individual volumes one at a time)
     # NB: This can be very large for big images, such as `sct_apply_transfo` on a moco image warped to the PAM50
     # template. But, I don't think there's any way to avoid keeping 1 full copy in memory. I've tried using `np.memmap`
     # instead of `np.empty`, but calling it still allocates the full array in memory.
-    im_in_first = Image(im_in_list[0])
-    shape = list(im_in_first.data.shape)
-    shape.insert(dim, len(im_in_list))
     data_concat = np.empty(shape, dtype=im_in_first.data.dtype)
 
     # Insert volumes one at a time to avoid doubling memory usage (as would occur with `np.concatenate(dat_list)`)
     for i, fname in enumerate(im_in_list):
-        # ensure we're working with a 3D volume, rather than a 4D volume with an additional singleton axis
+        # squeeze any singleton axes along `dim` to ensure we're working with just the data we want to insert
         vol = Image(fname).data
-        if len(vol.shape) == 4 and vol.shape[dim] == 1:
+        if len(vol.shape) == len(shape) and vol.shape[dim] == 1:
             vol = np.squeeze(vol, axis=dim)
-        # sanity check on input array before assigning
-        assert vol.shape == im_in_first.data.shape
-        assert vol.dtype == im_in_first.data.dtype
         # create a slice object to index into the preallocated array
-        idx = [slice(None)] * 4
+        idx = [slice(None)] * len(shape)
         idx[dim] = i
         data_concat[tuple(idx)] = vol
         del vol
