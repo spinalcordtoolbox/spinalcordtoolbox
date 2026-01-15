@@ -587,7 +587,7 @@ class Image(object):
                 self.fix_header_dtype()
 
             # nb. that copy() is important because if it were a memory map, save() would corrupt it
-            dataobj = self.data.copy()
+            dataobj = self.data.copy() if isinstance(self.data, np.memmap) else self.data
             affine = None
             header = self.hdr.copy() if self.hdr is not None else None
             nib.save(nib.Nifti1Image(dataobj, affine, header), self.absolutepath)
