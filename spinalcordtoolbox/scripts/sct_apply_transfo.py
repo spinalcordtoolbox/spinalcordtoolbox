@@ -16,7 +16,7 @@ import textwrap
 
 import numpy as np
 
-from spinalcordtoolbox.image import Image, generate_output_file, add_suffix
+from spinalcordtoolbox.image import Image, add_suffix
 from spinalcordtoolbox.cropping import ImageCropper
 from spinalcordtoolbox.math import dilate
 from spinalcordtoolbox.labels import cubic_to_point
@@ -241,6 +241,8 @@ class Transform:
                 verbose=verbose,
             )
 
+            img_out = Image(fname_out)
+
         # if 4d, loop across the T dimension
         else:
             if islabel:
@@ -291,17 +293,13 @@ class Transform:
             # Merge files back
             printv('\nMerge file back...', verbose)
             import glob
-            path_out, name_out, ext_out = extract_fname(fname_out)
             # im_list = [Image(file_name) for file_name in glob.glob('data_reg_T*.nii')]
             # concat_data use to take a list of image in input, now takes a list of file names to open the files one by one (see issue #715)
             fname_list = glob.glob('data_reg_T*.nii')
             fname_list.sort()
             im_list = [Image(fname) for fname in fname_list]
-            im_out = sct_image.concat_data(im_list, 3, im_header['pixdim'])
-            im_out.save(name_out + ext_out)
-
+            img_out = sct_image.concat_data(im_list, 3, im_header['pixdim'])
             os.chdir(curdir)
-            generate_output_file(os.path.join(path_tmp, name_out + ext_out), fname_out)
             # Delete temporary folder if specified
             if remove_temp_files:
                 printv('\nRemove temporary files...', verbose)
@@ -309,14 +307,11 @@ class Transform:
 
         # Copy affine matrix from destination space to make sure qform/sform are the same
         printv("Copy affine matrix from destination space to make sure qform/sform are the same.", verbose)
-        im_src_reg = Image(fname_out)
-        im_src_reg.copy_affine_from_ref(Image(fname_dest))
-        im_src_reg.save(verbose=0)  # set verbose=0 to avoid warning message about rewriting file
+        img_out.copy_affine_from_ref(Image(fname_dest))
 
         if islabel:
             printv("\nTake the center of mass of each registered dilated labels...", verbose)
-            labeled_img = cubic_to_point(im_src_reg)
-            labeled_img.save(path=fname_out)
+            img_out = cubic_to_point(img_out)
             if remove_temp_files:
                 printv('\nRemove temporary files...', verbose)
                 rmtree(path_tmp, verbose=verbose)
@@ -327,7 +322,6 @@ class Transform:
         # warping field
         if not isLastAffine and crop_reference in [1, 2, 3]:
             printv('Last transformation is not affine.')
-            img_out = Image(fname_out)
             # Extract only the first n dims of the warping field by creating a dummy image with the correct shape
             img_warp = Image(warping_field)
             warp_shape = img_warp.data.shape[:int(dim)]  # dim = {'2', '3', '4'}
@@ -348,7 +342,10 @@ class Transform:
                 img_ref_r = resample_nib(img_warp_ndim, image_dest=img_out, interpolation='nn', mode='constant')
                 # Simply mask the output image instead of doing a bounding-box-based crop
                 img_out.data = img_out.data * img_ref_r.data
-            img_out.save(fname_out)
+
+        # Only save at the end to avoid unnecessary save/load operations for large warped 4D images
+        printv("Saving output image.", verbose)
+        img_out.save(fname_out)
 
 
 # MAIN
