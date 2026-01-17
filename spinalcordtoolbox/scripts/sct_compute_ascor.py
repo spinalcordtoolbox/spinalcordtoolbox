@@ -108,6 +108,12 @@ def main(argv: Sequence[str]):
         printv("No `-centerline` provided. A centerline will be computed from `-i-SC` and used for both SC and canal.", verbose, 'info')
         process_seg_argv.extend(['-centerline', fname_sc_seg])
 
+    # Override the default value of `-centerline-exclude-missing` to be `1` instead of `0`
+    # Doing this limits the aSCOR computation to only the slices where both SC and canal segmentations are present.
+    # This avoids a potential exception caused by the centerline (i.e. `-i-SC`) not fully covering the canal segmentation.
+    if '-centerline-exclude-missing' not in process_seg_argv:
+        process_seg_argv.extend(['-centerline-exclude-missing', '1'])
+
     # Run sct_process_segmentation twice: 1) SC seg 2) canal seg
     temp_folder = TempFolder(basename="process-segmentation")
     path_tmp = temp_folder.get_path()

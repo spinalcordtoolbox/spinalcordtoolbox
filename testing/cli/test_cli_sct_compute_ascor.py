@@ -4,6 +4,7 @@ import pytest
 import logging
 import csv
 
+from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.scripts import sct_compute_ascor, sct_crop_image, sct_deepseg, sct_label_utils
 from spinalcordtoolbox.utils.sys import sct_test_path
 
@@ -88,3 +89,33 @@ def test_sct_process_segmentation_missing_input_sc(tmp_path, t2_canal_seg):
         sct_compute_ascor.main(argv=['-i-canal', t2_canal_seg,
                                      '-discfile', sct_test_path('t2', 'labels.nii.gz'), '-o', filename])
         assert e.value.code == 2
+
+
+def test_sct_compute_ascor_exclude_missing_centerline_slices(tmp_path, t2_canal_seg):
+    """Run sct_compute_ascor where the SC seg doesn't fully cover the slices of the canal seg."""
+    filename = str(tmp_path / 'tmp_file_out.csv')
+    # Crop the spinal cord segmentation with `-b 0` so that the array shape is preserved,
+    # but so that the spinal cord no longer fully covers the spinal canal (NB: AIL -> SI axis==`y` -> `-ymax`)
+    t2_cord_seg = sct_test_path('t2', 't2_seg-manual.nii.gz')
+    t2_cord_seg_crop = str(tmp_path / 't2_cord_seg_crop.nii.gz')
+    sct_crop_image.main(argv=['-i', t2_cord_seg, '-ymax', '-2', '-b', '0', '-o', t2_cord_seg_crop])
+
+    # Ensure consistent arguments between both calls
+    argv = ['-i-SC', t2_cord_seg_crop,
+            '-i-canal', t2_canal_seg,
+            # TODO: When I left `-perslice` off, the range showed as 0:54. Is this correct? Should it be 0:53?
+            '-perslice', '1',  # Used to ensure specific slices are skipped
+            '-discfile', sct_test_path('t2', 'labels.nii.gz'), '-o', filename]
+
+    # When `0`, this should raise a parser error since the SC seg (used as a centerline) doesn't cover the canal seg
+    with pytest.raises(SystemExit) as e:
+        sct_compute_ascor.main(argv=argv + ['-centerline-exclude-missing', '0'])
+    assert e.value.code == 2
+
+    # However, by default (`1`), this should bypass the error and limit aSCOR to only the overlapping slices
+    sct_compute_ascor.main(argv=argv)
+    last_slice = Image(t2_canal_seg).change_orientation('RPI').data.shape[2] - 1
+    with open(filename, "r") as csvfile:
+        reader = csv.DictReader(csvfile, delimiter=',')
+        slices = [int(row['Slice (I->S)']) for row in list(reader)]
+        assert last_slice not in slices
