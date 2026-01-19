@@ -995,15 +995,12 @@ def concat_data(im_in_list: Sequence[Image | str], dim, pixdim=None, squeeze_dat
         vol = Image(im).data
         if len(vol.shape) < n_dims:
             vol = np.expand_dims(vol, axis=dim)
-        # copy the contents of the source array into the destination array
-        for n_vol in range(vol.shape[dim]):
-            # create slice objects to index into the source and destination arrays
-            idx_dst = [slice(None)] * n_dims
-            idx_dst[dim] = i
-            idx_src = [slice(None)] * n_dims
-            idx_src[dim] = n_vol
-            data_concat[tuple(idx_dst)] = vol[tuple(idx_src)]
-            i += 1
+        # create slice object to index into the source and destination arrays
+        j = i + vol.shape[dim]
+        idx = [slice(None)] * n_dims
+        idx[dim] = slice(i, j)
+        data_concat[tuple(idx)] = vol
+        i = j
         del vol  # conserve memory
 
     im_in_first = Image(im_in_list[0])
