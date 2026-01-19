@@ -937,7 +937,7 @@ def compute_dice(image1, image2, mode='3d', label=1, zboundaries=False):
     return dice
 
 
-def concat_data(im_in_list: Sequence[Image] | Sequence[str], dim, pixdim=None, squeeze_data=False):
+def concat_data(im_in_list: Sequence[Image | str], dim, pixdim=None, squeeze_data=False):
     """
     Concatenate data
 
