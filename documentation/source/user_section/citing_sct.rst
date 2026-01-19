@@ -51,7 +51,7 @@ The table below lists the references for :ref:`sct_deepseg` sub-tasks which have
     * - DeepSeg Task
       - References
     * - :ref:`sct_deepseg_spinalcord`
-      - - Karthik EN *et al.* "`Monitoring morphometric drift in lifelong learning segmentation of the spinal cord <https://arxiv.org/abs/2505.01364>`__" **arXiv** (2025).
+      - - Karthik EN *et al.* "`Monitoring morphometric drift in lifelong learning segmentation of the spinal cord <https://doi.org/10.1162/IMAG.a.1105>`__" **Imaging Neurosci.** (2026).
         - Bédard S, Karthik EN *et al.* "`Towards contrast-agnostic soft segmentation of the spinal cord. <https://www.sciencedirect.com/science/article/pii/S1361841525000210>`__" **Medical Image Analysis** (2025): 103473.
     * - :ref:`sct_deepseg_sc_epi`
       - Banerjee R *et al.* "`EPISeg: Automated segmentation of the spinal cord on echo planar images using open-access multi-center data. <https://www.biorxiv.org/content/10.1101/2025.01.07.631402v2.abstract>`__" **bioRxiv** (2025): 2025-01.
