@@ -189,7 +189,7 @@ def get_parser(ascor=False):
         """),
     )
     optional.add_argument(
-        '-rootlet',  # TODO: consider adding QC report with spinal levels from rootlets
+        '-spinal-level',
         metavar=Metavar.str,
         help=textwrap.dedent("""
             Dorsal and ventral nerve rootlets segmentation. Example: `anat_rootlets.nii.gz`
@@ -431,8 +431,8 @@ def main(argv: Sequence[str]):
     # make sure we have a valid VertLevel file (used for aggregation + VertLevel column)
     if arguments.vertfile is not None and arguments.discfile is not None:
         parser.error("Both '-vertfile' and '-discfile' were specified. Please only specify one of these options.")
-    elif arguments.rootlet is not None:
-        fname_vert_level = arguments.rootlet
+    elif arguments.spinal_level is not None:
+        fname_vert_level = arguments.spinal_level
     elif arguments.discfile is not None:
         fname_vert_level = arguments.discfile
     elif arguments.vertfile is not None:
@@ -485,36 +485,37 @@ def main(argv: Sequence[str]):
                 copy(ctl_projected.absolutepath, os.path.dirname(os.path.abspath(fname_vert_level)))
             # Overwrite the input argument so that the labeled centerline (in the tmpdir) is used from now on
             fname_vert_level = ctl_projected.absolutepath
-        elif arguments.rootlet is not None:
-            if arguments.centerline is not None:
-                fname_centerline = arguments.centerline
-            else:
-                fname_centerline = fname_segmentation
-            # Copy the input files to the tempdir
-            temp_folder = TempFolder(basename="process-segmentation")
-            path_tmp_seg = temp_folder.copy_from(fname_segmentation)
-            path_tmp_ctl = (temp_folder.copy_from(fname_centerline) if arguments.centerline
-                            else path_tmp_seg)
-            path_tmp_rootlet = temp_folder.copy_from(fname_vert_level)
-            dilate_size = 3  # [mm]
-            im_intersect = intersect_seg_and_rootlets(path_tmp_seg, path_tmp_rootlet, dilate_size)
-            fname_intersect = add_suffix(path_tmp_rootlet, '_intersect')
-            im_intersect.save(fname_intersect, mutable=True)
-            # Get unique values in the rootlets segmentation larger than 0
-            im_rootlets = Image(path_tmp_rootlet).change_orientation('RPI')
-            rootlets_levels = np.unique(im_rootlets.data[np.where(im_rootlets.data > 0)])
-            print(rootlets_levels)
+        elif arguments.spinal_level is not None:
+            # if arguments.centerline is not None:
+            #     fname_centerline = arguments.centerline
+            # else:
+            #     fname_centerline = fname_segmentation
+            # # Copy the input files to the tempdir
+            # temp_folder = TempFolder(basename="process-segmentation")
+            # path_tmp_seg = temp_folder.copy_from(fname_segmentation)
+            # path_tmp_ctl = (temp_folder.copy_from(fname_centerline) if arguments.centerline
+            #                 else path_tmp_seg)
+            # path_tmp_rootlet = temp_folder.copy_from(fname_vert_level)
+            # dilate_size = 3  # [mm]
+            # im_intersect = intersect_seg_and_rootlets(path_tmp_seg, path_tmp_rootlet, dilate_size)
+            # fname_intersect = add_suffix(path_tmp_rootlet, '_intersect')
+            # im_intersect.save(fname_intersect, mutable=True)
+            # # Get unique values in the rootlets segmentation larger than 0
+            # im_rootlets = Image(path_tmp_rootlet).change_orientation('RPI')
+            # rootlets_levels = np.unique(im_rootlets.data[np.where(im_rootlets.data > 0)])
+            # print(rootlets_levels)
 
-            # Project the nerve rootlets intersection on the spinal cord segmentation to obtain spinal levels
-            fname_spinal_levels_ctl, fname_seg_projected = project_rootlets_to_segmentation(path_tmp_seg, path_tmp_rootlet, fname_intersect,
-                                                                                            rootlets_levels)
-            # Use the projected spinal levels to extract a labeled centerline from the input segmentation
-            if verbose == 2:
-                copy(fname_spinal_levels_ctl, os.path.dirname(os.path.abspath(fname_vert_level)))
-                copy(fname_intersect, os.path.dirname(os.path.abspath(fname_vert_level)))
-                copy(fname_seg_projected, os.path.dirname(os.path.abspath(fname_vert_level)))
+            # # Project the nerve rootlets intersection on the spinal cord segmentation to obtain spinal levels
+            # fname_spinal_levels_ctl, fname_seg_projected = project_rootlets_to_segmentation(path_tmp_seg, path_tmp_rootlet, fname_intersect,
+            #                                                                                 rootlets_levels)
+            # # Use the projected spinal levels to extract a labeled centerline from the input segmentation
+            # if verbose == 2:
+            #     copy(fname_spinal_levels_ctl, os.path.dirname(os.path.abspath(fname_vert_level)))
+            #     copy(fname_intersect, os.path.dirname(os.path.abspath(fname_vert_level)))
+            #     copy(fname_seg_projected, os.path.dirname(os.path.abspath(fname_vert_level)))
             # Overwrite the input argument so that the labeled centerline (in the tmpdir) is used from now on
-            fname_vert_level = fname_spinal_levels_ctl
+           #fname_vert_level = fname_spinal_levels_ctl
+            fname_vert_level = fname_vert_level
     perlevel = bool(arguments.perlevel)
     slices = arguments.z
     perslice = bool(arguments.perslice)
@@ -548,7 +549,7 @@ def main(argv: Sequence[str]):
                                          verbose=verbose,
                                          remove_temp_files=arguments.r)
     if normalize_pam50:
-        if arguments.rootlet is not None:
+        if arguments.spinal_level is not None:
             fname_vert_level_PAM50 = os.path.join(__data_dir__, 'PAM50', 'template', 'PAM50_spinal_levels.nii.gz')  # consider creating a sepearet spinal level from the rootlets
         fname_vert_level_PAM50 = os.path.join(__data_dir__, 'PAM50', 'template', 'PAM50_levels.nii.gz')
         metrics_PAM50_space = interpolate_metrics(metrics, fname_vert_level_PAM50, fname_vert_level)
