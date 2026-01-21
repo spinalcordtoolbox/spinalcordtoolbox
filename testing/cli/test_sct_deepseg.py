@@ -89,10 +89,13 @@ def test_segment_nifti_binary_seg(fname_image, fname_seg_manual, fname_out, task
     if 'sc_' in task:
         # TODO: Replace the "general" testing of these arguments with specific tests with specific input data
         args.extend(['-largest', '1', '-fill-holes', '1', '-remove-small', '5mm3'])
+
     # try out `use_mirroring` for `lesion_ms` model only (due to longer inference time)
     # based on https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4995#issuecomment-3410672883
-    if task == 'lesion_ms':
-        args.extend(['-test-time-aug'])
+    # FIXME: This takes upwards of 1-2 hours to complete based on OS. Disable for now until we can speed up testing.
+    # if task == 'lesion_ms':
+    #     args.extend(['-test-time-aug'])
+
     sct_deepseg.main(argv=args)
     # Make sure output file exists
     assert os.path.isfile(fname_out)
@@ -125,17 +128,21 @@ def test_segment_nifti_binary_seg(fname_image, fname_seg_manual, fname_out, task
                 )
 
 
-def t2_ax():
+@pytest.fixture(scope='session')
+def t2_ax(tmp_path_factory):
     """Generate an approximation of an axially-acquired T2w anat image using resampling."""
-    fname_out = os.path.abspath('t2_ax.nii.gz')
+    tmp_path = tmp_path_factory.mktemp('t2_ax')
+    fname_out = str(tmp_path / 't2_ax.nii.gz')
     sct_resample.main(argv=["-i", sct_test_path('t2', 't2.nii.gz'), "-o", fname_out,
                             "-mm", "0.8x3x0.8", "-x", "spline"])
     return fname_out
 
 
-def t2_ax_sc_seg():
+@pytest.fixture(scope='session')
+def t2_ax_sc_seg(tmp_path_factory):
     """Generate an approximation of an axially-acquired T2w segmentation using resampling."""
-    fname_out = os.path.abspath('t2_ax_sc_seg.nii.gz')
+    tmp_path = tmp_path_factory.mktemp('t2_ax')
+    fname_out = str(tmp_path / 't2_ax_sc_seg.nii.gz')
     sct_resample.main(argv=["-i", sct_test_path('t2', 't2_seg-manual.nii.gz'), "-o", fname_out,
                             "-mm", "0.8x3x0.8", "-x", "spline"])
     return fname_out
@@ -151,9 +158,9 @@ def t2_ax_sc_seg():
      0.5,
      0.95,
      []),
-    (t2_ax(),          # Generate axial images on the fly
-     [t2_ax_sc_seg(),  # Just test against SC ground truth, because the model generates SC segs well
-      None],           # The model performs poorly on our fake t2_ax() image, so skip evaluating on lesion seg
+    (t2_ax,          # Generate axial images on the fly
+     [t2_ax_sc_seg,  # Just test against SC ground truth, because the model generates SC segs well
+      None],         # The model performs poorly on our fake t2_ax() image, so skip evaluating on lesion seg
      't2_deepseg.nii.gz',
      ["_sc_seg", "_lesion_seg"],
      'lesion_ms_axial_t2',
@@ -187,7 +194,7 @@ def t2_ax_sc_seg():
 ])
 @pytest.mark.usefixtures(cleanup_model_dirs.__name__)
 def test_segment_nifti_multiclass(fname_image, fnames_seg_manual, fname_out, suffixes, task, thr, expected_dice,
-                                  extra_args, tmp_path, tmp_path_qc):
+                                  extra_args, tmp_path, tmp_path_qc, request):
     """
     Uses the locally-installed sct_testing_data
     """
@@ -197,6 +204,11 @@ def test_segment_nifti_multiclass(fname_image, fnames_seg_manual, fname_out, suf
     # More info here: https://github.com/spinalcordtoolbox/spinalcordtoolbox/wiki/Testing%253A-Datasets
     if "mouse" in task and not os.path.exists(fname_image):
         pytest.skip("Mouse data must be manually downloaded to run this test.")
+    # Fixtures can't be used in parametrization (https://stackoverflow.com/q/42014484)
+    # So, we have to evaluate the fixture (i.e. generate the axial images) at test-time
+    if "lesion_ms_axial_t2" in task:
+        fname_image = request.getfixturevalue(fname_image.__name__)
+        fnames_seg_manual[0] = request.getfixturevalue(fnames_seg_manual[0].__name__)
 
     fname_out = str(tmp_path / fname_out)
     sct_deepseg.main([task, '-i', fname_image, '-thr', str(thr), '-o', fname_out, '-qc', tmp_path_qc,
