@@ -9,7 +9,8 @@ on:
     # https://docs.github.com/en/free-pro-team@latest/actions/reference/workflow-syntax-for-github-actions#onschedule
     # > Scheduled workflows run on the latest commit on the default or base branch
     # i.e. this can only run on master
-    - cron:  '0 11 * * *'
+    # NB: 8AM UTC every day corresponds to 3AM/4AM depending on DST
+    - cron:  '0 8 * * *'
 
 env:
   # Turns on color output for pytest. See: https://github.com/pytest-dev/pytest/issues/7443#issuecomment-656642591

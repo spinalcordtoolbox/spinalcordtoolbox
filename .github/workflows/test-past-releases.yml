@@ -6,7 +6,8 @@ on:
     # https://docs.github.com/en/free-pro-team@latest/actions/reference/workflow-syntax-for-github-actions#onschedule
     # > Scheduled workflows run on the latest commit on the default or base branch
     # i.e. this can only run on master
-    - cron:  '0 11 * * 0'
+    # NB: 8AM UTC on Sundays corresponds to 3AM/4AM depending on DST
+    - cron:  '0 8 * * 0'
 env:
     # Even when given -y, apt will still sometimes hang at a prompt if a package
     # has clarifications to ask; DEBIAN_FRONTEND=noninteractive prevents that,
