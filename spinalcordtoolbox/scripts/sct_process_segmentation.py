@@ -550,7 +550,8 @@ def main(argv: Sequence[str]):
     if normalize_pam50:
         if arguments.rootlet is not None:
             fname_vert_level_PAM50 = os.path.join(__data_dir__, 'PAM50', 'template', 'PAM50_spinal_levels.nii.gz')  # consider creating a sepearet spinal level from the rootlets
-        fname_vert_level_PAM50 = os.path.join(__data_dir__, 'PAM50', 'template', 'PAM50_levels.nii.gz')
+        else:
+            fname_vert_level_PAM50 = os.path.join(__data_dir__, 'PAM50', 'template', 'PAM50_levels.nii.gz')
         metrics_PAM50_space = interpolate_metrics(metrics, fname_vert_level_PAM50, fname_vert_level)
         if not levels:  # If no levels -vert were specified by user
             if verbose == 2:
