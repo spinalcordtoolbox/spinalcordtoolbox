@@ -11,14 +11,12 @@ import textwrap
 import numpy as np
 from shutil import copyfile
 
-from spinalcordtoolbox.math import smooth
 from spinalcordtoolbox.image import add_suffix, generate_output_file, Image
 from spinalcordtoolbox.scripts import sct_dmri_separate_b0_and_dwi
 from spinalcordtoolbox.utils.sys import sct_dir_local_path, LazyLoader, printv
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, rmtree
 
 torch = LazyLoader("torch", globals(), "torch")
-ski_exposure = LazyLoader("ski_exposure", globals(), "skimage.exposure")
 moco_dl_model = LazyLoader("moco_dl_model", globals(), "spinalcordtoolbox.moco.dl.model")
 
 
@@ -130,35 +128,8 @@ def moco_dl(fname_data, fname_mask='', fname_ref='', path_out='', mode="fmri", f
     Tx = Tx.squeeze().cpu().numpy()  # (D,T)
     Ty = Ty.squeeze().cpu().numpy()  # (D,T)
 
-    H, W, D, T = warped.shape
-    # Restore high-frequency detail from raw data
-    sharpened = np.copy(warped)
-    for t in range(T):
-        for d in range(D):
-            img_warped = warped[..., d, t]
-            img_raw = mov_img[..., d, t]
-            mask_slice = mask_img[..., d]
-
-            if np.count_nonzero(mask_slice) == 0:
-                sharpened[..., d, t] = img_warped
-                continue
-
-            raw_smooth = smooth(img_raw.astype(np.float32), sigmas=[0.5, 0.5])
-            texture = img_raw - raw_smooth
-            out = img_warped + 1.2 * texture
-            lo, hi = np.percentile(img_raw[mask_slice > 0], [0.5, 99.5])
-            out = np.clip(out, lo, hi)
-            sharpened[..., d, t] = out
-
-    matched = np.zeros_like(sharpened)
-    for t in range(T):
-        matched[..., t] = ski_exposure.match_histograms(
-            sharpened[..., t].astype(np.float32),
-            mov_img[..., t].astype(np.float32)
-        )
-
     # Save Moco output
-    im_moco = Image(matched, hdr=header)
+    im_moco = Image(warped, hdr=header)
     im_moco.affine = affine
     fname_moco_tmp = os.path.join(path_tmp, "mocoDL.nii.gz")
     im_moco.save(fname_moco_tmp)
