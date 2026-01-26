@@ -47,7 +47,12 @@ jobs:
       run: |
         source python/etc/profile.d/conda.sh
         conda activate venv_sct
-        pip freeze | grep -v "-e git+" | grep -v "torch" | grep -v "certifi @ file" > requirements-freeze.txt
+        # NB: "@ file" comes from conda packages containing `direct_url.json` files that get misinterpreted by pip.
+        #     Generally, these will only be "standard" packages like `packaging`, `wheel`, etc. that get installed 
+        #     when the conda environment is first created, which I don't think aren't strictly necessary to pin in 
+        #     `requirements-freeze.txt`. So, we filter them out here, as they would break a `pip` install.
+        #     See: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/5150
+        pip freeze | grep -v "-e git+" | grep -v "torch" | grep -v "@ file" > requirements-freeze.txt
         conda deactivate
         grep "# append_to_freeze" requirements.txt >> requirements-freeze.txt
 
