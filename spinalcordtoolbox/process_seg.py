@@ -165,9 +165,8 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
 
     # Compute image-based shape properties
     if image is not None:
-        im_r = resample_nib(im, new_size=[pr, pr, pz], new_size_type='mm', interpolation='linear')
         shape_properties_image = _properties_image(
-            im_r, nz, px, py, pz, pr, min_z_index, max_z_index, property_list_image,
+            im, nz, px, py, pz, pr, min_z_index, max_z_index, property_list_image,
             current_patches, current_tforms, angle_correction, filter_size, verbose
         )
         shape_properties.update(shape_properties_image)
@@ -182,7 +181,7 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
     return metrics, fit_results
 
 
-def _properties_image(im_r, nz, px, py, pz, pr, min_z_index, max_z_index, property_list,
+def _properties_image(im, nz, px, py, pz, pr, min_z_index, max_z_index, property_list,
                       current_patches, current_tforms, angle_correction, filter_size, verbose):
     """
     Compute morphometric measures of the spinal cord in the transverse (axial) plane that specifically
@@ -204,7 +203,7 @@ def _properties_image(im_r, nz, px, py, pz, pr, min_z_index, max_z_index, proper
             continue
 
         # Apply angle correction transformation to the anatomical image slice
-        current_patch_im = im_r.data[:, :, iz]
+        current_patch_im = im.data[:, :, iz]
         if angle_correction:
             tform = current_tforms[iz]
             current_patch_im_scaled = transform.warp(current_patch_im.astype(np.float64),
