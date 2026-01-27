@@ -245,7 +245,7 @@ def _properties_image(im_r, nz, px, py, pz, pr, min_z_index, max_z_index, proper
         current_patch_scaled = current_patches[iz]['patch']
 
         # Compute shape properties with regularized angle_hog
-        shape_property = _properties2d(current_patch_scaled, [px, py], iz, angle_hog=angle_hog, verbose=verbose)
+        shape_property = _properties2d(current_patch_scaled, [px, py], pr, iz, angle_hog=angle_hog, verbose=verbose)
 
         if shape_property is not None:
             # Add custom fields
@@ -261,7 +261,7 @@ def _properties_image(im_r, nz, px, py, pz, pr, min_z_index, max_z_index, proper
     return shape_properties
 
 
-def _properties2d(seg, dim, iz, angle_hog=None, verbose=1):
+def _properties2d(seg, dim, pr, iz, angle_hog=None, verbose=1):
     """
     Compute shape property of the input 2D segmentation. Accounts for partial volume information.
     :param seg: 2D input segmentation in uint8 or float (weighted for partial volume) that has a single object. seg.shape[0] --> RL; seg.shape[1] --> PA
@@ -295,7 +295,7 @@ def _properties2d(seg, dim, iz, angle_hog=None, verbose=1):
     seg_crop = seg_norm[np.clip(minx-pad, 0, seg_bin.shape[0]): np.clip(maxx+pad, 0, seg_bin.shape[0]),
                         np.clip(miny-pad, 0, seg_bin.shape[1]): np.clip(maxy+pad, 0, seg_bin.shape[1])]
     # Apply resampling to the cropped segmentation:
-    zoom_factors = (dim[0]/0.1, dim[1]/0.1)
+    zoom_factors = (dim[0]/pr, dim[1]/pr)
     seg_crop_r = zoom(seg_crop, zoom=zoom_factors, order=1, mode='grid-constant', grid_mode=True)  # make pixel size isotropic
     regions = measure.regionprops(np.array(seg_crop_r > 0.5, dtype='uint8'), intensity_image=seg_crop_r)
     region = regions[0]
@@ -304,8 +304,7 @@ def _properties2d(seg, dim, iz, angle_hog=None, verbose=1):
     seg_crop_r = seg_crop_r[np.clip(minx-pad, 0, seg_crop_r.shape[0]): np.clip(maxx+pad, 0, seg_crop_r.shape[0]),
                             np.clip(miny-pad, 0, seg_crop_r.shape[1]): np.clip(maxy+pad, 0, seg_crop_r.shape[1])]
     # Update dim to isotropic pixel size
-    dim = [0.1, 0.1]
-    # seg_crop_r = seg_crop
+    dim = [pr, pr]
     # Binarize segmentation using threshold at 0.5 Necessary input for measure.regionprops
     seg_crop_r_bin = np.array(seg_crop_r > 0.5, dtype='uint8')
     # Get all closed binary regions from the segmentation (normally there is only one)
