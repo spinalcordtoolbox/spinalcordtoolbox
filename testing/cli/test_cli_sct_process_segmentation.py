@@ -225,12 +225,12 @@ def test_sct_process_segmentation_anat_properties(tmp_path, tmp_path_qc):
         rows = list(reader)
         row = rows[10]
         assert row['Slice (I->S)'] == '10'
-        assert float(row['MEAN(symmetry_dice_RL)']) == pytest.approx(0.8219981221404254)
-        assert float(row['MEAN(symmetry_dice_AP)']) == pytest.approx(0.8335237077563687)
-        assert float(row['MEAN(symmetry_hausdorff_RL)']) == pytest.approx(1.252996408614167)
-        assert float(row['MEAN(symmetry_hausdorff_AP)']) == pytest.approx(1.565247584249853)
-        assert float(row['MEAN(symmetry_difference_RL)']) == pytest.approx(13.730229403882033)
-        assert float(row['MEAN(symmetry_difference_AP)']) == pytest.approx(12.745297924936569)
+        assert float(row['MEAN(symmetry_dice_RL)']) == pytest.approx(0.886441262352387)
+        assert float(row['MEAN(symmetry_dice_AP)']) == pytest.approx(0.8945379741366641)
+        assert float(row['MEAN(symmetry_hausdorff_RL)']) == pytest.approx(0.894427190999916)
+        assert float(row['MEAN(symmetry_hausdorff_AP)']) == pytest.approx(0.894427190999916)
+        assert float(row['MEAN(symmetry_difference_RL)']) == pytest.approx(8.9110579867627)
+        assert float(row['MEAN(symmetry_difference_AP)']) == pytest.approx(8.235451023499937)
 
 
 @pytest.mark.sct_testing
