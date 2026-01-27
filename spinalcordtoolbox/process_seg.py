@@ -145,7 +145,7 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
             angle_AP_rad, angle_RL_rad = 0.0, 0.0
 
         # Compute shape properties for this slice
-        shape_property = _properties2d(current_patch_scaled, [px, py], iz, verbose=verbose)
+        shape_property = _properties2d(current_patch_scaled, [px, py], pr, iz, verbose=verbose)
         if shape_property is not None:
             # Add custom fields
             shape_property['angle_AP'] = angle_AP_rad * 180.0 / math.pi     # convert to degrees
