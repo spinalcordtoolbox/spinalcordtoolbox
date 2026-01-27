@@ -83,13 +83,7 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
     # Getting image dimensions. x, y and z respectively correspond to RL, PA and IS.
     nx, ny, nz, nt, px, py, pz, pt = im_seg.dim
     pr = 0.1   # we use a fixed value to be independent from the input image resolution
-    # Resample to isotropic resolution in the axial plane. Use the minimum pixel dimension as target dimension.
-    #im_segr = resample_nib(im_seg, new_size=[pr, pr, pz], new_size_type='mm', interpolation='linear')
-    im_segr = im_seg
-    # Update dimensions from resampled image.
-    nx, ny, nz, nt, px, py, pz, pt = im_segr.dim
-    # Extract min and max index in Z direction
-    data_seg = im_segr.data
+    data_seg = im_seg.data
     X, Y, Z = (data_seg > NEAR_ZERO_THRESHOLD).nonzero()
     min_z_index, max_z_index = min(Z), max(Z)
 
@@ -105,7 +99,7 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
             im_centerline_r = resample_nib(im_centerline, new_size=[pr, pr, pz], new_size_type='mm',
                                            interpolation='linear')
         else:
-            im_centerline_r = im_segr
+            im_centerline_r = im_seg
         # compute the spinal cord centerline based on the spinal cord segmentation
         _, arr_ctl, arr_ctl_der, fit_results = get_centerline(im_centerline_r, param=param_centerline, verbose=verbose,
                                                               remove_temp_files=remove_temp_files)
@@ -128,7 +122,7 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
     for iz in sct_progress_bar(range(min_z_index, max_z_index + 1), unit='iter', unit_scale=False, desc="Compute shape analysis",
                                ncols=80):
         # Extract 2D patch
-        current_patch = im_segr.data[:, :, iz]
+        current_patch = im_seg.data[:, :, iz]
         if angle_correction:
             # Extract tangent vector to the centerline (i.e. its derivative)
             tangent_vect = np.array([deriv[iz][0] * px, deriv[iz][1] * py, pz])
