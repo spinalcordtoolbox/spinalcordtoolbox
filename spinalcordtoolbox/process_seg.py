@@ -96,7 +96,7 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
         # allow the centerline image to be bypassed (in case `im_seg` is irregularly shaped, e.g. GM/WM)
         if centerline_path:
             im_centerline = Image(centerline_path).change_orientation('RPI')
-            im_centerline_r = resample_nib(im_centerline, new_size=[pr, pr, pz], new_size_type='mm',
+            im_centerline_r = resample_nib(im_centerline, new_size=[px, py, pz], new_size_type='mm',
                                            interpolation='linear')
         else:
             im_centerline_r = im_seg
