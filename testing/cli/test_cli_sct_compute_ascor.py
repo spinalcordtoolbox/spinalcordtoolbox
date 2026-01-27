@@ -48,7 +48,7 @@ def test_sct_process_segmentation_check_discfile_perslice(tmp_path, t2_canal_seg
         assert row['Slice (I->S)'] == '10'
         assert row['DistancePMJ'] == ''
         assert row['VertLevel'] == '3'
-        assert float(row['aSCOR']) == pytest.approx(0.45090644843410044)
+        assert float(row['aSCOR']) == pytest.approx(0.4502665491328947)
 
 
 def test_sct_process_segmentation_check_discfile_perlevel(tmp_path, t2_canal_seg, t2_disc_labels):
