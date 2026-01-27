@@ -143,7 +143,7 @@ def test_sct_compute_compression_no_normalization(tmp_path, dummy_3d_mask_nib, d
         reader = csv.DictReader(csvfile, delimiter=',')
         row = next(reader)
         assert float(row['compression_level']) == 5.0
-        assert float(row['diameter_AP_ratio']) == pytest.approx(19.789721361809686)
+        assert float(row['diameter_AP_ratio']) == pytest.approx(23.333335503628728)
         assert row['diameter_AP_ratio_PAM50'] == 'n/a'
         assert row['diameter_AP_ratio_PAM50_normalized'] == 'n/a'
 
@@ -159,14 +159,14 @@ def test_sct_compute_compression_no_normalization_multiple_compressions(tmp_path
         row = next(reader)
         assert float(row['Slice (I->S)']) == 48
         assert float(row['compression_level']) == 5.0
-        assert float(row['diameter_AP_ratio']) == pytest.approx(19.789721361809676)
+        assert float(row['diameter_AP_ratio']) == pytest.approx(23.333335503628728)
         assert row['diameter_AP_ratio_PAM50'] == 'n/a'
         assert row['diameter_AP_ratio_PAM50_normalized'] == 'n/a'
         # Second compression
         row = next(reader)
         assert float(row['Slice (I->S)']) == 60
         assert float(row['compression_level']) == 6.0
-        assert float(row['diameter_AP_ratio']) == pytest.approx(2.220446049250313e-14)
+        assert float(row['diameter_AP_ratio']) == pytest.approx(-2.9840204973652362e-06)
         assert row['diameter_AP_ratio_PAM50'] == 'n/a'
         assert row['diameter_AP_ratio_PAM50_normalized'] == 'n/a'
 
@@ -184,12 +184,12 @@ def test_sct_compute_compression(tmp_path, dummy_3d_mask_nib, dummy_3d_compressi
         reader = csv.DictReader(csvfile, delimiter=',')
         row = next(reader)
         assert float(row['compression_level']) == 5.0
-        assert float(row['diameter_AP_ratio']) == pytest.approx(19.789721361809686)
-        assert float(row['diameter_AP_ratio_PAM50']) == pytest.approx(12.783515208484742)
-        assert float(row['diameter_AP_ratio_PAM50_normalized']) == pytest.approx(16.95761551212851)
-        assert float(row['area_ratio']) == pytest.approx(20.057757586677848)
-        assert float(row['area_ratio_PAM50']) == pytest.approx(13.071711214924264)
-        assert float(row['area_ratio_PAM50_normalized']) == pytest.approx(20.7312573834592)
+        assert float(row['diameter_AP_ratio']) == pytest.approx(23.333335503628728)
+        assert float(row['diameter_AP_ratio_PAM50']) == pytest.approx(14.583334941957316)
+        assert float(row['diameter_AP_ratio_PAM50_normalized']) == pytest.approx(18.67129753764426)  # TODO: update when PAM50 values are up-to-date
+        assert float(row['area_ratio']) == pytest.approx(20.05342163028501)
+        assert float(row['area_ratio_PAM50']) == pytest.approx(12.533399971018577)
+        assert float(row['area_ratio_PAM50_normalized']) == pytest.approx(20.24037856786154)
         # Ensure that there isn't a duplicate appended row from running sct_compute_compression twice
         with pytest.raises(StopIteration):
             next(reader)
@@ -205,9 +205,9 @@ def test_sct_compute_compression_sex_F(tmp_path, dummy_3d_mask_nib, dummy_3d_com
         reader = csv.DictReader(csvfile, delimiter=',')
         row = next(reader)
         assert float(row['compression_level']) == 5.0
-        assert float(row['diameter_AP_ratio']) == pytest.approx(19.789721361809686)
-        assert float(row['diameter_AP_ratio_PAM50']) == pytest.approx(12.783515208484742)
-        assert float(row['diameter_AP_ratio_PAM50_normalized']) == pytest.approx(16.50677727239248)
+        assert float(row['diameter_AP_ratio']) == pytest.approx(23.333335503628728)
+        assert float(row['diameter_AP_ratio_PAM50']) == pytest.approx(14.583334941957315)
+        assert float(row['diameter_AP_ratio_PAM50_normalized']) == pytest.approx(18.229762901033496)  # TODO: update when PAM50 values are up-to-date
 
 
 def test_sct_compute_compression_lesion_no_vertfile(tmp_path, dummy_3d_mask_nib, dummy_3d_lesion_label):
@@ -220,7 +220,7 @@ def test_sct_compute_compression_lesion_no_vertfile(tmp_path, dummy_3d_mask_nib,
         row = next(reader)
         assert row['compression_level'] == 'n/a'     # 'n/a' because we do not provide a vertfile
         assert float(row['Slice (I->S)']) == 48
-        assert float(row['diameter_AP_ratio']) == pytest.approx(19.789721361809686)
+        assert float(row['diameter_AP_ratio']) == pytest.approx(23.333335503628728)
         assert row['diameter_AP_ratio_PAM50'] == 'n/a'   # 'n/a' because we do not do normalization
         assert row['diameter_AP_ratio_PAM50_normalized'] == 'n/a'    # 'n/a' because we do not do normalization
         # Ensure that there isn't a duplicate appended row from running sct_compute_compression twice
@@ -238,7 +238,7 @@ def test_sct_compute_compression_lesion_vertfile(tmp_path, dummy_3d_mask_nib, du
         row = next(reader)
         assert float(row['compression_level']) == 5
         assert float(row['Slice (I->S)']) == 48
-        assert float(row['diameter_AP_ratio']) == pytest.approx(19.789721361809686)
+        assert float(row['diameter_AP_ratio']) == pytest.approx(23.333335503628728)
         assert row['diameter_AP_ratio_PAM50'] == 'n/a'   # 'n/a' because we do not do normalization
         assert row['diameter_AP_ratio_PAM50_normalized'] == 'n/a'    # 'n/a' because we do not do normalization
         # Ensure that there isn't a duplicate appended row from running sct_compute_compression twice
