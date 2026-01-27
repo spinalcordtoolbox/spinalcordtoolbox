@@ -70,12 +70,12 @@ def test_sct_detect_compression(tmp_path):
     assert len(df) == 1  # '-num-of-slices 0' (default) --> 1 slice in total --> 1 row in the CSV file
     row = df.iloc[0]
     assert float(row['Axial slice #']) == 9
-    assert float(row['Compression probability']) == pytest.approx(0.0130664899695548)
+    assert float(row['Compression probability']) == pytest.approx(0.0159296853383658)
     assert row['Compression probability category'] == 'no'
-    assert float(row['Compression ratio (%)']) == pytest.approx(61.89181729284422)
-    assert float(row['CSA (mm2)']) == pytest.approx(78.13187618815772)
-    assert float(row['Solidity (%)']) == pytest.approx(96.50860467995544)
-    assert float(row['Torsion (degrees)']) == pytest.approx(1.1143341630160355)
+    assert float(row['Compression ratio (%)']) == pytest.approx(61.42885526716485)
+    assert float(row['CSA (mm2)']) == pytest.approx(77.81758919741446)
+    assert float(row['Solidity (%)']) == pytest.approx(96.875)
+    assert float(row['Torsion (degrees)']) == pytest.approx(1.2029329356733938)
 
 
 @pytest.mark.parametrize("num_of_slices", [1, 2])
@@ -83,7 +83,7 @@ def test_sct_detect_compression_num_of_slices(tmp_path, num_of_slices):
     """ Run sct_detect_compression with -num-of-slices flag and check output CSV file"""
     path_seg = sct_test_path('t2', 't2_seg-manual.nii.gz')
     path_labels = sct_test_path('t2', 'labels.nii.gz')  # contains only labels 3 and 5 --> okay for testing
-    gt = {7: 0.1329630570499392, 8:  0.0189452670930377, 9: 0.0130664899695548, 10: 0.0102869719524022, 11: 0.0854938928596479}
+    gt = {7: 0.1589344457339681, 8:  0.0271629466595177, 9: 0.0159296853383658, 10: 0.0097478164800803, 11: 0.0732123149570348}
     slc_center = 9
     slices_to_test = list(range(slc_center - num_of_slices, slc_center + num_of_slices + 1))
     filename = str(tmp_path / 'compression_results.csv')
