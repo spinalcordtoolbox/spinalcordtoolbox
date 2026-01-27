@@ -302,7 +302,7 @@ def _properties2d(seg, dim, iz, angle_hog=None, verbose=1):
                         np.clip(miny-pad, 0, seg_bin.shape[1]): np.clip(maxy+pad, 0, seg_bin.shape[1])]
     # Apply resampling to the cropped segmentation:
     zoom_factors = (dim[0]/0.1, dim[1]/0.1)
-    seg_crop_r = zoom(seg_crop, zoom=zoom_factors, order=1)  # make pixel size isotropic
+    seg_crop_r = zoom(seg_crop, zoom=zoom_factors, order=1, mode='grid-constant', grid_mode=True)  # make pixel size isotropic
     regions = measure.regionprops(np.array(seg_crop_r > 0.5, dtype='uint8'), intensity_image=seg_crop_r)
     region = regions[0]
     minx, miny, maxx, maxy = region.bbox
