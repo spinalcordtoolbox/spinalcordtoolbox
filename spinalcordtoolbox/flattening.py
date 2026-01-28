@@ -68,6 +68,12 @@ def flatten_sagittal(im_anat, im_centerline, verbose):
     flattened_data *= (max_data - min_data)  # [ 0, 1]       -> [0, max-min]
     flattened_data += min_data               # [ 0, max-min] -> [min, max]
 
+    # If we're converting back to int, fractional values will get truncated. This is especially concerning for
+    # binary segmentation images, where values < 1 will be lost. Since this image is just for visualization purposes,
+    # the exact numerical values don't matter -- we just want to keep all the nonzero voxels. So, take the ceil.
+    if np.issubdtype(im_anat.data.dtype, np.integer):
+        flattened_data = np.ceil(flattened_data)
+
     # change back to native orientation and datatype
     im_anat_flattened.data = flattened_data.astype(im_anat.data.dtype)
     im_anat_flattened.change_orientation(orientation_native)
