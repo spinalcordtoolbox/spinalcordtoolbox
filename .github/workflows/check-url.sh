@@ -81,5 +81,5 @@ if [[ $status_code -eq 406 ]];then
 fi
 
 # Report failure
-echo "($status_code) $URL ($filename)" >> invalid_urls.txt
+echo -e "(\x1B[31m$status_code\x1B[0m) $URL ($filename)" >> invalid_urls.txt
 echo -e "$filename: \x1B[31m⛔ Error status code: $status_code for URL: $URL \x1B[0m"
