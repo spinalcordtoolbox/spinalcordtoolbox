@@ -178,10 +178,10 @@ def moco_dl(fname_data, fname_mask='', fname_ref='', path_out='', mode="fmri", f
     else:
         generate_output_file(fname_moco_mean, add_suffix(fname_moco, "_mean"))
     # rigid translation parameter (Tx, Ty)
-    generate_output_file(tx_tmp, add_suffix(fname_moco, "_Tx"))
-    generate_output_file(ty_tmp, add_suffix(fname_moco, "_Ty"))
+    generate_output_file(tx_tmp, os.path.join(path_out_abs, "moco_params_x.nii.gz"))
+    generate_output_file(ty_tmp, os.path.join(path_out_abs, "moco_params_y.nii.gz"))
     # 5D displacement field
-    generate_output_file(disp_tmp, add_suffix(fname_moco, "_dispfield"))
+    generate_output_file(disp_tmp, os.path.join(path_out_abs, f"warp_{mode}_moco.nii.gz"))
 
     # Delete temporary files
     printv('\nDelete temporary files...')
