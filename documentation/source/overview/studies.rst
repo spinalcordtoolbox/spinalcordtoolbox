@@ -23,6 +23,11 @@ Citation list
 
 The following studies have used SCT:
 
+2026
+----
+
+-  Karthik *et al.* `Monitoring morphometric drift in lifelong learning segmentation of the spinal cord <https://doi.org/10.1162/IMAG.a.1105>`_, **Imaging Neurosci.** 2026
+
 2025 
 ----
 

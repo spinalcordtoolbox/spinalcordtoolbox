@@ -549,7 +549,18 @@ TASKS = {
                              '(± standard deviation) of 1.10±1.13 x 0.51±0.24 x 3.27±1.95 mm³ reported in “RPI-” orientation ',
          'url': 'https://github.com/ivadomed/ms-lesion-agnostic',
          'models': ['model_seg_ms_lesion'],
-         'citation': "",  # TODO: #5062 (Update when new study is published)
+         'citation': textwrap.dedent("""
+            ```bibtex
+             @inproceedings{
+                 benveniste2025longitudinal,
+                 title={Longitudinal tracking of multiple sclerosis lesions in the spinal cord},
+                 author={Pierre-Louis Benveniste and Shannon Kolind and Larry Lynd and Sarah Morrow and Jiwon Oh and Scott B. Patten and Alexandre Prat and Alice Schabas and Penny Smyth and Roger Tam and Anthony Traboulsee and Herve Lombaert and Julien Cohen-Adad},
+                 booktitle={Submitted to Medical Imaging with Deep Learning - Validation Papers},
+                 year={2025},
+                 url={https://openreview.net/forum?id=SIZEp7Mf44},
+                 note={under review}
+             }
+         ```"""),  # noqa E501 (line too long)
          'group': 'pathology'
          },
     'sc_canal_t2':

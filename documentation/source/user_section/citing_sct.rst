@@ -51,7 +51,7 @@ The table below lists the references for :ref:`sct_deepseg` sub-tasks which have
     * - DeepSeg Task
       - References
     * - :ref:`sct_deepseg_spinalcord`
-      - - Karthik EN *et al.* "`Monitoring morphometric drift in lifelong learning segmentation of the spinal cord <https://arxiv.org/abs/2505.01364>`__" **arXiv** (2025).
+      - - Karthik EN *et al.* "`Monitoring morphometric drift in lifelong learning segmentation of the spinal cord <https://doi.org/10.1162/IMAG.a.1105>`__" **Imaging Neurosci.** (2026).
         - Bédard S, Karthik EN *et al.* "`Towards contrast-agnostic soft segmentation of the spinal cord. <https://www.sciencedirect.com/science/article/pii/S1361841525000210>`__" **Medical Image Analysis** (2025): 103473.
     * - :ref:`sct_deepseg_sc_epi`
       - Banerjee R *et al.* "`EPISeg: Automated segmentation of the spinal cord on echo planar images using open-access multi-center data. <https://www.biorxiv.org/content/10.1101/2025.01.07.631402v2.abstract>`__" **bioRxiv** (2025): 2025-01.
@@ -59,6 +59,8 @@ The table below lists the references for :ref:`sct_deepseg` sub-tasks which have
       - Medina N *et al.* "`2D multi-class model for gray and white matter segmentation of the cervical spinal cord at 7T. <https://arxiv.org/abs/2110.06516>`__" **arXiv preprint arXiv:2110.06516** (2021).
     * - :ref:`sct_deepseg_gm_wm_mouse_t1`
       - Cohen-Adad J "`Segmentation model of ex vivo mouse spinal cord white and gray matter (v0.5). <https://doi.org/10.5281/zenodo.10819207>`__" **Zenodo** (2024).
+    * - :ref:`sct_deepseg_lesion_ms`
+      - Benveniste *et al.* "`Longitudinal tracking of multiple sclerosis lesions in the spinal cord: A validation study <https://openreview.net/forum?id=SIZEp7Mf44>`__" **MIDL** (2026).
     * - :ref:`sct_deepseg_lesion_sci_t2`
       - - Karthik EN, Valošek J *et al.* "`SCIsegV2: A Universal Tool for Segmentation of Intramedullary Lesions in Spinal Cord Injury. <https://link.springer.com/chapter/10.1007/978-3-031-82007-6_19>`__" **International Workshop on Applications of Medical AI** (2025).
         - Karthik EN, Valošek J *et al.* "`SCIseg: Automatic Segmentation of Intramedullary Lesions in Spinal Cord Injury on T2-weighted MRI Scans. <https://doi.org/10.1148/ryai.240005>`__" **Radiol Artif Intell** (2024).
