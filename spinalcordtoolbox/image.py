@@ -1786,7 +1786,9 @@ def stitch_images(im_list: Sequence[Image], fname_out: str = 'stitched.nii.gz', 
     # reorient input files to RPI
     im_list_rpi = []
     for im_in in im_list:
-        im_list_rpi.append(change_orientation(im_in, 'RPI'))
+        im_in_rpi = change_orientation(im_in, 'RPI')
+        im_in_rpi.absolutepath = add_suffix(im_in.absolutepath, '_rpi')
+        im_list_rpi.append(im_in_rpi)
 
     # pad the first image based on the max x/y dimensions
     # Explanation:
