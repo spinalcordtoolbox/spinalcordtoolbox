@@ -1783,29 +1783,44 @@ def stitch_images(im_list: Sequence[Image], fname_out: str = 'stitched.nii.gz', 
     # preserve original orientation (we assume it's consistent among all images)
     orig_ornt = im_list[0].orientation
 
-    # reorient input files and save them to a temp directory
+    # reorient input files to RPI
+    im_list_rpi = []
+    for im_in in im_list:
+        im_list_rpi.append(change_orientation(im_in, 'RPI'))
+
+    # pad the first image based on the max x/y dimensions
+    # Explanation:
+    #     C++ stitching module by Glocker et al. uses the first image as reference image
+    #     and allocates an array (to be filled by subsequent images along the z-axis)
+    #     based on the dimensions (x,y) of the reference image.
+    #     As subsequent images are padded to the x-/y- dimensions of the reference image,
+    #     it is important to use the image with the largest dimensions as the first
+    #     argument to the input of the C++ binary, to ensure the images are not cropped.
+    shapes_in = [im.data.shape for im in im_list_rpi]
+    x_max = max(shape[0] for shape in shapes_in)
+    y_max = max(shape[1] for shape in shapes_in)
+    x_pad = x_max - shapes_in[0][0]
+    y_pad = y_max - shapes_in[0][1]
+    if (x_pad, y_pad) != (0, 0):
+        logger.info(f"Padding the axial slice dimensions of the first image from ({shapes_in[0][0]}, {shapes_in[0][1]}) "
+                    f"to ({x_max}, {y_max}) to preserve the maximum AP and RL dimensions across the images.")
+        im_list_rpi[0] = pad_image(im_list_rpi[0],
+                                   pad_x_i=math.floor(x_pad / 2), pad_x_f=math.ceil(x_pad / 2),
+                                   pad_y_i=math.floor(y_pad / 2), pad_y_f=math.ceil(y_pad / 2),
+                                   pad_z_i=0, pad_z_f=0)
+
+    # save the preprocessed images to a tempdir
     path_tmp = tmp_create(basename="stitch-images")
     fnames_in = []
-    for im_in in im_list:
-        temp_file_path = os.path.join(path_tmp, os.path.basename(im_in.absolutepath))
-        im_in_rpi = change_orientation(im_in, 'RPI')
+    for im_in_rpi in im_list_rpi:
+        temp_file_path = os.path.join(path_tmp, os.path.basename(im_in_rpi.absolutepath))
         im_in_rpi.save(temp_file_path, verbose=verbose)
         fnames_in.append(temp_file_path)
-
-    # C++ stitching module by Glocker et al. uses the first image as reference image
-    # and allocates an array (to be filled by subsequent images along the z-axis)
-    # based on the dimensions (x,y) of the reference image.
-    # As subsequent images are padded to the x-/y- dimensions of the reference image,
-    # it is important to use the image with the largest dimensions as the first
-    # argument to the input of the C++ binary, to ensure the images are not cropped.
-
-    # order fs_names in descending order based on dimensions (largest -> smallest)
-    fnames_in_sorted = sorted(fnames_in, key=lambda fname: max(Image(fname).dim), reverse=True)
 
     # ensure that a tmp_path is used for the output of the stitching binary, since sct_image will re-save the image
     fname_out = os.path.join(path_tmp, os.path.basename(fname_out))
 
-    cmd = ['isct_stitching', '-i'] + fnames_in_sorted + ['-o', fname_out, '-a']
+    cmd = ['isct_stitching', '-i'] + fnames_in + ['-o', fname_out, '-a']
     status, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
     if status != 0:
         raise RuntimeError(f"Subprocess call to `isct_stitching` returned exit code {status} along with the following "
