@@ -50,6 +50,10 @@ def flatten_sagittal(im_anat, im_centerline, verbose):
     flattened_data *= 2                      # [0, 1]       -> [ 0, 2]
     flattened_data -= 1                      # [0, 2]       -> [-1, 1]
 
+    # Apply the same scaling to `0` so that we can set the appropriate `cval` (constant value) in the transformation
+    # Doing this will ensure that the `cval` gets mapped back to `0` in the output.
+    zero_scaled = (0 - min_data) / (max_data - min_data) * 2 - 1
+
     # loop and translate each axial slice, such that the flattened centerline is centered in the medial plane (R-L)
     for iz in range(nz):
         # compute translation along x (R-L)
@@ -59,7 +63,7 @@ def flatten_sagittal(im_anat, im_centerline, verbose):
         tform = transform.SimilarityTransform(translation=(0, translation_x))
         # important to force input in float to skikit image, because it will output float values
         img = img_as_float(flattened_data[:, :, iz])
-        img_reg = transform.warp(img, tform)
+        img_reg = transform.warp(img, tform, cval=zero_scaled)
         flattened_data[:, :, iz] = img_reg
 
     # Change [-1, 1] values back to the original range ([min, max])
