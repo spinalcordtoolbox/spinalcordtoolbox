@@ -198,10 +198,6 @@ class DenseRigidReg(nn.Module):
             Tx_list.append(Tx)
             Ty_list.append(Ty)
 
-            # cleanup
-            del mov_t, fix_t, mov_norm_ds, fix_norm_ds, x, theta, warped_t, flow_t
-            torch.cuda.empty_cache()
-
         warped_all = torch.stack(warped_list, dim=-1)
         flow_all = torch.stack(flow_list, dim=-1)  # (B,H,W,D,3,T)
         Tx_all = torch.stack(Tx_list, dim=-1)  # (B,1,D,T)
