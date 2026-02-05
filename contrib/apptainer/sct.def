@@ -21,12 +21,11 @@ From: ubuntu:22.04
     git clone --branch {{ sct_version }} https://github.com/spinalcordtoolbox/spinalcordtoolbox.git /root/sct
     cd /root/sct
 
-    # Mark it as executable
-    install_sh="install_sct"
-    chmod +x "$install_sh"
+    # Mark the installer script as executable
+    chmod +x install_sct
 
     # Install SCT within the container
-    ./"$install_sh" -y
+    ./install_sct -y
 
     # Update the PATH so that SCT commands are always available
     export PATH="$PATH:/root/sct/bin"
