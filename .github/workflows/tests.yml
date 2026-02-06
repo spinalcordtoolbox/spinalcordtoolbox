@@ -537,20 +537,23 @@ jobs:
         run: |
           mkdir apptainer_build
           tar -xvf ./contrib/apptainer/sct_apptainer_$SAFE_REF.tar.gz -C ./apptainer_build
-      - name: Run installer scripts (with 'spinalcord' task)
+      - name: Run installer scripts (with 'spine' task)
         run: |
           cd ./apptainer_build
-          ./install_sct_containered_$SAFE_REF.sh spinalcord
-      - name: Install deepseg task post-install (with 'spine' task)
+          ./install_sct_containered_$SAFE_REF.sh spine
+      - name: Install deepseg task post-install (with 'lesion_ms' task)
         run: |
           cd ./apptainer_build
-          ./install_deepseg_task.sh spine
+          ./install_deepseg_task.sh lesion_ms
       - name: Download sample data
         run: |
           curl -sL "https://github.com/spinalcordtoolbox/sct_tutorial_data/archive/refs/tags/SCT-Course-20251208.tar.gz" | tar -z -xf -
-      - name: Run 'sct_deepseg spinalcord'
+      - name: Run 'sct_deepseg spinalcord' (default task)
         run: |
           apptainer exec apptainer_build/sct.sif sct_deepseg spinalcord -i sct_tutorial_data-SCT-Course-20251208/single_subject/data/t2/t2.nii.gz
-      - name: Run 'sct_deepseg spine'
+      - name: Run 'sct_deepseg spine' (added on install)
         run: |          
           apptainer exec apptainer_build/sct.sif sct_deepseg spine -i sct_tutorial_data-SCT-Course-20251208/single_subject/data/t2/t2.nii.gz
+      - name: Run 'sct_deepseg lesion_ms' (added in post-install
+        run: |          
+          apptainer exec apptainer_build/sct.sif sct_deepseg lesion_ms -i sct_tutorial_data-SCT-Course-20251208/single_subject/data/t2_lesion/t2.nii.gz
