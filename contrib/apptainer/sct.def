@@ -34,7 +34,7 @@ From: ubuntu:22.04
     sct_version
 
     # If any tasks were designated by the user, install their corresponding models
-    if [ ! "{{ task_installs }}" == "" ]; then
+    if [ -n "{{ task_installs }}" ]; then
         # Install each task requested by the user, one by one
         for task in {{ task_installs }}; do
             sct_deepseg "$task" -install || echo "Failed to install task $task"
