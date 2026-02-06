@@ -25,7 +25,7 @@ From: ubuntu:22.04
     chmod +x install_sct
 
     # Install SCT within the container
-    ./install_sct -y
+    ./install_sct -iy
 
     # Update the PATH so that SCT commands are always available
     export PATH="$PATH:/root/sct/bin"
