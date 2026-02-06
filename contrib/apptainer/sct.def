@@ -12,6 +12,11 @@ From: ubuntu:22.04
     export PATH="$PATH:/root/sct/bin"
 
 %post
+    # stricter shell mode
+    # https://sipb.mit.edu/doc/safe-shell/
+    set -e            # exit if non-zero error is encountered (NB: /bin/dash doesn't support `pipefail`)
+    set -u            # exit if unset variables used
+
     # Install our non-Python dependencies
     apt-get update
     apt-mark hold openssh-client dbus  # Pinning these so that it doesn't crash due to this: https://github.com/apptainer/apptainer/issues/1822#issuecomment-2051581258
