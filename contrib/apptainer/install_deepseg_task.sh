@@ -12,7 +12,7 @@ APPTAINER_BIND=' ' apptainer build --build-arg task_installs="$*" sct_tmp.sif sc
 # Removes the old .sif and replaced it with the new one, given the prior command ran correctly
 if [ ! -f sct_tmp.sif ]; then
   echo "Failed to install new SCT DeepSeg tasks, terminating"
-  exit 0
+  exit 1
 fi
 echo "Replacing old sct.dif with updated one!"
 rm sct.sif
