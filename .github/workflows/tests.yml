@@ -548,7 +548,7 @@ jobs:
       - name: Download sample data
         run: |
           curl -sL "https://github.com/spinalcordtoolbox/sct_tutorial_data/archive/refs/tags/SCT-Course-20251208.tar.gz" | tar -z -xf -
-      - name: Run 'sct_deepseg spinalcord' (default task)
+      - name: Run 'sct_deepseg spinalcord' (installed by default)
         run: |
           apptainer exec apptainer_build/sct.sif sct_deepseg spinalcord -i sct_tutorial_data-SCT-Course-20251208/single_subject/data/t2/t2.nii.gz
       - name: Run 'sct_deepseg spine' (added on install)
