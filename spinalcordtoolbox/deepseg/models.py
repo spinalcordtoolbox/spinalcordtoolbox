@@ -20,6 +20,7 @@ from spinalcordtoolbox import download
 from spinalcordtoolbox.utils.sys import stylize, __deepseg_dir__, LazyLoader
 
 tss_init = LazyLoader("tss_init", globals(), 'totalspineseg.init_inference')
+auglab_add_trainer = LazyLoader("auglab_add_trainer", globals(), 'auglab.add_trainer')
 
 logger = logging.getLogger(__name__)
 
@@ -654,6 +655,11 @@ def install_model(name_model, custom_url=None):
             tss_init.init_inference(data_path=Path(folder(name_model)), quiet=False, dict_urls=url_field,
                                     store_export=False)  # Avoid having duplicate .zip files stored on disk
             urls_used = url_field
+            # For totalspineseg, for now we need to copy its custom trainer to the `nnunetv2` folder
+            # Long-term, this may not be necessary if we end up using the fork of `nnunetv2`:
+            #    See: https://github.com/neuropoly/totalspineseg/issues/126
+            # Since `install_model`` will only be invoked on first run or if model is outdated, it's safe to always overwrite
+            auglab_add_trainer.add_trainer(trainer_name="nnUNetTrainerDAExt", overwrite=True)
         else:
             urls_used = {}
             for seed_name, model_urls in url_field.items():
