@@ -111,7 +111,7 @@ def test_sct_dmri_moco_dl(tmp_path, dmri_mask, tmp_path_qc, dmri_mean_seg):
     rmse = float(np.sqrt(np.sum(diff ** 2) / (np.sum(mask) + 1e-6)))
     norm = float(np.sum(np.abs(moco_dl) * mask) / (np.sum(mask) + 1e-6) + 1e-6)
     nrmse = rmse / norm
-    assert nrmse < 0.2
+    assert nrmse < 0.1
 
 
 @pytest.fixture

@@ -106,4 +106,4 @@ def test_sct_fmri_moco_dl(tmp_path_qc, fmri_mean, fmri_mask, tmp_path, fmri_mean
     rmse = float(np.sqrt(np.sum(diff ** 2) / (np.sum(mask) + 1e-6)))
     norm = float(np.sum(np.abs(moco_dl) * mask) / (np.sum(mask) + 1e-6) + 1e-6)
     nrmse = rmse / norm
-    assert nrmse < 0.2
+    assert nrmse < 0.1
