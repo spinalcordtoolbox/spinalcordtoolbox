@@ -158,6 +158,8 @@ def moco_dl(fname_data, fname_mask='', fname_ref='', path_out='', mode="fmri", f
 
     # Save 5D dispfield
     printv("\n[moco-dl] Saving displacement fields...")
+    flow[0, ...] *= 1
+    flow[1, ...] *= -1
     disp5D = np.moveaxis(flow, 0, -1)  # (H,W,D,T,3)
     im_disp5D = Image(disp5D, hdr=header)
     im_disp5D.hdr.set_data_shape(disp5D.shape)

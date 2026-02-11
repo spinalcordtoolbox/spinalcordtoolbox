@@ -109,9 +109,9 @@ class DenseNetRegressorSliceWise(nn.Module):
         theta = self.conv_out(x)        # (B, 2, D')
 
         s = torch.nn.functional.softplus(self.shift_scale) + 1e-4
-        Ty = torch.tanh(theta[:, 0:1, :]) * (self.max_vox_shift * s)
-        Tx = torch.tanh(theta[:, 1:2, :]) * (self.max_vox_shift * s)
-        return torch.cat([Tx, Ty], dim=1)
+        Tx = torch.tanh(theta[:, 0:1, :]) * (self.max_vox_shift * s)
+        Ty = torch.tanh(theta[:, 1:2, :]) * (self.max_vox_shift * s)
+        return torch.cat([Tx, Ty], dim=1)   # channel 0 = Tx, channel 1 = Ty
 
 
 # -----------------------------
@@ -189,8 +189,8 @@ class DenseRigidReg(nn.Module):
             x = torch.cat([mov_norm_ds, fix_norm_ds], dim=1)
 
             theta = self.backbone(x)  # (B, 2, D')
-            Ty = theta[:, 0:1, :]
-            Tx = theta[:, 1:2, :]
+            Tx = theta[:, 0:1, :]
+            Ty = theta[:, 1:2, :]
 
             warped_t, flow_t = self.warp(mov_t, Tx, Ty)
             warped_list.append(warped_t)
