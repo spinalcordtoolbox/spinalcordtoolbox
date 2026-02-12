@@ -26,6 +26,12 @@ The following studies have used SCT:
 2025 
 ----
 
+-  Ganzetti *et al.* `SynSpine: an automated workflow for the generation of longitudinal spinal cord synthetic MRI data <https://doi.org/10.3389/fninf.2025.1649440>`_, **Front. Neuroinform.** 2025
+-  Rotem-Kohavi *et al.* `Building a library of acute traumatic spinal cord injury images across Canada: a retrospective cohort study protocol <https://doi.org/10.1136/bmjopen-2025-106818>`_, **BMJ Neurol. Open** 2025
+-  Lukas *et al.* `Optimization of cervical cord atrophy measurement using a real-world, multicentre dataset in multiple sclerosis <https://doi.org/10.3389/fneur.2025.1657484>`_, **Front. Neurol.** 2025
+-  Lin *et al.* `A corticospinal signature for interindividual pain sensitivity <https://doi.org/10.1038/s41467-025-67132-6>`_, **Nat. Commun.** 2025
+-  Kosa *et al.* `Longitudinal proteomic profiling of cerebrospinal fluid in untreated multiple sclerosis defines evolving disease biology <https://doi.org/10.1038/s41467-025-65154-8>`_, **Nat. Commun.** 2025
+-  Masciullo *et al.* `Fully-automated estimation of upper cervical cord cross-sectional area using pontomedullary junction referencing in multiple sclerosis <https://doi.org/10.3389/fnimg.2025.1681669>`_, **Front. Neuroimaging** 2025
 -  St-Onge *et al.* `Parkinson’s disease in the spinal cord: an exploratory study to establish T2*w, MTR and diffusion-weighted imaging metric values <https://doi.org/10.1162/IMAG.a.1015>`_, **Imaging Neurosci.** 2025
 -  Schlienger *et al.* `Mapping Human Proprioceptive Projections of Upper Limb Muscles Through Spinal Cord fMRI <https://doi.org/10.1002/hbm.70386>`_, **Hum. Brain Mapp.** 2025
 -  Wang *et al.* `The role of pain catastrophizing in modulating irritable bowel syndrome symptoms through brain-spinal cord integration <https://doi.org/10.1016/j.metrad.2025.100187>`_, **Meta-Radiol.** 2025
