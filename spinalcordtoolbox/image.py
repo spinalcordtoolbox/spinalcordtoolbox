@@ -1607,8 +1607,7 @@ def pad_image(im: Image, pad_x_i: int = 0, pad_x_f: int = 0, pad_y_i: int = 0, p
     # TODO: Do not copy the Image(), because the dim field and hdr.get_data_shape() will not be updated properly.
     #   better to just create a new Image() from scratch.
     im_out.data = padded_data  # done after the call of the function
-    if isinstance(im_out.absolutepath, str):
-        im_out.absolutepath = add_suffix(im_out.absolutepath, "_pad")
+    im_out.absolutepath = add_suffix(im_out.absolutepath, "_pad")
 
     # adapt the origin in the sform and qform matrix
     new_origin = np.dot(im_out.hdr.get_qform(), [-pad_x_i, -pad_y_i, -pad_z_i, 1])
