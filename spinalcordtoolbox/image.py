@@ -587,7 +587,7 @@ class Image(object):
                 self.fix_header_dtype()
 
             # nb. that copy() is important because if it were a memory map, save() would corrupt it
-            dataobj = self.data.copy()
+            dataobj = self.data.copy() if isinstance(self.data, np.memmap) else self.data
             affine = None
             header = self.hdr.copy() if self.hdr is not None else None
             nib.save(nib.Nifti1Image(dataobj, affine, header), self.absolutepath)
@@ -937,7 +937,7 @@ def compute_dice(image1, image2, mode='3d', label=1, zboundaries=False):
     return dice
 
 
-def concat_data(im_in_list: Sequence[Image], dim, pixdim=None, squeeze_data=False):
+def concat_data(im_in_list: Sequence[Image | str], dim, pixdim=None, squeeze_data=False):
     """
     Concatenate data
 
@@ -950,35 +950,60 @@ def concat_data(im_in_list: Sequence[Image], dim, pixdim=None, squeeze_data=Fals
     # WARNING: calling concat_data in python instead of in command line causes a non-understood issue (results are
     # different with both options) from numpy import concatenate, expand_dims
 
-    dat_list = []
-    data_concat_list = []
+    # determine the datatype of the final array
+    arrs = [Image(im).data for im in im_in_list]
+    dtypes = [arr.dtype for arr in arrs]
+    dtypes_unique = list(set(dtypes))
+    final_dtype = np.result_type(*dtypes_unique)
+    if len(dtypes_unique) != 1:
+        logger.warning(f"Concatenating images with different datatypes: {dtypes_unique}. Using dtype {final_dtype}.")
 
-    for i, im in enumerate(im_in_list):
-        # if there is more than 100 images to concatenate, then it does it iteratively to avoid memory issue.
-        if i != 0 and i % 100 == 0:
-            data_concat_list.append(np.concatenate(dat_list, axis=dim))
-            dat = im.data
-            # if image shape is smaller than asked dim, then expand dim
-            if len(dat.shape) <= dim:
-                dat = np.expand_dims(dat, dim)
-            dat_list = [dat]
-            del im
-            del dat
-        else:
-            dat = im.data
-            # if image shape is smaller than asked dim, then expand dim
-            if len(dat.shape) <= dim:
-                dat = np.expand_dims(dat, dim)
-            dat_list.append(dat)
-            del im
-            del dat
-    if data_concat_list:
-        data_concat_list.append(np.concatenate(dat_list, axis=dim))
-        data_concat = np.concatenate(data_concat_list, axis=dim)
-    else:
-        data_concat = np.concatenate(dat_list, axis=dim)
+    # determine how many dimensions there should be in the final array
+    shapes = [list(arr.shape) for arr in arrs]
+    n_dims = max([dim+1] +                  # Option 1: dim+1 > len(shape), so a new axis will be added
+                 [len(s) for s in shapes])  # Option 2: len(shape) >= dim+1, so we'll concatenate along an existing axis
+    del arrs  # conserve memory
 
-    im_in_first = im_in_list[0]
+    # determine how many volumes there will be in the final array
+    n_vols = 0
+    volume_shapes = []
+    for shape in shapes:
+        # ensure we're not trying to, say, concatenate a 2D array with a 4D array
+        if len(shape) not in [n_dims, n_dims - 1]:
+            raise ValueError(f"Cannot concatenate shape of size {len(shape)} to expected size {n_dims}.")
+        # we can pop the `dim` to simultaneously get the n_vols and also isolate the volume shape
+        n_vols += shape.pop(dim) if len(shape) == n_dims else 1
+        volume_shapes.append(tuple(shape))
+
+    # make sure we're concatenating compatible shapes
+    volume_shapes_unique = list(set(volume_shapes))
+    if len(volume_shapes_unique) != 1:
+        raise ValueError(f"Cannot concatenate incompatible shapes: {volume_shapes_unique}.")
+    final_shape = list(volume_shapes_unique[0])
+    final_shape.insert(dim, n_vols)
+
+    # Preallocate the array in memory (to allow us to replace individual volumes one at a time)
+    # NB: This can be very large for big images, such as `sct_apply_transfo` on a moco image warped to the PAM50
+    # template. But, I don't think there's any way to avoid keeping 1 full copy in memory. I've tried using `np.memmap`
+    # instead of `np.empty`, but calling it still allocates the full array in memory.
+    data_concat = np.empty(final_shape, dtype=final_dtype)
+
+    # Insert volumes one at a time to avoid doubling memory usage (as would occur with `np.concatenate(dat_list)`)
+    i = 0
+    for im in im_in_list:
+        # make sure the source array has the same number of dimensions as the destination array
+        vol = Image(im).data
+        if len(vol.shape) < n_dims:
+            vol = np.expand_dims(vol, axis=dim)
+        # create slice object to index into the source and destination arrays
+        j = i + vol.shape[dim]
+        idx = [slice(None)] * n_dims
+        idx[dim] = slice(i, j)
+        data_concat[tuple(idx)] = vol
+        i = j
+        del vol  # conserve memory
+
+    im_in_first = Image(im_in_list[0])
     im_out = empty_like(im_in_first)  # NB: empty_like reuses the header from the first input image for im_out
     if im_in_first.absolutepath is not None:
         im_out.absolutepath = add_suffix(im_in_first.absolutepath, '_concat')
