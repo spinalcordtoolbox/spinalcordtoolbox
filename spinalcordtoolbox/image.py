@@ -1814,9 +1814,8 @@ def stitch_images(im_list: Sequence[Image], fname_out: str = 'stitched.nii.gz', 
     # save the preprocessed images to a tempdir
     path_tmp = tmp_create(basename="stitch-images")
     fnames_in = []
-    for i, im_in_rpi in enumerate(im_list_rpi):
-        # avoid writing multiple files with the same basename to the tempdir
-        temp_file_path = add_suffix(os.path.join(path_tmp, os.path.basename(im_in_rpi.absolutepath)), f"_{i}")
+    for im_in_rpi in im_list_rpi:
+        temp_file_path = os.path.join(path_tmp, os.path.basename(im_in_rpi.absolutepath))
         im_in_rpi.save(temp_file_path, verbose=verbose)
         fnames_in.append(temp_file_path)
 
