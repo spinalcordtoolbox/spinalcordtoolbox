@@ -81,20 +81,6 @@ def one_two_three_ints(arg: str) -> list[int]:
     return values
 
 
-def parse_kv_list(arg_list: list[str]) -> dict[str, str]:
-    """
-    Convert ["k=v", "a=b"] into {"k":"v", "a":"b"}.
-    Items without '=' are ignored.
-    """
-    out = {}
-    for item in arg_list:
-        if '=' not in item:
-            continue
-        k, v = item.split('=', 1)
-        out[k.strip()] = v.strip()
-    return out
-
-
 class AppendTodo(argparse.Action):
     """
     Store the arguments of an sct_maths operation in `arguments.todo`.
@@ -342,24 +328,6 @@ def get_parser():
 
             To use default parameters, write `-denoise 1`
         """),  # noqa: E501 (line too long)
-        )
-    filtering.add_argument(
-        "-restore-detail",
-        metavar=Metavar.list,
-        type=list_type(',', str),
-        action=AppendTodo,
-        help=textwrap.dedent("""
-            Restore high-frequency spatial detail from a raw image into the current image, inside a mask.
-            This operation enhances fine spatial texture that may be attenuated by interpolation during motion correction.
-
-            Required arguments:
-            - raw=<file> : Raw (unwarped) image with the same spatial and temporal
-                            dimensions as the current image.
-            - m=<file>   : Binary 3D mask defining the region where detail restoration
-                            is applied (e.g., spinal cord mask).
-
-            Usage: -restore-detail raw=<raw.nii.gz>,m=<mask.nii.gz>
-        """),
         )
 
     similarity = parser.add_argument_group("SIMILARITY METRIC")
@@ -650,15 +618,6 @@ def main(argv: Sequence[str]):
                 )
                 printv(f"\nDone! File created: {arguments.o}", verbose, 'info')
                 return
-
-            elif arg_name == "restore_detail":
-                params = parse_kv_list(arg_value)
-                if "raw" not in params or "m" not in params:
-                    parser.error("-restore-detail requires raw=<file>,m=<file>")
-                im_raw = Image(params["raw"])
-                im_mask = Image(params["m"])
-                # Use current `data` as the warped input
-                data = sct_math.restore_detail(warped=data, raw=im_raw.data, mask=im_mask.data)
 
             else:
                 assert arg_name == "symmetrize"
