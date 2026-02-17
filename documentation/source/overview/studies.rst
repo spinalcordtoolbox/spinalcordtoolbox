@@ -26,6 +26,8 @@ The following studies have used SCT:
 2026
 ----
 
+-  Rahman *et al.* `Intramedullary Strain During Neck Extension is Associated with Microstructural Spinal Cord Injury in Degenerative Cervical Myelopathy <https://doi.org/10.1007/s10439-026-04009-9>`_, **Ann. Biomed. Eng.** 2026
+-  Thornton *et al.* `Presence of midsagittal tissue bridges and walking ability 1-year post spinal cord injury <https://doi.org/10.1080/10790268.2025.2609475>`_, **J. Spinal Cord Med.** 2026
 -  Solomakha *et al.* `Transceiver 16-Channel Coaxial-End Dipole Array for Combined Head and C-Spine MRI at 9.4 T <https://doi.org/10.1002/nbm.70228>`_, **NMR Biomed.** 2026
 -  Jindal *et al.* `Medullary and C3–C4 propriospinal pathways underlying mammalian forelimb movement control <https://doi.org/10.1073/pnas.2518217123>`_, **PNAS** 2026
 
