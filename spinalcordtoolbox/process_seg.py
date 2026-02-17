@@ -10,7 +10,7 @@ import platform
 import numpy as np
 from skimage import measure, transform
 import skimage
-from scipy.ndimage import map_coordinates, gaussian_filter1d
+from scipy.ndimage import map_coordinates, gaussian_filter1d, zoom
 import logging
 
 from spinalcordtoolbox.image import Image
@@ -100,13 +100,7 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
     # Getting image dimensions. x, y and z respectively correspond to RL, PA and IS.
     nx, ny, nz, nt, px, py, pz, pt = im_seg.dim
     pr = 0.1   # we use a fixed value to be independent from the input image resolution
-    # Resample to isotropic resolution in the axial plane. Use the minimum pixel dimension as target dimension.
-    im_segr = resample_nib(im_seg, new_size=[pr, pr, pz], new_size_type='mm', interpolation='linear')
-
-    # Update dimensions from resampled image.
-    nx, ny, nz, nt, px, py, pz, pt = im_segr.dim
-    # Extract min and max index in Z direction
-    data_seg = im_segr.data
+    data_seg = im_seg.data
     X, Y, Z = (data_seg > NEAR_ZERO_THRESHOLD).nonzero()
     min_z_index, max_z_index = min(Z), max(Z)
 
@@ -119,10 +113,10 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
         # allow the centerline image to be bypassed (in case `im_seg` is irregularly shaped, e.g. GM/WM)
         if centerline_path:
             im_centerline = Image(centerline_path).change_orientation('RPI')
-            im_centerline_r = resample_nib(im_centerline, new_size=[pr, pr, pz], new_size_type='mm',
+            im_centerline_r = resample_nib(im_centerline, new_size=[px, py, pz], new_size_type='mm',
                                            interpolation='linear')
         else:
-            im_centerline_r = im_segr
+            im_centerline_r = im_seg
         # compute the spinal cord centerline based on the spinal cord segmentation
         _, arr_ctl, arr_ctl_der, fit_results = get_centerline(im_centerline_r, param=param_centerline, verbose=verbose,
                                                               remove_temp_files=remove_temp_files)
@@ -136,7 +130,7 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
     for iz in sct_progress_bar(range(min_z_index, max_z_index + 1), unit='iter', unit_scale=False, desc="Compute shape analysis",
                                ncols=80):
         # Extract 2D patch
-        current_patch = im_segr.data[:, :, iz]
+        current_patch = im_seg.data[:, :, iz]
         if angle_correction:
             # Extract tangent vector to the centerline (i.e. its derivative)
             tangent_vect = np.array([deriv[iz][0] * px, deriv[iz][1] * py, pz])
@@ -159,7 +153,7 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
             angle_AP_rad, angle_RL_rad = 0.0, 0.0
 
         # Compute shape properties for this slice
-        shape_property = _properties2d(current_patch_scaled, [px, py], iz, verbose=verbose)
+        shape_property = _properties2d(current_patch_scaled, [px, py], pr, iz, verbose=verbose)
         if shape_property is not None:
             # Add custom fields
             shape_property['angle_AP'] = angle_AP_rad * 180.0 / math.pi     # convert to degrees
@@ -179,9 +173,8 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
 
     # Compute image-based shape properties
     if image is not None:
-        im_r = resample_nib(im, new_size=[pr, pr, pz], new_size_type='mm', interpolation='linear')
         shape_properties_image = _properties_image(
-            im_r, nz, px, py, pz, pr, min_z_index, max_z_index, property_list_image,
+            im, nz, px, py, pz, pr, min_z_index, max_z_index, property_list_image,
             current_patches, current_tforms, angle_correction, filter_size, verbose
         )
         shape_properties.update(shape_properties_image)
@@ -196,7 +189,7 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
     return metrics, fit_results
 
 
-def _properties_image(im_r, nz, px, py, pz, pr, min_z_index, max_z_index, property_list,
+def _properties_image(im, nz, px, py, pz, pr, min_z_index, max_z_index, property_list,
                       current_patches, current_tforms, angle_correction, filter_size, verbose):
     """
     Compute morphometric measures of the spinal cord in the transverse (axial) plane that specifically
@@ -218,7 +211,7 @@ def _properties_image(im_r, nz, px, py, pz, pr, min_z_index, max_z_index, proper
             continue
 
         # Apply angle correction transformation to the anatomical image slice
-        current_patch_im = im_r.data[:, :, iz]
+        current_patch_im = im.data[:, :, iz]
         if angle_correction:
             tform = current_tforms[iz]
             current_patch_im_scaled = transform.warp(current_patch_im.astype(np.float64),
@@ -259,7 +252,7 @@ def _properties_image(im_r, nz, px, py, pz, pr, min_z_index, max_z_index, proper
         current_patch_scaled = current_patches[iz]['patch']
 
         # Compute shape properties with regularized angle_hog
-        shape_property = _properties2d(current_patch_scaled, [px, py], iz, angle_hog=angle_hog, verbose=verbose)
+        shape_property = _properties2d(current_patch_scaled, [px, py], pr, iz, angle_hog=angle_hog, verbose=verbose)
 
         if shape_property is not None:
             # Add custom fields
@@ -275,7 +268,7 @@ def _properties_image(im_r, nz, px, py, pz, pr, min_z_index, max_z_index, proper
     return shape_properties
 
 
-def _properties2d(seg, dim, iz, angle_hog=None, verbose=1):
+def _properties2d(seg, dim, pr, iz, angle_hog=None, verbose=1):
     """
     Compute shape property of the input 2D segmentation. Accounts for partial volume information.
     :param seg: 2D input segmentation in uint8 or float (weighted for partial volume) that has a single object. seg.shape[0] --> RL; seg.shape[1] --> PA
@@ -308,7 +301,17 @@ def _properties2d(seg, dim, iz, angle_hog=None, verbose=1):
     # Use those bounding box coordinates to crop the segmentation (for faster processing)
     seg_crop = seg_norm[np.clip(minx-pad, 0, seg_bin.shape[0]): np.clip(maxx+pad, 0, seg_bin.shape[0]),
                         np.clip(miny-pad, 0, seg_bin.shape[1]): np.clip(maxy+pad, 0, seg_bin.shape[1])]
-    seg_crop_r = seg_crop
+    # Apply resampling to the cropped segmentation:
+    zoom_factors = (dim[0]/pr, dim[1]/pr)
+    seg_crop_r = zoom(seg_crop, zoom=zoom_factors, order=1, mode='grid-constant', grid_mode=True)  # make pixel size isotropic
+    regions = measure.regionprops(np.array(seg_crop_r > 0.5, dtype='uint8'), intensity_image=seg_crop_r)
+    region = regions[0]
+    minx, miny, maxx, maxy = region.bbox
+    # Use those bounding box coordinates to crop the segmentation (for faster processing), again as zoom adds padding
+    seg_crop_r = seg_crop_r[np.clip(minx-pad, 0, seg_crop_r.shape[0]): np.clip(maxx+pad, 0, seg_crop_r.shape[0]),
+                            np.clip(miny-pad, 0, seg_crop_r.shape[1]): np.clip(maxy+pad, 0, seg_crop_r.shape[1])]
+    # Update dim to isotropic pixel size
+    dim = [pr, pr]
     # Binarize segmentation using threshold at 0.5 Necessary input for measure.regionprops
     seg_crop_r_bin = np.array(seg_crop_r > 0.5, dtype='uint8')
     # Get all closed binary regions from the segmentation (normally there is only one)
@@ -341,7 +344,7 @@ def _properties2d(seg, dim, iz, angle_hog=None, verbose=1):
     # Rotate the segmentation by the orientation to align with AP/RL axes
     seg_crop_r_rotated = _rotate_segmentation_by_angle(seg_crop_r, -region.orientation)
 
-    # Measure diameters along AP and RL axes in the rotated segmentation
+    # Measure diameters along AP in the rotated segmentation
     rotated_properties = _measure_ap_diameter(seg_crop_r, seg_crop_r_rotated, dim, region.orientation,
                                               iz, properties, verbose)
     # Update the properties dictionary with the rotated properties
