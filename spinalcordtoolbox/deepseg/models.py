@@ -651,7 +651,7 @@ def install_model(name_model, custom_url=None):
         if not isinstance(url_field, dict):
             raise ValueError("Invalid url field in MODELS")
         # totalspineseg handles data downloading itself, so just pass the urls along
-        if name_model == 'spine':
+        if name_model in TASKS['spine']['models']:
             tss_init.init_inference(data_path=Path(folder(name_model)), quiet=False, dict_urls=url_field,
                                     store_export=False)  # Avoid having duplicate .zip files stored on disk
             urls_used = url_field
