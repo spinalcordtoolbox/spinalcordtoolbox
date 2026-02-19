@@ -221,7 +221,7 @@ MODELS = {
         "thr": None,  # Images are already binarized
         "default": False,
     },
-    "spine": {
+    "model_seg_spine_contrast_agnostic": {
          # NB: Rather than hardcoding the URLs ourselves, use the URLs from the totalspineseg package.
          # This means that when the totalspineseg package is updated, the URLs will be too, thus triggering
          # a re-installation of the model URLs
@@ -572,7 +572,7 @@ TASKS = {
                              'spinal cord, and spinal canal in MRI images. It is robust to various MRI contrasts, acquisition orientations, '
                              'and resolutions. The model used in TotalSpineSeg is based on nnU-Net as the backbone for training and inference.',
          'url': 'https://github.com/neuropoly/totalspineseg',
-         'models': ['spine'],
+         'models': ['model_seg_spine_contrast_agnostic'],
          'citation': None
          },
     'lesion_ms_axial_t2':
