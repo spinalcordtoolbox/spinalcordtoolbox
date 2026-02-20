@@ -28,11 +28,12 @@ import os
 from typing import Sequence
 import textwrap
 
-from spinalcordtoolbox.moco import ParamMoco, moco_wrapper
+from spinalcordtoolbox.moco.moco import ParamMoco, moco_wrapper
 from spinalcordtoolbox.utils.sys import init_sct, set_loglevel
 from spinalcordtoolbox.utils.shell import (SCTArgumentParser, Metavar, ActionCreateFolder, list_type, positive_int_type,
                                            display_viewer_syntax)
 from spinalcordtoolbox.reports.qc import generate_qc
+from spinalcordtoolbox.moco.dl.inference import moco_dl, check_dl_args
 
 
 def get_parser():
@@ -48,6 +49,7 @@ def get_parser():
               - slice-wise regularized along z using polynomial function (`-param poly`). For more info about the method, type: `isct_antsSliceRegularizedRegistration`
               - masking (`-m`)
               - iterative averaging of target volume
+              - Optional DL-based motion correction (`-dl`)
 
             The outputs of the motion correction process are:
 
@@ -99,6 +101,12 @@ def get_parser():
         default=param_default.fname_mask,
         help='Binary mask to limit voxels considered by the registration metric. You may also provide a softmask '
              '(nonbinary, [0, 1]), and it will be binarized at 0.5. Example: `dmri_mask.nii.gz`',
+    )
+    optional.add_argument(
+        '-ref',
+        metavar=Metavar.file,
+        default=param_default.fname_ref,
+        help="Reference volume for motion correction, e.g., mean DWI or mean b=0 volume."
     )
     optional.add_argument(
         '-param',
@@ -161,6 +169,17 @@ def get_parser():
         metavar=Metavar.str,
         help="If provided, this string will be mentioned in the QC report as the subject the process was run on."
     )
+    optional.add_argument(
+        '-dl',
+        action='store_true',
+        help="Use deep learning–based motion correction (DenseNet) with the best-weights checkpoint.\n"
+             "Requires both -m (binary spinal cord mask) and -ref (reference image).\n"
+             "  - The binary mask (3D) defines the spinal cord region used by the model to estimate motion within the mask. "
+             "It should be large enough to cover the full extent of the spinal cord in the image.\n"
+             "  - The reference image (3D) serves as the target to which all timepoints are aligned. "
+             "It is typically a representative or no-motion volume. "
+             "You may use the first volume or the mean volume of the input.\n"
+    )
 
     # Arguments which implement shared functionality
     parser.add_common_args()
@@ -185,6 +204,7 @@ def main(argv: Sequence[str]):
     param.bval_min = arguments.bvalmin
     param.group_size = arguments.g
     param.fname_mask = arguments.m
+    param.fname_ref = arguments.ref
     param.interp = arguments.x
     param.path_out = arguments.ofolder
     param.remove_temp_files = arguments.r
@@ -203,8 +223,25 @@ def main(argv: Sequence[str]):
     if not (is_qc_none == is_seg_none):
         parser.error("Both '-qc' and '-qc-seg' are required in order to generate a QC report.")
 
-    # run moco
-    fname_output_image = moco_wrapper(param)
+    # Run moco
+    if arguments.dl:
+        try:
+            check_dl_args(argv)
+        except ValueError as e:
+            raise parser.error(str(e))
+
+        fname_output_image = moco_dl(
+            fname_data=param.fname_data,
+            fname_mask=param.fname_mask,
+            path_out=param.path_out,
+            fname_ref=param.fname_ref,
+            fname_bvecs=param.fname_bvecs,
+            fname_bvals=param.fname_bvals,
+            mode="dmri"
+        )
+    else:
+        # Run SCT-based motion correction
+        fname_output_image = moco_wrapper(param)
 
     set_loglevel(verbose, caller_module_name=__name__)  # moco_wrapper changes verbose to 0, see issue #3341
 

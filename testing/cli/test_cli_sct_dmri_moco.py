@@ -1,12 +1,13 @@
 # pytest unit tests for sct_dmri_moco
 
+import numpy as np
 import pytest
 import logging
 
 from numpy import allclose, genfromtxt
 
-from spinalcordtoolbox.scripts import (sct_dmri_moco, sct_image, sct_crop_image, sct_create_mask,
-                                       sct_deepseg)
+from spinalcordtoolbox.scripts import sct_dmri_moco, sct_image, sct_crop_image, sct_create_mask, sct_deepseg, sct_apply_transfo
+from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.utils.sys import sct_test_path
 
 logger = logging.getLogger(__name__)
@@ -75,6 +76,42 @@ def test_sct_dmri_moco_with_mask_check_params(tmp_path, dmri_mask, tmp_path_qc, 
         0.16997247,
     ]
     assert allclose(lresults, lgroundtruth)
+
+
+@pytest.mark.sct_testing
+def test_sct_dmri_moco_dl(tmp_path, dmri_mask, tmp_path_qc, dmri_mean_seg):
+    """Run the CLI script with '-m' and '-ref' option and using '-dl' algorithm."""
+    sct_dmri_moco.main(argv=['-i', sct_test_path('dmri', 'dmri.nii.gz'),
+                             '-bvec', sct_test_path('dmri', 'bvecs.txt'),
+                             '-ref', sct_test_path('dmri', 'dwi_mean.nii.gz'),
+                             '-m', dmri_mask, '-ofolder', str(tmp_path), '-dl',
+                             '-qc', tmp_path_qc, '-qc-seg', dmri_mean_seg])
+    fname_warp_4d = str(tmp_path / "warp_dmri_moco.nii.gz")
+    sct_image.main(argv=['-i', fname_warp_4d, '-split', 't'])
+    sct_image.main(argv=['-i', sct_test_path('dmri', 'dmri.nii.gz'), '-split', 't', '-o', str(tmp_path / "dmri.nii.gz")])
+
+    T = Image(sct_test_path('dmri', 'dmri.nii.gz')).data.shape[3]
+    warped_list = []
+    for t in range(T):
+        fname_vol = str(tmp_path / f"dmri_T{t:04d}.nii.gz")
+        fname_warp = str(tmp_path / f"warp_dmri_moco_T{t:04d}.nii.gz")
+        fname_out = str(tmp_path / f"dmri_warped_T{t:04d}.nii.gz")
+
+        sct_apply_transfo.main(argv=['-i', fname_vol, '-d', sct_test_path('dmri', 'dwi_mean.nii.gz'),
+                                     '-w', fname_warp, '-o', fname_out, '-x', 'linear'])
+        assert (tmp_path / f"dmri_warped_T{t:04d}.nii.gz").exists(), "sct_apply_transfo failed to create output"
+        warped_list.append(Image(fname_out).data.astype(np.float32))
+
+    warped = np.stack(warped_list, axis=3)
+    moco_dl = Image(str(tmp_path / "dmri_mocoDL.nii.gz")).data.astype(np.float32)
+    mask = Image(dmri_mask).data > 0
+    mask = mask[..., None]
+
+    diff = (warped - moco_dl) * mask
+    rmse = float(np.sqrt(np.sum(diff ** 2) / (np.sum(mask) + 1e-6)))
+    norm = float(np.sum(np.abs(moco_dl) * mask) / (np.sum(mask) + 1e-6) + 1e-6)
+    nrmse = rmse / norm
+    assert nrmse < 0.1
 
 
 @pytest.fixture
