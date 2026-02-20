@@ -25,6 +25,7 @@ from spinalcordtoolbox.image import Image, get_orientation, add_suffix
 from spinalcordtoolbox.math import binarize, remove_small_objects
 from spinalcordtoolbox.deepseg_.postprocessing import keep_largest_object, fill_holes
 
+import spinalcordtoolbox.deepseg.models as ds_models
 import spinalcordtoolbox.deepseg.monai as ds_monai
 import spinalcordtoolbox.deepseg.nnunet as ds_nnunet
 
@@ -114,7 +115,7 @@ def segment_non_ivadomed(path_model, model_type, input_filenames, threshold, kee
                          remove_small, use_gpu=False, remove_temp_files=True, extra_network_kwargs=None, extra_inference_kwargs=None):
     # MONAI and NNUnet have similar structure, and so we use nnunet+inference functions with the same signature
     # NB: For TotalSpineSeg, we don't need to create the network ourselves
-    if "spine" in path_model:
+    if os.path.basename(path_model) in ds_models.TASKS['spine']['models']:
         def create_net(pm, _): return pm  # just echo `path_model` back as 'net'
         inference = segment_totalspineseg
     elif model_type == "monai":
