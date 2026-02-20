@@ -26,6 +26,8 @@ The following studies have used SCT:
 2026
 ----
 
+-  de Jong *et al.* `Enhancing the interpretability of spinal cord atrophy in multiple sclerosis by reducing interindividual variability due to anatomical differences <https://doi.org/10.1016/j.msard.2026.107079>`_, **Mult. Scler. Relat. Disord.** 2026
+-  Hu *et al.* `Quantitative evaluation of cervical muscles in patients with degenerative cervical myelopathy using diffusion tensor imaging metrics <https://doi.org/10.1302/2046-3758.152.BJR-2025-0169.R1>`_, **Bone Jt. Res.** 2026
 -  Rahman *et al.* `Intramedullary Strain During Neck Extension is Associated with Microstructural Spinal Cord Injury in Degenerative Cervical Myelopathy <https://doi.org/10.1007/s10439-026-04009-9>`_, **Ann. Biomed. Eng.** 2026
 -  Thornton *et al.* `Presence of midsagittal tissue bridges and walking ability 1-year post spinal cord injury <https://doi.org/10.1080/10790268.2025.2609475>`_, **J. Spinal Cord Med.** 2026
 -  Solomakha *et al.* `Transceiver 16-Channel Coaxial-End Dipole Array for Combined Head and C-Spine MRI at 9.4 T <https://doi.org/10.1002/nbm.70228>`_, **NMR Biomed.** 2026
