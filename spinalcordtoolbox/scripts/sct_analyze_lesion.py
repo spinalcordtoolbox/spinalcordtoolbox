@@ -364,10 +364,16 @@ class AnalyzeLesion:
         printv(f'  Midsagittal ventral bridge ratio: {ventral_bridge_ratio:.2f} %',
                self.verbose, type='info')
 
-    def _measure_interpolated_tissue_bridges(self, tissue_bridges_df, p_lst, idx):
+    def _measure_interpolated_tissue_bridges(self, tissue_bridges_df, p_lst, idx, im_lesion_data, im_sc_data):
         """
         Compute the interpolated tissue bridges. These bridges are computed from two sagittal slices, which are
         interpolated to the midsagittal slice.
+
+        :param tissue_bridges_df: DataFrame with tissue bridges for each sagittal and axial slice
+        :param p_lst: list, pixel size of the lesion
+        :param idx: int, index of the lesion
+        :param im_lesion_data: 3D numpy array: mask of the lesion (RPI orientation)
+        :param im_sc_data: 3D numpy array: mask of the spinal cord (RPI orientation)
         """
         # Interpolated tissue bridges
         interpolated_dorsal_bridge_width_mm = {}
@@ -379,11 +385,66 @@ class AnalyzeLesion:
                                  ['axial_slice'])
 
         # If there are no axial slices, it means that the current lesion is not captured on the sagittal slices used
-        # for the interpolation. In this case, we will not compute the interpolated tissue bridges.
+        # for the interpolation (i.e., the lesion is parasagittal). In this case, we use the spinal cord A-P diameter
+        # as a proxy for the tissue bridges, as done in manual measurements.
         if len(axial_slices) == 0:
-            self.measure_pd.loc[idx, 'interpolated_dorsal_bridge_width [mm]'] = np.nan
-            self.measure_pd.loc[idx, 'interpolated_ventral_bridge_width [mm]'] = np.nan
-            self.measure_pd.loc[idx, 'interpolated_total_bridge_width [mm]'] = np.nan
+            # Get all axial slices (S-I direction) with the lesion
+            axial_lesion_slices = np.unique(np.where(im_lesion_data)[2])  # [2] --> S-I direction in RPI
+
+            # Compute the spinal cord A-P diameter for each axial slice with lesion at the midsagittal slice
+            sc_ap_diameter_mm = {}
+            for axial_slice in axial_lesion_slices:
+                # Get the two sagittal slices used for interpolation
+                slice1, slice2 = self.interpolation_slices_RPI
+
+                # Get the spinal cord mask for the two sagittal slices at the current axial slice
+                sc_slice1 = im_sc_data[slice1, :, axial_slice]
+                sc_slice2 = im_sc_data[slice2, :, axial_slice]
+
+                # Check if there's spinal cord on both slices
+                if np.any(sc_slice1) and np.any(sc_slice2):
+                    # Get the A-P diameter (in pixels) for both slices
+                    sc_indices1 = np.where(sc_slice1)[0]
+                    sc_indices2 = np.where(sc_slice2)[0]
+                    sc_ap_diameter1 = sc_indices1[-1] - sc_indices1[0]  # ventral - dorsal
+                    sc_ap_diameter2 = sc_indices2[-1] - sc_indices2[0]  # ventral - dorsal
+
+                    # Interpolate the A-P diameter
+                    sc_ap_diameter_interpolated = self._interpolate_values(sc_ap_diameter1, sc_ap_diameter2)
+
+                    # Convert to mm and apply angle correction
+                    sc_ap_diameter_mm[axial_slice] = (sc_ap_diameter_interpolated * p_lst[1] *
+                                                      np.cos(self.angles_sagittal[axial_slice]))
+
+            if len(sc_ap_diameter_mm) > 0:
+                # Use the minimum A-P diameter as the total bridge width
+                # For dorsal and ventral, we split it in half as we don't know the actual lesion location
+                min_sc_ap_diameter_mm = np.min(list(sc_ap_diameter_mm.values()))
+                min_interpolated_dorsal_bridge_width_mm = min_sc_ap_diameter_mm / 2
+                min_interpolated_ventral_bridge_width_mm = min_sc_ap_diameter_mm / 2
+                interpolated_total_bridge_width_mm = min_sc_ap_diameter_mm
+            else:
+                # If we can't compute the A-P diameter, fall back to NaN
+                self.measure_pd.loc[idx, 'interpolated_dorsal_bridge_width [mm]'] = np.nan
+                self.measure_pd.loc[idx, 'interpolated_ventral_bridge_width [mm]'] = np.nan
+                self.measure_pd.loc[idx, 'interpolated_total_bridge_width [mm]'] = np.nan
+                return
+
+            # Save the spinal cord A-P diameter as tissue bridges
+            self.measure_pd.loc[idx, 'interpolated_dorsal_bridge_width [mm]'] = min_interpolated_dorsal_bridge_width_mm
+            self.measure_pd.loc[idx, 'interpolated_ventral_bridge_width [mm]'] = min_interpolated_ventral_bridge_width_mm
+            self.measure_pd.loc[idx, 'interpolated_total_bridge_width [mm]'] = interpolated_total_bridge_width_mm
+            printv(f'  Lesion not on midsagittal slice, using spinal cord A-P diameter as proxy',
+                   self.verbose, type='warning')
+            printv(f'  Midsagittal dorsal tissue bridge width: '
+                   f'{np.round(min_interpolated_dorsal_bridge_width_mm, 2)} mm',
+                   self.verbose, type='info')
+            printv(f'  Midsagittal ventral tissue bridge width: '
+                   f'{np.round(min_interpolated_ventral_bridge_width_mm, 2)} mm',
+                   self.verbose, type='info')
+            printv(f'  Midsagittal total tissue bridge width (spinal cord A-P diameter): '
+                   f'{np.round(interpolated_total_bridge_width_mm, 2)} mm',
+                   self.verbose, type='info')
             return
 
         for axial_slice in axial_slices:
@@ -517,7 +578,7 @@ class AnalyzeLesion:
         tissue_bridges_df.reset_index(inplace=True)
 
         # Compute interpolated tissue bridges
-        self._measure_interpolated_tissue_bridges(tissue_bridges_df, p_lst, idx)
+        self._measure_interpolated_tissue_bridges(tissue_bridges_df, p_lst, idx, im_lesion_data, im_sc_data)
         # Compute tissue bridge ratios
         self._compute_tissue_bridge_ratio(idx)
 
