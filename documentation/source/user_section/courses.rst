@@ -7,33 +7,18 @@ We organize a **free** annual SCT course. The course provides a guided walkthrou
 
 The past course handouts are listed below:
 
--  `SCT course (v7.2), Online, 2025-12-08`_ \| `Video recording <https://youtu.be/VzEKwu9xUNk>`__
--  `SCT course (v6.5), Online, 2024-12-09`_ \| `Video recording <https://youtu.be/CDj8PYW1WaA>`__
--  `SCT course (v6.1), Online, 2023-11-20`_ \| `Video recording <https://youtu.be/hTbJo8GO5IU>`__
--  `SCT course (v5.4.0), Boston, 2021-11-16`_ \| `Video recording <https://www.youtube.com/watch?v=Pcg2ngc9hj8&list=PLJ5-Fnq9XpaXmDmtwDPycLyZoitv8PsTi&index=2>`__
--  `SCT course (v4.2.1), London, 2020-01-21`_ \| `Video recording <https://www.youtube.com/watch?v=whbtjYNtHko>`__
--  `SCT course (v4.0.0), Beijing, 2019-08-02`_ \| `Slides with Chinese translation`_
--  `SCT course (v4.0.0_beta.4), London, 2019-01-22`_
--  `SCT course (v3.2.2), Paris, 2018-06-12`_
--  `SCT course (v3.0.3), Honolulu, 2017-04-28`_
--  `SCT course (v3.0_beta14), Geneva, 2016-06-28`_
--  `SCT course (v3.0_beta9), Singapore, 2016-05-13`_
--  `SCT course (v3.0_beta1), Montreal, 2016-04-19`_
--  `SCT Hands-on Workshop (v2.0.4), Toronto, 2015-06-15`_
-
-.. _SCT course (v7.2), Online, 2025-12-08: https://docs.google.com/presentation/d/1fGGHDDFwSc0lJA7FBn8dlE-5qDjQskWSlet3p1ieHVM
-.. _SCT course (v6.5), Online, 2024-12-09: https://docs.google.com/presentation/d/1uUOpgshwnyC2p8r2GalXlUczQLpX6PfJbtzNELxbqdI/edit?usp=sharing
-.. _SCT course (v6.1), Online, 2023-11-20: https://docs.google.com/presentation/d/1t40Fd0fS0SwWR5FU_GWKEvHkB9d96LVddLQW6L3QAx0/edit?usp=sharing
-.. _SCT course (v5.4.0), Boston, 2021-11-16: https://drive.google.com/file/d/1Oe9XHepUbd-nMNZvlNojh4YttEPep01P/view?usp=sharing
-.. _SCT course (v4.2.1), London, 2020-01-21: https://drive.google.com/file/d/1TZireJ6yhV8q7PbKKXyXg7Heov9-YJMu/view?usp=sharing
-.. _SCT course (v4.0.0), Beijing, 2019-08-02: https://osf.io/arfv7/
-.. _Slides with Chinese translation: https://osf.io/hnmr2/
-.. _SCT course (v4.0.0_beta.4), London, 2019-01-22: https://osf.io/gvs6f/
-.. _SCT course (v3.2.2), Paris, 2018-06-12: https://osf.io/386h7/
-.. _SCT course (v3.0.3), Honolulu, 2017-04-28: https://osf.io/fvnjq/
-.. _SCT course (v3.0_beta14), Geneva, 2016-06-28: https://drive.google.com/file/d/0Bx3A13n3Q_EAOXktWmNVNGRhdUk/view?usp=sharing
-.. _SCT course (v3.0_beta9), Singapore, 2016-05-13: https://drive.google.com/file/d/0Bx3A13n3Q_EAa3NQYjBOWjhjZm8/view?usp=sharing
-.. _SCT course (v3.0_beta1), Montreal, 2016-04-19: https://drive.google.com/file/d/0Bx3A13n3Q_EAenltM2ZvZUNEdjQ/view?usp=sharing
-.. _SCT Hands-on Workshop (v2.0.4), Toronto, 2015-06-15: https://www.dropbox.com/s/f9887yrbkcfujn9/sct_handsOn_20150605.pdf?dl=0
+- `SCT course (v7.2), Online, 2025-12-08 <https://docs.google.com/presentation/d/1fGGHDDFwSc0lJA7FBn8dlE-5qDjQskWSlet3p1ieHVM>`__ \| `Video recording <https://youtu.be/VzEKwu9xUNk>`__
+- `SCT course (v6.5), Online, 2024-12-09 <https://docs.google.com/presentation/d/1uUOpgshwnyC2p8r2GalXlUczQLpX6PfJbtzNELxbqdI/edit?usp=sharing>`__ \| `Video recording <https://youtu.be/CDj8PYW1WaA>`__
+- `SCT course (v6.1), Online, 2023-11-20 <https://docs.google.com/presentation/d/1t40Fd0fS0SwWR5FU_GWKEvHkB9d96LVddLQW6L3QAx0/edit?usp=sharing>`__ \| `Video recording <https://youtu.be/hTbJo8GO5IU>`__
+- `SCT course (v5.4.0), Boston, 2021-11-16 <https://drive.google.com/file/d/1Oe9XHepUbd-nMNZvlNojh4YttEPep01P/view?usp=sharing>`__ \| `Video recording <https://www.youtube.com/watch?v=Pcg2ngc9hj8&list=PLJ5-Fnq9XpaXmDmtwDPycLyZoitv8PsTi&index=2>`__
+- `SCT course (v4.2.1), London, 2020-01-21 <https://drive.google.com/file/d/1TZireJ6yhV8q7PbKKXyXg7Heov9-YJMu/view?usp=sharing>`__ \| `Video recording <https://www.youtube.com/watch?v=whbtjYNtHko>`__
+- `SCT course (v4.0.0), Beijing, 2019-08-02 <https://osf.io/arfv7/>`__ \| `Slides with Chinese translation <https://osf.io/hnmr2/>`__
+- `SCT course (v4.0.0_beta.4), London, 2019-01-22 <https://osf.io/gvs6f/>`__
+- `SCT course (v3.2.2), Paris, 2018-06-12 <https://osf.io/386h7/>`__
+- `SCT course (v3.0.3), Honolulu, 2017-04-28 <https://osf.io/fvnjq/>`__
+- `SCT course (v3.0_beta14), Geneva, 2016-06-28 <https://drive.google.com/file/d/0Bx3A13n3Q_EAOXktWmNVNGRhdUk/view?usp=sharing>`__
+- `SCT course (v3.0_beta9), Singapore, 2016-05-13 <https://drive.google.com/file/d/0Bx3A13n3Q_EAa3NQYjBOWjhjZm8/view?usp=sharing>`__
+- `SCT course (v3.0_beta1), Montreal, 2016-04-19 <https://drive.google.com/file/d/0Bx3A13n3Q_EAenltM2ZvZUNEdjQ/view?usp=sharing>`__
+- `SCT Hands-on Workshop (v2.0.4), Toronto, 2015-06-15 <https://www.dropbox.com/s/f9887yrbkcfujn9/sct_handsOn_20150605.pdf?dl=0>`__
 
 If you would prefer to learn from webpage tutorials instead, then SCT also provides this course material in the form of step-by-step :ref:`tutorials`.
