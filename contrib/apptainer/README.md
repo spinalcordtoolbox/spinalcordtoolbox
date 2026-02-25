@@ -2,9 +2,11 @@
 
 **_EXPERIMENTAL! Use at your own risk!_**
 
-This directory contains files needed to install a minimal Apptainer (formally Singularity) instance of SCT, for use on High Performance Computing (HPC) clusters which do not support Conda/Mamba. In short, this will generate a compressed "image" of SCT into a `.sif` (Singularity Image Format) file, which can then be run as a program. This is done without you needing to install or provide SCT's usual dependencies yourself; they are all contained within the image file.
+This directory contains files needed to install a minimal Apptainer (formally Singularity) instance of SCT, for use on High Performance Computing (HPC) clusters which do not support Conda/Mamba. 
 
-For those familiar with Docker, Apptainer is a close analog, with Apptainer `.def` files being equivalent to Docker `.docker` files. Likewise, the container resulting from using a `.def` file (a "Singularity Image Format", or `.sif`, file) can then be run as a program via the `apptainer exec {container_name}.sif` command, similar to `docker run {container_name}`.
+This will generate a compressed "image" of SCT into a `.sif` (Singularity Image Format) file, which can then be run as a program. This is done without you needing to install or provide SCT's usual dependencies yourself; they are all contained within the image file.
+
+For those familiar with Docker, Apptainer is a close analog, with Apptainer `.def` files being equivalent to Docker `.docker` files. Likewise, the container resulting from using a `.def` file (the `.sif`, file) can then be run as a program via the `apptainer exec {container_name}.sif` command, similar to `docker run {container_name}`.
 
 ## Caveats
 
@@ -30,7 +32,7 @@ To build the SCT Apptainer image, you will need the following:
 
 **NOTE:** If at all possible, we recommend doing this on the machine you intend to run SCT on; the resulting image is quite large (more than 2 GigaBytes), and copying it over post-creation can take quite a while depending on your network.
 
-Firstly, navigate to the copy of this directory you have on the machine. You should see a copy of this `README.md` file, alongside four files: 
+Firstly, navigate to the copy of this directory you have on the machine. You should see a copy of this `README.md` file, alongside at least four other files:
 * `install_sct_containered.sh`: Will be used to create the initial SCT Apptainer file.
 * `install_deepseg_model.sh`: Installs new DeepSeg models to an existing container.
 * `sct.def`: An Apptainer definition file which designates how the SCT container will be defined.
@@ -48,7 +50,7 @@ If you need to install a `sct_deepseg` model after the initial `sct` container i
 
     ./install_deepseg_task.sh task1 task2 task3
 
-Note that this can take a substantial amount of time, as to do this the `.sif` file must be packed and unpacked each time `install_deepseg_task.sh` is called. You should really try to avoid using this as much as possible. 
+Note that this can take a substantial amount of time, as the `.sif` file must be packed and unpacked each time `install_deepseg_task.sh` is called. You should really try to avoid using this as much as possible.
 
 ## Using SCT From Apptainer
 
