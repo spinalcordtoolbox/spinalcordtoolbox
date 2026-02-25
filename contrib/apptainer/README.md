@@ -34,7 +34,7 @@ Firstly, navigate to the copy of this directory you have on the machine. You sho
 * `install_sct_containered.sh`: Will be used to create the initial SCT Apptainer file.
 * `install_deepseg_model.sh`: Installs new DeepSeg models to an existing container.
 * `sct.def`: An Apptainer definition file which designates how the SCT container will be defined.
-* `model_install.def`: An Apptainer definition file which defines how to install a new `sct_deepseg` into an existing SCT container.
+* `model_install.def`: An Apptainer definition file which defines how to install a new `sct_deepseg` models into an existing SCT container.
 
 Once there, run the following command:
 
