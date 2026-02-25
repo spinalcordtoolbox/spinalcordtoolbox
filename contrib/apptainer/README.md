@@ -14,6 +14,7 @@ There are a number of considerations you should keep in mind if running SCT from
 * Apptainer images are static, and isolated from any networks your device may have. This prevents the installation of new DeepSeg models with `sct_deepseg -install`. Instead, you define the models you want SCT to have access to during the initial `.sif` file creation; if you must install a model afterward, use `sct_model_install.def` instead.
 * With datasets being contained within the image alongside the SCT installation, they can only be accessed when you are running a command with the SCT image. Currently only default datasets are available, and other datasets cannot be downloaded using `sct_download_data`. 
 * Due to some `apt` packages requiring user permissions, which are not always given on HPC systems, we need to pin `openssh-client` and `dbus` to get around [this](https://github.com/apptainer/apptainer/issues/1822#issuecomment-2051581258) bug. While this does not appear to impact the installation currently, it is possible that a future update to SCT or one of its dependencies may break as a result. Caveat Emptor!
+* We strongly recommend against using `sct_run_batch` unless you are **_ONLY_** using SCT utilities in the batch script, as the SCT Apptainer image cannot (and should not) access any external software while it is running.
 
 ## Installation
 
