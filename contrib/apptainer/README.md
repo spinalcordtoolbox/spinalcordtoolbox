@@ -62,4 +62,13 @@ For example, the following command will display the help output of `sct_deepseg 
 
 ### Using SCT Datasets
 
-If you need to access a dataset managed by SCT (such as the PAM50 dataset), they can be referenced using `root/sct/data/{dataset_name}` while running a command using the `.sif` file. Note that only datasets downloaded by default (`PAM50`, `PAM50_normalized_metrics`, and `sct_testing_data`) are currently available. 
+If you need to access a dataset managed by SCT (such as the PAM50 dataset), they can be referenced using `root/sct/data/{dataset_name}` while running a command using the `.sif` file. Note that only datasets downloaded by default (`PAM50`, `PAM50_normalized_metrics`, and `sct_testing_data`) are currently available.
+
+If you're accessing the data as part of an SCT command, this can be treated like any other file path:
+
+    apptainer exec sct.sif sct_image -i /root/sct/data/PAM50/template/PAM50_t2s.nii.gz
+
+Otherwise, you should copy the data to a location outside the `.sif` file first. An example for viewing a template file using the `fsleyes` image viewer is shown below:
+
+    apptainer exec sct.sif cp /root/sct/data/PAM50/template/PAM50_t2s.nii.gz ./data/
+    fsleyes ./data/PAM50_t2s.nii.gz
