@@ -1,0 +1,1777 @@
+
+[0;32m
+*******************************
+* Welcome to SCT installation *
+*******************************
+[0m
+
+
+[0;32mChecking OS type and version...[0m
+
+Darwin mclogars-MacBook-Air.local 24.3.0 Darwin Kernel Version 24.3.0: Thu Jan  2 20:31:46 PST 2025; root:xnu-11215.81.4~4/RELEASE_ARM64_T8132 arm64
+ProductVersion:		15.3
+
+[0;32mChecking requirements...[0m
+
+
+[0;32mOK![0m
+
+
+SCT version ......... 7.3.dev0
+Installation type ... in-place
+Operating system .... osx (	15.3)
+Shell config ........ /Users/mclogar/.zshrc
+
+Checking permissions on required file /Users/mclogar/.zshrc:
+[0;32m  - File exists: True
+  - File ownership: True
+  - Read permissions: True
+  - Write permissions: True[0m
+
+
+[0;93mWARNING: Directory already exists. Files will be overwritten.[0m
+
+
+[0;32mSCT will be installed here: [/Users/mclogar/spinalcordtoolbox][0m
+
+
+[0;92m
+Do you agree? [y]es/[n]o: [0m
+[0;32mSkipping copy of source files (source and destination folders are the same)[0m
+
+
+[0;92mDo you want to add the sct_* scripts to your PATH environment? [y]es/[n]o: [0m
+[0;32mDownloading Miniforge...[0m
+
+
+[0;34mcurl -sS -o /var/folders/pc/cz8kpv9d4lzgtnz_gf6t7j1c0000gn/T/tmp.0ynJKsV0rm/miniforge.sh -L https://github.com/conda-forge/miniforge/releases/download/24.11.2-1/Miniforge3-MacOSX-x86_64.sh[0m
+
+
+[0;32mInstalling Miniforge...[0m
+
+
+[0;34mbash /var/folders/pc/cz8kpv9d4lzgtnz_gf6t7j1c0000gn/T/tmp.0ynJKsV0rm/miniforge.sh -p /Users/mclogar/spinalcordtoolbox/python -b -f[0m
+
+PREFIX=/Users/mclogar/spinalcordtoolbox/python
+Unpacking payload ...
+Extracting bzip2-1.0.8-hfdf4475_7.conda
+Extracting c-ares-1.34.4-hf13058a_0.conda
+Extracting ca-certificates-2024.12.14-h8857fd0_0.conda
+Extracting libcxx-19.1.6-hf95d169_1.conda
+Extracting libev-4.33-h10d778d_2.conda
+Extracting libexpat-2.6.4-h240833e_0.conda
+Extracting libffi-3.4.2-h0d85af4_5.tar.bz2
+Extracting libiconv-1.17-hd75f5a5_2.conda
+Extracting liblzma-5.6.3-hd471939_1.conda
+Extracting libzlib-1.3.1-hd23fc13_2.conda
+Extracting lzo-2.10-h10d778d_1001.conda
+Extracting ncurses-6.5-hf036a51_1.conda
+Extracting pybind11-abi-4-hd8ed1ab_3.tar.bz2
+Extracting python_abi-3.12-5_cp312.conda
+Extracting reproc-14.2.5.post0-h6e16a3a_0.conda
+Extracting tzdata-2024b-hc8b5060_0.conda
+Extracting fmt-11.0.2-h3c5361c_0.conda
+Extracting libedit-3.1.20191231-h0678c8f_2.tar.bz2
+Extracting libsolv-0.7.30-h69d5d9b_0.conda
+Extracting libsqlite-3.47.2-hdb6dae5_0.conda
+Extracting libxml2-2.13.5-he8ee3e7_1.conda
+Extracting lz4-c-1.10.0-h240833e_1.conda
+Extracting openssl-3.4.0-hd471939_0.conda
+Extracting readline-8.2-h9e318b2_1.conda
+Extracting reproc-cpp-14.2.5.post0-h240833e_0.conda
+Extracting tk-8.6.13-h1abcd95_1.conda
+Extracting yaml-cpp-0.8.0-he965462_0.conda
+Extracting zstd-1.5.6-h915ae27_0.conda
+Extracting krb5-1.21.3-h37d8d59_0.conda
+Extracting libarchive-3.7.7-h1a33361_3.conda
+Extracting libnghttp2-1.64.0-hc7306c3_0.conda
+Extracting libssh2-1.11.1-h3dc7d44_0.conda
+Extracting python-3.12.8-h9ccd52b_1_cpython.conda
+Extracting libcurl-8.11.1-h5dec5d8_0.conda
+Extracting menuinst-2.2.0-py312hb401068_0.conda
+Extracting archspec-0.2.3-pyhd8ed1ab_0.conda
+Extracting boltons-24.0.0-pyhd8ed1ab_1.conda
+Extracting brotli-python-1.1.0-py312h5861a67_2.conda
+Extracting certifi-2024.12.14-pyhd8ed1ab_0.conda
+Extracting charset-normalizer-3.4.1-pyhd8ed1ab_0.conda
+Extracting colorama-0.4.6-pyhd8ed1ab_1.conda
+Extracting distro-1.9.0-pyhd8ed1ab_1.conda
+Extracting frozendict-2.4.6-py312h3d0f464_0.conda
+Extracting hpack-4.0.0-pyhd8ed1ab_1.conda
+Extracting hyperframe-6.0.1-pyhd8ed1ab_1.conda
+Extracting idna-3.10-pyhd8ed1ab_1.conda
+Extracting jsonpointer-3.0.0-py312hb401068_1.conda
+Extracting libmamba-1.5.12-h415aaf8_0.conda
+Extracting packaging-24.2-pyhd8ed1ab_2.conda
+Extracting platformdirs-4.3.6-pyhd8ed1ab_1.conda
+Extracting pluggy-1.5.0-pyhd8ed1ab_1.conda
+Extracting pycosat-0.6.6-py312h01d7ebd_2.conda
+Extracting pycparser-2.22-pyh29332c3_1.conda
+Extracting pysocks-1.7.1-pyha55dd90_7.conda
+Extracting ruamel.yaml.clib-0.2.8-py312h3d0f464_1.conda
+Extracting setuptools-75.6.0-pyhff2d567_1.conda
+Extracting truststore-0.10.0-pyhd8ed1ab_0.conda
+Extracting wheel-0.45.1-pyhd8ed1ab_1.conda
+Extracting cffi-1.17.1-py312hf857d28_0.conda
+Extracting h2-4.1.0-pyhd8ed1ab_1.conda
+Extracting jsonpatch-1.33-pyhd8ed1ab_1.conda
+Extracting libmambapy-1.5.12-py312h4e4b3da_0.conda
+Extracting pip-24.3.1-pyh8b19718_2.conda
+Extracting ruamel.yaml-0.18.8-py312h01d7ebd_0.conda
+Extracting tqdm-4.67.1-pyhd8ed1ab_1.conda
+Extracting zstandard-0.23.0-py312h7122b0e_1.conda
+Extracting conda-package-streaming-0.11.0-pyhd8ed1ab_0.conda
+Extracting urllib3-2.3.0-pyhd8ed1ab_0.conda
+Extracting conda-package-handling-2.4.0-pyha770c72_1.conda
+Extracting requests-2.32.3-pyhd8ed1ab_1.conda
+Extracting conda-libmamba-solver-24.9.0-pyhd8ed1ab_0.conda
+Extracting conda-24.11.2-py312hb401068_1.conda
+Extracting mamba-1.5.12-py312ha12221d_0.conda
+
+Installing base environment...
+
+Transaction
+
+  Prefix: /Users/mclogar/spinalcordtoolbox/python
+
+  Updating specs:
+
+   - conda-forge/osx-64::bzip2==1.0.8=hfdf4475_7[md5=7ed4301d437b59045be7e051a0308211]
+   - conda-forge/osx-64::c-ares==1.34.4=hf13058a_0[md5=133255af67aaf1e0c0468cc753fd800b]
+   - conda-forge/osx-64::ca-certificates==2024.12.14=h8857fd0_0[md5=b7b887091c99ed2e74845e75e9128410]
+   - conda-forge/osx-64::libcxx==19.1.6=hf95d169_1[md5=1bad6c181a0799298aad42fc5a7e98b7]
+   - conda-forge/osx-64::libev==4.33=h10d778d_2[md5=899db79329439820b7e8f8de41bca902]
+   - conda-forge/osx-64::libexpat==2.6.4=h240833e_0[md5=20307f4049a735a78a29073be1be2626]
+   - conda-forge/osx-64::libffi==3.4.2=h0d85af4_5[md5=ccb34fb14960ad8b125962d3d79b31a9]
+   - conda-forge/osx-64::libiconv==1.17=hd75f5a5_2[md5=6c3628d047e151efba7cf08c5e54d1ca]
+   - conda-forge/osx-64::liblzma==5.6.3=hd471939_1[md5=f9e9205fed9c664421c1c09f0b90ce6d]
+   - conda-forge/osx-64::libzlib==1.3.1=hd23fc13_2[md5=003a54a4e32b02f7355b50a837e699da]
+   - conda-forge/osx-64::lzo==2.10=h10d778d_1001[md5=bfecd73e4a2dc18ffd5288acf8a212ab]
+   - conda-forge/osx-64::ncurses==6.5=hf036a51_1[md5=e102bbf8a6ceeaf429deab8032fc8977]
+   - conda-forge/noarch::pybind11-abi==4=hd8ed1ab_3[md5=878f923dd6acc8aeb47a75da6c4098be]
+   - conda-forge/osx-64::python_abi==3.12=5_cp312[md5=c34dd4920e0addf7cfcc725809f25d8e]
+   - conda-forge/osx-64::reproc==14.2.5.post0=h6e16a3a_0[md5=eda18d4a7dce3831016086a482965345]
+   - conda-forge/noarch::tzdata==2024b=hc8b5060_0[md5=8ac3367aafb1cc0a068483c580af8015]
+   - conda-forge/osx-64::fmt==11.0.2=h3c5361c_0[md5=e8070546e8739040383f6774e0cd4033]
+   - conda-forge/osx-64::libedit==3.1.20191231=h0678c8f_2[md5=6016a8a1d0e63cac3de2c352cd40208b]
+   - conda-forge/osx-64::libsolv==0.7.30=h69d5d9b_0[md5=8f8fd9f1740c8cb7dcfebf1a1ed7e678]
+   - conda-forge/osx-64::libsqlite==3.47.2=hdb6dae5_0[md5=44d9799fda97eb34f6d88ac1e3eb0ea6]
+   - conda-forge/osx-64::libxml2==2.13.5=he8ee3e7_1[md5=9379f216f9132d0d3cdeeb10af165262]
+   - conda-forge/osx-64::lz4-c==1.10.0=h240833e_1[md5=d6b9bd7e356abd7e3a633d59b753495a]
+   - conda-forge/osx-64::openssl==3.4.0=hd471939_0[md5=ec99d2ce0b3033a75cbad01bbc7c5b71]
+   - conda-forge/osx-64::readline==8.2=h9e318b2_1[md5=f17f77f2acf4d344734bda76829ce14e]
+   - conda-forge/osx-64::reproc-cpp==14.2.5.post0=h240833e_0[md5=420229341978751bd96faeced92c200e]
+   - conda-forge/osx-64::tk==8.6.13=h1abcd95_1[md5=bf830ba5afc507c6232d4ef0fb1a882d]
+   - conda-forge/osx-64::yaml-cpp==0.8.0=he965462_0[md5=1bb3addc859ed1338370da6e2996ef47]
+   - conda-forge/osx-64::zstd==1.5.6=h915ae27_0[md5=4cb2cd56f039b129bb0e491c1164167e]
+   - conda-forge/osx-64::krb5==1.21.3=h37d8d59_0[md5=d4765c524b1d91567886bde656fb514b]
+   - conda-forge/osx-64::libarchive==3.7.7=h1a33361_3[md5=5cc55f063de099a537a56c4db2e8d58d]
+   - conda-forge/osx-64::libnghttp2==1.64.0=hc7306c3_0[md5=ab21007194b97beade22ceb7a3f6fee5]
+   - conda-forge/osx-64::libssh2==1.11.1=h3dc7d44_0[md5=b1caec4561059e43a5d056684c5a2de0]
+   - conda-forge/osx-64::python==3.12.8=h9ccd52b_1_cpython[md5=68a31f9cfbdcab2a4baec79095374780]
+   - conda-forge/osx-64::libcurl==8.11.1=h5dec5d8_0[md5=2f80e92674f4a92e9f8401494496ee62]
+   - conda-forge/osx-64::menuinst==2.2.0=py312hb401068_0[md5=4b908217561a1274f48b0f9952fb5359]
+   - conda-forge/noarch::archspec==0.2.3=pyhd8ed1ab_0[md5=192278292e20704f663b9c766909d67b]
+   - conda-forge/noarch::boltons==24.0.0=pyhd8ed1ab_1[md5=d88c38e66d85ecc9c7e2c4110676bbf4]
+   - conda-forge/osx-64::brotli-python==1.1.0=py312h5861a67_2[md5=b95025822e43128835826ec0cc45a551]
+   - conda-forge/noarch::certifi==2024.12.14=pyhd8ed1ab_0[md5=6feb87357ecd66733be3279f16a8c400]
+   - conda-forge/noarch::charset-normalizer==3.4.1=pyhd8ed1ab_0[md5=e83a31202d1c0a000fce3e9cf3825875]
+   - conda-forge/noarch::colorama==0.4.6=pyhd8ed1ab_1[md5=962b9857ee8e7018c22f2776ffa0b2d7]
+   - conda-forge/noarch::distro==1.9.0=pyhd8ed1ab_1[md5=0a2014fd9860f8b1eaa0b1f3d3771a08]
+   - conda-forge/osx-64::frozendict==2.4.6=py312h3d0f464_0[md5=58a8d9e016adc22964bfb0b9a5272e16]
+   - conda-forge/noarch::hpack==4.0.0=pyhd8ed1ab_1[md5=2aa5ff7fa34a81b9196532c84c10d865]
+   - conda-forge/noarch::hyperframe==6.0.1=pyhd8ed1ab_1[md5=566e75c90c1d0c8c459eb0ad9833dc7a]
+   - conda-forge/noarch::idna==3.10=pyhd8ed1ab_1[md5=39a4f67be3286c86d696df570b1201b7]
+   - conda-forge/osx-64::jsonpointer==3.0.0=py312hb401068_1[md5=5dcf96bca4649d496d818a0f5cfb962e]
+   - conda-forge/osx-64::libmamba==1.5.12=h415aaf8_0[md5=4d0ba50ef9b7a0702b5e7d13b139de24]
+   - conda-forge/noarch::packaging==24.2=pyhd8ed1ab_2[md5=3bfed7e6228ebf2f7b9eaa47f1b4e2aa]
+   - conda-forge/noarch::platformdirs==4.3.6=pyhd8ed1ab_1[md5=577852c7e53901ddccc7e6a9959ddebe]
+   - conda-forge/noarch::pluggy==1.5.0=pyhd8ed1ab_1[md5=e9dcbce5f45f9ee500e728ae58b605b6]
+   - conda-forge/osx-64::pycosat==0.6.6=py312h01d7ebd_2[md5=9addc104aa4afd0b21a086cfdca253d5]
+   - conda-forge/noarch::pycparser==2.22=pyh29332c3_1[md5=12c566707c80111f9799308d9e265aef]
+   - conda-forge/noarch::pysocks==1.7.1=pyha55dd90_7[md5=461219d1a5bd61342293efa2c0c90eac]
+   - conda-forge/osx-64::ruamel.yaml.clib==0.2.8=py312h3d0f464_1[md5=f4c0464f98dabcd65064e89991c3c9c2]
+   - conda-forge/noarch::setuptools==75.6.0=pyhff2d567_1[md5=fc80f7995e396cbaeabd23cf46c413dc]
+   - conda-forge/noarch::truststore==0.10.0=pyhd8ed1ab_0[md5=ad1c20cd193e3044bcf17798c33b9d67]
+   - conda-forge/noarch::wheel==0.45.1=pyhd8ed1ab_1[md5=75cb7132eb58d97896e173ef12ac9986]
+   - conda-forge/osx-64::cffi==1.17.1=py312hf857d28_0[md5=5bbc69b8194fedc2792e451026cac34f]
+   - conda-forge/noarch::h2==4.1.0=pyhd8ed1ab_1[md5=825927dc7b0f287ef8d4d0011bb113b1]
+   - conda-forge/noarch::jsonpatch==1.33=pyhd8ed1ab_1[md5=cb60ae9cf02b9fcb8004dec4089e5691]
+   - conda-forge/osx-64::libmambapy==1.5.12=py312h4e4b3da_0[md5=015a81b7c86e74144fc106be5810aa30]
+   - conda-forge/noarch::pip==24.3.1=pyh8b19718_2[md5=04e691b9fadd93a8a9fad87a81d4fd8f]
+   - conda-forge/osx-64::ruamel.yaml==0.18.8=py312h01d7ebd_0[md5=8147454ea92f105fbab3bd1044892bc8]
+   - conda-forge/noarch::tqdm==4.67.1=pyhd8ed1ab_1[md5=9efbfdc37242619130ea42b1cc4ed861]
+   - conda-forge/osx-64::zstandard==0.23.0=py312h7122b0e_1[md5=bd132ba98f3fc0a6067f355f8efe4cb6]
+   - conda-forge/noarch::conda-package-streaming==0.11.0=pyhd8ed1ab_0[md5=bc9533d8616a97551ed144789bf9c1cd]
+   - conda-forge/noarch::urllib3==2.3.0=pyhd8ed1ab_0[md5=32674f8dbfb7b26410ed580dd3c10a29]
+   - conda-forge/noarch::conda-package-handling==2.4.0=pyha770c72_1[md5=28b86d110bda4ef40e680d1afa9ddb1d]
+   - conda-forge/noarch::requests==2.32.3=pyhd8ed1ab_1[md5=a9b9368f3701a417eac9edbcae7cb737]
+   - conda-forge/noarch::conda-libmamba-solver==24.9.0=pyhd8ed1ab_0[md5=45378d089c5f72c9c0d63d58414c645d]
+   - conda-forge/osx-64::conda==24.11.2=py312hb401068_1[md5=5dffa6caac1bf5bb3141514e659bf393]
+   - conda-forge/osx-64::mamba==1.5.12=py312ha12221d_0[md5=1020c747a424cbc156284f0620d4234f]
+
+
+  Package                         Version  Build               Channel         Size
+─────────────────────────────────────────────────────────────────────────────────────
+  Install:
+─────────────────────────────────────────────────────────────────────────────────────
+
+  + bzip2                           1.0.8  hfdf4475_7          conda-forge         
+  + c-ares                         1.34.4  hf13058a_0          conda-forge         
+  + ca-certificates            2024.12.14  h8857fd0_0          conda-forge         
+  + libcxx                         19.1.6  hf95d169_1          conda-forge         
+  + libev                            4.33  h10d778d_2          conda-forge         
+  + libexpat                        2.6.4  h240833e_0          conda-forge         
+  + libffi                          3.4.2  h0d85af4_5          conda-forge         
+  + libiconv                         1.17  hd75f5a5_2          conda-forge         
+  + liblzma                         5.6.3  hd471939_1          conda-forge         
+  + libzlib                         1.3.1  hd23fc13_2          conda-forge         
+  + lzo                              2.10  h10d778d_1001       conda-forge         
+  + ncurses                           6.5  hf036a51_1          conda-forge         
+  + pybind11-abi                        4  hd8ed1ab_3          conda-forge         
+  + python_abi                       3.12  5_cp312             conda-forge         
+  + reproc                   14.2.5.post0  h6e16a3a_0          conda-forge         
+  + tzdata                          2024b  hc8b5060_0          conda-forge         
+  + fmt                            11.0.2  h3c5361c_0          conda-forge         
+  + libedit                  3.1.20191231  h0678c8f_2          conda-forge         
+  + libsolv                        0.7.30  h69d5d9b_0          conda-forge         
+  + libsqlite                      3.47.2  hdb6dae5_0          conda-forge         
+  + libxml2                        2.13.5  he8ee3e7_1          conda-forge         
+  + lz4-c                          1.10.0  h240833e_1          conda-forge         
+  + openssl                         3.4.0  hd471939_0          conda-forge         
+  + readline                          8.2  h9e318b2_1          conda-forge         
+  + reproc-cpp               14.2.5.post0  h240833e_0          conda-forge         
+  + tk                             8.6.13  h1abcd95_1          conda-forge         
+  + yaml-cpp                        0.8.0  he965462_0          conda-forge         
+  + zstd                            1.5.6  h915ae27_0          conda-forge         
+  + krb5                           1.21.3  h37d8d59_0          conda-forge         
+  + libarchive                      3.7.7  h1a33361_3          conda-forge         
+  + libnghttp2                     1.64.0  hc7306c3_0          conda-forge         
+  + libssh2                        1.11.1  h3dc7d44_0          conda-forge         
+  + python                         3.12.8  h9ccd52b_1_cpython  conda-forge         
+  + libcurl                        8.11.1  h5dec5d8_0          conda-forge         
+  + menuinst                        2.2.0  py312hb401068_0     conda-forge         
+  + archspec                        0.2.3  pyhd8ed1ab_0        conda-forge         
+  + boltons                        24.0.0  pyhd8ed1ab_1        conda-forge         
+  + brotli-python                   1.1.0  py312h5861a67_2     conda-forge         
+  + certifi                    2024.12.14  pyhd8ed1ab_0        conda-forge         
+  + charset-normalizer              3.4.1  pyhd8ed1ab_0        conda-forge         
+  + colorama                        0.4.6  pyhd8ed1ab_1        conda-forge         
+  + distro                          1.9.0  pyhd8ed1ab_1        conda-forge         
+  + frozendict                      2.4.6  py312h3d0f464_0     conda-forge         
+  + hpack                           4.0.0  pyhd8ed1ab_1        conda-forge         
+  + hyperframe                      6.0.1  pyhd8ed1ab_1        conda-forge         
+  + idna                             3.10  pyhd8ed1ab_1        conda-forge         
+  + jsonpointer                     3.0.0  py312hb401068_1     conda-forge         
+  + libmamba                       1.5.12  h415aaf8_0          conda-forge         
+  + packaging                        24.2  pyhd8ed1ab_2        conda-forge         
+  + platformdirs                    4.3.6  pyhd8ed1ab_1        conda-forge         
+  + pluggy                          1.5.0  pyhd8ed1ab_1        conda-forge         
+  + pycosat                         0.6.6  py312h01d7ebd_2     conda-forge         
+  + pycparser                        2.22  pyh29332c3_1        conda-forge         
+  + pysocks                         1.7.1  pyha55dd90_7        conda-forge         
+  + ruamel.yaml.clib                0.2.8  py312h3d0f464_1     conda-forge         
+  + setuptools                     75.6.0  pyhff2d567_1        conda-forge         
+  + truststore                     0.10.0  pyhd8ed1ab_0        conda-forge         
+  + wheel                          0.45.1  pyhd8ed1ab_1        conda-forge         
+  + cffi                           1.17.1  py312hf857d28_0     conda-forge         
+  + h2                              4.1.0  pyhd8ed1ab_1        conda-forge         
+  + jsonpatch                        1.33  pyhd8ed1ab_1        conda-forge         
+  + libmambapy                     1.5.12  py312h4e4b3da_0     conda-forge         
+  + pip                            24.3.1  pyh8b19718_2        conda-forge         
+  + ruamel.yaml                    0.18.8  py312h01d7ebd_0     conda-forge         
+  + tqdm                           4.67.1  pyhd8ed1ab_1        conda-forge         
+  + zstandard                      0.23.0  py312h7122b0e_1     conda-forge         
+  + conda-package-streaming        0.11.0  pyhd8ed1ab_0        conda-forge         
+  + urllib3                         2.3.0  pyhd8ed1ab_0        conda-forge         
+  + conda-package-handling          2.4.0  pyha770c72_1        conda-forge         
+  + requests                       2.32.3  pyhd8ed1ab_1        conda-forge         
+  + conda-libmamba-solver          24.9.0  pyhd8ed1ab_0        conda-forge         
+  + conda                         24.11.2  py312hb401068_1     conda-forge         
+  + mamba                          1.5.12  py312ha12221d_0     conda-forge         
+
+  Summary:
+
+  Install: 73 packages
+
+  Total download: 0 B
+
+─────────────────────────────────────────────────────────────────────────────────────
+
+
+
+Transaction starting
+
+Transaction finished
+
+To activate this environment, use:
+
+    micromamba activate /Users/mclogar/spinalcordtoolbox/python
+
+Or to execute a single command in this environment, use:
+
+    micromamba run -p /Users/mclogar/spinalcordtoolbox/python mycommand
+
+installation finished.
+
+[0;32mCreating conda environment...[0m
+
+Channels:
+ - conda-forge
+Platform: osx-64
+Collecting package metadata (repodata.json): ...working... done
+Solving environment: ...working... done
+
+
+==> WARNING: A newer version of conda exists. <==
+    current version: 24.11.2
+    latest version: 25.11.1
+
+Please update conda by running
+
+    $ conda update -n base -c conda-forge conda
+
+
+
+## Package Plan ##
+
+  environment location: /Users/mclogar/spinalcordtoolbox/python/envs/venv_sct
+
+  added / updated specs:
+    - python=3.10
+
+
+The following packages will be downloaded:
+
+    package                    |            build
+    ---------------------------|-----------------
+    bzip2-1.0.8                |       h500dc9f_8         129 KB  conda-forge
+    ca-certificates-2025.11.12 |       hbd8a1cb_0         149 KB  conda-forge
+    icu-75.1                   |       h120a0e1_0        11.2 MB  conda-forge
+    libexpat-2.7.3             |       heffb93a_0          72 KB  conda-forge
+    libffi-3.5.2               |       h750e83c_0          51 KB  conda-forge
+    liblzma-5.8.1              |       hd471939_2         102 KB  conda-forge
+    libsqlite-3.51.1           |       h6cc646a_0         968 KB  conda-forge
+    ncurses-6.5                |       h0622a9a_3         803 KB  conda-forge
+    openssl-3.6.0              |       h230baf5_0         2.7 MB  conda-forge
+    pip-25.3                   |     pyh8b19718_0         1.1 MB  conda-forge
+    python-3.10.19             |h988dfef_2_cpython        12.5 MB  conda-forge
+    readline-8.3               |       h68b038d_0         310 KB  conda-forge
+    setuptools-80.9.0          |     pyhff2d567_0         731 KB  conda-forge
+    tk-8.6.13                  |       hf689a15_3         3.1 MB  conda-forge
+    tzdata-2025c               |       h8577fbf_0         116 KB  conda-forge
+    ------------------------------------------------------------
+                                           Total:        34.0 MB
+
+The following NEW packages will be INSTALLED:
+
+  bzip2              conda-forge/osx-64::bzip2-1.0.8-h500dc9f_8 
+  ca-certificates    conda-forge/noarch::ca-certificates-2025.11.12-hbd8a1cb_0 
+  icu                conda-forge/osx-64::icu-75.1-h120a0e1_0 
+  libexpat           conda-forge/osx-64::libexpat-2.7.3-heffb93a_0 
+  libffi             conda-forge/osx-64::libffi-3.5.2-h750e83c_0 
+  liblzma            conda-forge/osx-64::liblzma-5.8.1-hd471939_2 
+  libsqlite          conda-forge/osx-64::libsqlite-3.51.1-h6cc646a_0 
+  libzlib            conda-forge/osx-64::libzlib-1.3.1-hd23fc13_2 
+  ncurses            conda-forge/osx-64::ncurses-6.5-h0622a9a_3 
+  openssl            conda-forge/osx-64::openssl-3.6.0-h230baf5_0 
+  pip                conda-forge/noarch::pip-25.3-pyh8b19718_0 
+  python             conda-forge/osx-64::python-3.10.19-h988dfef_2_cpython 
+  readline           conda-forge/osx-64::readline-8.3-h68b038d_0 
+  setuptools         conda-forge/noarch::setuptools-80.9.0-pyhff2d567_0 
+  tk                 conda-forge/osx-64::tk-8.6.13-hf689a15_3 
+  tzdata             conda-forge/noarch::tzdata-2025c-h8577fbf_0 
+  wheel              conda-forge/noarch::wheel-0.45.1-pyhd8ed1ab_1 
+
+
+
+Downloading and Extracting Packages: ...working...python-3.10.19       | 12.5 MB   |            |   0% 
+icu-75.1             | 11.2 MB   |            |   0% [A
+
+tk-8.6.13            | 3.1 MB    |            |   0% [A[A
+
+
+openssl-3.6.0        | 2.7 MB    |            |   0% [A[A[A
+
+
+
+pip-25.3             | 1.1 MB    |            |   0% [A[A[A[A
+
+
+
+
+libsqlite-3.51.1     | 968 KB    |            |   0% [A[A[A[A[A
+
+
+
+
+
+ncurses-6.5          | 803 KB    |            |   0% [A[A[A[A[A[A
+
+
+
+
+
+
+setuptools-80.9.0    | 731 KB    |            |   0% [A[A[A[A[A[A[A
+
+
+
+
+
+
+
+readline-8.3         | 310 KB    |            |   0% [A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+ca-certificates-2025 | 149 KB    |            |   0% [A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+bzip2-1.0.8          | 129 KB    |            |   0% [A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+tzdata-2025c         | 116 KB    |            |   0% [A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+liblzma-5.8.1        | 102 KB    |            |   0% [A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+
+libexpat-2.7.3       | 72 KB     |            |   0% [A[A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+
+
+libffi-3.5.2         | 51 KB     |            |   0% [A[A[A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+pip-25.3             | 1.1 MB    | 1          |   1% [A[A[A[A
+
+tk-8.6.13            | 3.1 MB    |            |   1% [A[Apython-3.10.19       | 12.5 MB   |            |   0% 
+
+
+openssl-3.6.0        | 2.7 MB    |            |   1% [A[A[A
+
+
+
+pip-25.3             | 1.1 MB    | ########## | 100% [A[A[A[A
+icu-75.1             | 11.2 MB   |            |   0% [A
+
+tk-8.6.13            | 3.1 MB    | #####      |  51% [A[Apython-3.10.19       | 12.5 MB   | 9          |  10% 
+
+
+
+pip-25.3             | 1.1 MB    | ########## | 100% [A[A[A[A
+
+
+
+pip-25.3             | 1.1 MB    | ########## | 100% [A[A[A[A
+
+
+
+
+libsqlite-3.51.1     | 968 KB    | 1          |   2% [A[A[A[A[A
+
+
+openssl-3.6.0        | 2.7 MB    | ###4       |  34% [A[A[A
+icu-75.1             | 11.2 MB   | 1          |   2% [Apython-3.10.19       | 12.5 MB   | #9         |  19% 
+
+tk-8.6.13            | 3.1 MB    | #########1 |  91% [A[A
+
+
+
+
+libsqlite-3.51.1     | 968 KB    | #########7 |  98% [A[A[A[A[A
+
+
+
+
+libsqlite-3.51.1     | 968 KB    | ########## | 100% [A[A[A[A[A
+
+
+
+
+libsqlite-3.51.1     | 968 KB    | ########## | 100% [A[A[A[A[A
+icu-75.1             | 11.2 MB   | #5         |  16% [A
+
+
+openssl-3.6.0        | 2.7 MB    | ########## | 100% [A[A[A
+
+
+openssl-3.6.0        | 2.7 MB    | ########## | 100% [A[A[A
+
+tk-8.6.13            | 3.1 MB    | ########## | 100% [A[Apython-3.10.19       | 12.5 MB   | ###7       |  38% 
+
+
+openssl-3.6.0        | 2.7 MB    | ########## | 100% [A[A[A
+
+
+
+
+
+ncurses-6.5          | 803 KB    | 1          |   2% [A[A[A[A[A[A
+
+tk-8.6.13            | 3.1 MB    | ########## | 100% [A[A
+icu-75.1             | 11.2 MB   | ####       |  40% [A
+
+
+
+
+
+
+
+readline-8.3         | 310 KB    | 5          |   5% [A[A[A[A[A[A[A[A
+
+
+
+
+
+
+setuptools-80.9.0    | 731 KB    | 2          |   2% [A[A[A[A[A[A[A
+
+
+
+
+
+
+
+readline-8.3         | 310 KB    | ########## | 100% [A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+readline-8.3         | 310 KB    | ########## | 100% [A[A[A[A[A[A[A[Apython-3.10.19       | 12.5 MB   | ####8      |  49% 
+
+
+
+
+
+
+setuptools-80.9.0    | 731 KB    | ########## | 100% [A[A[A[A[A[A[A
+
+
+
+
+
+ncurses-6.5          | 803 KB    | ######7    |  68% [A[A[A[A[A[A
+
+
+
+
+
+ncurses-6.5          | 803 KB    | ########## | 100% [A[A[A[A[A[A
+
+
+
+
+
+
+
+
+ca-certificates-2025 | 149 KB    | #          |  11% [A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+ca-certificates-2025 | 149 KB    | ########## | 100% [A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+ca-certificates-2025 | 149 KB    | ########## | 100% [A[A[A[A[A[A[A[A[A
+icu-75.1             | 11.2 MB   | #######4   |  75% [A
+
+
+
+
+
+
+
+
+
+bzip2-1.0.8          | 129 KB    | #2         |  12% [A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+bzip2-1.0.8          | 129 KB    | ########## | 100% [A[A[A[A[A[A[A[A[A[Apython-3.10.19       | 12.5 MB   | ######7    |  67% 
+
+
+
+
+
+
+
+
+
+
+tzdata-2025c         | 116 KB    | #3         |  14% [A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+tzdata-2025c         | 116 KB    | ########## | 100% [A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+liblzma-5.8.1        | 102 KB    | #5         |  16% [A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+liblzma-5.8.1        | 102 KB    | ########## | 100% [A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+bzip2-1.0.8          | 129 KB    | ########## | 100% [A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+
+libexpat-2.7.3       | 72 KB     | ##2        |  22% [A[A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+
+libexpat-2.7.3       | 72 KB     | ########## | 100% [A[A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+setuptools-80.9.0    | 731 KB    | ########## | 100% [A[A[A[A[A[A[A
+
+
+
+
+
+
+setuptools-80.9.0    | 731 KB    | ########## | 100% [A[A[A[A[A[A[A
+icu-75.1             | 11.2 MB   | ########## | 100% [A
+icu-75.1             | 11.2 MB   | ########## | 100% [A
+
+
+
+
+
+
+
+
+
+
+
+liblzma-5.8.1        | 102 KB    | ########## | 100% [A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+
+libexpat-2.7.3       | 72 KB     | ########## | 100% [A[A[A[A[A[A[A[A[A[A[A[A[Apython-3.10.19       | 12.5 MB   | #########1 |  92% 
+
+
+
+
+
+
+
+
+
+
+
+
+
+libffi-3.5.2         | 51 KB     | ###1       |  31% [A[A[A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+
+
+libffi-3.5.2         | 51 KB     | ########## | 100% [A[A[A[A[A[A[A[A[A[A[A[A[A[Apython-3.10.19       | 12.5 MB   | ########## | 100% 
+
+
+
+
+
+
+
+
+
+
+tzdata-2025c         | 116 KB    | ########## | 100% [A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+tzdata-2025c         | 116 KB    | ########## | 100% [A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+
+
+libffi-3.5.2         | 51 KB     | ########## | 100% [A[A[A[A[A[A[A[A[A[A[A[A[A[A
+icu-75.1             | 11.2 MB   | ########## | 100% [A
+
+
+
+
+
+ncurses-6.5          | 803 KB    | ########## | 100% [A[A[A[A[A[Apython-3.10.19       | 12.5 MB   | ########## | 100%                                                      
+                                                     [A
+
+                                                     [A[A
+
+
+                                                     [A[A[A
+
+
+
+                                                     [A[A[A[A
+
+
+
+
+                                                     [A[A[A[A[A
+
+
+
+
+
+                                                     [A[A[A[A[A[A
+
+
+
+
+
+
+                                                     [A[A[A[A[A[A[A
+
+
+
+
+
+
+
+                                                     [A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+                                                     [A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+                                                     [A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+                                                     [A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+                                                     [A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+
+                                                     [A[A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                     [A[A[A[A[A[A[A[A[A[A[A[A[A[A done
+Preparing transaction: - done
+Verifying transaction: | / - \ | done
+Executing transaction: - \ | / - \ | / - \ | / - \ | / - \ | / - \ | / - \ | / - \ | / - \ | / - \ | / - \ | / - \ | done
+#
+# To activate this environment, use
+#
+#     $ conda activate /Users/mclogar/spinalcordtoolbox/python/envs/venv_sct
+#
+# To deactivate an active environment, use
+#
+#     $ conda deactivate
+
+Requirement already satisfied: pip!=21.2.* in ./python/envs/venv_sct/lib/python3.10/site-packages (25.3)
+
+[0;32mInstalling Python dependencies...[0m
+
+
+[0;32mUsing requirements.txt (git installation)[0m
+
+Looking in indexes: https://pypi.org/simple, https://download.pytorch.org/whl/cpu
+Ignoring msvc-runtime: markers 'sys_platform == "win32"' don't match your environment
+Collecting certifi
+  Downloading certifi-2025.11.12-py3-none-any.whl.metadata (2.5 kB)
+Collecting acvl_utils!=0.2.1 (from -r requirements.txt (line 7))
+  Downloading acvl_utils-0.2.5.tar.gz (29 kB)
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Getting requirements to build wheel: started
+  Getting requirements to build wheel: finished with status 'done'
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+Collecting blosc2!=3.9.0 (from -r requirements.txt (line 12))
+  Downloading blosc2-3.12.2-cp310-cp310-macosx_10_9_x86_64.whl.metadata (7.1 kB)
+Collecting dipy==1.8.0 (from -r requirements.txt (line 14))
+  Downloading dipy-1.8.0-cp310-cp310-macosx_10_9_x86_64.whl.metadata (8.6 kB)
+Collecting h5py!=3.15.0 (from -r requirements.txt (line 16))
+  Downloading h5py-3.15.1-cp310-cp310-macosx_10_9_x86_64.whl.metadata (3.0 kB)
+Collecting ivadomed (from -r requirements.txt (line 20))
+  Downloading ivadomed-2.9.10-py3-none-any.whl.metadata (6.4 kB)
+Collecting matplotlib (from -r requirements.txt (line 21))
+  Downloading matplotlib-3.10.8-cp310-cp310-macosx_10_12_x86_64.whl.metadata (52 kB)
+Collecting matplotlib-inline (from -r requirements.txt (line 26))
+  Downloading matplotlib_inline-0.2.1-py3-none-any.whl.metadata (2.3 kB)
+Collecting nibabel (from -r requirements.txt (line 34))
+  Downloading nibabel-5.3.3-py3-none-any.whl.metadata (9.1 kB)
+Collecting nilearn (from -r requirements.txt (line 35))
+  Downloading nilearn-0.12.1-py3-none-any.whl.metadata (9.9 kB)
+Collecting nnunetv2-neuropoly (from -r requirements.txt (line 44))
+  Downloading nnunetv2_neuropoly-2.6.2-py3-none-any.whl.metadata (25 kB)
+Collecting numpy<2 (from -r requirements.txt (line 46))
+  Downloading numpy-1.26.4-cp310-cp310-macosx_10_9_x86_64.whl.metadata (61 kB)
+Collecting numexpr!=2.14.0 (from -r requirements.txt (line 49))
+  Downloading numexpr-2.14.1-cp310-cp310-macosx_10_9_x86_64.whl.metadata (9.0 kB)
+Collecting onnxruntime!=1.16.0,<1.22.0,>=1.7.0 (from -r requirements.txt (line 55))
+  Downloading onnxruntime-1.21.1-cp310-cp310-macosx_13_0_universal2.whl.metadata (4.5 kB)
+Collecting onnx<1.16.2 (from -r requirements.txt (line 58))
+  Downloading onnx-1.16.1-cp310-cp310-macosx_11_0_universal2.whl.metadata (16 kB)
+Collecting pandas (from -r requirements.txt (line 59))
+  Downloading pandas-2.3.3-cp310-cp310-macosx_10_9_x86_64.whl.metadata (91 kB)
+Collecting portalocker (from -r requirements.txt (line 60))
+  Downloading portalocker-3.2.0-py3-none-any.whl.metadata (8.7 kB)
+Collecting psutil (from -r requirements.txt (line 61))
+  Downloading psutil-7.1.3-cp36-abi3-macosx_10_9_x86_64.whl.metadata (23 kB)
+Collecting pyqt5>=5.15.0 (from -r requirements.txt (line 64))
+  Downloading PyQt5-5.15.11-cp38-abi3-macosx_11_0_x86_64.whl.metadata (2.1 kB)
+Collecting PyQt5-Qt5==5.15.2 (from -r requirements.txt (line 69))
+  Downloading PyQt5_Qt5-5.15.2-py3-none-macosx_10_13_intel.whl.metadata (535 bytes)
+Collecting pystrum>=0.3 (from -r requirements.txt (line 72))
+  Downloading pystrum-0.4.tar.gz (17 kB)
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Getting requirements to build wheel: started
+  Getting requirements to build wheel: finished with status 'done'
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+Collecting pytest (from -r requirements.txt (line 73))
+  Downloading pytest-9.0.2-py3-none-any.whl.metadata (7.6 kB)
+Collecting pytest-cov (from -r requirements.txt (line 74))
+  Downloading pytest_cov-7.0.0-py3-none-any.whl.metadata (31 kB)
+Collecting requests (from -r requirements.txt (line 75))
+  Downloading requests-2.32.5-py3-none-any.whl.metadata (4.9 kB)
+Collecting requirements-parser (from -r requirements.txt (line 76))
+  Downloading requirements_parser-0.13.0-py3-none-any.whl.metadata (4.7 kB)
+Collecting scipy (from -r requirements.txt (line 77))
+  Downloading scipy-1.15.3-cp310-cp310-macosx_14_0_x86_64.whl.metadata (61 kB)
+Collecting scikit-image (from -r requirements.txt (line 78))
+  Downloading scikit_image-0.25.2-cp310-cp310-macosx_10_9_x86_64.whl.metadata (14 kB)
+Collecting scikit-learn (from -r requirements.txt (line 79))
+  Downloading scikit_learn-1.7.2-cp310-cp310-macosx_10_9_x86_64.whl.metadata (11 kB)
+Collecting xlwt (from -r requirements.txt (line 81))
+  Downloading xlwt-1.3.0-py2.py3-none-any.whl.metadata (3.5 kB)
+Collecting torch<2.3 (from -r requirements.txt (line 93))
+  Downloading https://download.pytorch.org/whl/cpu/torch-2.2.2-cp310-none-macosx_10_9_x86_64.whl (151.0 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 151.0/151.0 MB 70.7 MB/s  0:00:02
+Collecting tqdm (from -r requirements.txt (line 94))
+  Downloading tqdm-4.67.1-py3-none-any.whl.metadata (57 kB)
+Collecting transforms3d (from -r requirements.txt (line 95))
+  Downloading transforms3d-0.4.2-py3-none-any.whl.metadata (2.8 kB)
+Collecting urllib3 (from -r requirements.txt (line 96))
+  Downloading urllib3-2.6.2-py3-none-any.whl.metadata (6.6 kB)
+Collecting pytest_console_scripts (from -r requirements.txt (line 97))
+  Downloading pytest_console_scripts-1.4.1-py3-none-any.whl.metadata (11 kB)
+Collecting pyyaml (from -r requirements.txt (line 98))
+  Downloading pyyaml-6.0.3-cp310-cp310-macosx_10_13_x86_64.whl.metadata (2.4 kB)
+Collecting voxelmorph (from -r requirements.txt (line 99))
+  Downloading voxelmorph-0.2-py3-none-any.whl.metadata (660 bytes)
+Collecting wquantiles (from -r requirements.txt (line 100))
+  Downloading wquantiles-0.6-py3-none-any.whl.metadata (1.1 kB)
+Collecting xlsxwriter (from -r requirements.txt (line 103))
+  Downloading xlsxwriter-3.2.9-py3-none-any.whl.metadata (2.7 kB)
+Collecting monai[nibabel] (from -r requirements.txt (line 27))
+  Downloading monai-1.5.1-py3-none-any.whl.metadata (13 kB)
+Collecting totalspineseg[neuropoly] (from -r requirements.txt (line 80))
+  Downloading totalspineseg-20251124-py3-none-any.whl.metadata (17 kB)
+Collecting cython!=0.29.29,>=0.29.24 (from dipy==1.8.0->-r requirements.txt (line 14))
+  Downloading cython-3.2.3-cp39-abi3-macosx_10_9_x86_64.whl.metadata (4.5 kB)
+Collecting packaging>=21 (from dipy==1.8.0->-r requirements.txt (line 14))
+  Downloading packaging-25.0-py3-none-any.whl.metadata (3.3 kB)
+Collecting trx-python>=0.2.9 (from dipy==1.8.0->-r requirements.txt (line 14))
+  Downloading trx_python-0.3-py3-none-any.whl.metadata (2.7 kB)
+Collecting coloredlogs (from onnxruntime!=1.16.0,<1.22.0,>=1.7.0->-r requirements.txt (line 55))
+  Downloading coloredlogs-15.0.1-py2.py3-none-any.whl.metadata (12 kB)
+Collecting flatbuffers (from onnxruntime!=1.16.0,<1.22.0,>=1.7.0->-r requirements.txt (line 55))
+  Downloading flatbuffers-25.9.23-py2.py3-none-any.whl.metadata (875 bytes)
+Collecting protobuf (from onnxruntime!=1.16.0,<1.22.0,>=1.7.0->-r requirements.txt (line 55))
+  Downloading protobuf-6.33.2-cp39-abi3-macosx_10_9_universal2.whl.metadata (593 bytes)
+Collecting sympy (from onnxruntime!=1.16.0,<1.22.0,>=1.7.0->-r requirements.txt (line 55))
+  Downloading sympy-1.14.0-py3-none-any.whl.metadata (12 kB)
+Collecting filelock (from torch<2.3->-r requirements.txt (line 93))
+  Downloading filelock-3.20.1-py3-none-any.whl.metadata (2.1 kB)
+Collecting typing-extensions>=4.8.0 (from torch<2.3->-r requirements.txt (line 93))
+  Downloading https://download.pytorch.org/whl/typing_extensions-4.15.0-py3-none-any.whl.metadata (3.3 kB)
+Collecting networkx (from torch<2.3->-r requirements.txt (line 93))
+  Downloading networkx-3.4.2-py3-none-any.whl.metadata (6.3 kB)
+Collecting jinja2 (from torch<2.3->-r requirements.txt (line 93))
+  Downloading https://download.pytorch.org/whl/jinja2-3.1.6-py3-none-any.whl.metadata (2.9 kB)
+Collecting fsspec (from torch<2.3->-r requirements.txt (line 93))
+  Downloading fsspec-2025.12.0-py3-none-any.whl.metadata (10 kB)
+Collecting batchgenerators (from acvl_utils!=0.2.1->-r requirements.txt (line 7))
+  Downloading batchgenerators-0.25.1.tar.gz (76 kB)
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Getting requirements to build wheel: started
+  Getting requirements to build wheel: finished with status 'done'
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+Collecting SimpleITK (from acvl_utils!=0.2.1->-r requirements.txt (line 7))
+  Downloading simpleitk-2.5.3-cp310-cp310-macosx_10_9_x86_64.whl.metadata (7.2 kB)
+Collecting connected-components-3d (from acvl_utils!=0.2.1->-r requirements.txt (line 7))
+  Downloading connected_components_3d-3.26.1-cp310-cp310-macosx_10_9_x86_64.whl.metadata (32 kB)
+Collecting ndindex (from blosc2!=3.9.0->-r requirements.txt (line 12))
+  Downloading ndindex-1.10.1-cp310-cp310-macosx_10_9_x86_64.whl.metadata (3.6 kB)
+Collecting msgpack (from blosc2!=3.9.0->-r requirements.txt (line 12))
+  Downloading msgpack-1.1.2-cp310-cp310-macosx_10_9_x86_64.whl.metadata (8.1 kB)
+Collecting platformdirs (from blosc2!=3.9.0->-r requirements.txt (line 12))
+  Downloading platformdirs-4.5.1-py3-none-any.whl.metadata (12 kB)
+Collecting py-cpuinfo (from blosc2!=3.9.0->-r requirements.txt (line 12))
+  Downloading py_cpuinfo-9.0.0-py3-none-any.whl.metadata (794 bytes)
+Collecting csv-diff>=1.0 (from ivadomed->-r requirements.txt (line 20))
+  Downloading csv_diff-1.2-py3-none-any.whl.metadata (5.3 kB)
+Collecting loguru~=0.5 (from ivadomed->-r requirements.txt (line 20))
+  Downloading loguru-0.7.3-py3-none-any.whl.metadata (22 kB)
+Collecting imageio>=2.31.4 (from ivadomed->-r requirements.txt (line 20))
+  Downloading imageio-2.37.2-py3-none-any.whl.metadata (9.7 kB)
+Collecting joblib~=1.0 (from ivadomed->-r requirements.txt (line 20))
+  Downloading joblib-1.5.3-py3-none-any.whl.metadata (5.5 kB)
+Collecting pandas (from -r requirements.txt (line 59))
+  Downloading pandas-1.5.3-cp310-cp310-macosx_10_9_x86_64.whl.metadata (11 kB)
+Collecting pybids<0.15.6,>=0.14.0 (from ivadomed->-r requirements.txt (line 20))
+  Downloading pybids-0.15.5-py3-none-any.whl.metadata (3.2 kB)
+Collecting seaborn~=0.11 (from ivadomed->-r requirements.txt (line 20))
+  Downloading seaborn-0.13.2-py3-none-any.whl.metadata (5.4 kB)
+Collecting tensorboard>=1.15.0 (from ivadomed->-r requirements.txt (line 20))
+  Downloading tensorboard-2.20.0-py3-none-any.whl.metadata (1.8 kB)
+Collecting torchio>=0.18.68 (from ivadomed->-r requirements.txt (line 20))
+  Downloading torchio-0.21.0-py3-none-any.whl.metadata (52 kB)
+Collecting torchvision>=0.9.1 (from ivadomed->-r requirements.txt (line 20))
+  Downloading https://download.pytorch.org/whl/cpu/torchvision-0.17.2-cp310-cp310-macosx_10_13_x86_64.whl (1.7 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.7/1.7 MB 24.8 MB/s  0:00:00
+Collecting wandb>=0.12.11 (from ivadomed->-r requirements.txt (line 20))
+  Downloading wandb-0.23.1-py3-none-macosx_12_0_x86_64.whl.metadata (12 kB)
+Collecting importlib-resources>=5.12 (from nibabel->-r requirements.txt (line 34))
+  Downloading importlib_resources-6.5.2-py3-none-any.whl.metadata (3.9 kB)
+Collecting python-dateutil>=2.8.1 (from pandas->-r requirements.txt (line 59))
+  Downloading python_dateutil-2.9.0.post0-py2.py3-none-any.whl.metadata (8.4 kB)
+Collecting pytz>=2020.1 (from pandas->-r requirements.txt (line 59))
+  Downloading pytz-2025.2-py2.py3-none-any.whl.metadata (22 kB)
+Collecting pillow>=10.1 (from scikit-image->-r requirements.txt (line 78))
+  Downloading pillow-12.0.0-cp310-cp310-macosx_10_10_x86_64.whl.metadata (8.8 kB)
+Collecting tifffile>=2022.8.12 (from scikit-image->-r requirements.txt (line 78))
+  Downloading tifffile-2025.5.10-py3-none-any.whl.metadata (31 kB)
+Collecting lazy-loader>=0.4 (from scikit-image->-r requirements.txt (line 78))
+  Downloading lazy_loader-0.4-py3-none-any.whl.metadata (7.6 kB)
+Collecting formulaic<0.4,>=0.2.4 (from pybids<0.15.6,>=0.14.0->ivadomed->-r requirements.txt (line 20))
+  Downloading formulaic-0.3.4-py3-none-any.whl.metadata (5.6 kB)
+Collecting sqlalchemy<1.4.0.dev0 (from pybids<0.15.6,>=0.14.0->ivadomed->-r requirements.txt (line 20))
+  Downloading SQLAlchemy-1.3.24.tar.gz (6.4 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 6.4/6.4 MB 31.5 MB/s  0:00:00
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Getting requirements to build wheel: started
+  Getting requirements to build wheel: finished with status 'done'
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+Collecting bids-validator (from pybids<0.15.6,>=0.14.0->ivadomed->-r requirements.txt (line 20))
+  Downloading bids_validator-1.14.7.post0-py3-none-any.whl.metadata (39 kB)
+Collecting num2words (from pybids<0.15.6,>=0.14.0->ivadomed->-r requirements.txt (line 20))
+  Downloading num2words-0.5.14-py3-none-any.whl.metadata (13 kB)
+Collecting click>=8.0 (from pybids<0.15.6,>=0.14.0->ivadomed->-r requirements.txt (line 20))
+  Downloading click-8.3.1-py3-none-any.whl.metadata (2.6 kB)
+Collecting astor>=0.8 (from formulaic<0.4,>=0.2.4->pybids<0.15.6,>=0.14.0->ivadomed->-r requirements.txt (line 20))
+  Downloading astor-0.8.1-py2.py3-none-any.whl.metadata (4.2 kB)
+Collecting interface-meta<2.0.0,>=1.2.0 (from formulaic<0.4,>=0.2.4->pybids<0.15.6,>=0.14.0->ivadomed->-r requirements.txt (line 20))
+  Downloading interface_meta-1.3.0-py3-none-any.whl.metadata (6.7 kB)
+Collecting wrapt>=1.0 (from formulaic<0.4,>=0.2.4->pybids<0.15.6,>=0.14.0->ivadomed->-r requirements.txt (line 20))
+  Downloading wrapt-2.0.1-cp310-cp310-macosx_10_9_x86_64.whl.metadata (9.0 kB)
+Collecting contourpy>=1.0.1 (from matplotlib->-r requirements.txt (line 21))
+  Downloading contourpy-1.3.2-cp310-cp310-macosx_10_9_x86_64.whl.metadata (5.5 kB)
+Collecting cycler>=0.10 (from matplotlib->-r requirements.txt (line 21))
+  Downloading cycler-0.12.1-py3-none-any.whl.metadata (3.8 kB)
+Collecting fonttools>=4.22.0 (from matplotlib->-r requirements.txt (line 21))
+  Downloading fonttools-4.61.1-cp310-cp310-macosx_10_9_x86_64.whl.metadata (114 kB)
+Collecting kiwisolver>=1.3.1 (from matplotlib->-r requirements.txt (line 21))
+  Downloading kiwisolver-1.4.9-cp310-cp310-macosx_10_9_x86_64.whl.metadata (6.3 kB)
+Collecting pyparsing>=3 (from matplotlib->-r requirements.txt (line 21))
+  Downloading pyparsing-3.2.5-py3-none-any.whl.metadata (5.0 kB)
+Collecting traitlets (from matplotlib-inline->-r requirements.txt (line 26))
+  Downloading traitlets-5.14.3-py3-none-any.whl.metadata (10 kB)
+INFO: pip is looking at multiple versions of monai[nibabel] to determine which version is compatible with other requirements. This could take a while.
+Collecting monai[nibabel] (from -r requirements.txt (line 27))
+  Downloading monai-1.5.0-py3-none-any.whl.metadata (13 kB)
+  Downloading monai-1.4.0-py3-none-any.whl.metadata (11 kB)
+Collecting lxml (from nilearn->-r requirements.txt (line 35))
+  Downloading lxml-6.0.2-cp310-cp310-macosx_10_9_x86_64.whl.metadata (3.6 kB)
+INFO: pip is looking at multiple versions of nilearn to determine which version is compatible with other requirements. This could take a while.
+Collecting nilearn (from -r requirements.txt (line 35))
+  Downloading nilearn-0.12.0-py3-none-any.whl.metadata (9.9 kB)
+  Downloading nilearn-0.11.1-py3-none-any.whl.metadata (9.3 kB)
+  Downloading nilearn-0.11.0-py3-none-any.whl.metadata (8.8 kB)
+  Downloading nilearn-0.10.4-py3-none-any.whl.metadata (7.8 kB)
+Collecting dynamic-network-architectures<0.5,>=0.4.1 (from nnunetv2-neuropoly->-r requirements.txt (line 44))
+  Downloading dynamic_network_architectures-0.4.2.tar.gz (28 kB)
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Getting requirements to build wheel: started
+  Getting requirements to build wheel: finished with status 'done'
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+Collecting graphviz (from nnunetv2-neuropoly->-r requirements.txt (line 44))
+  Downloading graphviz-0.21-py3-none-any.whl.metadata (12 kB)
+Collecting imagecodecs (from nnunetv2-neuropoly->-r requirements.txt (line 44))
+  Downloading imagecodecs-2025.3.30-cp310-cp310-macosx_10_14_x86_64.whl.metadata (20 kB)
+Collecting yacs (from nnunetv2-neuropoly->-r requirements.txt (line 44))
+  Downloading yacs-0.1.8-py3-none-any.whl.metadata (639 bytes)
+Collecting batchgeneratorsv2>=0.3.0 (from nnunetv2-neuropoly->-r requirements.txt (line 44))
+  Downloading batchgeneratorsv2-0.3.0.tar.gz (44 kB)
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Getting requirements to build wheel: started
+  Getting requirements to build wheel: finished with status 'done'
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+Collecting einops (from nnunetv2-neuropoly->-r requirements.txt (line 44))
+  Downloading einops-0.8.1-py3-none-any.whl.metadata (13 kB)
+Collecting timm (from dynamic-network-architectures<0.5,>=0.4.1->nnunetv2-neuropoly->-r requirements.txt (line 44))
+  Downloading timm-1.0.22-py3-none-any.whl.metadata (63 kB)
+Collecting PyQt5-sip<13,>=12.15 (from pyqt5>=5.15.0->-r requirements.txt (line 64))
+  Downloading pyqt5_sip-12.17.2-cp310-cp310-macosx_10_9_universal2.whl.metadata (495 bytes)
+Collecting six (from pystrum>=0.3->-r requirements.txt (line 72))
+  Downloading six-1.17.0-py2.py3-none-any.whl.metadata (1.7 kB)
+Collecting exceptiongroup>=1 (from pytest->-r requirements.txt (line 73))
+  Downloading exceptiongroup-1.3.1-py3-none-any.whl.metadata (6.7 kB)
+Collecting iniconfig>=1.0.1 (from pytest->-r requirements.txt (line 73))
+  Downloading iniconfig-2.3.0-py3-none-any.whl.metadata (2.5 kB)
+Collecting pluggy<2,>=1.5 (from pytest->-r requirements.txt (line 73))
+  Downloading pluggy-1.6.0-py3-none-any.whl.metadata (4.8 kB)
+Collecting pygments>=2.7.2 (from pytest->-r requirements.txt (line 73))
+  Downloading pygments-2.19.2-py3-none-any.whl.metadata (2.5 kB)
+Collecting tomli>=1 (from pytest->-r requirements.txt (line 73))
+  Downloading tomli-2.3.0-py3-none-any.whl.metadata (10 kB)
+Collecting coverage>=7.10.6 (from coverage[toml]>=7.10.6->pytest-cov->-r requirements.txt (line 74))
+  Downloading coverage-7.13.0-cp310-cp310-macosx_10_9_x86_64.whl.metadata (8.5 kB)
+Collecting charset_normalizer<4,>=2 (from requests->-r requirements.txt (line 75))
+  Downloading charset_normalizer-3.4.4-cp310-cp310-macosx_10_9_universal2.whl.metadata (37 kB)
+Collecting idna<4,>=2.5 (from requests->-r requirements.txt (line 75))
+  Downloading idna-3.11-py3-none-any.whl.metadata (8.4 kB)
+Collecting threadpoolctl>=3.1.0 (from scikit-learn->-r requirements.txt (line 79))
+  Downloading threadpoolctl-3.6.0-py3-none-any.whl.metadata (13 kB)
+Collecting gryds (from totalspineseg[neuropoly]->-r requirements.txt (line 80))
+  Downloading gryds-0.0.9-py3-none-any.whl.metadata (1.0 kB)
+Collecting auglab (from totalspineseg[neuropoly]->-r requirements.txt (line 80))
+  Downloading auglab-20251125-py3-none-any.whl.metadata (4.7 kB)
+Collecting neurite>=0.2 (from voxelmorph->-r requirements.txt (line 99))
+  Downloading neurite-0.2-py3-none-any.whl.metadata (653 bytes)
+Collecting future (from batchgenerators->acvl_utils!=0.2.1->-r requirements.txt (line 7))
+  Downloading future-1.0.0-py3-none-any.whl.metadata (4.0 kB)
+Collecting unittest2 (from batchgenerators->acvl_utils!=0.2.1->-r requirements.txt (line 7))
+  Downloading unittest2-1.1.0-py2.py3-none-any.whl.metadata (15 kB)
+Collecting fft-conv-pytorch (from batchgeneratorsv2>=0.3.0->nnunetv2-neuropoly->-r requirements.txt (line 44))
+  Downloading fft_conv_pytorch-1.2.0-py3-none-any.whl.metadata (2.8 kB)
+Collecting dictdiffer (from csv-diff>=1.0->ivadomed->-r requirements.txt (line 20))
+  Downloading dictdiffer-0.9.0-py2.py3-none-any.whl.metadata (4.8 kB)
+Collecting absl-py>=0.4 (from tensorboard>=1.15.0->ivadomed->-r requirements.txt (line 20))
+  Downloading absl_py-2.3.1-py3-none-any.whl.metadata (3.3 kB)
+Collecting grpcio>=1.48.2 (from tensorboard>=1.15.0->ivadomed->-r requirements.txt (line 20))
+  Downloading grpcio-1.76.0-cp310-cp310-macosx_11_0_universal2.whl.metadata (3.7 kB)
+Collecting markdown>=2.6.8 (from tensorboard>=1.15.0->ivadomed->-r requirements.txt (line 20))
+  Downloading markdown-3.10-py3-none-any.whl.metadata (5.1 kB)
+Collecting setuptools>=41.0.0 (from tensorboard>=1.15.0->ivadomed->-r requirements.txt (line 20))
+  Using cached setuptools-80.9.0-py3-none-any.whl.metadata (6.6 kB)
+Collecting tensorboard-data-server<0.8.0,>=0.7.0 (from tensorboard>=1.15.0->ivadomed->-r requirements.txt (line 20))
+  Downloading tensorboard_data_server-0.7.2-py3-none-macosx_10_9_x86_64.whl.metadata (1.1 kB)
+Collecting werkzeug>=1.0.1 (from tensorboard>=1.15.0->ivadomed->-r requirements.txt (line 20))
+  Downloading werkzeug-3.1.4-py3-none-any.whl.metadata (4.0 kB)
+Collecting deprecated>=1.2 (from torchio>=0.18.68->ivadomed->-r requirements.txt (line 20))
+  Downloading deprecated-1.3.1-py2.py3-none-any.whl.metadata (5.9 kB)
+Collecting humanize>=0.1 (from torchio>=0.18.68->ivadomed->-r requirements.txt (line 20))
+  Downloading humanize-4.14.0-py3-none-any.whl.metadata (7.8 kB)
+Collecting rich>=10 (from torchio>=0.18.68->ivadomed->-r requirements.txt (line 20))
+  Downloading rich-14.2.0-py3-none-any.whl.metadata (18 kB)
+Collecting typer>=0.1 (from torchio>=0.18.68->ivadomed->-r requirements.txt (line 20))
+  Downloading typer-0.20.0-py3-none-any.whl.metadata (16 kB)
+Collecting markdown-it-py>=2.2.0 (from rich>=10->torchio>=0.18.68->ivadomed->-r requirements.txt (line 20))
+  Downloading markdown_it_py-4.0.0-py3-none-any.whl.metadata (7.3 kB)
+Collecting mdurl~=0.1 (from markdown-it-py>=2.2.0->rich>=10->torchio>=0.18.68->ivadomed->-r requirements.txt (line 20))
+  Downloading mdurl-0.1.2-py3-none-any.whl.metadata (1.6 kB)
+Collecting setuptools-scm (from trx-python>=0.2.9->dipy==1.8.0->-r requirements.txt (line 14))
+  Downloading setuptools_scm-9.2.2-py3-none-any.whl.metadata (7.7 kB)
+Collecting deepdiff (from trx-python>=0.2.9->dipy==1.8.0->-r requirements.txt (line 14))
+  Downloading deepdiff-8.6.1-py3-none-any.whl.metadata (8.6 kB)
+Collecting shellingham>=1.3.0 (from typer>=0.1->torchio>=0.18.68->ivadomed->-r requirements.txt (line 20))
+  Downloading shellingham-1.5.4-py2.py3-none-any.whl.metadata (3.5 kB)
+Collecting gitpython!=3.1.29,>=1.0.0 (from wandb>=0.12.11->ivadomed->-r requirements.txt (line 20))
+  Downloading gitpython-3.1.45-py3-none-any.whl.metadata (13 kB)
+Collecting pydantic<3 (from wandb>=0.12.11->ivadomed->-r requirements.txt (line 20))
+  Downloading pydantic-2.12.5-py3-none-any.whl.metadata (90 kB)
+Collecting sentry-sdk>=2.0.0 (from wandb>=0.12.11->ivadomed->-r requirements.txt (line 20))
+  Downloading sentry_sdk-2.47.0-py2.py3-none-any.whl.metadata (10 kB)
+Collecting annotated-types>=0.6.0 (from pydantic<3->wandb>=0.12.11->ivadomed->-r requirements.txt (line 20))
+  Downloading annotated_types-0.7.0-py3-none-any.whl.metadata (15 kB)
+Collecting pydantic-core==2.41.5 (from pydantic<3->wandb>=0.12.11->ivadomed->-r requirements.txt (line 20))
+  Downloading pydantic_core-2.41.5-cp310-cp310-macosx_10_12_x86_64.whl.metadata (7.3 kB)
+Collecting typing-inspection>=0.4.2 (from pydantic<3->wandb>=0.12.11->ivadomed->-r requirements.txt (line 20))
+  Downloading typing_inspection-0.4.2-py3-none-any.whl.metadata (2.6 kB)
+Collecting gitdb<5,>=4.0.1 (from gitpython!=3.1.29,>=1.0.0->wandb>=0.12.11->ivadomed->-r requirements.txt (line 20))
+  Downloading gitdb-4.0.12-py3-none-any.whl.metadata (1.2 kB)
+Collecting smmap<6,>=3.0.1 (from gitdb<5,>=4.0.1->gitpython!=3.1.29,>=1.0.0->wandb>=0.12.11->ivadomed->-r requirements.txt (line 20))
+  Downloading smmap-5.0.2-py3-none-any.whl.metadata (4.3 kB)
+Collecting markupsafe>=2.1.1 (from werkzeug>=1.0.1->tensorboard>=1.15.0->ivadomed->-r requirements.txt (line 20))
+  Downloading markupsafe-3.0.3-cp310-cp310-macosx_10_9_x86_64.whl.metadata (2.7 kB)
+Collecting kornia (from auglab->totalspineseg[neuropoly]->-r requirements.txt (line 80))
+  Downloading kornia-0.8.2-py2.py3-none-any.whl.metadata (18 kB)
+Collecting bidsschematools>=0.10 (from bids-validator->pybids<0.15.6,>=0.14.0->ivadomed->-r requirements.txt (line 20))
+  Downloading bidsschematools-1.1.3-py3-none-any.whl.metadata (3.2 kB)
+Collecting acres (from bidsschematools>=0.10->bids-validator->pybids<0.15.6,>=0.14.0->ivadomed->-r requirements.txt (line 20))
+  Downloading acres-0.5.0-py3-none-any.whl.metadata (6.2 kB)
+Collecting humanfriendly>=9.1 (from coloredlogs->onnxruntime!=1.16.0,<1.22.0,>=1.7.0->-r requirements.txt (line 55))
+  Downloading humanfriendly-10.0-py2.py3-none-any.whl.metadata (9.2 kB)
+Collecting orderly-set<6,>=5.4.1 (from deepdiff->trx-python>=0.2.9->dipy==1.8.0->-r requirements.txt (line 14))
+  Downloading orderly_set-5.5.0-py3-none-any.whl.metadata (6.6 kB)
+Collecting kornia_rs>=0.1.9 (from kornia->auglab->totalspineseg[neuropoly]->-r requirements.txt (line 80))
+  Downloading kornia_rs-0.1.10-cp310-cp310-macosx_10_12_x86_64.whl.metadata (12 kB)
+Collecting docopt>=0.6.2 (from num2words->pybids<0.15.6,>=0.14.0->ivadomed->-r requirements.txt (line 20))
+  Downloading docopt-0.6.2.tar.gz (25 kB)
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Getting requirements to build wheel: started
+  Getting requirements to build wheel: finished with status 'done'
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+Collecting mpmath<1.4,>=1.1.0 (from sympy->onnxruntime!=1.16.0,<1.22.0,>=1.7.0->-r requirements.txt (line 55))
+  Downloading mpmath-1.3.0-py3-none-any.whl.metadata (8.6 kB)
+Collecting huggingface_hub (from timm->dynamic-network-architectures<0.5,>=0.4.1->nnunetv2-neuropoly->-r requirements.txt (line 44))
+  Downloading huggingface_hub-1.2.3-py3-none-any.whl.metadata (13 kB)
+Collecting safetensors (from timm->dynamic-network-architectures<0.5,>=0.4.1->nnunetv2-neuropoly->-r requirements.txt (line 44))
+  Downloading safetensors-0.7.0-cp38-abi3-macosx_10_12_x86_64.whl.metadata (4.1 kB)
+Collecting hf-xet<2.0.0,>=1.2.0 (from huggingface_hub->timm->dynamic-network-architectures<0.5,>=0.4.1->nnunetv2-neuropoly->-r requirements.txt (line 44))
+  Downloading hf_xet-1.2.0-cp37-abi3-macosx_10_12_x86_64.whl.metadata (4.9 kB)
+Collecting httpx<1,>=0.23.0 (from huggingface_hub->timm->dynamic-network-architectures<0.5,>=0.4.1->nnunetv2-neuropoly->-r requirements.txt (line 44))
+  Downloading httpx-0.28.1-py3-none-any.whl.metadata (7.1 kB)
+Collecting typer-slim (from huggingface_hub->timm->dynamic-network-architectures<0.5,>=0.4.1->nnunetv2-neuropoly->-r requirements.txt (line 44))
+  Downloading typer_slim-0.20.0-py3-none-any.whl.metadata (16 kB)
+Collecting anyio (from httpx<1,>=0.23.0->huggingface_hub->timm->dynamic-network-architectures<0.5,>=0.4.1->nnunetv2-neuropoly->-r requirements.txt (line 44))
+  Downloading anyio-4.12.0-py3-none-any.whl.metadata (4.3 kB)
+Collecting httpcore==1.* (from httpx<1,>=0.23.0->huggingface_hub->timm->dynamic-network-architectures<0.5,>=0.4.1->nnunetv2-neuropoly->-r requirements.txt (line 44))
+  Downloading httpcore-1.0.9-py3-none-any.whl.metadata (21 kB)
+Collecting h11>=0.16 (from httpcore==1.*->httpx<1,>=0.23.0->huggingface_hub->timm->dynamic-network-architectures<0.5,>=0.4.1->nnunetv2-neuropoly->-r requirements.txt (line 44))
+  Downloading h11-0.16.0-py3-none-any.whl.metadata (8.3 kB)
+Collecting argparse (from unittest2->batchgenerators->acvl_utils!=0.2.1->-r requirements.txt (line 7))
+  Downloading argparse-1.4.0-py2.py3-none-any.whl.metadata (2.8 kB)
+Collecting traceback2 (from unittest2->batchgenerators->acvl_utils!=0.2.1->-r requirements.txt (line 7))
+  Downloading traceback2-1.4.0-py2.py3-none-any.whl.metadata (1.5 kB)
+Collecting linecache2 (from traceback2->unittest2->batchgenerators->acvl_utils!=0.2.1->-r requirements.txt (line 7))
+  Downloading linecache2-1.0.0-py2.py3-none-any.whl.metadata (1000 bytes)
+Downloading dipy-1.8.0-cp310-cp310-macosx_10_9_x86_64.whl (8.4 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 8.4/8.4 MB 33.2 MB/s  0:00:00
+Downloading PyQt5_Qt5-5.15.2-py3-none-macosx_10_13_intel.whl (40.5 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 40.5/40.5 MB 33.0 MB/s  0:00:01
+Downloading numpy-1.26.4-cp310-cp310-macosx_10_9_x86_64.whl (20.6 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 20.6/20.6 MB 53.5 MB/s  0:00:00
+Downloading onnxruntime-1.21.1-cp310-cp310-macosx_13_0_universal2.whl (33.6 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 33.6/33.6 MB 23.2 MB/s  0:00:01
+Downloading onnx-1.16.1-cp310-cp310-macosx_11_0_universal2.whl (16.5 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 16.5/16.5 MB 34.7 MB/s  0:00:00
+Downloading certifi-2025.11.12-py3-none-any.whl (159 kB)
+Downloading blosc2-3.12.2-cp310-cp310-macosx_10_9_x86_64.whl (4.0 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.0/4.0 MB 37.3 MB/s  0:00:00
+Downloading h5py-3.15.1-cp310-cp310-macosx_10_9_x86_64.whl (3.4 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.4/3.4 MB 51.6 MB/s  0:00:00
+Downloading ivadomed-2.9.10-py3-none-any.whl (240 kB)
+Downloading nibabel-5.3.3-py3-none-any.whl (3.3 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.3/3.3 MB 51.0 MB/s  0:00:00
+Downloading pandas-1.5.3-cp310-cp310-macosx_10_9_x86_64.whl (12.0 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 12.0/12.0 MB 30.6 MB/s  0:00:00
+Downloading scikit_image-0.25.2-cp310-cp310-macosx_10_9_x86_64.whl (14.0 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 14.0/14.0 MB 51.2 MB/s  0:00:00
+Downloading joblib-1.5.3-py3-none-any.whl (309 kB)
+Downloading loguru-0.7.3-py3-none-any.whl (61 kB)
+Downloading pybids-0.15.5-py3-none-any.whl (14.9 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 14.9/14.9 MB 36.4 MB/s  0:00:00
+Downloading formulaic-0.3.4-py3-none-any.whl (68 kB)
+Downloading interface_meta-1.3.0-py3-none-any.whl (14 kB)
+Downloading seaborn-0.13.2-py3-none-any.whl (294 kB)
+Downloading matplotlib-3.10.8-cp310-cp310-macosx_10_12_x86_64.whl (8.2 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 8.2/8.2 MB 55.4 MB/s  0:00:00
+Downloading matplotlib_inline-0.2.1-py3-none-any.whl (9.5 kB)
+Downloading monai-1.4.0-py3-none-any.whl (1.5 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.5/1.5 MB 45.4 MB/s  0:00:00
+Downloading nilearn-0.10.4-py3-none-any.whl (10.4 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 10.4/10.4 MB 39.9 MB/s  0:00:00
+Downloading nnunetv2_neuropoly-2.6.2-py3-none-any.whl (286 kB)
+Downloading numexpr-2.14.1-cp310-cp310-macosx_10_9_x86_64.whl (163 kB)
+Downloading portalocker-3.2.0-py3-none-any.whl (22 kB)
+Downloading psutil-7.1.3-cp36-abi3-macosx_10_9_x86_64.whl (238 kB)
+Downloading PyQt5-5.15.11-cp38-abi3-macosx_11_0_x86_64.whl (7.0 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 7.0/7.0 MB 40.1 MB/s  0:00:00
+Downloading pyqt5_sip-12.17.2-cp310-cp310-macosx_10_9_universal2.whl (122 kB)
+Downloading pytest-9.0.2-py3-none-any.whl (374 kB)
+Downloading pluggy-1.6.0-py3-none-any.whl (20 kB)
+Downloading pytest_cov-7.0.0-py3-none-any.whl (22 kB)
+Downloading requests-2.32.5-py3-none-any.whl (64 kB)
+Downloading urllib3-2.6.2-py3-none-any.whl (131 kB)
+Downloading charset_normalizer-3.4.4-cp310-cp310-macosx_10_9_universal2.whl (209 kB)
+Downloading idna-3.11-py3-none-any.whl (71 kB)
+Downloading requirements_parser-0.13.0-py3-none-any.whl (14 kB)
+Downloading scipy-1.15.3-cp310-cp310-macosx_14_0_x86_64.whl (25.1 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 25.1/25.1 MB 40.3 MB/s  0:00:00
+Downloading scikit_learn-1.7.2-cp310-cp310-macosx_10_9_x86_64.whl (9.3 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 9.3/9.3 MB 42.7 MB/s  0:00:00
+Downloading totalspineseg-20251124-py3-none-any.whl (87 kB)
+Downloading xlwt-1.3.0-py2.py3-none-any.whl (99 kB)
+Downloading tqdm-4.67.1-py3-none-any.whl (78 kB)
+Downloading transforms3d-0.4.2-py3-none-any.whl (1.4 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.4/1.4 MB 55.7 MB/s  0:00:00
+Downloading pytest_console_scripts-1.4.1-py3-none-any.whl (10 kB)
+Downloading pyyaml-6.0.3-cp310-cp310-macosx_10_13_x86_64.whl (184 kB)
+Downloading voxelmorph-0.2-py3-none-any.whl (54 kB)
+Downloading wquantiles-0.6-py3-none-any.whl (3.3 kB)
+Downloading xlsxwriter-3.2.9-py3-none-any.whl (175 kB)
+Downloading astor-0.8.1-py2.py3-none-any.whl (27 kB)
+Downloading click-8.3.1-py3-none-any.whl (108 kB)
+Downloading contourpy-1.3.2-cp310-cp310-macosx_10_9_x86_64.whl (268 kB)
+Downloading coverage-7.13.0-cp310-cp310-macosx_10_9_x86_64.whl (217 kB)
+Downloading csv_diff-1.2-py3-none-any.whl (13 kB)
+Downloading cycler-0.12.1-py3-none-any.whl (8.3 kB)
+Downloading cython-3.2.3-cp39-abi3-macosx_10_9_x86_64.whl (2.9 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.9/2.9 MB 49.0 MB/s  0:00:00
+Downloading exceptiongroup-1.3.1-py3-none-any.whl (16 kB)
+Downloading fonttools-4.61.1-cp310-cp310-macosx_10_9_x86_64.whl (2.4 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.4/2.4 MB 47.0 MB/s  0:00:00
+Downloading imageio-2.37.2-py3-none-any.whl (317 kB)
+Downloading importlib_resources-6.5.2-py3-none-any.whl (37 kB)
+Downloading iniconfig-2.3.0-py3-none-any.whl (7.5 kB)
+Downloading kiwisolver-1.4.9-cp310-cp310-macosx_10_9_x86_64.whl (66 kB)
+Downloading lazy_loader-0.4-py3-none-any.whl (12 kB)
+Downloading networkx-3.4.2-py3-none-any.whl (1.7 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.7/1.7 MB 35.4 MB/s  0:00:00
+Downloading neurite-0.2-py3-none-any.whl (108 kB)
+Downloading packaging-25.0-py3-none-any.whl (66 kB)
+Downloading pillow-12.0.0-cp310-cp310-macosx_10_10_x86_64.whl (5.3 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 5.3/5.3 MB 42.4 MB/s  0:00:00
+Downloading protobuf-6.33.2-cp39-abi3-macosx_10_9_universal2.whl (427 kB)
+Downloading pygments-2.19.2-py3-none-any.whl (1.2 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.2/1.2 MB 49.9 MB/s  0:00:00
+Downloading pyparsing-3.2.5-py3-none-any.whl (113 kB)
+Downloading python_dateutil-2.9.0.post0-py2.py3-none-any.whl (229 kB)
+Downloading pytz-2025.2-py2.py3-none-any.whl (509 kB)
+Downloading simpleitk-2.5.3-cp310-cp310-macosx_10_9_x86_64.whl (44.6 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 44.6/44.6 MB 33.1 MB/s  0:00:01
+Downloading six-1.17.0-py2.py3-none-any.whl (11 kB)
+Downloading tensorboard-2.20.0-py3-none-any.whl (5.5 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 5.5/5.5 MB 53.6 MB/s  0:00:00
+Downloading tensorboard_data_server-0.7.2-py3-none-macosx_10_9_x86_64.whl (4.8 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.8/4.8 MB 57.2 MB/s  0:00:00
+Downloading absl_py-2.3.1-py3-none-any.whl (135 kB)
+Downloading grpcio-1.76.0-cp310-cp310-macosx_11_0_universal2.whl (11.8 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 11.8/11.8 MB 60.8 MB/s  0:00:00
+Downloading https://download.pytorch.org/whl/typing_extensions-4.15.0-py3-none-any.whl (44 kB)
+Downloading markdown-3.10-py3-none-any.whl (107 kB)
+Using cached setuptools-80.9.0-py3-none-any.whl (1.2 MB)
+Downloading threadpoolctl-3.6.0-py3-none-any.whl (18 kB)
+Downloading tifffile-2025.5.10-py3-none-any.whl (226 kB)
+Downloading tomli-2.3.0-py3-none-any.whl (14 kB)
+Downloading torchio-0.21.0-py3-none-any.whl (193 kB)
+Downloading deprecated-1.3.1-py2.py3-none-any.whl (11 kB)
+Downloading wrapt-2.0.1-cp310-cp310-macosx_10_9_x86_64.whl (60 kB)
+Downloading einops-0.8.1-py3-none-any.whl (64 kB)
+Downloading humanize-4.14.0-py3-none-any.whl (132 kB)
+Downloading rich-14.2.0-py3-none-any.whl (243 kB)
+Downloading markdown_it_py-4.0.0-py3-none-any.whl (87 kB)
+Downloading mdurl-0.1.2-py3-none-any.whl (10.0 kB)
+Downloading trx_python-0.3-py3-none-any.whl (45 kB)
+Downloading typer-0.20.0-py3-none-any.whl (47 kB)
+Downloading shellingham-1.5.4-py2.py3-none-any.whl (9.8 kB)
+Downloading wandb-0.23.1-py3-none-macosx_12_0_x86_64.whl (22.7 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 22.7/22.7 MB 36.9 MB/s  0:00:00
+Downloading pydantic-2.12.5-py3-none-any.whl (463 kB)
+Downloading pydantic_core-2.41.5-cp310-cp310-macosx_10_12_x86_64.whl (2.1 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.1/2.1 MB 48.0 MB/s  0:00:00
+Downloading annotated_types-0.7.0-py3-none-any.whl (13 kB)
+Downloading gitpython-3.1.45-py3-none-any.whl (208 kB)
+Downloading gitdb-4.0.12-py3-none-any.whl (62 kB)
+Downloading smmap-5.0.2-py3-none-any.whl (24 kB)
+Downloading sentry_sdk-2.47.0-py2.py3-none-any.whl (411 kB)
+Downloading typing_inspection-0.4.2-py3-none-any.whl (14 kB)
+Downloading werkzeug-3.1.4-py3-none-any.whl (224 kB)
+Downloading markupsafe-3.0.3-cp310-cp310-macosx_10_9_x86_64.whl (11 kB)
+Downloading auglab-20251125-py3-none-any.whl (62 kB)
+Downloading bids_validator-1.14.7.post0-py3-none-any.whl (23 kB)
+Downloading bidsschematools-1.1.3-py3-none-any.whl (180 kB)
+Downloading acres-0.5.0-py3-none-any.whl (12 kB)
+Downloading coloredlogs-15.0.1-py2.py3-none-any.whl (46 kB)
+Downloading humanfriendly-10.0-py2.py3-none-any.whl (86 kB)
+Downloading connected_components_3d-3.26.1-cp310-cp310-macosx_10_9_x86_64.whl (791 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 791.8/791.8 kB 35.9 MB/s  0:00:00
+Downloading deepdiff-8.6.1-py3-none-any.whl (91 kB)
+Downloading orderly_set-5.5.0-py3-none-any.whl (13 kB)
+Downloading dictdiffer-0.9.0-py2.py3-none-any.whl (16 kB)
+Downloading fft_conv_pytorch-1.2.0-py3-none-any.whl (6.8 kB)
+Downloading filelock-3.20.1-py3-none-any.whl (16 kB)
+Downloading flatbuffers-25.9.23-py2.py3-none-any.whl (30 kB)
+Downloading fsspec-2025.12.0-py3-none-any.whl (201 kB)
+Downloading future-1.0.0-py3-none-any.whl (491 kB)
+Downloading graphviz-0.21-py3-none-any.whl (47 kB)
+Downloading gryds-0.0.9-py3-none-any.whl (31 kB)
+Downloading imagecodecs-2025.3.30-cp310-cp310-macosx_10_14_x86_64.whl (17.9 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 17.9/17.9 MB 28.3 MB/s  0:00:00
+Downloading https://download.pytorch.org/whl/jinja2-3.1.6-py3-none-any.whl (134 kB)
+Downloading kornia-0.8.2-py2.py3-none-any.whl (1.1 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.1/1.1 MB 44.7 MB/s  0:00:00
+Downloading kornia_rs-0.1.10-cp310-cp310-macosx_10_12_x86_64.whl (2.8 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.8/2.8 MB 31.1 MB/s  0:00:00
+Downloading lxml-6.0.2-cp310-cp310-macosx_10_9_x86_64.whl (4.6 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.6/4.6 MB 38.4 MB/s  0:00:00
+Downloading msgpack-1.1.2-cp310-cp310-macosx_10_9_x86_64.whl (81 kB)
+Downloading ndindex-1.10.1-cp310-cp310-macosx_10_9_x86_64.whl (172 kB)
+Downloading num2words-0.5.14-py3-none-any.whl (163 kB)
+Downloading platformdirs-4.5.1-py3-none-any.whl (18 kB)
+Downloading py_cpuinfo-9.0.0-py3-none-any.whl (22 kB)
+Downloading setuptools_scm-9.2.2-py3-none-any.whl (62 kB)
+Downloading sympy-1.14.0-py3-none-any.whl (6.3 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 6.3/6.3 MB 47.3 MB/s  0:00:00
+Downloading mpmath-1.3.0-py3-none-any.whl (536 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 536.2/536.2 kB 21.5 MB/s  0:00:00
+Downloading timm-1.0.22-py3-none-any.whl (2.5 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.5/2.5 MB 45.9 MB/s  0:00:00
+Downloading huggingface_hub-1.2.3-py3-none-any.whl (520 kB)
+Downloading hf_xet-1.2.0-cp37-abi3-macosx_10_12_x86_64.whl (2.9 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.9/2.9 MB 35.8 MB/s  0:00:00
+Downloading httpx-0.28.1-py3-none-any.whl (73 kB)
+Downloading httpcore-1.0.9-py3-none-any.whl (78 kB)
+Downloading h11-0.16.0-py3-none-any.whl (37 kB)
+Downloading anyio-4.12.0-py3-none-any.whl (113 kB)
+Downloading safetensors-0.7.0-cp38-abi3-macosx_10_12_x86_64.whl (467 kB)
+Downloading traitlets-5.14.3-py3-none-any.whl (85 kB)
+Downloading typer_slim-0.20.0-py3-none-any.whl (47 kB)
+Downloading unittest2-1.1.0-py2.py3-none-any.whl (96 kB)
+Downloading argparse-1.4.0-py2.py3-none-any.whl (23 kB)
+Downloading traceback2-1.4.0-py2.py3-none-any.whl (16 kB)
+Downloading linecache2-1.0.0-py2.py3-none-any.whl (12 kB)
+Downloading yacs-0.1.8-py3-none-any.whl (14 kB)
+Building wheels for collected packages: acvl_utils, sqlalchemy, dynamic-network-architectures, pystrum, batchgenerators, batchgeneratorsv2, docopt
+  Building wheel for acvl_utils (pyproject.toml): started
+  Building wheel for acvl_utils (pyproject.toml): finished with status 'done'
+  Created wheel for acvl_utils: filename=acvl_utils-0.2.5-py3-none-any.whl size=27243 sha256=461c6258dc308afe0d36b0d6eeaddbab36c11bd04ae747b7a21afed7bd293c00
+  Stored in directory: /Users/mclogar/Library/Caches/pip/wheels/11/68/32/42aed9ef6a7c3ff868f84b243120481ef8a19d0ddbc2551133
+  Building wheel for sqlalchemy (pyproject.toml): started
+  Building wheel for sqlalchemy (pyproject.toml): finished with status 'done'
+  Created wheel for sqlalchemy: filename=sqlalchemy-1.3.24-cp310-cp310-macosx_10_13_x86_64.whl size=1213984 sha256=ad130fdf292bfa05047fb8dee16375cf9e8b24b48580c4498c3caa9b2b33dd0c
+  Stored in directory: /Users/mclogar/Library/Caches/pip/wheels/27/51/b3/3481e88d5a5ba95dd4aafedc9316774d941c4ba61cfb93add8
+  Building wheel for dynamic-network-architectures (pyproject.toml): started
+  Building wheel for dynamic-network-architectures (pyproject.toml): finished with status 'done'
+  Created wheel for dynamic-network-architectures: filename=dynamic_network_architectures-0.4.2-py3-none-any.whl size=39081 sha256=6d4b0f2032d7af57e02d8bc6fe2847a76bf3c5fa675734652a2fb7f8771e4602
+  Stored in directory: /Users/mclogar/Library/Caches/pip/wheels/08/23/62/cbf95e3b955e69700d71fd056ba2ed436cfff0ba3f9ae2ebb9
+  Building wheel for pystrum (pyproject.toml): started
+  Building wheel for pystrum (pyproject.toml): finished with status 'done'
+  Created wheel for pystrum: filename=pystrum-0.4-py3-none-any.whl size=19569 sha256=f7448b43e73dcf9b008c668163bac8ede7a5728999847dd8e9b4c3e0d6a9ae7f
+  Stored in directory: /Users/mclogar/Library/Caches/pip/wheels/aa/08/d0/914025beb5a12a855b8aafd22eeedc547198684a3f4409f66c
+  Building wheel for batchgenerators (pyproject.toml): started
+  Building wheel for batchgenerators (pyproject.toml): finished with status 'done'
+  Created wheel for batchgenerators: filename=batchgenerators-0.25.1-py3-none-any.whl size=93163 sha256=190147cba499c65623c304125696afa8be809ad7791588548a59bbbac1cef0aa
+  Stored in directory: /Users/mclogar/Library/Caches/pip/wheels/be/1b/30/b3f066999ad01855fc903fe7c93c25682333dd5645d5c75434
+  Building wheel for batchgeneratorsv2 (pyproject.toml): started
+  Building wheel for batchgeneratorsv2 (pyproject.toml): finished with status 'done'
+  Created wheel for batchgeneratorsv2: filename=batchgeneratorsv2-0.3.0-py3-none-any.whl size=65215 sha256=72921349ba8131bfd9c189758aa988d7976e3538bef77570f016510ce35a3175
+  Stored in directory: /Users/mclogar/Library/Caches/pip/wheels/85/91/18/f246cf6cecb275d0e293271390794a0c090621cfc1ab1501c7
+  Building wheel for docopt (pyproject.toml): started
+  Building wheel for docopt (pyproject.toml): finished with status 'done'
+  Created wheel for docopt: filename=docopt-0.6.2-py2.py3-none-any.whl size=13783 sha256=d8555acd2612339a8ce1d8457a5fba43c73cbdfa3cccfee9663addf3e6e67201
+  Stored in directory: /Users/mclogar/Library/Caches/pip/wheels/fc/ab/d4/5da2067ac95b36618c629a5f93f809425700506f72c9732fac
+Successfully built acvl_utils sqlalchemy dynamic-network-architectures pystrum batchgenerators batchgeneratorsv2 docopt
+Installing collected packages: xlwt, SimpleITK, pytz, PyQt5-Qt5, py-cpuinfo, mpmath, linecache2, flatbuffers, docopt, dictdiffer, argparse, xlsxwriter, wrapt, urllib3, typing-extensions, traitlets, traceback2, tqdm, tomli, threadpoolctl, tensorboard-data-server, sympy, sqlalchemy, smmap, six, shellingham, setuptools, safetensors, pyyaml, PyQt5-sip, pyparsing, pygments, psutil, protobuf, portalocker, pluggy, platformdirs, pillow, packaging, orderly-set, numpy, num2words, networkx, ndindex, msgpack, mdurl, markupsafe, markdown, lxml, loguru, kornia_rs, kiwisolver, joblib, interface-meta, iniconfig, importlib-resources, idna, humanize, humanfriendly, hf-xet, h11, graphviz, future, fsspec, fonttools, filelock, einops, cython, cycler, coverage, click, charset_normalizer, certifi, astor, annotated-types, acres, absl-py, yacs, wquantiles, werkzeug, unittest2, typing-inspection, typer-slim, transforms3d, tifffile, setuptools-scm, sentry-sdk, scipy, requirements-parser, requests, python-dateutil, pyqt5, pydantic-core, onnx, numexpr, nibabel, matplotlib-inline, markdown-it-py, lazy-loader, jinja2, imageio, imagecodecs, httpcore, h5py, grpcio, gitdb, exceptiongroup, deprecated, deepdiff, csv-diff, contourpy, connected-components-3d, coloredlogs, bidsschematools, trx-python, torch, tensorboard, scikit-learn, scikit-image, rich, pytest, pydantic, pandas, onnxruntime, matplotlib, gryds, gitpython, blosc2, bids-validator, anyio, wandb, typer, torchvision, seaborn, pytest-cov, pytest_console_scripts, pystrum, nilearn, monai, kornia, httpx, formulaic, fft-conv-pytorch, dipy, batchgenerators, torchio, pybids, neurite, huggingface_hub, batchgeneratorsv2, acvl_utils, voxelmorph, timm, ivadomed, auglab, totalspineseg, dynamic-network-architectures, nnunetv2-neuropoly
+
+Successfully installed PyQt5-Qt5-5.15.2 PyQt5-sip-12.17.2 SimpleITK-2.5.3 absl-py-2.3.1 acres-0.5.0 acvl_utils-0.2.5 annotated-types-0.7.0 anyio-4.12.0 argparse-1.4.0 astor-0.8.1 auglab-20251125 batchgenerators-0.25.1 batchgeneratorsv2-0.3.0 bids-validator-1.14.7.post0 bidsschematools-1.1.3 blosc2-3.12.2 certifi-2025.11.12 charset_normalizer-3.4.4 click-8.3.1 coloredlogs-15.0.1 connected-components-3d-3.26.1 contourpy-1.3.2 coverage-7.13.0 csv-diff-1.2 cycler-0.12.1 cython-3.2.3 deepdiff-8.6.1 deprecated-1.3.1 dictdiffer-0.9.0 dipy-1.8.0 docopt-0.6.2 dynamic-network-architectures-0.4.2 einops-0.8.1 exceptiongroup-1.3.1 fft-conv-pytorch-1.2.0 filelock-3.20.1 flatbuffers-25.9.23 fonttools-4.61.1 formulaic-0.3.4 fsspec-2025.12.0 future-1.0.0 gitdb-4.0.12 gitpython-3.1.45 graphviz-0.21 grpcio-1.76.0 gryds-0.0.9 h11-0.16.0 h5py-3.15.1 hf-xet-1.2.0 httpcore-1.0.9 httpx-0.28.1 huggingface_hub-1.2.3 humanfriendly-10.0 humanize-4.14.0 idna-3.11 imagecodecs-2025.3.30 imageio-2.37.2 importlib-resources-6.5.2 iniconfig-2.3.0 interface-meta-1.3.0 ivadomed-2.9.10 jinja2-3.1.6 joblib-1.5.3 kiwisolver-1.4.9 kornia-0.8.2 kornia_rs-0.1.10 lazy-loader-0.4 linecache2-1.0.0 loguru-0.7.3 lxml-6.0.2 markdown-3.10 markdown-it-py-4.0.0 markupsafe-3.0.3 matplotlib-3.10.8 matplotlib-inline-0.2.1 mdurl-0.1.2 monai-1.4.0 mpmath-1.3.0 msgpack-1.1.2 ndindex-1.10.1 networkx-3.4.2 neurite-0.2 nibabel-5.3.3 nilearn-0.10.4 nnunetv2-neuropoly-2.6.2 num2words-0.5.14 numexpr-2.14.1 numpy-1.26.4 onnx-1.16.1 onnxruntime-1.21.1 orderly-set-5.5.0 packaging-25.0 pandas-1.5.3 pillow-12.0.0 platformdirs-4.5.1 pluggy-1.6.0 portalocker-3.2.0 protobuf-6.33.2 psutil-7.1.3 py-cpuinfo-9.0.0 pybids-0.15.5 pydantic-2.12.5 pydantic-core-2.41.5 pygments-2.19.2 pyparsing-3.2.5 pyqt5-5.15.11 pystrum-0.4 pytest-9.0.2 pytest-cov-7.0.0 pytest_console_scripts-1.4.1 python-dateutil-2.9.0.post0 pytz-2025.2 pyyaml-6.0.3 requests-2.32.5 requirements-parser-0.13.0 rich-14.2.0 safetensors-0.7.0 scikit-image-0.25.2 scikit-learn-1.7.2 scipy-1.15.3 seaborn-0.13.2 sentry-sdk-2.47.0 setuptools-80.9.0 setuptools-scm-9.2.2 shellingham-1.5.4 six-1.17.0 smmap-5.0.2 sqlalchemy-1.3.24 sympy-1.14.0 tensorboard-2.20.0 tensorboard-data-server-0.7.2 threadpoolctl-3.6.0 tifffile-2025.5.10 timm-1.0.22 tomli-2.3.0 torch-2.2.2 torchio-0.21.0 torchvision-0.17.2 totalspineseg-20251124 tqdm-4.67.1 traceback2-1.4.0 traitlets-5.14.3 transforms3d-0.4.2 trx-python-0.3 typer-0.20.0 typer-slim-0.20.0 typing-extensions-4.15.0 typing-inspection-0.4.2 unittest2-1.1.0 urllib3-2.6.2 voxelmorph-0.2 wandb-0.23.1 werkzeug-3.1.4 wquantiles-0.6 wrapt-2.0.1 xlsxwriter-3.2.9 xlwt-1.3.0 yacs-0.1.8
+
+[0;32mInstalling spinalcordtoolbox...[0m
+
+Obtaining file:///Users/mclogar/spinalcordtoolbox
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Checking if build backend supports build_editable: started
+  Checking if build backend supports build_editable: finished with status 'done'
+  Getting requirements to build editable: started
+  Getting requirements to build editable: finished with status 'done'
+  Preparing editable metadata (pyproject.toml): started
+  Preparing editable metadata (pyproject.toml): finished with status 'done'
+Building wheels for collected packages: spinalcordtoolbox
+  Building editable for spinalcordtoolbox (pyproject.toml): started
+  Building editable for spinalcordtoolbox (pyproject.toml): finished with status 'done'
+  Created wheel for spinalcordtoolbox: filename=spinalcordtoolbox-7.3.dev0-0.editable-py3-none-any.whl size=9857 sha256=0740b5c5c5313342103090a3666aa29b5d386d255c926ba9fd58577f1e2c18ff
+  Stored in directory: /private/var/folders/pc/cz8kpv9d4lzgtnz_gf6t7j1c0000gn/T/pip-ephem-wheel-cache-6bue8uc5/wheels/f1/8f/a4/c45a0759037a19533ef7d43c5229407f473bd2638360b5bdfd
+Successfully built spinalcordtoolbox
+Installing collected packages: spinalcordtoolbox
+Successfully installed spinalcordtoolbox-7.3.dev0
+
+[0;32mCreating launchers for Python scripts...[0m
+
+
+[0;32mInstalling binaries...[0m
+
+
+[0;34msct_download_data -d binaries_osx -k[0m
+
+
+--
+Spinal Cord Toolbox (git-master-3ce19094c99ea201fdc6757792e566ca3d7a9bb8)
+
+sct_download_data -d binaries_osx -k
+--
+
+Trying URL: https://github.com/spinalcordtoolbox/spinalcordtoolbox-binaries/releases/download/r20221018/spinalcordtoolbox-binaries_osx.tar.gz
+Downloading: spinalcordtoolbox-binaries_osx.tar.gz
+Status:   0%|          | 0.00/65.3M [00:00<?, ?B/s]Status:   3%|▎         | 1.69M/65.3M [00:00<00:03, 16.7MB/s]Status:   5%|▌         | 3.37M/65.3M [00:00<00:05, 11.2MB/s]Status:   7%|▋         | 4.60M/65.3M [00:00<00:05, 10.8MB/s]Status:   9%|▉         | 5.73M/65.3M [00:00<00:05, 10.7MB/s]Status:  10%|█         | 6.83M/65.3M [00:00<00:05, 10.8MB/s]Status:  12%|█▏        | 7.93M/65.3M [00:00<00:05, 10.5MB/s]Status:  14%|█▍        | 9.00M/65.3M [00:00<00:05, 10.4MB/s]Status:  15%|█▌        | 10.1M/65.3M [00:00<00:05, 9.88MB/s]Status:  17%|█▋        | 11.1M/65.3M [00:01<00:06, 8.79MB/s]Status:  18%|█▊        | 12.0M/65.3M [00:01<00:08, 6.63MB/s]Status:  19%|█▉        | 12.7M/65.3M [00:01<00:07, 6.60MB/s]Status:  21%|██        | 13.4M/65.3M [00:01<00:07, 6.73MB/s]Status:  22%|██▏       | 14.2M/65.3M [00:01<00:07, 6.78MB/s]Status:  23%|██▎       | 14.9M/65.3M [00:01<00:07, 6.97MB/s]Status:  24%|██▍       | 15.6M/65.3M [00:01<00:07, 6.70MB/s]Status:  25%|██▌       | 16.3M/65.3M [00:01<00:07, 6.32MB/s]Status:  26%|██▌       | 17.0M/65.3M [00:02<00:08, 5.99MB/s]Status:  27%|██▋       | 17.6M/65.3M [00:02<00:07, 5.99MB/s]Status:  28%|██▊       | 18.2M/65.3M [00:02<00:09, 5.09MB/s]Status:  29%|██▊       | 18.8M/65.3M [00:02<00:09, 5.04MB/s]Status:  30%|██▉       | 19.3M/65.3M [00:02<00:09, 5.02MB/s]Status:  30%|███       | 19.8M/65.3M [00:02<00:09, 4.93MB/s]Status:  31%|███       | 20.3M/65.3M [00:02<00:08, 5.08MB/s]Status:  32%|███▏      | 20.9M/65.3M [00:02<00:08, 5.27MB/s]Status:  33%|███▎      | 21.5M/65.3M [00:03<00:08, 5.42MB/s]Status:  34%|███▍      | 22.2M/65.3M [00:03<00:07, 5.66MB/s]Status:  35%|███▍      | 22.8M/65.3M [00:03<00:07, 5.82MB/s]Status:  36%|███▌      | 23.4M/65.3M [00:03<00:07, 5.53MB/s]Status:  37%|███▋      | 24.0M/65.3M [00:03<00:07, 5.30MB/s]Status:  38%|███▊      | 24.5M/65.3M [00:03<00:09, 4.37MB/s]Status:  38%|███▊      | 25.0M/65.3M [00:03<00:09, 4.08MB/s]Status:  39%|███▉      | 25.4M/65.3M [00:03<00:10, 3.90MB/s]Status:  40%|███▉      | 25.8M/65.3M [00:04<00:10, 3.66MB/s]Status:  40%|████      | 26.2M/65.3M [00:04<00:10, 3.62MB/s]Status:  41%|████      | 26.6M/65.3M [00:04<00:11, 3.46MB/s]Status:  41%|████      | 26.9M/65.3M [00:04<00:11, 3.39MB/s]Status:  42%|████▏     | 27.3M/65.3M [00:04<00:11, 3.17MB/s]Status:  42%|████▏     | 27.6M/65.3M [00:04<00:11, 3.16MB/s]Status:  43%|████▎     | 27.9M/65.3M [00:04<00:11, 3.20MB/s]Status:  43%|████▎     | 28.3M/65.3M [00:04<00:11, 3.32MB/s]Status:  44%|████▍     | 28.7M/65.3M [00:04<00:10, 3.37MB/s]Status:  45%|████▍     | 29.1M/65.3M [00:05<00:10, 3.55MB/s]Status:  45%|████▌     | 29.5M/65.3M [00:05<00:09, 3.78MB/s]Status:  46%|████▌     | 30.0M/65.3M [00:05<00:08, 4.03MB/s]Status:  47%|████▋     | 30.4M/65.3M [00:05<00:09, 3.80MB/s]Status:  47%|████▋     | 30.8M/65.3M [00:05<00:08, 3.94MB/s]Status:  48%|████▊     | 31.2M/65.3M [00:05<00:08, 3.91MB/s]Status:  48%|████▊     | 31.6M/65.3M [00:05<00:09, 3.71MB/s]Status:  49%|████▉     | 32.0M/65.3M [00:05<00:08, 3.79MB/s]Status:  50%|████▉     | 32.5M/65.3M [00:05<00:08, 3.96MB/s]Status:  50%|█████     | 33.0M/65.3M [00:05<00:07, 4.21MB/s]Status:  51%|█████     | 33.4M/65.3M [00:06<00:07, 4.35MB/s]Status:  52%|█████▏    | 34.0M/65.3M [00:06<00:06, 4.60MB/s]Status:  53%|█████▎    | 34.4M/65.3M [00:06<00:06, 4.51MB/s]Status:  53%|█████▎    | 34.9M/65.3M [00:06<00:06, 4.51MB/s]Status:  54%|█████▍    | 35.4M/65.3M [00:06<00:06, 4.57MB/s]Status:  55%|█████▍    | 35.8M/65.3M [00:06<00:06, 4.49MB/s]Status:  56%|█████▌    | 36.3M/65.3M [00:06<00:06, 4.48MB/s]Status:  56%|█████▋    | 36.8M/65.3M [00:06<00:06, 4.50MB/s]Status:  57%|█████▋    | 37.3M/65.3M [00:06<00:06, 4.62MB/s]Status:  58%|█████▊    | 37.7M/65.3M [00:07<00:06, 4.49MB/s]Status:  58%|█████▊    | 38.2M/65.3M [00:07<00:06, 4.26MB/s]Status:  59%|█████▉    | 38.6M/65.3M [00:07<00:06, 4.23MB/s]Status:  60%|█████▉    | 39.0M/65.3M [00:07<00:06, 4.02MB/s]Status:  60%|██████    | 39.5M/65.3M [00:07<00:06, 4.08MB/s]Status:  61%|██████    | 39.9M/65.3M [00:07<00:07, 3.55MB/s]Status:  62%|██████▏   | 40.4M/65.3M [00:07<00:06, 3.95MB/s]Status:  63%|██████▎   | 40.9M/65.3M [00:07<00:05, 4.21MB/s]Status:  63%|██████▎   | 41.5M/65.3M [00:07<00:05, 4.58MB/s]Status:  64%|██████▍   | 42.0M/65.3M [00:08<00:04, 4.83MB/s]Status:  65%|██████▌   | 42.6M/65.3M [00:08<00:04, 5.01MB/s]Status:  66%|██████▌   | 43.1M/65.3M [00:08<00:05, 4.26MB/s]Status:  67%|██████▋   | 43.5M/65.3M [00:08<00:05, 4.00MB/s]Status:  67%|██████▋   | 44.0M/65.3M [00:08<00:05, 3.86MB/s]Status:  68%|██████▊   | 44.4M/65.3M [00:08<00:05, 3.81MB/s]Status:  69%|██████▊   | 44.8M/65.3M [00:08<00:05, 3.85MB/s]Status:  69%|██████▉   | 45.2M/65.3M [00:08<00:05, 3.93MB/s]Status:  70%|██████▉   | 45.6M/65.3M [00:08<00:04, 4.10MB/s]Status:  71%|███████   | 46.1M/65.3M [00:09<00:04, 4.26MB/s]Status:  71%|███████▏  | 46.6M/65.3M [00:09<00:04, 4.53MB/s]Status:  72%|███████▏  | 47.1M/65.3M [00:09<00:03, 4.62MB/s]Status:  73%|███████▎  | 47.6M/65.3M [00:09<00:04, 4.31MB/s]Status:  74%|███████▎  | 48.0M/65.3M [00:09<00:04, 3.95MB/s]Status:  74%|███████▍  | 48.5M/65.3M [00:09<00:04, 3.61MB/s]Status:  75%|███████▍  | 48.8M/65.3M [00:09<00:05, 3.21MB/s]Status:  75%|███████▌  | 49.2M/65.3M [00:09<00:05, 3.11MB/s]Status:  76%|███████▌  | 49.5M/65.3M [00:10<00:05, 3.13MB/s]Status:  76%|███████▋  | 49.8M/65.3M [00:10<00:04, 3.21MB/s]Status:  77%|███████▋  | 50.2M/65.3M [00:10<00:04, 3.10MB/s]Status:  77%|███████▋  | 50.5M/65.3M [00:10<00:04, 2.97MB/s]Status:  78%|███████▊  | 50.9M/65.3M [00:10<00:04, 3.25MB/s]Status:  78%|███████▊  | 51.2M/65.3M [00:10<00:04, 3.28MB/s]Status:  79%|███████▉  | 51.6M/65.3M [00:10<00:04, 3.25MB/s]Status:  80%|███████▉  | 51.9M/65.3M [00:10<00:04, 3.31MB/s]Status:  80%|████████  | 52.3M/65.3M [00:10<00:03, 3.34MB/s]Status:  81%|████████  | 52.7M/65.3M [00:10<00:03, 3.47MB/s]Status:  81%|████████▏ | 53.1M/65.3M [00:11<00:03, 3.62MB/s]Status:  82%|████████▏ | 53.5M/65.3M [00:11<00:03, 3.73MB/s]Status:  83%|████████▎ | 53.9M/65.3M [00:11<00:03, 3.39MB/s]Status:  83%|████████▎ | 54.2M/65.3M [00:11<00:03, 3.27MB/s]Status:  84%|████████▎ | 54.6M/65.3M [00:11<00:03, 2.92MB/s]Status:  84%|████████▍ | 54.9M/65.3M [00:11<00:03, 2.94MB/s]Status:  85%|████████▍ | 55.2M/65.3M [00:11<00:03, 2.95MB/s]Status:  85%|████████▌ | 55.5M/65.3M [00:11<00:03, 3.07MB/s]Status:  86%|████████▌ | 55.9M/65.3M [00:11<00:02, 3.18MB/s]Status:  86%|████████▌ | 56.3M/65.3M [00:12<00:02, 3.32MB/s]Status:  87%|████████▋ | 56.6M/65.3M [00:12<00:02, 3.22MB/s]Status:  87%|████████▋ | 56.9M/65.3M [00:12<00:02, 3.08MB/s]Status:  88%|████████▊ | 57.2M/65.3M [00:12<00:02, 3.10MB/s]Status:  88%|████████▊ | 57.6M/65.3M [00:12<00:02, 2.93MB/s]Status:  89%|████████▊ | 57.9M/65.3M [00:12<00:02, 2.83MB/s]Status:  89%|████████▉ | 58.2M/65.3M [00:12<00:02, 2.86MB/s]Status:  90%|████████▉ | 58.5M/65.3M [00:12<00:02, 2.95MB/s]Status:  90%|█████████ | 58.8M/65.3M [00:12<00:02, 3.11MB/s]Status:  91%|█████████ | 59.2M/65.3M [00:13<00:01, 3.21MB/s]Status:  91%|█████████▏| 59.6M/65.3M [00:13<00:01, 3.46MB/s]Status:  92%|█████████▏| 60.0M/65.3M [00:13<00:01, 3.50MB/s]Status:  93%|█████████▎| 60.4M/65.3M [00:13<00:01, 3.81MB/s]Status:  93%|█████████▎| 60.9M/65.3M [00:13<00:01, 4.09MB/s]Status:  94%|█████████▍| 61.4M/65.3M [00:13<00:00, 4.33MB/s]Status:  95%|█████████▍| 61.9M/65.3M [00:13<00:00, 4.28MB/s]Status:  96%|█████████▌| 62.4M/65.3M [00:13<00:00, 4.58MB/s]Status:  96%|█████████▋| 63.0M/65.3M [00:13<00:00, 4.83MB/s]Status:  97%|█████████▋| 63.6M/65.3M [00:14<00:00, 5.16MB/s]Status:  98%|█████████▊| 64.1M/65.3M [00:14<00:00, 5.16MB/s]Status:  99%|█████████▉| 64.6M/65.3M [00:14<00:00, 4.87MB/s]Status: 100%|█████████▉| 65.1M/65.3M [00:14<00:00, 4.63MB/s]Status: 100%|██████████| 65.3M/65.3M [00:14<00:00, 4.54MB/s]
+Creating temporary folder (/var/folders/pc/cz8kpv9d4lzgtnz_gf6t7j1c0000gn/T/sct_2025-12-16_09-38-48_install-data_c3feo5_0)
+Unzip data to: /var/folders/pc/cz8kpv9d4lzgtnz_gf6t7j1c0000gn/T/sct_2025-12-16_09-38-48_install-data_c3feo5_0
+Copying data to: /Users/mclogar/spinalcordtoolbox/bin
+Removing temporary folders...
+Done!
+
+Total runtime; 16.286 seconds.
+
+[0;32mAll requirements installed![0m
+
+
+[0;32mInstalling data...[0m
+
+
+[0;34mmkdir -p /Users/mclogar/spinalcordtoolbox/data[0m
+
+
+[0;34msct_download_data -d default -k[0m
+
+
+--
+Spinal Cord Toolbox (git-master-3ce19094c99ea201fdc6757792e566ca3d7a9bb8)
+
+sct_download_data -d default -k
+--
+
+Trying URL: https://github.com/spinalcordtoolbox/PAM50/releases/download/r20250730/PAM50-r20250730.zip
+Downloading: PAM50-r20250730.zip
+Status:   0%|          | 0.00/104M [00:00<?, ?B/s]Status:   4%|▍         | 4.21M/104M [00:00<00:03, 31.3MB/s]Status:  11%|█         | 11.4M/104M [00:00<00:01, 52.2MB/s]Status:  17%|█▋        | 17.4M/104M [00:00<00:01, 55.6MB/s]Status:  23%|██▎       | 24.2M/104M [00:00<00:01, 59.5MB/s]Status:  30%|███       | 31.6M/104M [00:00<00:01, 62.1MB/s]Status:  37%|███▋      | 38.2M/104M [00:00<00:01, 63.4MB/s]Status:  44%|████▍     | 45.6M/104M [00:00<00:00, 66.6MB/s]Status:  50%|█████     | 52.3M/104M [00:00<00:00, 63.7MB/s]Status:  57%|█████▋    | 58.7M/104M [00:00<00:00, 63.2MB/s]Status:  63%|██████▎   | 65.2M/104M [00:01<00:00, 63.6MB/s]Status:  69%|██████▉   | 72.1M/104M [00:01<00:00, 65.3MB/s]Status:  76%|███████▌  | 78.6M/104M [00:01<00:00, 61.4MB/s]Status:  82%|████████▏ | 85.2M/104M [00:01<00:00, 62.4MB/s]Status:  88%|████████▊ | 91.4M/104M [00:01<00:00, 60.0MB/s]Status:  94%|█████████▍| 97.5M/104M [00:01<00:00, 59.6MB/s]Status: 100%|██████████| 104M/104M [00:01<00:00, 61.0MB/s] 
+Creating temporary folder (/var/folders/pc/cz8kpv9d4lzgtnz_gf6t7j1c0000gn/T/sct_2025-12-16_09-38-52_install-data_324_glhh)
+Unzip data to: /var/folders/pc/cz8kpv9d4lzgtnz_gf6t7j1c0000gn/T/sct_2025-12-16_09-38-52_install-data_324_glhh
+Copying data to: /Users/mclogar/spinalcordtoolbox/data/PAM50
+Removing temporary folders...
+Trying URL: https://github.com/spinalcordtoolbox/deepseg_gm_models/releases/download/r20180205/20220325_deepseg_gm_models_onnx.zip
+Downloading: 20220325_deepseg_gm_models_onnx.zip
+Status:   0%|          | 0.00/2.24M [00:00<?, ?B/s]Status:  72%|███████▏  | 1.61M/2.24M [00:00<00:00, 16.0MB/s]Status: 100%|██████████| 2.24M/2.24M [00:00<00:00, 17.4MB/s]
+Creating temporary folder (/var/folders/pc/cz8kpv9d4lzgtnz_gf6t7j1c0000gn/T/sct_2025-12-16_09-38-52_install-data_q7pzpwyj)
+Unzip data to: /var/folders/pc/cz8kpv9d4lzgtnz_gf6t7j1c0000gn/T/sct_2025-12-16_09-38-52_install-data_q7pzpwyj
+Copying data to: /Users/mclogar/spinalcordtoolbox/data/deepseg_gm_models
+Removing temporary folders...
+Trying URL: https://github.com/spinalcordtoolbox/deepseg_sc_models/releases/download/r20180610/20220325_deepseg_sc_models_onnx.zip
+Downloading: 20220325_deepseg_sc_models_onnx.zip
+Status:   0%|          | 0.00/19.5M [00:00<?, ?B/s]Status:   8%|▊         | 1.51M/19.5M [00:00<00:01, 15.1MB/s]Status:  23%|██▎       | 4.55M/19.5M [00:00<00:00, 24.1MB/s]Status:  36%|███▌      | 6.99M/19.5M [00:00<00:00, 24.1MB/s]Status:  48%|████▊     | 9.40M/19.5M [00:00<00:00, 18.2MB/s]Status:  58%|█████▊    | 11.4M/19.5M [00:00<00:00, 15.5MB/s]Status:  67%|██████▋   | 13.1M/19.5M [00:00<00:00, 13.0MB/s]Status:  74%|███████▍  | 14.5M/19.5M [00:00<00:00, 11.7MB/s]Status:  81%|████████  | 15.8M/19.5M [00:01<00:00, 10.7MB/s]Status:  87%|████████▋ | 16.9M/19.5M [00:01<00:00, 8.83MB/s]Status:  91%|█████████▏| 17.9M/19.5M [00:01<00:00, 6.88MB/s]Status:  95%|█████████▌| 18.6M/19.5M [00:01<00:00, 5.96MB/s]Status:  99%|█████████▉| 19.3M/19.5M [00:01<00:00, 5.19MB/s]Status: 100%|██████████| 19.5M/19.5M [00:02<00:00, 9.54MB/s]
+Creating temporary folder (/var/folders/pc/cz8kpv9d4lzgtnz_gf6t7j1c0000gn/T/sct_2025-12-16_09-38-55_install-data_v7kjppj7)
+Unzip data to: /var/folders/pc/cz8kpv9d4lzgtnz_gf6t7j1c0000gn/T/sct_2025-12-16_09-38-55_install-data_v7kjppj7
+Copying data to: /Users/mclogar/spinalcordtoolbox/data/deepseg_sc_models
+Removing temporary folders...
+Trying URL: https://github.com/spinalcordtoolbox/deepseg_lesion_models/releases/download/r20180613/20220325_deepseg_lesion_models_onnx.zip
+Downloading: 20220325_deepseg_lesion_models_onnx.zip
+Status:   0%|          | 0.00/5.35M [00:00<?, ?B/s]Status:  41%|████▏     | 2.21M/5.35M [00:00<00:00, 19.6MB/s]Status: 100%|██████████| 5.35M/5.35M [00:00<00:00, 32.5MB/s]
+Creating temporary folder (/var/folders/pc/cz8kpv9d4lzgtnz_gf6t7j1c0000gn/T/sct_2025-12-16_09-38-56_install-data_12zswbm6)
+Unzip data to: /var/folders/pc/cz8kpv9d4lzgtnz_gf6t7j1c0000gn/T/sct_2025-12-16_09-38-56_install-data_12zswbm6
+Copying data to: /Users/mclogar/spinalcordtoolbox/data/deepseg_lesion_models
+Removing temporary folders...
+Trying URL: https://github.com/ivadomed/multimodal-registration/releases/download/r20220512/models.zip
+Downloading: models.zip
+Status:   0%|          | 0.00/158M [00:00<?, ?B/s]Status:   1%|          | 1.57M/158M [00:00<00:09, 15.7MB/s]Status:   3%|▎         | 4.85M/158M [00:00<00:06, 24.1MB/s]Status:   6%|▋         | 9.95M/158M [00:00<00:04, 35.9MB/s]Status:   9%|▉         | 15.0M/158M [00:00<00:03, 41.4MB/s]Status:  13%|█▎        | 20.3M/158M [00:00<00:03, 44.4MB/s]Status:  16%|█▌        | 25.0M/158M [00:00<00:02, 45.4MB/s]Status:  19%|█▉        | 30.7M/158M [00:00<00:02, 47.8MB/s]Status:  23%|██▎       | 36.3M/158M [00:00<00:02, 49.6MB/s]Status:  26%|██▌       | 41.2M/158M [00:00<00:02, 47.4MB/s]Status:  30%|███       | 47.7M/158M [00:01<00:02, 52.2MB/s]Status:  34%|███▍      | 53.5M/158M [00:01<00:01, 54.0MB/s]Status:  37%|███▋      | 58.9M/158M [00:01<00:01, 52.6MB/s]Status:  41%|████      | 64.8M/158M [00:01<00:01, 54.4MB/s]Status:  44%|████▍     | 70.3M/158M [00:01<00:01, 51.2MB/s]Status:  48%|████▊     | 75.6M/158M [00:01<00:01, 51.3MB/s]Status:  52%|█████▏    | 81.8M/158M [00:01<00:01, 54.4MB/s]Status:  55%|█████▌    | 87.9M/158M [00:01<00:01, 56.0MB/s]Status:  59%|█████▉    | 93.5M/158M [00:01<00:01, 51.8MB/s]Status:  63%|██████▎   | 99.9M/158M [00:02<00:01, 55.3MB/s]Status:  67%|██████▋   | 106M/158M [00:02<00:00, 56.5MB/s] Status:  70%|███████   | 112M/158M [00:02<00:00, 56.2MB/s]Status:  74%|███████▍  | 117M/158M [00:02<00:00, 56.3MB/s]Status:  78%|███████▊  | 123M/158M [00:02<00:00, 53.5MB/s]Status:  81%|████████  | 129M/158M [00:02<00:00, 54.2MB/s]Status:  85%|████████▍ | 134M/158M [00:02<00:00, 52.2MB/s]Status:  88%|████████▊ | 139M/158M [00:02<00:00, 50.5MB/s]Status:  92%|█████████▏| 145M/158M [00:02<00:00, 52.5MB/s]Status:  96%|█████████▌| 151M/158M [00:02<00:00, 55.1MB/s]Status:  99%|█████████▉| 157M/158M [00:03<00:00, 52.6MB/s]Status: 100%|██████████| 158M/158M [00:03<00:00, 51.0MB/s]
+Creating temporary folder (/var/folders/pc/cz8kpv9d4lzgtnz_gf6t7j1c0000gn/T/sct_2025-12-16_09-38-59_install-data_6o2yxu3r)
+Unzip data to: /var/folders/pc/cz8kpv9d4lzgtnz_gf6t7j1c0000gn/T/sct_2025-12-16_09-38-59_install-data_6o2yxu3r
+Copying data to: /Users/mclogar/spinalcordtoolbox/data/deepreg_models
+Removing temporary folders...
+Trying URL: https://github.com/spinalcordtoolbox/PAM50-normalized-metrics/archive/refs/tags/r20250321.zip
+Downloading: PAM50-normalized-metrics-r20250321.zip
+Status:   0%|          | 0.00/1.00 [00:00<?, ?B/s]Status: 35.6kB [00:00, 262kB/s]                   Status: 182kB [00:00, 736kB/s] Status: 755kB [00:00, 2.28MB/s]Status: 1.30MB [00:00, 2.93MB/s]Status: 2.84MB [00:00, 5.90MB/s]Status: 4.24MB [00:00, 8.05MB/s]Status: 5.53MB [00:00, 9.11MB/s]Status: 6.76MB [00:01, 9.85MB/s]Status: 7.28MB [00:01, 7.16MB/s]
+Creating temporary folder (/var/folders/pc/cz8kpv9d4lzgtnz_gf6t7j1c0000gn/T/sct_2025-12-16_09-39-02_install-data_qrxwqp0p)
+Unzip data to: /var/folders/pc/cz8kpv9d4lzgtnz_gf6t7j1c0000gn/T/sct_2025-12-16_09-39-02_install-data_qrxwqp0p
+Copying data to: /Users/mclogar/spinalcordtoolbox/data/PAM50_normalized_metrics
+Removing temporary folders...
+Done!
+
+Total runtime; 12.563 seconds.
+Status:   0%|          | 0.00/231M [00:00<?, ?B/s]Status:   1%|          | 2.44M/231M [00:00<00:10, 22.7MB/s]Status:   2%|▏         | 5.58M/231M [00:00<00:08, 27.6MB/s]Status:   4%|▎         | 8.36M/231M [00:00<00:08, 26.8MB/s]Status:   5%|▍         | 11.1M/231M [00:00<00:09, 22.1MB/s]Status:   6%|▌         | 13.4M/231M [00:00<00:10, 20.8MB/s]Status:   7%|▋         | 15.5M/231M [00:00<00:11, 19.0MB/s]Status:   8%|▊         | 17.5M/231M [00:00<00:11, 18.7MB/s]Status:   8%|▊         | 19.4M/231M [00:00<00:12, 17.6MB/s]Status:   9%|▉         | 21.2M/231M [00:01<00:12, 16.3MB/s]Status:  10%|▉         | 22.8M/231M [00:01<00:13, 15.5MB/s]Status:  11%|█         | 24.4M/231M [00:01<00:18, 11.4MB/s]Status:  11%|█         | 25.7M/231M [00:01<00:21, 9.67MB/s]Status:  12%|█▏        | 26.8M/231M [00:01<00:26, 7.68MB/s]Status:  12%|█▏        | 27.7M/231M [00:02<00:30, 6.64MB/s]Status:  12%|█▏        | 28.4M/231M [00:02<00:32, 6.22MB/s]Status:  13%|█▎        | 29.1M/231M [00:02<00:36, 5.53MB/s]Status:  13%|█▎        | 29.7M/231M [00:02<00:36, 5.49MB/s]Status:  13%|█▎        | 30.3M/231M [00:02<00:39, 5.07MB/s]Status:  13%|█▎        | 30.8M/231M [00:02<00:40, 4.90MB/s]Status:  14%|█▎        | 31.3M/231M [00:02<00:42, 4.74MB/s]Status:  14%|█▍        | 31.8M/231M [00:03<00:46, 4.32MB/s]Status:  14%|█▍        | 32.3M/231M [00:03<00:47, 4.17MB/s]Status:  14%|█▍        | 32.7M/231M [00:03<00:48, 4.12MB/s]Status:  14%|█▍        | 33.1M/231M [00:03<00:48, 4.06MB/s]Status:  15%|█▍        | 33.5M/231M [00:03<00:49, 4.02MB/s]Status:  15%|█▍        | 33.9M/231M [00:03<00:50, 3.91MB/s]Status:  15%|█▍        | 34.3M/231M [00:03<00:58, 3.38MB/s]Status:  15%|█▍        | 34.6M/231M [00:03<01:02, 3.15MB/s]Status:  15%|█▌        | 35.0M/231M [00:04<01:03, 3.06MB/s]Status:  15%|█▌        | 35.3M/231M [00:04<01:03, 3.10MB/s]Status:  15%|█▌        | 35.6M/231M [00:04<01:01, 3.19MB/s]Status:  16%|█▌        | 36.0M/231M [00:04<00:59, 3.25MB/s]Status:  16%|█▌        | 36.4M/231M [00:04<00:57, 3.40MB/s]Status:  16%|█▌        | 36.7M/231M [00:04<00:56, 3.42MB/s]Status:  16%|█▌        | 37.1M/231M [00:04<00:54, 3.54MB/s]Status:  16%|█▌        | 37.5M/231M [00:04<00:56, 3.40MB/s]Status:  16%|█▋        | 37.8M/231M [00:04<00:59, 3.24MB/s]Status:  17%|█▋        | 38.2M/231M [00:04<00:56, 3.40MB/s]Status:  17%|█▋        | 38.7M/231M [00:05<00:53, 3.61MB/s]Status:  17%|█▋        | 39.0M/231M [00:05<00:54, 3.49MB/s]Status:  17%|█▋        | 39.4M/231M [00:05<00:57, 3.33MB/s]Status:  17%|█▋        | 39.7M/231M [00:05<00:58, 3.28MB/s]Status:  17%|█▋        | 40.1M/231M [00:05<00:57, 3.29MB/s]Status:  18%|█▊        | 40.4M/231M [00:05<00:55, 3.45MB/s]Status:  18%|█▊        | 40.9M/231M [00:05<00:52, 3.61MB/s]Status:  18%|█▊        | 41.3M/231M [00:05<00:49, 3.87MB/s]Status:  18%|█▊        | 41.7M/231M [00:05<00:49, 3.82MB/s]Status:  18%|█▊        | 42.2M/231M [00:06<00:46, 4.06MB/s]Status:  18%|█▊        | 42.7M/231M [00:06<00:43, 4.36MB/s]Status:  19%|█▊        | 43.2M/231M [00:06<00:41, 4.51MB/s]Status:  19%|█▉        | 43.6M/231M [00:06<00:43, 4.34MB/s]Status:  19%|█▉        | 44.1M/231M [00:06<00:45, 4.06MB/s]Status:  19%|█▉        | 44.5M/231M [00:06<00:45, 4.11MB/s]Status:  19%|█▉        | 45.0M/231M [00:06<00:43, 4.32MB/s]Status:  20%|█▉        | 45.5M/231M [00:06<00:41, 4.47MB/s]Status:  20%|█▉        | 45.9M/231M [00:06<00:41, 4.43MB/s]Status:  20%|██        | 46.4M/231M [00:07<00:49, 3.71MB/s]Status:  20%|██        | 46.8M/231M [00:07<00:56, 3.24MB/s]Status:  20%|██        | 47.1M/231M [00:07<00:56, 3.25MB/s]Status:  21%|██        | 47.5M/231M [00:07<00:58, 3.12MB/s]Status:  21%|██        | 47.8M/231M [00:07<00:58, 3.14MB/s]Status:  21%|██        | 48.1M/231M [00:07<01:00, 3.01MB/s]Status:  21%|██        | 48.5M/231M [00:07<01:00, 3.02MB/s]Status:  21%|██        | 48.8M/231M [00:07<00:59, 3.07MB/s]Status:  21%|██▏       | 49.1M/231M [00:07<00:56, 3.20MB/s]Status:  21%|██▏       | 49.5M/231M [00:08<00:53, 3.36MB/s]Status:  22%|██▏       | 49.9M/231M [00:08<00:51, 3.54MB/s]Status:  22%|██▏       | 50.4M/231M [00:08<00:47, 3.80MB/s]Status:  22%|██▏       | 50.8M/231M [00:08<00:50, 3.57MB/s]Status:  22%|██▏       | 51.3M/231M [00:08<00:46, 3.90MB/s]Status:  22%|██▏       | 51.7M/231M [00:08<00:44, 4.00MB/s]Status:  23%|██▎       | 52.2M/231M [00:08<00:41, 4.29MB/s]Status:  23%|██▎       | 52.8M/231M [00:08<00:38, 4.59MB/s]Status:  23%|██▎       | 53.4M/231M [00:08<00:36, 4.92MB/s]Status:  23%|██▎       | 54.0M/231M [00:09<00:33, 5.23MB/s]Status:  24%|██▎       | 54.6M/231M [00:09<00:32, 5.47MB/s]Status:  24%|██▍       | 55.2M/231M [00:09<00:30, 5.68MB/s]Status:  24%|██▍       | 55.9M/231M [00:09<00:29, 5.97MB/s]Status:  24%|██▍       | 56.5M/231M [00:09<00:30, 5.66MB/s]Status:  25%|██▍       | 57.1M/231M [00:09<00:33, 5.15MB/s]Status:  25%|██▍       | 57.6M/231M [00:09<00:37, 4.64MB/s]Status:  25%|██▌       | 58.1M/231M [00:09<00:39, 4.43MB/s]Status:  25%|██▌       | 58.5M/231M [00:09<00:40, 4.23MB/s]Status:  26%|██▌       | 59.0M/231M [00:10<00:44, 3.89MB/s]Status:  26%|██▌       | 59.4M/231M [00:10<00:45, 3.78MB/s]Status:  26%|██▌       | 59.8M/231M [00:10<00:47, 3.63MB/s]Status:  26%|██▌       | 60.1M/231M [00:10<00:54, 3.14MB/s]Status:  26%|██▌       | 60.4M/231M [00:10<00:58, 2.94MB/s]Status:  26%|██▋       | 60.8M/231M [00:10<01:01, 2.77MB/s]Status:  26%|██▋       | 61.0M/231M [00:10<01:02, 2.72MB/s]Status:  27%|██▋       | 61.3M/231M [00:10<01:00, 2.80MB/s]Status:  27%|██▋       | 61.7M/231M [00:11<00:58, 2.88MB/s]Status:  27%|██▋       | 62.0M/231M [00:11<00:57, 2.92MB/s]Status:  27%|██▋       | 62.4M/231M [00:11<00:53, 3.13MB/s]Status:  27%|██▋       | 62.7M/231M [00:11<00:54, 3.07MB/s]Status:  27%|██▋       | 63.1M/231M [00:11<00:50, 3.30MB/s]Status:  27%|██▋       | 63.5M/231M [00:11<00:48, 3.48MB/s]Status:  28%|██▊       | 63.9M/231M [00:11<00:44, 3.73MB/s]Status:  28%|██▊       | 64.4M/231M [00:11<00:40, 4.06MB/s]Status:  28%|██▊       | 64.9M/231M [00:11<00:37, 4.38MB/s]Status:  28%|██▊       | 65.5M/231M [00:12<00:35, 4.67MB/s]Status:  29%|██▊       | 66.0M/231M [00:12<00:33, 4.87MB/s]Status:  29%|██▉       | 66.5M/231M [00:12<00:35, 4.62MB/s]Status:  29%|██▉       | 67.0M/231M [00:12<00:36, 4.53MB/s]Status:  29%|██▉       | 67.4M/231M [00:12<00:43, 3.80MB/s]Status:  29%|██▉       | 67.8M/231M [00:12<00:48, 3.34MB/s]Status:  30%|██▉       | 68.2M/231M [00:12<00:51, 3.16MB/s]Status:  30%|██▉       | 68.5M/231M [00:12<00:54, 2.99MB/s]Status:  30%|██▉       | 68.9M/231M [00:13<00:53, 3.03MB/s]Status:  30%|██▉       | 69.2M/231M [00:13<00:51, 3.17MB/s]Status:  30%|███       | 69.6M/231M [00:13<00:48, 3.31MB/s]Status:  30%|███       | 69.9M/231M [00:13<00:49, 3.26MB/s]Status:  30%|███       | 70.3M/231M [00:13<00:54, 2.96MB/s]Status:  31%|███       | 70.6M/231M [00:13<01:00, 2.64MB/s]Status:  31%|███       | 70.9M/231M [00:13<01:01, 2.60MB/s]Status:  31%|███       | 71.1M/231M [00:13<01:00, 2.64MB/s]Status:  31%|███       | 71.5M/231M [00:13<00:57, 2.76MB/s]Status:  31%|███       | 71.8M/231M [00:14<00:54, 2.95MB/s]Status:  31%|███       | 72.2M/231M [00:14<00:50, 3.16MB/s]Status:  31%|███▏      | 72.5M/231M [00:14<00:50, 3.16MB/s]Status:  32%|███▏      | 72.9M/231M [00:14<00:48, 3.25MB/s]Status:  32%|███▏      | 73.2M/231M [00:14<00:50, 3.12MB/s]Status:  32%|███▏      | 73.5M/231M [00:14<00:51, 3.08MB/s]Status:  32%|███▏      | 73.9M/231M [00:14<00:50, 3.12MB/s]Status:  32%|███▏      | 74.2M/231M [00:14<00:47, 3.28MB/s]Status:  32%|███▏      | 74.6M/231M [00:14<00:45, 3.47MB/s]Status:  32%|███▏      | 75.0M/231M [00:15<00:44, 3.47MB/s]Status:  33%|███▎      | 75.4M/231M [00:15<00:41, 3.73MB/s]Status:  33%|███▎      | 75.9M/231M [00:15<00:38, 3.98MB/s]Status:  33%|███▎      | 76.4M/231M [00:15<00:35, 4.30MB/s]Status:  33%|███▎      | 76.8M/231M [00:15<00:39, 3.90MB/s]Status:  33%|███▎      | 77.2M/231M [00:15<00:39, 3.90MB/s]Status:  34%|███▎      | 77.6M/231M [00:15<00:39, 3.90MB/s]Status:  34%|███▍      | 78.0M/231M [00:15<00:40, 3.78MB/s]Status:  34%|███▍      | 78.4M/231M [00:15<00:41, 3.68MB/s]Status:  34%|███▍      | 78.8M/231M [00:16<00:49, 3.09MB/s]Status:  34%|███▍      | 79.1M/231M [00:16<00:59, 2.56MB/s]Status:  34%|███▍      | 79.4M/231M [00:16<01:03, 2.40MB/s]Status:  34%|███▍      | 79.7M/231M [00:16<01:01, 2.44MB/s]Status:  35%|███▍      | 80.0M/231M [00:16<00:58, 2.59MB/s]Status:  35%|███▍      | 80.3M/231M [00:16<00:54, 2.76MB/s]Status:  35%|███▍      | 80.7M/231M [00:16<00:51, 2.92MB/s]Status:  35%|███▌      | 81.1M/231M [00:16<00:48, 3.09MB/s]Status:  35%|███▌      | 81.5M/231M [00:17<00:44, 3.33MB/s]Status:  35%|███▌      | 81.9M/231M [00:17<00:41, 3.58MB/s]Status:  36%|███▌      | 82.4M/231M [00:17<00:38, 3.87MB/s]Status:  36%|███▌      | 82.8M/231M [00:17<00:36, 4.06MB/s]Status:  36%|███▌      | 83.2M/231M [00:17<00:37, 3.96MB/s]Status:  36%|███▌      | 83.7M/231M [00:17<00:34, 4.25MB/s]Status:  36%|███▋      | 84.3M/231M [00:17<00:32, 4.55MB/s]Status:  37%|███▋      | 84.8M/231M [00:17<00:30, 4.83MB/s]Status:  37%|███▋      | 85.4M/231M [00:17<00:28, 5.14MB/s]Status:  37%|███▋      | 86.0M/231M [00:17<00:30, 4.72MB/s]Status:  37%|███▋      | 86.6M/231M [00:18<00:28, 5.13MB/s]Status:  38%|███▊      | 87.3M/231M [00:18<00:25, 5.55MB/s]Status:  38%|███▊      | 87.9M/231M [00:18<00:24, 5.91MB/s]Status:  38%|███▊      | 88.6M/231M [00:18<00:24, 5.83MB/s]Status:  39%|███▊      | 89.3M/231M [00:18<00:23, 6.15MB/s]Status:  39%|███▉      | 89.9M/231M [00:18<00:22, 6.21MB/s]Status:  39%|███▉      | 90.6M/231M [00:18<00:23, 5.92MB/s]Status:  39%|███▉      | 91.2M/231M [00:18<00:25, 5.54MB/s]Status:  40%|███▉      | 91.7M/231M [00:19<00:30, 4.51MB/s]Status:  40%|███▉      | 92.2M/231M [00:19<00:40, 3.42MB/s]Status:  40%|████      | 92.6M/231M [00:19<00:49, 2.81MB/s]Status:  40%|████      | 92.9M/231M [00:19<00:50, 2.76MB/s]Status:  40%|████      | 93.3M/231M [00:19<00:49, 2.77MB/s]Status:  41%|████      | 93.6M/231M [00:19<00:49, 2.75MB/s]Status:  41%|████      | 93.9M/231M [00:19<00:52, 2.62MB/s]Status:  41%|████      | 94.1M/231M [00:20<00:52, 2.62MB/s]Status:  41%|████      | 94.4M/231M [00:20<00:51, 2.65MB/s]Status:  41%|████      | 94.7M/231M [00:20<00:51, 2.63MB/s]Status:  41%|████      | 95.0M/231M [00:20<00:55, 2.44MB/s]Status:  41%|████      | 95.2M/231M [00:20<00:55, 2.46MB/s]Status:  41%|████▏     | 95.5M/231M [00:20<00:52, 2.56MB/s]Status:  41%|████▏     | 95.8M/231M [00:20<00:50, 2.69MB/s]Status:  42%|████▏     | 96.1M/231M [00:20<00:47, 2.83MB/s]Status:  42%|████▏     | 96.5M/231M [00:20<00:43, 3.07MB/s]Status:  42%|████▏     | 96.9M/231M [00:21<00:41, 3.26MB/s]Status:  42%|████▏     | 97.3M/231M [00:21<00:38, 3.48MB/s]Status:  42%|████▏     | 97.7M/231M [00:21<00:37, 3.51MB/s]Status:  42%|████▏     | 98.1M/231M [00:21<00:34, 3.82MB/s]Status:  43%|████▎     | 98.5M/231M [00:21<00:34, 3.81MB/s]Status:  43%|████▎     | 99.0M/231M [00:21<00:31, 4.16MB/s]Status:  43%|████▎     | 99.5M/231M [00:21<00:30, 4.27MB/s]Status:  43%|████▎     | 99.9M/231M [00:21<00:32, 4.08MB/s]Status:  43%|████▎     | 100M/231M [00:21<00:32, 4.02MB/s] Status:  44%|████▎     | 101M/231M [00:21<00:32, 3.95MB/s]Status:  44%|████▍     | 101M/231M [00:22<00:32, 3.98MB/s]Status:  44%|████▍     | 102M/231M [00:22<00:33, 3.84MB/s]Status:  44%|████▍     | 102M/231M [00:22<00:37, 3.44MB/s]Status:  44%|████▍     | 102M/231M [00:22<00:43, 2.97MB/s]Status:  44%|████▍     | 103M/231M [00:22<00:42, 3.02MB/s]Status:  45%|████▍     | 103M/231M [00:22<00:41, 3.08MB/s]Status:  45%|████▍     | 103M/231M [00:22<00:39, 3.21MB/s]Status:  45%|████▍     | 104M/231M [00:22<00:38, 3.34MB/s]Status:  45%|████▌     | 104M/231M [00:23<00:38, 3.33MB/s]Status:  45%|████▌     | 104M/231M [00:23<00:44, 2.87MB/s]Status:  45%|████▌     | 105M/231M [00:23<00:47, 2.65MB/s]Status:  45%|████▌     | 105M/231M [00:23<00:49, 2.53MB/s]Status:  46%|████▌     | 105M/231M [00:23<00:47, 2.63MB/s]Status:  46%|████▌     | 106M/231M [00:23<00:46, 2.72MB/s]Status:  46%|████▌     | 106M/231M [00:23<00:47, 2.64MB/s]Status:  46%|████▌     | 106M/231M [00:23<00:46, 2.67MB/s]Status:  46%|████▌     | 106M/231M [00:23<00:46, 2.70MB/s]Status:  46%|████▌     | 107M/231M [00:24<00:44, 2.80MB/s]Status:  46%|████▋     | 107M/231M [00:24<00:41, 2.99MB/s]Status:  47%|████▋     | 108M/231M [00:24<00:38, 3.17MB/s]Status:  47%|████▋     | 108M/231M [00:24<00:38, 3.24MB/s]Status:  47%|████▋     | 108M/231M [00:24<00:37, 3.25MB/s]Status:  47%|████▋     | 109M/231M [00:24<00:34, 3.58MB/s]Status:  47%|████▋     | 109M/231M [00:24<00:31, 3.85MB/s]Status:  47%|████▋     | 110M/231M [00:24<00:31, 3.87MB/s]Status:  48%|████▊     | 110M/231M [00:24<00:34, 3.55MB/s]Status:  48%|████▊     | 110M/231M [00:25<00:36, 3.27MB/s]Status:  48%|████▊     | 111M/231M [00:25<00:38, 3.17MB/s]Status:  48%|████▊     | 111M/231M [00:25<00:39, 3.07MB/s]Status:  48%|████▊     | 111M/231M [00:25<00:39, 3.03MB/s]Status:  48%|████▊     | 112M/231M [00:25<00:39, 3.04MB/s]Status:  48%|████▊     | 112M/231M [00:25<00:40, 2.95MB/s]Status:  49%|████▊     | 112M/231M [00:25<00:40, 2.93MB/s]Status:  49%|████▊     | 113M/231M [00:25<00:38, 3.04MB/s]Status:  49%|████▉     | 113M/231M [00:25<00:36, 3.20MB/s]Status:  49%|████▉     | 113M/231M [00:26<00:35, 3.36MB/s]Status:  49%|████▉     | 114M/231M [00:26<00:33, 3.52MB/s]Status:  49%|████▉     | 114M/231M [00:26<00:33, 3.47MB/s]Status:  50%|████▉     | 114M/231M [00:26<00:31, 3.76MB/s]Status:  50%|████▉     | 115M/231M [00:26<00:30, 3.82MB/s]Status:  50%|████▉     | 115M/231M [00:26<00:29, 3.91MB/s]Status:  50%|█████     | 116M/231M [00:26<00:30, 3.81MB/s]Status:  50%|█████     | 116M/231M [00:26<00:30, 3.81MB/s]Status:  50%|█████     | 116M/231M [00:26<00:30, 3.82MB/s]Status:  51%|█████     | 117M/231M [00:26<00:33, 3.41MB/s]Status:  51%|█████     | 117M/231M [00:27<00:30, 3.70MB/s]Status:  51%|█████     | 118M/231M [00:27<00:30, 3.66MB/s]Status:  51%|█████     | 118M/231M [00:27<00:31, 3.64MB/s]Status:  51%|█████▏    | 118M/231M [00:27<00:32, 3.46MB/s]Status:  51%|█████▏    | 119M/231M [00:27<00:31, 3.60MB/s]Status:  52%|█████▏    | 119M/231M [00:27<00:29, 3.78MB/s]Status:  52%|█████▏    | 120M/231M [00:27<00:28, 3.95MB/s]Status:  52%|█████▏    | 120M/231M [00:27<00:26, 4.20MB/s]Status:  52%|█████▏    | 121M/231M [00:27<00:26, 4.20MB/s]Status:  52%|█████▏    | 121M/231M [00:28<00:27, 4.00MB/s]Status:  53%|█████▎    | 121M/231M [00:28<00:27, 3.98MB/s]Status:  53%|█████▎    | 122M/231M [00:28<00:26, 4.05MB/s]Status:  53%|█████▎    | 122M/231M [00:28<00:26, 4.09MB/s]Status:  53%|█████▎    | 123M/231M [00:28<00:27, 3.98MB/s]Status:  53%|█████▎    | 123M/231M [00:28<00:25, 4.21MB/s]Status:  54%|█████▎    | 124M/231M [00:28<00:24, 4.46MB/s]Status:  54%|█████▍    | 124M/231M [00:28<00:22, 4.69MB/s]Status:  54%|█████▍    | 125M/231M [00:28<00:21, 4.91MB/s]Status:  54%|█████▍    | 125M/231M [00:28<00:21, 4.88MB/s]Status:  55%|█████▍    | 126M/231M [00:29<00:20, 5.09MB/s]Status:  55%|█████▍    | 127M/231M [00:29<00:19, 5.40MB/s]Status:  55%|█████▌    | 127M/231M [00:29<00:18, 5.76MB/s]Status:  55%|█████▌    | 128M/231M [00:29<00:18, 5.68MB/s]Status:  56%|█████▌    | 128M/231M [00:29<00:18, 5.69MB/s]Status:  56%|█████▌    | 129M/231M [00:29<00:18, 5.41MB/s]Status:  56%|█████▌    | 129M/231M [00:29<00:20, 4.84MB/s]Status:  56%|█████▋    | 130M/231M [00:29<00:22, 4.55MB/s]Status:  56%|█████▋    | 130M/231M [00:30<00:23, 4.37MB/s]Status:  57%|█████▋    | 131M/231M [00:30<00:22, 4.37MB/s]Status:  57%|█████▋    | 131M/231M [00:30<00:22, 4.35MB/s]Status:  57%|█████▋    | 132M/231M [00:30<00:24, 4.11MB/s]Status:  57%|█████▋    | 132M/231M [00:30<00:27, 3.63MB/s]Status:  57%|█████▋    | 133M/231M [00:30<00:26, 3.71MB/s]Status:  58%|█████▊    | 133M/231M [00:30<00:25, 3.81MB/s]Status:  58%|█████▊    | 133M/231M [00:30<00:24, 3.97MB/s]Status:  58%|█████▊    | 134M/231M [00:30<00:23, 4.21MB/s]Status:  58%|█████▊    | 134M/231M [00:30<00:23, 4.18MB/s]Status:  58%|█████▊    | 135M/231M [00:31<00:21, 4.41MB/s]Status:  59%|█████▊    | 135M/231M [00:31<00:21, 4.42MB/s]Status:  59%|█████▉    | 136M/231M [00:31<00:22, 4.28MB/s]Status:  59%|█████▉    | 136M/231M [00:31<00:23, 4.08MB/s]Status:  59%|█████▉    | 137M/231M [00:31<00:22, 4.15MB/s]Status:  59%|█████▉    | 137M/231M [00:31<00:21, 4.33MB/s]Status:  60%|█████▉    | 138M/231M [00:31<00:20, 4.50MB/s]Status:  60%|█████▉    | 138M/231M [00:31<00:19, 4.71MB/s]Status:  60%|██████    | 139M/231M [00:31<00:18, 4.92MB/s]Status:  60%|██████    | 139M/231M [00:32<00:18, 4.84MB/s]Status:  60%|██████    | 140M/231M [00:32<00:19, 4.69MB/s]Status:  61%|██████    | 140M/231M [00:32<00:19, 4.58MB/s]Status:  61%|██████    | 141M/231M [00:32<00:20, 4.40MB/s]Status:  61%|██████    | 141M/231M [00:32<00:20, 4.44MB/s]Status:  61%|██████▏   | 142M/231M [00:32<00:19, 4.60MB/s]Status:  62%|██████▏   | 142M/231M [00:32<00:18, 4.77MB/s]Status:  62%|██████▏   | 143M/231M [00:32<00:18, 4.88MB/s]Status:  62%|██████▏   | 143M/231M [00:32<00:17, 5.09MB/s]Status:  62%|██████▏   | 144M/231M [00:33<00:16, 5.36MB/s]Status:  63%|██████▎   | 144M/231M [00:33<00:15, 5.56MB/s]Status:  63%|██████▎   | 145M/231M [00:33<00:14, 5.80MB/s]Status:  63%|██████▎   | 146M/231M [00:33<00:15, 5.68MB/s]Status:  63%|██████▎   | 146M/231M [00:33<00:15, 5.36MB/s]Status:  64%|██████▎   | 147M/231M [00:33<00:14, 5.67MB/s]Status:  64%|██████▍   | 148M/231M [00:33<00:15, 5.52MB/s]Status:  64%|██████▍   | 148M/231M [00:33<00:15, 5.38MB/s]Status:  64%|██████▍   | 149M/231M [00:33<00:15, 5.42MB/s]Status:  65%|██████▍   | 149M/231M [00:33<00:14, 5.53MB/s]Status:  65%|██████▍   | 150M/231M [00:34<00:14, 5.62MB/s]Status:  65%|██████▌   | 150M/231M [00:34<00:14, 5.67MB/s]Status:  65%|██████▌   | 151M/231M [00:34<00:15, 5.29MB/s]Status:  66%|██████▌   | 152M/231M [00:34<00:17, 4.57MB/s]Status:  66%|██████▌   | 152M/231M [00:34<00:19, 4.09MB/s]Status:  66%|██████▌   | 152M/231M [00:34<00:21, 3.69MB/s]Status:  66%|██████▌   | 153M/231M [00:34<00:24, 3.18MB/s]Status:  66%|██████▋   | 153M/231M [00:35<00:26, 2.97MB/s]Status:  66%|██████▋   | 153M/231M [00:35<00:29, 2.64MB/s]Status:  67%|██████▋   | 154M/231M [00:35<00:28, 2.69MB/s]Status:  67%|██████▋   | 154M/231M [00:35<00:28, 2.72MB/s]Status:  67%|██████▋   | 154M/231M [00:35<00:26, 2.90MB/s]Status:  67%|██████▋   | 155M/231M [00:35<00:24, 3.10MB/s]Status:  67%|██████▋   | 155M/231M [00:35<00:23, 3.27MB/s]Status:  67%|██████▋   | 156M/231M [00:35<00:21, 3.55MB/s]Status:  68%|██████▊   | 156M/231M [00:35<00:19, 3.82MB/s]Status:  68%|██████▊   | 157M/231M [00:36<00:18, 4.06MB/s]Status:  68%|██████▊   | 157M/231M [00:36<00:16, 4.36MB/s]Status:  68%|██████▊   | 158M/231M [00:36<00:16, 4.49MB/s]Status:  68%|██████▊   | 158M/231M [00:36<00:15, 4.80MB/s]Status:  69%|██████▊   | 159M/231M [00:36<00:16, 4.52MB/s]Status:  69%|██████▉   | 159M/231M [00:36<00:15, 4.78MB/s]Status:  69%|██████▉   | 160M/231M [00:36<00:13, 5.11MB/s]Status:  69%|██████▉   | 160M/231M [00:36<00:12, 5.54MB/s]Status:  70%|██████▉   | 161M/231M [00:36<00:12, 5.78MB/s]Status:  70%|███████   | 162M/231M [00:36<00:11, 6.08MB/s]Status:  70%|███████   | 162M/231M [00:37<00:10, 6.36MB/s]Status:  71%|███████   | 163M/231M [00:37<00:10, 6.48MB/s]Status:  71%|███████   | 164M/231M [00:37<00:10, 6.66MB/s]Status:  71%|███████   | 165M/231M [00:37<00:09, 6.65MB/s]Status:  72%|███████▏  | 165M/231M [00:37<00:09, 6.86MB/s]Status:  72%|███████▏  | 166M/231M [00:37<00:09, 7.08MB/s]Status:  72%|███████▏  | 167M/231M [00:37<00:09, 6.48MB/s]Status:  72%|███████▏  | 167M/231M [00:37<00:12, 5.03MB/s]Status:  73%|███████▎  | 168M/231M [00:38<00:15, 4.03MB/s]Status:  73%|███████▎  | 168M/231M [00:38<00:15, 3.93MB/s]Status:  73%|███████▎  | 169M/231M [00:38<00:16, 3.86MB/s]Status:  73%|███████▎  | 169M/231M [00:38<00:16, 3.72MB/s]Status:  73%|███████▎  | 170M/231M [00:38<00:16, 3.61MB/s]Status:  74%|███████▎  | 170M/231M [00:38<00:17, 3.58MB/s]Status:  74%|███████▍  | 171M/231M [00:38<00:16, 3.63MB/s]Status:  74%|███████▍  | 171M/231M [00:38<00:16, 3.74MB/s]Status:  74%|███████▍  | 171M/231M [00:39<00:16, 3.63MB/s]Status:  74%|███████▍  | 172M/231M [00:39<00:15, 3.87MB/s]Status:  75%|███████▍  | 172M/231M [00:39<00:14, 4.09MB/s]Status:  75%|███████▍  | 173M/231M [00:39<00:13, 4.26MB/s]Status:  75%|███████▍  | 173M/231M [00:39<00:12, 4.46MB/s]Status:  75%|███████▌  | 174M/231M [00:39<00:12, 4.68MB/s]Status:  75%|███████▌  | 174M/231M [00:39<00:12, 4.42MB/s]Status:  76%|███████▌  | 175M/231M [00:39<00:13, 4.20MB/s]Status:  76%|███████▌  | 175M/231M [00:39<00:14, 3.78MB/s]Status:  76%|███████▌  | 175M/231M [00:40<00:15, 3.65MB/s]Status:  76%|███████▌  | 176M/231M [00:40<00:15, 3.63MB/s]Status:  76%|███████▋  | 176M/231M [00:40<00:15, 3.65MB/s]Status:  76%|███████▋  | 177M/231M [00:40<00:15, 3.61MB/s]Status:  77%|███████▋  | 177M/231M [00:40<00:15, 3.54MB/s]Status:  77%|███████▋  | 177M/231M [00:40<00:15, 3.47MB/s]Status:  77%|███████▋  | 178M/231M [00:40<00:15, 3.49MB/s]Status:  77%|███████▋  | 178M/231M [00:40<00:15, 3.52MB/s]Status:  77%|███████▋  | 178M/231M [00:40<00:14, 3.64MB/s]Status:  77%|███████▋  | 179M/231M [00:41<00:14, 3.57MB/s]Status:  78%|███████▊  | 179M/231M [00:41<00:13, 3.82MB/s]Status:  78%|███████▊  | 180M/231M [00:41<00:12, 4.13MB/s]Status:  78%|███████▊  | 180M/231M [00:41<00:11, 4.30MB/s]Status:  78%|███████▊  | 181M/231M [00:41<00:11, 4.40MB/s]Status:  78%|███████▊  | 181M/231M [00:41<00:10, 4.69MB/s]Status:  79%|███████▊  | 182M/231M [00:41<00:10, 4.67MB/s]Status:  79%|███████▉  | 182M/231M [00:41<00:11, 4.43MB/s]Status:  79%|███████▉  | 183M/231M [00:41<00:11, 4.03MB/s]Status:  79%|███████▉  | 183M/231M [00:42<00:12, 3.85MB/s]Status:  79%|███████▉  | 183M/231M [00:42<00:12, 3.80MB/s]Status:  80%|███████▉  | 184M/231M [00:42<00:12, 3.67MB/s]Status:  80%|███████▉  | 184M/231M [00:42<00:12, 3.73MB/s]Status:  80%|███████▉  | 185M/231M [00:42<00:12, 3.81MB/s]Status:  80%|████████  | 185M/231M [00:42<00:11, 4.02MB/s]Status:  80%|████████  | 186M/231M [00:42<00:10, 4.29MB/s]Status:  81%|████████  | 186M/231M [00:42<00:09, 4.54MB/s]Status:  81%|████████  | 187M/231M [00:42<00:09, 4.78MB/s]Status:  81%|████████  | 187M/231M [00:42<00:08, 5.01MB/s]Status:  81%|████████▏ | 188M/231M [00:43<00:08, 5.22MB/s]Status:  82%|████████▏ | 188M/231M [00:43<00:07, 5.45MB/s]Status:  82%|████████▏ | 189M/231M [00:43<00:07, 5.68MB/s]Status:  82%|████████▏ | 190M/231M [00:43<00:07, 5.73MB/s]Status:  82%|████████▏ | 190M/231M [00:43<00:06, 6.00MB/s]Status:  83%|████████▎ | 191M/231M [00:43<00:06, 6.34MB/s]Status:  83%|████████▎ | 192M/231M [00:43<00:05, 6.72MB/s]Status:  83%|████████▎ | 193M/231M [00:43<00:05, 6.42MB/s]Status:  84%|████████▎ | 193M/231M [00:43<00:06, 6.11MB/s]Status:  84%|████████▍ | 194M/231M [00:44<00:06, 6.00MB/s]Status:  84%|████████▍ | 194M/231M [00:44<00:06, 6.01MB/s]Status:  84%|████████▍ | 195M/231M [00:44<00:05, 6.11MB/s]Status:  85%|████████▍ | 196M/231M [00:44<00:05, 6.01MB/s]Status:  85%|████████▌ | 196M/231M [00:44<00:06, 5.43MB/s]Status:  85%|████████▌ | 197M/231M [00:44<00:06, 4.96MB/s]Status:  85%|████████▌ | 197M/231M [00:44<00:07, 4.53MB/s]Status:  86%|████████▌ | 198M/231M [00:44<00:07, 4.17MB/s]Status:  86%|████████▌ | 198M/231M [00:45<00:08, 3.76MB/s]Status:  86%|████████▌ | 199M/231M [00:45<00:08, 3.68MB/s]Status:  86%|████████▌ | 199M/231M [00:45<00:08, 3.68MB/s]Status:  86%|████████▋ | 199M/231M [00:45<00:08, 3.75MB/s]Status:  87%|████████▋ | 200M/231M [00:45<00:08, 3.70MB/s]Status:  87%|████████▋ | 200M/231M [00:45<00:08, 3.67MB/s]Status:  87%|████████▋ | 201M/231M [00:45<00:07, 3.90MB/s]Status:  87%|████████▋ | 201M/231M [00:45<00:07, 4.16MB/s]Status:  87%|████████▋ | 202M/231M [00:45<00:06, 4.46MB/s]Status:  88%|████████▊ | 202M/231M [00:45<00:06, 4.68MB/s]Status:  88%|████████▊ | 203M/231M [00:46<00:06, 4.49MB/s]Status:  88%|████████▊ | 203M/231M [00:46<00:07, 3.86MB/s]Status:  88%|████████▊ | 204M/231M [00:46<00:07, 3.44MB/s]Status:  88%|████████▊ | 204M/231M [00:46<00:07, 3.44MB/s]Status:  88%|████████▊ | 204M/231M [00:46<00:07, 3.52MB/s]Status:  89%|████████▊ | 205M/231M [00:46<00:07, 3.65MB/s]Status:  89%|████████▉ | 205M/231M [00:46<00:07, 3.66MB/s]Status:  89%|████████▉ | 206M/231M [00:46<00:06, 3.88MB/s]Status:  89%|████████▉ | 206M/231M [00:47<00:06, 4.12MB/s]Status:  89%|████████▉ | 207M/231M [00:47<00:05, 4.33MB/s]Status:  90%|████████▉ | 207M/231M [00:47<00:05, 4.63MB/s]Status:  90%|████████▉ | 208M/231M [00:47<00:05, 4.64MB/s]Status:  90%|█████████ | 208M/231M [00:47<00:05, 4.19MB/s]Status:  90%|█████████ | 208M/231M [00:47<00:05, 4.09MB/s]Status:  90%|█████████ | 209M/231M [00:47<00:05, 3.76MB/s]Status:  91%|█████████ | 209M/231M [00:47<00:05, 3.69MB/s]Status:  91%|█████████ | 210M/231M [00:47<00:05, 3.71MB/s]Status:  91%|█████████ | 210M/231M [00:48<00:05, 3.56MB/s]Status:  91%|█████████ | 210M/231M [00:48<00:06, 3.35MB/s]Status:  91%|█████████ | 211M/231M [00:48<00:06, 2.97MB/s]Status:  91%|█████████▏| 211M/231M [00:48<00:07, 2.80MB/s]Status:  91%|█████████▏| 211M/231M [00:48<00:07, 2.78MB/s]Status:  92%|█████████▏| 212M/231M [00:48<00:06, 2.86MB/s]Status:  92%|█████████▏| 212M/231M [00:48<00:07, 2.70MB/s]Status:  92%|█████████▏| 212M/231M [00:48<00:06, 2.94MB/s]Status:  92%|█████████▏| 213M/231M [00:48<00:05, 3.18MB/s]Status:  92%|█████████▏| 213M/231M [00:49<00:05, 3.24MB/s]Status:  92%|█████████▏| 213M/231M [00:49<00:05, 3.17MB/s]Status:  93%|█████████▎| 214M/231M [00:49<00:05, 3.06MB/s]Status:  93%|█████████▎| 214M/231M [00:49<00:05, 3.05MB/s]Status:  93%|█████████▎| 214M/231M [00:49<00:05, 3.14MB/s]Status:  93%|█████████▎| 215M/231M [00:49<00:05, 3.04MB/s]Status:  93%|█████████▎| 215M/231M [00:49<00:05, 3.02MB/s]Status:  93%|█████████▎| 215M/231M [00:49<00:05, 3.04MB/s]Status:  93%|█████████▎| 216M/231M [00:49<00:04, 3.12MB/s]Status:  94%|█████████▎| 216M/231M [00:50<00:05, 2.95MB/s]Status:  94%|█████████▎| 216M/231M [00:50<00:05, 2.83MB/s]Status:  94%|█████████▍| 217M/231M [00:50<00:05, 2.60MB/s]Status:  94%|█████████▍| 217M/231M [00:50<00:05, 2.42MB/s]Status:  94%|█████████▍| 217M/231M [00:50<00:05, 2.49MB/s]Status:  94%|█████████▍| 217M/231M [00:50<00:05, 2.60MB/s]Status:  94%|█████████▍| 218M/231M [00:50<00:04, 2.77MB/s]Status:  94%|█████████▍| 218M/231M [00:50<00:04, 2.93MB/s]Status:  95%|█████████▍| 218M/231M [00:50<00:04, 2.98MB/s]Status:  95%|█████████▍| 219M/231M [00:51<00:04, 2.96MB/s]Status:  95%|█████████▍| 219M/231M [00:51<00:04, 2.68MB/s]Status:  95%|█████████▍| 219M/231M [00:51<00:04, 2.58MB/s]Status:  95%|█████████▌| 220M/231M [00:51<00:04, 2.43MB/s]Status:  95%|█████████▌| 220M/231M [00:51<00:04, 2.50MB/s]Status:  95%|█████████▌| 220M/231M [00:51<00:04, 2.67MB/s]Status:  95%|█████████▌| 220M/231M [00:51<00:03, 2.79MB/s]Status:  96%|█████████▌| 221M/231M [00:51<00:03, 3.03MB/s]Status:  96%|█████████▌| 221M/231M [00:51<00:03, 3.24MB/s]Status:  96%|█████████▌| 222M/231M [00:52<00:02, 3.51MB/s]Status:  96%|█████████▌| 222M/231M [00:52<00:02, 3.80MB/s]Status:  96%|█████████▋| 223M/231M [00:52<00:02, 3.99MB/s]Status:  97%|█████████▋| 223M/231M [00:52<00:01, 4.25MB/s]Status:  97%|█████████▋| 223M/231M [00:52<00:01, 4.16MB/s]Status:  97%|█████████▋| 224M/231M [00:52<00:01, 4.38MB/s]Status:  97%|█████████▋| 225M/231M [00:52<00:01, 4.72MB/s]Status:  97%|█████████▋| 225M/231M [00:52<00:01, 4.73MB/s]Status:  98%|█████████▊| 226M/231M [00:52<00:01, 5.02MB/s]Status:  98%|█████████▊| 226M/231M [00:53<00:00, 5.34MB/s]Status:  98%|█████████▊| 227M/231M [00:53<00:00, 5.40MB/s]Status:  98%|█████████▊| 227M/231M [00:53<00:00, 5.15MB/s]Status:  99%|█████████▊| 228M/231M [00:53<00:00, 4.94MB/s]Status:  99%|█████████▉| 228M/231M [00:53<00:00, 4.39MB/s]Status:  99%|█████████▉| 229M/231M [00:53<00:00, 4.22MB/s]Status:  99%|█████████▉| 229M/231M [00:53<00:00, 4.19MB/s]Status:  99%|█████████▉| 230M/231M [00:53<00:00, 4.22MB/s]Status: 100%|█████████▉| 230M/231M [00:53<00:00, 4.35MB/s]Status: 100%|█████████▉| 231M/231M [00:54<00:00, 4.10MB/s]Status: 100%|██████████| 231M/231M [00:54<00:00, 4.27MB/s]
+
+[0;32mValidate installation...[0m
+
+
+--
+Spinal Cord Toolbox (git-master-3ce19094c99ea201fdc6757792e566ca3d7a9bb8)
+
+sct_check_dependencies 
+--
+
+
+SYSTEM INFORMATION
+------------------
+SCT info:
+- version: git-master-3ce19094c99ea201fdc6757792e566ca3d7a9bb8
+- path: /Users/mclogar/spinalcordtoolbox
+OS: osx (macOS-15.3-x86_64-i386-64bit)
+CPU cores: Available: 10, Used by ITK functions: 10
+RAM: Total: 16384MB, Used: 1249MB, Available: 1483MB
+
+OPTIONAL DEPENDENCIES
+---------------------
+Check FSLeyes version...............................[  ]
+   (127, '/bin/sh: fsleyes: command not found')
+
+MANDATORY DEPENDENCIES
+----------------------
+Check Python executable.............................[[92mOK[0m]
+  Using bundled python 3.10.19 | packaged by conda-forge | (main, Oct 22 2025, 22:46:36) [Clang 19.1.7 ] at /Users/mclogar/spinalcordtoolbox/python/envs/venv_sct/bin/python3.10
+[33mMatplotlib is building the font cache; this may take a moment.[0m
+Check if acvl_utils is installed....................[[92mOK[0m]
+Check if blosc2 is installed........................NumExpr defaulting to 10 threads.
+[[92mOK[0m] (3.12.2)
+Check if dipy (1.8.0) is installed..................[[92mOK[0m] (1.8.0)
+Check if h5py is installed..........................[[92mOK[0m] (3.15.1)
+Check if ivadomed is installed......................[[92mOK[0m] (2.9.10)
+Check if matplotlib is installed....................[[92mOK[0m] (3.10.8)
+Check if matplotlib-inline is installed.............[[92mOK[0m]
+Check if monai is installed.........................[[92mOK[0m] (1.4.0)
+Check if nibabel is installed.......................[[92mOK[0m] (5.3.3)
+Check if nilearn is installed.......................[[92mOK[0m] (0.10.4)
+Check if nnunetv2-neuropoly is installed............[[92mOK[0m]
+Check if numpy is installed.........................[[92mOK[0m] (1.26.4)
+Check if numexpr is installed.......................[[92mOK[0m] (2.14.1)
+Check if onnxruntime is installed...................[[92mOK[0m] (1.21.1)
+Check if onnx is installed..........................[[92mOK[0m] (1.16.1)
+Check if pandas is installed........................[[92mOK[0m] (1.5.3)
+Check if portalocker is installed...................[[92mOK[0m] (3.2.0)
+Check if psutil is installed........................[[92mOK[0m] (7.1.3)
+Check if pyqt5 is installed.........................[[92mOK[0m] (5.15.11)
+Check if PyQt5-Qt5 (5.15.2) is installed............[[93mWARNING[0m] (5.15.14 != 5.15.2 mandated version))
+Check if pystrum is installed.......................[[92mOK[0m] (0.4)
+Check if pytest is installed........................[[92mOK[0m] (9.0.2)
+Check if pytest-cov is installed....................[[92mOK[0m] (7.0.0)
+Check if requests is installed......................[[92mOK[0m] (2.32.5)
+Check if requirements-parser is installed...........[[92mOK[0m] (0.13.0)
+Check if scipy is installed.........................[[92mOK[0m] (1.15.3)
+Check if scikit-image is installed..................[[92mOK[0m] (0.25.2)
+Check if scikit-learn is installed..................[[92mOK[0m] (1.7.2)
+Check if totalspineseg is installed.................[[92mOK[0m] (20251124)
+Check if xlwt is installed..........................[[92mOK[0m] (1.3.0)
+Check if torch is installed.........................[[92mOK[0m] (2.2.2)
+Check if tqdm is installed..........................[[92mOK[0m] (4.67.1)
+Check if transforms3d is installed..................[[92mOK[0m] (0.4.2)
+Check if urllib3 is installed.......................[[92mOK[0m] (2.6.2)
+Check if pytest_console_scripts is installed........[[92mOK[0m]
+Check if pyyaml is installed........................[[92mOK[0m] (6.0.3)
+Check if voxelmorph is installed....................[[92mOK[0m] (0.2)
+Check if wquantiles is installed....................[[92mOK[0m] (0.4)
+Check if xlsxwriter is installed....................[[92mOK[0m] (3.2.9)
+Check if spinalcordtoolbox is installed.............[[92mOK[0m]
+Check ANTs compatibility with OS ...................[[92mOK[0m]
+Check PropSeg compatibility with OS ................[[92mOK[0m]
+Check if figure can be opened with PyQt.............[[92mOK[0m]
+Check if figure can be opened with matplotlib.......[[92mOK[0m] (Using GUI backend: 'qtagg')
+Check data dependency 'PAM50'.......................[[92mOK[0m]
+Check data dependency 'deepseg_gm_models'...........[[92mOK[0m]
+Check data dependency 'deepseg_sc_models'...........[[92mOK[0m]
+Check data dependency 'deepseg_lesion_models'.......[[92mOK[0m]
+Check data dependency 'deepreg_models'..............[[92mOK[0m]
+Check data dependency 'PAM50_normalized_metrics'....[[92mOK[0m]
+Check data dependency 'binaries_osx'................[[92mOK[0m]
+
+Total runtime; 135.133 seconds.
+
+[0;32mOpen a new Terminal window to load environment variables, or run:
+  source /Users/mclogar/.zshrc[0m
+
+
+[0;32mInstallation finished successfully![0m
+

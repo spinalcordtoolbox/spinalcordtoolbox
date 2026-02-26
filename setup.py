@@ -73,6 +73,7 @@ setup(
                 'sct_convert',
                 'sct_create_mask',
                 'sct_crop_image',
+                'sct_deepseb',
                 'sct_deepseg',
                 'sct_deepseg_gm',
                 'sct_deepseg_lesion',
