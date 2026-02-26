@@ -143,6 +143,7 @@ class AnalyzeLesion:
         self.interpolated_midsagittal_slice_RPI = None  # target float sagittal slice number used for the interpolation
         self.interpolation_slices_RPI = None            # sagittal slices used for the interpolation
         self.nli_slice = nli_slice                      # user-provided NLI slice number (in original orientation)
+        self.empty_lesion = False                       # bool to skip QC if no lesion is found
         self.fname_sc = fname_sc
         self.fname_ref = fname_ref
         self.path_template = path_template
@@ -1210,6 +1211,7 @@ class AnalyzeLesion:
 
         # Exit the script if no lesion is found, unless NLI slice is provided
         if len(self.measure_pd['label']) == 0:
+            self.empty_lesion = True
             if self.nli_slice is None:
                 printv('ERROR: No lesion found in the input image. You can provide a slice corresponding to '
                        'the Neurological Level of Injury (NLI) using the `-nli-slice` option to compute the spinal '
@@ -1346,7 +1348,7 @@ def main(argv: Sequence[str]):
 
     # Create QC report for tissue bridges (only if SC is provided)
     if arguments.qc is not None:
-        if fname_sc is not None:
+        if fname_sc is not None and lesion_obj.empty_lesion is False:
             sct_analyze_lesion(
                 fname_input=fname_mask,
                 fname_label=lesion_obj.fname_label,
