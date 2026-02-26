@@ -349,6 +349,7 @@ def test_sct_analyze_lesion_no_lesion_found(tmp_path, tmp_path_qc):
 
     # Check that the appropriate warning message is in the output
     assert "No lesion found in the input image" in process.stdout.decode('utf-8')
+    assert "You can provide a slice corresponding to the Neurological Level of Injury (NLI)" in process.stdout.decode('utf-8')
 
     # Verify that no output files were created (or they are empty/contain default values)
     _, fname, _ = extract_fname(path_empty_lesion)

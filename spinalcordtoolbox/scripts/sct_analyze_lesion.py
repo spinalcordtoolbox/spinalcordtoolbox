@@ -99,6 +99,20 @@ def get_parser():
         action=ActionCreateFolder,
         default='.')
     optional.add_argument(
+        '-nli-slice',
+        help=textwrap.dedent("""
+            Slice number (in the S-I axis) corresponding to the Neurological Level of Injury (NLI).
+            If provided, this slice will be used to measure the midsagittal A-P diameter instead of the 
+            automatically computed midsagittal slice based on the lesion center of mass.
+            The measured A-P diameter is then used as a proxy for the tissue bridges.
+            This is useful when no lesion is found in the image but you still need to quantify tissue bridges.
+            Note: The slice number should be in the same orientation as the input image.
+        """),  # noqa: E501 (line too long)
+        metavar=Metavar.int,
+        type=int,
+        default=None
+    )
+    optional.add_argument(
         '-qc',
         metavar=Metavar.folder,
         action=ActionCreateFolder,
@@ -123,11 +137,12 @@ def get_parser():
 
 
 class AnalyzeLesion:
-    def __init__(self, fname_mask, fname_sc, fname_ref, path_template, path_ofolder, perslice, verbose):
+    def __init__(self, fname_mask, fname_sc, fname_ref, path_template, path_ofolder, perslice, nli_slice, verbose):
         self.fname_mask = fname_mask
         # NB: We use `_RPI` to distinguish from the slice values that get output to the user (in original orientation)
         self.interpolated_midsagittal_slice_RPI = None  # target float sagittal slice number used for the interpolation
         self.interpolation_slices_RPI = None            # sagittal slices used for the interpolation
+        self.nli_slice = nli_slice                      # user-provided NLI slice number (in original orientation)
         self.fname_sc = fname_sc
         self.fname_ref = fname_ref
         self.path_template = path_template
@@ -910,10 +925,6 @@ class AnalyzeLesion:
 
         label_lst = [label for label in np.unique(im_lesion_data) if label]  # lesion label IDs list
 
-        # Print warning if there is no lesion (label_lst is empty list)
-        if not label_lst:
-            printv(f'WARNING: No lesion found in {self.fname_label}.', self.verbose, 'warning')
-
         if self.path_template is not None:
             if os.path.isfile(self.path_levels):
                 img_vert = Image(self.path_levels)
@@ -1197,9 +1208,18 @@ class AnalyzeLesion:
         self.measure_pd['label'] = [label for label in np.unique(im_2save.data) if label]
         printv('Lesion count = ' + str(len(self.measure_pd['label'])), self.verbose, 'info')
 
-        # Exit the script if no lesion is found
+        # Exit the script if no lesion is found, unless NLI slice is provided
         if len(self.measure_pd['label']) == 0:
-            printv('ERROR: No lesion found in the input image.', self.verbose, 'error')  # exit code 1
+            if self.nli_slice is None:
+                printv('ERROR: No lesion found in the input image. You can provide a slice corresponding to '
+                       'the Neurological Level of Injury (NLI) using the `-nli-slice` option to compute the spinal '
+                       'cord A-P diameter at that slice). The measured A-P diameter will be used as a proxy for the '
+                       'tissue bridges.', self.verbose, 'error')  # exit code 1
+            else:
+                printv('WARNING: No lesion found in the input image. However, NLI slice was provided, so the '
+                       'script will continue to measure the midsagittal A-P diameter at the specified NLI slice.'
+                       'The measured A-P diameter will be used as a proxy for the tissue bridges.',
+                       self.verbose, 'warning')
 
     def _orient(self, fname, orientation):
         return Image(fname).change_orientation(orientation).save(fname, mutable=True)
@@ -1318,6 +1338,7 @@ def main(argv: Sequence[str]):
                                path_template=path_template,
                                path_ofolder=path_results,
                                perslice=arguments.perslice,
+                               nli_slice=arguments.nli_slice,
                                verbose=verbose)
 
     # run the analyze
