@@ -384,7 +384,7 @@ class AnalyzeLesion:
         axial_slices = np.unique(tissue_bridges_df[tissue_bridges_df['sagittal_slice'].isin(self.interpolation_slices_RPI)]
                                  ['axial_slice'])
 
-        # If there are no axial slices, it means that the current lesion is not captured on the sagittal slices used
+        # If there are no axial slices, it means that the current lesion is not captured on the two sagittal slices used
         # for the interpolation (i.e., the lesion is parasagittal). In this case, we use the spinal cord A-P diameter
         # as a proxy for the tissue bridges, as done in manual measurements.
         if len(axial_slices) == 0:
@@ -394,27 +394,9 @@ class AnalyzeLesion:
             # Compute the spinal cord A-P diameter for each axial slice with lesion at the midsagittal slice
             sc_ap_diameter_mm = {}
             for axial_slice in axial_lesion_slices:
-                # Get the two sagittal slices used for interpolation
-                slice1, slice2 = self.interpolation_slices_RPI
-
-                # Get the spinal cord mask for the two sagittal slices at the current axial slice
-                sc_slice1 = im_sc_data[slice1, :, axial_slice]
-                sc_slice2 = im_sc_data[slice2, :, axial_slice]
-
-                # Check if there's spinal cord on both slices
-                if np.any(sc_slice1) and np.any(sc_slice2):
-                    # Get the A-P diameter (in pixels) for both slices
-                    sc_indices1 = np.where(sc_slice1)[0]
-                    sc_indices2 = np.where(sc_slice2)[0]
-                    sc_ap_diameter1 = sc_indices1[-1] - sc_indices1[0]  # ventral - dorsal
-                    sc_ap_diameter2 = sc_indices2[-1] - sc_indices2[0]  # ventral - dorsal
-
-                    # Interpolate the A-P diameter
-                    sc_ap_diameter_interpolated = self._interpolate_values(sc_ap_diameter1, sc_ap_diameter2)
-
-                    # Convert to mm and apply angle correction
-                    sc_ap_diameter_mm[axial_slice] = (sc_ap_diameter_interpolated * p_lst[1] *
-                                                      np.cos(self.angles_sagittal[axial_slice]))
+                diameter = self._compute_sc_ap_diameter_at_axial_slice(im_sc_data, axial_slice, p_lst)
+                if diameter is not None:
+                    sc_ap_diameter_mm[axial_slice] = diameter
 
             if len(sc_ap_diameter_mm) > 0:
                 # Use the minimum A-P diameter as the total bridge width
@@ -1152,6 +1134,43 @@ class AnalyzeLesion:
         """
         interpolation_factor = self.interpolated_midsagittal_slice_RPI - int(self.interpolated_midsagittal_slice_RPI)   # e.g., 8.7 - 8 = 0.7
         return (1 - interpolation_factor) * data1 + interpolation_factor * data2
+
+    def _compute_sc_ap_diameter_at_axial_slice(self, im_sc_data, axial_slice, p_lst):
+        """
+        Compute the spinal cord anterior-posterior (A-P) diameter at a given axial slice.
+        The diameter is computed by interpolating the A-P diameter from the two sagittal slices
+        used for the midsagittal slice interpolation.
+
+        :param im_sc_data: 3D numpy array: mask of the spinal cord (RPI orientation)
+        :param axial_slice: int, axial slice index in the S-I direction (RPI orientation)
+        :param p_lst: list, pixel size
+        :return: float, spinal cord A-P diameter in mm, or None if cannot be computed
+        """
+        # Get the two sagittal slices used for interpolation
+        slice1, slice2 = self.interpolation_slices_RPI
+
+        # Get the spinal cord mask for the two sagittal slices at the current axial slice
+        sc_slice1 = im_sc_data[slice1, :, axial_slice]
+        sc_slice2 = im_sc_data[slice2, :, axial_slice]
+
+        # Check if there's spinal cord on both slices
+        if np.any(sc_slice1) and np.any(sc_slice2):
+            # Get the A-P diameter (in pixels) for both slices
+            sc_indices1 = np.where(sc_slice1)[0]
+            sc_indices2 = np.where(sc_slice2)[0]
+            sc_ap_diameter1 = sc_indices1[-1] - sc_indices1[0]  # ventral - dorsal
+            sc_ap_diameter2 = sc_indices2[-1] - sc_indices2[0]  # ventral - dorsal
+
+            # Interpolate the A-P diameter
+            sc_ap_diameter_interpolated = self._interpolate_values(sc_ap_diameter1, sc_ap_diameter2)
+
+            # Convert to mm and apply angle correction
+            sc_ap_diameter_mm = (sc_ap_diameter_interpolated * p_lst[1] *
+                                np.cos(self.angles_sagittal[axial_slice]))
+
+            return sc_ap_diameter_mm
+        else:
+            return None
 
     def _get_lesion_midsagittal_slice(self, im_lesion_data):
         """
