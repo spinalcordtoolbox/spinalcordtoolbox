@@ -362,3 +362,38 @@ def test_sct_analyze_lesion_no_lesion_found(tmp_path, tmp_path_qc):
                 with open(output_file, 'rb') as f:
                     data = pickle.load(f)
                     assert len(data['measures']) == 0
+
+
+@pytest.mark.sct_testing
+def test_sct_analyze_lesion_no_lesion_found_nli_no_cord(tmp_path, tmp_path_qc):
+    """
+    Test that the script exits when no lesion is found in the input image.
+    But NLI is provided. However, without a spinal cord segmentation
+    """
+    # Create an empty lesion mask (all zeros) using an existing test image as reference
+    path_ref = sct_test_path("t2", "t2.nii.gz")
+    path_empty_lesion = str(tmp_path/"empty_lesion.nii.gz")
+
+    # Create an empty mask (no lesion)
+    sct_label_utils.main(argv=['-i', path_ref,
+                               '-o', path_empty_lesion,
+                               '-create', '0,0,0,0'])  # Create a label at 0,0,0 with value 0 (no lesion)
+
+    # Run the analysis on the empty lesion file
+    # Use pytest's subprocess run to catch the sys.exit() call
+    from subprocess import run
+    import sys
+
+    # Run the script as a separate process to catch the exit code
+    process = run([sys.executable, '-m', 'spinalcordtoolbox.scripts.sct_analyze_lesion',
+                   '-m', path_empty_lesion,
+                   '-nli-slice', '20',
+                   '-ofolder', str(tmp_path),
+                   '-qc', str(tmp_path_qc)],
+                  capture_output=True)
+
+    # Check that the process exited with exit code 1
+    assert process.returncode == 1
+
+    # Check that the appropriate warning message is in the output
+    assert "The spinal cord segmentation (`-s` option) is required if `-nli-slice` is provided" in process.stdout.decode('utf-8')
