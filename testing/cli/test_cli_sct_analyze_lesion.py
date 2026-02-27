@@ -14,7 +14,7 @@ from scipy.ndimage import center_of_mass
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.utils.fs import extract_fname
 from spinalcordtoolbox.utils.sys import sct_test_path
-from spinalcordtoolbox.scripts import sct_analyze_lesion, sct_label_utils, sct_register_to_template, sct_warp_template
+from spinalcordtoolbox.scripts import sct_analyze_lesion, sct_label_utils, sct_register_to_template, sct_warp_template, sct_image
 
 logger = logging.getLogger(__name__)
 
