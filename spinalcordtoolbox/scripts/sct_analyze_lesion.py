@@ -1263,6 +1263,14 @@ class AnalyzeLesion:
                 for fname_atlas in self.atlas_roi_lst:
                     self._orient(fname_atlas, 'RPI')
 
+        # Check that the NLI slice (provided by the user) is in the range of the S-I dimension
+        if self.nli_slice is not None:
+            im_sc = Image(self.fname_sc)
+            if self.nli_slice < 0 or self.nli_slice >= im_sc.dim[2]:
+                printv(f"ERROR: The provided NLI slice ({self.nli_slice}) is out of range for the S-I dimension of the "
+                       f"input images (0 to {im_sc.dim[2] - 1}).", self.verbose, 'error')
+
+
     def ifolder2tmp(self):
         # copy input image
         if self.fname_mask is not None:

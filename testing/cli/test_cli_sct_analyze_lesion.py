@@ -441,3 +441,40 @@ def test_sct_analyze_lesion_no_lesion_found_nli_outside_cord(tmp_path, tmp_path_
     # Check that the appropriate warning message is in the output
     assert "No spinal cord found at NLI slice" in process.stdout.decode('utf-8')
 
+
+@pytest.mark.sct_testing
+def test_sct_analyze_lesion_nli_outside_image(tmp_path, tmp_path_qc):
+    """
+    Test that the script exits when cord seg and NLI is provided. However, NLI is outside the image dimensions.
+    """
+    # Create an empty lesion mask (all zeros) using an existing test image as reference
+    path_ref = sct_test_path("t2", "t2.nii.gz")
+    path_empty_lesion = str(tmp_path/"empty_lesion.nii.gz")
+    path_seg = sct_test_path("t2", "t2_seg-manual.nii.gz")
+
+    # Create an empty mask (no lesion)
+    sct_label_utils.main(argv=['-i', path_ref,
+                               '-o', path_empty_lesion,
+                               '-create', '0,0,0,0'])  # Create a label at 0,0,0 with value 0 (no lesion)
+
+    # Run the analysis on the empty lesion file
+    # Use pytest's subprocess run to catch the sys.exit() call
+    from subprocess import run
+    import sys
+
+    nli_slice = 100
+    # Run the script as a separate process to catch the exit code
+    process = run([sys.executable, '-m', 'spinalcordtoolbox.scripts.sct_analyze_lesion',
+                   '-m', path_empty_lesion,
+                   '-s', path_seg,
+                   '-nli-slice', str(nli_slice),
+                   '-ofolder', str(tmp_path),
+                   '-qc', str(tmp_path_qc)],
+                  capture_output=True)
+
+    # Check that the process exited with exit code 1
+    assert process.returncode == 1
+
+    # Check that the appropriate warning message is in the output
+    assert "is out of range for the S-I dimension of the" in process.stdout.decode('utf-8')
+
