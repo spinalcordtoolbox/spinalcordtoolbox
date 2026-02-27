@@ -363,6 +363,7 @@ def test_sct_analyze_lesion_no_lesion_found(tmp_path, tmp_path_qc):
                     data = pickle.load(f)
                     assert len(data['measures']) == 0
 
+
 @pytest.mark.sct_testing
 def test_sct_analyze_lesion_no_lesion_found_nli(tmp_path, tmp_path_qc):
     """
@@ -411,6 +412,7 @@ def test_sct_analyze_lesion_no_lesion_found_nli(tmp_path, tmp_path_qc):
     np.testing.assert_allclose(measurements['interpolated_dorsal_bridge_width [mm]'], 3.48, rtol=0.001)
     np.testing.assert_allclose(measurements['interpolated_ventral_bridge_width [mm]'], 3.48, rtol=0.001)
     np.testing.assert_allclose(measurements['interpolated_total_bridge_width [mm]'], 6.96, rtol=0.001)
+
 
 @pytest.mark.sct_testing
 def test_sct_analyze_lesion_no_lesion_found_nli_no_cord(tmp_path, tmp_path_qc):
@@ -524,6 +526,7 @@ def test_sct_analyze_lesion_nli_outside_image(tmp_path, tmp_path_qc):
 
     # Check that the appropriate warning message is in the output
     assert "is out of range for the S-I dimension of the" in process.stdout.decode('utf-8')
+
 
 @pytest.mark.sct_testing
 def test_sct_analyze_lesion_different_dimensions_of_lesion_and_cord(tmp_path, tmp_path_qc):
