@@ -397,3 +397,47 @@ def test_sct_analyze_lesion_no_lesion_found_nli_no_cord(tmp_path, tmp_path_qc):
 
     # Check that the appropriate warning message is in the output
     assert "The spinal cord segmentation (`-s` option) is required if `-nli-slice` is provided" in process.stdout.decode('utf-8')
+
+
+@pytest.mark.sct_testing
+def test_sct_analyze_lesion_no_lesion_found_nli_outside_cord(tmp_path, tmp_path_qc):
+    """
+    Test that the script exits when no lesion is found in the input image.
+    NLI slice is provided. But, is outside the spinal cord segmentation (because the segmentation doesn't cover the
+    whole image)
+    """
+    # Create an empty lesion mask (all zeros) using an existing test image as reference
+    path_empty_lesion = str(tmp_path/"empty_lesion.nii.gz")
+    path_seg = sct_test_path("t2", "t2_seg-manual.nii.gz")
+    path_seg_pad = str(tmp_path/"t2_seg-manual_pad.nii.gz")
+
+    # 't2_seg-manual.nii.gz' covers all the slices. Add an empty slice at the top (and bottom)
+    sct_image.main(argv=['-i', path_seg,
+                         '-pad', '0,1,0',   # AIL orientation
+                         '-o', path_seg_pad])
+
+    # Create an empty mask (no lesion)
+    sct_label_utils.main(argv=['-i', path_seg_pad,  # the lesion and cord dimensions must match
+                               '-o', path_empty_lesion,
+                               '-create', '0,0,0,0'])  # Create a label at 0,0,0 with value 0 (no lesion)
+
+    # Run the analysis on the empty lesion file
+    # Use pytest's subprocess run to catch the sys.exit() call
+    from subprocess import run
+    import sys
+
+    # Run the script as a separate process to catch the exit code
+    process = run([sys.executable, '-m', 'spinalcordtoolbox.scripts.sct_analyze_lesion',
+                   '-m', path_empty_lesion,
+                   '-s', path_seg_pad,
+                   '-nli-slice', '0',   # NLI slice outside the spinal cord segmentation (the padded slice)
+                   '-ofolder', str(tmp_path),
+                   '-qc', str(tmp_path_qc)],
+                  capture_output=True)
+
+    # Check that the process exited with exit code 1
+    assert process.returncode == 1
+
+    # Check that the appropriate warning message is in the output
+    assert "No spinal cord found at NLI slice" in process.stdout.decode('utf-8')
+

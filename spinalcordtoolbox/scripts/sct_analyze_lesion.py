@@ -1108,6 +1108,22 @@ class AnalyzeLesion:
         # Get the RPI-oriented (x=R-L, y=P-A, z=I-S) spinal cord mask
         im_sc_data = Image(self.fname_sc).data
 
+        if self.nli_slice is not None:
+            # Compute the spinal cord center of mass in the R-L axis at the NLI slice
+            spinal_cord_slice = im_sc_data[:, :, self.nli_slice]
+            if np.any(spinal_cord_slice):
+                self.interpolated_midsagittal_slice_RPI = center_of_mass(spinal_cord_slice)[0]  # [0] --> R-L
+            else:
+                printv(f'ERROR: No spinal cord found at The NLI slice (RPI, S-I axis): {self.nli_slice}. '
+                       f'Cannot compute midsagittal measurements.', self.verbose, 'error')
+                return
+        else:
+            # Handle no lesion found AND no NLI slice provided case
+            if im_lesion_data_largest_lesion is None:
+                printv('ERROR: No lesion found and no NLI slice provided. Cannot compute midsagittal slice.',
+                       self.verbose, 'error')
+                return
+
         # 1. Find lesion center of mass in S-I axis (z direction)
         z_center = int(round(center_of_mass(im_lesion_data_largest_lesion)[2]))   # [2] --> S-I
         # 2. Define analysis range (2 axial slices above and below the lesion center of mass) around lesion center
