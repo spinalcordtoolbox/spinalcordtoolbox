@@ -1239,7 +1239,7 @@ class AnalyzeLesion:
             else:
                 printv('WARNING: No lesion found in the input image. However, NLI slice and the spinal cord '
                        'segmentation were provided, so the script will continue to measure the midsagittal A-P diameter '
-                       'at the specified NLI slice.'
+                       'at the specified NLI slice. '
                        'The measured A-P diameter will be used as a proxy for the tissue bridges.',
                        self.verbose, 'warning')
 
