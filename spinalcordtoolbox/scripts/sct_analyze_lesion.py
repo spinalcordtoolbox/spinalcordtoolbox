@@ -1343,7 +1343,6 @@ class AnalyzeLesion:
                 printv(f"ERROR: The provided NLI slice ({self.nli_slice}) is out of range for the S-I dimension of the "
                        f"input images (0 to {im_sc.dim[2] - 1}).", self.verbose, 'error')
 
-
     def ifolder2tmp(self):
         # copy input image
         if self.fname_mask is not None:
