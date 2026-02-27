@@ -102,7 +102,7 @@ def get_parser():
         '-nli-slice',
         help=textwrap.dedent("""
             Slice number (in the S-I axis) corresponding to the Neurological Level of Injury (NLI).
-            If provided, this slice will be used to measure the midsagittal A-P diameter instead of the 
+            If provided, this slice will be used to measure the midsagittal A-P diameter instead of the
             automatically computed midsagittal slice based on the lesion center of mass.
             The measured A-P diameter is then used as a proxy for the tissue bridges.
             This is useful when no lesion is found in the image but you still need to quantify tissue bridges.
@@ -431,7 +431,7 @@ class AnalyzeLesion:
             self.measure_pd.loc[idx, 'interpolated_dorsal_bridge_width [mm]'] = min_interpolated_dorsal_bridge_width_mm
             self.measure_pd.loc[idx, 'interpolated_ventral_bridge_width [mm]'] = min_interpolated_ventral_bridge_width_mm
             self.measure_pd.loc[idx, 'interpolated_total_bridge_width [mm]'] = interpolated_total_bridge_width_mm
-            printv(f'  Lesion not on midsagittal slice, using spinal cord A-P diameter as proxy',
+            printv('  Lesion not on midsagittal slice, using spinal cord A-P diameter as proxy',
                    self.verbose, type='warning')
             printv(f'  Midsagittal dorsal tissue bridge width: '
                    f'{np.round(min_interpolated_dorsal_bridge_width_mm, 2)} mm',
@@ -1266,8 +1266,7 @@ class AnalyzeLesion:
             sc_ap_diameter_interpolated = self._interpolate_values(sc_ap_diameter1, sc_ap_diameter2)
 
             # Convert to mm and apply angle correction
-            sc_ap_diameter_mm = (sc_ap_diameter_interpolated * p_lst[1] *
-                                np.cos(self.angles_sagittal[axial_slice]))
+            sc_ap_diameter_mm = (sc_ap_diameter_interpolated * p_lst[1] * np.cos(self.angles_sagittal[axial_slice]))
 
             return sc_ap_diameter_mm
         else:
