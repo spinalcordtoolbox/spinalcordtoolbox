@@ -478,3 +478,42 @@ def test_sct_analyze_lesion_nli_outside_image(tmp_path, tmp_path_qc):
     # Check that the appropriate warning message is in the output
     assert "is out of range for the S-I dimension of the" in process.stdout.decode('utf-8')
 
+@pytest.mark.sct_testing
+def test_sct_analyze_lesion_different_dimensions_of_lesion_and_cord(tmp_path, tmp_path_qc):
+    """
+    Test that the script exits when lesion and cord segmentation dimensions don't match.
+    """
+    # Create an empty lesion mask (all zeros) using an existing test image as reference
+    path_empty_lesion = str(tmp_path/"empty_lesion.nii.gz")
+    path_seg = sct_test_path("t2", "t2_seg-manual.nii.gz")
+    path_seg_pad = str(tmp_path/"t2_seg-manual_pad.nii.gz")
+
+    # Add slices to change the cord segmentation dimensions so it's different from the lesion dimensions
+    sct_image.main(argv=['-i', path_seg,
+                         '-pad', '0,1,0',   # AIL orientation
+                         '-o', path_seg_pad])
+
+    # Create an empty mask (no lesion)
+    sct_label_utils.main(argv=['-i', path_seg,  # the lesion and cord dimensions must match
+                               '-o', path_empty_lesion,
+                               '-create', '0,0,0,0'])  # Create a label at 0,0,0 with value 0 (no lesion)
+
+    # Run the analysis on the empty lesion file
+    # Use pytest's subprocess run to catch the sys.exit() call
+    from subprocess import run
+    import sys
+
+    # Run the script as a separate process to catch the exit code
+    process = run([sys.executable, '-m', 'spinalcordtoolbox.scripts.sct_analyze_lesion',
+                   '-m', path_empty_lesion,
+                   '-s', path_seg_pad,
+                   '-nli-slice', '20',
+                   '-ofolder', str(tmp_path),
+                   '-qc', str(tmp_path_qc)],
+                  capture_output=True)
+
+    # Check that the process exited with exit code 1
+    assert process.returncode == 1
+
+    # Check that the appropriate warning message is in the output
+    assert "ERROR: Lesion and spinal cord images must have the same dimensions" in process.stdout.decode('utf-8')
