@@ -462,12 +462,11 @@ def test_sct_analyze_lesion_nli_outside_image(tmp_path, tmp_path_qc):
     from subprocess import run
     import sys
 
-    nli_slice = 100
     # Run the script as a separate process to catch the exit code
     process = run([sys.executable, '-m', 'spinalcordtoolbox.scripts.sct_analyze_lesion',
                    '-m', path_empty_lesion,
                    '-s', path_seg,
-                   '-nli-slice', str(nli_slice),
+                   '-nli-slice', '100',
                    '-ofolder', str(tmp_path),
                    '-qc', str(tmp_path_qc)],
                   capture_output=True)
