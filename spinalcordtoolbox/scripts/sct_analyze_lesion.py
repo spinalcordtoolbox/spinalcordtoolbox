@@ -276,8 +276,7 @@ class AnalyzeLesion:
         total_length = np.round(np.sum(self.measure_pd['length [mm]']), 2)
         # Take max width across lesions --> max
         max_width = np.round(np.max(self.measure_pd['width [mm]']), 2)
-        lesion_count = len(self.measure_pd['volume [mm3]'].values)
-
+        lesion_count = 0 if self.empty_lesion else len(self.measure_pd['volume [mm3]'].values)
         printv('\nTotal volume = ' + str(total_volume) + ' mm^3', self.verbose, 'info')
         printv('Total length = ' + str(total_length) + ' mm', self.verbose, 'info')
         printv('Max width = ' + str(max_width) + ' mm', self.verbose, 'info')
@@ -484,6 +483,59 @@ class AnalyzeLesion:
         printv(f'  Midsagittal total tissue bridge width: '
                f'{np.round(interpolated_total_bridge_width_mm, 2)} mm',
                self.verbose, type='info')
+
+    def _compute_sc_ap_diameter_at_nli(self, im_lesion_data, p_lst):
+        """
+        Compute the spinal cord A-P diameter at the user-provided NLI slice.
+        This is called when no lesions are detected but an NLI slice is provided.
+        The spinal cord A-P diameter is computed as a proxy for tissue bridges and saved to the output.
+
+        :param im_lesion_data: 3D numpy array: shape of the image (RPI orientation)
+        :param p_lst: list, pixel size
+        """
+        im_sc_data = Image(self.fname_sc).data
+
+        # Compute the spinal cord A-P diameter at the NLI slice
+        sc_ap_diameter_mm = self._compute_sc_ap_diameter_at_axial_slice(im_sc_data, self.nli_slice, p_lst)
+
+        if sc_ap_diameter_mm is not None:
+            # Since there is no lesion, we output the spinal cord A-P diameter as tissue bridge measurements
+            # For dorsal and ventral, we split it in half as there's no lesion to define the split
+            sc_ap_diameter_half_mm = sc_ap_diameter_mm / 2
+
+            # Create a single row in the measure_pd DataFrame for the NLI measurement
+            # Add a row with label 0 (no lesion)
+            new_row = {'label': 0}
+            self.measure_pd = pd.concat([self.measure_pd, pd.DataFrame([new_row])], ignore_index=True)
+            idx = self.measure_pd.index[-1]  # Get the index of the new row
+
+            # Save the NLI slice information
+            self.measure_pd.loc[idx, 'interpolated_midsagittal_slice'] = \
+                rpi_slice_to_orig_orientation(im_lesion_data.shape, self.orientation,
+                                              self.interpolated_midsagittal_slice_RPI, 0)
+
+            # Save the spinal cord A-P diameter as tissue bridge measurements
+            self.measure_pd.loc[idx, 'interpolated_dorsal_bridge_width [mm]'] = sc_ap_diameter_half_mm
+            self.measure_pd.loc[idx, 'interpolated_ventral_bridge_width [mm]'] = sc_ap_diameter_half_mm
+            self.measure_pd.loc[idx, 'interpolated_total_bridge_width [mm]'] = sc_ap_diameter_mm
+
+            printv(f'  Spinal cord A-P diameter at NLI slice (z={self.nli_slice} in RPI): {np.round(sc_ap_diameter_mm, 2)} mm',
+                   self.verbose, type='info')
+            printv(f'  Interpolated midsagittal slice number: '
+                   f'{round(rpi_slice_to_orig_orientation(im_lesion_data.shape, self.orientation, self.interpolated_midsagittal_slice_RPI, 0), 2)}',
+                   self.verbose, type='info')
+            printv(f'  Midsagittal dorsal bridge width (half A-P diameter): '
+                   f'{np.round(sc_ap_diameter_half_mm, 2)} mm',
+                   self.verbose, type='info')
+            printv(f'  Midsagittal ventral bridge width (half A-P diameter): '
+                   f'{np.round(sc_ap_diameter_half_mm, 2)} mm',
+                   self.verbose, type='info')
+            printv(f'  Midsagittal total tissue bridge width (spinal cord A-P diameter): '
+                   f'{np.round(sc_ap_diameter_mm, 2)} mm',
+                   self.verbose, type='info')
+        else:
+            printv(f'ERROR: No spinal cord A-P diameter computed at the NLI slice {self.nli_slice}.',
+                   self.verbose, 'warning')
 
     def _measure_tissue_bridges(self, im_lesion_data, p_lst, idx):
         """
@@ -1008,6 +1060,11 @@ class AnalyzeLesion:
                                                       im_lesion=im_lesion_data_cur,
                                                       p_lst=p_lst)
 
+        # Special case: no lesion but NLI slice and spinal cord segmentation are provided --> Compute spinal cord
+        # A-P diameter at the NLI slice (if user provided the NLI slice)
+        if self.nli_slice is not None:
+            self._compute_sc_ap_diameter_at_nli(im_lesion_data, p_lst)
+
         if self.path_template is not None:
             # compute total lesion distribution
             print("\nROI percentage taken up by all lesions...")
@@ -1058,7 +1115,11 @@ class AnalyzeLesion:
         If the spinal cord mask is provided, the following variables are computed and stored:
             - `self.interpolated_midsagittal_slice_RPI`: float, interpolated midsagittal slice
             - `self.interpolation_slices_RPI`: list, two sagittal slices used for interpolation
-        Steps:
+
+        If a user-provided NLI slice is available (-nli-slice option), it will be used instead of the
+        automatically computed midsagittal slice based on the lesion center of mass.
+
+        Steps (when NLI slice is NOT provided):
             1. Find lesion center of mass in superior-inferior axis (z direction). For example, 211.
             2. Define analysis range (2 axial slices above and below the lesion center of mass) around lesion center
                 mass in superior-inferior axis (z direction). For example, 209, 210, 211, 212, 213.
@@ -1085,21 +1146,32 @@ class AnalyzeLesion:
                 c. Calculate the interpolated slice:
                         interp_slice = (1 – 0.7) * slice_1 + 0.7 * slice_2
                         (slice_1 and slice_2 are 2D arrays)
+
+        Steps (when NLI slice IS provided):
+            1. Use the provided NLI slice (already converted to RPI in orient2rpi method)
+            2. Compute the spinal cord center of mass in the R-L axis at the NLI slice
+            3. Use this as the midsagittal slice for interpolation
+
         :param im_lesion_data: 3D numpy array, in the case of multiple lesions, each lesion has a unique label
         :param label_lst: list of lesion labels
         :param p_lst: list, pixel size of the lesion
         """
 
         # Compute volume for each lesion to determine the largest lesion. Its center of mass will be used for the
-        # midsagittal slice interpolation.
+        # midsagittal slice interpolation (if NLI slice is not provided).
         for lesion_label in label_lst:
             im_lesion_data_cur = np.copy(im_lesion_data == lesion_label)
             label_idx = self.measure_pd[self.measure_pd.label == lesion_label].index
             self._measure_volume(im_lesion_data_cur, p_lst, label_idx)
-        # Get the index of the largest lesion
-        largest_lesion_idx = self.measure_pd.loc[pd.to_numeric(self.measure_pd['volume [mm3]']).idxmax()]['label']
-        printv(f'Largest lesion index: {largest_lesion_idx}', self.verbose, 'info')
-        im_lesion_data_largest_lesion = np.copy(im_lesion_data == largest_lesion_idx)
+
+        im_lesion_data_largest_lesion = None
+        # Only get the largest lesion if we're using automatic detection (no NLI slice provided)
+        # and we have at least one lesion
+        if self.nli_slice is None and len(label_lst) > 0:
+            # Get the index of the largest lesion
+            largest_lesion_idx = self.measure_pd.loc[pd.to_numeric(self.measure_pd['volume [mm3]']).idxmax()]['label']
+            printv(f'Largest lesion index: {largest_lesion_idx}', self.verbose, 'info')
+            im_lesion_data_largest_lesion = np.copy(im_lesion_data == largest_lesion_idx)
 
         # Skip the rest of the function if the spinal cord mask is not provided
         if self.fname_sc is None:
@@ -1124,21 +1196,22 @@ class AnalyzeLesion:
                        self.verbose, 'error')
                 return
 
-        # 1. Find lesion center of mass in S-I axis (z direction)
-        z_center = int(round(center_of_mass(im_lesion_data_largest_lesion)[2]))   # [2] --> S-I
-        # 2. Define analysis range (2 axial slices above and below the lesion center of mass) around lesion center
-        # mass in S-I axis (z direction)
-        # TODO: try other number of slices above and below the lesion center of mass
-        z_range = np.arange(z_center - 2, z_center + 3)   # 5 slices in total
-        # 3: For each of these slices, compute the spinal cord center of mass in the x-axis (R-L direction)
-        stored_x_coordinates = []
-        for z in z_range:
-            spinal_cord_slice = im_sc_data[:, :, z]     # RPI --> selecting in the 3rd dimension (SI) to get axial slice
-            if np.any(spinal_cord_slice):  # Avoid empty slices
-                stored_x_coordinates.append(center_of_mass(spinal_cord_slice)[0])   # [0] --> R-L
-        # 4. Calculate target position in right-left axis (x direction) for the interpolation (mean of spinal cord
-        # center of mass (in the x-axis (R-L direction))
-        self.interpolated_midsagittal_slice_RPI = np.mean(stored_x_coordinates)    # e.g., for [8.6, 8.6, 8.9, 8.8, 9.6] --> 8.7
+            # 1. Find lesion center of mass in S-I axis (z direction)
+            z_center = int(round(center_of_mass(im_lesion_data_largest_lesion)[2]))   # [2] --> S-I
+            # 2. Define analysis range (2 axial slices above and below the lesion center of mass) around lesion center
+            # mass in S-I axis (z direction)
+            # TODO: try other number of slices above and below the lesion center of mass
+            z_range = np.arange(z_center - 2, z_center + 3)   # 5 slices in total
+            # 3: For each of these slices, compute the spinal cord center of mass in the x-axis (R-L direction)
+            stored_x_coordinates = []
+            for z in z_range:
+                spinal_cord_slice = im_sc_data[:, :, z]     # RPI --> selecting in the 3rd dimension (SI) to get axial slice
+                if np.any(spinal_cord_slice):  # Avoid empty slices
+                    stored_x_coordinates.append(center_of_mass(spinal_cord_slice)[0])   # [0] --> R-L
+            # 4. Calculate target position in right-left axis (x direction) for the interpolation (mean of spinal cord
+            # center of mass (in the x-axis (R-L direction))
+            self.interpolated_midsagittal_slice_RPI = np.mean(stored_x_coordinates)    # e.g., for [8.6, 8.6, 8.9, 8.8, 9.6] --> 8.7
+
         # Convert the interpolated midsagittal slice to the original orientation (just for printing)
         interpolated_midsagittal_slice_orig_orientation = (
             rpi_slice_to_orig_orientation(im_lesion_data.shape, self.orientation,
