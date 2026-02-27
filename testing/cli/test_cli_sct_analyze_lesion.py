@@ -363,6 +363,54 @@ def test_sct_analyze_lesion_no_lesion_found(tmp_path, tmp_path_qc):
                     data = pickle.load(f)
                     assert len(data['measures']) == 0
 
+@pytest.mark.sct_testing
+def test_sct_analyze_lesion_no_lesion_found_nli(tmp_path, tmp_path_qc):
+    """
+    Test that the script computes the spinal cord A-P spinal cord diameter if no lesion is found and NLI slice is
+    provided.
+    """
+    path_seg = sct_test_path("t2", "t2_seg-manual.nii.gz")
+    # Create an empty lesion mask (all zeros) using an existing test image as reference
+    path_ref = sct_test_path("t2", "t2.nii.gz")
+    path_empty_lesion = str(tmp_path/"empty_lesion.nii.gz")
+
+    # Create an empty mask (no lesion)
+    sct_label_utils.main(argv=['-i', path_ref,
+                               '-o', path_empty_lesion,
+                               '-create', '0,0,0,0'])  # Create a label at 0,0,0 with value 0 (no lesion)
+
+    # Run the analysis on the empty lesion file
+    # Use pytest's subprocess run to catch the sys.exit() call
+    from subprocess import run
+    import sys
+
+    # Run the script as a separate process to catch the exit code
+    process = run([sys.executable, '-m', 'spinalcordtoolbox.scripts.sct_analyze_lesion',
+                   '-m', path_empty_lesion,
+                   '-s', path_seg,
+                   '-nli-slice', '10',
+                   '-ofolder', str(tmp_path),
+                   '-qc', str(tmp_path_qc)],
+                  capture_output=True)
+
+    # Check that the appropriate warning message is in the output
+    assert (("WARNING: No lesion found in the input image. However, NLI slice and the spinal cord segmentation were "
+            "provided, so the script will continue to measure the midsagittal A-P diameter at the specified NLI slice")
+            in process.stdout.decode('utf-8'))
+
+    # Test presence of output files
+    _, fname, _ = extract_fname(path_empty_lesion)
+    for suffix in ['_analysis.pkl', '_analysis.xlsx', '_label.nii.gz']:
+        assert os.path.isfile(tmp_path / f"{fname}{suffix}")
+
+    # Load analysis results from pickled pandas.Dataframe
+    with open(tmp_path/f"{fname}_analysis.pkl", 'rb') as f:
+        measurements = pickle.load(f)['measures']
+
+    # Hardcoded for now
+    np.testing.assert_allclose(measurements['interpolated_dorsal_bridge_width [mm]'], 3.48, rtol=0.001)
+    np.testing.assert_allclose(measurements['interpolated_ventral_bridge_width [mm]'], 3.48, rtol=0.001)
+    np.testing.assert_allclose(measurements['interpolated_total_bridge_width [mm]'], 6.96, rtol=0.001)
 
 @pytest.mark.sct_testing
 def test_sct_analyze_lesion_no_lesion_found_nli_no_cord(tmp_path, tmp_path_qc):
