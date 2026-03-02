@@ -231,24 +231,23 @@ def test_compute_shape(im_seg, expected, params):
                                                      angle_correction=params['angle_corr'],
                                                      param_centerline=ParamCenterline(),
                                                      verbose=VERBOSE)
+    slice_range = [params['slice']] if 'slice' in params else range(im_seg.data.shape[2])
     for key in expected.keys():
         # Ensure values are within 5% of the expected value
         kwargs = {'rel': 0.05}
 
-        # fetch obtained_value
-        if 'slice' in params:
-            obtained_value = float(metrics['area'].data[params['slice']])
-        else:
+        for n_slice in slice_range:
+            # fetch obtained_value
             if key == 'length':
                 # when computing length, sums values across slices
                 obtained_value = metrics[key].data.sum()
             else:
-                # otherwise, average across slices
-                obtained_value = metrics[key].data.mean()
-        # fetch expected_value
-        if expected[key] is np.nan:
-            assert math.isnan(obtained_value)
-            break
-        else:
-            expected_value = pytest.approx(expected[key], **kwargs)
-        assert obtained_value == expected_value
+                # otherwise, take the slicewise value
+                obtained_value = metrics[key].data[n_slice]
+            # fetch expected_value
+            if expected[key] is np.nan:
+                assert math.isnan(obtained_value)
+                break
+            else:
+                expected_value = pytest.approx(expected[key], **kwargs)
+            assert obtained_value == expected_value
