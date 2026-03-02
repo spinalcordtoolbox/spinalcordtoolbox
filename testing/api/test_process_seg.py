@@ -138,7 +138,7 @@ def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.floa
     data_rot_crop = data_rot[padding:nx+padding, padding:ny+padding, padding:nz+padding]
 
     # Zero specified slices
-    if zeroslice is not []:
+    if zeroslice:
         data_rot_crop[:, :, zeroslice] = 0
 
     # Create nibabel object
