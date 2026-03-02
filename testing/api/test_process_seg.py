@@ -233,19 +233,47 @@ def test_compute_shape(im_seg, expected, params):
                                                      verbose=VERBOSE)
     slice_range = [params['slice']] if 'slice' in params else range(im_seg.data.shape[2])
     for key in expected.keys():
-        # Ensure values are within 5% of the expected value
-        kwargs = {'rel': 0.05}
+        # If we're testing angle values, ensure the values are within half a degree
+        # If we're testing distances (area, diameter, length), ensure the values are within 5% of the expected value
+        kwargs = ({'abs': 0.5} if key.startswith('angle_') or key == 'orientation' else
+                  {'rel': 0.05})
 
         # for length, the values are given per-slice, but we want to check the total length (hence `sum()`)
         if key == 'length':
             assert metrics[key].data.sum() == pytest.approx(expected[key], **kwargs)
         else:
-            for n_slice in slice_range:
-                obtained_value = metrics[key].data[n_slice]
-                # fetch expected_value
-                if expected[key] is np.nan:
-                    assert math.isnan(obtained_value)
-                    break
-                else:
-                    expected_value = pytest.approx(expected[key], **kwargs)
-                assert obtained_value == expected_value
+            # for angled cords, SCT's angle-estimating code uses the tangent to a single-voxel-wide centerline.
+            # this code is somewhat sensitive to single-voxel shifts in the centerline, e.g.:
+            #
+            #  [ ][ ][ ][X][ ]       [ ][ ][ ][X][ ]
+            #  [ ][ ][X][ ][ ]  vs.  [ ][ ][X][ ][ ]
+            #  [ ][X][ ][ ][ ]       [ ][ ][X][ ][ ]
+            #  [ ][X][ ][ ][ ]       [ ][X][ ][ ][ ]
+            #
+            # So, while ideally all slices would have an angle value exactly like the cord we generated, in practice this
+            # value can be off by a few degrees. So, it's not feasible to test the per-slice angle to the tight tolerance.
+            # Furthermore, the angle values have a direct effect on the angle correction applied to the metrics, meaning if
+            # angle correction is on, the per-slice metrics will stray from the expected values just like the angles do.
+            # However, we can still test:
+            #    1. The mean values across all slices
+            #    2. The property that each subsequent value is within a tolerance of the previous value
+            #       (i.e. that the values don't jump around wildly from slice to slice)
+            if params['angle_corr'] is True:
+                assert abs(metrics[key].data).mean() == pytest.approx(abs(expected[key]), **kwargs)
+                for i, n_slice in enumerate(slice_range):
+                    if i > 0:
+                        angle_curr = metrics[key].data[n_slice]
+                        angle_prev = metrics[key].data[slice_range[i - 1]]
+                        assert angle_curr == pytest.approx(angle_prev, **kwargs)
+
+            # for non-angled cords, we can reliably compare expected values on a slice-wise basis
+            else:
+                for n_slice in slice_range:
+                    obtained_value = metrics[key].data[n_slice]
+                    # fetch expected_value
+                    if expected[key] is np.nan:
+                        assert math.isnan(obtained_value)
+                        break
+                    else:
+                        expected_value = pytest.approx(expected[key], **kwargs)
+                    assert obtained_value == expected_value
