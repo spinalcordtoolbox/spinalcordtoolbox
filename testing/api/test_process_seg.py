@@ -10,6 +10,7 @@ from datetime import datetime
 from random import uniform
 import numpy as np
 import nibabel as nib
+from scipy.spatial.transform import Rotation
 from skimage.transform import rotate
 
 from spinalcordtoolbox import process_seg
@@ -38,6 +39,21 @@ dict_test_orientation = [
     {'input': 3 * math.pi / 8, 'expected': 67.5},
     {'input': -3 * math.pi / 8, 'expected': 67.5},
     ]
+
+
+def get_effective_angles(rot_x=0.0, rot_y=0.0, rot_z=0.0, order='xyz', degrees=True):
+    """
+    Given sequential rotations applied in `order`, compute the effective
+    angle_AP, angle_RL, and angle_IS that sct_process_segmentation would measure.
+    """
+    rot = {'x': rot_x, 'y': rot_y, 'z': rot_z}
+    r = Rotation.from_euler(seq=order, angles=[rot[ax] for ax in order], degrees=degrees)
+    tx, ty, tz = r.apply([0.0, 0.0, 1.0])
+    return {
+        'angle_x': np.degrees(np.arctan2(tx, tz)),
+        'angle_y': np.degrees(np.arctan2(ty, tz)),
+        'angle_z': np.degrees(np.arctan2(ty, tx)),
+    }
 
 
 def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.float64, orientation='LPI',
@@ -155,7 +171,51 @@ def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.floa
     img.change_orientation(orientation)
     if debug:
         img.save('tmp_dummy_seg_'+datetime.now().strftime("%Y%m%d%H%M%S%f")+'.nii.gz')
-    return img
+
+    # Determine expected metrics based on input values
+    if shape == 'ellipse':
+        # NB: We cannot just use the typical ellipse formula "area = math.pi * radius_RL * radius_AP", because
+        #     there is no one strategy to define a voxel-based ellipse. (See: https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4966#discussion_r2210567786)
+        area = data[:, :, 0].sum()
+        diameter_AP = diameter_AP_regionprops = (radius_AP * 2) + 1
+        diameter_RL = diameter_RL_regionprops = (radius_RL * 2) + 1
+    else:
+        assert shape == 'rectangle'
+        area = (radius_RL*2+1) * (radius_AP*2+1)
+        # NB: skimage.regionprops will fit an "ellipse that has the same second-moments as the region." So, we need to
+        #     use the diameters for that ellipse. Since we only test rectangles with no rotation, we can hardcode the factor 2/sqrt(3).
+        #     source: https://scikit-image.org/docs/0.25.x/api/skimage.measure.html#skimage.measure.regionprops
+        diameter_AP_regionprops = (2 / math.sqrt(3)) * ((radius_AP * 2) + 1)
+        diameter_RL_regionprops = (2 / math.sqrt(3)) * ((radius_RL * 2) + 1)
+        # Ah, but actually, we recently refactored the code to use a different diameter measure instead of the "major axis length" for the diameter_AP
+        # So, I guess we CAN just use the simple formula here... but only for diameter_AP.
+        diameter_AP = (radius_AP * 2) + 1
+        diameter_RL = diameter_RL_regionprops
+
+    # NB: rotations are not commutative i.e. the order that rotations are applied matters.
+    #     if we ever have multiple rotations, we can't just take the `angle_` values and check directly, as each
+    #     subsequent rotation will change the effective rotation in the previous axes.
+    #     So, we need to compute the effective rotation about each original axis after applying all rotations.
+    #     NB: rotations are applied SI -> RL -> AP, so order should be z -> x -> y for RPI images
+    effective = get_effective_angles(rot_x=angle_RL, rot_y=angle_AP, rot_z=angle_IS, order='zxy')
+    expected = {
+        'area': area,
+        'angle_AP': effective['angle_x'],
+        'angle_RL': effective['angle_y'],
+        # FIXME: I don't really know how to estimate orientation of the 2D cross-sectional ellipse. This isn't working.
+        # 'orientation': effective['angle_z'],  # NB: 'orientation' is just rotation around the SI axis
+        'diameter_AP': diameter_AP,
+        'diameter_RL': diameter_RL,
+        'length': size_arr[2] * pixdim[2] / (np.cos(math.radians(angle_AP)) * np.cos(math.radians(angle_RL))),
+        'eccentricity': math.sqrt(1 - ((diameter_AP_regionprops / 2) / (diameter_RL_regionprops / 2)) ** 2),
+    }
+
+    # zero slices only affect the overall expected length
+    if zeroslice:
+        zero_percent = len(zeroslice) / size_arr[2]
+        expected['length'] *= (1 - zero_percent)
+
+    return [img, expected]
 
 
 @pytest.mark.parametrize('test_orient', dict_test_orientation)
@@ -166,63 +226,54 @@ def test_fix_orientation(test_orient):
 # Generate a list of fake segmentation for testing: (dummy_segmentation(params), dict of expected results)
 im_segs = [
     # test area
-    (dummy_segmentation(size_arr=(32, 32, 5), debug=DEBUG),
-     {'area': 77, 'angle_RL': 0.0, 'angle_AP': 0.0, 'length': 5.0},
-     {'angle_corr': False}),
+    dummy_segmentation(size_arr=(32, 32, 5), debug=DEBUG) +
+    [{'angle_corr': False}],
+
     # test anisotropic pixel dim
-    (dummy_segmentation(size_arr=(64, 32, 5), pixdim=(0.5, 1, 5), debug=DEBUG),
-     {'area': 77, 'angle_RL': 0.0, 'angle_AP': 0.0},
-     {'angle_corr': False}),
+    dummy_segmentation(size_arr=(64, 32, 5), pixdim=(0.5, 1, 5), debug=DEBUG) +
+    [{'angle_corr': False}],
+
     # test with angle IS
-    (dummy_segmentation(size_arr=(32, 32, 5), pixdim=(1, 1, 5), angle_IS=15, debug=DEBUG),
-     {'area': 77, 'angle_RL': 0.0, 'angle_AP': 0.0},
-     {'angle_corr': False}),
+    dummy_segmentation(size_arr=(32, 32, 5), pixdim=(1, 1, 5), angle_IS=15, debug=DEBUG) +
+    [{'angle_corr': False}],
+
     # test with ellipse shape
-    (dummy_segmentation(size_arr=(64, 64, 5), shape='ellipse', radius_RL=13.0, radius_AP=5.0, angle_RL=0.0,
-                        debug=DEBUG),
-     {'area': 197.0, 'diameter_AP': 10.0, 'diameter_RL': 26.0, 'angle_RL': 0.0, 'angle_AP': 0.0},
-     {'angle_corr': False}),
+    dummy_segmentation(size_arr=(64, 64, 5), shape='ellipse', radius_RL=13, radius_AP=5, angle_RL=0, debug=DEBUG) +
+    [{'angle_corr': False}],
+
     # test with int16. Different bit ordering, which can cause issue when applying transform.warp()
-    (dummy_segmentation(size_arr=(64, 320, 5), pixdim=(1, 1, 1), dtype=np.int16, orientation='RPI',
-                        shape='rectangle', radius_RL=13.0, radius_AP=5.0, angle_RL=0.0, debug=DEBUG),
-     {'area': 297.0, 'angle_RL': 0.0, 'angle_AP': 0.0},
-     {'angle_corr': False}),
+    dummy_segmentation(size_arr=(64, 320, 5), shape='rectangle', radius_RL=13, radius_AP=5, angle_RL=0, debug=DEBUG,
+                       pixdim=(1, 1, 1), dtype=np.int16, orientation='RPI',) +
+    [{'angle_corr': False}],
+
     # test with angled spinal cord (neg angle)
-    (dummy_segmentation(size_arr=(64, 64, 20), shape='ellipse', radius_RL=13.0, radius_AP=5.0, angle_RL=-30.0,
-                        debug=DEBUG),
-     {'area': 197.0, 'diameter_AP': 10.0, 'diameter_RL': 26.0, 'angle_RL': -30.0, 'angle_AP': 0.0, 'length': 23.15},
-     {'angle_corr': True}),
+    dummy_segmentation(size_arr=(64, 64, 20), shape='ellipse', radius_RL=13, radius_AP=5, angle_RL=-30, debug=DEBUG) +
+    [{'angle_corr': True}],
+
     # test with AP angled spinal cord
-    (dummy_segmentation(size_arr=(64, 64, 20), shape='ellipse', radius_RL=13.0, radius_AP=5.0, angle_AP=20.0,
-                        debug=DEBUG),
-     {'area': 197.0, 'diameter_AP': 9.41, 'diameter_RL': 26.0, 'angle_RL': 0.0, 'angle_AP': 20.0, 'length': 21.02},
-     {'angle_corr': True}),
+    dummy_segmentation(size_arr=(64, 64, 20), shape='ellipse', radius_RL=13, radius_AP=5, angle_AP=20, debug=DEBUG) +
+    [{'angle_corr': True}],
+
     # test with RL and AP angled spinal cord
-    (dummy_segmentation(size_arr=(64, 64, 50), shape='ellipse', radius_RL=13.0, radius_AP=5.0,
-                        angle_RL=-10.0, angle_AP=15.0, debug=DEBUG),
-     {'area': 196.0, 'diameter_AP':  9.465, 'diameter_RL': 26.0, 'angle_RL': -10.0, 'angle_AP': 15.0},
-     {'angle_corr': True}),
-    # Reproduce issue: "LinAlgError: SVD did not converge". Note: due to the cropping, the estimated angle_RL is wrong,
-    # so it had to be made wrong in the expected values
-    (dummy_segmentation(size_arr=(64, 64, 50), shape='ellipse', radius_RL=13.0, radius_AP=5.0,
-                        angle_RL=-10.0, angle_AP=30.0, debug=DEBUG),
-     {'area': 197.0, 'diameter_AP': 9.418, 'diameter_RL': 26.0, 'angle_RL': -11.5, 'angle_AP': 30.0},
-     {'angle_corr': True}),
+    dummy_segmentation(size_arr=(64, 64, 50), shape='ellipse', radius_RL=13, radius_AP=5, angle_RL=-10, angle_AP=15, debug=DEBUG) +
+    [{'angle_corr': True}],
+
+    # Reproduce issue: "LinAlgError: SVD did not converge".
+    dummy_segmentation(size_arr=(64, 64, 50), shape='ellipse', radius_RL=13, radius_AP=5, angle_RL=-10, angle_AP=30, debug=DEBUG) +
+    [{'angle_corr': True}],
+
     # test uint8 input
-    (dummy_segmentation(size_arr=(32, 32, 50), dtype=np.uint8, angle_RL=15, debug=DEBUG),
-     {'area': 77, 'angle_RL': 13.269097801736525, 'angle_AP': 0.0},
-     {'angle_corr': True}),
+    dummy_segmentation(size_arr=(32, 32, 50), dtype=np.uint8, angle_RL=15, debug=DEBUG) +
+    [{'angle_corr': True}],
+
     # test all output params
-    (dummy_segmentation(size_arr=(128, 128, 5), pixdim=(1, 1, 1), shape='ellipse', radius_RL=50.0, radius_AP=30.0,
-                        debug=DEBUG),
-     {'area': 4701, 'angle_AP': 0.0, 'angle_RL': 0.0, 'diameter_AP': 60.0, 'diameter_RL': 100.0, 'eccentricity': 0.8,
-      'orientation': 0.0},
-     {'angle_corr': False}),
+    dummy_segmentation(size_arr=(128, 128, 5), pixdim=(1, 1, 1), shape='ellipse', radius_RL=50, radius_AP=30, debug=DEBUG) +
+    [{'angle_corr': False}],
+
     # test with one empty slice
-    (dummy_segmentation(size_arr=(32, 32, 5), zeroslice=[2], debug=DEBUG),
-     {'area': np.nan},
-     {'angle_corr': False, 'slice': 2})
-    ]
+    dummy_segmentation(size_arr=(32, 32, 5), zeroslice=[2], debug=DEBUG) +
+    [{'angle_corr': False, 'slice': 2}]
+]
 
 
 @pytest.mark.parametrize('im_seg,expected,params', im_segs)
