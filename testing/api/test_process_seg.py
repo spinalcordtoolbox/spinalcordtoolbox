@@ -236,18 +236,16 @@ def test_compute_shape(im_seg, expected, params):
         # Ensure values are within 5% of the expected value
         kwargs = {'rel': 0.05}
 
-        for n_slice in slice_range:
-            # fetch obtained_value
-            if key == 'length':
-                # when computing length, sums values across slices
-                obtained_value = metrics[key].data.sum()
-            else:
-                # otherwise, take the slicewise value
+        # for length, the values are given per-slice, but we want to check the total length (hence `sum()`)
+        if key == 'length':
+            assert metrics[key].data.sum() == pytest.approx(expected[key], **kwargs)
+        else:
+            for n_slice in slice_range:
                 obtained_value = metrics[key].data[n_slice]
-            # fetch expected_value
-            if expected[key] is np.nan:
-                assert math.isnan(obtained_value)
-                break
-            else:
-                expected_value = pytest.approx(expected[key], **kwargs)
-            assert obtained_value == expected_value
+                # fetch expected_value
+                if expected[key] is np.nan:
+                    assert math.isnan(obtained_value)
+                    break
+                else:
+                    expected_value = pytest.approx(expected[key], **kwargs)
+                assert obtained_value == expected_value
