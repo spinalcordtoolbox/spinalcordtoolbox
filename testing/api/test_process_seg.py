@@ -291,9 +291,9 @@ def test_compute_shape(im_seg, expected, params):
     slice_range = range(im_seg.data.shape[2])
     for key in expected.keys():
         # If we're testing angle values, ensure the values are within half a degree
-        # If we're testing distances (area, diameter, length), ensure the values are within 5% of the expected value
+        # If we're testing distances (area, diameter, length), ensure the values are within 3% of the expected value
         kwargs = ({'abs': 0.5} if key.startswith('angle_') or key == 'orientation' else
-                  {'rel': 0.05})
+                  {'rel': 0.03})  # FIXME: Try to make this tolerance tighter -- it's still too large.
 
         # for length, the values are given per-slice, but we want to check the total length (hence `sum()`)
         if key == 'length':
