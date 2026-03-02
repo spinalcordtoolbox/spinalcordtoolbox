@@ -288,7 +288,7 @@ def test_compute_shape(im_seg, expected, params):
                                                      angle_correction=params['angle_corr'],
                                                      param_centerline=ParamCenterline(),
                                                      verbose=VERBOSE)
-    slice_range = [params['slice']] if 'slice' in params else range(im_seg.data.shape[2])
+    slice_range = range(im_seg.data.shape[2])
     for key in expected.keys():
         # If we're testing angle values, ensure the values are within half a degree
         # If we're testing distances (area, diameter, length), ensure the values are within 5% of the expected value
@@ -297,7 +297,8 @@ def test_compute_shape(im_seg, expected, params):
 
         # for length, the values are given per-slice, but we want to check the total length (hence `sum()`)
         if key == 'length':
-            assert metrics[key].data.sum() == pytest.approx(expected[key], **kwargs)
+            # ignore zeroed-out slices (i.e. `zeroslice`), as these will be `np.nan` and throw off the sum
+            assert np.nansum(metrics[key].data) == pytest.approx(expected[key], **kwargs)
         else:
             # for angled cords, SCT's angle-estimating code uses the tangent to a single-voxel-wide centerline.
             # this code is somewhat sensitive to single-voxel shifts in the centerline, e.g.:
@@ -326,11 +327,12 @@ def test_compute_shape(im_seg, expected, params):
             # for non-angled cords, we can reliably compare expected values on a slice-wise basis
             else:
                 for n_slice in slice_range:
+                    # fetch expected/obtained values
+                    expected_value = expected[key]
                     obtained_value = metrics[key].data[n_slice]
-                    # fetch expected_value
-                    if expected[key] is np.nan:
+
+                    # if n_slice is empty (i.e. `zeroslice` was set) all metrics should be `np.nan`
+                    if im_seg.data[:, :, n_slice].sum() == 0:
                         assert math.isnan(obtained_value)
-                        break
                     else:
-                        expected_value = pytest.approx(expected[key], **kwargs)
-                    assert obtained_value == expected_value
+                        assert obtained_value == pytest.approx(expected_value, **kwargs)
