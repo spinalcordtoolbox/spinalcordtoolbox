@@ -1300,11 +1300,14 @@ class AnalyzeLesion:
         # Exit the script if no lesion is found, unless NLI slice is provided
         if len(self.measure_pd['label']) == 0:
             self.empty_lesion = True
+            # No NLI slice provided
             if self.nli_slice is None:
                 printv('ERROR: No lesion found in the input image. You can provide a slice corresponding to '
                        'the Neurological Level of Injury (NLI) using the `-nli-slice` option to compute the spinal '
                        'cord A-P diameter at that slice). The measured A-P diameter will be used as a proxy for the '
                        'tissue bridges.', self.verbose, 'error')  # exit code 1
+
+            # No spinal cord segmentation provided
             if self.fname_sc is None:   # we need the spinal cord segmentation to compute the spinal cord A-P diameter
                 printv('ERROR: The spinal cord segmentation (`-s` option) is required if `-nli-slice` is '
                        'provided.', self.verbose, 'error')  # exit code 1
