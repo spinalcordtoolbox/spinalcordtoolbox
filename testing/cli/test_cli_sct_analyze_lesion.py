@@ -489,7 +489,7 @@ def test_sct_analyze_lesion_no_lesion_found_nli_outside_cord(tmp_path, tmp_path_
     assert process.returncode == 1
 
     # Check that the appropriate warning message is in the output
-    assert "No spinal cord found at NLI slice" in process.stdout.decode('utf-8')
+    assert "No spinal cord found at the NLI slice" in process.stdout.decode('utf-8')
 
 
 @pytest.mark.sct_testing

@@ -1186,7 +1186,7 @@ class AnalyzeLesion:
             if np.any(spinal_cord_slice):
                 self.interpolated_midsagittal_slice_RPI = center_of_mass(spinal_cord_slice)[0]  # [0] --> R-L
             else:
-                printv(f'ERROR: No spinal cord found at The NLI slice (RPI, S-I axis): {self.nli_slice}. '
+                printv(f'ERROR: No spinal cord found at the NLI slice (RPI, S-I axis): {self.nli_slice}. '
                        f'Cannot compute midsagittal measurements.', self.verbose, 'error')
                 return
         else:
