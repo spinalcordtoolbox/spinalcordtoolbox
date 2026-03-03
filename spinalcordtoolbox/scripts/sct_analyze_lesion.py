@@ -1308,6 +1308,16 @@ class AnalyzeLesion:
             if self.fname_sc is None:   # we need the spinal cord segmentation to compute the spinal cord A-P diameter
                 printv('ERROR: The spinal cord segmentation (`-s` option) is required if `-nli-slice` is '
                        'provided.', self.verbose, 'error')  # exit code 1
+
+            # Check that the NLI slice (provided by the user) is in the range of the S-I dimension
+            im_sc = Image(self.fname_sc)
+            if self.nli_slice < 0 or self.nli_slice >= im_sc.dim[2]:
+                printv(
+                    f"ERROR: The provided NLI slice ({self.nli_slice}) is out of range for the S-I dimension of the "
+                    f"input images (0 to {im_sc.dim[2] - 1}).", self.verbose, 'error')
+
+            # If we reach this point, it means that no lesion was found but the user provided an NLI slice and a
+            # spinal cord segmentation, so we can continue to compute the A-P diameter at the NLI slice
             printv('WARNING: No lesion found in the input image. However, NLI slice and the spinal cord '
                    'segmentation were provided, so the script will continue to measure the midsagittal A-P diameter '
                    'at the specified NLI slice. '
@@ -1334,12 +1344,6 @@ class AnalyzeLesion:
                 for fname_atlas in self.atlas_roi_lst:
                     self._orient(fname_atlas, 'RPI')
 
-        # Check that the NLI slice (provided by the user) is in the range of the S-I dimension
-        if self.nli_slice is not None:
-            im_sc = Image(self.fname_sc)
-            if self.nli_slice < 0 or self.nli_slice >= im_sc.dim[2]:
-                printv(f"ERROR: The provided NLI slice ({self.nli_slice}) is out of range for the S-I dimension of the "
-                       f"input images (0 to {im_sc.dim[2] - 1}).", self.verbose, 'error')
 
     def ifolder2tmp(self):
         # copy input image
