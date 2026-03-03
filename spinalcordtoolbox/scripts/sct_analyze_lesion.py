@@ -1347,7 +1347,6 @@ class AnalyzeLesion:
                 for fname_atlas in self.atlas_roi_lst:
                     self._orient(fname_atlas, 'RPI')
 
-
     def ifolder2tmp(self):
         # copy input image
         if self.fname_mask is not None:
