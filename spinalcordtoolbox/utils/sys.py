@@ -31,8 +31,16 @@ def stylize(string, styles):
     """Helper function that mimics colored.stylize to reduce boilerplate when coloring text."""
     if not isinstance(styles, list):
         styles = [styles]
-    style_codes = "".join([getattr(ANSIColors16, style, ANSIColors16.ResetAll) for style in styles])
-    return style_codes + string + ANSIColors16.ResetAll
+    # Convert style names into style codes
+    style_codes = []
+    for style in styles:
+        # Already in code form, apply directly
+        if style.startswith("\033"):
+            style_codes.append(style)
+        # Not in code form, fetch from class
+        else:
+            style_codes.append(getattr(ANSIColors16, style, ANSIColors16.ResetAll))
+    return "".join(style_codes) + string + ANSIColors16.ResetAll
 
 
 class ANSIColors16(object):
