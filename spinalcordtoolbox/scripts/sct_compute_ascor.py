@@ -119,13 +119,13 @@ def main(argv: Sequence[str]):
     path_tmp = temp_folder.get_path()
     path_tmp_sc = os.path.join(path_tmp, "sc.csv")
     path_tmp_canal = os.path.join(path_tmp, "canal.csv")
-    printv("Running sct_process_segmentation on spinal cord segmentation...", verbose, 'normal')
-    sct_process_segmentation.main(['-i', fname_sc_seg, '-o', path_tmp_sc,] + process_seg_argv)
-    printv("Running sct_process_segmentation on spinal canal segmentation...", verbose, 'normal')
-    sct_process_segmentation.main(['-i', fname_canal_seg, '-o', path_tmp_canal,] + process_seg_argv)
+    printv("\nRunning sct_process_segmentation on spinal cord segmentation...", verbose, 'normal')
+    sct_process_segmentation.main(['-i', fname_sc_seg, '-o', path_tmp_sc, '-v', '0'] + process_seg_argv)
+    printv("\nRunning sct_process_segmentation on spinal canal segmentation...", verbose, 'normal')
+    sct_process_segmentation.main(['-i', fname_canal_seg, '-o', path_tmp_canal, '-v', '0'] + process_seg_argv)
 
     # Compute aSCOR
-    printv("Computing aSCOR...", verbose, 'normal')
+    printv("\nComputing aSCOR...", verbose, 'normal')
     df_ascor = compute_ascor(path_tmp_sc, path_tmp_canal)
     # Save aSCOR to csv
     if arguments.append and os.path.exists(fname_out):

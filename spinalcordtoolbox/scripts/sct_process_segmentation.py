@@ -671,7 +671,8 @@ def main(argv: Sequence[str]):
                 angle_type='angle_hog',
             )
 
-    display_open(file_out)
+    if verbose:
+        display_open(file_out)
 
 
 if __name__ == "__main__":
