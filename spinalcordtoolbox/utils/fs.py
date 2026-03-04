@@ -27,7 +27,7 @@ def tmp_create(basename):
     """
     prefix = f"sct_{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}_{basename}_"
     tmpdir = tempfile.mkdtemp(prefix=prefix)
-    logger.info(f"Creating temporary folder ({tmpdir})")
+    logger.debug(f"Creating temporary folder ({tmpdir})")
     return tmpdir
 
 
