@@ -10,6 +10,7 @@ URL=$2
 # --silent: Hides the curl progress bar, which is unnecessary noise when testing >600 urls.
 # --insecure: Skip SSL verification. Since we're only checking the headers, this should be safe to do. (https://curl.se/docs/sslcerts.html)
 CURL_ARGS=(--head --silent --insecure)
+CURL_ARGS_GET=(--silent --insecure)
 # Explicitly write out the HTTP code to stdout, while redirecting the response output to /dev/null
 HTTP_CODE_ONLY=(--write-out '%{http_code}' --output /dev/null)
 # Override default behavior (exponential backoff + 10m limit) since we don't need that many retries
@@ -37,6 +38,16 @@ if [[ $status_code -ge 300 && $status_code -le 399 ]];then
     echo -e "$filename: \x1B[33m⚠️  Warning - Redirection - code: $status_code for URL $URL --> $LOCATION \x1B[0m"
     status_code=$(curl "${CURL_ARGS[@]}" "${HTTP_CODE_ONLY[@]}" "${RETRY_ARGS[@]}" --location -- "$URL")
     URL=$LOCATION
+fi
+
+# Check for "405 Method Not Allowed" error code (https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/405)
+# From https://http.dev/405: "returned by the server to indicate that the resource specified by the request exists
+#                             but the requested HTTP method is not allowed."
+# We encountered this error for the 'https://pmc.ncbi.nlm.nih.gov' domain, which explicitly defines `allow: GET`
+# So, retry without `--head` (i.e. a GET request). We could do this by default, but it's more expensive to do.
+if [[ $status_code -eq 405 ]];then
+    echo -e "$filename: \x1B[33m⚠️  Warning - HEAD request not allowed - code: $status_code for URL $URL\x1B[0m"
+    status_code=$(curl "${CURL_ARGS_GET[@]}" "${HTTP_CODE_ONLY[@]}" "${RETRY_ARGS[@]}" -- "$URL")
 fi
 
 # Check for success
