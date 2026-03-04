@@ -132,13 +132,14 @@ def main(argv: Sequence[str]):
         dataframe_old = pd.read_csv(fname_out, index_col=INDEX_COLUMNS)
         df_ascor = pd.concat([dataframe_old.reset_index(), df_ascor], ignore_index=True)
     df_ascor.to_csv(fname_out, index=False)
-    printv(f'\nSaved: {os.path.abspath(fname_out)}')
-    display_open(os.path.abspath(fname_out))
 
     # Clean up temp
     if arguments.r and temp_folder is not None:
         logger.info("\nRemove temporary files...")
         temp_folder.cleanup()
+
+    # Print final log message for user to open the output file
+    display_open(os.path.abspath(fname_out))
 
 
 if __name__ == "__main__":
