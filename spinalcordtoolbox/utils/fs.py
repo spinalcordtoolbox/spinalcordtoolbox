@@ -27,7 +27,7 @@ def tmp_create(basename):
     """
     prefix = f"sct_{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}_{basename}_"
     tmpdir = tempfile.mkdtemp(prefix=prefix)
-    logger.info(f"Creating temporary folder ({tmpdir})")
+    logger.debug(f"Creating temporary folder ({tmpdir})")
     return tmpdir
 
 
@@ -131,6 +131,7 @@ class TempFolder(object):
     def __init__(self, basename, verbose=0):
         self.path_tmp = tmp_create(basename)
         self.previous_path = None
+        self.verbose = verbose
 
     def chdir(self):
         """This method will change the working directory to the temporary folder."""
@@ -153,12 +154,12 @@ class TempFolder(object):
         :param filename: The filename to copy into the folder.
         """
         file_fname = os.path.basename(filename)
-        copy(filename, self.path_tmp)
+        copy(filename, self.path_tmp, verbose=self.verbose)
         return os.path.join(self.path_tmp, file_fname)
 
     def cleanup(self):
         """Remove the created folder and its contents."""
-        rmtree(self.path_tmp)
+        rmtree(self.path_tmp, verbose=self.verbose)
 
 
 def cache_signature(input_files=[], input_params={}):

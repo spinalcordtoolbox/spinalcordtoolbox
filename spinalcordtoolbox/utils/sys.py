@@ -31,8 +31,16 @@ def stylize(string, styles):
     """Helper function that mimics colored.stylize to reduce boilerplate when coloring text."""
     if not isinstance(styles, list):
         styles = [styles]
-    style_codes = "".join([getattr(ANSIColors16, style, ANSIColors16.ResetAll) for style in styles])
-    return style_codes + string + ANSIColors16.ResetAll
+    # Convert style names into style codes
+    style_codes = []
+    for style in styles:
+        # Already in code form, apply directly
+        if style.startswith("\033"):
+            style_codes.append(style)
+        # Not in code form, fetch from class
+        else:
+            style_codes.append(getattr(ANSIColors16, style, ANSIColors16.ResetAll))
+    return "".join(style_codes) + string + ANSIColors16.ResetAll
 
 
 class ANSIColors16(object):
@@ -99,6 +107,53 @@ class ANSIColors16(object):
     BackgroundWhite = "\033[107m"
 
 
+# LOGGING GUIDELINES
+# - Info: Messages that help the user understand what step in the processing
+#         they are at (i.e. messages meant to avoid long periods of processing
+#         without any feedback).
+# - Debug: Info messages that do not meaningfully help the user understand what
+#          processing step they are at (i.e. information that is primarily
+#          useful in debugging)
+# - Warning: Actionable steps the user can take (i.e. CLI options to consider,
+#            potential data issues) but that SCT can automatically handle.
+# - Error: Unhandled warnings (i.e. issues with CLI args or input data that
+#          cannot be automatically handled)
+LOGGING_COLOURS = {
+    # SCT-specific `printv` logging colors
+    'normal': ANSIColors16.ResetAll,
+    'info': ANSIColors16.LightGreen,
+    'code': ANSIColors16.LightBlue,
+    'bold': ANSIColors16.Bold,
+    'process': ANSIColors16.LightMagenta,
+
+    # Overlap between SCT's `printv` log levels and `logging` library's log levels
+    'debug': ANSIColors16.DarkGray,
+    # 'info': ANSIColors16.Default,
+    'warning': [ANSIColors16.LightYellow, ANSIColors16.Bold],
+    'error': [ANSIColors16.LightRed, ANSIColors16.Bold],
+    'critical': [ANSIColors16.Red, ANSIColors16.Bold],
+}
+
+
+# Allow `logging` log level values to be used as keys as well
+# NB: 'info' is already used by `printv` for LightGreen, so we can't map logging.INFO to 'info'.
+#     Instead, we need to map logging.INFO to 'normal' to preserve the look of logging.info calls.
+# FIXME: We could change the `printv` info to be 'notice' instead, and then unify 'info' to be the same color for
+#        both `printv` and `logging`.
+LOGGING_COLOURS[logging.DEBUG] = LOGGING_COLOURS['debug']
+LOGGING_COLOURS[logging.INFO] = LOGGING_COLOURS['normal']
+LOGGING_COLOURS[logging.WARNING] = LOGGING_COLOURS['warning']
+LOGGING_COLOURS[logging.ERROR] = LOGGING_COLOURS['error']
+LOGGING_COLOURS[logging.CRITICAL] = LOGGING_COLOURS['critical']
+
+
+class CustomLoggingFormatter(logging.Formatter):
+    def format(self, record):
+        log_fmt = stylize("%(message)s", LOGGING_COLOURS[record.levelno])
+        formatter = logging.Formatter(log_fmt)
+        return formatter.format(record)
+
+
 def set_loglevel(verbose, caller_module_name):
     """
     Use SCT's verbosity values to set the logging level.
@@ -130,9 +185,15 @@ def set_loglevel(verbose, caller_module_name):
     caller_logger = logging.getLogger(caller_module_name)
     caller_logger.setLevel(getattr(logging, log_level))
 
+    # Set CLI logging formatter globally
+    root_logger = logging.getLogger()
+    for handler in root_logger.handlers:
+        if isinstance(handler, logging.StreamHandler):
+            handler.setFormatter(CustomLoggingFormatter())
+
     # Set the logging level globally, but only when scripts are directly invoked (e.g. from the command line)
     if caller_module_name == "__main__":
-        logging.root.setLevel(getattr(logging, log_level))
+        root_logger.setLevel(getattr(logging, log_level))
         # matplotlib is particularly chatty, so keep it at the default level
         # see: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4086
         logging.getLogger('matplotlib').setLevel(logging.WARNING)
@@ -335,10 +396,6 @@ def printv(string, verbose=1, type='normal', file=None):
         - However, API modules *should not* use this function. They should instead use `logging` for
           info/warning messages, and Exceptions for throwing errors.
     """
-    colors = {'normal': ANSIColors16.ResetAll, 'info': ANSIColors16.LightGreen,
-              'warning': ANSIColors16.LightYellow + ANSIColors16.Bold,
-              'error': ANSIColors16.LightRed + ANSIColors16.Bold,
-              'code': ANSIColors16.LightBlue, 'bold': ANSIColors16.Bold, 'process': ANSIColors16.LightMagenta}
 
     if file is None:
         # replicate the logic from print()
@@ -350,8 +407,8 @@ def printv(string, verbose=1, type='normal', file=None):
         try:
             # Print color only if the output is the terminal
             if file.isatty():
-                color = colors.get(type, ANSIColors16.ResetAll)
-                print(color + string + ANSIColors16.ResetAll, file=file)
+                color = LOGGING_COLOURS.get(type, ANSIColors16.ResetAll)
+                print(stylize(string, color), file=file)
             else:
                 print(string, file=file)
         except Exception:

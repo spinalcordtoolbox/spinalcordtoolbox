@@ -584,7 +584,7 @@ def propseg(img_input, options_dict):
 
     # If using OptiC
     elif use_optic:
-        image_centerline = optic.detect_centerline(image_input, contrast_type, remove_temp_files)
+        image_centerline = optic.detect_centerline(image_input, contrast_type, remove_temp_files, verbose)
         path_tmp = tmp_create(basename="propseg-centerline-optic")
         fname_centerline_optic = os.path.join(path_tmp, 'centerline_optic.nii.gz')
         image_centerline.save(fname_centerline_optic)

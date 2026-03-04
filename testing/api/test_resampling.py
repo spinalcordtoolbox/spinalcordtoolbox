@@ -2,6 +2,7 @@
 
 # TODO: add test for 2d image
 
+import logging
 import pytest
 
 import numpy as np
@@ -80,10 +81,11 @@ def test_nib_resample_image_4d(fake_4dimage_nib):
 
 def test_nib_resample_image_convert_to_float(fake_3dimage_nib, caplog):
     """Test that arithmetic resampling of an integer image gets converted to floating point first."""
+    caplog.set_level(logging.DEBUG)
     assert fake_3dimage_nib.dataobj.dtype.kind == 'i', "test input should have an integer dtype"
     img_r = resampling.resample_nib(fake_3dimage_nib, new_size=[2, 1, 1], new_size_type='factor', interpolation='linear')
     assert img_r.dataobj.dtype.kind == 'f', "test output should have a floating point dtype"
-    assert "Converting image" in caplog.text, "there should be a type conversion warning"
+    assert "Converting image" in caplog.text, "there should be a type conversion debug message"
 
 
 def test_nib_resample_image_no_convert_to_float(fake_3dimage_nib):
