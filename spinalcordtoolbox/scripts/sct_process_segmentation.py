@@ -480,7 +480,7 @@ def main(argv: Sequence[str]):
     else:
         if arguments.discfile is not None:
             # Copy the input files to the tempdir
-            temp_folder = TempFolder(basename="process-segmentation")
+            temp_folder = TempFolder(basename="process-segmentation", verbose=verbose)
             path_tmp_seg = temp_folder.copy_from(fname_segmentation)
             # label the segmentation by default, mimicking the old `-vertfile` workflow
             path_tmp_ctl = path_tmp_seg
@@ -535,7 +535,7 @@ def main(argv: Sequence[str]):
             else:
                 logger.warning(f"The centerline image does not cover slice(s) '{missing_slices}' of the segmentation. "
                                f"These slices will be excluded from the analysis.")
-                temp_folder = TempFolder(basename="process-segmentation-modified-seg")
+                temp_folder = TempFolder(basename="process-segmentation-modified-seg", verbose=verbose)
                 fname_segmentation = temp_folder.copy_from(fname_segmentation)
                 orig_orientation = im_seg.orientation
                 im_seg = im_seg.change_orientation('RPI')

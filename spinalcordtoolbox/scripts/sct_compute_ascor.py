@@ -115,7 +115,7 @@ def main(argv: Sequence[str]):
         process_seg_argv.extend(['-centerline-exclude-missing', '1'])
 
     # Run sct_process_segmentation twice: 1) SC seg 2) canal seg
-    temp_folder = TempFolder(basename="process-segmentation")
+    temp_folder = TempFolder(basename="process-segmentation", verbose=verbose)
     path_tmp = temp_folder.get_path()
     path_tmp_sc = os.path.join(path_tmp, "sc.csv")
     path_tmp_canal = os.path.join(path_tmp, "canal.csv")
