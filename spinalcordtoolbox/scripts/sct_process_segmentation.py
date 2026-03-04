@@ -541,7 +541,7 @@ def main(argv: Sequence[str]):
                 im_seg = im_seg.change_orientation('RPI')
                 im_seg.data[:, :, missing_slices] = 0
                 im_seg.change_orientation(orig_orientation)
-                im_seg.save(fname_segmentation)
+                im_seg.save(fname_segmentation, verbose=0)  # suppress overwrite in tmpdir
 
     if normalize_pam50 and not perslice:
         parser.error("Option '-normalize-PAM50' requires option '-perslice 1'.")
