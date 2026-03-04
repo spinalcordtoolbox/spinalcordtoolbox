@@ -105,7 +105,7 @@ def main(argv: Sequence[str]):
 
     # If `-centerline` has not been passed, specify it ourselves (to ensure that a consistent centerline is used for both segmentations)
     if '-centerline' not in process_seg_argv:
-        printv("No `-centerline` provided. A centerline will be computed from `-i-SC` and used for both SC and canal.", verbose, 'info')
+        printv("No `-centerline` provided. A centerline will be computed from `-i-SC` and used for both SC and canal.", verbose, 'warning')
         process_seg_argv.extend(['-centerline', fname_sc_seg])
 
     # Override the default value of `-centerline-exclude-missing` to be `1` instead of `0`
