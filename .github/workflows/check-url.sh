@@ -19,7 +19,7 @@ RETRY_ARGS=(--retry 2 --retry-delay 30 --retry-max-time 300 --retry-all-errors)
 
 # Make sure to check both URL *and* redirections (--location) for excluded patterns
 full_info=$(curl "${CURL_ARGS[@]}" --location -- "$URL")
-LOCATION=$(curl "${CURL_ARGS[@]}" -- "$URL" | perl -n -e '/^[Ll]ocation: (.*)$/ && print "$1\n"')
+LOCATION=$(curl -Ls -o /dev/null -w '%{url_effective}' -- "$URL")
 # `pipeline-hemis` -> private repository, will 404 (expected)
 # `.ru` -> Russian domains, which don't play nicely with curl'ing from GitHub's servers
 # `ieeexplore.ieee.org` -> oddly returns a "418 - I'm a teapot" error code instead of 403
