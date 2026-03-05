@@ -405,22 +405,34 @@ class AnalyzeLesion:
                                                                 np.cos(self.angles_sagittal[axial_slice]))
             interpolated_ventral_bridge_width_mm[axial_slice] = (ventral_bridge_interpolated * p_lst[1] *
                                                                  np.cos(self.angles_sagittal[axial_slice]))
-        # Get minimum dorsal and ventral bridge widths
-        min_interpolated_dorsal_bridge_width_mm = np.min(list(interpolated_dorsal_bridge_width_mm.values()))
-        min_interpolated_ventral_bridge_width_mm = np.min(list(interpolated_ventral_bridge_width_mm.values()))
+        # Get minimum dorsal and ventral bridge widths and their corresponding axial slices
+        min_dorsal_axial_slice_rpi, min_interpolated_dorsal_bridge_width_mm = min(
+            interpolated_dorsal_bridge_width_mm.items(), key=lambda x: x[1])
+        min_ventral_axial_slice_rpi, min_interpolated_ventral_bridge_width_mm = min(
+            interpolated_ventral_bridge_width_mm.items(), key=lambda x: x[1])
         # Sum up the dorsal and ventral tissue bridges
         interpolated_total_bridge_width_mm = (min_interpolated_dorsal_bridge_width_mm +
                                               min_interpolated_ventral_bridge_width_mm)
+
+        # Get the dimensions of the lesion mask for slice conversion
+        im_lesion = Image(self.fname_label)
+        dim = im_lesion.data.shape
+        # Convert axial slice numbers from RPI to the original orientation for printing
+        # '2' because of the S-I direction (third in RPI)
+        min_dorsal_axial_slice = rpi_slice_to_orig_orientation(dim, self.orientation,
+                                                                     min_dorsal_axial_slice_rpi, 2)
+        min_ventral_axial_slice = rpi_slice_to_orig_orientation(dim, self.orientation,
+                                                                      min_ventral_axial_slice_rpi, 2)
 
         # Save the minimum tissue bridges
         self.measure_pd.loc[idx, 'interpolated_dorsal_bridge_width [mm]'] = min_interpolated_dorsal_bridge_width_mm
         self.measure_pd.loc[idx, 'interpolated_ventral_bridge_width [mm]'] = min_interpolated_ventral_bridge_width_mm
         self.measure_pd.loc[idx, 'interpolated_total_bridge_width [mm]'] = interpolated_total_bridge_width_mm
         printv(f'  Midsagittal dorsal tissue bridge width: '
-               f'{np.round(min_interpolated_dorsal_bridge_width_mm, 2)} mm',
+               f'{np.round(min_interpolated_dorsal_bridge_width_mm, 2)} mm (axial slice {min_dorsal_axial_slice})',
                self.verbose, type='info')
         printv(f'  Midsagittal ventral tissue bridge width: '
-               f'{np.round(min_interpolated_ventral_bridge_width_mm, 2)} mm',
+               f'{np.round(min_interpolated_ventral_bridge_width_mm, 2)} mm (axial slice {min_ventral_axial_slice})',
                self.verbose, type='info')
         printv(f'  Midsagittal total tissue bridge width: '
                f'{np.round(interpolated_total_bridge_width_mm, 2)} mm',
