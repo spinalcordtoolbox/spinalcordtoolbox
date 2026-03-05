@@ -30,15 +30,6 @@ logger = logging.getLogger(__name__)
 # downloaded to (relative to the repo) if a location isn't passed by
 # the user.
 DATASET_DICT = {
-    "sct_example_data": {
-        "mirrors": [
-            "https://github.com/spinalcordtoolbox/sct_example_data/releases/download/r20180525/20180525_sct_example_data.zip",
-            "https://osf.io/kjcgs/?action=download",
-        ],
-        "default_location": os.path.join(__sct_dir__, "data", "sct_example_data"),
-        "download_type": "Datasets",
-        "default": False,
-    },
     "sct_testing_data": {
         "mirrors": [
             "https://github.com/spinalcordtoolbox/sct_testing_data/releases/download/r20250506/sct_testing_data-r20250506.zip",

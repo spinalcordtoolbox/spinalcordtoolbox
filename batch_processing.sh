@@ -14,7 +14,7 @@
 #
 #   [option] ./batch_processing.sh
 #
-#   Prevent (re-)downloading sct_example_data:
+#   Prevent (re-)downloading sct_course_data:
 #   SCT_BP_DOWNLOAD=0 ./batch_processing.sh
 #
 #   Specify quality control (QC) folder (Default is ~/qc_batch_processing):
@@ -56,11 +56,11 @@ start=$(date +%s)
 
 # download example data
 if [[ "$SCT_BP_DOWNLOAD" == "1" ]]; then
-  sct_download_data -d sct_example_data
+  sct_download_data -d sct_course_data
 fi
 
 # Enter our data directory
-cd "$SCT_DIR/data/sct_example_data"
+cd "$SCT_DIR/data/sct_course_data/single_subject/data"
 
 # install the sct_deepseg model this script will use later
 sct_deepseg spinalcord -install
@@ -242,14 +242,12 @@ sct_create_mask -i fmri_mean.nii.gz -p centerline,fmri_mean_centerline.nii.gz -s
 # Motion correction
 # Tips: Here data have sufficient SNR and there is visible motion between two consecutive scans, so motion correction is more efficient with -g 1 (i.e. not average consecutive scans)
 sct_fmri_moco -i fmri.nii.gz -g 1 -m mask_fmri_mean.nii.gz
-# Segment spinal cord manually
-#   Since these data have very poor cord/CSF contrast, it is difficult to segment the cord properly using sct_deepseg
-#   and hence in this case we do it manually. The file is called: fmri_crop_moco_mean_seg_manual.nii.gz
-#   There is no command for this step, because the file is included in the 'sct_example_data' dataset.
-# Generate QC for sct_fmri_moco ('fmri_crop_moco_mean_seg_manual.nii.gz' is needed to align each slice in the QC mosaic)
-sct_qc -i fmri.nii.gz -d fmri_moco.nii.gz -s fmri_crop_moco_mean_seg_manual.nii.gz -p sct_fmri_moco -qc "$SCT_BP_QC_FOLDER"
+# Segment spinal cord automatically
+sct_deepseg spinalcord -i fmri_moco_mean.nii.gz -qc "$SCT_BP_QC_FOLDER"
+# Generate QC for sct_fmri_moco ('fmri_moco_mean_seg.nii.gz' is needed to align each slice in the QC mosaic)
+sct_qc -i fmri.nii.gz -d fmri_moco.nii.gz -s fmri_moco_mean_seg.nii.gz -p sct_fmri_moco -qc "$SCT_BP_QC_FOLDER"
 # Register template->fmri
-sct_register_multimodal -i "$SCT_DIR/data/PAM50/template/PAM50_t2.nii.gz" -iseg "$SCT_DIR/data/PAM50/template/PAM50_cord.nii.gz" -d fmri_moco_mean.nii.gz -dseg fmri_crop_moco_mean_seg_manual.nii.gz -param step=1,type=seg,algo=slicereg,metric=MeanSquares,smooth=2:step=2,type=im,algo=bsplinesyn,metric=MeanSquares,iter=5,gradStep=0.5 -initwarp ../t2/warp_template2anat.nii.gz -initwarpinv ../t2/warp_anat2template.nii.gz -qc "$SCT_BP_QC_FOLDER" -owarp warp_template2fmri.nii.gz -owarpinv warp_fmri2template.nii.gz
+sct_register_multimodal -i "$SCT_DIR/data/PAM50/template/PAM50_t2.nii.gz" -iseg "$SCT_DIR/data/PAM50/template/PAM50_cord.nii.gz" -d fmri_moco_mean.nii.gz -dseg fmri_moco_mean_seg.nii.gz -param step=1,type=seg,algo=slicereg,metric=MeanSquares,smooth=2:step=2,type=im,algo=bsplinesyn,metric=MeanSquares,iter=5,gradStep=0.5 -initwarp ../t2/warp_template2anat.nii.gz -initwarpinv ../t2/warp_anat2template.nii.gz -qc "$SCT_BP_QC_FOLDER" -owarp warp_template2fmri.nii.gz -owarpinv warp_fmri2template.nii.gz
 # Warp template, including spinal levels (here we don't need the WM atlas)
 sct_warp_template -d fmri_moco_mean.nii.gz -w warp_template2fmri.nii.gz -a 0
 # Note, once you have computed fMRI statistics in the subject's space, you can use

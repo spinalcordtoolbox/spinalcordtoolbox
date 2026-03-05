@@ -46,6 +46,7 @@ testing/*.json
 test.sh
 sct_course-london19/
 sct_example_data/
+sct_course_data/
 
 # Profiling output
 **/*.prof
