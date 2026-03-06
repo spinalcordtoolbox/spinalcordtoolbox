@@ -4,8 +4,14 @@ if [ $# -ne 2 ]; then
     exit 1;
 fi
 
+# argument parsing
 filename=$1
 URL=$2
+
+###############################################################################
+#                  Run `curl` to resolve URLs and status code                 #
+###############################################################################
+
 # --head: Sends a HEAD request. We use this to be good netizens, since we only need the header to check the response code.
 # --silent: Hides the curl progress bar, which is unnecessary noise when testing >600 urls.
 # --insecure: Skip SSL verification. Since we're only checking the headers, this should be safe to do. (https://curl.se/docs/sslcerts.html)
@@ -51,6 +57,10 @@ if [[ $status_code -eq 405 ]];then
     echo -e "$filename: \x1B[33m⚠️  Warning - HEAD request not allowed - code: $status_code for URL $effective_url\x1B[0m"
     status_code=$(curl "${CURL_ARGS_GET[@]}" "${HTTP_CODE_ONLY[@]}" "${RETRY_ARGS[@]}" -- "$effective_url")
 fi
+
+###############################################################################
+#                             Analyze status code                             #
+###############################################################################
 
 # Check for success
 if [[ $status_code -ge 200 && $status_code -le 299 ]];then
