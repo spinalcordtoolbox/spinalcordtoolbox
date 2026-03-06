@@ -9,35 +9,37 @@ URL=$2
 # --head: Sends a HEAD request. We use this to be good netizens, since we only need the header to check the response code.
 # --silent: Hides the curl progress bar, which is unnecessary noise when testing >600 urls.
 # --insecure: Skip SSL verification. Since we're only checking the headers, this should be safe to do. (https://curl.se/docs/sslcerts.html)
-CURL_ARGS=(--head --silent --insecure)
+CURL_ARGS_HEAD=(--head --silent --insecure)
 CURL_ARGS_GET=(--silent --insecure)
 # Explicitly write out the HTTP code to stdout, while redirecting the response output to /dev/null
 HTTP_CODE_ONLY=(--write-out '%{http_code}' --output /dev/null)
+HTTP_CODE_PLUS_BOTH_URLS=(--write-out '%{http_code}|%{url}|%{url_effective}' --output /dev/null --location)
 # Override default behavior (exponential backoff + 10m limit) since we don't need that many retries
 # We still keep a 5m limit, though, because --retry respects the Retry-After field, which may be greater than 30s.
 RETRY_ARGS=(--retry 2 --retry-delay 30 --retry-max-time 300 --retry-all-errors)
 
-# Make sure to check both URL *and* redirections (--location) for excluded patterns
-full_info=$(curl "${CURL_ARGS[@]}" --location -- "$URL")
-LOCATION=$(curl -Ls -o /dev/null -w '%{url_effective}' -- "$URL")
-# `pipeline-hemis` -> private repository, will 404 (expected)
-# `.ru` -> Russian domains, which don't play nicely with curl'ing from GitHub's servers
-# `ieeexplore.ieee.org` -> oddly returns a "418 - I'm a teapot" error code instead of 403
-# `%s` -> placeholder for a URL, which is used in our documentation's `conf.py` file
-if [[ "$full_info + $URL" =~ 'pipeline-hemis'|'.ru'|'ieeexplore.ieee.org'|'%s' ]]; then
+# Do an initial `--head` check to figure out both the original and redirected URLs,
+# as well as the final status code after any redirections.
+IFS='|' read -r status_code original_url effective_url < <(
+  curl "${CURL_ARGS_HEAD[@]}" "${HTTP_CODE_PLUS_BOTH_URLS[@]}" "${RETRY_ARGS[@]}" -- "$URL"
+)
+
+# Check to see if either URLs are in the exclusion list, which includes:
+# - `pipeline-hemis` -> private repository, will 404 (expected)
+# - `.ru` -> Russian domains, which don't play nicely with curl'ing from GitHub's servers
+# - `ieeexplore.ieee.org` -> oddly returns a "418 - I'm a teapot" error code instead of 403
+# - `%s` -> placeholder for a URL, which is used in our documentation's `conf.py` file
+if [[ "$original_url + $effective_url" =~ 'pipeline-hemis'|'.ru'|'ieeexplore.ieee.org'|'%s' ]];then
     echo -e "$filename: \x1B[33m⚠️  Warning - Skipping: $URL --> $LOCATION\x1B[0m"
     exit 0
 fi
 
-# Get the status code for the original URL
-status_code=$(curl "${CURL_ARGS[@]}" "${HTTP_CODE_ONLY[@]}" "${RETRY_ARGS[@]}" -- "$URL")
-
-# If there is a redirection, then re-run curl with --location, then continue to check success/failure
-if [[ $status_code -ge 300 && $status_code -le 399 ]];then
-    echo "($status_code) $URL ($filename)" >> redirected_urls.txt
-    echo -e "$filename: \x1B[33m⚠️  Warning - Redirection - code: $status_code for URL $URL --> $LOCATION \x1B[0m"
-    status_code=$(curl "${CURL_ARGS[@]}" "${HTTP_CODE_ONLY[@]}" "${RETRY_ARGS[@]}" --location -- "$URL")
-    URL=$LOCATION
+# If the original URL redirects, then emit a log message
+if [[ "$original_url" != "$effective_url" ]];then
+    # Run without `--location` to get the status code for the original URL (to determine the type of redirect)
+    original_code=$(curl "${CURL_ARGS_HEAD[@]}" "${HTTP_CODE_ONLY[@]}" -- "$original_url")
+    echo "($original_code) $original_url ($filename)" >> redirected_urls.txt
+    echo -e "$filename: \x1B[33m⚠️  Warning - Redirection - code: $original_code for URL $original_url --> $effective_url \x1B[0m"
 fi
 
 # Check for "405 Method Not Allowed" error code (https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/405)
@@ -46,14 +48,14 @@ fi
 # We encountered this error for the 'https://pmc.ncbi.nlm.nih.gov' domain, which explicitly defines `allow: GET`
 # So, retry without `--head` (i.e. a GET request). We could do this by default, but it's more expensive to do.
 if [[ $status_code -eq 405 ]];then
-    echo -e "$filename: \x1B[33m⚠️  Warning - HEAD request not allowed - code: $status_code for URL $URL\x1B[0m"
-    status_code=$(curl "${CURL_ARGS_GET[@]}" "${HTTP_CODE_ONLY[@]}" "${RETRY_ARGS[@]}" -- "$URL")
+    echo -e "$filename: \x1B[33m⚠️  Warning - HEAD request not allowed - code: $status_code for URL $effective_url\x1B[0m"
+    status_code=$(curl "${CURL_ARGS_GET[@]}" "${HTTP_CODE_ONLY[@]}" "${RETRY_ARGS[@]}" -- "$effective_url")
 fi
 
 # Check for success
 if [[ $status_code -ge 200 && $status_code -le 299 ]];then
-    echo "($status_code) $URL ($filename)" >> valid_urls.txt
-    echo -e "$filename: \x1B[32m✅ OK status code: $status_code for domain $URL  \x1B[0m"
+    echo "($status_code) $effective_url ($filename)" >> valid_urls.txt
+    echo -e "$filename: \x1B[32m✅ OK status code: $status_code for domain $effective_url  \x1B[0m"
     exit 0
 fi
 
@@ -69,8 +71,8 @@ fi
 #         'pnas.org', 'neurology.org', 'academic.oup.com', 'science.org', 'pubs.rsna.org', 'direct.mit.edu',
 #         'thejns.org', 'ajnr.org', 'bmj.com', and 'biorxiv.org'
 if [[ $status_code -eq 403 ]];then
-    echo "($status_code) $URL ($filename)" >> valid_urls.txt
-    echo -e "$filename: \x1B[33m⚠️  Warning - Forbidden - status code: $status_code for domain $URL  \x1B[0m"
+    echo "($status_code) $effective_url ($filename)" >> valid_urls.txt
+    echo -e "$filename: \x1B[33m⚠️  Warning - Forbidden - status code: $status_code for domain $effective_url \x1B[0m"
     exit 0
 fi
 
@@ -86,11 +88,11 @@ fi
 # My best guess is that this due to either A) misconfigured CloudFlare B) a way to prevent LLMs from scraping content.
 # So, for now, we just filter out this response, as there's a good chance that this is still accessible via browsers.
 if [[ $status_code -eq 406 ]];then
-    echo "($status_code) $URL ($filename)" >> valid_urls.txt
-    echo -e "$filename: \x1B[33m⚠️  Warning - Not Acceptable - status code: $status_code for domain $URL  \x1B[0m"
+    echo "($status_code) $effective_url ($filename)" >> valid_urls.txt
+    echo -e "$filename: \x1B[33m⚠️  Warning - Not Acceptable - status code: $status_code for domain $effective_url  \x1B[0m"
     exit 0
 fi
 
 # Report failure
-echo -e "(\x1B[31m$status_code\x1B[0m) $URL ($filename)" >> invalid_urls.txt
-echo -e "$filename: \x1B[31m⛔ Error status code: $status_code for URL: $URL \x1B[0m"
+echo -e "(\x1B[31m$status_code\x1B[0m) $effective_url ($filename)" >> invalid_urls.txt
+echo -e "$filename: \x1B[31m⛔ Error status code: $status_code for URL: $effective_url \x1B[0m"
