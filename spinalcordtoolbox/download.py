@@ -41,7 +41,7 @@ DATASET_DICT = {
     },
     "sct_course_data": {
         "mirrors": [
-            "https://github.com/spinalcordtoolbox/sct_tutorial_data/archive/refs/tags/SCT-Course-20251208.zip",
+            "https://github.com/spinalcordtoolbox/sct_tutorial_data/archive/refs/heads/jn/3508-use-sct_tutorial_data-for-batch_processing.sh.zip",
         ],
         "default_location": os.path.join(__sct_dir__, "data", "sct_course_data"),
         "download_type": "SCT Course Files",
