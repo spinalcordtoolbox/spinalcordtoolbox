@@ -7,6 +7,7 @@ fi
 # argument parsing
 filename=$1
 URL=$2
+echo -e "\n${filename}: Checking URL ${URL}..."
 
 ###############################################################################
 #                  Run `curl` to resolve URLs and status code                 #
@@ -36,7 +37,7 @@ IFS='|' read -r status_code original_url effective_url < <(
 # - `ieeexplore.ieee.org` -> oddly returns a "418 - I'm a teapot" error code instead of 403
 # - `%s` -> placeholder for a URL, which is used in our documentation's `conf.py` file
 if [[ "$original_url + $effective_url" =~ 'pipeline-hemis'|'.ru'|'ieeexplore.ieee.org'|'%s' ]];then
-    echo -e "$filename: \x1B[33m⚠️  Warning - Skipping: $URL --> $LOCATION\x1B[0m"
+    echo -e "$filename: \x1B[33m⚠️ Warning - Skipping: $URL --> $LOCATION\x1B[0m"
     exit 0
 fi
 
@@ -45,7 +46,7 @@ if [[ "$original_url" != "$effective_url" ]];then
     # Run without `--location` to get the status code for the original URL (to determine the type of redirect)
     original_code=$(curl "${CURL_ARGS_HEAD[@]}" "${HTTP_CODE_ONLY[@]}" -- "$original_url")
     echo "($original_code) $original_url ($filename)" >> redirected_urls.txt
-    echo -e "$filename: \x1B[33m⚠️  Warning - Redirection - code: $original_code for URL $original_url --> $effective_url \x1B[0m"
+    echo -e "$filename: \x1B[33m⚠️ Warning - Redirection - code: $original_code for URL $original_url --> $effective_url \x1B[0m"
 fi
 
 # Check for "405 Method Not Allowed" error code (https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/405)
@@ -54,7 +55,7 @@ fi
 # We encountered this error for the 'https://pmc.ncbi.nlm.nih.gov' domain, which explicitly defines `allow: GET`
 # So, retry without `--head` (i.e. a GET request). We could do this by default, but it's more expensive to do.
 if [[ $status_code -eq 405 ]];then
-    echo -e "$filename: \x1B[33m⚠️  Warning - HEAD request not allowed - code: $status_code for URL $effective_url\x1B[0m"
+    echo -e "$filename: \x1B[33m⚠️ Warning - HEAD request not allowed - code: $status_code for URL $effective_url\x1B[0m"
     status_code=$(curl "${CURL_ARGS_GET[@]}" "${HTTP_CODE_ONLY[@]}" "${RETRY_ARGS[@]}" -- "$effective_url")
 fi
 
@@ -65,7 +66,7 @@ fi
 # Check for success
 if [[ $status_code -ge 200 && $status_code -le 299 ]];then
     echo "($status_code) $effective_url ($filename)" >> valid_urls.txt
-    echo -e "$filename: \x1B[32m✅ OK status code: $status_code for domain $effective_url  \x1B[0m"
+    echo -e "$filename: \x1B[32m✅  OK status code: $status_code for domain $effective_url  \x1B[0m"
     exit 0
 fi
 
@@ -82,7 +83,7 @@ fi
 #         'thejns.org', 'ajnr.org', 'bmj.com', and 'biorxiv.org'
 if [[ $status_code -eq 403 ]];then
     echo "($status_code) $effective_url ($filename)" >> valid_urls.txt
-    echo -e "$filename: \x1B[33m⚠️  Warning - Forbidden - status code: $status_code for domain $effective_url \x1B[0m"
+    echo -e "$filename: \x1B[33m⚠️ Warning - Forbidden - status code: $status_code for domain $effective_url \x1B[0m"
     exit 0
 fi
 
@@ -99,7 +100,7 @@ fi
 # So, for now, we just filter out this response, as there's a good chance that this is still accessible via browsers.
 if [[ $status_code -eq 406 ]];then
     echo "($status_code) $effective_url ($filename)" >> valid_urls.txt
-    echo -e "$filename: \x1B[33m⚠️  Warning - Not Acceptable - status code: $status_code for domain $effective_url  \x1B[0m"
+    echo -e "$filename: \x1B[33m⚠️ Warning - Not Acceptable - status code: $status_code for domain $effective_url  \x1B[0m"
     exit 0
 fi
 
