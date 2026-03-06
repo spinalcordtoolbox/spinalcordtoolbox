@@ -71,14 +71,19 @@ jobs:
       - name: Check dependencies
         run: sct_check_dependencies
 
+      - name: Download course data
+        run: sct_download_data -d sct_course_data
+
       - name: Run batch_processing.sh
-        run: bash batch_processing.sh
+        run: |
+          cd $SCT_DIR/data/sct_course_data/single_subject
+          bash batch_single_subject.sh
 
       - name: Upload QC results
         uses: actions/upload-artifact@v4
         with:
           name: Batch Processing QC (${{ matrix.os }})
-          path: "qc_example_data"
+          path: "qc_singleSubj"
 
       - name: "Upload CSV files for easier batch_processing.sh updating"
         uses: actions/upload-artifact@v4
