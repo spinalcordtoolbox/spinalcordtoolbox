@@ -444,6 +444,7 @@ class AnalyzeLesion:
                    self.verbose, type='info')
             return
 
+        debug = {}
         for axial_slice in axial_slices:
             # Get bridges for the 2 sagittal slices used for the interpolation
             # Filter for current axial slice once
@@ -458,6 +459,13 @@ class AnalyzeLesion:
             # Interpolate tissue bridges
             dorsal_bridge_interpolated = self._interpolate_values(*dorsal_bridges)
             ventral_bridge_interpolated = self._interpolate_values(*ventral_bridges)
+            # debug
+            debug[axial_slice] = {}
+            debug[axial_slice][f"slice_{self.interpolation_slices_RPI[0]+1}"] = round(dorsal_bridges[0] * p_lst[1] * np.cos(self.angles_sagittal[axial_slice]), 2)
+            debug[axial_slice][f"slice_{self.interpolation_slices_RPI[1]+1}"] = round(dorsal_bridges[1] * p_lst[1] * np.cos(self.angles_sagittal[axial_slice]), 2)
+            debug[axial_slice]["slice_interp"] = round(dorsal_bridge_interpolated * p_lst[1] * np.cos(
+                self.angles_sagittal[axial_slice]), 2)
+
             # Get the width of the tissue bridges in mm (by multiplying by p_lst[1]) and use np.cos(self.angles_sagittal[SLICE])
             # to correct for the angle of the spinal cord with respect to the axial slice
             interpolated_dorsal_bridge_width_mm[axial_slice] = (dorsal_bridge_interpolated * p_lst[1] *
