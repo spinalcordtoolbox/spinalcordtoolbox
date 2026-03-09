@@ -393,9 +393,14 @@ class AnalyzeLesion:
             # Create a lookup series for the current axial slice
             dorsal_lookup = slice_data.set_index('sagittal_slice')['dorsal_bridge_width']
             ventral_lookup = slice_data.set_index('sagittal_slice')['ventral_bridge_width']
-            # Get widths for the two sagittal slices. If there is no bridge for given slices, use 0.
-            dorsal_bridges = [dorsal_lookup.get(sag_slice, 0) for sag_slice in self.interpolation_slices_RPI]
-            ventral_bridges = [ventral_lookup.get(sag_slice, 0) for sag_slice in self.interpolation_slices_RPI]
+            # Get bridge widths for the two sagittal slices.
+            # NB: In the `_measure_tissue_bridges` method (where these values were determined) there
+            # is logic that checks if the lesion is missing, and if it is, use a bridge width value
+            # equal to the spinal cord width. This produces a more accurate interpolated value, and replaces
+            # the old faulty behavior where we would just set the bridge width to 0 if the lesion was missing.
+            # See: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/5184#issuecomment-4014030850
+            dorsal_bridges = [dorsal_lookup[sag_slice] for sag_slice in self.interpolation_slices_RPI]
+            ventral_bridges = [ventral_lookup[sag_slice] for sag_slice in self.interpolation_slices_RPI]
             # Interpolate tissue bridges
             dorsal_bridge_interpolated = self._interpolate_values(*dorsal_bridges)
             ventral_bridge_interpolated = self._interpolate_values(*ventral_bridges)
@@ -471,16 +476,27 @@ class AnalyzeLesion:
             printv('  Slices with lesion: ' + str(sagittal_lesion_slices_print), self.verbose, type='info')
 
         # --------------------------------------
-        # Compute tissue bridges for each sagittal slice containing the lesion
+        # Compute tissue bridges for each sagittal slice containing the lesion **and** the interpolation slices
         # --------------------------------------
+        # Note: We want to compute the bridge widths for the full 3D bounding box around the lesion, even if there
+        #       are some place in the bounding box where the lesion is not present. (If the lesion is not present, then
+        #       the bridge width will be the full width of the spinal cord.)
+        #       The reason we do this is because, for the interpolated midsagittal bridge width calculation, we need to
+        #       average the bridge widths between two sagittal slices. And, if the lesion is present in one sagittal
+        #       slice but not the other, we still need to compute the average. For more info on this edge case, see:
+        #       https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/5184
+        axial_lesion_slices = [np.unique(np.where(im_lesion_data[sagittal_slice, :, :])[1])  # 2D, dim=[AP, SI] --> [1]
+                               for sagittal_slice in sagittal_lesion_slices]
+        axial_lesion_slices = sorted(list(set(np.concatenate(axial_lesion_slices))))
+
         tissue_bridges_dict = {}
         # Loop across sagittal slices
-        for sagittal_slice in sagittal_lesion_slices:
-            # Get all axial slices (S-I direction) with the lesion for the selected sagittal slice
-            # In other words, we will iterate through the lesion in S-I direction and compute tissue bridges for each
-            # axial slice with the lesion
-            axial_lesion_slices = np.unique(np.where(im_lesion_data[sagittal_slice, :, :])[1])  # 2D, dim=[AP, SI] --> [1]
-            # Iterate across axial slices to compute tissue bridges
+        # NB: Make sure we include both of the `self.interpolation_slices_RPI` slices in the `sagittal_lesion_slices` list,
+        #     even if the lesion is not present in those slices. This is because we need to still compute placeholder values
+        #     for the interpolation.
+        sagittal_slices_all = sorted(list(set(sagittal_lesion_slices) | set(self.interpolation_slices_RPI)))
+        for sagittal_slice in sagittal_slices_all:
+            # Iterate across axial slices in the sagittal slice to compute tissue bridges
             for axial_slice in axial_lesion_slices:
                 # Get the lesion segmentation mask of the selected 2D axial slice
                 slice_lesion_data = im_lesion_data[sagittal_slice, :, axial_slice]
@@ -491,15 +507,19 @@ class AnalyzeLesion:
                 # Get the indices of the spinal cord mask for the selected axial slice
                 sc_indices = np.where(slice_sc_data)[0]
 
-                # Compute ventral and dorsal tissue bridges
-                dorsal_bridge_width = lesion_indices[0] - sc_indices[0]         # [0] returns the most dorsal elements
-                # if the lesion extends the spinal cord, the dorsal bridge is set to 0
-                if dorsal_bridge_width < 0:
-                    dorsal_bridge_width = 0
-                ventral_bridge_width = sc_indices[-1] - lesion_indices[-1]      # [-1] returns the most ventral elements
-                # if the lesion extends the spinal cord, the ventral bridge is set to 0
-                if ventral_bridge_width < 0:
-                    ventral_bridge_width = 0
+                # If lesion isn't present in this slice, then both bridge widths will just be the full width of the spinal cord.
+                if lesion_indices.size == 0:
+                    dorsal_bridge_width = ventral_bridge_width = sc_indices.size
+                else:
+                    # Compute ventral and dorsal tissue bridges
+                    dorsal_bridge_width = lesion_indices[0] - sc_indices[0]         # [0] returns the most dorsal elements
+                    # if the lesion extends the spinal cord, the dorsal bridge is set to 0
+                    if dorsal_bridge_width < 0:
+                        dorsal_bridge_width = 0
+                    ventral_bridge_width = sc_indices[-1] - lesion_indices[-1]      # [-1] returns the most ventral elements
+                    # if the lesion extends the spinal cord, the ventral bridge is set to 0
+                    if ventral_bridge_width < 0:
+                        ventral_bridge_width = 0
 
                 tissue_bridges_dict[sagittal_slice, axial_slice] = \
                     {'dorsal_bridge_width': dorsal_bridge_width,
