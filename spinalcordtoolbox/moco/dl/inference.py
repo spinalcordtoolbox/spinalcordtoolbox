@@ -11,7 +11,7 @@ import textwrap
 import numpy as np
 from shutil import copyfile
 
-from spinalcordtoolbox.image import add_suffix, generate_output_file, Image
+from spinalcordtoolbox.image import add_suffix, generate_output_file, Image, reorient_coordinates
 from spinalcordtoolbox.scripts import sct_dmri_separate_b0_and_dwi
 from spinalcordtoolbox.utils.sys import sct_dir_local_path, LazyLoader, printv
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, rmtree
@@ -71,30 +71,51 @@ def moco_dl(fname_data, fname_mask='', fname_ref='', path_out='', mode="fmri", f
     # Create tmp folder
     path_tmp = tmp_create(basename="moco-dl")
 
+    # Load native inputs
+    im_data_native = Image(fname_data)
+    im_mask_native = Image(fname_mask) if fname_mask != '' else None
+    im_ref_native = Image(fname_ref) if fname_ref != '' else None
+    orig_orient = im_data_native.orientation
+    printv(f"\n[moco-dl] Native input orientation: {orig_orient}")
+
+    # Reorient inputs to RPI for inference
+    printv("\n[moco-dl] Reorienting inputs to RPI for inference...")
+    im_data_rpi = im_data_native.copy()
+    if im_data_rpi.orientation != "RPI":
+        im_data_rpi.change_orientation("RPI")
+    im_mask_rpi = im_mask_native.copy()
+    if im_mask_rpi.orientation != "RPI":
+        im_mask_rpi.change_orientation("RPI")
+    im_ref_rpi = im_ref_native.copy()
+    if im_ref_rpi.orientation != "RPI":
+        im_ref_rpi.change_orientation("RPI")
+
     # Copying input data to tmp folder
     printv("\nCopying input data to tmp folder...")
-    im_data = Image(fname_data)
-    affine, header = im_data.affine, im_data.header
-    im_data.save(os.path.join(path_tmp))
-    mov_img = Image(im_data).data.astype(np.float32)
-    if fname_mask != '':
-        im_mask = Image(fname_mask)
-        im_mask.save(os.path.join(path_tmp))
-        mask_img = Image(im_mask).data.astype(np.float32)
-    if fname_ref != '':
-        im_ref = Image(fname_ref)
-        im_ref.save(os.path.join(path_tmp))
-        ref_img = Image(im_ref).data.astype(np.float32)
+    fname_data_rpi = os.path.join(path_tmp, "data_rpi.nii.gz")
+    im_data_rpi.save(fname_data_rpi)
+    if im_mask_rpi is not None:
+        fname_mask_rpi = os.path.join(path_tmp, "mask_rpi.nii.gz")
+        im_mask_rpi.save(fname_mask_rpi)
+    if im_ref_rpi is not None:
+        fname_ref_rpi = os.path.join(path_tmp, "ref_rpi.nii.gz")
+        im_ref_rpi.save(fname_ref_rpi)
     if fname_bvals != '':
         _, _, ext_bvals = extract_fname(fname_bvals)
-        file_bvals = f"bvals.{ext_bvals}"  # Use hardcoded name to avoid potential duplicate files when copying
+        file_bvals = f"bvals.{ext_bvals}"
         copyfile(fname_bvals, os.path.join(path_tmp, file_bvals))
         fname_bvals = file_bvals
     if fname_bvecs != '':
         _, _, ext_bvecs = extract_fname(fname_bvecs)
-        file_bvecs = f"bvecs.{ext_bvecs}"  # Use hardcoded name to avoid potential duplicate files when copying
+        file_bvecs = f"bvecs.{ext_bvecs}"
         copyfile(fname_bvecs, os.path.join(path_tmp, file_bvecs))
         fname_bvecs = file_bvecs
+
+    mov_img = im_data_rpi.data.astype(np.float32)
+    mask_img = im_mask_rpi.data.astype(np.float32)
+    ref_img = im_ref_rpi.data.astype(np.float32)
+    affine_rpi = im_data_rpi.affine
+    header_rpi = im_data_rpi.header
 
     # Build absolute output path and go to tmp folder
     curdir = os.getcwd()
@@ -141,10 +162,20 @@ def moco_dl(fname_data, fname_mask='', fname_ref='', path_out='', mode="fmri", f
     # Ty is flipped when converting from array coordinates to physical coordinates.
 
     # Save Moco output
-    im_moco = Image(warped, hdr=header)
-    im_moco.affine = affine
+    im_moco_rpi = Image(warped, hdr=header_rpi)
+    im_moco_rpi.affine = affine_rpi
+    im_moco_rpi.hdr.set_data_shape(im_moco_rpi.data.shape)
+    fname_moco_rpi_tmp = os.path.join(path_tmp, "mocoDL_rpi.nii.gz")
+    im_moco_rpi.save(fname_moco_rpi_tmp)
+
+    # Reorient corrected image back to native orientation
+    if orig_orient != "RPI":
+        printv(f"\n[moco-dl] Reorienting corrected image from RPI back to native orientation: {orig_orient}")
+        im_moco_native = im_moco_rpi.change_orientation(orig_orient)
+    else:
+        im_moco_native = im_moco_rpi.copy()
     fname_moco_tmp = os.path.join(path_tmp, "mocoDL.nii.gz")
-    im_moco.save(fname_moco_tmp)
+    im_moco_native.save(fname_moco_tmp)
 
     # Save mean output
     printv("\n[moco-dl] Computing time-averaged output volume...")
@@ -155,17 +186,37 @@ def moco_dl(fname_data, fname_mask='', fname_ref='', path_out='', mode="fmri", f
         _, fname_b0_mean, _, fname_dwi_mean = sct_dmri_separate_b0_and_dwi.main(argv=args)
     else:
         fname_moco_mean = add_suffix(fname_moco_tmp, '_mean')
-        im_moco.mean(dim=3).save(fname_moco_mean)
+        im_moco_native.mean(dim=3).save(fname_moco_mean)
 
-    # Save Tx, Ty, and displacement fields
+    # Reorient translation params back to native orientation
+    printv(f"\n[moco-dl] Reorienting translation params back to native orientation: {orig_orient}")
+    if orig_orient != "RPI":
+        D, T = Tx_mm_rpi.shape
+        Tx_mm_native = np.zeros((D, T), dtype=np.float32)
+        Ty_mm_native = np.zeros((D, T), dtype=np.float32)
+        for d in range(D):
+            for t in range(T):
+                # Treat slice-wise motion as a displacement vector in RPI space
+                vec_rpi = [[float(Tx_mm_rpi[d, t]), float(Ty_mm_rpi[d, t]), 0.0]]
+                # Reorient vector from RPI -> native using relative mode
+                vec_native = reorient_coordinates(vec_rpi, im_data_rpi, orig_orient, mode="relative")[0]
+                Tx_mm_native[d, t] = vec_native[0]
+                Ty_mm_native[d, t] = vec_native[1]
+    else:
+        Tx_mm_native = Tx_mm_rpi.astype(np.float32)
+        Ty_mm_native = Ty_mm_rpi.astype(np.float32)
+
+    # Save Tx and Ty in world-coordinates (mm unit)
     printv("\n[moco-dl] Saving translation params...")
-    im_Tx = Image(Tx[np.newaxis, np.newaxis, ...], hdr=header)
-    im_Tx.hdr.set_data_shape(im_Tx.data.shape)
-    tx_tmp = os.path.join(path_tmp, "Tx.nii.gz")
+    im_Tx = Image(Tx_mm_native[np.newaxis, np.newaxis, ...], hdr=im_data_native.header)
+    im_Tx.affine = im_data_native.affine
+    im_Tx.hdr.set_data_shape(im_Tx.data.shape)  # change header with new shape (1, 1, D, T)
+    tx_tmp = os.path.join(path_tmp, "Tx_mm.nii.gz")
     im_Tx.save(tx_tmp)
-    im_Ty = Image(Ty[np.newaxis, np.newaxis, ...], hdr=header)
-    im_Ty.hdr.set_data_shape(im_Ty.data.shape)
-    ty_tmp = os.path.join(path_tmp, "Ty.nii.gz")
+    im_Ty = Image(Ty_mm_native[np.newaxis, np.newaxis, ...], hdr=im_data_native.header)
+    im_Ty.affine = im_data_native.affine
+    im_Ty.hdr.set_data_shape(im_Ty.data.shape)  # change header with new shape (1, 1, D, T)
+    ty_tmp = os.path.join(path_tmp, "Ty_mm.nii.gz")
     im_Ty.save(ty_tmp)
 
     # Generate output files
