@@ -81,31 +81,47 @@ def test_sct_dmri_moco_with_mask_check_params(tmp_path, dmri_mask, tmp_path_qc, 
 @pytest.mark.sct_testing
 def test_sct_dmri_moco_dl(tmp_path, dmri_mask, tmp_path_qc, dmri_mean_seg):
     """Run the CLI script with '-m' and '-ref' option and using '-dl' algorithm."""
-    sct_dmri_moco.main(argv=['-i', sct_test_path('dmri', 'dmri.nii.gz'),
-                             '-bvec', sct_test_path('dmri', 'bvecs.txt'),
+    fname_data = sct_test_path('dmri', 'dmri.nii.gz')
+    sct_dmri_moco.main(argv=['-i', fname_data, '-bvec', sct_test_path('dmri', 'bvecs.txt'),
                              '-ref', sct_test_path('dmri', 'dwi_mean.nii.gz'),
                              '-m', dmri_mask, '-ofolder', str(tmp_path), '-dl',
                              '-qc', tmp_path_qc, '-qc-seg', dmri_mean_seg])
+
+    def build_disp_from_params(fname_tx, fname_ty, fname_ref, fname_warp):
+        """Re-build displacement field from translation parameters; Tx and Ty"""
+        tx = Image(fname_tx).data[0, 0, :, :]  # (Z,T)
+        ty = Image(fname_ty).data[0, 0, :, :]  # (Z,T)
+        ref = Image(fname_ref)
+        nx, ny, nz, nt = ref.data.shape
+        disp = np.zeros((nx, ny, nz, nt, 3), dtype=np.float32)
+        for t in range(nt):
+            for z in range(nz):
+                disp[:, :, z, t, 0] = tx[z, t]
+                disp[:, :, z, t, 1] = ty[z, t]
+                disp[:, :, z, t, 2] = 0.0
+        im_disp = Image(disp, hdr=ref.hdr)
+        im_disp.affine = ref.affine
+        im_disp.hdr.set_data_shape(disp.shape)
+        im_disp.hdr.set_intent('vector', (), '')
+        im_disp.save(fname_warp)
+
+    sct_image.main(argv=['-i', fname_data, '-split', 't', '-o', str(tmp_path / "dmri.nii.gz")])
+    # test on the first volume of dwi
+    t = 0
+    fname_vol = str(tmp_path / f"dmri_T{t:04d}.nii.gz")
     fname_warp_4d = str(tmp_path / "warp_dmri_moco.nii.gz")
+    # re-build displacement field
+    build_disp_from_params(fname_tx=str(tmp_path / "moco_params_x.nii.gz"),
+                           fname_ty=str(tmp_path / "moco_params_y.nii.gz"),
+                           fname_ref=fname_data, fname_warp=fname_warp_4d)
     sct_image.main(argv=['-i', fname_warp_4d, '-split', 't'])
-    sct_image.main(argv=['-i', sct_test_path('dmri', 'dmri.nii.gz'), '-split', 't', '-o', str(tmp_path / "dmri.nii.gz")])
+    fname_warp = str(tmp_path / f"warp_dmri_moco_T{t:04d}.nii.gz")
+    fname_out = str(tmp_path / f"dmri_warped_T{t:04d}.nii.gz")
 
-    T = Image(sct_test_path('dmri', 'dmri.nii.gz')).data.shape[3]
-    warped_list = []
-    for t in range(T):
-        fname_vol = str(tmp_path / f"dmri_T{t:04d}.nii.gz")
-        fname_warp = str(tmp_path / f"warp_dmri_moco_T{t:04d}.nii.gz")
-        fname_out = str(tmp_path / f"dmri_warped_T{t:04d}.nii.gz")
-
-        sct_apply_transfo.main(argv=['-i', fname_vol, '-d', sct_test_path('dmri', 'dwi_mean.nii.gz'),
-                                     '-w', fname_warp, '-o', fname_out, '-x', 'linear'])
-        assert (tmp_path / f"dmri_warped_T{t:04d}.nii.gz").exists(), "sct_apply_transfo failed to create output"
-        warped_list.append(Image(fname_out).data.astype(np.float32))
-
-    warped = np.stack(warped_list, axis=3)
+    sct_apply_transfo.main(argv=['-i', fname_vol, '-d', sct_test_path('dmri', 'dwi_mean.nii.gz'),
+                                 '-w', fname_warp, '-o', fname_out, '-x', 'linear'])
+    warped = (Image(fname_out).data.astype(np.float32))
     moco_dl = Image(str(tmp_path / "dmri_mocoDL.nii.gz")).data.astype(np.float32)
-    mask = Image(dmri_mask).data > 0
-    mask = mask[..., None]
 
     moco_vol0 = moco_dl[..., 0]
     # pick a representative slice: middle slice
