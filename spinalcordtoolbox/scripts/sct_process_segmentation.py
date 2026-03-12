@@ -427,6 +427,7 @@ def main(argv: Sequence[str]):
     fname_image = arguments.anat
 
     file_out = os.path.abspath(arguments.o)
+    path_output_dir = str(os.path.dirname(file_out))
     append = bool(arguments.append)
     levels = arguments.vert
     fname_vert_level = None
@@ -515,6 +516,7 @@ def main(argv: Sequence[str]):
     metrics_agg = {}
 
     metrics, fit_results = compute_shape(fname_segmentation,
+                                         path_output_dir,
                                          fname_image,
                                          angle_correction=angle_correction,
                                          centerline_path=centerline,

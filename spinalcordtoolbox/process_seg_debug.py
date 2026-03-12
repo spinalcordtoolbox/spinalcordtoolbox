@@ -21,6 +21,7 @@ from spinalcordtoolbox.registration.algorithms import compute_pca
 def create_regularized_hog_angle_plot(
         z_indices_array, filter_size,
         angle_hog_array, angle_hog_regularized,
+        path_output_dir
 ):
     plt.figure(figsize=(10, 6))
     plt.plot(z_indices_array, 180 * angle_hog_array / np.pi, 'ob', label='Original HOG angles')
@@ -30,7 +31,7 @@ def create_regularized_hog_angle_plot(
     plt.ylabel('Angle (deg)')
     plt.title(f"Regularized HOG angle estimation (filter_size: {filter_size})")
     plt.legend()
-    fname_out = os.path.join('process_seg_regularize_hog_rotation.png')
+    fname_out = os.path.join(path_output_dir, 'process_seg_regularize_hog_rotation.png')
     plt.savefig(fname_out, dpi=300)
     plt.close()
     logging.info(f"Saved regularized HOG angles visualization to: {fname_out}")
@@ -44,7 +45,7 @@ def create_quadrant_area_plots(
         # but passing them in directly avoids duplicate calculations.
         ant_r_mask, ant_l_mask, post_r_mask, post_l_mask, quadrant_areas,
         # Debug-specific inputs (passed only for these plots)
-        diameter_AP, diameter_RL, iz
+        diameter_AP, diameter_RL, iz, path_output_dir
 ):
     # simple transformations of the input
     y0, x0 = centroid
@@ -127,9 +128,11 @@ def create_quadrant_area_plots(
              fontsize=10, ha='center', va='center', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
 
     # Save figure
-    os.makedirs('debug_figures_area_quadrants', exist_ok=True)
+    debug_figure_area_quadrants_dir = os.path.join(path_output_dir, 'debug_figures_area_quadrants')
+    os.makedirs(debug_figure_area_quadrants_dir, exist_ok=True)
     fig.tight_layout()
-    fig.savefig(f'debug_figures_area_quadrants/cord_quadrant_tmp_fig_slice_{iz:03d}.png', dpi=150)
+    output_file = os.path.join(debug_figure_area_quadrants_dir, f'cord_quadrant_fig_slice_{iz:03d}.png')
+    fig.savefig(output_file, dpi=150)
 
 
 def _add_diameter_lines(ax, centroid, diameter_AP, diameter_RL, orientation_rad, dim):
@@ -164,7 +167,7 @@ def _setup_axis(ax, title, xlabel='y\nPosterior-Anterior (PA)', ylabel='x\nLeft-
 
 
 def create_ap_diameter_plots(angle_hog, ap0_r, ap_diameter, dim, iz, properties, rl0_r, rl_diameter,
-                             rotated_bin, seg_crop_r, coord_ap):
+                             rotated_bin, seg_crop_r, coord_ap, path_output_dir):
     """
     """
     def _add_labels(ax):
@@ -248,9 +251,9 @@ def create_ap_diameter_plots(angle_hog, ap0_r, ap_diameter, dim, iz, properties,
     plt.tight_layout()
     # plt.show()
     # Save the figure
-    if not os.path.exists('debug_figures_diameters'):
-        os.makedirs('debug_figures_diameters')
-    fname_out = os.path.join('debug_figures_diameters', f'slice_{iz}.png')
+    path_debug_diameter = os.path.join(path_output_dir, 'debug_figures_diameters')
+    os.makedirs(path_debug_diameter, exist_ok=True)
+    fname_out = os.path.join(path_debug_diameter, f'slice_{iz}.png')
     fig.savefig(fname_out, dpi=300, bbox_inches='tight')
     plt.close(fig)  # Close the figure to free up memory
     print(f'Saved debug figure for slice {iz} with segmentation properties to {fname_out}')
@@ -266,7 +269,8 @@ def create_symmetry_plots(
     seg_crop_r_flipped_RL, seg_crop_r_flipped_AP,
     symmetry_metrics,
     # Debug inputs
-    iz
+    iz,
+    path_output_dir
 ):
     # Simple transformations of the input
     y0, x0 = centroid
@@ -311,9 +315,11 @@ def create_symmetry_plots(
         f'Hausdorff RL (mm): {symmetry_metrics["symmetry_hausdorff_RL"]:.3f}, AP: {symmetry_metrics["symmetry_hausdorff_AP"]:.3f}\n'
         f'Symmetric diff RL (mm²): {symmetry_metrics["symmetry_difference_RL"]:.3f}, AP: {symmetry_metrics["symmetry_difference_AP"]:.3f}'
     )
-    if not os.path.exists('debug_figures_symmetry'):
-        os.makedirs('debug_figures_symmetry')
-    fname_out = os.path.join('debug_figures_symmetry', f'process_seg_symmetry_dice_z{iz:03d}.png')
+    # Save figure
+    print(path_output_dir)
+    path_debug_symmetry = os.path.join(path_output_dir, 'debug_figures_symmetry')
+    os.makedirs(path_debug_symmetry, exist_ok=True)
+    fname_out = os.path.join(path_debug_symmetry, f'process_seg_symmetry_dice_z{iz:03d}.png')
     plt.savefig(fname_out, dpi=300)
     plt.close()
     logging.info(f"Saved symmetry Dice visualization to: {fname_out}")

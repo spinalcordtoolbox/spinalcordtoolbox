@@ -47,13 +47,14 @@ KEYS_SYMMETRY = ['symmetry_dice_RL', 'symmetry_hausdorff_RL', 'symmetry_differen
                  'symmetry_dice_AP', 'symmetry_hausdorff_AP', 'symmetry_difference_AP']
 
 
-def compute_shape(segmentation, image=None, angle_correction=True, centerline_path=None, param_centerline=None,
+def compute_shape(segmentation, path_output_dir, image=None, angle_correction=True, centerline_path=None, param_centerline=None,
                   verbose=1, remove_temp_files=1, filter_size=5):
     """
     Compute morphometric measures of the spinal cord in the transverse (axial) plane from the segmentation.
     The segmentation could be binary or weighted for partial volume [0,1].
 
     :param segmentation: input segmentation. Could be either an Image or a file name.
+    :param path_output_dir: path to the output directory for debug figures.
     :param image: input image. Could be either an Image or a file name. Note that the image is necessary to turn on HOG/symmetry-based metrics
     :param angle_correction:
     :param centerline_path: path to image file to be used as a centerline for computing angle correction.
@@ -145,7 +146,7 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
             angle_AP_rad, angle_RL_rad = 0.0, 0.0
 
         # Compute shape properties for this slice
-        shape_property = _properties2d(current_patch_scaled, [px, py], pr, iz, verbose=verbose)
+        shape_property = _properties2d(current_patch_scaled, [px, py], pr, iz, path_output_dir=path_output_dir, verbose=verbose)
         if shape_property is not None:
             # Add custom fields
             shape_property['angle_AP'] = angle_AP_rad * 180.0 / math.pi     # convert to degrees
@@ -167,7 +168,8 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
     if image is not None:
         shape_properties_image = _properties_image(
             im, nz, px, py, pz, pr, min_z_index, max_z_index, property_list_image,
-            current_patches, current_tforms, angle_correction, filter_size, verbose
+            current_patches, current_tforms, angle_correction, filter_size, verbose,
+            path_output_dir=path_output_dir
         )
         shape_properties.update(shape_properties_image)
 
@@ -182,7 +184,7 @@ def compute_shape(segmentation, image=None, angle_correction=True, centerline_pa
 
 
 def _properties_image(im, nz, px, py, pz, pr, min_z_index, max_z_index, property_list,
-                      current_patches, current_tforms, angle_correction, filter_size, verbose):
+                      current_patches, current_tforms, angle_correction, filter_size, verbose, path_output_dir):
     """
     Compute morphometric measures of the spinal cord in the transverse (axial) plane that specifically
     require an anatomical image (namely symmetry, quadrant areas, and HOG-based angle).
@@ -233,7 +235,8 @@ def _properties_image(im, nz, px, py, pz, pr, min_z_index, max_z_index, property
         if verbose == 2:
             create_regularized_hog_angle_plot(
                 np.array(z_indices), filter_size,
-                np.array(angle_hog_values), angle_hog_regularized
+                np.array(angle_hog_values), angle_hog_regularized,
+                path_output_dir=path_output_dir
             )
     # If filter_size <= 0, then just use the original angles
     else:
@@ -244,7 +247,7 @@ def _properties_image(im, nz, px, py, pz, pr, min_z_index, max_z_index, property
         current_patch_scaled = current_patches[iz]['patch']
 
         # Compute shape properties with regularized angle_hog
-        shape_property = _properties2d(current_patch_scaled, [px, py], pr, iz, angle_hog=angle_hog, verbose=verbose)
+        shape_property = _properties2d(current_patch_scaled, [px, py], pr, iz, path_output_dir=path_output_dir, angle_hog=angle_hog, verbose=verbose)
 
         if shape_property is not None:
             # Add custom fields
@@ -260,12 +263,13 @@ def _properties_image(im, nz, px, py, pz, pr, min_z_index, max_z_index, property
     return shape_properties
 
 
-def _properties2d(seg, dim, pr, iz, angle_hog=None, verbose=1):
+def _properties2d(seg, dim, pr, iz, path_output_dir, angle_hog=None, verbose=1):
     """
     Compute shape property of the input 2D segmentation. Accounts for partial volume information.
     :param seg: 2D input segmentation in uint8 or float (weighted for partial volume) that has a single object. seg.shape[0] --> RL; seg.shape[1] --> PA
     :param dim: [px, py]: Physical dimension of the segmentation (in mm). X,Y respectively correspond to RL,PA.
     :param iz: Integer slice number (z index) of the segmentation. Used for plotting purposes.
+    :param path_output_dir: Path to the output directory for debug figures.
     :param angle_hog: Optional angle in radians to rotate the segmentation to align with AP/RL axes.
     :return:
     """
@@ -338,7 +342,7 @@ def _properties2d(seg, dim, pr, iz, angle_hog=None, verbose=1):
 
     # Measure diameters along AP in the rotated segmentation
     rotated_properties = _measure_ap_diameter(seg_crop_r, seg_crop_r_rotated, dim, region.orientation,
-                                              iz, properties, verbose)
+                                              iz, properties, verbose, path_output_dir=path_output_dir)
     # Update the properties dictionary with the rotated properties
     properties.update(rotated_properties)
     properties['orientation'] = -properties['orientation'] * 180.0 / math.pi  # convert to degrees
@@ -349,10 +353,10 @@ def _properties2d(seg, dim, pr, iz, angle_hog=None, verbose=1):
         # Compute quadrant areas and RL and AP symmetry
         quadrant_areas = compute_quadrant_areas(seg_crop_r_rotated_hog, region.centroid, orientation_deg=0,
                                                 area=area, diameter_AP=diameter_AP, diameter_RL=diameter_RL,
-                                                dim=dim, iz=iz, verbose=verbose)
+                                                dim=dim, iz=iz, path_output_dir=path_output_dir, verbose=verbose)
         # Update the properties dictionary with the rotated properties
         properties.update(quadrant_areas)
-        symmetry_metrics = _calculate_symmetry(seg_crop_r_rotated_hog, region.centroid, iz=iz, dim=dim, verbose=verbose)
+        symmetry_metrics = _calculate_symmetry(seg_crop_r_rotated_hog, region.centroid, dim=dim, path_output_dir=path_output_dir, iz=iz, verbose=verbose)
         properties.update(symmetry_metrics)
     return properties
 
@@ -430,7 +434,7 @@ def _rotate_segmentation_by_angle(seg_crop_r, angle):
     return seg_crop_r_rotated
 
 
-def _measure_ap_diameter(seg_crop_r, seg_crop_r_rotated, dim, angle, iz, properties, verbose):
+def _measure_ap_diameter(seg_crop_r, seg_crop_r_rotated, dim, angle, iz, properties, verbose, path_output_dir):
     """
     Measure the AP diameter in the rotated segmentation.
     This function counts the number of pixels along the AP axis in the rotated segmentation and converts them
@@ -443,6 +447,7 @@ def _measure_ap_diameter(seg_crop_r, seg_crop_r_rotated, dim, angle, iz, propert
     :param iz: Integer slice number (z index) of the segmentation. Used for plotting purposes.
     :param properties: Dictionary containing the properties of the original (not-rotated) segmentation. Used for plotting purposes.
     :param verbose: Verbosity level. If 2, debug figures are created.
+    :param path_output_dir: Path to the output directory for debug figures.
     :return result: Dictionary containing the measured diameters and pixel counts along AP and RL axes.
     """
     # Get center of mass (which is computed in the PCA function); centermass_src: [RL, AP] (assuming RPI orientation)
@@ -482,12 +487,12 @@ def _measure_ap_diameter(seg_crop_r, seg_crop_r_rotated, dim, angle, iz, propert
         # Debug plotting
         if verbose == 2:
             create_ap_diameter_plots(angle, ap0_r, ap_diameter, dim, iz, properties, rl0_r, properties["diameter_RL"],
-                                     seg_crop_r_rotated, seg_crop_r, coord_ap)
+                                     seg_crop_r_rotated, seg_crop_r, coord_ap, path_output_dir=path_output_dir)
 
     return result
 
 
-def _calculate_symmetry(seg_crop_r_rotated, centroid, dim, iz=None, verbose=1):
+def _calculate_symmetry(seg_crop_r_rotated, centroid, dim, path_output_dir, iz=None, verbose=1):
     """
     Compute symmetry metrics by flipping the segmentation along the RL and AP axes and comparing with the original.
     Calculates Dice coefficient, symmetric difference, and Hausdorff distance for both axes.
@@ -495,6 +500,7 @@ def _calculate_symmetry(seg_crop_r_rotated, centroid, dim, iz=None, verbose=1):
     :param seg_crop_r_rotated: Rotated segmentation (after applying angle) used to measure diameters. seg.shape[0] --> RL; seg.shape[1] --> PA
     :param centroid: (y, x) coordinates of the centroid in the upsampled image space.
     :param dim: [px, py] pixel dimensions in mm.
+    :param path_output_dir: Path to the output directory for debug figures.
     :param iz: Optional slice index for debug plotting.
     :param verbose: Verbosity level for debug plotting.
     :return: symmetry_metrics: Dictionary with symmetry metrics for RL and AP axes.
@@ -566,7 +572,7 @@ def _calculate_symmetry(seg_crop_r_rotated, centroid, dim, iz=None, verbose=1):
             seg_crop_r_rotated, centroid,
             seg_crop_r_rotated_cut, seg_crop_r_rotated_cut_RL,
             seg_crop_r_flipped_RL, seg_crop_r_flipped_AP,
-            symmetry_metrics, iz
+            symmetry_metrics, iz, path_output_dir=path_output_dir
         )
 
     return symmetry_metrics
@@ -574,7 +580,7 @@ def _calculate_symmetry(seg_crop_r_rotated, centroid, dim, iz=None, verbose=1):
 
 def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, float], orientation_deg: float,
                            area: float, diameter_AP: float, diameter_RL: float,
-                           dim: list[float], iz: int, verbose=1) -> tuple[dict, dict]:
+                           dim: list[float], iz: int, path_output_dir, verbose=1) -> tuple[dict, dict]:
     """
     Compute the cross-sectional area of the four spinal cord quadrants in the axial plane.
     Also calculates the symmetry of the spinal cord in the right-left (RL) and anterior-posterior (AP) directions.
@@ -589,6 +595,7 @@ def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, floa
     :param diameter_RL: RL diameter of the spinal cord in mm (used for debug plots).
     :param dim: [px, py] pixel dimensions in mm. X,Y respectively correspond to AP, RL.
     :param iz: Slice index used for filename in debug plot.
+    :param path_output_dir: Path to output directory.
     :return: quadrant_areas (dict)
         quadrant_areas is a dictionary with the area in mm² for each quadrant:
                  {
@@ -637,7 +644,7 @@ def compute_quadrant_areas(image_crop_r: np.ndarray, centroid: tuple[float, floa
         create_quadrant_area_plots(
             image_crop_r, centroid, orientation_deg, dim,
             ant_r_mask, ant_l_mask, post_r_mask, post_l_mask, quadrant_areas,
-            diameter_AP, diameter_RL, iz,
+            diameter_AP, diameter_RL, iz, path_output_dir=path_output_dir
         )
 
     return quadrant_areas
