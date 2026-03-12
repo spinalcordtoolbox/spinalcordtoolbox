@@ -124,7 +124,7 @@ def moco_dl(fname_data, fname_mask='', fname_ref='', path_out='', mode="fmri", f
     printv(f"\nInference time: {inference_time:.2f} sec")
 
     warped = warped.squeeze().cpu().numpy()  # (H,W,D,T)
-    flow = flow.squeeze().cpu().numpy()
+    flow = flow.squeeze().cpu().numpy()  # (3,H,W,D,T) -- not exported
     Tx = Tx.squeeze().cpu().numpy()  # (D,T)
     Ty = Ty.squeeze().cpu().numpy()  # (D,T)
 
@@ -156,18 +156,6 @@ def moco_dl(fname_data, fname_mask='', fname_ref='', path_out='', mode="fmri", f
     ty_tmp = os.path.join(path_tmp, "Ty.nii.gz")
     im_Ty.save(ty_tmp)
 
-    # Save 5D dispfield
-    printv("\n[moco-dl] Saving displacement fields...")
-    flow[0, ...] *= 1
-    flow[1, ...] *= -1
-    disp5D = np.moveaxis(flow, 0, -1)  # (H,W,D,T,3)
-    im_disp5D = Image(disp5D, hdr=header)
-    im_disp5D.hdr.set_data_shape(disp5D.shape)
-    im_disp5D.hdr.set_intent('vector', (), '')
-    im_disp5D.affine = affine
-    disp_tmp = os.path.join(path_tmp, "displacement-field.nii.gz")
-    im_disp5D.save(disp_tmp)
-
     # Generate output files
     printv('\nGenerate output files...')
     # motion corrected data
@@ -182,8 +170,6 @@ def moco_dl(fname_data, fname_mask='', fname_ref='', path_out='', mode="fmri", f
     # rigid translation parameter (Tx, Ty)
     generate_output_file(tx_tmp, os.path.join(path_out_abs, "moco_params_x.nii.gz"))
     generate_output_file(ty_tmp, os.path.join(path_out_abs, "moco_params_y.nii.gz"))
-    # 5D displacement field
-    generate_output_file(disp_tmp, os.path.join(path_out_abs, f"warp_{mode}_moco.nii.gz"))
 
     # Delete temporary files
     printv('\nDelete temporary files...')
