@@ -26,6 +26,18 @@ Note -- This script can be run two ways:
 import json
 from pathlib import Path
 import uuid
+import re
+
+
+def detect_report_uuid(path_datasets_js):
+    try:
+        with path_datasets_js.open('r') as file:
+            for line in file:
+                match = re.match("window.SCT_QC_UUID = '(.*)';", line)
+                if match:
+                    return match.group(1)
+    except FileNotFoundError:
+        return False
 
 
 def main(path_qc):
@@ -41,7 +53,7 @@ def main(path_qc):
         with path.open() as file:
             json_data.append(json.load(file))
 
-    report_uuid = uuid.uuid4()
+    report_uuid = detect_report_uuid(path_datasets_js) or uuid.uuid4()
     with open(path_datasets_js, mode='w', encoding="utf-8") as file_datasets_js:
         file_datasets_js.write(f"""
 window.SCT_QC_UUID = '{report_uuid}';

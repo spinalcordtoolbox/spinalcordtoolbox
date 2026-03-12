@@ -71,7 +71,10 @@ def get_parser():
         '-stitch',
         action='store_true',
         help='Stitch multiple images acquired in the same orientation utilizing '
-             'the algorithm by Lavdas, Glocker et al. (https://doi.org/10.1016/j.crad.2019.01.012).')
+             'the algorithm by Lavdas, Glocker et al. (https://doi.org/10.1016/j.crad.2019.01.012).'
+             'The first image is used as the reference.'
+             'Ensure to use the image with the largest dimensions first to avoid cropping of the images.'
+             )
     image.add_argument(
         '-qc',
         metavar=Metavar.folder,
