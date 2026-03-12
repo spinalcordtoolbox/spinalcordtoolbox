@@ -23,6 +23,12 @@ Citation list
 
 The following studies have used SCT:
 
+2026
+----
+
+-  Solomakha *et al.* `Transceiver 16-Channel Coaxial-End Dipole Array for Combined Head and C-Spine MRI at 9.4 T <https://doi.org/10.1002/nbm.70228>`_, **NMR Biomed.** 2026
+-  Jindal *et al.* `Medullary and C3–C4 propriospinal pathways underlying mammalian forelimb movement control <https://doi.org/10.1073/pnas.2518217123>`_, **PNAS** 2026
+
 2025 
 ----
 

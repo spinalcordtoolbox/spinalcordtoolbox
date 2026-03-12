@@ -10,6 +10,11 @@ From: sct.sif
     export PATH="$PATH:/root/sct/bin"
 
 %post
+    # stricter shell mode
+    # https://sipb.mit.edu/doc/safe-shell/
+    set -e            # exit if non-zero error is encountered (NB: /bin/dash doesn't support `pipefail`)
+    set -u            # exit if unset variables used
+
     # Ubuntu 24.04 AppArmour strips the path, but doesn't run %environment to restore it for god knows why
     export PATH="$PATH:/root/sct/bin"
 

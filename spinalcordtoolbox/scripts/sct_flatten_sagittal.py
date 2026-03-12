@@ -58,9 +58,9 @@ def main(argv: Sequence[str]):
 
 def get_parser():
     parser = SCTArgumentParser(
-        description="Flatten the spinal cord such within the medial sagittal plane. Useful to make nice pictures. "
-                    "Output data has suffix _flatten. Output type is float32 (regardless of input type) to minimize "
-                    "loss of precision during conversion."
+        description="Flatten the spinal cord such within the medial sagittal plane. Useful to make nice pictures, "
+                    "but should not be used for quantitative analysis (eg: CSA computation) or for registration. "
+                    "Output data has suffix _flatten."
     )
     mandatory = parser.mandatory_arggroup
     mandatory.add_argument(
