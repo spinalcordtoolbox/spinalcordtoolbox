@@ -128,6 +128,18 @@ def moco_dl(fname_data, fname_mask='', fname_ref='', path_out='', mode="fmri", f
     Tx = Tx.squeeze().cpu().numpy()  # (D,T)
     Ty = Ty.squeeze().cpu().numpy()  # (D,T)
 
+    # Convert voxel shifts predicted by the model to physical displacement (mm)
+    # using voxel spacing derived from the input image affine.
+    A = affine_rpi[:3, :3].astype(np.float32)
+    # voxel spacing in mm
+    sx = float(np.linalg.norm(A[:, 0]))
+    sy = float(np.linalg.norm(A[:, 1]))
+    printv(f"\n[moco-dl] Scaling by voxel size from affine: sx={sx:.3f}mm, sy={sy:.3f}mm")
+    # convert voxel shifts -> mm
+    Tx_mm_rpi = Tx.astype(np.float32) * sx
+    Ty_mm_rpi = Ty.astype(np.float32) * sy * -1.0
+    # Ty is flipped when converting from array coordinates to physical coordinates.
+
     # Save Moco output
     im_moco = Image(warped, hdr=header)
     im_moco.affine = affine
