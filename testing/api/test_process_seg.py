@@ -42,11 +42,23 @@ dict_test_orientation = [
     ]
 
 
-def angles(angle_IS, angle_RL, angle_AP):
+def angles(angle_IS, angle_RL, angle_AP, orientation, ax_order):
     """
     Compute the effective RL and AP angles after applying the specified rotations about the IS, RL, and AP axes.
     """
-    rot = Rotation.from_euler('zxy', angles=[
+    # WARNING: This function makes two assumptions:
+    #   1. The image is 'LPI', i.e. RL: x-axis, AP: y-axis, IS: z-axis.
+    #   2. The rotations are applied in the following order: IS, then RL, then AP
+    assumed_axis_map = {'RL': 'x', 'AP': 'y', 'IS': 'z'}
+    assumed_ax_order = ('IS', 'RL', 'AP')
+    # If either of these assumptions change in `dummy_segmentation`, this function won't provide the right values.
+    # So, do a safety check to make sure our tests are written exactly as assumed.
+    assert all((char in axis) for char, axis in zip(orientation, assumed_axis_map.keys())), "orientation is not RL->AP->IS"
+    assert ax_order == assumed_ax_order, "rotation order is not IS, then RL, then AP"
+
+    # Get the proper 'from_euler' sequence notation: 'zxy' (derived from our stated assumptions)
+    seq = ''.join([assumed_axis_map[ax] for ax in assumed_ax_order])
+    rot = Rotation.from_euler(seq=seq, angles=[
         angle_IS,   # positive angle sends L -> A -> R -> P
         -angle_RL,  # positive angle sends A -> I -> P -> S
         angle_AP,   # positive angle sends S -> L -> I -> R
@@ -214,7 +226,8 @@ def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.floa
     #     if we ever have multiple rotations, we can't just take the `angle_` values and check directly, as each
     #     subsequent rotation will change the effective rotation in the previous axes.
     #     So, we need to compute the effective rotation about each original axis after applying all rotations.
-    effective = angles(angle_RL=angle_RL, angle_AP=angle_AP, angle_IS=angle_IS)
+    effective = angles(angle_RL=angle_RL, angle_AP=angle_AP, angle_IS=angle_IS,
+                       orientation=orientation, ax_order=('IS', 'RL', 'AP'))
     expected = {
         'area': area,
         'angle_AP': effective['angle_AP'],
