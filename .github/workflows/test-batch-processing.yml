@@ -71,20 +71,25 @@ jobs:
       - name: Check dependencies
         run: sct_check_dependencies
 
+      - name: Download course data
+        run: sct_download_data -d sct_course_data
+
       - name: Run batch_processing.sh
-        run: bash batch_processing.sh
+        run: |
+          cd $SCT_DIR/data/sct_course_data/single_subject
+          bash batch_single_subject.sh
 
       - name: Upload QC results
         uses: actions/upload-artifact@v4
         with:
           name: Batch Processing QC (${{ matrix.os }})
-          path: "qc_example_data"
+          path: "qc_singleSubj"
 
       - name: "Upload CSV files for easier batch_processing.sh updating"
         uses: actions/upload-artifact@v4
         with:
           name: Batch Processing CSV files (${{ matrix.os }})
-          path: data/sct_example_data/**/*.csv
+          path: data/sct_course_data/single_subject/data/**/*.csv
 
       - name: Validate new results
         run: |
@@ -102,13 +107,13 @@ jobs:
         if: always()
         run: |
           mkdir jsons
-          mv testing/sct_example_data.json jsons/sct_example_data_${{ matrix.os }}.json
+          mv testing/sct_course_data.json jsons/sct_course_data_${{ matrix.os }}.json
 
       - name: Upload folder summary
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: sct_example_data_${{ matrix.os }}.json
+          name: sct_course_data_${{ matrix.os }}.json
           path: jsons
 
   compare-results:
@@ -146,7 +151,7 @@ jobs:
           event: schedule
           path: artifacts_master
           name_is_regexp: true
-          name: sct_example_data_.*\.json
+          name: sct_course_data_.*\.json
           # Note: Because `dawidd6/action-download-artifact@v8` doesn't have a corresponding
           #       `merge-multiple` option, the downloaded json files get put into parent
           #       folders with the same name as the file itself.
@@ -161,7 +166,7 @@ jobs:
             # Full log output
             echo "::group::Diff for $os"
             # diff will throw exit code 1 if diff is non-empty, so use '|| true' to prevent the job from failing
-            diff -u "artifacts_master/sct_example_data_$os.json/sct_example_data_$os.json" "artifacts/sct_example_data_$os.json" > $DIFF_FILE || true
+            diff -u "artifacts_master/sct_course_data_$os.json/sct_course_data_$os.json" "artifacts/sct_course_data_$os.json" > $DIFF_FILE || true
             ydiff < $DIFF_FILE
             echo "::endgroup::"
           
