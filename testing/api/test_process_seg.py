@@ -42,29 +42,19 @@ dict_test_orientation = [
     ]
 
 
-def get_effective_angles(rot_x=0.0, rot_y=0.0, rot_z=0.0, order='xyz', degrees=True):
+def angles(angle_IS, angle_RL, angle_AP):
     """
-    Given sequential rotations applied in `order`, compute the effective
-    angles in each axis (to match what `sct_process_segmentation` would measure).
+    Compute the effective RL and AP angles after applying the specified rotations about the IS, RL, and AP axes.
     """
-    # FIXME: @joshuacwnewton, this code was written involving discussions with an LLM.
-    #        Specifically, I was looking for an explanation for why the test with
-    #        "angle_RL=-10, angle_AP=30" had hardcoded a value of "angle_RL=-11.5" in
-    #        its "expected values" dict. Applying the total rotation matrix to the unit
-    #        vector for the z-axis produces the expected angle value, so I kept it
-    #        just to make writing the rest of PR #5180 smoother. But, I would like to
-    #        better understand:
-    #            - How to generate the correct sign (or whether this is ambiguous in nature)
-    #            - How to generate the correct SI rotation (this should be equivalent to 'orientation', but isn't)
-    #            - Whether `from_euler` is equivalent to individually generating the rotation matrices for each axis
-    #              and then matmul'ing them. (I tried that first, but got different outputs...)
-    rot = {'x': rot_x, 'y': rot_y, 'z': rot_z}
-    r = Rotation.from_euler(seq=order, angles=[rot[ax] for ax in order], degrees=degrees)
-    tx, ty, tz = r.apply([0.0, 0.0, 1.0])
+    rot = Rotation.from_euler('zxy', angles=[
+        angle_IS,   # positive angle sends L -> A -> R -> P
+        -angle_RL,  # positive angle sends A -> I -> P -> S
+        angle_AP,   # positive angle sends S -> L -> I -> R
+        ], degrees=True)
+    tx, ty, tz = rot.apply([0, 0, 1])
     return {
-        'angle_x': np.degrees(np.arctan2(tx, tz)),
-        'angle_y': np.degrees(np.arctan2(ty, tz)),
-        'angle_z': np.degrees(np.arctan2(ty, tx)),
+        'angle_RL': np.degrees(np.arctan2(ty, tz)),
+        'angle_AP': np.degrees(np.arctan2(tx, tz)),
     }
 
 
@@ -224,14 +214,11 @@ def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.floa
     #     if we ever have multiple rotations, we can't just take the `angle_` values and check directly, as each
     #     subsequent rotation will change the effective rotation in the previous axes.
     #     So, we need to compute the effective rotation about each original axis after applying all rotations.
-    #     NB: rotations are applied SI -> RL -> AP, so order should be z -> x -> y for RPI images
-    effective = get_effective_angles(rot_x=angle_RL, rot_y=angle_AP, rot_z=angle_IS, order='zxy')
+    effective = angles(angle_RL=angle_RL, angle_AP=angle_AP, angle_IS=angle_IS)
     expected = {
         'area': area,
-        'angle_AP': effective['angle_x'],
-        'angle_RL': effective['angle_y'],
-        # FIXME: I don't really know how to estimate orientation of the 2D cross-sectional ellipse. This isn't working.
-        # 'orientation': effective['angle_z'],  # NB: 'orientation' is just rotation around the SI axis
+        'angle_AP': effective['angle_AP'],
+        'angle_RL': effective['angle_RL'],
         'diameter_AP': diameter_AP,
         'diameter_RL': diameter_RL,
         'length': size_arr[2] * pixdim[2] / (np.cos(math.radians(angle_AP)) * np.cos(math.radians(angle_RL))),
@@ -352,9 +339,7 @@ def test_compute_shape(im_seg, expected, params):
             #    2. The property that each subsequent value is within a tolerance of the previous value
             #       (i.e. that the values don't jump around wildly from slice to slice)
             if params['angle_corr'] is True:
-                # FIXME: These `abs` calls were just because I couldn't get the right sign to be output from the
-                #        `get_effective_angles` function, but ultimately that should be fixed and `abs` should be removed.
-                assert abs(metrics[key].data).mean() == pytest.approx(abs(expected[key]), **kwargs)
+                assert metrics[key].data.mean() == pytest.approx(expected[key], **kwargs)
                 for i, n_slice in enumerate(slice_range):
                     if i > 0:
                         angle_curr = metrics[key].data[n_slice]
