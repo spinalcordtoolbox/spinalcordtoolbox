@@ -10,6 +10,8 @@ from datetime import datetime
 from random import uniform
 import numpy as np
 import nibabel as nib
+from scipy.spatial.transform import Rotation
+from skimage.draw import ellipse
 from skimage.transform import rotate
 
 from spinalcordtoolbox import process_seg
@@ -38,6 +40,34 @@ dict_test_orientation = [
     {'input': 3 * math.pi / 8, 'expected': 67.5},
     {'input': -3 * math.pi / 8, 'expected': 67.5},
     ]
+
+
+def angles(angle_IS, angle_RL, angle_AP, orientation, ax_order):
+    """
+    Compute the effective RL and AP angles after applying the specified rotations about the IS, RL, and AP axes.
+    """
+    # WARNING: This function makes two assumptions:
+    #   1. The image is 'LPI', i.e. RL: x-axis, AP: y-axis, IS: z-axis.
+    #   2. The rotations are applied in the following order: IS, then RL, then AP
+    assumed_axis_map = {'RL': 'x', 'AP': 'y', 'IS': 'z'}
+    assumed_ax_order = ('IS', 'RL', 'AP')
+    # If either of these assumptions change in `dummy_segmentation`, this function won't provide the right values.
+    # So, do a safety check to make sure our tests are written exactly as assumed.
+    assert all((char in axis) for char, axis in zip(orientation, assumed_axis_map.keys())), "orientation is not RL->AP->IS"
+    assert ax_order == assumed_ax_order, "rotation order is not IS, then RL, then AP"
+
+    # Get the proper 'from_euler' sequence notation: 'zxy' (derived from our stated assumptions)
+    seq = ''.join([assumed_axis_map[ax] for ax in assumed_ax_order])
+    rot = Rotation.from_euler(seq=seq, angles=[
+        angle_IS,   # positive angle sends L -> A -> R -> P
+        -angle_RL,  # positive angle sends A -> I -> P -> S
+        angle_AP,   # positive angle sends S -> L -> I -> R
+        ], degrees=True)
+    tx, ty, tz = rot.apply([0, 0, 1])
+    return {
+        'angle_RL': np.degrees(np.arctan2(ty, tz)),
+        'angle_AP': np.degrees(np.arctan2(tx, tz)),
+    }
 
 
 def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.float64, orientation='LPI',
@@ -106,7 +136,12 @@ def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.floa
         if shape == 'rectangle':  # theoretical CSA: (a*2+1)(b*2+1)
             data[:, :, iz] = ((abs(xx - x[iz]) <= radius_RL) & (abs(yy - yfit[iz]) <= radius_AP)) * 1
         if shape == 'ellipse':
-            data[:, :, iz] = (((xx - x[iz]) / radius_RL) ** 2 + ((yy - yfit[iz]) / radius_AP) ** 2 <= 1) * 1
+            height, width = radius_RL, radius_AP
+            rows, cols = ellipse(height, width, height + 0.5, width + 0.5)
+            # FIXME: Write 1s directly to data, probably cleaner!
+            footprint = np.zeros((2*height + 1, 2*width + 1), dtype=dtype)
+            footprint[rows, cols] = 1
+            data[x[iz]-radius_RL:x[iz]+radius_RL+1, yfit[iz]-radius_AP:yfit[iz]+radius_AP+1, iz] = footprint
 
     # Pad to avoid edge effect during rotation
     data = np.pad(data, padding, 'reflect')
@@ -138,7 +173,7 @@ def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.floa
     data_rot_crop = data_rot[padding:nx+padding, padding:ny+padding, padding:nz+padding]
 
     # Zero specified slices
-    if zeroslice is not []:
+    if zeroslice:
         data_rot_crop[:, :, zeroslice] = 0
 
     # Create nibabel object
@@ -155,7 +190,60 @@ def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.floa
     img.change_orientation(orientation)
     if debug:
         img.save('tmp_dummy_seg_'+datetime.now().strftime("%Y%m%d%H%M%S%f")+'.nii.gz')
-    return img
+
+    # Determine expected metrics based on input values
+    if shape == 'ellipse':
+        # NB: We cannot just use the typical ellipse formula "area = math.pi * radius_RL * radius_AP", because
+        #     there is no one strategy to define a voxel-based ellipse. (See: https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4966#discussion_r2210567786)
+        area = data[:, :, 0].sum()
+        diameter_AP = diameter_AP_regionprops = (radius_AP * 2) + 1
+        diameter_RL = diameter_RL_regionprops = (radius_RL * 2) + 1
+    else:
+        assert shape == 'rectangle'
+        area = (radius_RL*2+1) * (radius_AP*2+1)
+        # NB: For diameters, the typical rectangle formula would underestimate the diameter output by
+        # `skimage.regionprops`. This is because regionprops fits an ellipse with the same second central moments, and
+        # the ellipse will always extend past the corners of the rectangle.
+        #   -> See: https://scikit-image.org/docs/0.25.x/api/skimage.measure.html#skimage.measure.regionprops
+        # But, we can derive what the ellipse diameters would be (as a function of the rectangle's height and width)
+        # by equating the second central moments of the rectangle and ellipse:
+        #   - Rectangle: Ix = W*H^3/12, Iy = H*W^3/12     # Side lengths: (H, W)
+        #   - Ellipse:   Ix = π*a*b^3/4, Iy = π*a^3*b/4   # Semi-axes: (a, b)
+        #   - Equating moments gives a = W/√3, b = H/√3
+        #   - Since the diameters are 2x the semi-axis lengths, the ellipse diameters are (2/√3) * rectangle side lengths.
+        # FIXME: This only works for non-rotated rectangles, since if the cross-section is rotated, the fitted ellipse
+        #        will no longer have semi-axes that are aligned with the AP/RL axes. But, our test suite currently only
+        #        tests rectangle cross-sections with no rotation, so this is sufficient for now.
+        diameter_AP_regionprops = (2 / math.sqrt(3)) * ((radius_AP * 2) + 1)
+        diameter_RL_regionprops = (2 / math.sqrt(3)) * ((radius_RL * 2) + 1)
+        # Ah, but actually, we recently refactored the code to use a different AP diameter measure instead of the
+        # "major axis length" in PR #4958.
+        #  -> See: https://github.com/spinalcordtoolbox/spinalcordtoolbox/blob/b322832e939d356039af27832b09cd671e034b2d/spinalcordtoolbox/process_seg.py#L438-L442
+        diameter_AP = (radius_AP * 2) + 1
+        diameter_RL = diameter_RL_regionprops
+
+    # NB: rotations are not commutative i.e. the order that rotations are applied matters.
+    #     if we ever have multiple rotations, we can't just take the `angle_` values and check directly, as each
+    #     subsequent rotation will change the effective rotation in the previous axes.
+    #     So, we need to compute the effective rotation about each original axis after applying all rotations.
+    effective = angles(angle_RL=angle_RL, angle_AP=angle_AP, angle_IS=angle_IS,
+                       orientation=orientation, ax_order=('IS', 'RL', 'AP'))
+    expected = {
+        'area': area,
+        'angle_AP': effective['angle_AP'],
+        'angle_RL': effective['angle_RL'],
+        'diameter_AP': diameter_AP,
+        'diameter_RL': diameter_RL,
+        'length': size_arr[2] * pixdim[2] / (np.cos(math.radians(angle_AP)) * np.cos(math.radians(angle_RL))),
+        'eccentricity': math.sqrt(1 - ((diameter_AP_regionprops / 2) / (diameter_RL_regionprops / 2)) ** 2),
+    }
+
+    # zero slices only affect the overall expected length
+    if zeroslice:
+        zero_percent = len(zeroslice) / size_arr[2]
+        expected['length'] *= (1 - zero_percent)
+
+    return [img, expected]
 
 
 @pytest.mark.parametrize('test_orient', dict_test_orientation)
@@ -165,64 +253,55 @@ def test_fix_orientation(test_orient):
 
 # Generate a list of fake segmentation for testing: (dummy_segmentation(params), dict of expected results)
 im_segs = [
-    # test area
-    (dummy_segmentation(size_arr=(32, 32, 5), debug=DEBUG),
-     {'area': 77, 'angle_RL': 0.0, 'angle_AP': 0.0, 'length': 5.0},
-     {'angle_corr': False}),
-    # test anisotropic pixel dim
-    (dummy_segmentation(size_arr=(64, 32, 5), pixdim=(0.5, 1, 5), debug=DEBUG),
-     {'area': 77, 'angle_RL': 0.0, 'angle_AP': 0.0},
-     {'angle_corr': False}),
-    # test with angle IS
-    (dummy_segmentation(size_arr=(32, 32, 5), pixdim=(1, 1, 5), angle_IS=15, debug=DEBUG),
-     {'area': 77, 'angle_RL': 0.0, 'angle_AP': 0.0},
-     {'angle_corr': False}),
-    # test with ellipse shape
-    (dummy_segmentation(size_arr=(64, 64, 5), shape='ellipse', radius_RL=13.0, radius_AP=5.0, angle_RL=0.0,
-                        debug=DEBUG),
-     {'area': 197.0, 'diameter_AP': 10.0, 'diameter_RL': 26.0, 'angle_RL': 0.0, 'angle_AP': 0.0},
-     {'angle_corr': False}),
-    # test with int16. Different bit ordering, which can cause issue when applying transform.warp()
-    (dummy_segmentation(size_arr=(64, 320, 5), pixdim=(1, 1, 1), dtype=np.int16, orientation='RPI',
-                        shape='rectangle', radius_RL=13.0, radius_AP=5.0, angle_RL=0.0, debug=DEBUG),
-     {'area': 297.0, 'angle_RL': 0.0, 'angle_AP': 0.0},
-     {'angle_corr': False}),
-    # test with angled spinal cord (neg angle)
-    (dummy_segmentation(size_arr=(64, 64, 20), shape='ellipse', radius_RL=13.0, radius_AP=5.0, angle_RL=-30.0,
-                        debug=DEBUG),
-     {'area': 197.0, 'diameter_AP': 10.0, 'diameter_RL': 26.0, 'angle_RL': -30.0, 'angle_AP': 0.0, 'length': 23.15},
-     {'angle_corr': True}),
-    # test with AP angled spinal cord
-    (dummy_segmentation(size_arr=(64, 64, 20), shape='ellipse', radius_RL=13.0, radius_AP=5.0, angle_AP=20.0,
-                        debug=DEBUG),
-     {'area': 197.0, 'diameter_AP': 9.41, 'diameter_RL': 26.0, 'angle_RL': 0.0, 'angle_AP': 20.0, 'length': 21.02},
-     {'angle_corr': True}),
-    # test with RL and AP angled spinal cord
-    (dummy_segmentation(size_arr=(64, 64, 50), shape='ellipse', radius_RL=13.0, radius_AP=5.0,
-                        angle_RL=-10.0, angle_AP=15.0, debug=DEBUG),
-     {'area': 196.0, 'diameter_AP':  9.465, 'diameter_RL': 26.0, 'angle_RL': -10.0, 'angle_AP': 15.0},
-     {'angle_corr': True}),
-    # Reproduce issue: "LinAlgError: SVD did not converge". Note: due to the cropping, the estimated angle_RL is wrong,
-    # so it had to be made wrong in the expected values
-    (dummy_segmentation(size_arr=(64, 64, 50), shape='ellipse', radius_RL=13.0, radius_AP=5.0,
-                        angle_RL=-10.0, angle_AP=30.0, debug=DEBUG),
-     {'area': 197.0, 'diameter_AP': 9.418, 'diameter_RL': 26.0, 'angle_RL': -11.5, 'angle_AP': 30.0},
-     {'angle_corr': True}),
-    # test uint8 input
-    (dummy_segmentation(size_arr=(32, 32, 50), dtype=np.uint8, angle_RL=15, debug=DEBUG),
-     {'area': 77, 'angle_RL': 13.269097801736525, 'angle_AP': 0.0},
-     {'angle_corr': True}),
-    # test all output params
-    (dummy_segmentation(size_arr=(128, 128, 5), pixdim=(1, 1, 1), shape='ellipse', radius_RL=50.0, radius_AP=30.0,
-                        debug=DEBUG),
-     {'area': 4701, 'angle_AP': 0.0, 'angle_RL': 0.0, 'diameter_AP': 60.0, 'diameter_RL': 100.0, 'eccentricity': 0.8,
-      'orientation': 0.0},
-     {'angle_corr': False}),
-    # test with one empty slice
-    (dummy_segmentation(size_arr=(32, 32, 5), zeroslice=[2], debug=DEBUG),
-     {'area': np.nan},
-     {'angle_corr': False, 'slice': 2})
-    ]
+    # 0. test area
+    dummy_segmentation(size_arr=(32, 32, 5), debug=DEBUG) +
+    [{'angle_corr': False}],
+
+    # 1. test anisotropic pixel dim
+    dummy_segmentation(size_arr=(64, 32, 5), pixdim=(0.5, 1, 5), debug=DEBUG) +
+    [{'angle_corr': False}],
+
+    # 2. test with angle IS
+    dummy_segmentation(size_arr=(32, 32, 5), pixdim=(1, 1, 5), angle_IS=15, debug=DEBUG) +
+    [{'angle_corr': False}],
+
+    # 3. test with ellipse shape
+    dummy_segmentation(size_arr=(64, 64, 5), shape='ellipse', radius_RL=13, radius_AP=5, angle_RL=0, debug=DEBUG) +
+    [{'angle_corr': False}],
+
+    # 4. test with int16. Different bit ordering, which can cause issue when applying transform.warp()
+    dummy_segmentation(size_arr=(64, 320, 5), shape='rectangle', radius_RL=13, radius_AP=5, angle_RL=0, debug=DEBUG,
+                       pixdim=(1, 1, 1), dtype=np.int16, orientation='RPI',) +
+    [{'angle_corr': False}],
+
+    # 5. test with angled spinal cord (neg angle)
+    dummy_segmentation(size_arr=(64, 64, 20), shape='ellipse', radius_RL=13, radius_AP=5, angle_RL=-30, debug=DEBUG) +
+    [{'angle_corr': True}],
+
+    # 6. test with AP angled spinal cord
+    dummy_segmentation(size_arr=(64, 64, 20), shape='ellipse', radius_RL=13, radius_AP=5, angle_AP=20, debug=DEBUG) +
+    [{'angle_corr': True}],
+
+    # 7. test with RL and AP angled spinal cord
+    dummy_segmentation(size_arr=(64, 64, 50), shape='ellipse', radius_RL=13, radius_AP=5, angle_RL=-10, angle_AP=15, debug=DEBUG) +
+    [{'angle_corr': True}],
+
+    # 8. Reproduce issue: "LinAlgError: SVD did not converge".
+    dummy_segmentation(size_arr=(64, 64, 50), shape='ellipse', radius_RL=13, radius_AP=5, angle_RL=-10, angle_AP=30, debug=DEBUG) +
+    [{'angle_corr': True}],
+
+    # 9. test uint8 input
+    dummy_segmentation(size_arr=(32, 32, 50), dtype=np.uint8, angle_RL=15, debug=DEBUG) +
+    [{'angle_corr': True}],
+
+    # 10. test all output params
+    dummy_segmentation(size_arr=(128, 128, 5), pixdim=(1, 1, 1), shape='ellipse', radius_RL=50, radius_AP=30, debug=DEBUG) +
+    [{'angle_corr': False}],
+
+    # 11. test with one empty slice
+    dummy_segmentation(size_arr=(32, 32, 5), zeroslice=[2], debug=DEBUG) +
+    [{'angle_corr': False, 'slice': 2}]
+]
 
 
 @pytest.mark.parametrize('im_seg,expected,params', im_segs)
@@ -231,21 +310,64 @@ def test_compute_shape(im_seg, expected, params):
                                                      angle_correction=params['angle_corr'],
                                                      param_centerline=ParamCenterline(),
                                                      verbose=VERBOSE)
+    slice_range = range(im_seg.data.shape[2])
     for key in expected.keys():
-        # fetch obtained_value
-        if 'slice' in params:
-            obtained_value = float(metrics['area'].data[params['slice']])
+        # If we're testing angle values, ensure the values are within half a degree
+        # If we're testing distances (area, diameter, length), ensure the values are within 3% of the expected value
+        kwargs = ({'abs': 0.5} if key.startswith('angle_') or key == 'orientation' else
+                  {'rel': 0.030})
+        # FIXME: Try to make the 0.03 tolerance tighter -- it's still too large.
+        #        Notes (what breaks when `rel` is decreased):
+        #          - 0.030: test9 - mean(area) - 73.108 vs. 77 +/- 2.31 <- Known, will be fixed before merging
+        #          - 0.025: test7 - mean(diameter_AP) - 10.715 vs. 11 +/- 0.275
+        #          - 0.020: test5 - mean(diameter_AP) - 10.778 vs. 11 +/- 0.220
+        #                   test8 - mean(diameter_AP) - 10.768 vs. 11 +/- 0.220
+        #          - 0.015: test7 - mean(area) - 232.89 vs. 237.0 +/- 3.555
+        #                   test8 - mean(area) - 232.89 vs. 237.0 +/- 3.555
+        #          - 0.010: test1 - slice(area) - 76.142 vs. 77 +/- 0.77
+        #                   test10 - slice(area) - 4839.88 vs. 4908.0 +/- 49.08
+        #         Many of these failures are due to the inherent limitations of angle estimation at low resolutions.
+        #         I think this is what upsampling to 0.1mm was possibly supposed to fix? So, maybe there is still merit
+        #         for that approach, and estimating the cord centerline / deriv / tangent vectors on an upsampled image.
+
+        # for length, the values are given per-slice, but we want to check the total length (hence `sum()`)
+        if key == 'length':
+            # ignore zeroed-out slices (i.e. `zeroslice`), as these will be `np.nan` and throw off the sum
+            assert np.nansum(metrics[key].data) == pytest.approx(expected[key], **kwargs)
         else:
-            if key == 'length':
-                # when computing length, sums values across slices
-                obtained_value = metrics[key].data.sum()
+            # for angled cords, SCT's angle-estimating code uses the tangent to a single-voxel-wide centerline.
+            # this code is somewhat sensitive to single-voxel shifts in the centerline, e.g.:
+            #
+            #  [ ][ ][ ][X][ ]       [ ][ ][ ][X][ ]
+            #  [ ][ ][X][ ][ ]  vs.  [ ][ ][X][ ][ ]
+            #  [ ][X][ ][ ][ ]       [ ][ ][X][ ][ ]
+            #  [ ][X][ ][ ][ ]       [ ][X][ ][ ][ ]
+            #
+            # So, while ideally all slices would have an angle value exactly like the cord we generated, in practice this
+            # value can be off by a few degrees. So, it's not feasible to test the per-slice angle to the tight tolerance.
+            # Furthermore, the angle values have a direct effect on the angle correction applied to the metrics, meaning if
+            # angle correction is on, the per-slice metrics will stray from the expected values just like the angles do.
+            # However, we can still test:
+            #    1. The mean values across all slices
+            #    2. The property that each subsequent value is within a tolerance of the previous value
+            #       (i.e. that the values don't jump around wildly from slice to slice)
+            if params['angle_corr'] is True:
+                assert metrics[key].data.mean() == pytest.approx(expected[key], **kwargs)
+                for i, n_slice in enumerate(slice_range):
+                    if i > 0:
+                        angle_curr = metrics[key].data[n_slice]
+                        angle_prev = metrics[key].data[slice_range[i - 1]]
+                        assert angle_curr == pytest.approx(angle_prev, **kwargs)
+
+            # for non-angled cords, we can reliably compare expected values on a slice-wise basis
             else:
-                # otherwise, average across slices
-                obtained_value = metrics[key].data.mean()
-        # fetch expected_value
-        if expected[key] is np.nan:
-            assert math.isnan(obtained_value)
-            break
-        else:
-            expected_value = pytest.approx(expected[key], rel=0.05)
-        assert obtained_value == expected_value
+                for n_slice in slice_range:
+                    # fetch expected/obtained values
+                    expected_value = expected[key]
+                    obtained_value = metrics[key].data[n_slice]
+
+                    # if n_slice is empty (i.e. `zeroslice` was set) all metrics should be `np.nan`
+                    if im_seg.data[:, :, n_slice].sum() == 0:
+                        assert math.isnan(obtained_value)
+                    else:
+                        assert obtained_value == pytest.approx(expected_value, **kwargs)
