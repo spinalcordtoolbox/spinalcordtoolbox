@@ -1,5 +1,8 @@
 # pytest unit tests for sct_dmri_moco
 
+import os
+
+import numpy
 import numpy as np
 import pytest
 import logging
@@ -7,7 +10,7 @@ import logging
 from numpy import allclose, genfromtxt
 
 from spinalcordtoolbox.scripts import sct_dmri_moco, sct_image, sct_crop_image, sct_create_mask, sct_deepseg, sct_apply_transfo
-from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.image import Image, add_suffix
 from spinalcordtoolbox.utils.sys import sct_test_path
 
 logger = logging.getLogger(__name__)
@@ -78,58 +81,90 @@ def test_sct_dmri_moco_with_mask_check_params(tmp_path, dmri_mask, tmp_path_qc, 
     assert allclose(lresults, lgroundtruth)
 
 
-@pytest.mark.sct_testing
-def test_sct_dmri_moco_dl(tmp_path, dmri_mask, tmp_path_qc, dmri_mean_seg):
-    """Run the CLI script with '-m' and '-ref' option and using '-dl' algorithm."""
-    fname_data = sct_test_path('dmri', 'dmri.nii.gz')
-    sct_dmri_moco.main(argv=['-i', fname_data, '-bvec', sct_test_path('dmri', 'bvecs.txt'),
-                             '-ref', sct_test_path('dmri', 'dwi_mean.nii.gz'),
-                             '-m', dmri_mask, '-ofolder', str(tmp_path), '-dl',
-                             '-qc', tmp_path_qc, '-qc-seg', dmri_mean_seg])
-
-    def build_disp_from_params(fname_tx, fname_ty, fname_ref, fname_warp):
-        """Re-build displacement field from translation parameters; Tx and Ty"""
-        tx = Image(fname_tx).data[0, 0, :, :]  # (Z,T)
-        ty = Image(fname_ty).data[0, 0, :, :]  # (Z,T)
-        ref = Image(fname_ref)
-        nx, ny, nz, nt = ref.data.shape
-        disp = np.zeros((nx, ny, nz, nt, 3), dtype=np.float32)
+def build_disp_from_params(fname_tx, fname_ty, fname_ref, fname_warp, orientation):
+    """Re-build displacement field from translation parameters; Tx and Ty"""
+    tx = Image(fname_tx).data[0, 0, :, :]  # (Z,T)
+    ty = Image(fname_ty).data[0, 0, :, :]  # (Z,T)
+    ref = Image(fname_ref)
+    disp = np.zeros(list(ref.data.shape) + [3], dtype=np.float32)
+    nt = disp.shape[3]
+    if orientation == "RPI":
+        nz = disp.shape[2]
         for t in range(nt):
             for z in range(nz):
                 disp[:, :, z, t, 0] = tx[z, t]
                 disp[:, :, z, t, 1] = ty[z, t]
                 disp[:, :, z, t, 2] = 0.0
-        im_disp = Image(disp, hdr=ref.hdr)
-        im_disp.affine = ref.affine
-        im_disp.hdr.set_data_shape(disp.shape)
-        im_disp.hdr.set_intent('vector', (), '')
-        im_disp.save(fname_warp)
+    elif orientation == "SAL":
+        nz = disp.shape[0]
+        for t in range(nt):
+            for z in range(nz):
+                # FIXME: There is a problem with the moco params output for non-RPI images. moco_x/moco_y can't be used
+                #        to reconstruct the warping field in the same way as for RPI images. See PR.
+                disp[z, :, :, t, 0] = tx[z, t] * -1
+                disp[z, :, :, t, 1] = ty[z, t] * -1
+                disp[z, :, :, t, 2] = 0.0
+    else:
+        # This is a quick hack for speed of prototyping, and probably shouldn't be merged as-is
+        raise NotImplementedError("Test is not yet generalized to orientations outside RPI/SAL")
+    im_disp = Image(disp, hdr=ref.hdr)
+    im_disp.affine = ref.affine
+    im_disp.hdr.set_data_shape(disp.shape)
+    im_disp.hdr.set_intent('vector', (), '')
+    im_disp.save(fname_warp)
 
-    sct_image.main(argv=['-i', fname_data, '-split', 't', '-o', str(tmp_path / "dmri.nii.gz")])
-    # test on the first volume of dwi
-    t = 0
-    fname_vol = str(tmp_path / f"dmri_T{t:04d}.nii.gz")
+
+@pytest.mark.sct_testing
+@pytest.mark.parametrize("orientation", ["SAL"])
+def test_sct_dmri_moco_dl(tmp_path, dmri_mask, tmp_path_qc, dmri_mean_seg, orientation):
+    """Run the CLI script with '-m' and '-ref' option and using '-dl' algorithm."""
+    # reorient input images according to orientation parameter
+    inputs = {
+        '-i': sct_test_path('dmri', 'dmri.nii.gz'),
+        '-ref': sct_test_path('dmri', 'dwi_mean.nii.gz'),
+        '-m': dmri_mask,
+        '-qc-seg': dmri_mean_seg
+    }
+    for arg, im_in in inputs.items():
+        im_out = str(tmp_path / add_suffix(os.path.basename(im_in), f"_{orientation}"))
+        im = Image(im_in)
+        im.change_orientation(orientation)
+        im.save(im_out)
+        inputs[arg] = im_out
+
+    # 1. apply moco_dl directly (outputs motion-corrected image + Tx/Ty moco params)
+    sct_dmri_moco.main(argv=['-i', inputs['-i'], '-bvec', sct_test_path('dmri', 'bvecs.txt'),
+                             '-ref', inputs['-ref'], '-m', inputs['-m'],
+                             '-ofolder', str(tmp_path), '-dl',
+                             '-qc', tmp_path_qc, '-qc-seg', inputs['-qc-seg']])
+    fname_moco = add_suffix(inputs['-i'], '_mocoDL')
+
+    # 2. build warping field from Tx/Ty and apply it to the original image using sct_apply_transfo
     fname_warp_4d = str(tmp_path / "warp_dmri_moco.nii.gz")
-    # re-build displacement field
     build_disp_from_params(fname_tx=str(tmp_path / "moco_params_x.nii.gz"),
                            fname_ty=str(tmp_path / "moco_params_y.nii.gz"),
-                           fname_ref=fname_data, fname_warp=fname_warp_4d)
+                           fname_ref=inputs['-i'], fname_warp=fname_warp_4d,
+                           orientation=orientation)
+    # split both the warping field and original input image into 3D volumes
+    sct_image.main(argv=['-i', inputs['-i'], '-split', 't', '-o', str(tmp_path / "dmri.nii.gz")])
     sct_image.main(argv=['-i', fname_warp_4d, '-split', 't'])
-    fname_warp = str(tmp_path / f"warp_dmri_moco_T{t:04d}.nii.gz")
-    fname_out = str(tmp_path / f"dmri_warped_T{t:04d}.nii.gz")
+    # warp a single volume using the corresponding 3D warping field
+    t = 0
+    fname_warp_3d = str(tmp_path / f"warp_dmri_moco_T{t:04d}.nii.gz")
+    fname_vol_in = str(tmp_path / f"dmri_T{t:04d}.nii.gz")
+    fname_vol_out = str(tmp_path / f"dmri_warped_T{t:04d}.nii.gz")
+    sct_apply_transfo.main(argv=['-i', fname_vol_in, '-d', sct_test_path('dmri', 'dwi_mean.nii.gz'),
+                                 '-w', fname_warp_3d, '-o', fname_vol_out, '-x', 'linear'])
 
-    sct_apply_transfo.main(argv=['-i', fname_vol, '-d', sct_test_path('dmri', 'dwi_mean.nii.gz'),
-                                 '-w', fname_warp, '-o', fname_out, '-x', 'linear'])
-    warped = (Image(fname_out).data.astype(np.float32))
-    moco_dl = Image(str(tmp_path / "dmri_mocoDL.nii.gz")).data.astype(np.float32)
-
-    moco_vol0 = moco_dl[..., 0]
-    # pick a representative slice: middle slice
-    z = warped.shape[2] // 2
-    # compare using phase cross-correlation
+    # 3. compare a single slice from the two t=0 volumes from both methods using phase cross-correlation
     from skimage.registration import phase_cross_correlation
-    shift, _, _ = phase_cross_correlation(warped[:, :, z], moco_vol0[:, :, z], normalization=None, upsample_factor=10)
-    print("shift:", shift)
+
+    warped_vol0 = Image(fname_vol_out).change_orientation('RPI').data.astype(np.float32)
+    mocodl_vol0 = Image(fname_moco).change_orientation('RPI').data.astype(np.float32)[..., 0]
+    z = warped_vol0.shape[2] // 2  # pick a representative slice: middle slice
+    shift, _, _ = phase_cross_correlation(warped_vol0[:, :, z],
+                                          mocodl_vol0[:, :, z],
+                                          normalization=None, upsample_factor=10)
     assert np.max(np.abs(shift)) < 1.0
 
 
