@@ -58,12 +58,35 @@ def angles(angle_IS, angle_RL, angle_AP, orientation, ax_order):
 
     # Get the proper 'from_euler' sequence notation: 'zxy' (derived from our stated assumptions)
     seq = ''.join([assumed_axis_map[ax] for ax in assumed_ax_order])
+    # Create rotation matrix from the set of angles
+    # NB: For the following axes (mimicking default FSLeyes view for LPI-/RAS+):
+    #       S   R    |     Z   X       - x-axis == Left to Right
+    #       | /      |     | /         - y-axis == Posterior to Anterior
+    #  P ---+--- A   |     +--- Y      - z-axis == Inferior to Superior
+    #     / |        |
+    #   L   I        |
+    # When extrinsic rotations are used ('xyz' notation), `from_euler` results
+    # in the following left-hand rotation conventions:
+    #   - angle_RL: rotation about x-axis, from +Y to +Z (A->S->P->I)
+    #   - angle_AP: rotation about y-axis, from +Z to +X (S->R->I->L)
+    # See also: https://en.wikipedia.org/wiki/Right-hand_rule#A_rotating_body
+    #   - (You can use your left hand to confirm `from_euler`'s rotations.)
+    # However, SCT expresses angles always as being relative to the +Z axis:
+    #   - angle_RL: rotation about x-axis, from +Z to +Y (S->A->I->P)
+    #   - angle_AP: rotation about y-axis, from +Z to +X (S->R->I->L)
+    #   - See: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/shape-metric-computation/csa-angles.png
+    # In practice, this is a weird mix of both a left-hand rotation (angle_AP)
+    # and a right-hand rotation (angle_RL), so we need to convert the angle_RL
+    # into its expected left-hand form:
     rot = Rotation.from_euler(seq=seq, angles=[
-        angle_IS,   # positive angle sends L -> A -> R -> P
-        -angle_RL,  # positive angle sends A -> I -> P -> S
-        angle_AP,   # positive angle sends S -> L -> I -> R
+        angle_IS,
+        angle_RL * -1,  # convert to left-hand form by negating the angle
+        angle_AP,
         ], degrees=True)
     tx, ty, tz = rot.apply([0, 0, 1])
+    # Then, to derive our expected angles, we need to use this arctan2 form:
+    #   - arctan2(y, z) -> angle_RL: +θ = rotation from +Z to +Y (S->A->I->P)
+    #   - arctan2(x, z) -> angle_AP: +θ = rotation from +Z to +X (S->R->I->L)
     return {
         'angle_RL': np.degrees(np.arctan2(ty, tz)),
         'angle_AP': np.degrees(np.arctan2(tx, tz)),
