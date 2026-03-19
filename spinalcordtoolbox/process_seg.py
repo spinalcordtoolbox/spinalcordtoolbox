@@ -103,7 +103,7 @@ def compute_shape(segmentation, path_output_dir, image=None, angle_correction=Tr
             im_centerline_r = im_seg
         # compute the spinal cord centerline based on the spinal cord segmentation
         _, arr_ctl, arr_ctl_der, fit_results = get_centerline(im_centerline_r, param=param_centerline, verbose=verbose,
-                                                              remove_temp_files=remove_temp_files)
+                                                              remove_temp_files=remove_temp_files, path_output_dir=path_output_dir)
         # the third column of `arr_ctl` contains the integer slice numbers, and the first two
         # columns of `arr_ctl_der` contain the x and y components of the centerline derivative
         deriv = {int(z_ref): arr_ctl_der[:2, index] for index, z_ref in enumerate(arr_ctl[2])}

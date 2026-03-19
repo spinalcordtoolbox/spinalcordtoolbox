@@ -84,11 +84,12 @@ def find_and_sort_coord(img):
     return np.array(sorted_avg).T
 
 
-def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files=1, space='pix'):
+def get_centerline(im_seg, path_output_dir=None, param=ParamCenterline(), verbose=1, remove_temp_files=1, space='pix'):
     """
     Extract centerline from an image (using optic) or from a binary or weighted segmentation (using the center of mass).
 
     :param im_seg: Image(): Input segmentation or series of points along the centerline.
+    :param path_output_dir: Path to the output directory.
     :param param: ParamCenterline() class:
     :param verbose: int: verbose level
     :param remove_temp_files: int: Whether to remove temporary files. 0 = no, 1 = yes.
@@ -266,7 +267,7 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
             plt.xlabel("Z [mm]")
             plt.legend(['X-deriv', 'Y-deriv'])
 
-            plt.savefig('fig_centerline_' + datetime.now().strftime("%y%m%d-%H%M%S%f") + '_' + param.algo_fitting + '.png')
+            plt.savefig(path_output_dir + '/fig_centerline_' + datetime.now().strftime("%y%m%d-%H%M%S%f") + '_' + param.algo_fitting + '.png')
             plt.close()
 
     # Construct the outputs (still in RPI- orientation)
