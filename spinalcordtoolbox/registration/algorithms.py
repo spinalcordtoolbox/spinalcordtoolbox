@@ -1576,7 +1576,8 @@ def find_angle_hog(image, centermass, px, py, angle_range=radians(10)):
     # Bins of the histogram :
     # It is an array containing the central angle (in radians) for each bin of the orientation histogram, allowing you
     # to map histogram indices to their corresponding angles.
-    repr_hist = np.linspace(-(radians(180) - radians(360) / nb_bin), (radians(180) - radians(360) / nb_bin), nb_bin - 1)
+    bin_width = radians(360) / nb_bin
+    repr_hist = np.linspace(-(radians(180) - bin_width), (radians(180) - bin_width), nb_bin - 1)
 
     # Smoothing of the histogram, necessary to avoid digitization effects that will favor angles 0, 45, 90, -45, -90:
     grad_orient_histo_smooth = circular_filter_1d(grad_orient_histo, kmedian_size, kernel='median')  # fft than square than ifft to calculate convolution
@@ -1584,10 +1585,13 @@ def find_angle_hog(image, centermass, px, py, angle_range=radians(10)):
     # Computing the circular autoconvolution of the histogram to obtain the axis of symmetry of the histogram :
     grad_orient_histo_conv = circular_conv(grad_orient_histo_smooth, grad_orient_histo_smooth)
 
-    # Restraining angle search to the angle range :
+    # Since we are restricting the search to [-angle_range, +angle_range], find how many bins (indexes) span [0, angle_range]
+    # and use that distance to get the indexes of -angle_range and +angle_range
     index_restrain = int(np.ceil(np.true_divide(angle_range, radians(180)) * nb_bin))
-    center = (nb_bin - 1) // 2
-    grad_orient_histo_conv_restrained = grad_orient_histo_conv[center - index_restrain + 1:center + index_restrain + 1]
+    index_center = (nb_bin - 1) // 2
+    index_lower, index_upper = (index_center - index_restrain + 1), (index_center + index_restrain + 1)
+    # get the orientation values at those points
+    grad_orient_histo_conv_restrained = grad_orient_histo_conv[index_lower:index_upper]
 
     # Finding the symmetry axis by searching for the maximum in the autoconvolution of the histogram :
     index_angle_found = np.argmax(grad_orient_histo_conv_restrained) + (nb_bin // 2 - index_restrain)
