@@ -9,7 +9,7 @@ import logging
 import os  # FIXME
 import shutil
 import psutil
-from math import asin, cos, sin, acos
+from math import asin, cos, sin, acos, radians
 
 import numpy as np
 from scipy.ndimage import gaussian_filter, gaussian_filter1d, convolve
@@ -718,7 +718,7 @@ def register_slicewise(fname_src, fname_dest, paramreg=None, fname_mask='', warp
 
 def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='warp_forward.nii.gz',
                              fname_warp_inv='warp_inverse.nii.gz', rot_method='pca', filter_size=0, path_qc='.',
-                             verbose=1, pca_eigenratio_th=1.6, th_max_angle=40):
+                             verbose=1, pca_eigenratio_th=1.6, th_max_angle=radians(40)):
     """
     Rotate the source image to match the orientation of the destination image, using the first and second eigenvector
     of the PCA. This function should be used on segmentations (not images).
@@ -810,7 +810,6 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
     # displacement_inverse = np.zeros([nz, 2])
     angle_src_dest = np.zeros(nz)
     z_nonzero = []
-    th_max_angle *= np.pi / 180
 
     # Loop across slices
     print()  # Add newline between last log message and the progress bar logging
@@ -1540,7 +1539,7 @@ def find_index_halfmax(data1d):
     return xmin, xmax
 
 
-def find_angle_hog(image, centermass, px, py, angle_range=10):
+def find_angle_hog(image, centermass, px, py, angle_range=radians(10)):
     """
     Finds the angle of an image based on the method described by Sun, "Symmetry Detection Using Gradient Information."
     Pattern Recognition Letters 16, no. 9 (September 1, 1995): 987–96, and improved by N. Pinon
@@ -1548,7 +1547,7 @@ def find_angle_hog(image, centermass, px, py, angle_range=10):
     :param: image : 2D numpy array to find symmetry axis on
     :param: centermass: tuple of floats indicating the center of mass of the image
     :param: px, py, dimensions of the pixels in the x and y direction
-    :param: angle_range : float or None, in deg, the angle will be searched in the range [-angle_range, angle_range], if None any angle might be returned
+    :param: angle_range : float or None (in rad) the angle will be searched in the range [-angle_range, angle_range], if None any angle might be returned
     :return: angle found (in rad) and confidence score
     """
 
@@ -1563,7 +1562,7 @@ def find_angle_hog(image, centermass, px, py, angle_range=10):
     if nb_bin % 2 != 0:  # necessary to have even number of bins
         nb_bin = nb_bin - 1
     if angle_range is None:
-        angle_range = 90
+        angle_range = radians(90)
 
     # Constructing mask based on center of mass that will influence the weighting of the orientation histogram
     nx, ny = image.shape
@@ -1577,7 +1576,7 @@ def find_angle_hog(image, centermass, px, py, angle_range=10):
     # Bins of the histogram :
     # It is an array containing the central angle (in radians) for each bin of the orientation histogram, allowing you
     # to map histogram indices to their corresponding angles.
-    repr_hist = np.linspace(-(np.pi - 2 * np.pi / nb_bin), (np.pi - 2 * np.pi / nb_bin), nb_bin - 1)
+    repr_hist = np.linspace(-(radians(180) - radians(360) / nb_bin), (radians(180) - radians(360) / nb_bin), nb_bin - 1)
 
     # Smoothing of the histogram, necessary to avoid digitization effects that will favor angles 0, 45, 90, -45, -90:
     grad_orient_histo_smooth = circular_filter_1d(grad_orient_histo, kmedian_size, kernel='median')  # fft than square than ifft to calculate convolution
@@ -1586,7 +1585,7 @@ def find_angle_hog(image, centermass, px, py, angle_range=10):
     grad_orient_histo_conv = circular_conv(grad_orient_histo_smooth, grad_orient_histo_smooth)
 
     # Restraining angle search to the angle range :
-    index_restrain = int(np.ceil(np.true_divide(angle_range, 180) * nb_bin))
+    index_restrain = int(np.ceil(np.true_divide(angle_range, radians(180)) * nb_bin))
     center = (nb_bin - 1) // 2
     grad_orient_histo_conv_restrained = grad_orient_histo_conv[center - index_restrain + 1:center + index_restrain + 1]
 
