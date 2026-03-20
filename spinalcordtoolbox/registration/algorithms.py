@@ -831,7 +831,7 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
                     logger.warning(f"Slice #{str(iz)} not angle found in dest or src. It will be ignored.")
                     continue
                 if rot_method == 'hog':
-                    angle_src = -angle_src_hog  # flip sign to be consistent with PCA output
+                    angle_src = angle_src_hog
                     angle_dest = angle_dest_hog
 
             # Detect rotation using the PCA or PCA-HOG method
@@ -854,7 +854,7 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
                         angle_src = 0
                     elif rot_method == 'pcahog':
                         logger.info("Switched to method 'hog' for slice: {}".format(iz))
-                        angle_src = -angle_src_hog  # flip sign to be consistent with PCA output
+                        angle_src = angle_src_hog
                 if pca_eigenratio_dest < pca_eigenratio_th or angle_dest > th_max_angle or angle_dest < -th_max_angle:
                     if rot_method == 'pca':
                         angle_dest = 0
