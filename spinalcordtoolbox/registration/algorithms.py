@@ -1576,6 +1576,15 @@ def find_angle_hog(image, centermass, px, py, angle_range=radians(10)):
     # Bins of the histogram :
     # It is an array containing the central angle (in radians) for each bin of the orientation histogram, allowing you
     # to map histogram indices to their corresponding angles.
+    # FIXME: Despite an above comment mentioning an even number of bins (e.g. nb_bin=360), all further calculations are done
+    #        with odd-sized arrays (e.g. 359)...
+    #        The end result is the following `repr_hist` array (shown in degrees for readability):
+    # idx           [0]   [1]          [179]         [357] [358]
+    # val          -179  -178            0            178   179
+    #             | --- | --- | [...] | --- | [...] | --- | --- |
+    # bounds   -179.5 -178.5 -177.5  -0.5  0.5    177.5 178.5 179.5
+    # This seems off (wouldn't we want the bounds to overlap, i.e. (-180, 180)?), but it corresponds to the size of the
+    # array returned by `gradient_orientation_histogram`, so I don't know if this actually causes any harm.
     bin_width = radians(360) / nb_bin
     repr_hist = np.linspace(-(radians(180) - bin_width), (radians(180) - bin_width), nb_bin - 1)
 
@@ -1587,15 +1596,22 @@ def find_angle_hog(image, centermass, px, py, angle_range=radians(10)):
 
     # Since we are restricting the search to [-angle_range, +angle_range], find how many bins (indexes) span [0, angle_range]
     # and use that distance to get the indexes of -angle_range and +angle_range
-    index_restrain = int(np.ceil(np.true_divide(angle_range, radians(180)) * nb_bin))
+    index_restrain = int(np.ceil(angle_range / bin_width))
     index_center = (nb_bin - 1) // 2
-    index_lower, index_upper = (index_center - index_restrain + 1), (index_center + index_restrain + 1)
-    # get the orientation values at those points
+    index_lower, index_upper = (index_center - index_restrain), (index_center + index_restrain)
+    # debug sanity check: make sure these indices are actually equivalent to [-angle_range, angle_range]
+    # this only works if angle_range is an exact multiple of the bin_width (e.g. 1deg -> 40deg)
+    # which is true by default but not guaranteed
+    # assert np.isclose(repr_hist[index_upper], angle_range)
+    # assert np.isclose(repr_hist[index_lower], -angle_range)
+    # get the orientation histogram values only within those points
     grad_orient_histo_conv_restrained = grad_orient_histo_conv[index_lower:index_upper]
 
     # Finding the symmetry axis by searching for the maximum in the autoconvolution of the histogram :
-    index_angle_found = np.argmax(grad_orient_histo_conv_restrained) + (nb_bin // 2 - index_restrain)
-    angle_found = repr_hist[index_angle_found] / 2
+    index_angle_found = np.argmax(grad_orient_histo_conv_restrained)
+    # Shift the index back to the original histogram index range
+    index_angle_found = index_angle_found + index_center - index_restrain
+    angle_found = repr_hist[index_angle_found]
     angle_found_score = np.amax(grad_orient_histo_conv_restrained)
 
     # Finding other maxima to compute confidence score
