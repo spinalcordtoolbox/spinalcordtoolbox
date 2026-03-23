@@ -395,6 +395,119 @@ class SlicingSpec:
         Get a mosaic that can hold the result of `self.get_slices`.
         """
         return Mosaic(self.shape, list(self.offsets.keys()), self.axis_labels, **kwargs)
+    
+def plot_outlines(img: np.ndarray, ax: 'mpl_axes.Axes', **kwargs):
+    """
+    Draw the outlines of every equal-value area of a 2D Numpy array with Matplotlib.
+
+    kwargs are forwarded to `matplotlib.collections.PolyCollection` for styling.
+    """
+    # To see where each (row, column) index shows up in the graphic
+    # (left, right, top, bottom), see:
+    # https://matplotlib.org/stable/users/explain/artists/imshow_extent.html#default-extent
+
+    # Add a frame of zeros around the image to account for cells on the border
+    padded = np.pad(img, 1)
+
+    # First we compute the endpoints of every horizontal segment of the outline
+
+    # edge[r, c] is True when there should be a visible horizontal outline
+    # between img[r, c+1] and img[r+1, c+1]
+    edge = (padded[:-1, :] != padded[1:, :])
+    # run[r, c] is True when a run of horizontal edges starts or stops at the
+    # upper left corner of img[r, c]
+    run = (edge[:, :-1] != edge[:, 1:])
+    # Get the coordinates from the big boolean array. They are sorted so that
+    # the horizontal segments start at even vertices and stop at the next (odd)
+    # vertex: v0--v1, v2--v3, v4--v5, ...
+    vertices = sorted(map(tuple, np.argwhere(run)))
+    # Given a vertex, we want to quickly travel to its horizontal neighbour
+    # i^1 == i+1 when i is even (v0->v1, v2->v3, ...)
+    # i^1 == i-1 when i is odd (v1->v0, v3->v2, ...)
+    horizontal_segment = {v: vertices[i ^ 1] for i, v in enumerate(vertices)}
+
+    # Second, we compute endpoints for the vertical segments
+
+    # edge[r, c] is True when there should be a visible vertical outline
+    # between img[r+1, c] and img[r+1, c+1]
+    edge = (padded[:, :-1] != padded[:, 1:])
+    # run[r, c] is True when a run of vertical edges starts or stops at the
+    # upper left corner of img[r, c]
+    run = (edge[:-1, :] != edge[1:, :])
+    # Get the coordinates from the big boolean array. They are sorted so that
+    # the vertical segments start at even vertices and stop at the next (odd)
+    # vertex: v0--v1, v2--v3, v4--v5, ...
+    vertices = sorted(map(tuple, np.argwhere(run)), key=lambda v: v[::-1])
+    # Given a vertex, we want to quickly travel to its vertical neighbour
+    # i^1 == i+1 when i is even (v0->v1, v2->v3, ...)
+    # i^1 == i-1 when i is odd (v1->v0, v3->v2, ...)
+    vertical_segment = {v: vertices[i ^ 1] for i, v in enumerate(vertices)}
+
+    # Now we need to collect the horizontal and vertical segments into a list
+    # of polygons. We may need some open-ended polygons, which start and end
+    # at vertices which are in the middle of a perpendicular segment. And we
+    # may need some closed polygons, which loop back to their starting vertex.
+
+    # The open-ended polygons:
+    open_polygons = []
+    open_vertices = set(horizontal_segment).symmetric_difference(vertical_segment)
+    while open_vertices:
+        polygon = []
+        vertex = open_vertices.pop()
+        # Build the polygon by listing its vertices in order. We remove
+        # vertices from horizontal_segment and vertical_segment as we trace
+        # over them with the polygon.
+        while True:
+            polygon.append(vertex)
+            if vertex in horizontal_segment:
+                # Move to the other endpoint of the segment, and make sure to
+                # remove both endpoints from the dictionary.
+                vertex = horizontal_segment.pop(vertex)
+                del horizontal_segment[vertex]
+            elif vertex in vertical_segment:
+                # Move to the other endpoint of the segment, and make sure to
+                # remove both endpoints from the dictionary.
+                vertex = vertical_segment.pop(vertex)
+                del vertical_segment[vertex]
+            else:
+                # We have reached the end of the current open-ended polygon.
+                open_vertices.remove(vertex)
+                # Convert (row, column) coordinates to (x, y)
+                open_polygons.append(np.array(polygon)[:, ::-1] - 0.5)
+                break
+
+    # The closed polygons:
+    closed_polygons = []
+    while horizontal_segment:
+        polygon = []
+        # Remove both endpoints of an arbitrary segment.
+        vertex, other = horizontal_segment.popitem()
+        del horizontal_segment[other]
+        while True:
+            polygon.append(vertex)
+            if vertex in horizontal_segment:
+                # Move to the other endpoint of the segment, and make sure to
+                # remove both endpoints from the dictionary.
+                vertex = horizontal_segment.pop(vertex)
+                del horizontal_segment[vertex]
+            elif vertex in vertical_segment:
+                # Move to the other endpoint of the segment, and make sure to
+                # remove both endpoints from the dictionary.
+                vertex = vertical_segment.pop(vertex)
+                del vertical_segment[vertex]
+            else:
+                # We have reached the end of the current closed polygon.
+                # Convert (row, column) coordinates to (x, y)
+                closed_polygons.append(np.array(polygon)[:, ::-1] - 0.5)
+                break
+    assert not vertical_segment
+
+    # Draw the outline
+    ax.add_collection(mpl_collections.PolyCollection(
+        open_polygons, closed=False, **kwargs))
+    ax.add_collection(mpl_collections.PolyCollection(
+        closed_polygons, closed=True, **kwargs))
+
 
 
 class Mosaic:
@@ -421,15 +534,15 @@ class Mosaic:
         scale: float = 2.5,
     ):
         # Make a canvas of the right size to hold all the tiles.
-        num_col = max(math.floor(TARGET_WIDTH_PIXL / scale / shape[1]), 1)
-        num_row = math.ceil(len(slice_labels) / num_col)
-        self.canvas = np.zeros((num_row * shape[0], num_col * shape[1]))
+        num_col = len(slice_labels)
+        num_row = 1
+        self.canvas = np.zeros((num_row * (shape[0]+20), num_col * (shape[1]+2)))
 
         # Compute the canvas coordinates for each slice label.
         self.tiles = dict(zip(slice_labels, [
-            (slice(x, x + shape[0]), slice(y, y + shape[1]))
-            for x in range(0, self.canvas.shape[0], shape[0])
-            for y in range(0, self.canvas.shape[1], shape[1])
+            (slice(x + 10, x + 10 + shape[0]), slice(y + 1, y + 1 + shape[1]))
+            for x in range(0, self.canvas.shape[0], shape[0] + 20)
+            for y in range(0, self.canvas.shape[1], shape[1] + 2)
         ], strict=False))
 
         # Save the axis labels for displaying later.
@@ -486,7 +599,7 @@ class Mosaic:
                 self.ax.text(right, (top + bottom) / 2, right_label, ha='right', va='center', **text_args)
             else:
                 # Slice labels for the other tiles.
-                self.ax.text(left, top, slice_label, ha='left', va='top', **text_args)
+                self.ax.text((left + right) / 2, top, slice_label, ha='center', va='bottom', **text_args)
 
     def save(self, path: Path):
         """Save the final figure."""
@@ -516,7 +629,12 @@ def sct_deepseb(
     mosaic.ax.imshow(mosaic.canvas, cmap=cbar, vmin=cmin, vmax=cmax, interpolation='none')
     if with_seg:
         mosaic.insert_slices(slicing_spec.get_slices(img_seg, order=0)) #  1 is for linear
-        mosaic.ax.imshow(mosaic.canvas, cmap = mpl_colors.ListedColormap(["#000000", "#00ffff"]), alpha = 1.0, norm = mpl_colors.Normalize(vmin=0, vmax=1), interpolation='none')
+        plot_outlines(mosaic.canvas > 0.5, mosaic.ax, facecolor='none', edgecolor='black', linewidth=0.3)
+        #mskd_array = np.ma.masked_where(mosaic.canvas == 0, mosaic.canvas)
+        #mosaic.ax.imshow(mskd_array, cmap = mpl_colors.ListedColormap(["#000000", "#00ffff"]), alpha = 0.5, norm = mpl_colors.Normalize(vmin=0, vmax=1), interpolation='none')
+        
+    
+    # TO-DO: Add if statement for labels flag
     mosaic.add_labels()
     # This shows the input image with colormap and vmin/vmax custom
     mosaic.save(fname_output)
@@ -747,6 +865,8 @@ def main(argv: Sequence[str]):
         fname_output=f"{arguments.o.removesuffix('.png')}_with_seg.png",
         with_seg=True,
         )
+    
+    
     
 
 if __name__ == "__main__":
