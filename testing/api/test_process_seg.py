@@ -402,7 +402,7 @@ def test_compute_shape(im_seg, expected, params):
                     obtained_value = metrics[key].data[n_slice]
 
                     # if n_slice is empty (i.e. `zeroslice` was set) all metrics should be `np.nan`
-                    if im_seg.data[:, :, n_slice].sum() == 0:
+                    if np.all(im_seg.data[:, :, n_slice] == 0):
                         assert math.isnan(obtained_value)
                     else:
                         assert obtained_value == pytest.approx(expected_value, **kwargs)
