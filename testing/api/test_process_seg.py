@@ -161,7 +161,6 @@ def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.floa
         if shape == 'ellipse':
             height, width = radius_RL, radius_AP
             rows, cols = ellipse(height, width, height + 0.5, width + 0.5)
-            # FIXME: Write 1s directly to data, probably cleaner!
             footprint = np.zeros((2*height + 1, 2*width + 1), dtype=dtype)
             footprint[rows, cols] = 1
             data[x[iz]-radius_RL:x[iz]+radius_RL+1, yfit[iz]-radius_AP:yfit[iz]+radius_AP+1, iz] = footprint
