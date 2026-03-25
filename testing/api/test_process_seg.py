@@ -335,7 +335,7 @@ im_segs = [
 
     # 11. test with one empty slice
     dummy_segmentation(size_arr=(32, 32, 5), zeroslice=[2], debug=DEBUG) +
-    [{'angle_corr': False, 'slice': 2}]
+    [{'angle_corr': False}]
 ]
 
 
