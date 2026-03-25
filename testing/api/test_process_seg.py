@@ -118,7 +118,7 @@ def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.floa
     padding = 15  # Padding size (isotropic) to avoid edge effect during rotation
     # Create a 3d array, with dimensions corresponding to x: RL, y: AP, z: IS
     nx, ny, nz = [int(size_arr[i] * pixdim[i]) for i in range(3)]
-    data = np.zeros((nx, ny, nz))
+    data = np.zeros((nx, ny, nz), dtype=np.float64)
     xx, yy = np.mgrid[:nx, :ny]
 
     # Create a dummy segmentation using polynomial function
@@ -161,7 +161,7 @@ def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.floa
         if shape == 'ellipse':
             height, width = radius_RL, radius_AP
             rows, cols = ellipse(height, width, height + 0.5, width + 0.5)
-            footprint = np.zeros((2*height + 1, 2*width + 1), dtype=dtype)
+            footprint = np.zeros((2*height + 1, 2*width + 1))
             footprint[rows, cols] = 1
             data[x[iz]-radius_RL:x[iz]+radius_RL+1, yfit[iz]-radius_AP:yfit[iz]+radius_AP+1, iz] = footprint
 
@@ -198,11 +198,22 @@ def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.floa
     if zeroslice:
         data_rot_crop[:, :, zeroslice] = 0
 
+    # if dtype is int, we need to round values before converting to int, otherwise the interpolation during rotation will result in non-integer values that get truncated
+    # FIXME: The uint8 test is already failing (see discussion in #5129), but the test is especially sensitive
+    #        to the rounding, too"
+    #          - Before the dtype fix, we got 73.108 != 77.0 +/- 2.31
+    #          - Without this rounding, we get 63.03 != 77.0 +/- 2.31
+    #          - After the rounding, we get 74.006 != 77.0 ± 2.31
+    #        Meaning, we should be careful when implementing the proposed fix for the unit8 test, to make sure
+    #        the problem isn't actually just faulty input data instead of a bug in the code.
+    if np.issubdtype(dtype, np.integer):
+        data_rot_crop = np.round(data_rot_crop)
+
     # Create nibabel object
     xform = np.eye(4)
     for i in range(3):
         xform[i][i] = 1  # in [mm]
-    nii = nib.nifti1.Nifti1Image(data_rot_crop.astype('float32'), xform)
+    nii = nib.nifti1.Nifti1Image(data_rot_crop.astype(dtype), xform)
     # resample to desired resolution
     nii_r = resample_nib(nii, new_size=pixdim, new_size_type='mm', interpolation='linear')
     # Create Image object. Default orientation is LPI.
@@ -340,7 +351,7 @@ def test_compute_shape(im_seg, expected, params):
                   {'rel': 0.030})
         # FIXME: Try to make the 0.03 tolerance tighter -- it's still too large.
         #        Notes (what breaks when `rel` is decreased):
-        #          - 0.030: test9 - mean(area) - 73.108 vs. 77 +/- 2.31 <- Known, will be fixed before merging
+        #          - 0.030: test9 - mean(area) - 74.006 vs. 77 +/- 2.31 <- Known, will be fixed before merging #5129
         #          - 0.025: test7 - mean(diameter_AP) - 10.715 vs. 11 +/- 0.275
         #          - 0.020: test5 - mean(diameter_AP) - 10.778 vs. 11 +/- 0.220
         #                   test8 - mean(diameter_AP) - 10.768 vs. 11 +/- 0.220
