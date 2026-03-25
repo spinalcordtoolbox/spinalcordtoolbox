@@ -303,6 +303,8 @@ im_segs = [
     [{'angle_corr': False}],
 
     # 4. test with int16. Different bit ordering, which can cause issue when applying transform.warp()
+    # Bugfix that this case is testing: https://github.com/spinalcordtoolbox/spinalcordtoolbox/commit/2503ecc16b1a481b6eb51dfdeef713f9b58f8013
+    # Test originally added in PR#2200: https://github.com/spinalcordtoolbox/spinalcordtoolbox/commit/cf85f228e01b33dd08a5acbc4c1ce6ae86fa5af3
     dummy_segmentation(size_arr=(64, 320, 5), shape='rectangle', radius_RL=13, radius_AP=5, angle_RL=0, debug=DEBUG,
                        pixdim=(1, 1, 1), dtype=np.int16, orientation='RPI',) +
     [{'angle_corr': False}],
@@ -327,7 +329,7 @@ im_segs = [
     dummy_segmentation(size_arr=(32, 32, 50), dtype=np.uint8, angle_RL=15, debug=DEBUG) +
     [{'angle_corr': True}],
 
-    # 10. test all output params
+    # 10. test bigger slice
     dummy_segmentation(size_arr=(128, 128, 5), pixdim=(1, 1, 1), shape='ellipse', radius_RL=50, radius_AP=30, debug=DEBUG) +
     [{'angle_corr': False}],
 
