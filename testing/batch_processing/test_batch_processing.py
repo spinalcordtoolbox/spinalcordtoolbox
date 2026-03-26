@@ -1,4 +1,8 @@
 # pytest unit tests to validate the results of the batch_processing.sh script
+# This comment is used to retrigger the CI, specifically to demonstrate that I've fixed
+# `batch_single_subject.sh` to properly reproduce the cached values. See:
+# - Initial commit: https://github.com/spinalcordtoolbox/sct_tutorial_data/commit/84139952c531ada90a901d9612ff7a8070bcc02f
+# - Fixed commit: https://github.com/spinalcordtoolbox/sct_tutorial_data/commit/4930bd82e8a4b48ad7d478a80c6a494d2da2cf23
 
 import csv
 from pathlib import Path
