@@ -976,7 +976,7 @@ def sct_deepseb(
 
         img_input = Image(fname_input)
         img_seg = Image(fname_seg)
-        img_seg.data = (img_seg.data > 0.5) * 1
+        img_seg.data = (img_seg.data > 0.1) * 1
 
         # Center the axial slices and create mosaice
         slicing_spec = SlicingSpec.full_axial(img_input, p_resample=None).center_patches(img_seg)
