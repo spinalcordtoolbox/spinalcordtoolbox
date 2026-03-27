@@ -270,6 +270,11 @@ def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.floa
         'length': size_arr[2] * pixdim[2] / (np.cos(math.radians(angle_AP)) * np.cos(math.radians(angle_RL))),
         'eccentricity': math.sqrt(1 - ((diameter_AP_regionprops / 2) / (diameter_RL_regionprops / 2)) ** 2),
     }
+    # Get expected orientation from angle_IS
+    # This only works when we don't have any apparent IS rotation (i.e. RL+AP=IS). If we have both, then estimating the
+    # orientation that skimage measures becomes fragile/difficult.
+    if not (angle_AP and angle_RL):
+        expected['orientation'] = -angle_IS  # NB: inputting angle_IS=15 gives orientation=-15 (different skimage sign convention?)
 
     # zero slices only affect the overall expected length
     if zeroslice:
