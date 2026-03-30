@@ -278,9 +278,9 @@ def _properties2d(seg, dim, pr, iz, angle_hog=None, verbose=1):
     seg_norm = (seg - seg.min()) / (seg.max() - seg.min())
     # Convert to float64
     seg_norm = seg_norm.astype(np.float64)
-    # Binarize segmentation using threshold at 0. Necessary input for measure.regionprops
+    # Binarize segmentation using threshold at NEAR_ZERO_THRESHOLD Necessary input for measure.regionprops
     # Note: even when the input segmentation is binary, it might be soft now due to the angle correction
-    seg_bin = np.array(seg_norm > 0.5, dtype='uint8')
+    seg_bin = np.array(seg_norm > NEAR_ZERO_THRESHOLD, dtype='uint8')
     # Get all closed binary regions from the segmentation (normally there is only one)
     regions = measure.regionprops(seg_bin, intensity_image=seg_norm)
     # Check number of regions
