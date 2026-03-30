@@ -296,12 +296,6 @@ def _properties2d(seg, dim, pr, iz, angle_hog=None, verbose=1):
     # Apply resampling to the cropped segmentation:
     zoom_factors = (dim[0]/pr, dim[1]/pr)
     seg_crop_r = zoom(seg_crop, zoom=zoom_factors, order=1, mode='grid-constant', grid_mode=True)  # make pixel size isotropic
-    regions = measure.regionprops(np.array(seg_crop_r > 0.5, dtype='uint8'), intensity_image=seg_crop_r)
-    region = regions[0]
-    minx, miny, maxx, maxy = region.bbox
-    # Use those bounding box coordinates to crop the segmentation (for faster processing), again as zoom adds padding
-    seg_crop_r = seg_crop_r[np.clip(minx-pad, 0, seg_crop_r.shape[0]): np.clip(maxx+pad, 0, seg_crop_r.shape[0]),
-                            np.clip(miny-pad, 0, seg_crop_r.shape[1]): np.clip(maxy+pad, 0, seg_crop_r.shape[1])]
     # Update dim to isotropic pixel size
     dim = [pr, pr]
     # Binarize segmentation using threshold at 0.5 Necessary input for measure.regionprops
