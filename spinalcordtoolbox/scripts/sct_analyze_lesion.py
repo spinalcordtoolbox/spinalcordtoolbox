@@ -790,8 +790,9 @@ class AnalyzeLesion:
                 self.distrib_matrix_dct[sheet_name].loc[idx, 'PAM50_' + str(tract_id).zfill(2)] = val * 100.0 / vol_mask_tot
 
         # Add the total column
+        ## Remove vert_level column from the sum if it exists for the total column
         self.distrib_matrix_dct[sheet_name]['total % (all tracts)'] = \
-            self.distrib_matrix_dct[sheet_name].sum(numeric_only=True, axis=1)
+            self.distrib_matrix_dct[sheet_name].drop(columns=['vert_level'], errors='ignore').sum(numeric_only=True, axis=1)
 
         # Add additional columns for the "CombinedLabels" defined by info_label.txt
         for label_name, sublabels in self.atlas_combinedlabels.items():
