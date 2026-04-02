@@ -146,7 +146,7 @@ jobs:
         id: download-artifact
         uses: dawidd6/action-download-artifact@v8
         with:
-          workflow: test-batch-single-subject.yml
+          workflow: test-batch-processing.yml
           branch: master
           event: schedule
           path: artifacts_master
@@ -160,7 +160,7 @@ jobs:
         continue-on-error: true
         run: |
           DIFF_FILE=diff.txt
-          WORKFLOW_FILE=".github/workflows/test-batch-single-subject.yml"
+          WORKFLOW_FILE=".github/workflows/test-batch-processing.yml"
           for os in "macos-15" "windows-2022" "ubuntu-22.04" "ubuntu-24.04";
           do
             # Full log output
