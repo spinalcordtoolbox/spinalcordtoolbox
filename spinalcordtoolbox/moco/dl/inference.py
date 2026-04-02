@@ -81,10 +81,10 @@ def moco_dl(fname_data, fname_mask='', fname_ref='', path_out='', mode="fmri", f
 
     # Validate orientation before reorienting to RPI
     if orig_orient[2] in 'IS':
-        printv("\n[moco-dl] Input is treated as axial (last axis = S/I).")
+        printv("[moco-dl] Input is treated as axial (last axis = S/I).")
     else:
         raise ValueError(
-            f"\n[moco-dl] Unsupported orientation: {orig_orient}. "
+            f"Unsupported orientation: {orig_orient}. "
             f"DL-based moco currently supports only inputs where the last axis is S/I."
         )
 
