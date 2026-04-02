@@ -172,12 +172,12 @@ def get_parser():
     optional.add_argument(
         '-dl',
         action='store_true',
-        help="Use deep learning–based motion correction (DenseNet) with the best-weights checkpoint.\n"
-             "Requires both -m (binary spinal cord mask).\n"
-             "  - The binary mask (3D) defines the spinal cord region used by the model to estimate motion within the mask. "
+        help="Use deep learning–based motion correction (DenseNet).\n"
+             "  - Requires the `-m` argument (binary spinal cord mask). "
+             "The binary mask (3D) defines the spinal cord region used by the model to estimate motion within the mask. "
              "It should be large enough to cover the full extent of the spinal cord in the image.\n"
              "DISCLAIMER: This preliminary method has not been thoroughly validated therefore we cannot guarantee it will work well on your data. "
-             "We suggest you compare the performance with/without the -dl method, and pick the best for your data. \n"
+             "We suggest you compare the performance with/without the -dl method, and pick the best for your data."
     )
 
     # Arguments which implement shared functionality
