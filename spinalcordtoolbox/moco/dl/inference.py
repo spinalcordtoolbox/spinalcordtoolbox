@@ -25,9 +25,6 @@ def check_dl_args(argv):
     if "-m" not in argv:
         raise ValueError("\n[moco-dl] Missing required argument: -m <mask>. A spinal cord mask is required for DL-based motion correction.")
 
-    if "-ref" not in argv:
-        raise ValueError("\n[moco-dl] Missing required argument: -ref <reference>. A target image (3D or 4D) is required for DL-based motion correction.")
-
     # check if the raw user arguments contain any forbidden args
     forbidden = []
     for forbidden_arg in ["-g", "-x", "-param", "-bvalmin"]:
@@ -63,7 +60,7 @@ def moco_dl(fname_data, fname_mask='', fname_ref='', path_out='', mode="fmri", f
         Output folder:         {os.path.abspath(path_out)}
         Mode:                  {mode}
         Mask:                  {fname_mask if fname_mask != '' else 'None'}
-        Reference image:       {fname_ref if fname_ref != '' else 'None'}
+        Reference image:       {fname_ref if fname_ref != '' else 'first volume of input (t=0)'}
         bvecs (dmri only):     {fname_bvecs}
         bvals (dmri only):     {fname_bvals}
     """))
@@ -74,7 +71,11 @@ def moco_dl(fname_data, fname_mask='', fname_ref='', path_out='', mode="fmri", f
     # Load native inputs
     im_data_native = Image(fname_data)
     im_mask_native = Image(fname_mask) if fname_mask != '' else None
-    im_ref_native = Image(fname_ref) if fname_ref != '' else None
+    if fname_ref:
+        im_ref_native = Image(fname_ref)
+    else:
+        ref_data = im_data_native.data[..., 0]
+        im_ref_native = Image(param=ref_data, hdr=im_data_native.hdr)
     orig_orient = im_data_native.orientation
     printv(f"\n[moco-dl] Native input orientation: {orig_orient}")
 
