@@ -75,12 +75,16 @@ def test_sct_fmri_moco_invalid_group_values(tmp_path, tmp_path_qc, fmri_mean_seg
 
 
 @pytest.mark.sct_testing
-def test_sct_fmri_moco_dl(tmp_path_qc, fmri_mean, fmri_mask, tmp_path, fmri_mean_seg):
-    """Run the CLI script with '-m' and '-ref' option and using '-dl' algorithm."""
+@pytest.mark.parametrize("ref", [True, False])
+def test_sct_fmri_moco_dl(tmp_path_qc, fmri_mean, fmri_mask, tmp_path, fmri_mean_seg, ref):
+    """Run the CLI script with '-m' and optionally '-ref' using '-dl' algorithm."""
     fname_data = sct_test_path('fmri', 'fmri.nii.gz')
-    sct_fmri_moco.main(argv=['-i', fname_data, '-ref', fmri_mean, '-m', fmri_mask,
-                             '-ofolder', str(tmp_path), '-dl',
-                             '-qc', tmp_path_qc, '-qc-seg', fmri_mean_seg])
+    argv = ['-i', fname_data, '-m', fmri_mask,
+            '-ofolder', str(tmp_path), '-dl',
+            '-qc', tmp_path_qc, '-qc-seg', fmri_mean_seg]
+    if ref:
+        argv += ['-ref', fmri_mean]
+    sct_fmri_moco.main(argv=argv)
 
     def build_disp_from_params(fname_tx, fname_ty, fname_ref, fname_warp):
         """Re-build displacement field from translation parameters; Tx and Ty"""

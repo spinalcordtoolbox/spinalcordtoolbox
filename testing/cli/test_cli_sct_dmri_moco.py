@@ -79,13 +79,16 @@ def test_sct_dmri_moco_with_mask_check_params(tmp_path, dmri_mask, tmp_path_qc, 
 
 
 @pytest.mark.sct_testing
-def test_sct_dmri_moco_dl(tmp_path, dmri_mask, tmp_path_qc, dmri_mean_seg):
-    """Run the CLI script with '-m' and '-ref' option and using '-dl' algorithm."""
+@pytest.mark.parametrize("ref", [True, False])
+def test_sct_dmri_moco_dl(tmp_path, dmri_mask, tmp_path_qc, dmri_mean_seg, ref):
+    """Run the CLI script with '-m' and optionally '-ref' option and using '-dl' algorithm."""
     fname_data = sct_test_path('dmri', 'dmri.nii.gz')
-    sct_dmri_moco.main(argv=['-i', fname_data, '-bvec', sct_test_path('dmri', 'bvecs.txt'),
-                             '-ref', sct_test_path('dmri', 'dwi_mean.nii.gz'),
-                             '-m', dmri_mask, '-ofolder', str(tmp_path), '-dl',
-                             '-qc', tmp_path_qc, '-qc-seg', dmri_mean_seg])
+    argv = ['-i', fname_data, '-bvec', sct_test_path('dmri', 'bvecs.txt'),
+            '-m', dmri_mask, '-ofolder', str(tmp_path), '-dl',
+            '-qc', tmp_path_qc, '-qc-seg', dmri_mean_seg]
+    if ref:
+        argv += ['-ref', sct_test_path('dmri', 'dwi_mean.nii.gz')]
+    sct_dmri_moco.main(argv=argv)
 
     def build_disp_from_params(fname_tx, fname_ty, fname_ref, fname_warp):
         """Re-build displacement field from translation parameters; Tx and Ty"""
