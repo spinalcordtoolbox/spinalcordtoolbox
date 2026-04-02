@@ -173,12 +173,11 @@ def get_parser():
         '-dl',
         action='store_true',
         help="Use deep learning–based motion correction (DenseNet) with the best-weights checkpoint.\n"
-             "Requires both -m (binary spinal cord mask) and -ref (reference image).\n"
+             "Requires both -m (binary spinal cord mask).\n"
              "  - The binary mask (3D) defines the spinal cord region used by the model to estimate motion within the mask. "
              "It should be large enough to cover the full extent of the spinal cord in the image.\n"
-             "  - The reference image (3D) serves as the target to which all timepoints are aligned. "
-             "It is typically a representative or no-motion volume. "
-             "You may use the first volume or the mean volume of the input.\n"
+             "DISCLAIMER: This preliminary method has not been thoroughly validated therefore we cannot guarantee it will work well on your data. "
+             "We suggest you compare the performance with/without the -dl method, and pick the best for your data. \n"
     )
 
     # Arguments which implement shared functionality
