@@ -60,3 +60,6 @@ documentation/build
 /contrib/apptainer/*.sif
 /contrib/apptainer/*.tar.gz
 /contrib/apptainer/sct_apptainer_*/
+
+# Installation logs
+install_sct_log.txt
