@@ -470,7 +470,7 @@ def _measure_ap_diameter(seg_crop_r, seg_crop_r_rotated, dim, angle, iz, propert
 
         # Note: seg_crop_r_rotated is soft (due to the rotation) so we sum its values to account for softness
         # Sum non-zero pixels along AP axis, i.e., the number of pixels in the row corresponding to the center of mass along the RL axis
-        # Compute AP diameter average acrross 3 mm extent centered at rl0_r
+        # Compute AP diameter average across 3 mm extent centered at rl0_r
 
         # Use centroid for AP diameter
         extent_avg = 30  # extent of 3 mm (because seg was resampled to 0.1mm) used for averaging the minimum (to account for noise)
