@@ -1120,14 +1120,14 @@ def sct_process_segmentation(
         scale = 2.5  # we can consider increasing the number, then the mosaic can be zoomed in/out using the "Full size" button in the QC report
 
         # Generate the first QC report image - background image
-        img = equalize_histogram(mosaic(img_input, centers, radius, scale=scale))
+        img_bg = equalize_histogram(mosaic(img_input, centers, radius, scale=scale))
         # Fix the width to a specific size, and vary the height based on how many rows there are.
-        size_fig = [TARGET_WIDTH_INCH, TARGET_WIDTH_INCH * img.shape[0] / img.shape[1]]
+        size_fig = [TARGET_WIDTH_INCH, TARGET_WIDTH_INCH * img_bg.shape[0] / img_bg.shape[1]]
         fig = mpl_figure.Figure()
         fig.set_size_inches(*size_fig, forward=True)
         mpl_backend_agg.FigureCanvasAgg(fig)
         ax = fig.add_axes((0, 0, 1, 1))
-        ax.imshow(img, cmap='gray', interpolation='none', aspect=1.0)
+        ax.imshow(img_bg, cmap='gray', interpolation='none', aspect=1.0)
         add_orientation_labels(ax, radius=tuple(r for r in radius))
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
@@ -1149,6 +1149,46 @@ def sct_process_segmentation(
         ax.imshow(img, aspect=1.0)
         # Plot HOG angle lines directly on the empty axes
         add_angle_lines(ax, img_temp.dim[0], metrics, angle_type=angle_type, radius=radius, scale=scale)
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+        img_path = str(imgs_to_generate['path_overlay_img'])
+        logger.debug('Save image %s', img_path)
+        fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
+
+    # QC entry 2: anterior (cyan) / posterior (yellow) cord lengths with RL axis (white).
+    # Variables from the first with-block (img_input, img_temp, img_bg, centers, radius, scale,
+    # size_fig) remain in scope in Python and are reused here to avoid redundant computation.
+    # Reference: Kang et al. J Clin Med 2023. https://doi.org/10.3390/jcm12124111 (Fig. 1)
+    with create_qc_entry(
+        path_input=Path(fname_input).resolve(),
+        path_qc=Path(path_qc),
+        command=command,
+        cmdline=list2cmdline(cmdline),
+        plane='Axial',
+        dataset=dataset,
+        subject=subject,
+    ) as imgs_to_generate:
+        fig = mpl_figure.Figure()
+        fig.set_size_inches(*size_fig, forward=True)
+        mpl_backend_agg.FigureCanvasAgg(fig)
+        ax = fig.add_axes((0, 0, 1, 1))
+        ax.imshow(img_bg, cmap='gray', interpolation='none', aspect=1.0)
+        add_orientation_labels(ax, radius=tuple(r for r in radius))
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+        img_path = str(imgs_to_generate['path_background_img'])
+        logger.debug('Save image %s', img_path)
+        fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
+
+        fig = mpl_figure.Figure()
+        fig.set_size_inches(*size_fig, forward=True)
+        mpl_backend_agg.FigureCanvasAgg(fig)
+        ax = fig.add_axes((0, 0, 1, 1))
+        ax.imshow(img, aspect=1.0)
+        # px_AP: pixel size in mm for the AP axis of the SAL-oriented image (dim[5])
+        add_ap_split_lines(ax, img_temp.dim[0], metrics,
+                           px_AP=img_input.dim[5],
+                           radius=radius, scale=scale)
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
         img_path = str(imgs_to_generate['path_overlay_img'])
@@ -1199,6 +1239,85 @@ def add_angle_lines(ax, num_slices, metrics, angle_type, radius: tuple[int, int]
             ax.text(x_mosaic + radius[0] * 0.2, y_mosaic - radius[1] * 0.3,  # upper right corner
                     f'{angle_deg:.1f}°', color='red', fontsize=3,
                     path_effects=[mpl_patheffects.withStroke(linewidth=0.75, foreground='black')])
+
+
+def add_ap_split_lines(ax, num_slices, metrics, px_AP, radius: tuple[int, int] = (15, 15), scale: float = 2.5):
+    """
+    Overlay anterior/posterior cord length lines on an axial mosaic.
+
+    For each slice, three lines are drawn (Fig. 1 of Kang et al. J Clin Med 2023):
+      - Cyan line:   cord center of mass → anterior cord edge (length = diameter_anterior)
+      - Yellow line: cord center of mass → posterior cord edge (length = diameter_posterior)
+
+    Lines are oriented using the HOG angle when available (otherwise vertical/horizontal).
+
+    :param ax: matplotlib axes object of the mosaic figure.
+    :param num_slices: number of axial slices (= first dim of the SAL image).
+    :param metrics: dict of Metric objects from compute_shape(). Must contain 'diameter_anterior',
+      'diameter_posterior', and 'diameter_RL'. Optionally 'angle_hog' for orientation.
+    :param px_AP: pixel size in mm along the AP axis (= img.dim[5] for a SAL-oriented image).
+    :param radius: (rows, cols) half-size in pixels of each mosaic tile.
+    :param scale: display scale factor (same value used when building the mosaic).
+    """
+    if 'diameter_anterior' not in metrics or 'diameter_posterior' not in metrics:
+        return
+
+    num_col = math.floor(TARGET_WIDTH_PIXL / scale / (2 * radius[0]))
+
+    for i in range(num_slices):
+        diam_ant = metrics['diameter_anterior'].data[i]
+        diam_post = metrics['diameter_posterior'].data[i]
+        if np.isnan(diam_ant) or np.isnan(diam_post):
+            continue
+
+        # Mosaic tile centre (same index inversion as add_angle_lines: RPI → SAL)
+        slice_index = num_slices - 1 - i
+        row = slice_index // num_col
+        col = slice_index % num_col
+        x_mosaic = col * (2 * radius[0]) + radius[0]
+        y_mosaic = row * (2 * radius[1]) + radius[1]
+
+        # HOG angle determines the cord's AP axis orientation in the mosaic.
+        # SAL orientation: in imshow coordinates, y increases downward.
+        # Orientation labels confirm: A (Anterior) = top (small y), P (Posterior) = bottom (large y).
+        # Unit vector toward Posterior at angle_deg=0: (sin(0), cos(0)) = (0, 1) = straight down ✓
+        angle_deg = 0.0
+        if 'angle_hog' in metrics:
+            v = metrics['angle_hog'].data[i]
+            if not np.isnan(v):
+                angle_deg = v
+        angle_rad = -angle_deg * np.pi / 180   # matches sign convention in add_angle_lines
+
+        # AP unit vector (toward Posterior) and perpendicular RL unit vector (toward Left at 0°)
+        ap_dx, ap_dy = np.sin(angle_rad), np.cos(angle_rad)
+
+        # Convert mm lengths to mosaic pixel lengths
+        ant_px = diam_ant / px_AP
+        post_px = diam_post / px_AP
+
+        stroke = [mpl_patheffects.withStroke(linewidth=0.6, foreground='black')]
+
+        # Cyan: cord center of mass to anterior cord edge
+        ax.plot([x_mosaic, x_mosaic - ant_px * ap_dx],
+                [y_mosaic, y_mosaic - ant_px * ap_dy],
+                '-', color='cyan', linewidth=0.7, solid_capstyle='round')
+        # Yellow: cord center of mass to posterior cord edge
+        ax.plot([x_mosaic, x_mosaic + post_px * ap_dx],
+                [y_mosaic, y_mosaic + post_px * ap_dy],
+                '-', color='yellow', linewidth=0.7, solid_capstyle='round')
+
+        # # Center of mass
+        # ax.plot(x_mosaic, y_mosaic, 'o', color='black', markersize=1, markeredgewidth=0.8)
+
+        # Value labels (mm) at the line tips
+        ax.text(x_mosaic - ant_px * ap_dx,
+                y_mosaic - ant_px * ap_dy - 1.5,
+                f'A:{diam_ant:.1f} mm', color='cyan', fontsize=3,
+                ha='center', va='bottom', path_effects=stroke)
+        ax.text(x_mosaic + post_px * ap_dx,
+                y_mosaic + post_px * ap_dy + 1.5,
+                f'P:{diam_post:.1f} mm', color='yellow', fontsize=3,
+                ha='center', va='top', path_effects=stroke)
 
 
 def sct_deepseg(
