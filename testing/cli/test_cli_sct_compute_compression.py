@@ -64,9 +64,9 @@ def dummy_3d_vert_label():
 @pytest.fixture(scope="session")
 def dummy_3d_mask_nib():
     data = np.zeros([32, 32, 81], dtype=np.uint8)
-    data[9:24, 9:24, :] = 1
-    data[9:24, 9:24, 48] = 0
-    data[9:24, 10:22, 48] = 1
+    data[9:24, 10:23, :] = 1
+    data[9:24, 10:23, 48] = 0
+    data[9:24, 11:21, 48] = 1
     nii = nibabel.nifti1.Nifti1Image(data, np.eye(4))
     filename = tempfile.NamedTemporaryFile(prefix='seg', suffix='.nii.gz', delete=False).name
     nibabel.save(nii, filename)
