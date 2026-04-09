@@ -1149,6 +1149,7 @@ def sct_process_segmentation(
         ax.imshow(img, aspect=1.0)
         # Plot HOG angle lines directly on the empty axes
         add_angle_lines(ax, img_temp.dim[0], metrics, angle_type=angle_type, radius=radius, scale=scale)
+        add_slice_numbers(ax, img_temp.dim[0], radius=radius, reverse=True)
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
         img_path = str(imgs_to_generate['path_overlay_img'])
@@ -1189,6 +1190,7 @@ def sct_process_segmentation(
         add_ap_split_lines(ax, img_temp.dim[0], metrics,
                            px_AP=img_input.dim[5],
                            radius=radius, scale=scale)
+        add_slice_numbers(ax, img_temp.dim[0], radius=radius, reverse=True)
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
         img_path = str(imgs_to_generate['path_overlay_img'])
