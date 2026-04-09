@@ -1318,11 +1318,11 @@ def add_ap_split_lines(ax, num_slices, metrics, px_AP, radius: tuple[int, int] =
         ax.text(x_mosaic - ant_px * ap_dx,
                 y_mosaic - ant_px * ap_dy - 1.5,
                 f'{diam_ant:.1f} mm', color='cyan', fontsize=3.5,
-                ha='center', va='bottom', path_effects=stroke)
+                ha='left', va='bottom', path_effects=stroke)
         ax.text(x_mosaic + post_px * ap_dx,
                 y_mosaic + post_px * ap_dy + 1.5,
                 f'{diam_post:.1f} mm', color='yellow', fontsize=3.5,
-                ha='center', va='top', path_effects=stroke)
+                ha='left', va='top', path_effects=stroke)
 
 
 def sct_deepseg(
