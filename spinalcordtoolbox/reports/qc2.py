@@ -1245,16 +1245,16 @@ def add_ap_split_lines(ax, num_slices, metrics, px_AP, radius: tuple[int, int] =
     """
     Overlay anterior/posterior cord length lines on an axial mosaic.
 
-    For each slice, three lines are drawn (Fig. 1 of Kang et al. J Clin Med 2023):
+    For each slice, two lines are drawn (inspiration: Fig. 1 of Kang et al. J Clin Med 2023):
       - Cyan line:   cord center of mass → anterior cord edge (length = diameter_anterior)
       - Yellow line: cord center of mass → posterior cord edge (length = diameter_posterior)
 
-    Lines are oriented using the HOG angle when available (otherwise vertical/horizontal).
+    Lines are oriented using the HOG angle when available (otherwise vertical).
 
     :param ax: matplotlib axes object of the mosaic figure.
     :param num_slices: number of axial slices (= first dim of the SAL image).
-    :param metrics: dict of Metric objects from compute_shape(). Must contain 'diameter_anterior',
-      'diameter_posterior', and 'diameter_RL'. Optionally 'angle_hog' for orientation.
+    :param metrics: dict of Metric objects from compute_shape(). Must contain 'diameter_anterior'
+      and 'diameter_posterior'. Optionally 'angle_hog' for orientation.
     :param px_AP: pixel size in mm along the AP axis (= img.dim[5] for a SAL-oriented image).
     :param radius: (rows, cols) half-size in pixels of each mosaic tile.
     :param scale: display scale factor (same value used when building the mosaic).
