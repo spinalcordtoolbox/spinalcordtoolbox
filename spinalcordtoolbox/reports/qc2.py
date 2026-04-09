@@ -1084,8 +1084,11 @@ def sct_process_segmentation(
         angle_type: Optional[str] = 'angle_hog',
 ):
     """
-    Generate a QC report for sct_process_segmentation showing a line corresponding to the HOG angle
-    (obtained using spinalcordtoolbox.registration.algorithms.find_angle_hog)
+    Generate two QC report entries for sct_process_segmentation:
+      1. HOG angle overlay: a line per slice showing the estimated cord orientation angle
+         (obtained using spinalcordtoolbox.registration.algorithms.find_angle_hog).
+      2. AP split overlay: per-slice cyan/yellow lines showing anterior (diameter_anterior) and
+         posterior (diameter_posterior) cord lengths from the cord center of mass.
     """
 
     command = 'sct_process_segmentation'
