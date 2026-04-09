@@ -1117,7 +1117,7 @@ def sct_process_segmentation(
 
         # If seg is available, use it to generate the radius
         radius = get_max_axial_radius(img_seg) if fname_seg else (15, 15)
-        scale = 2.5  # we can consider increasing the number, then the mosaic can be zoomed in/out using the "Full size" button in the QC report
+        scale = 3.2  # we can consider increasing the number, then the mosaic can be zoomed in/out using the "Full size" button in the QC report
 
         # Generate the first QC report image - background image
         img_bg = equalize_histogram(mosaic(img_input, centers, radius, scale=scale))
@@ -1239,8 +1239,8 @@ def add_angle_lines(ax, num_slices, metrics, angle_type, radius: tuple[int, int]
             # See https://github.com/spinalcordtoolbox/spinalcordtoolbox/blob/ba30577e80a4e7387498820f0ff30b8965fbf2a4/spinalcordtoolbox/registration/algorithms.py#L834
             # TODO: figure out why the link below flip the angle sign only for src_hog but not for dest_hog
             ax.text(x_mosaic + radius[0] * 0.2, y_mosaic - radius[1] * 0.3,  # upper right corner
-                    f'{angle_deg:.1f}°', color='red', fontsize=3,
-                    path_effects=[mpl_patheffects.withStroke(linewidth=0.75, foreground='black')])
+                    f'{angle_deg:.1f}°', color='red', fontsize=3.5,
+                    path_effects=[mpl_patheffects.withStroke(linewidth=1, foreground='black')])
 
 
 def add_ap_split_lines(ax, num_slices, metrics, px_AP, radius: tuple[int, int] = (15, 15), scale: float = 2.5):
@@ -1302,11 +1302,11 @@ def add_ap_split_lines(ax, num_slices, metrics, px_AP, radius: tuple[int, int] =
         # Cyan: cord center of mass to anterior cord edge
         ax.plot([x_mosaic, x_mosaic - ant_px * ap_dx],
                 [y_mosaic, y_mosaic - ant_px * ap_dy],
-                '-', color='cyan', linewidth=0.7, solid_capstyle='round')
+                '-', color='cyan', linewidth=1, solid_capstyle='round')
         # Yellow: cord center of mass to posterior cord edge
         ax.plot([x_mosaic, x_mosaic + post_px * ap_dx],
                 [y_mosaic, y_mosaic + post_px * ap_dy],
-                '-', color='yellow', linewidth=0.7, solid_capstyle='round')
+                '-', color='yellow', linewidth=1, solid_capstyle='round')
 
         # # Center of mass
         # ax.plot(x_mosaic, y_mosaic, 'o', color='black', markersize=1, markeredgewidth=0.8)
@@ -1314,11 +1314,11 @@ def add_ap_split_lines(ax, num_slices, metrics, px_AP, radius: tuple[int, int] =
         # Value labels (mm) at the line tips
         ax.text(x_mosaic - ant_px * ap_dx,
                 y_mosaic - ant_px * ap_dy - 1.5,
-                f'A:{diam_ant:.1f} mm', color='cyan', fontsize=3,
+                f'{diam_ant:.1f} mm', color='cyan', fontsize=3.5,
                 ha='center', va='bottom', path_effects=stroke)
         ax.text(x_mosaic + post_px * ap_dx,
                 y_mosaic + post_px * ap_dy + 1.5,
-                f'P:{diam_post:.1f} mm', color='yellow', fontsize=3,
+                f'{diam_post:.1f} mm', color='yellow', fontsize=3.5,
                 ha='center', va='top', path_effects=stroke)
 
 
