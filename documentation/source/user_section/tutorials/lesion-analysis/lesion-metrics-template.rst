@@ -9,7 +9,13 @@ If specified, the function computes:
 
 .. note::
 
-   The following command requires that you register the PAM50 template to the ``t2_lesion.nii.gz`` anatomical image. You can register the template and warp the atlas to the anatomical image using the ``sct_register_to_template`` and ``sct_warp_template`` functions, respectively.
+   The following command requires that you register the PAM50 template to the ``t2_lesion.nii.gz`` anatomical image. You can register the template and warp the atlas to the anatomical image using the ``sct_register_to_template`` and ``sct_warp_template`` functions, respectively. Specifically, the following command is vital to run before using ``-f label``, since it generates the ``label/`` folder in the working directory.
+
+   .. code:: sh
+
+      # Generate the subject-space label/atlas folder required by `-f label`
+      sct_warp_template -d t2.nii.gz -w warp_template2anat.nii.gz
+
    See :ref:`template-registration <template-registration>` for more information.
 
 Running ``sct_analyze_lesion``
@@ -19,7 +25,7 @@ Running ``sct_analyze_lesion``
 
 .. code:: sh
 
-   sct_analyze_lesion -m t2_lesion_seg.nii.gz -s t2_sc_seg.nii.gz -f label_T2w -qc ~/qc_singleSubj
+   sct_analyze_lesion -m t2_lesion_seg.nii.gz -s t2_sc_seg.nii.gz -f label -qc ~/qc_singleSubj
 
 :Input arguments:
    - ``-m`` : 3D binary mask of the segmented lesion
