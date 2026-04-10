@@ -794,7 +794,7 @@ class AnalyzeLesion:
         try:
             # numeric_only=False -> crash if any non-numeric columns are present (shouldn't happen)
             self.distrib_matrix_dct[sheet_name]['total % (all tracts)'] = df_tracts.sum(numeric_only=False, axis=1)
-        except TypeError as e:
+        except TypeError:
             raise TypeError("Non-numeric column found in distribution matrix. Please raise this issue on the SCT forum.")
 
         # Add additional columns for the "CombinedLabels" defined by info_label.txt
