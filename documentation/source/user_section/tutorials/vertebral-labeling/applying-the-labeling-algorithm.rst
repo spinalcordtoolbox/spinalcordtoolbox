@@ -1,29 +1,53 @@
 Applying the labeling algorithm
 ###############################
 
-To apply :ref:`sct_label_vertebrae` to our T2 data, the following command is used:
+The recommended workflow for vertebral and disc labeling is now based on :ref:`sct_deepseg_spine`, which uses TotalSpineSeg to generate disc labels (and optionally full multi-class spine segmentation).
+
+For most subsequent commands in this tutorial series (for example, template registration and per-level CSA with ``-discfile``), the main required output is the disc label file.
+
+Disc labeling for registration and per-level metrics
+====================================================
 
 .. code:: sh
 
-   sct_label_vertebrae -i t2.nii.gz -s t2_seg.nii.gz -c t2 -qc ~/qc_singleSubj
+   sct_deepseg spine -i t2.nii.gz -qc ~/qc_singleSubj
 
 :Input arguments:
    - ``-i`` : Input image
-   - ``-s`` : Segmented spinal cord corresponding to the input image
-   - ``-c`` : Contrast of the input image
    - ``-qc`` : Directory for Quality Control reporting. QC reports allow us to evaluate the results slice-by-slice.
 
 :Output files/folders:
-   - ``straight_ref.nii.gz`` : The straightened input image produced by the intermediate straightening step. This file can be re-used by other SCT functions that need a straight reference space.
-   - ``warp_curve2straight.nii.gz`` : The 4D warping field that defines the transform from the original curved anatomical image to the straightened image.
-   - ``warp_straight2curve.nii.gz`` : The 4D warping field that defines the inverse transform from the straightened anatomical image back to the original curved image.
-   - ``straightening.cache`` : SCT functions that require straightening will check for this file. If it is present in the working directory, ``straight_ref.nii.gz`` and the two warping fields will be re-used, saving processing time.
-   - ``t2_seg_labeled.nii.gz`` : Image containing the labeled spinal cord. Each voxel of the segmented spinal cord is labeled with a vertebral level as though the vertebrae were projected onto the spinal cord. The convention for label values is C3-->3, C4-->4, etc.
-   - ``t2_seg_labeled_discs.nii.gz`` : Image containing single-voxel intervertebral disc labels (without the segmented spinal cord). Each label is centered within the disc. The convention for label values is C2/C3-->3, C3/C4-->4, etc. This file also contains additional labels (such as the pontomedullary junction and groove). The latter can be used as part of a :ref:`PMJ-based method <csa-pmj>` for computing the CSA of the spinal cord.
+   - ``t2_totalspineseg_discs.nii.gz`` : Single-voxel intervertebral disc labels for subsequent registration and metric extraction steps.
 
 Once the command has finished, at the bottom of your terminal there will be instructions for inspecting the results using :ref:`Quality Control (QC) <qc>` reports. Optionally, If you have :ref:`fsleyes-instructions` installed, a ``fsleyes`` command will printed as well.
 
-.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/vertebral-labeling/io-sct_label_vertebrae.png
+
+Optional: full multi-class spine segmentation
+=============================================
+
+If you also want vertebrae/canal/cord outputs from TotalSpineSeg, run :ref:`sct_deepseg_spine` with ``-label-vert 1``.
+
+.. code:: sh
+
+   sct_deepseg spine -i t2.nii.gz -label-vert 1 -qc ~/qc_singleSubj
+   fsleyes t2.nii.gz -cm greyscale t2_totalspineseg_discs.nii.gz -cm subcortical -a 70.0 t2_totalspineseg_all.nii.gz -cm subcortical -a 70.0 &
+
+:Input arguments:
+   - ``-i`` : Input image.
+   - ``-label-vert`` : Set to ``1`` to output full spine segmentation (e.g. vertebrae, cord, canal).
+   - ``-qc`` : Directory for Quality Control reporting.
+
+:Output files/folders:
+   - ``t2_step1_canal.nii.gz`` : Spinal canal segmentation.
+   - ``t2_step1_cord.nii.gz`` : Spinal cord segmentation.
+   - ``t2_totalspineseg_discs.nii.gz`` : Intervertebral disc labels.
+   - ``t2_step1_output.nii.gz`` : Vertebrae segmentation (intermediate output).
+   - ``t2_step2_output.nii.gz`` : Refined vertebrae segmentation (intermediate output).
+   - ``t2_totalspineseg_all.nii.gz`` : Combined TotalSpineSeg output.
+
+This model can be slow on large volumes. Processing time can often be reduced by cropping the image before running the command and/or by using a GPU.
+
+.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/vertebral-labeling/io-sct_deepseg_spine.png
    :align: center
 
-   Input/output images for :ref:`sct_label_vertebrae`
+   Input/output images for :ref:`sct_deepseg_spine`

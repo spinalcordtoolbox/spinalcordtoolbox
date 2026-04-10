@@ -1,6 +1,6 @@
 .. manual-labeling-all-labels:
 
-Alternative #2: Manual labeling all labels
+Alternative #3: Manual labeling all labels
 ##########################################
 
 In special circumstances, both the automated and semi-automated approaches may not be applicable. For example, the C2-C3 disc may not be present in your image, or you may be dealing with heavily artifacted data. In those cases, you may want to skip the automated labeling approaches, and instead manually label every vertebrae.
