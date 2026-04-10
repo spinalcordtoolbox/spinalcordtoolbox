@@ -35,8 +35,8 @@ KEYS_DEFAULT = ['area',
                 'diameter_AP',
                 'diameter_AP_ellipse',
                 'diameter_RL',
-                'diameter_anterior',
-                'diameter_posterior',
+                'length_anterior',
+                'length_posterior',
                 'eccentricity',
                 'orientation',
                 'solidity',
@@ -461,8 +461,8 @@ def _measure_ap_diameter(seg_crop_r, seg_crop_r_rotated, dim, angle, iz, propert
         return {
             'ap_pixel_count': np.nan,
             'diameter_AP': np.nan,
-            'diameter_anterior': np.nan,
-            'diameter_posterior': np.nan,
+            'length_anterior': np.nan,
+            'length_posterior': np.nan,
         }
     else:
         _, _, [rl0, ap0] = compute_pca(rotated_bin)    # same as `y0, x0 = region.centroid`
@@ -489,15 +489,15 @@ def _measure_ap_diameter(seg_crop_r, seg_crop_r_rotated, dim, angle, iz, propert
         # Reference: Kang et al. J Clin Med 2023, https://doi.org/10.3390/jcm12124111 (Fig. 1)
         ap_pixels_posterior = np.sum(seg_crop_r_rotated[indices, :ap0_r], axis=1).mean()
         ap_pixels_anterior = np.sum(seg_crop_r_rotated[indices, ap0_r:], axis=1).mean()
-        diameter_posterior = ap_pixels_posterior * dim[1]
-        diameter_anterior = ap_pixels_anterior * dim[1]
+        length_posterior = ap_pixels_posterior * dim[1]
+        length_anterior = ap_pixels_anterior * dim[1]
 
         # Store all the rotated properties
         result = {
             'ap_pixel_count': ap_pixels,
             'diameter_AP': ap_diameter,
-            'diameter_anterior': diameter_anterior,
-            'diameter_posterior': diameter_posterior,
+            'length_anterior': length_anterior,
+            'length_posterior': length_posterior,
         }
 
         # Debug plotting

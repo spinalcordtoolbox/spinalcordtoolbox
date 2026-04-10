@@ -1087,8 +1087,8 @@ def sct_process_segmentation(
     Generate two QC report entries for sct_process_segmentation:
       1. HOG angle overlay: a line per slice showing the estimated cord orientation angle
          (obtained using spinalcordtoolbox.registration.algorithms.find_angle_hog).
-      2. AP split overlay: per-slice cyan/yellow lines showing anterior (diameter_anterior) and
-         posterior (diameter_posterior) cord lengths from the cord center of mass.
+      2. AP split overlay: per-slice cyan/yellow lines showing anterior (length_anterior) and
+         posterior (length_posterior) cord lengths from the cord center of mass.
     """
 
     command = 'sct_process_segmentation'
@@ -1251,27 +1251,27 @@ def add_ap_split_lines(ax, num_slices, metrics, px_AP, radius: tuple[int, int] =
     Overlay anterior/posterior cord length lines on an axial mosaic.
 
     For each slice, two lines are drawn (inspiration: Fig. 1 of Kang et al. J Clin Med 2023):
-      - Cyan line:   cord center of mass → anterior cord edge (length = diameter_anterior)
-      - Yellow line: cord center of mass → posterior cord edge (length = diameter_posterior)
+      - Cyan line:   cord center of mass → anterior cord edge (length_anterior)
+      - Yellow line: cord center of mass → posterior cord edge (length_posterior)
 
     Lines are oriented using the HOG angle when available (otherwise vertical).
 
     :param ax: matplotlib axes object of the mosaic figure.
     :param num_slices: number of axial slices (= first dim of the SAL image).
-    :param metrics: dict of Metric objects from compute_shape(). Must contain 'diameter_anterior'
-      and 'diameter_posterior'. Optionally 'angle_hog' for orientation.
+    :param metrics: dict of Metric objects from compute_shape(). Must contain 'length_anterior'
+      and 'length_posterior'. Optionally 'angle_hog' for orientation.
     :param px_AP: pixel size in mm along the AP axis (= img.dim[5] for a SAL-oriented image).
     :param radius: (rows, cols) half-size in pixels of each mosaic tile.
     :param scale: display scale factor (same value used when building the mosaic).
     """
-    if 'diameter_anterior' not in metrics or 'diameter_posterior' not in metrics:
+    if 'length_anterior' not in metrics or 'length_posterior' not in metrics:
         return
 
     num_col = math.floor(TARGET_WIDTH_PIXL / scale / (2 * radius[0]))
 
     for i in range(num_slices):
-        diam_ant = metrics['diameter_anterior'].data[i]
-        diam_post = metrics['diameter_posterior'].data[i]
+        diam_ant = metrics['length_anterior'].data[i]
+        diam_post = metrics['length_posterior'].data[i]
         if np.isnan(diam_ant) or np.isnan(diam_post):
             continue
 
