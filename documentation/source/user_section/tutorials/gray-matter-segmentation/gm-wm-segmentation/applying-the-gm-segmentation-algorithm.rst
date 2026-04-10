@@ -1,11 +1,11 @@
 Applying the gray matter segmentation algorithm
 ###############################################
 
-:ref:`sct_deepseg_gm` can be applied to T2* data using the following command:
+The ``graymatter`` task of :ref:`sct_deepseg` can be applied to T2* data using the following command:
 
 .. code::
 
-   sct_deepseg_gm -i t2s.nii.gz -qc ~/qc_singleSubj
+   sct_deepseg graymatter -i t2s.nii.gz -o t2s_gmseg.nii.gz -qc ~/qc_singleSubj
 
 :Input arguments:
    - ``-i`` : Destination image the template will be warped to.
