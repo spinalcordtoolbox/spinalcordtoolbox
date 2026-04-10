@@ -789,9 +789,13 @@ class AnalyzeLesion:
                 val = self.distrib_matrix_dct[sheet_name].loc[idx, 'PAM50_' + str(tract_id).zfill(2)].values[0]
                 self.distrib_matrix_dct[sheet_name].loc[idx, 'PAM50_' + str(tract_id).zfill(2)] = val * 100.0 / vol_mask_tot
 
-        # Add the total column (Remove vert_level column from the sum if it exists)
-        self.distrib_matrix_dct[sheet_name]['total % (all tracts)'] = \
-            self.distrib_matrix_dct[sheet_name].drop(columns=['vert_level'], errors='ignore').sum(numeric_only=True, axis=1)
+        # drop the non-numeric index columns
+        df_tracts = self.distrib_matrix_dct[sheet_name].drop(columns=['row', 'vert_level'], errors='ignore')
+        try:
+            # numeric_only=False -> crash if any non-numeric columns are present (shouldn't happen)
+            self.distrib_matrix_dct[sheet_name]['total % (all tracts)'] = df_tracts.sum(numeric_only=False, axis=1)
+        except TypeError as e:
+            raise TypeError("Non-numeric column found in distribution matrix. Please raise this issue on the SCT forum.")
 
         # Add additional columns for the "CombinedLabels" defined by info_label.txt
         for label_name, sublabels in self.atlas_combinedlabels.items():
