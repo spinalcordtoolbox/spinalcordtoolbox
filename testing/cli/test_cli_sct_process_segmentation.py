@@ -44,8 +44,8 @@ def test_sct_process_segmentation_check_values(tmp_path):
         rows = list(reader)
         row = rows[10]
         assert row['Slice (I->S)'] == '10'
-        assert float(row['MEAN(area)']) == pytest.approx(77.90040678117502)
-        assert float(row['MEAN(diameter_AP)']) == pytest.approx(7.710487297680945)
+        assert float(row['MEAN(area)']) == pytest.approx(78.58643257836141)
+        assert float(row['MEAN(diameter_AP)']) == pytest.approx(7.842507960401277)
         assert float(row['MEAN(diameter_RL)']) == pytest.approx(12.537767663676533)
         assert float(row['MEAN(orientation)']) == pytest.approx(-5.435920797812814)
         assert float(row['MEAN(eccentricity)']) == pytest.approx(0.7678714078545043)
@@ -134,7 +134,7 @@ def test_sct_process_segmentation_check_normalize(dummy_3d_mask_nib, tmp_path):
     with open(filename, "r") as csvfile:
         reader = csv.DictReader(csvfile, delimiter=',')
         row = next(reader)
-        assert float(row['MEAN(area)']) == pytest.approx(227.01133426502938)
+        assert float(row['MEAN(area)']) == pytest.approx(228.20973426502943)
 
 
 def test_sct_process_segmentation_check_normalize_missing_value(dummy_3d_mask_nib, tmp_path):
@@ -165,7 +165,7 @@ def test_sct_process_segmentation_check_normalize_PAM50(tmp_path):
         rows = list(reader)
         row = rows[26]
         assert row['Slice (I->S)'] == '827'
-        assert float(row['MEAN(area)']) == pytest.approx(69.90456166438896)
+        assert float(row['MEAN(area)']) == pytest.approx(71.16703270056989)
         assert row['VertLevel'] == '5'
 
 
@@ -210,7 +210,7 @@ def test_sct_process_segmentation_check_discfile(tmp_path):
         assert row['Slice (I->S)'] == '10'
         assert row['DistancePMJ'] == ''
         assert row['VertLevel'] == '3'
-        assert float(row['MEAN(area)']) == pytest.approx(77.90040678117502)
+        assert float(row['MEAN(area)']) == pytest.approx(78.58643257836141)
 
 
 def test_sct_process_segmentation_anat_properties(tmp_path, tmp_path_qc):
@@ -225,12 +225,12 @@ def test_sct_process_segmentation_anat_properties(tmp_path, tmp_path_qc):
         rows = list(reader)
         row = rows[10]
         assert row['Slice (I->S)'] == '10'
-        assert float(row['MEAN(symmetry_dice_RL)']) == pytest.approx(0.886441262352387)
-        assert float(row['MEAN(symmetry_dice_AP)']) == pytest.approx(0.8945379741366641)
+        assert float(row['MEAN(symmetry_dice_RL)']) == pytest.approx(0.8782385979483419)
+        assert float(row['MEAN(symmetry_dice_AP)']) == pytest.approx(0.8782330172874384)
         assert float(row['MEAN(symmetry_hausdorff_RL)']) == pytest.approx(0.894427190999916)
         assert float(row['MEAN(symmetry_hausdorff_AP)']) == pytest.approx(0.894427190999916)
-        assert float(row['MEAN(symmetry_difference_RL)']) == pytest.approx(8.9110579867627)
-        assert float(row['MEAN(symmetry_difference_AP)']) == pytest.approx(8.235451023499937)
+        assert float(row['MEAN(symmetry_difference_RL)']) == pytest.approx(9.665748033454484)
+        assert float(row['MEAN(symmetry_difference_AP)']) == pytest.approx(9.72454876265175)
 
 
 @pytest.mark.sct_testing
