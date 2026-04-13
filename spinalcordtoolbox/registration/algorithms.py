@@ -1611,7 +1611,7 @@ def find_angle_hog(image, centermass, px, py, angle_range=radians(10)):
     index_angle_found = np.argmax(grad_orient_histo_conv_restrained)
     # Shift the index back to the original histogram index range
     index_angle_found = index_angle_found + index_center - index_restrain
-    angle_found = repr_hist[index_angle_found]
+    angle_found = repr_hist[index_angle_found] / 2
     angle_found_score = np.amax(grad_orient_histo_conv_restrained)
 
     # Finding other maxima to compute confidence score
