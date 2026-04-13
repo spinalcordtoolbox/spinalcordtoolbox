@@ -14,17 +14,18 @@ import textwrap
 
 import numpy as np
 
-import nibabel
 from scipy.ndimage import center_of_mass
 
 from spinalcordtoolbox.image import Image, empty_like
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel, LazyLoader
 from spinalcordtoolbox.utils.fs import tmp_create, check_file_exist, extract_fname, rmtree, copy
 from spinalcordtoolbox.labels import create_labels
 from spinalcordtoolbox.types import Coordinate
 
 from spinalcordtoolbox.scripts.sct_image import concat_data
+
+nib = LazyLoader("nib", globals(), "nibabel")
 
 
 # DEFAULT PARAMETERS
@@ -202,7 +203,7 @@ def create_mask(param):
 
     # create mask
     printv('\nCreate mask...', param.verbose)
-    centerline = nibabel.load(fname_centerline)  # open centerline
+    centerline = nib.load(fname_centerline)  # open centerline
     hdr = centerline.header  # get header
     hdr.set_data_dtype('uint8')  # set imagetype to uint8
     # spacing = hdr.structarr['pixdim']

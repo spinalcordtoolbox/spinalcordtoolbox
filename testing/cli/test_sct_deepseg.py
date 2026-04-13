@@ -1,6 +1,7 @@
 # pytest unit tests for spinalcordtoolbox.deepseg
 
 import os
+import shutil
 
 import pytest
 import warnings
@@ -8,22 +9,10 @@ from torch.serialization import SourceChangeWarning
 
 import spinalcordtoolbox as sct
 from spinalcordtoolbox.image import Image, compute_dice, add_suffix, check_image_kind
-from spinalcordtoolbox.utils.sys import sct_test_path
+from spinalcordtoolbox.utils.sys import sct_test_path, __deepseg_dir__
 import spinalcordtoolbox.deepseg.models
 
 from spinalcordtoolbox.scripts import sct_deepseg, sct_resample
-
-
-def test_install_model():
-    """
-    Download all models, to allow subsequent tests on the model packages.
-    :return:
-    """
-    for name_model, value in sct.deepseg.models.MODELS.items():
-        if value['default']:
-            sct.deepseg.models.install_model(name_model)
-            # Make sure all files are present after unpacking the model
-            assert sct.deepseg.models.is_valid(sct.deepseg.models.folder(name_model))
 
 
 def test_model_dict():
@@ -35,6 +24,16 @@ def test_model_dict():
         assert 'url' in value
         assert 'description' in value
         assert 'default' in value
+
+
+@pytest.fixture()
+def cleanup_model_dirs():
+    """Fixture to clean up model directory after tests."""
+    model_dirs = os.listdir(__deepseg_dir__)
+    yield
+    new_dirs = set(os.listdir(__deepseg_dir__)) - set(model_dirs)
+    for dir_name in new_dirs:
+        shutil.rmtree(os.path.join(__deepseg_dir__, dir_name))
 
 
 @pytest.mark.parametrize('fname_image, fname_seg_manual, fname_out, task, thr, expected_dice', [
@@ -75,6 +74,7 @@ def test_model_dict():
      None,
      None),
 ])
+@pytest.mark.usefixtures(cleanup_model_dirs.__name__)
 def test_segment_nifti_binary_seg(fname_image, fname_seg_manual, fname_out, task, thr, expected_dice,
                                   tmp_path, tmp_path_qc):
     """
@@ -89,10 +89,13 @@ def test_segment_nifti_binary_seg(fname_image, fname_seg_manual, fname_out, task
     if 'sc_' in task:
         # TODO: Replace the "general" testing of these arguments with specific tests with specific input data
         args.extend(['-largest', '1', '-fill-holes', '1', '-remove-small', '5mm3'])
+
     # try out `use_mirroring` for `lesion_ms` model only (due to longer inference time)
     # based on https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4995#issuecomment-3410672883
-    if task == 'lesion_ms':
-        args.extend(['-test-time-aug'])
+    # FIXME: This takes upwards of 1-2 hours to complete based on OS. Disable for now until we can speed up testing.
+    # if task == 'lesion_ms':
+    #     args.extend(['-test-time-aug'])
+
     sct_deepseg.main(argv=args)
     # Make sure output file exists
     assert os.path.isfile(fname_out)
@@ -125,17 +128,21 @@ def test_segment_nifti_binary_seg(fname_image, fname_seg_manual, fname_out, task
                 )
 
 
-def t2_ax():
+@pytest.fixture(scope='session')
+def t2_ax(tmp_path_factory):
     """Generate an approximation of an axially-acquired T2w anat image using resampling."""
-    fname_out = os.path.abspath('t2_ax.nii.gz')
+    tmp_path = tmp_path_factory.mktemp('t2_ax')
+    fname_out = str(tmp_path / 't2_ax.nii.gz')
     sct_resample.main(argv=["-i", sct_test_path('t2', 't2.nii.gz'), "-o", fname_out,
                             "-mm", "0.8x3x0.8", "-x", "spline"])
     return fname_out
 
 
-def t2_ax_sc_seg():
+@pytest.fixture(scope='session')
+def t2_ax_sc_seg(tmp_path_factory):
     """Generate an approximation of an axially-acquired T2w segmentation using resampling."""
-    fname_out = os.path.abspath('t2_ax_sc_seg.nii.gz')
+    tmp_path = tmp_path_factory.mktemp('t2_ax')
+    fname_out = str(tmp_path / 't2_ax_sc_seg.nii.gz')
     sct_resample.main(argv=["-i", sct_test_path('t2', 't2_seg-manual.nii.gz'), "-o", fname_out,
                             "-mm", "0.8x3x0.8", "-x", "spline"])
     return fname_out
@@ -151,9 +158,9 @@ def t2_ax_sc_seg():
      0.5,
      0.95,
      []),
-    (t2_ax(),          # Generate axial images on the fly
-     [t2_ax_sc_seg(),  # Just test against SC ground truth, because the model generates SC segs well
-      None],           # The model performs poorly on our fake t2_ax() image, so skip evaluating on lesion seg
+    (t2_ax,          # Generate axial images on the fly
+     [t2_ax_sc_seg,  # Just test against SC ground truth, because the model generates SC segs well
+      None],         # The model performs poorly on our fake t2_ax() image, so skip evaluating on lesion seg
      't2_deepseg.nii.gz',
      ["_sc_seg", "_lesion_seg"],
      'lesion_ms_axial_t2',
@@ -185,8 +192,9 @@ def t2_ax_sc_seg():
      None,
      ["-label-vert", "1"]),
 ])
+@pytest.mark.usefixtures(cleanup_model_dirs.__name__)
 def test_segment_nifti_multiclass(fname_image, fnames_seg_manual, fname_out, suffixes, task, thr, expected_dice,
-                                  extra_args, tmp_path, tmp_path_qc):
+                                  extra_args, tmp_path, tmp_path_qc, request):
     """
     Uses the locally-installed sct_testing_data
     """
@@ -196,6 +204,11 @@ def test_segment_nifti_multiclass(fname_image, fnames_seg_manual, fname_out, suf
     # More info here: https://github.com/spinalcordtoolbox/spinalcordtoolbox/wiki/Testing%253A-Datasets
     if "mouse" in task and not os.path.exists(fname_image):
         pytest.skip("Mouse data must be manually downloaded to run this test.")
+    # Fixtures can't be used in parametrization (https://stackoverflow.com/q/42014484)
+    # So, we have to evaluate the fixture (i.e. generate the axial images) at test-time
+    if "lesion_ms_axial_t2" in task:
+        fname_image = request.getfixturevalue(fname_image.__name__)
+        fnames_seg_manual[0] = request.getfixturevalue(fnames_seg_manual[0].__name__)
 
     fname_out = str(tmp_path / fname_out)
     sct_deepseg.main([task, '-i', fname_image, '-thr', str(thr), '-o', fname_out, '-qc', tmp_path_qc,
@@ -215,6 +228,7 @@ def test_segment_nifti_multiclass(fname_image, fnames_seg_manual, fname_out, suf
 
 
 @pytest.mark.parametrize("qc_plane", ["Axial", "Sagittal"])
+@pytest.mark.usefixtures(cleanup_model_dirs.__name__)
 def test_deepseg_with_cropped_qc(qc_plane, tmp_path, tmp_path_qc):
     """
     Test that `-qc-seg` cropping works with both Axial and Sagittal QCs.

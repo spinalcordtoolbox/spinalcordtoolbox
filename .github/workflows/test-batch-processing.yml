@@ -9,7 +9,8 @@ on:
     # https://docs.github.com/en/free-pro-team@latest/actions/reference/workflow-syntax-for-github-actions#onschedule
     # > Scheduled workflows run on the latest commit on the default or base branch
     # i.e. this can only run on master
-    - cron:  '0 11 * * *'
+    # NB: 8AM UTC every day corresponds to 3AM/4AM depending on DST
+    - cron:  '0 8 * * *'
 
 env:
   # Turns on color output for pytest. See: https://github.com/pytest-dev/pytest/issues/7443#issuecomment-656642591
@@ -112,13 +113,22 @@ jobs:
 
   compare-results:
     name: Compare cross-platform results
-    runs-on: macos-15  # brew is the easiest way to install `jd`
+    runs-on: ubuntu-24.04
     needs: batch_processing
     env:
+      YDIFF_VERSION: "1.5"
       YDIFF_OPTIONS: "--side-by-side --pager=cat --color=always --width=120 --nowrap"
     steps:
+      - name: Setup Python 3.13
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
       - name: Install `ydiff`  # https://github.com/ymattw/ydiff
-        run: brew install ydiff
+        run: |
+          # curl+chmod taken directly from ydiff's readme
+          curl -L https://raw.github.com/ymattw/ydiff/${{ env.YDIFF_VERSION }}/ydiff.py > ydiff
+          chmod +x ydiff
 
       - name: Download summaries
         uses: actions/download-artifact@v4

@@ -20,6 +20,7 @@ from spinalcordtoolbox import download
 from spinalcordtoolbox.utils.sys import stylize, __deepseg_dir__, LazyLoader
 
 tss_init = LazyLoader("tss_init", globals(), 'totalspineseg.init_inference')
+auglab_add_trainer = LazyLoader("auglab_add_trainer", globals(), 'auglab.add_trainer')
 
 logger = logging.getLogger(__name__)
 
@@ -220,7 +221,7 @@ MODELS = {
         "thr": None,  # Images are already binarized
         "default": False,
     },
-    "spine": {
+    "model_seg_spine_contrast_agnostic": {
          # NB: Rather than hardcoding the URLs ourselves, use the URLs from the totalspineseg package.
          # This means that when the totalspineseg package is updated, the URLs will be too, thus triggering
          # a re-installation of the model URLs
@@ -571,7 +572,7 @@ TASKS = {
                              'spinal cord, and spinal canal in MRI images. It is robust to various MRI contrasts, acquisition orientations, '
                              'and resolutions. The model used in TotalSpineSeg is based on nnU-Net as the backbone for training and inference.',
          'url': 'https://github.com/neuropoly/totalspineseg',
-         'models': ['spine'],
+         'models': ['model_seg_spine_contrast_agnostic'],
          'citation': None
          },
     'lesion_ms_axial_t2':
@@ -650,10 +651,15 @@ def install_model(name_model, custom_url=None):
         if not isinstance(url_field, dict):
             raise ValueError("Invalid url field in MODELS")
         # totalspineseg handles data downloading itself, so just pass the urls along
-        if name_model == 'spine':
+        if name_model in TASKS['spine']['models']:
             tss_init.init_inference(data_path=Path(folder(name_model)), quiet=False, dict_urls=url_field,
                                     store_export=False)  # Avoid having duplicate .zip files stored on disk
             urls_used = url_field
+            # For totalspineseg, for now we need to copy its custom trainer to the `nnunetv2` folder
+            # Long-term, this may not be necessary if we end up using the fork of `nnunetv2`:
+            #    See: https://github.com/neuropoly/totalspineseg/issues/126
+            # Since `install_model`` will only be invoked on first run or if model is outdated, it's safe to always overwrite
+            auglab_add_trainer.add_trainer(trainer_name="nnUNetTrainerDAExt", overwrite=True)
         else:
             urls_used = {}
             for seed_name, model_urls in url_field.items():
