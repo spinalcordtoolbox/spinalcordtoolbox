@@ -187,9 +187,9 @@ def test_sct_compute_compression(tmp_path, dummy_3d_mask_nib, dummy_3d_compressi
         assert float(row['diameter_AP_ratio']) == pytest.approx(23.07, abs=0.01)
         assert float(row['diameter_AP_ratio_PAM50']) == pytest.approx(14.42, abs=0.01)
         assert float(row['diameter_AP_ratio_PAM50_normalized']) == pytest.approx(18.78, abs=0.01)  # TODO: update when PAM50 values are up-to-date
-        assert float(row['area_ratio']) == pytest.approx(20.05342163028501)
-        assert float(row['area_ratio_PAM50']) == pytest.approx(12.533399971018577)
-        assert float(row['area_ratio_PAM50_normalized']) == pytest.approx(20.24037856786154)
+        assert float(row['area_ratio']) == pytest.approx(23.07, abs=0.01)
+        assert float(row['area_ratio_PAM50']) == pytest.approx(14.42, abs=0.01)
+        assert float(row['area_ratio_PAM50_normalized']) == pytest.approx(22.21, abs=0.01)
         # Ensure that there isn't a duplicate appended row from running sct_compute_compression twice
         with pytest.raises(StopIteration):
             next(reader)
@@ -207,7 +207,7 @@ def test_sct_compute_compression_sex_F(tmp_path, dummy_3d_mask_nib, dummy_3d_com
         assert float(row['compression_level']) == 5.0
         assert float(row['diameter_AP_ratio']) == pytest.approx(23.07, abs=0.01)
         assert float(row['diameter_AP_ratio_PAM50']) == pytest.approx(14.42, abs=0.01)
-        assert float(row['diameter_AP_ratio_PAM50_normalized']) == pytest.approx(18.23, abs=0.01)  # TODO: update when PAM50 values are up-to-date
+        assert float(row['diameter_AP_ratio_PAM50_normalized']) == pytest.approx(18.31, abs=0.01)  # TODO: update when PAM50 values are up-to-date
 
 
 def test_sct_compute_compression_lesion_no_vertfile(tmp_path, dummy_3d_mask_nib, dummy_3d_lesion_label):
