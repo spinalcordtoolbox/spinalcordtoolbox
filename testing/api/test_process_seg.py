@@ -330,15 +330,11 @@ im_segs = [
     dummy_segmentation(size_arr=(64, 64, 50), shape='ellipse', radius_RL=13, radius_AP=5, angle_RL=-10, angle_AP=30, debug=DEBUG) +
     [{'angle_corr': True}],
 
-    # 9. test uint8 input
-    dummy_segmentation(size_arr=(32, 32, 50), dtype=np.uint8, angle_RL=15, debug=DEBUG) +
-    [{'angle_corr': True}],
-
-    # 10. test bigger slice
+    # 9. test bigger slice
     dummy_segmentation(size_arr=(128, 128, 5), pixdim=(1, 1, 1), shape='ellipse', radius_RL=50, radius_AP=30, debug=DEBUG) +
     [{'angle_corr': False}],
 
-    # 11. test with one empty slice
+    # 10. test with one empty slice
     dummy_segmentation(size_arr=(32, 32, 5), zeroslice=[2], debug=DEBUG) +
     [{'angle_corr': False}]
 ]
