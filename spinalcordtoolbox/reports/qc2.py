@@ -1254,12 +1254,14 @@ def add_ap_split_lines(ax, num_slices, metrics, px_AP, radius: tuple[int, int] =
       - Cyan line:   cord center of mass → anterior cord edge (length_anterior)
       - Yellow line: cord center of mass → posterior cord edge (length_posterior)
 
-    Lines are oriented using the HOG angle when available (otherwise vertical).
+    Lines are oriented using the ellipse orientation when available (otherwise vertical).
+    This matches the rotation applied in _measure_ap_diameter() (which uses -region.orientation,
+    the ellipse principal axis), not the HOG angle.
 
     :param ax: matplotlib axes object of the mosaic figure.
     :param num_slices: number of axial slices (= first dim of the SAL image).
     :param metrics: dict of Metric objects from compute_shape(). Must contain 'length_anterior'
-      and 'length_posterior'. Optionally 'angle_hog' for orientation.
+      and 'length_posterior'. Optionally 'orientation' (ellipse orientation in degrees) for line orientation.
     :param px_AP: pixel size in mm along the AP axis (= img.dim[5] for a SAL-oriented image).
     :param radius: (rows, cols) half-size in pixels of each mosaic tile.
     :param scale: display scale factor (same value used when building the mosaic).
@@ -1282,16 +1284,16 @@ def add_ap_split_lines(ax, num_slices, metrics, px_AP, radius: tuple[int, int] =
         x_mosaic = col * (2 * radius[0]) + radius[0]
         y_mosaic = row * (2 * radius[1]) + radius[1]
 
-        # HOG angle determines the cord's AP axis orientation in the mosaic.
+        # Ellipse orientation determines the cord's AP axis orientation in the mosaic.
         # SAL orientation: in imshow coordinates, y increases downward.
         # Orientation labels confirm: A (Anterior) = top (small y), P (Posterior) = bottom (large y).
         # Unit vector toward Posterior at angle_deg=0: (sin(0), cos(0)) = (0, 1) = straight down ✓
         angle_deg = 0.0
-        if 'angle_hog' in metrics:
-            v = metrics['angle_hog'].data[i]
+        if 'orientation' in metrics:
+            v = metrics['orientation'].data[i]
             if not np.isnan(v):
                 angle_deg = v
-        angle_rad = -angle_deg * np.pi / 180   # matches sign convention in add_angle_lines
+        angle_rad = -angle_deg * np.pi / 180
 
         # AP unit vector (toward Posterior) and perpendicular RL unit vector (toward Left at 0°)
         ap_dx, ap_dy = np.sin(angle_rad), np.cos(angle_rad)
