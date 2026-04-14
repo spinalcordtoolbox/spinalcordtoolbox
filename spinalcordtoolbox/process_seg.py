@@ -482,13 +482,15 @@ def _measure_ap_diameter(seg_crop_r, seg_crop_r_rotated, dim, angle, iz, propert
 
         ap_diameter = ap_pixels * dim[1]
 
-        # Compute anterior and posterior lengths by splitting the AP diameter at the cord center of mass.
+        # Compute anterior and posterior lengths by splitting the AP diameter at the widest horizontal line.
         # In RPI orientation, axis 1 (columns) is the PA direction: low index = posterior, high index = anterior.
-        # Anterior length: distance from the cord center of mass to the anterior cord edge.
-        # Posterior length: distance from the cord center of mass to the posterior cord edge.
+        # The split point is the AP column with the maximum RL extent (i.e., the widest horizontal line).
+        # Anterior length: distance from the widest line to the anterior cord edge.
+        # Posterior length: distance from the widest line to the posterior cord edge.
         # Inspiration: Kang et al. J Clin Med 2023, https://doi.org/10.3390/jcm12124111 (Fig. 1)
-        ap_pixels_posterior = np.sum(seg_crop_r_rotated[indices, :ap0_r], axis=1).mean()
-        ap_pixels_anterior = np.sum(seg_crop_r_rotated[indices, ap0_r:], axis=1).mean()
+        ap_widest_r = int(np.argmax(np.sum(seg_crop_r_rotated, axis=0)))
+        ap_pixels_posterior = np.sum(seg_crop_r_rotated[indices, :ap_widest_r], axis=1).mean()
+        ap_pixels_anterior = np.sum(seg_crop_r_rotated[indices, ap_widest_r:], axis=1).mean()
         length_posterior = ap_pixels_posterior * dim[1]
         length_anterior = ap_pixels_anterior * dim[1]
 
