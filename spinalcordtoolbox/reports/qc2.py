@@ -1192,6 +1192,8 @@ def sct_process_segmentation(
         # px_AP: pixel size in mm for the AP axis of the SAL-oriented image (dim[5])
         add_ap_split_lines(ax, img_temp.dim[0], metrics,
                            px_AP=img_input.dim[5],
+                           centers=centers,
+                           img_slice_shape=img_seg.data.shape[1:],
                            radius=radius, scale=scale)
         add_slice_numbers(ax, img_temp.dim[0], radius=radius, reverse=True)
         ax.get_xaxis().set_visible(False)
@@ -1246,7 +1248,8 @@ def add_angle_lines(ax, num_slices, metrics, angle_type, radius: tuple[int, int]
                     path_effects=[mpl_patheffects.withStroke(linewidth=1, foreground='black')])
 
 
-def add_ap_split_lines(ax, num_slices, metrics, px_AP, radius: tuple[int, int] = (15, 15), scale: float = 2.5):
+def add_ap_split_lines(ax, num_slices, metrics, px_AP, centers, img_slice_shape,
+                       radius: tuple[int, int] = (15, 15), scale: float = 2.5):
     """
     Overlay anterior/posterior cord length lines on an axial mosaic.
 
@@ -1263,12 +1266,17 @@ def add_ap_split_lines(ax, num_slices, metrics, px_AP, radius: tuple[int, int] =
     :param metrics: dict of Metric objects from compute_shape(). Must contain 'length_anterior'
       and 'length_posterior'. Optionally 'orientation' (ellipse orientation in degrees) for line orientation.
     :param px_AP: pixel size in mm along the AP axis (= img.dim[5] for a SAL-oriented image).
+    :param centers: (N, 2) array of cord center-of-mass coordinates in SAL image space, as used
+      by mosaic(). Required to correctly compute the cord position within each tile when the center
+      is clamped to the image boundary.
+    :param img_slice_shape: (AP_dim, LR_dim) shape of each axial SAL slice, used for clamping.
     :param radius: (rows, cols) half-size in pixels of each mosaic tile.
     :param scale: display scale factor (same value used when building the mosaic).
     """
     if 'length_anterior' not in metrics or 'length_posterior' not in metrics:
         return
 
+    AP_dim, LR_dim = img_slice_shape
     num_col = math.floor(TARGET_WIDTH_PIXL / scale / (2 * radius[0]))
 
     for i in range(num_slices):
@@ -1277,12 +1285,19 @@ def add_ap_split_lines(ax, num_slices, metrics, px_AP, radius: tuple[int, int] =
         if np.isnan(diam_ant) or np.isnan(diam_post):
             continue
 
-        # Mosaic tile centre (same index inversion as add_angle_lines: RPI → SAL)
+        # Mosaic tile position (same index inversion as add_angle_lines: RPI → SAL)
         slice_index = num_slices - 1 - i
         row = slice_index // num_col
         col = slice_index % num_col
-        x_mosaic = col * (2 * radius[0]) + radius[0]
-        y_mosaic = row * (2 * radius[1]) + radius[1]
+
+        # Reconstruct the actual cord centre within the mosaic, replicating the clamping done in mosaic().
+        # When the cord centre is within radius pixels of the image edge, mosaic() clamps it, so the cord
+        # is no longer at the tile's geometric centre.
+        cy, cx = centers[slice_index]
+        cy_c = max(radius[0], min(AP_dim - radius[0], int(cy)))
+        cx_c = max(radius[1], min(LR_dim - radius[1], int(cx)))
+        y_mosaic = row * (2 * radius[0]) + int(cy) + radius[0] - cy_c
+        x_mosaic = col * (2 * radius[1]) + int(cx) + radius[1] - cx_c
 
         # Ellipse orientation determines the cord's AP axis orientation in the mosaic.
         # SAL orientation: in imshow coordinates, y increases downward.
