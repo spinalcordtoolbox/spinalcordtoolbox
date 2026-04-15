@@ -481,11 +481,10 @@ def _measure_ap_diameter(seg_crop_r, seg_crop_r_rotated, dim, angle, iz, propert
 
         # Compute anterior and posterior lengths by splitting the AP diameter at the cord center of mass.
         # For an ellipse, the center of mass lies on the major (RL) axis, so its AP coordinate equals the AP position
-        # of the widest horizontal line — equivalent to the split used in Kang et al. J Clin Med 2023,
-        # https://doi.org/10.3390/jcm12124111 (Fig. 1), but more robust than argmax on raw pixel sums, which I tried in
-        # https://github.com/spinalcordtoolbox/spinalcordtoolbox/blob/15bef9f45980cf562b9e9b43ceaee6cdd5100a31/spinalcordtoolbox/process_seg.py#L491.
-        # Anterior length: distance from the CoM to the anterior cord edge.
-        # Posterior length: distance from the CoM to the posterior cord edge.
+        # of the widest horizontal line.
+        # Anterior length: distance from the cord center of mass to the anterior cord edge.
+        # Posterior length: distance from the cord center of mass to the posterior cord edge.
+        # Inspiration: Kang et al. J Clin Med 2023, https://doi.org/10.3390/jcm12124111 (Fig. 1).
         # In RPI orientation, axis 1 (columns) is the PA direction: low index = posterior, high index = anterior.
         ap_pixels_posterior = np.sum(seg_crop_r_rotated[indices, :ap0_r], axis=1).mean()
         ap_pixels_anterior = np.sum(seg_crop_r_rotated[indices, ap0_r:], axis=1).mean()
