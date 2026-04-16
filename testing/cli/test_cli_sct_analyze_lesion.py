@@ -136,11 +136,14 @@ def compute_expected_measurements(lesion_params, path_seg=None):
                     #   - I use the full sc_width (total sums to 2x SC width, individual bridges are the right size)
                     tissue_bridge_interp = sc_width_interp*2 if 'total' in key else sc_width_interp
                 else:
-                    # If 1/2 interp slices have lesion: use 0.0 as a placeholder value (FIXME: #5184/#5202)
+                    # If 1/2 interp slices have lesion: use sc_width (AP diameter)
+                    # FIXME: We just grab the minimum diameters since those were readily available, but the actual API code
+                    #        uses a per-axial-slice AP diameter, meaning that the expected vs. actual may differ.
+                    #        Fixing this would require refactoring this function to capture SC widths at each axial slice, which is possible but more work.
                     if tissue_bridge_ceil is None:
-                        tissue_bridge_ceil = 0.0
+                        tissue_bridge_ceil = 2*sc_min_ap_diameters[z_ceil] if 'total' in key else sc_min_ap_diameters[z_ceil]
                     if tissue_bridge_floor is None:
-                        tissue_bridge_floor = 0.0
+                        tissue_bridge_floor = 2*sc_min_ap_diameters[z_floor] if 'total' in key else sc_min_ap_diameters[z_floor]
                     # If 2/2 interp slices have lesion: interpolate like normal
                     tissue_bridge_interp = (decimal * tissue_bridge_ceil + (1 - decimal) * tissue_bridge_floor)
 
