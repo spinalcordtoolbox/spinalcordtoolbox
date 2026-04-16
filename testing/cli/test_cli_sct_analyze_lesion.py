@@ -110,12 +110,38 @@ def compute_expected_measurements(lesion_params, path_seg=None):
                 tissue_bridges[f"slice_{z}_ventral_bridge_width [mm]"] = min(ventral_bridge_widths)
                 tissue_bridges[f"slice_{z}_total_bridge_width [mm]"] = (min(dorsal_bridge_widths) +
                                                                         min(ventral_bridge_widths))
-            # Estimate the interpolated bridge widths at the mid-sagittal slice
+
+            # Find the minimum spinal cord AP diameter across each all SI slices for each of the interpolation slices
             decimal = mid_sagittal_slice - math.floor(mid_sagittal_slice)
             z_ceil, z_floor = int(np.ceil(mid_sagittal_slice)), int(np.floor(mid_sagittal_slice))
+            sc_min_ap_diameters = {}
+            for z in [z_ceil, z_floor]:
+                ap_diameters = []
+                for y in range(starting_coord[1], starting_coord[1] + dim[1]):
+                    ap_diameters.append(np.sum(Image(path_seg).data[:, y, z]))
+                sc_min_ap_diameters[z] = min(ap_diameters)
+
+            # Estimate the interpolated bridge widths at the mid-sagittal slice
             for key in ['dorsal_bridge_width', 'ventral_bridge_width', 'total_bridge_width']:
-                tissue_bridges[f'interpolated_{key} [mm]'] = (decimal * tissue_bridges.get(f'slice_{z_ceil}_{key} [mm]', 0.0) +
-                                                              (1 - decimal) * tissue_bridges.get(f'slice_{z_floor}_{key} [mm]', 0.0))
+                # NB: We have to fall back to 'None' here instead of '0.0' because the tissue bridge may actually be 0.0,
+                #     and we need to distinguish between missing slices vs. lesions that are at the extent of the SC
+                tissue_bridge_ceil = tissue_bridges.get(f'slice_{z_ceil}_{key} [mm]', None)
+                tissue_bridge_floor = tissue_bridges.get(f'slice_{z_floor}_{key} [mm]', None)
+
+                # If 0/2 interp slices have lesion: find the interpolated minimum SC AP diameter, then take 1/2 of that for dorsal/ventral
+                if tissue_bridge_ceil is None and tissue_bridge_floor is None:
+                    sc_width_interp = (decimal * sc_min_ap_diameters[z_ceil] + (1 - decimal) * sc_min_ap_diameters[z_floor])
+                    tissue_bridge_interp = sc_width_interp if 'total' in key else sc_width_interp/2
+                else:
+                    # If 1/2 interp slices have lesion: use 0.0 as a placeholder value (FIXME: #5184/#5202)
+                    if tissue_bridge_ceil is None:
+                        tissue_bridge_ceil = 0.0
+                    if tissue_bridge_floor is None:
+                        tissue_bridge_floor = 0.0
+                    # If 2/2 interp slices have lesion: interpolate like normal
+                    tissue_bridge_interp = (decimal * tissue_bridge_ceil + (1 - decimal) * tissue_bridge_floor)
+
+                tissue_bridges[f'interpolated_{key} [mm]'] = tissue_bridge_interp
 
             # Compute the bridge ratio using the interpolated bridge widths
             for key in ['dorsal', 'ventral']:
