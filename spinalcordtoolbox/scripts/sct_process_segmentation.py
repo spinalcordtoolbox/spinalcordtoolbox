@@ -19,11 +19,11 @@ from warnings import warn
 from spinalcordtoolbox.utils.sys import stylize
 from time import sleep
 import numpy as np
-from matplotlib.ticker import MaxNLocator
 
+from spinalcordtoolbox.reports import qc2
 from spinalcordtoolbox.aggregate_slicewise import aggregate_per_slice_or_level, save_as_csv, func_wa, func_std, \
     func_sum, merge_dict, normalize_csa
-from spinalcordtoolbox.process_seg import compute_shape
+from spinalcordtoolbox.process_seg import compute_shape, get_missing_slices
 from spinalcordtoolbox.scripts import sct_maths
 from spinalcordtoolbox.csa_pmj import get_slices_for_pmj_distance
 from spinalcordtoolbox.get_spinal_level_from_rootlets import intersect_seg_and_rootlets, project_rootlets_to_segmentation
@@ -39,6 +39,7 @@ from spinalcordtoolbox.utils.shell import (ActionCreateFolder, Metavar, SCTArgum
 from spinalcordtoolbox.utils.sys import __data_dir__, LazyLoader
 
 pd = LazyLoader("pd", globals(), "pandas")
+mpl_ticker = LazyLoader("mpl_ticker", globals(), "matplotlib.ticker")
 
 logger = logging.getLogger(__name__)
 
@@ -78,7 +79,8 @@ def get_parser(ascor=False):
             "accounted for by inputing a mask comprising values within [0,1]. Can be normalized when specifying the flag `-normalize`\n"
             "  - angle_AP, angle_RL: Estimated angle between the cord centerline and the axial slice. This angle is "
             "used to correct for morphometric information.\n"
-            "  - diameter_AP, diameter_RL: Finds the major and minor axes of the cord and measure their length.\n"
+            "  - diameter_AP: Measured as average across 3 mm extent centred at cord mask center of mass.\n"
+            "  - diameter_RL: Measured as the major axis of the ellipse fitted to the cord.\n"
             "  - eccentricity: Eccentricity of the ellipse that has the same second-moments as the spinal cord. "
             "The eccentricity is the ratio of the focal distance (distance between focal points) over the major axis "
             "length. The value is in the interval [0, 1). When it is 0, the ellipse becomes a circle.\n"
@@ -90,6 +92,10 @@ def get_parser(ascor=False):
             "  - length: Length of the segmentation, computed by summing the slice thickness (corrected for the "
             "centerline angle at each slice) across the specified superior-inferior region.\n"
             "\n"
+            "  - symmetry_dice:  Dice score between left and right (RL) hemicord of the spinal cord or anterior-posterior (AP) spinal cord.\n"
+            "  - symmetry_hausdorff [mm]:  Hausdorff distance between left and right (RL) hemicord of the spinal cord or anterior-posterior (AP) spinal cord.\n"
+            "  - symmetry_difference [mm^2]:  Absolute difference between left and right (RL) hemicord area of the spinal cord or anterior-posterior (AP) spinal cord.\n"
+            "  - area_quadrant:  Cross-sectional area of the spinal cord in each quadrant (anterior-left, anterior-right, posterior-left, posterior-right).\n"
             "IMPORTANT: There is a limit to the precision you can achieve for a given image resolution. SCT does not "
             "truncate spurious digits when performing angle correction, so please keep in mind that there may be "
             "non-significant digits in the computed values. You may wish to compare angle-corrected values with "
@@ -122,10 +128,10 @@ def get_parser(ascor=False):
         mandatory.add_argument(
             '-i',
             metavar=Metavar.file,
+            type=get_absolute_path,
             help="Mask to compute morphometrics from. Could be binary or weighted. E.g., spinal cord segmentation."
                  "Example: seg.nii.gz"
         )
-
     optional = parser.optional_arggroup
     optional.add_argument(
         '-o',
@@ -247,6 +253,19 @@ def get_parser(ascor=False):
         help="Degree of smoothing for centerline fitting. Only use with `-centerline-algo {bspline, linear}`."
     )
     optional.add_argument(
+        '-centerline-exclude-missing',
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1],
+        default=0,
+        # For aSCOR computation, we don't need to display this argument since aSCOR will always turn this behavior on
+        help=(argparse.SUPPRESS if ascor else
+              "By default, an error will be thrown if `-centerline` does not completely cover the input segmentation. "
+              "Setting this flag to 1 will bypass the error, by skipping segmentation slices that aren't covered by "
+              "the centerline. Use with caution; sometimes it is preferable to manually correct the `-centerline` image "
+              "instead (so that the `-centerline` image covers all of the segmentation slices).")
+    )
+    optional.add_argument(
         '-pmj',
         metavar=Metavar.file,
         type=get_absolute_path,
@@ -267,6 +286,14 @@ def get_parser(ascor=False):
         default=20.0,
         help="Extent (in mm) for the mask used to compute morphometric measures. Each slice covered by the mask is "
              "included in the calculation. (To be used with flag `-pmj` and `-pmj-distance`.)"
+    )
+    optional.add_argument(
+        '-anat',
+        metavar=Metavar.file,
+        default=None,
+        type=get_absolute_path,
+        help="Input image used to compute spinal cord orientation (using HOG method). It is required to compute symmetry and quadrants area metrics."
+             "Example: t2.nii.gz"
     )
     if is_sct_process_segmentation:
         optional.add_argument(
@@ -366,7 +393,7 @@ def _make_figure(metric, fit_results):
         ax.grid(True)
         ax.set_ylabel('CSA [$mm^2$]')
         ax.set_xticklabels([])
-        ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+        ax.xaxis.set_major_locator(mpl_ticker.MaxNLocator(integer=True))
 
         ax = fig.add_subplot(312)
         ax.grid(True)
@@ -377,7 +404,7 @@ def _make_figure(metric, fit_results):
         ax.legend(['Rotation about AP axis', 'Rotation about RL axis'])
         ax.set_ylabel('Angle [$deg$]')
         ax.set_xticklabels([])
-        ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+        ax.xaxis.set_major_locator(mpl_ticker.MaxNLocator(integer=True))
 
         ax = fig.add_subplot(313)
         ax.grid(True)
@@ -397,7 +424,7 @@ def _make_figure(metric, fit_results):
         ax.plot(zref_list, yfit_list, 'r')
         ax.legend(['Fitted (RL)', 'Fitted (AP)'])
         ax.set_ylabel('Centerline [$vox$]')
-        ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+        ax.xaxis.set_major_locator(mpl_ticker.MaxNLocator(integer=True))
     else:
         ax = fig.add_subplot(111)
         ax.plot(z, csa, 'k')
@@ -420,7 +447,8 @@ def main(argv: Sequence[str]):
     # Initialization
     group_funcs = (('MEAN', func_wa), ('STD', func_std))  # functions to perform when aggregating metrics along S-I
 
-    fname_segmentation = get_absolute_path(arguments.i)
+    fname_segmentation = arguments.i
+    fname_image = arguments.anat
 
     file_out = os.path.abspath(arguments.o)
     append = bool(arguments.append)
@@ -464,15 +492,16 @@ def main(argv: Sequence[str]):
     # Vertfile exists, so pre-process it if it's a `-discfile`
     else:
         if arguments.discfile is not None:
-            if arguments.centerline is not None:
-                fname_centerline = arguments.centerline
-            else:
-                fname_centerline = fname_segmentation
             # Copy the input files to the tempdir
             temp_folder = TempFolder(basename="process-segmentation")
             path_tmp_seg = temp_folder.copy_from(fname_segmentation)
-            path_tmp_ctl = (temp_folder.copy_from(fname_centerline) if arguments.centerline
-                            else path_tmp_seg)
+            # label the segmentation by default, mimicking the old `-vertfile` workflow
+            path_tmp_ctl = path_tmp_seg
+            # however, if a centerline file is provided by the user, label that instead
+            # we do this to ensure that consistent labeling is used for across multiple calls to
+            # sct_process_segmentation in tandem, for example for `sct_compute_ascor`
+            if arguments.centerline is not None:
+                path_tmp_ctl = temp_folder.copy_from(arguments.centerline)
             path_tmp_vert_level = temp_folder.copy_from(fname_vert_level)
             # Project discs labels onto centerline
             discs_projected = project_centerline(Image(path_tmp_ctl), Image(path_tmp_vert_level))
@@ -520,17 +549,42 @@ def main(argv: Sequence[str]):
     slices = arguments.z
     perslice = bool(arguments.perslice)
     angle_correction = bool(arguments.angle_corr)
-    centerline = arguments.centerline
-    param_centerline = ParamCenterline(
-        algo_fitting=arguments.centerline_algo,
-        smooth=arguments.centerline_smooth,
-        minmax=True)
     fname_pmj = arguments.pmj
     distance_pmj = arguments.pmj_distance
     extent_pmj = arguments.pmj_extent
     path_qc = arguments.qc
     qc_dataset = arguments.qc_dataset
     qc_subject = arguments.qc_subject
+
+    fname_centerline = arguments.centerline
+    param_centerline = ParamCenterline(
+        algo_fitting=arguments.centerline_algo,
+        smooth=arguments.centerline_smooth,
+        minmax=True)
+    # Exclude slices in segmentation where centerline is missing
+    if angle_correction and fname_centerline:
+        im_seg, im_ctl = Image(fname_segmentation), Image(fname_centerline)
+        missing_slices = get_missing_slices(im=im_seg, im_mask=im_ctl)
+        if missing_slices:
+            # Default behavior: Raise an error
+            if not arguments.centerline_exclude_missing:
+                parser.error(f"The centerline image does not cover slice(s) '{missing_slices}' of the segmentation, "
+                             f"meaning that angle correction cannot be computed for these slices. To bypass this error, "
+                             f"you can:\n"
+                             f"  a. Set the flag `-centerline-exclude-missing 1` to exclude these slices from the analysis \n"
+                             f"  b. Set the flag `-angle-corr 0` to skip angle correction altogether for this analysis, or \n"
+                             f"  c. Provide a centerline image that fully covers the segmentation")
+            # Opt-in behavior: Set the missing slices to 0 in the segmentation
+            else:
+                logger.warning(f"The centerline image does not cover slice(s) '{missing_slices}' of the segmentation. "
+                               f"These slices will be excluded from the analysis.")
+                temp_folder = TempFolder(basename="process-segmentation-modified-seg")
+                fname_segmentation = temp_folder.copy_from(fname_segmentation)
+                orig_orientation = im_seg.orientation
+                im_seg = im_seg.change_orientation('RPI')
+                im_seg.data[:, :, missing_slices] = 0
+                im_seg.change_orientation(orig_orientation)
+                im_seg.save(fname_segmentation)
 
     if normalize_pam50 and not perslice:
         parser.error("Option '-normalize-PAM50' requires option '-perslice 1'.")
@@ -543,8 +597,9 @@ def main(argv: Sequence[str]):
     metrics_agg = {}
 
     metrics, fit_results = compute_shape(fname_segmentation,
+                                         fname_image,
                                          angle_correction=angle_correction,
-                                         centerline_path=centerline,
+                                         centerline_path=fname_centerline,
                                          param_centerline=param_centerline,
                                          verbose=verbose,
                                          remove_temp_files=arguments.r)
@@ -553,6 +608,7 @@ def main(argv: Sequence[str]):
             fname_vert_level_PAM50 = os.path.join(__data_dir__, 'PAM50', 'template', 'PAM50_spinal_levels.nii.gz')  # consider creating a sepearet spinal level from the rootlets
         else:
             fname_vert_level_PAM50 = os.path.join(__data_dir__, 'PAM50', 'template', 'PAM50_levels.nii.gz')
+        metrics_native_space = metrics  # Save metrics in native space to use them for HOG angle QC
         metrics_PAM50_space = interpolate_metrics(metrics, fname_vert_level_PAM50, fname_vert_level)
         if not levels:  # If no levels -vert were specified by user
             if verbose == 2:
@@ -609,7 +665,9 @@ def main(argv: Sequence[str]):
             line['MEAN(area)'] = normalize_csa(line['MEAN(area)'], data_predictors, data_subject)
 
     save_as_csv(metrics_agg_merged, file_out, fname_in=fname_segmentation, append=append)
+
     # QC report (only for PMJ-based CSA)
+    # TODO: refactor this with qc2. Replace arguments.qc_image with arguments.i
     if path_qc is not None:
         if fname_pmj is not None:
             if arguments.qc_image is not None:
@@ -643,11 +701,22 @@ def main(argv: Sequence[str]):
             else:
                 parser.error('-qc-image is required to display QC report.')
         else:
-            logger.warning('QC report only available for PMJ-based CSA. QC report not generated.')
-    # Clean up temp
-    if arguments.r and temp_folder is not None:
-        logger.info("\nRemove temporary files...")
-        temp_folder.cleanup()
+            logger.warning('QC report only available for -pmj or -anat flags. QC report not generated.')
+
+    # Create QC report for the HOG angle
+    if arguments.qc is not None:
+        if fname_image is not None:
+            qc2.sct_process_segmentation(
+                fname_input=fname_image,
+                fname_seg=fname_segmentation,
+                metrics=metrics_native_space if normalize_pam50 else metrics,
+                argv=argv,
+                path_qc=arguments.qc,
+                dataset=arguments.qc_dataset,
+                subject=arguments.qc_subject,
+                angle_type='angle_hog',
+            )
+
     display_open(file_out)
 
 

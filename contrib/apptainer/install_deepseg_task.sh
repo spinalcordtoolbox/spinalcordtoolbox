@@ -6,16 +6,16 @@ if [ "$#" == "0" ]; then
   exit 1
 fi
 
-# Just passes the arguments through, saving the results to a temporary file so the original isn't deleted if it fails
-APPTAINER_BIND=' ' apptainer build --build-arg task_installs="$*" sct_tmp.sif sct_model_install.def
+# Just passes the arguments through
+# NB: Even though we are forcefully overwriting the original `sct.sif` file, the original file won't be touched
+#     if the build step fails (since it gets extracted to a tmpdir). This is inherent to "Bootstrap: localimage".
+APPTAINER_BIND=' ' apptainer build --force --build-arg task_installs="$*" sct.sif sct_model_install.def
 
-# Removes the old .sif and replaced it with the new one, given the prior command ran correctly
-if [ ! -f sct_tmp.sif ]; then
-  echo "Failed to install new SCT DeepSeg tasks, terminating"
-  exit 0
+# Catch errors and alert user that the `sct.sif` file was not updated
+status=$?
+if [ $status -ne 0 ];  then
+  echo "Apptainer build step exited with non-zero exit code, 'sct.sif' file not updated."
+  exit 1
 fi
-echo "Replacing old sct.dif with updated one!"
-rm sct.sif
-mv sct_tmp.sif sct.sif
 
 echo "Done!"

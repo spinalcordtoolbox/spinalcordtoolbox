@@ -11,6 +11,7 @@ from typing import Sequence
 import textwrap
 
 from spinalcordtoolbox.reports.qc import generate_qc
+from spinalcordtoolbox.reports import qc2
 from spinalcordtoolbox.utils.sys import init_sct, list2cmdline, __sct_dir__, set_loglevel
 from spinalcordtoolbox.utils.shell import SCTArgumentParser
 
@@ -110,20 +111,52 @@ def main(argv: Sequence[str]):
     if arguments.p == 'sct_deepseg_lesion' and arguments.plane is None:
         parser.error('Please provide the plane of the output QC with `-plane`')
 
-    generate_qc(fname_in1=arguments.i,
-                fname_in2=arguments.d,
-                fname_seg=arguments.s,
-                # Internal functions use capitalized strings ('Axial'/'Sagittal')
-                plane=arguments.plane.capitalize() if isinstance(arguments.plane, str) else arguments.plane,
-                args=f'("sct_qc {list2cmdline(argv)}")',
-                path_qc=arguments.qc,
-                dataset=arguments.qc_dataset,
-                subject=arguments.qc_subject,
-                process=arguments.p,
-                fps=arguments.fps,
-                p_resample=arguments.resample,
-                draw_text=bool(arguments.text_labels),
-                path_custom_labels=arguments.custom_labels)
+    # Common arguments for QC reports
+    kwargs = dict(
+        fname_input=arguments.i,
+        fname_output=arguments.d,
+        fname_seg=arguments.s,
+        argv=argv,
+        path_qc=arguments.qc,
+        dataset=arguments.qc_dataset,
+        subject=arguments.qc_subject,
+    )
+    if arguments.resample is None:
+        assert 'p_resample' not in kwargs  # Use the report's default
+    elif arguments.resample == 0:
+        kwargs['p_resample'] = None  # Explicitly turn it off
+    else:
+        kwargs['p_resample'] = arguments.resample
+
+    if arguments.p in ['sct_register_multimodal', 'sct_register_to_template']:
+        qc2.sct_register(command=arguments.p, **kwargs)
+    elif arguments.p == 'sct_fmri_compute_tsnr':
+        qc2.sct_fmri_compute_tsnr(**kwargs)
+    elif arguments.p == 'sct_label_vertebrae':
+        del kwargs['fname_output']  # not used by this report
+        qc2.sct_label_vertebrae(
+            command=arguments.p,
+            draw_text=bool(arguments.text_labels),
+            path_custom_labels=arguments.custom_labels,
+            **kwargs
+        )
+    elif arguments.p == 'sct_label_utils':
+        del kwargs['fname_output']  # not used by this report
+        qc2.sct_label_utils(command=arguments.p, **kwargs)
+    else:
+        generate_qc(fname_in1=arguments.i,
+                    fname_in2=arguments.d,
+                    fname_seg=arguments.s,
+                    # Internal functions use capitalized strings ('Axial'/'Sagittal')
+                    plane=arguments.plane.capitalize() if isinstance(arguments.plane, str) else arguments.plane,
+                    args=f'("sct_qc {list2cmdline(argv)}")',
+                    path_qc=arguments.qc,
+                    dataset=arguments.qc_dataset,
+                    subject=arguments.qc_subject,
+                    process=arguments.p,
+                    fps=arguments.fps,
+                    p_resample=arguments.resample,
+                    )
 
 
 if __name__ == "__main__":

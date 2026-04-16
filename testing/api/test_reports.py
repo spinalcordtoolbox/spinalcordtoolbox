@@ -82,7 +82,7 @@ def t2_path():
     return t2_path
 
 
-def test_label_vertebrae(t2_image, t2_seg_image, tmp_path):
+def test_sct_detect_pmj(t2_image, t2_seg_image, tmp_path):
     generate_qc(
         fname_in1=t2_image.absolutepath,
         fname_seg=t2_seg_image.absolutepath,
@@ -91,12 +91,12 @@ def test_label_vertebrae(t2_image, t2_seg_image, tmp_path):
         path_qc=str(tmp_path),
         dataset='dat',
         subject='sub',
-        process='sct_label_vertebrae',
+        process='sct_detect_pmj',
     )
 
     # check that some files exist
-    assert len(list(tmp_path.glob('dat/sub/*/sct_label_vertebrae/*/background_img.png'))) == 1
-    assert len(list(tmp_path.glob('dat/sub/*/sct_label_vertebrae/*/overlay_img.png'))) == 1
+    assert len(list(tmp_path.glob('dat/sub/*/sct_detect_pmj/*/background_img.png'))) == 1
+    assert len(list(tmp_path.glob('dat/sub/*/sct_detect_pmj/*/overlay_img.png'))) == 1
     assert len(list(tmp_path.glob('_json/qc_*.json'))) == 1
 
 

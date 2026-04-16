@@ -34,12 +34,29 @@ def dummy_3d_pmj_label():
     return filename
 
 
+def test_sct_process_segmentation_check_values(tmp_path):
+    """ Run sct_process_segmentation and check the results"""
+    filename = str(tmp_path / 'tmp_file_out.csv')
+    sct_process_segmentation.main(argv=['-i', sct_test_path('t2', 't2_seg-manual.nii.gz'),
+                                        '-perslice', '1', '-o', filename])
+    with open(filename, "r") as csvfile:
+        reader = csv.DictReader(csvfile, delimiter=',')
+        rows = list(reader)
+        row = rows[10]
+        assert row['Slice (I->S)'] == '10'
+        assert float(row['MEAN(area)']) == pytest.approx(78.58643257836141)
+        assert float(row['MEAN(diameter_AP)']) == pytest.approx(7.842507960401277)
+        assert float(row['MEAN(diameter_RL)']) == pytest.approx(12.537767663676533)
+        assert float(row['MEAN(orientation)']) == pytest.approx(-5.435920797812814)
+        assert float(row['MEAN(eccentricity)']) == pytest.approx(0.7678714078545043)
+        assert float(row['MEAN(solidity)']) == pytest.approx(0.9691052891744933)
+
+
 def test_sct_process_segmentation_check_pmj(dummy_3d_mask_nib, dummy_3d_pmj_label, tmp_path, tmp_path_qc):
     """ Run sct_process_segmentation with -pmj, -pmj-distance and -pmj-extent and check the results"""
     filename = str(tmp_path / 'tmp_file_out.csv')
     sct_process_segmentation.main(argv=['-i', dummy_3d_mask_nib, '-pmj', dummy_3d_pmj_label,
-                                        '-pmj-distance', '8', '-pmj-extent', '4', '-o', filename,
-                                        '-qc', tmp_path_qc, '-qc-image', dummy_3d_mask_nib])
+                                        '-pmj-distance', '8', '-pmj-extent', '4', '-o', filename])
     with open(filename, "r") as csvfile:
         reader = csv.DictReader(csvfile, delimiter=',')
         row = next(reader)
@@ -76,8 +93,7 @@ def test_sct_process_segmentation_check_pmj_reoriented(dummy_3d_mask_nib, dummy_
     results = []
     for fnames in fname_dict.values():
         sct_process_segmentation.main(argv=['-i', fnames["i"], '-pmj', fnames["i"], '-o', fnames["out"],
-                                            '-pmj-distance', '8', '-pmj-extent', '4',
-                                            '-qc', tmp_path_qc, '-qc-image', dummy_3d_mask_nib])
+                                            '-pmj-distance', '8', '-pmj-extent', '4'])
         with open(fnames["out"], "r") as csvfile:
             reader = csv.DictReader(csvfile, delimiter=',')
             results.append(next(reader))
@@ -91,8 +107,7 @@ def test_sct_process_segmentation_check_pmj_perslice(dummy_3d_mask_nib, dummy_3d
     """ Run sct_process_segmentation with -pmj, -perslice and check the results"""
     filename = str(tmp_path / 'tmp_file_out.csv')
     sct_process_segmentation.main(argv=['-i', dummy_3d_mask_nib, '-pmj', dummy_3d_pmj_label,
-                                        '-perslice', '1', '-o', filename,
-                                        '-qc', tmp_path_qc, '-qc-image', dummy_3d_mask_nib])
+                                        '-perslice', '1', '-o', filename])
     with open(filename, "r") as csvfile:
         reader = csv.DictReader(csvfile, delimiter=',')
         rows = list(reader)
@@ -144,13 +159,13 @@ def test_sct_process_segmentation_check_normalize_PAM50(tmp_path):
     """ Run sct_process_segmentation with -normalize PAM50"""
     filename = str(tmp_path / 'tmp_file_out.csv')
     sct_process_segmentation.main(argv=['-i', sct_test_path('t2', 't2_seg-manual.nii.gz'), '-normalize-PAM50', '1',
-                                        '-perslice', '1', '-vertfile', sct_test_path('t2', 't2_seg-manual_labeled.nii.gz'), '-o', filename])
+                                        '-perslice', '1', '-discfile', sct_test_path('t2', 'labels.nii.gz'), '-o', filename])
     with open(filename, "r") as csvfile:
         reader = csv.DictReader(csvfile, delimiter=',')
         rows = list(reader)
         row = rows[26]
         assert row['Slice (I->S)'] == '827'
-        assert float(row['MEAN(area)']) == pytest.approx(71.96880493869594)
+        assert float(row['MEAN(area)']) == pytest.approx(71.16703270056989)
         assert row['VertLevel'] == '5'
 
 
@@ -159,7 +174,7 @@ def test_sct_process_segmentation_check_normalize_PAM50_missing_perslice(tmp_pat
     filename = str(tmp_path / 'tmp_file_out.csv')
     with pytest.raises(SystemExit) as e:
         sct_process_segmentation.main(argv=['-i', sct_test_path('t2', 't2_seg-manual.nii.gz'), '-normalize-PAM50', '1',
-                                            '-vertfile', sct_test_path('t2', 't2_seg-manual_labeled.nii.gz'), '-o', filename])
+                                            '-discfile', sct_test_path('t2', 'labels.nii.gz'), '-o', filename])
         assert e.value.code == 2
 
 
@@ -183,7 +198,7 @@ def test_sct_process_segmentation_check_both_discfile_vertfile(tmp_path):
 
 
 def test_sct_process_segmentation_check_discfile(tmp_path):
-    """ Run sct_process_segmentation with -vertfile and -discfile"""
+    """ Run sct_process_segmentation with-discfile"""
     filename = str(tmp_path / 'tmp_file_out.csv')
     sct_process_segmentation.main(argv=['-i', sct_test_path('t2', 't2_seg-manual.nii.gz'),
                                         '-vert', '1:10', '-perslice', '1',
@@ -196,6 +211,26 @@ def test_sct_process_segmentation_check_discfile(tmp_path):
         assert row['DistancePMJ'] == ''
         assert row['VertLevel'] == '3'
         assert float(row['MEAN(area)']) == pytest.approx(78.58643257836141)
+
+
+def test_sct_process_segmentation_anat_properties(tmp_path, tmp_path_qc):
+    """ Run sct_process_segmentation with -anat and check the symmetry results"""
+    filename = str(tmp_path / 'tmp_file_out.csv')
+    sct_process_segmentation.main(argv=['-i', sct_test_path('t2', 't2_seg-manual.nii.gz'),
+                                        '-vert', '1:10', '-perslice', '1',
+                                        '-discfile', sct_test_path('t2', 'labels.nii.gz'), '-anat', sct_test_path('t2', 't2.nii.gz'), '-o', filename,
+                                        '-qc', str(tmp_path_qc)])
+    with open(filename, "r") as csvfile:
+        reader = csv.DictReader(csvfile, delimiter=',')
+        rows = list(reader)
+        row = rows[10]
+        assert row['Slice (I->S)'] == '10'
+        assert float(row['MEAN(symmetry_dice_RL)']) == pytest.approx(0.8782385979483419)
+        assert float(row['MEAN(symmetry_dice_AP)']) == pytest.approx(0.8782330172874384)
+        assert float(row['MEAN(symmetry_hausdorff_RL)']) == pytest.approx(0.894427190999916)
+        assert float(row['MEAN(symmetry_hausdorff_AP)']) == pytest.approx(0.894427190999916)
+        assert float(row['MEAN(symmetry_difference_RL)']) == pytest.approx(9.665748033454484)
+        assert float(row['MEAN(symmetry_difference_AP)']) == pytest.approx(9.72454876265175)
 
 
 @pytest.mark.sct_testing

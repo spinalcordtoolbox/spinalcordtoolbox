@@ -14,7 +14,7 @@ import numpy as np
 from spinalcordtoolbox.image import Image, add_suffix, empty_like, rpi_slice_to_orig_orientation
 from spinalcordtoolbox.utils.sys import init_sct, set_loglevel, printv
 from spinalcordtoolbox.utils.shell import Metavar, SCTArgumentParser, display_viewer_syntax
-from spinalcordtoolbox.reports.qc import generate_qc
+from spinalcordtoolbox.reports import qc2
 
 
 class Param:
@@ -159,8 +159,15 @@ def main(argv: Sequence[str]):
     display_viewer_syntax([fname_dst], verbose=verbose)
 
     if path_qc is not None:
-        generate_qc(fname_dst, fname_in2=fname_dst, fname_seg=fname_mask, args=argv, path_qc=os.path.abspath(path_qc),
-                    dataset=qc_dataset, subject=qc_subject, process='sct_fmri_compute_tsnr')
+        qc2.sct_fmri_compute_tsnr(
+            fname_input=fname_dst,
+            fname_output=fname_dst,
+            fname_seg=fname_mask,
+            argv=argv,
+            path_qc=os.path.abspath(path_qc),
+            dataset=qc_dataset,
+            subject=qc_subject,
+        )
 
 
 if __name__ == "__main__":

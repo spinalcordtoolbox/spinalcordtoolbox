@@ -7,20 +7,20 @@ image contrast, you can use the following algorithms:
 Contrast-agnostic
 *****************
 
-As described in the :ref:`contrasts` section, SCT has moved towards developing contrast-agnostic segmentation tools. The ``ms_lesion`` model is SCT's effort to create a contrast-agnostic lesion segmentation tool that can be used on any type of image (T1, T2, T2*, etc.), in order to ensure consistent lesion segmentation results between contrasts.
+As described in the :ref:`contrasts` section, SCT has moved towards developing contrast-agnostic segmentation tools. The ``lesion_ms`` model is SCT's effort to create a contrast-agnostic lesion segmentation tool that can be used on any type of image (T1, T2, T2*, etc.), in order to ensure consistent lesion segmentation results between contrasts.
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/ms_lesion.png
    :align: center
    :figwidth: 60%
 
-You can try the ``ms_lesion`` on the sample T2w image using the following command:
+You can try the ``lesion_ms`` on the sample T2w image using the following command:
 
 .. code:: sh
 
-   sct_deepseg sms_lesion -i t2.nii.gz -qc ./qc
+   sct_deepseg lesion_ms -i t2.nii.gz -qc ./qc
 
 :Input arguments:
-    - ``ms_lesion``: Task
+    - ``lesion_ms``: Task
     - ``-i`` : Input T2w image with fake lesion
     - ``-qc`` : Directory for Quality Control reporting. QC reports allow us to evaluate the segmentation slice-by-slice
 

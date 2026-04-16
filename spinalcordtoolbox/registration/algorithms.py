@@ -558,7 +558,7 @@ def register_dl_multimodal_cascaded_reg(fname_src, fname_dest, fname_warp_forwar
     # Set the intent code to vector
     # The intent code 1007 was chosen based on information found on:
     #     -  https://brainder.org/2012/09/23/the-nifti-file-format/
-    #     -  https://afni.nimh.nih.gov/afni/doc/source/nifti1_8h-source.html#l00823
+    #     -  https://github.com/NIFTI-Imaging/nifti_clib/blob/8f72d1165aa62320cc6982d6ddd71a7f6b9924c5/niftilib/nifti1.h#L880-L891
     warp.header['intent_code'] = 1007
     # Save the composed warping field [forward]
     warp.save(fname_warp_forward)
@@ -1548,8 +1548,8 @@ def find_angle_hog(image, centermass, px, py, angle_range=10):
     :param: image : 2D numpy array to find symmetry axis on
     :param: centermass: tuple of floats indicating the center of mass of the image
     :param: px, py, dimensions of the pixels in the x and y direction
-    :param: angle_range : float or None, in deg, the angle will be search in the range [-angle_range, angle_range], if None angle angle might be returned
-    :return: angle found and confidence score
+    :param: angle_range : float or None, in deg, the angle will be searched in the range [-angle_range, angle_range], if None any angle might be returned
+    :return: angle found (in rad) and confidence score
     """
 
     # param that can actually be tweeked to influence method performance :
@@ -1575,6 +1575,8 @@ def find_angle_hog(image, centermass, px, py, angle_range=10):
     grad_orient_histo = gradient_orientation_histogram(image, nb_bin=nb_bin, seg_weighted_mask=seg_weighted_mask)
 
     # Bins of the histogram :
+    # It is an array containing the central angle (in radians) for each bin of the orientation histogram, allowing you
+    # to map histogram indices to their corresponding angles.
     repr_hist = np.linspace(-(np.pi - 2 * np.pi / nb_bin), (np.pi - 2 * np.pi / nb_bin), nb_bin - 1)
 
     # Smoothing of the histogram, necessary to avoid digitization effects that will favor angles 0, 45, 90, -45, -90:

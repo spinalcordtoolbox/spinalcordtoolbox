@@ -50,7 +50,7 @@ DATASET_DICT = {
     },
     "sct_course_data": {
         "mirrors": [
-            "https://github.com/spinalcordtoolbox/sct_tutorial_data/archive/refs/tags/r20250916.zip",
+            "https://github.com/spinalcordtoolbox/sct_tutorial_data/archive/refs/tags/SCT-Course-20251208.zip",
         ],
         "default_location": os.path.join(__sct_dir__, "data", "sct_course_data"),
         "download_type": "SCT Course Files",
@@ -58,7 +58,7 @@ DATASET_DICT = {
     },
     "manual-correction": {
         "mirrors": [
-            "https://github.com/spinalcordtoolbox/manual-correction/archive/refs/tags/r20231101.zip",
+            "https://github.com/spinalcordtoolbox/manual-correction/archive/refs/tags/r20260113.zip",
         ],
         "default_location": os.path.join(__sct_dir__, "data", "manual-correction"),
         "download_type": "SCT Course Files",
@@ -160,6 +160,14 @@ DATASET_DICT = {
         ],
         "default_location": os.path.join(__sct_dir__, "data", "PAM50_normalized_metrics"),
         "download_type": "Templates",
+        "default": True,
+    },
+    "moco-dl_models": {
+        "mirrors": [
+            "https://github.com/ivadomed/moco-dl/releases/download/r20251127/models.zip"
+        ],
+        "default_location": os.path.join(__sct_dir__, "data", "moco-dl_models"),
+        "download_type": "Models",
         "default": True,
     },
 }

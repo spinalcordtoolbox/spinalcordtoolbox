@@ -18,7 +18,6 @@ from typing import Sequence
 import textwrap
 
 import numpy as np
-import pandas as pd
 
 from spinalcordtoolbox.process_seg import compute_shape
 from spinalcordtoolbox.aggregate_slicewise import aggregate_per_slice_or_level, func_wa, func_std, merge_dict
@@ -27,7 +26,9 @@ from spinalcordtoolbox.template import get_slices_from_vertebral_levels
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.utils.fs import get_absolute_path, extract_fname
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar
-from spinalcordtoolbox.utils.sys import init_sct, set_loglevel, printv
+from spinalcordtoolbox.utils.sys import init_sct, set_loglevel, printv, LazyLoader
+
+pd = LazyLoader("pd", globals(), "pandas")
 
 
 # Currently, the model works only for discs C3/C4 (4) to C6/C7 (7)

@@ -5,7 +5,6 @@ Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
 License: see the file LICENSE
 """
 
-import json
 import logging
 from pathlib import Path
 from typing import Callable, List, Tuple, Union
@@ -14,12 +13,11 @@ import numpy as np
 import skimage
 import skimage.io
 import skimage.exposure
-from scipy.ndimage import center_of_mass
 
 from spinalcordtoolbox.image import Image, check_image_kind
-from spinalcordtoolbox.reports.qc2 import assign_label_colors_by_groups, create_qc_entry, add_slice_numbers
+from spinalcordtoolbox.reports.qc2 import create_qc_entry, add_slice_numbers
 from spinalcordtoolbox.reports.slice import Slice, Axial, Sagittal
-from spinalcordtoolbox.utils.sys import list2cmdline, LazyLoader, __sct_dir__
+from spinalcordtoolbox.utils.sys import list2cmdline, LazyLoader
 
 mpl_figure = LazyLoader("mpl_figure", globals(), "matplotlib.figure")
 mpl_axes = LazyLoader("mpl_axes", globals(), "matplotlib.axes")
@@ -68,17 +66,9 @@ class QcImage:
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
 
-    def no_seg_seg(self, mask, ax, cmap='gray', norm=None, colorbar=False, text=None):
+    def no_seg_seg(self, mask, ax):
         """Create figure with image overlay. Notably used by sct_registration_to_template"""
-        img = ax.imshow(mask, cmap=cmap, norm=norm, interpolation=self.interpolation, aspect=self.aspect_mask)
-        if colorbar:
-            # Fetch the internal axis + associated figure
-            cax = ax.inset_axes([1.005, 0.07, 0.011, 0.86])
-            fig = ax.get_figure()
-            # Add a colorbar to our figure, and
-            cbar = fig.colorbar(img, cax=cax, orientation='vertical', pad=0.01, shrink=0.5, aspect=1, ticks=[norm.vmin, norm.vmax])
-            cbar.ax.tick_params(labelsize=5, length=2, pad=1.7)
-            ax.text(1.5, 6, text, color='white', size=3.25)
+        ax.imshow(mask, cmap='gray', interpolation=self.interpolation, aspect=self.aspect_mask)
         self._add_orientation_label(ax)
 
         # If Axial, overlay slice numbers in the top‐left of each tile
@@ -93,70 +83,6 @@ class QcImage:
 
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
-
-    def label_utils(self, mask, ax):
-        """Create figure with red label. Common scenario."""
-        img = np.full_like(mask, np.nan)
-        ax.imshow(img, cmap='gray', alpha=0, aspect=float(self.aspect_mask))
-        non_null_vox = np.where(mask > 0)
-        coord_labels = list(zip(non_null_vox[0], non_null_vox[1]))
-        logger.debug(coord_labels)
-        # compute horizontal offset based on the resolution of the mask
-        horiz_offset = mask.shape[1] / 50
-        for coord in coord_labels:
-            ax.plot(coord[1], coord[0], 'o', color='lime', markersize=5)
-            label_text = ax.text(coord[1] + horiz_offset, coord[0], str(round(mask[coord[0], coord[1]])), color='lime',
-                                 fontsize=15, verticalalignment='center', clip_on=True)
-            label_text.set_path_effects([mpl_patheffects.Stroke(linewidth=2, foreground='black'),
-                                         mpl_patheffects.Normal()])
-        ax.get_xaxis().set_visible(False)
-        ax.get_yaxis().set_visible(False)
-
-    def label_vertebrae(self, mask, ax):
-        """Draw vertebrae areas, then add text showing the vertebrae names"""
-        img = np.rint(np.ma.masked_where(mask < 1, mask))
-        labels = np.unique(img[np.where(~img.mask)]).astype(int)  # get available labels
-        color_list = assign_label_colors_by_groups(labels)
-        ax.imshow(img,
-                  cmap=mpl_colors.ListedColormap(color_list),
-                  interpolation=self.interpolation,
-                  alpha=1,
-                  aspect=float(self.aspect_mask))
-        ax.get_xaxis().set_visible(False)
-        ax.get_yaxis().set_visible(False)
-
-        if self._draw_text:
-            # Get the mapping between voxel values and text labels
-            default_path_labels = Path(__sct_dir__) / 'spinalcordtoolbox' / 'reports' / 'sct_label_vertebrae_regions.json'
-            if self._path_custom_labels is not None:
-                path_labels = Path(self._path_custom_labels)
-            else:
-                path_labels = default_path_labels
-            try:
-                dict_labels = json.loads(path_labels.read_text())
-                if not isinstance(dict_labels, dict):
-                    raise ValueError("The JSON file should contain a single dictionary")
-                for label_text in dict_labels.values():
-                    if not isinstance(label_text, str):
-                        raise ValueError(f"Not a text label: {label_text!r}")
-                dict_labels = {int(label_num): label_text for label_num, label_text in dict_labels.items()}
-            except ValueError as e:
-                raise ValueError(f"Invalid format for custom labels, see {default_path_labels} for an example. "
-                                 f"({e})")
-
-            # Add the text labels
-            for label_num in labels:
-                if label_num in dict_labels:
-                    # NB: We need to subtract `min` to convert the label value into an index for the color list
-                    label_color = color_list[label_num - labels.min()]
-                    # Position the label text
-                    y, x = center_of_mass(img == label_num)
-                    x += img.shape[1] / 25
-                    # Draw text with a shadow
-                    label_text = dict_labels[label_num]
-                    ax.text(x, y, label_text, color=label_color, clip_on=True).set_path_effects(
-                        [mpl_patheffects.Stroke(linewidth=2, foreground='black'), mpl_patheffects.Normal()]
-                    )
 
     def highlight_pmj(self, mask, ax):
         """Hook to show a rectangle where PMJ is on the slice"""
@@ -227,8 +153,7 @@ class QcImage:
         :return:
         """
 
-        if self._stretch_contrast:
-            img = self._func_stretch_contrast(img)
+        img = self._equalize_histogram(img)
 
         # NB: `size_fig` is in inches. So, when size_fig == 5", then: dpi=300 --> 1500px, dpi=100 --> 500px, etc.
         size_fig = [
@@ -249,18 +174,8 @@ class QcImage:
         fig = mpl_figure.Figure()
         fig.set_size_inches(size_fig[0], size_fig[1], forward=True)
         mpl_backend_agg.FigureCanvasAgg(fig)
-        kwargs = {}
-        ax_dim = (0, 0, 1, 1)
-        if self.process == 'sct_fmri_compute_tsnr':
-            vmin = min(int(np.amin(img)), int(np.amin(mask)))
-            vmax = max(int(np.amax(img)), int(np.amax(mask[0]))) - 2
-            kwargs['norm'] = mpl_colors.Normalize(vmin=vmin, vmax=vmax)
-            kwargs['cmap'] = 'seismic'
-            kwargs['colorbar'] = True
-            kwargs['text'] = 1
-            ax_dim = (0, 0, 0.93, 1)
-        ax = fig.add_axes(ax_dim)
-        QcImage.no_seg_seg(self, img, ax, **kwargs)
+        ax = fig.add_axes((0, 0, 1, 1))
+        QcImage.no_seg_seg(self, img, ax)
 
         logger.info(str(imgs_to_generate['path_background_img']))
         self._save(fig, str(imgs_to_generate['path_background_img']), dpi=self.dpi)
@@ -270,13 +185,11 @@ class QcImage:
         mpl_backend_agg.FigureCanvasAgg(fig)
         for i, action in enumerate(self.action_list):
             logger.debug('Action List %s', action.__name__)
-            if self._stretch_contrast and action.__name__ in ("no_seg_seg",):
+            if action.__name__ in ("no_seg_seg",):
                 logger.debug("Mask type %s" % mask[i].dtype)
-                mask[i] = self._func_stretch_contrast(mask[i])
-            if self.process == 'sct_fmri_compute_tsnr':
-                kwargs['text'] = kwargs['text'] + 1
-            ax = fig.add_axes(ax_dim, label=str(i))
-            action(self, mask[i], ax, **kwargs)
+                mask[i] = self._equalize_histogram(mask[i])
+            ax = fig.add_axes((0, 0, 1, 1), label=str(i))
+            action(self, mask[i], ax)
         self._save(fig, str(imgs_to_generate['path_overlay_img']), dpi=self.dpi)
 
     def _make_QC_image_for_4d_volumes(self, images_after_moco, images_before_moco, imgs_to_generate):
@@ -289,23 +202,12 @@ class QcImage:
         """
 
         size_fig = [5, 10 * images_after_moco[0].shape[0] / images_after_moco[0].shape[1] + 0.5]
-        if self._stretch_contrast:
-            for i in range(len(images_after_moco)):
-                images_after_moco[i] = self._func_stretch_contrast(images_after_moco[i])
-                images_before_moco[i] = self._func_stretch_contrast(images_before_moco[i])
+        for i in range(len(images_after_moco)):
+            images_after_moco[i] = self._equalize_histogram(images_after_moco[i])
+            images_before_moco[i] = self._equalize_histogram(images_before_moco[i])
 
         self._generate_and_save_gif(images_before_moco, images_after_moco, imgs_to_generate, size_fig)
         self._generate_and_save_gif(images_before_moco, images_after_moco, imgs_to_generate, size_fig, is_mask=True)
-
-    def _func_stretch_contrast(self, img):
-        if self._stretch_contrast_method == "equalized":
-            return self._equalize_histogram(img)
-        else:  # stretch_contrast_method == "contrast_stretching":
-            return self._stretch_intensity_levels(img)
-
-    def _stretch_intensity_levels(self, img):
-        p2, p98 = np.percentile(img, (2, 98))
-        return skimage.exposure.rescale_intensity(img, in_range=(p2, p98))
 
     def _equalize_histogram(self, img):
         """
@@ -438,7 +340,7 @@ class QcImage:
 
 
 def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None, path_qc=None, dataset=None,
-                subject=None, process=None, fps=None, p_resample=None, draw_text=True, path_custom_labels=None):
+                subject=None, process=None, fps=None, p_resample=None):
     """
     Generate a QC entry allowing to quickly review results. This function is the entry point and is called by SCT
     scripts (e.g. sct_propseg).
@@ -456,8 +358,6 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
     :param p_resample: float: Resolution (in mm) to resample the image to. If not provided, resampling will fall back
                               to the default value of the specific QC report layout (typically no resampling, or 0.6mm).
                               To turn off resampling, pass `p_resample==0`.
-    :param draw_text: bool: If set to False, text won't be drawn on top of labels. Used only for sct_label_vertebrae.
-    :param path_custom_labels: str: Path to a JSON file with map of int->str labels. Used only for sct_label_vertebrae.
     :return: None
     """
     dpi = 300  # Output resolution of the image
@@ -472,22 +372,8 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
                                    Tuple[List[List[np.ndarray]], List[Tuple[int, int]]]]]
 
     # Get QC specifics based on SCT process
-    # Axial orientation, switch between two input images
-    stretch_contrast = True
-    if process in ['sct_register_multimodal', 'sct_register_to_template']:
-        plane = 'Axial'
-        im_list = [Image(fname_in1), Image(fname_in2), Image(fname_seg)]
-        action_list = [QcImage.no_seg_seg]
-        def qcslice_layout(x): return x.mosaic()[:2]
-    # Axial orientation, switch between two input images and color bar and mean value in spinal cord
-    elif process in ['sct_fmri_compute_tsnr']:
-        plane = 'Axial'
-        stretch_contrast = False
-        im_list = [Image(fname_in1), Image(fname_in2), Image(fname_seg)]
-        action_list = [QcImage.no_seg_seg]
-        def qcslice_layout(x): return x.mosaic()[:2]
     # Axial orientation, switch between the image and the segmentation
-    elif process in ['sct_propseg', 'sct_deepseg_sc', 'sct_deepseg_gm']:
+    if process in ['sct_propseg', 'sct_deepseg_sc', 'sct_deepseg_gm']:
         plane = 'Axial'
         im_list = [Image(fname_in1), Image(fname_seg)]
         action_list = [QcImage.listed_seg]
@@ -513,23 +399,6 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
         im_list = [Image(fname_in1), Image(fname_in2), Image(fname_seg)]
         action_list = [QcImage.grid]
         def qcslice_layout(x): return x.mosaics_through_time()
-    # Sagittal orientation, display vertebral labels
-    elif process in ['sct_label_vertebrae']:
-        plane = 'Sagittal'
-        p_resample_default = None
-        dpi = 100  # bigger picture is needed for this special case, hence reduce dpi
-        im_list = [Image(fname_in1), Image(fname_seg)]
-        action_list = [QcImage.label_vertebrae]
-        def qcslice_layout(x): return x.single()
-    #  Sagittal orientation, display posterior labels
-    elif process in ['sct_label_utils']:
-        plane = 'Sagittal'
-        p_resample_default = None
-        dpi = 100  # bigger picture is needed for this special case, hence reduce dpi
-        # projected_image = projected(Image(fname_seg))
-        im_list = [Image(fname_in1), Image(fname_seg)]
-        action_list = [QcImage.label_utils]
-        def qcslice_layout(x): return x.single()
     # Sagittal orientation, display PMJ box
     elif process in ['sct_detect_pmj']:
         plane = 'Sagittal'
@@ -615,14 +484,7 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
     qc_image.interpolation = 'none'
     qc_image.action_list = action_list
     qc_image.process = process
-    qc_image._stretch_contrast = stretch_contrast
-    qc_image._stretch_contrast_method = 'equalized'
-    if 'equalized' not in ['equalized', 'contrast_stretching']:
-        raise ValueError("Unrecognized stretch_contrast_method: {}.".format('equalized'),
-                         "Try 'equalized' or 'contrast_stretching'")
     qc_image._fps = fps
-    qc_image._draw_text = draw_text
-    qc_image._path_custom_labels = path_custom_labels
     qc_image._centermass = None  # center of mass returned by slice.Axial.get_center()
     qc_image.orig_orientation = orig_orientations[0]  # just take the first orientation
     qc_image.num_slices = num_slices[0]  # pass the number of z-slices in the images (for mosaic labeling)

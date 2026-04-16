@@ -27,8 +27,8 @@ touch valid_urls.txt redirected_urls.txt invalid_urls.txt
 NUM_OK=$(wc -l valid_urls.txt | cut -d " " -f 1)
 NUM_REDIRECT=$(wc -l redirected_urls.txt | cut -d " " -f 1)
 NUM_BAD=$(wc -l invalid_urls.txt | cut -d " " -f 1)
-cat invalid_urls.txt
 echo -en "========== \033[0;32m$NUM_OK passed\033[0;0m, \033[0;33m$NUM_REDIRECT redirected\033[0;0m, \033[0;31m$NUM_BAD failed\033[0;0m ==========\n"
+cat invalid_urls.txt
 
 # Exit with failure if there are any bad URLs
 ((NUM_BAD == 0))

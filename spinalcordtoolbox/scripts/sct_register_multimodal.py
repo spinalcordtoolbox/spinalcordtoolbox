@@ -407,10 +407,11 @@ def main(argv: Sequence[str]):
     printv('\nFinished! Elapsed time: ' + str(int(np.round(elapsed_time))) + 's', verbose)
 
     if arguments.qc is not None:
-        qc2.sct_register_multimodal(
+        qc2.sct_register(
             fname_input=fname_src2dest,
             fname_output=fname_dest,
             fname_seg=fname_dest_seg,
+            command='sct_register_multimodal',
             argv=argv,
             path_qc=os.path.abspath(arguments.qc),
             dataset=arguments.qc_dataset,
