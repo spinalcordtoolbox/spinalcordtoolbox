@@ -1263,8 +1263,8 @@ class AnalyzeLesion:
             # Get the A-P diameter (in pixels) for both slices
             sc_indices1 = np.where(sc_slice1)[0]
             sc_indices2 = np.where(sc_slice2)[0]
-            sc_ap_diameter1 = sc_indices1[-1] - sc_indices1[0]  # ventral - dorsal
-            sc_ap_diameter2 = sc_indices2[-1] - sc_indices2[0]  # ventral - dorsal
+            sc_ap_diameter1 = len(sc_indices1)
+            sc_ap_diameter2 = len(sc_indices2)
 
             # Interpolate the A-P diameter
             sc_ap_diameter_interpolated = self._interpolate_values(sc_ap_diameter1, sc_ap_diameter2)

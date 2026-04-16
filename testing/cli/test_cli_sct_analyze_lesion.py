@@ -409,9 +409,9 @@ def test_sct_analyze_lesion_no_lesion_found_nli(tmp_path, tmp_path_qc):
         measurements = pickle.load(f)['measures']
 
     # Hardcoded for now
-    np.testing.assert_allclose(measurements['interpolated_dorsal_bridge_width [mm]'], 3.48, rtol=0.001)
-    np.testing.assert_allclose(measurements['interpolated_ventral_bridge_width [mm]'], 3.48, rtol=0.001)
-    np.testing.assert_allclose(measurements['interpolated_total_bridge_width [mm]'], 6.96, rtol=0.001)
+    np.testing.assert_allclose(measurements['interpolated_dorsal_bridge_width [mm]'], 3.98, rtol=0.001)
+    np.testing.assert_allclose(measurements['interpolated_ventral_bridge_width [mm]'], 3.98, rtol=0.001)
+    np.testing.assert_allclose(measurements['interpolated_total_bridge_width [mm]'], 7.96, rtol=0.001)
 
 
 @pytest.mark.sct_testing
