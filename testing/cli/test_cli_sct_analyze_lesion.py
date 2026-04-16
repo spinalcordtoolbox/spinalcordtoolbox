@@ -131,7 +131,10 @@ def compute_expected_measurements(lesion_params, path_seg=None):
                 # If 0/2 interp slices have lesion: find the interpolated minimum SC AP diameter, then take 1/2 of that for dorsal/ventral
                 if tissue_bridge_ceil is None and tissue_bridge_floor is None:
                     sc_width_interp = (decimal * sc_min_ap_diameters[z_ceil] + (1 - decimal) * sc_min_ap_diameters[z_floor])
-                    tissue_bridge_interp = sc_width_interp if 'total' in key else sc_width_interp/2
+                    # FIXME: This is proof that my solution overlaps Jan's solution
+                    #   - Jan uses /2 the sc_width (total sums to SC width, individual bridges are too small)
+                    #   - I use the full sc_width (total sums to 2x SC width, individual bridges are the right size)
+                    tissue_bridge_interp = sc_width_interp*2 if 'total' in key else sc_width_interp
                 else:
                     # If 1/2 interp slices have lesion: use 0.0 as a placeholder value (FIXME: #5184/#5202)
                     if tissue_bridge_ceil is None:
