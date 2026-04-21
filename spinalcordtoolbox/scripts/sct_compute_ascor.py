@@ -120,8 +120,12 @@ def main(argv: Sequence[str]):
     path_tmp_sc = os.path.join(path_tmp, "sc.csv")
     path_tmp_canal = os.path.join(path_tmp, "canal.csv")
     printv("\nRunning sct_process_segmentation on spinal cord segmentation...", verbose, 'normal')
+    if verbose >= 2:
+        printv("sct_process_segmentation " + " ".join(['-i', fname_sc_seg, '-o', path_tmp_sc, '-v', '0'] + process_seg_argv), verbose, 'code')
     sct_process_segmentation.main(['-i', fname_sc_seg, '-o', path_tmp_sc, '-v', '0'] + process_seg_argv)
     printv("\nRunning sct_process_segmentation on spinal canal segmentation...", verbose, 'normal')
+    if verbose >= 2:
+        printv("sct_process_segmentation " + " ".join(['-i', fname_canal_seg, '-o', path_tmp_canal, '-v', '0'] + process_seg_argv), verbose, 'code')
     sct_process_segmentation.main(['-i', fname_canal_seg, '-o', path_tmp_canal, '-v', '0'] + process_seg_argv)
 
     # Compute aSCOR
