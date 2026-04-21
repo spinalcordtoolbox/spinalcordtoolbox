@@ -117,20 +117,18 @@ def main(argv: Sequence[str]):
     # Run sct_process_segmentation twice: 1) SC seg 2) canal seg
     temp_folder = TempFolder(basename="process-segmentation", verbose=verbose)
     path_tmp = temp_folder.get_path()
-    path_tmp_sc = os.path.join(path_tmp, "sc.csv")
-    path_tmp_canal = os.path.join(path_tmp, "canal.csv")
-    printv("\nRunning sct_process_segmentation on spinal cord segmentation...", verbose, 'normal')
-    if verbose >= 2:
-        printv("sct_process_segmentation " + " ".join(['-i', fname_sc_seg, '-o', path_tmp_sc, '-v', '0'] + process_seg_argv), verbose, 'code')
-    sct_process_segmentation.main(['-i', fname_sc_seg, '-o', path_tmp_sc, '-v', '0'] + process_seg_argv)
-    printv("\nRunning sct_process_segmentation on spinal canal segmentation...", verbose, 'normal')
-    if verbose >= 2:
-        printv("sct_process_segmentation " + " ".join(['-i', fname_canal_seg, '-o', path_tmp_canal, '-v', '0'] + process_seg_argv), verbose, 'code')
-    sct_process_segmentation.main(['-i', fname_canal_seg, '-o', path_tmp_canal, '-v', '0'] + process_seg_argv)
+    inputs = {'spinal cord': fname_sc_seg,                     'spinal canal': fname_canal_seg}
+    output = {'spinal cord': os.path.join(path_tmp, "sc.csv"), 'spinal canal': os.path.join(path_tmp, "canal.csv")}
+    for step_name in inputs.keys():
+        printv(f"\nRunning sct_process_segmentation on {step_name} segmentation...", verbose, 'normal')
+        process_seg_argv_full = ['-i', inputs[step_name], '-o', output[step_name], '-v', '0'] + process_seg_argv
+        if verbose >= 2:
+            printv("sct_process_segmentation " + " ".join(process_seg_argv_full), verbose, 'code')
+        sct_process_segmentation.main(process_seg_argv_full)
 
     # Compute aSCOR
     printv("\nComputing aSCOR...", verbose, 'normal')
-    df_ascor = compute_ascor(path_tmp_sc, path_tmp_canal)
+    df_ascor = compute_ascor(csa_sc=output['spinal cord'], csa_canal=output['spinal canal'])
     # Save aSCOR to csv
     if arguments.append and os.path.exists(fname_out):
         dataframe_old = pd.read_csv(fname_out, index_col=INDEX_COLUMNS)
