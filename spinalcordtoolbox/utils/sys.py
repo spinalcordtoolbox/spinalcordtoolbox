@@ -148,9 +148,17 @@ LOGGING_COLOURS[logging.CRITICAL] = LOGGING_COLOURS['critical']
 
 
 class CustomLoggingFormatter(logging.Formatter):
+    """
+    Static string manipulation class, applying SCT's predefined ANSI color
+    codes from `printv` to the `logging` library's logs as well.
+    """
+    _formatters = {
+        level: logging.Formatter(stylize("%(message)s", colour))
+        for level, colour in LOGGING_COLOURS.items()
+    }
+
     def format(self, record):
-        log_fmt = stylize("%(message)s", LOGGING_COLOURS[record.levelno])
-        formatter = logging.Formatter(log_fmt)
+        formatter = self._formatters[record.levelno]
         return formatter.format(record)
 
 
