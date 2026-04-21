@@ -135,16 +135,18 @@ LOGGING_COLOURS = {
 }
 
 
-# Allow `logging` log level values to be used as keys as well
+# Allow numeric level values from `logging` (10, 20, 30...) to be used as keys as well
+# (https://docs.python.org/3/library/logging.html#levels)
 # NB: 'info' is already used by `printv` for LightGreen, so we can't map logging.INFO to 'info'.
 #     Instead, we need to map logging.INFO to 'normal' to preserve the look of logging.info calls.
 # FIXME: We could change the `printv` info to be 'notice' instead, and then unify 'info' to be the same color for
 #        both `printv` and `logging`.
-LOGGING_COLOURS[logging.DEBUG] = LOGGING_COLOURS['debug']
-LOGGING_COLOURS[logging.INFO] = LOGGING_COLOURS['normal']
-LOGGING_COLOURS[logging.WARNING] = LOGGING_COLOURS['warning']
-LOGGING_COLOURS[logging.ERROR] = LOGGING_COLOURS['error']
-LOGGING_COLOURS[logging.CRITICAL] = LOGGING_COLOURS['critical']
+LOGGING_COLOURS[logging.NOTSET] = LOGGING_COLOURS['normal']      # 0
+LOGGING_COLOURS[logging.DEBUG] = LOGGING_COLOURS['debug']        # 10
+LOGGING_COLOURS[logging.INFO] = LOGGING_COLOURS['normal']        # 20
+LOGGING_COLOURS[logging.WARNING] = LOGGING_COLOURS['warning']    # 30
+LOGGING_COLOURS[logging.ERROR] = LOGGING_COLOURS['error']        # 40
+LOGGING_COLOURS[logging.CRITICAL] = LOGGING_COLOURS['critical']  # 50
 
 
 class CustomLoggingFormatter(logging.Formatter):
