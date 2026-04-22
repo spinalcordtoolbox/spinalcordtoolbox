@@ -485,8 +485,8 @@ def _measure_ap_diameter(seg_crop_r, seg_crop_r_rotated, dim, angle, iz, propert
         # Inspiration: Kang et al. J Clin Med 2023, https://doi.org/10.3390/jcm12124111 (Fig. 1).
         # In RPI orientation, axis 1 (columns) is the PA direction: low index = posterior, high index = anterior.
         length_posterior = ap_arr_mean[:ap0_r].sum() * dim[1]
-        length_anterior  = ap_arr_mean[ap0_r:].sum() * dim[1]
-        ap_diameter      = length_posterior + length_anterior
+        length_anterior = ap_arr_mean[ap0_r:].sum() * dim[1]
+        ap_diameter = length_posterior + length_anterior
 
         # Store all the rotated properties
         result = {
