@@ -474,28 +474,24 @@ def _measure_ap_diameter(seg_crop_r, seg_crop_r_rotated, dim, angle, iz, propert
         indices = np.array([i for i in range(rl0_r - extent_avg//2, rl0_r + extent_avg//2)])
         # Ensure indices are within the segmentation bounds
         indices = indices[(indices >= 0) & (indices < seg_crop_r_rotated.shape[0])]
-        ap_pixels = np.sum(seg_crop_r_rotated[indices, :], axis=1).mean()
+        # Average the voxels across the 3 mm RL extent to get the mean AP array
+        ap_arr_mean = seg_crop_r_rotated[indices, :].mean(axis=0)
         coord_ap = rl0_r
 
-        ap_diameter = ap_pixels * dim[1]
-
-        # Compute anterior and posterior lengths by splitting the AP diameter at the cord center of mass (CoM).
+        # Split the AP diameter at the cord CoM and sum to get anterior/posterior lengths (vox -> mm).
         # The split column (ap0_r) is the CoM of the actual segmentation, computed by compute_pca() on the binary
         # rotated segmentation (equivalent to region.centroid from measure.regionprops; see above).
         # measure.regionprops fits the equivalent ellipse centered at region.centroid (the segmentation CoM),
         # so the RL major axis (diameter_RL) also passes through this column.
         # Inspiration: Kang et al. J Clin Med 2023, https://doi.org/10.3390/jcm12124111 (Fig. 1).
         # In RPI orientation, axis 1 (columns) is the PA direction: low index = posterior, high index = anterior.
-        # Anterior length: distance from the CoM to the anterior cord edge.
-        # Posterior length: distance from the CoM to the posterior cord edge.
-        ap_pixels_posterior = np.sum(seg_crop_r_rotated[indices, :ap0_r], axis=1).mean()
-        ap_pixels_anterior = np.sum(seg_crop_r_rotated[indices, ap0_r:], axis=1).mean()
-        length_posterior = ap_pixels_posterior * dim[1]
-        length_anterior = ap_pixels_anterior * dim[1]
+        length_posterior = ap_arr_mean[:ap0_r].sum() * dim[1]
+        length_anterior  = ap_arr_mean[ap0_r:].sum() * dim[1]
+        ap_diameter      = length_posterior + length_anterior
 
         # Store all the rotated properties
         result = {
-            'ap_pixel_count': ap_pixels,
+            'ap_pixel_count': ap_arr_mean.sum(),
             'diameter_AP': ap_diameter,
             'length_anterior': length_anterior,
             'length_posterior': length_posterior,
