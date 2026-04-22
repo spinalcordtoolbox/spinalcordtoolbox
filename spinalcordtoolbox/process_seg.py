@@ -476,7 +476,6 @@ def _measure_ap_diameter(seg_crop_r, seg_crop_r_rotated, dim, angle, iz, propert
         indices = indices[(indices >= 0) & (indices < seg_crop_r_rotated.shape[0])]
         # Average the voxels across the 3 mm RL extent to get the mean AP array
         ap_arr_mean = seg_crop_r_rotated[indices, :].mean(axis=0)
-        coord_ap = rl0_r
 
         # Split the AP diameter at the cord CoM and sum to get anterior/posterior lengths (vox -> mm).
         # The split column (ap0_r) is the CoM of the actual segmentation, computed by compute_pca() on the binary
@@ -500,7 +499,7 @@ def _measure_ap_diameter(seg_crop_r, seg_crop_r_rotated, dim, angle, iz, propert
         # Debug plotting
         if verbose == 2:
             create_ap_diameter_plots(angle, ap0_r, ap_diameter, dim, iz, properties, rl0_r, properties["diameter_RL"],
-                                     seg_crop_r_rotated, seg_crop_r, coord_ap)
+                                     seg_crop_r_rotated, seg_crop_r)
 
     return result
 
