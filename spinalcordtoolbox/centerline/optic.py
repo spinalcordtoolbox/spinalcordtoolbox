@@ -68,12 +68,13 @@ def centerline2roi(fname_image, folder_output='.', verbose=0):
     return fname_output
 
 
-def detect_centerline(img, contrast, remove_temp_files=1):
+def detect_centerline(img, contrast, remove_temp_files=1, verbose=0):
     """Detect spinal cord centerline using OptiC.
 
     :param img: input Image() object.
     :param contrast: str: The type of contrast. Will define the path to Optic model.
     :param remove_temp_files: int: Whether to remove temporary files. 0 = no, 1 = yes.
+    :param verbose int: Whether to show verbose logging messages.
     :returns: Image(): Output centerline
     """
 
@@ -83,7 +84,7 @@ def detect_centerline(img, contrast, remove_temp_files=1):
     logger.debug('Detecting the spinal cord using OptiC')
     img_orientation = img.orientation
 
-    temp_folder = TempFolder(basename="optic-detect-centerline")
+    temp_folder = TempFolder(basename="optic-detect-centerline", verbose=verbose)
     temp_folder.chdir()
 
     # convert image data type to int16, as required by opencv (backend in OptiC)
