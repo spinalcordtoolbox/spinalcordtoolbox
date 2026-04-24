@@ -1151,7 +1151,11 @@ def sct_process_segmentation(
         img.set_fill_value(0)
         ax.imshow(img, aspect=1.0)
         # Plot HOG angle lines directly on the empty axes
-        add_angle_lines(ax, img_temp.dim[0], metrics, angle_type=angle_type, radius=radius, scale=scale)
+        add_angle_lines(ax, img_temp.dim[0], metrics,
+                        angle_type=angle_type,
+                        centers=centers,
+                        img_slice_shape=img_seg.data.shape[1:],
+                        radius=radius, scale=scale)
         add_slice_numbers(ax, img_temp.dim[0], radius=radius, reverse=True)
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
@@ -1203,10 +1207,12 @@ def sct_process_segmentation(
         fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
 
 
-def add_angle_lines(ax, num_slices, metrics, angle_type, radius: tuple[int, int] = (15, 15), scale: float = 2.5):
+def add_angle_lines(ax, num_slices, metrics, angle_type, centers, img_slice_shape,
+                    radius: tuple[int, int] = (15, 15), scale: float = 2.5):
     """
     Overlay HOG angle lines and add angle text onto an Axial mosaic.
     """
+    AP_dim, LR_dim = img_slice_shape
     num_col = math.floor(TARGET_WIDTH_PIXL / scale / (2 * radius[0]))
     # Loop across axial slices
     for i in range(num_slices):
@@ -1224,9 +1230,20 @@ def add_angle_lines(ax, num_slices, metrics, angle_type, radius: tuple[int, int]
         x = metrics['centermass_x'].data[i] if 'centermass_x' in metrics else np.nan
         y = metrics['centermass_y'].data[i] if 'centermass_y' in metrics else np.nan
         if not np.isnan(x) and not np.isnan(y):
-            # Calculate center position within mosaic
-            x_mosaic = col * (2 * radius[0]) + radius[0]
-            y_mosaic = row * (2 * radius[1]) + radius[1]
+            # Reconstruct the actual cord centre within the mosaic, replicating the clamping done in mosaic().
+            # When the cord centre is within radius pixels of the image edge, mosaic() clamps it, so the cord
+            # is no longer at the tile's geometric centre.
+            cy, cx = centers[slice_index]
+            cy_c = max(radius[0], min(AP_dim - radius[0], int(cy)))
+            cx_c = max(radius[1], min(LR_dim - radius[1], int(cx)))
+            y_mosaic = row * (2 * radius[0]) + int(cy) + radius[0] - cy_c
+            x_mosaic = col * (2 * radius[1]) + int(cx) + radius[1] - cx_c
+            # add the decimal part of the center of mass back.
+            # (The mosaic is based on the SC center of mass, truncated to get an integer voxel coord. Preserving
+            #  the decimal part when plotting is possible in matplotlib, and leads to a more accurate plot.)
+            cy, cx = centers[slice_index]
+            y_mosaic += (cy - int(cy))
+            x_mosaic += (cx - int(cx))
             # Uncomment the next line to plot the center of mass point
             # ax.plot(x_mosaic, y_mosaic, 'o', color='red', markersize=1.0)
         # HOG angle
