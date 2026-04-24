@@ -1,8 +1,9 @@
 # pytest unit tests for spinalcordtoolbox.register.algorithms::find_angle_hog
 
 import numpy as np
+from skimage.transform import rotate
 
-from spinalcordtoolbox.registration.algorithms import normalized_sobel
+from spinalcordtoolbox.registration.algorithms import normalized_sobel, weighted_orientation_histogram
 
 
 def test_normalized_sobel():
@@ -24,3 +25,33 @@ def test_normalized_sobel():
     assert np.allclose(normalized_sobel(image, axis=0, p=7.0), 2/7)
     assert np.allclose(normalized_sobel(image, axis=1, p=8.0), 3/8)
     assert np.allclose(normalized_sobel(image, axis=2, p=9.0), 4/9)
+
+
+def test_weighted_orientation_histogram():
+    """
+    Test weighted_orientation_histogram on an artificial image with a clear
+    dividing line, so that all nonzero gradients point in roughly the same
+    direction.
+    """
+    # a 2-dimensional image in RP orientation, with zeros in the P half, and
+    # ones in the A half, so that the gradient vectors along the dividing half
+    # point in the A direction
+    image = np.zeros((30, 30), dtype=float)
+    image[:, 15:] = 1.0
+    px = py = 1.0
+
+    # the center of the image, which is between the 0.0 half and the 1.0 half
+    centermass = (14.5, 14.5)
+
+    # collect the absolute errors between expected and computed angles
+    abs_degree_diffs = []
+    for degrees in range(360):
+        # the skimage angle convention is the opposite from us:
+        # we want +90 degrees to point in the L direction
+        rotated_image = rotate(image, -degrees, mode='edge')
+        hist = weighted_orientation_histogram(rotated_image, px, py, centermass)
+        abs_degree_diffs.append(abs(degrees - hist.argmax()) % 360)
+    abs_degree_diffs = np.array(abs_degree_diffs)
+
+    assert abs_degree_diffs.max() <= 3
+    assert abs_degree_diffs.mean() <= 1

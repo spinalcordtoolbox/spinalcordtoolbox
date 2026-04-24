@@ -1736,3 +1736,53 @@ def normalized_sobel(
     trim = tuple([slice(1, -1)] * image.ndim)
 
     return (sobel(image, axis) / normalization)[trim]
+
+
+def weighted_orientation_histogram(
+    image: np.ndarray,
+    px: float,  # size of each voxel along the RL axis, in physical units
+    py: float,  # size of each voxel along the PA axis, in physical units
+    centermass: tuple[float, float],  # center of mass of the region of interest
+    sigma: float = 10.0,  # radius for gaussian weighting around the centermass
+    bins: int = 360,  # number of bins for the histogram
+) -> np.ndarray:
+    """
+    Compute a weighted histogram of gradient orientations of the image.
+
+    The image should be a 2-dimensional axial slice in RP orientation.
+
+    The first bin is centered around 0 degrees, that is, the A direction.
+    The angles increase in the order A -> L -> P -> R -> A.
+    """
+    # the rate of change at each voxel along each axis, per physical unit
+    gradient_RL = normalized_sobel(image, axis=0, p=px)
+    gradient_PA = normalized_sobel(image, axis=1, p=py)
+
+    # the direction of maximum increase at each voxel, between -pi and +pi
+    orientation = np.arctan2(gradient_RL, gradient_PA)
+
+    # the magnitude of maximum increase at each voxel, scaled so that the
+    # largest value is 1.0
+    magnitude = np.linalg.norm([gradient_RL, gradient_PA], axis=0)
+    normalization = magnitude.max(initial=0)
+    if normalization > 0:
+        magnitude /= normalization
+
+    # a gaussian weight around the center of mass
+    nx, ny = image.shape
+    xx, yy = np.mgrid[1:(nx-1), 1:(ny-1)]  # trimmed like normalized_sobel
+    weight = np.exp(-0.5/sigma * (
+        (px * (xx-centermass[0])) ** 2 +
+        (py * (yy-centermass[1])) ** 2
+    ))
+
+    # the orientation values are shifted so that 0 degrees falls in the center
+    # of the first bin, and taken modulo 2*pi to deal with wrap-around
+    hist, _ = np.histogram(
+        (orientation + np.pi/bins) % (2*np.pi),
+        bins=bins,
+        range=(0, 2*np.pi),
+        weights=magnitude*weight,
+    )
+
+    return hist
