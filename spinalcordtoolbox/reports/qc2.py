@@ -1298,6 +1298,9 @@ def add_ap_split_lines(ax, num_slices, metrics, px_AP, centers, img_slice_shape,
         cx_c = max(radius[1], min(LR_dim - radius[1], int(cx)))
         y_mosaic = row * (2 * radius[0]) + int(cy) + radius[0] - cy_c
         x_mosaic = col * (2 * radius[1]) + int(cx) + radius[1] - cx_c
+        # add the decimal part back, since the lengths are based off of the float-valued center
+        y_mosaic += (cy - int(cy))
+        x_mosaic += (cx - int(cx))
 
         # Ellipse orientation determines the cord's AP axis orientation in the mosaic.
         # SAL orientation: in imshow coordinates, y increases downward.
@@ -1322,11 +1325,11 @@ def add_ap_split_lines(ax, num_slices, metrics, px_AP, centers, img_slice_shape,
         # Cyan: cord center of mass to anterior cord edge
         ax.plot([x_mosaic, x_mosaic - ant_px * ap_dx],
                 [y_mosaic, y_mosaic - ant_px * ap_dy],
-                '-', color='cyan', linewidth=1, solid_capstyle='round')
+                '-', color='cyan', linewidth=0.75, solid_capstyle='butt')
         # Yellow: cord center of mass to posterior cord edge
         ax.plot([x_mosaic, x_mosaic + post_px * ap_dx],
                 [y_mosaic, y_mosaic + post_px * ap_dy],
-                '-', color='yellow', linewidth=1, solid_capstyle='round')
+                '-', color='yellow', linewidth=0.75, solid_capstyle='butt')
 
         # # Center of mass
         # ax.plot(x_mosaic, y_mosaic, 'o', color='black', markersize=1, markeredgewidth=0.8)
