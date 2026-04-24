@@ -50,7 +50,10 @@ def test_weighted_orientation_histogram():
         # we want +90 degrees to point in the L direction
         rotated_image = rotate(image, -degrees, mode='edge')
         hist = weighted_orientation_histogram(rotated_image, px, py, centermass)
-        abs_degree_diffs.append(abs(degrees - hist.argmax()) % 360)
+        abs_degree_diffs.append(min(
+            (degrees - hist.argmax()) % 360,
+            (hist.argmax() - degrees) % 360,
+        ))
     abs_degree_diffs = np.array(abs_degree_diffs)
 
     assert abs_degree_diffs.max() <= 3
