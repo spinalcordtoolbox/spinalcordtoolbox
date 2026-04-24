@@ -12,7 +12,7 @@ import psutil
 from math import asin, cos, sin, acos, radians
 
 import numpy as np
-from scipy.ndimage import gaussian_filter, gaussian_filter1d, convolve
+from scipy.ndimage import gaussian_filter, gaussian_filter1d, convolve, sobel
 from scipy.io import loadmat
 
 import spinalcordtoolbox.image as image
@@ -1709,3 +1709,30 @@ def circular_filter_1d(signal, window_size, kernel='gaussian'):
     signal_smoothed = signal_extended_smooth[len(signal):2*len(signal)]  # truncate back the signal
 
     return signal_smoothed
+
+
+def normalized_sobel(
+    image: np.ndarray,  # can be any-dimensional
+    axis: int,  # the direction in which to take the partial derivative
+    p: float,  # the size of each voxel along the given axis, in physical units
+) -> np.ndarray:
+    """
+    Estimate the rate of change of the image values along the given axis.
+
+    The output array has the same number of dimensions as the input, but one
+    voxel is trimmed from all sides because the Sobel filter is unreliable
+    around the edges.
+    """
+    # The Sobel filter computes the change in image values between the voxel
+    # 'before' and the voxel 'after' (and completely ignores the 'current'
+    # voxel), so it should be divided by 2*p to give a rate of change per
+    # physical unit.
+    # It also does a smoothing along every _other_ axis, which ends up scaling
+    # the image values by a factor of 4 for each smoothed axis, so we need to
+    # divide by this as well.
+    normalization = (2*p) * (4 ** (image.ndim-1))
+
+    # tuple of slices used to trim 1 voxel from each side of the result
+    trim = tuple([slice(1, -1)] * image.ndim)
+
+    return (sobel(image, axis) / normalization)[trim]
