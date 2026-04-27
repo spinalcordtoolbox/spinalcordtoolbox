@@ -1,9 +1,25 @@
 # pytest unit tests for spinalcordtoolbox.register.algorithms::find_angle_hog
 
+from math import degrees, radians
+
 import numpy as np
+from scipy.ndimage import center_of_mass
 from skimage.transform import rotate
 
-from spinalcordtoolbox.registration.algorithms import normalized_sobel, weighted_orientation_histogram, circular_autoconvolution
+from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.registration.algorithms import normalized_sobel, weighted_orientation_histogram, circular_autoconvolution, find_angle_hog_2
+from spinalcordtoolbox.utils.sys import sct_test_path
+
+
+def abs_degree_diff(x, y):
+    """
+    Return the absolute difference between x degrees and y degrees,
+    taking into account wrap-around behaviour at 360 degrees.
+    """
+    return min(
+        (x - y) % 360,
+        (y - x) % 360,
+    )
 
 
 def test_normalized_sobel():
@@ -44,20 +60,17 @@ def test_weighted_orientation_histogram():
     centermass = (14.5, 14.5)
 
     # collect the absolute errors between expected and computed angles
-    abs_degree_diffs = []
-    for degrees in range(360):
+    diffs = []
+    for expected_degrees in range(360):
         # the skimage angle convention is the opposite from us:
         # we want +90 degrees to point in the L direction
-        rotated_image = rotate(image, -degrees, mode='edge')
+        rotated_image = rotate(image, -expected_degrees, mode='edge')
         hist = weighted_orientation_histogram(rotated_image, px, py, centermass)
-        abs_degree_diffs.append(min(
-            (degrees - hist.argmax()) % 360,
-            (hist.argmax() - degrees) % 360,
-        ))
-    abs_degree_diffs = np.array(abs_degree_diffs)
+        diffs.append(abs_degree_diff(expected_degrees, hist.argmax()))
+    diffs = np.array(diffs)
 
-    assert abs_degree_diffs.max() <= 3
-    assert abs_degree_diffs.mean() <= 1
+    assert diffs.max() <= 3
+    assert diffs.mean() <= 1
 
 
 def test_circular_autoconvolution():
@@ -81,3 +94,43 @@ def test_circular_autoconvolution():
             array[axis] = 1
             array[(axis+1) % size] = 1
             assert np.argmax(circular_autoconvolution(array)) == (2*axis + 1) % size
+
+
+def test_find_angle_hog_2():
+    """
+    Test find_angle_hog on a real image before and after rotating it.
+    """
+    # load the test image and its segmentation, to get each slice's centermass
+    img = Image(sct_test_path('t2/t2.nii.gz')).change_orientation('RPI')
+    seg = Image(sct_test_path('t2/t2_seg-manual.nii.gz')).change_orientation('RPI')
+    _, _, nz, _, px, py, _, _ = img.dim
+    assert px == py, "expecting an isotropic image"
+    assert img.dim == seg.dim, "expecting a segmentation which matches the image"
+
+    for iz in range(nz):
+        # rotate() only works correctly on floating point data
+        original_slice = img.data[:, :, iz].astype(float)
+        cx, cy = center_of_mass(seg.data[:, :, iz])
+
+        # we use a wider angle_range because the slice may already be somewhat
+        # rotated, and we want to rotate it some more
+        kwargs = dict(px=px, py=py, centermass=(cx, cy), angle_range=radians(20))
+        original_degrees = degrees(find_angle_hog_2(original_slice, **kwargs))
+
+        diffs = []
+        for expected_degrees in range(-10, 11):
+            rotated_slice = rotate(
+                original_slice,
+                -expected_degrees,  # skimage convention is the opposite of ours
+                center=(cy, cx),  # skimage convention is the opposite of ours
+                mode='edge',
+            )
+            computed_degrees = degrees(find_angle_hog_2(rotated_slice, **kwargs))
+            diffs.append(abs_degree_diff(
+                original_degrees + expected_degrees,
+                computed_degrees,
+            ))
+        diffs = np.array(diffs)
+
+        assert diffs.max() <= 16
+        assert diffs.mean() <= 8

@@ -12,7 +12,7 @@ import psutil
 from math import asin, cos, sin, acos, radians
 
 import numpy as np
-from scipy.ndimage import gaussian_filter, gaussian_filter1d, convolve, sobel, convolve1d
+from scipy.ndimage import gaussian_filter, gaussian_filter1d, convolve, sobel, convolve1d, median_filter
 from scipy.io import loadmat
 
 import spinalcordtoolbox.image as image
@@ -1799,3 +1799,56 @@ def circular_autoconvolution(array: np.ndarray) -> np.ndarray:
     axis of almost-symmetry between positions i and i+1.
     """
     return convolve1d(array, array, mode='wrap', origin=-(array.size//2))
+
+
+def find_angle_hog_2(
+    image: np.ndarray,
+    px: float,  # size of each voxel along the RL axis, in physical units
+    py: float,  # size of each voxel along the PA axis, in physical units
+    centermass: tuple[float, float],  # center of mass of the region of interest
+    angle_range: float = radians(10),  # the maximum angle to consider, in radians
+    kmedian_size: int = 5,  # smoothing window size
+) -> float:  # best angle found, in radians
+    """
+    Find the angle of an axial slice in RP orientation, based on the method
+    described by Sun, "Symmetry Detection Using Gradient Information", Pattern
+    Recognition Letters 16, no. 9 (September 1, 1995): 987–96, and improved
+    by N. Pinon to use centermass distance and gradient magnitude information.
+    """
+    hist = weighted_orientation_histogram(image, px, py, centermass)
+
+    # smoothing of the histogram, necessary to avoid digitization effects that
+    # would favor angles 0, +/-45, +/-90, +/-135, 180
+    hist_smooth = median_filter(hist, size=kmedian_size, mode='wrap')
+
+    # compute the circular auto-convolution of the histogram to obtain its
+    # potential axes of approximate symmetry
+    hist_convo = circular_autoconvolution(hist_smooth)
+
+    # each index step in the circular auto-convolution corresponds to
+    # a half index step for the axis of symmetry in the histogram
+    half_width = np.pi / hist_convo.size
+
+    # Because of the half-steps, we need to go around the circular
+    # auto-convolution twice to cover the entire histogram.
+    # One time covers the angles in the range -np.pi <= angle < 0, and the
+    # second time covers the angles in the range 0 <= angle < np.pi.
+    # This also corresponds to the fact that two axes of symmetry that are
+    # 180 degrees apart are actually the same axis of symmetry.
+    scores = []
+    for index in range(-hist_convo.size, hist_convo.size):
+        angle = index * half_width
+
+        # only consider angles within the desired range
+        if abs(angle) <= angle_range:
+
+            # negative indices wrap around
+            score = hist_convo[index]
+
+            # when taking the maximum, we want the highest scores, then break
+            # ties towards the smallest absolute angle, then take the positive
+            # angle rather than the negative one if there's still a tie
+            scores.append((score, -abs(index), angle))
+
+    _, _, angle = max(scores)
+    return angle
