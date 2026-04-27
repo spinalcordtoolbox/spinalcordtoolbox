@@ -451,9 +451,10 @@ class AnalyzeLesion:
             # Create a lookup series for the current axial slice
             dorsal_lookup = slice_data.set_index('sagittal_slice')['dorsal_bridge_width']
             ventral_lookup = slice_data.set_index('sagittal_slice')['ventral_bridge_width']
-            # Get widths for the two sagittal slices. If there is no bridge for given slices, use 0.
-            dorsal_bridges = [dorsal_lookup.get(sag_slice, 0) for sag_slice in self.interpolation_slices_RPI]
-            ventral_bridges = [ventral_lookup.get(sag_slice, 0) for sag_slice in self.interpolation_slices_RPI]
+            # Get widths for the two sagittal slices. If there is no bridge for given slices, use 'np.nan', which will
+            # need to be properly handled (e.g. ignored) by downstream consumers of these values.
+            dorsal_bridges = [dorsal_lookup.get(sag_slice, np.nan) for sag_slice in self.interpolation_slices_RPI]
+            ventral_bridges = [ventral_lookup.get(sag_slice, np.nan) for sag_slice in self.interpolation_slices_RPI]
             # Interpolate tissue bridges
             dorsal_bridge_interpolated = self._interpolate_values(*dorsal_bridges)
             ventral_bridge_interpolated = self._interpolate_values(*ventral_bridges)
@@ -1237,6 +1238,16 @@ class AnalyzeLesion:
         :param data2: 2D numpy array (slice 2) or single int64 (tissue bridge for slice 2)
         :return: 2D numpy array (interpolated slice) or single float64 (interpolated tissue bridge)
         """
+        # This case should realistically be handled earlier in the script by falling back to `-nli-slice`.
+        # If a double-nan input slips through, it's a bug, so throw an error.
+        if np.any(np.isnan(data1) & np.isnan(data2)):
+            raise ValueError("Two 'NaN' values passed. Cannot interpolate between two 'NaN' values.")
+        # This case can occur for lesions that are present in only 1/2 interpolation slices.
+        # The decision to fall back to 1/2 slices was made here: https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/5202#discussion_r3138996132
+        elif np.any(np.isnan(data1)) or np.any(np.isnan(data2)):
+            printv("'NaN' value passed to interpolation. Falling back to single value instead of NaN.", type='info')
+            data1 = np.where(np.isnan(data1), data2, data1)
+            data2 = np.where(np.isnan(data2), data1, data2)
         interpolation_factor = self.interpolated_midsagittal_slice_RPI - int(self.interpolated_midsagittal_slice_RPI)   # e.g., 8.7 - 8 = 0.7
         return (1 - interpolation_factor) * data1 + interpolation_factor * data2
 
