@@ -3,7 +3,7 @@
 import numpy as np
 from skimage.transform import rotate
 
-from spinalcordtoolbox.registration.algorithms import normalized_sobel, weighted_orientation_histogram
+from spinalcordtoolbox.registration.algorithms import normalized_sobel, weighted_orientation_histogram, circular_autoconvolution
 
 
 def test_normalized_sobel():
@@ -58,3 +58,26 @@ def test_weighted_orientation_histogram():
 
     assert abs_degree_diffs.max() <= 3
     assert abs_degree_diffs.mean() <= 1
+
+
+def test_circular_autoconvolution():
+    """
+    Test circular_autoconvolution on actually symmetric inputs to check that
+    the maximum value of the result is at the right position.
+    """
+    # axis of symmetry in the middle of a bin
+    # even and odd number of bins
+    for size in [10, 11]:
+        for axis in range(size):
+            array = np.zeros(size)
+            array[axis] = 1
+            assert np.argmax(circular_autoconvolution(array)) == (2*axis) % size
+
+    # axis of symmetry between two bins
+    # even and odd number of bins
+    for size in [10, 11]:
+        for axis in range(size):
+            array = np.zeros(size)
+            array[axis] = 1
+            array[(axis+1) % size] = 1
+            assert np.argmax(circular_autoconvolution(array)) == (2*axis + 1) % size

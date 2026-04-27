@@ -12,7 +12,7 @@ import psutil
 from math import asin, cos, sin, acos, radians
 
 import numpy as np
-from scipy.ndimage import gaussian_filter, gaussian_filter1d, convolve, sobel
+from scipy.ndimage import gaussian_filter, gaussian_filter1d, convolve, sobel, convolve1d
 from scipy.io import loadmat
 
 import spinalcordtoolbox.image as image
@@ -1786,3 +1786,16 @@ def weighted_orientation_histogram(
     )
 
     return hist
+
+
+def circular_autoconvolution(array: np.ndarray) -> np.ndarray:
+    """
+    Compute the circular auto-convolution of a 1-dimensional array.
+
+    The result is a 1-dimensional array of the same size as the input.
+    A large value in position 2*i (modulo n) means that the input has an axis
+    of almost-symmetry in the center of position i.
+    A large value in position 2*i + 1 (modulo n) means that the input has an
+    axis of almost-symmetry between positions i and i+1.
+    """
+    return convolve1d(array, array, mode='wrap', origin=-(array.size//2))
