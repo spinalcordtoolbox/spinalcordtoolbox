@@ -26,6 +26,8 @@ from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, list_type,
 from spinalcordtoolbox.utils.sys import init_sct, printv, __data_dir__, set_loglevel
 from spinalcordtoolbox.utils.fs import check_file_exist, extract_fname, get_absolute_path, TempFolder
 from spinalcordtoolbox.scripts import sct_maths
+from spinalcordtoolbox.metrics_to_PAM50 import interpolate_metrics
+from spinalcordtoolbox.template import get_vertebral_level_from_slice
 
 
 class Param:
@@ -206,6 +208,19 @@ def get_parser():
         """),
     )
 
+    optional.add_argument(
+        '-normalize-PAM50',
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1],
+        default=0,
+        help="Set to 1 to interpolate the extracted metric values into PAM50 anatomical "
+             "dimensions per slice. "
+             "Requires `-vertfile` and `-perslice 1`. "
+             "Inspired by: Valošek J, Bédard S et al. Imaging Neuroscience 2024. "
+             "https://doi.org/10.1162/imag_a_00075"
+    )
+
     advanced = parser.add_argument_group("FOR ADVANCED USERS")
     advanced.add_argument(
         '-param',
@@ -264,6 +279,66 @@ def get_parser():
     return parser
 
 
+def _build_pam50_agg_metric(agg_metric_native, nz_native, label_name, method,
+                            fname_vert_level, fname_vert_level_PAM50):
+    """
+    Interpolate per-slice native-space metrics into PAM50 anatomical dimensions.
+    :param agg_metric_native: dict output of extract_metric() with perslice=True
+    :param nz_native: int: total z-slices in native image
+    :param label_name: str: atlas label name (for 'Label' CSV column)
+    :param method: str: extraction method ('wa', 'ml', 'map', 'bin', 'median', 'max')
+    :param fname_vert_level: str: native vertebral levels file (centerline-masked)
+    :param fname_vert_level_PAM50: str: canonical PAM50 template PAM50_levels.nii.gz
+    :return: dict keyed by (z,) PAM50 slice tuples, suitable for save_as_csv()
+    """
+    method_key_map = {
+        'wa': 'WA()', 'ml': 'ML()', 'map': 'MAP()',
+        'bin': 'BIN()', 'median': 'MEDIAN()', 'max': 'MAX()'
+    }
+    primary_key = method_key_map[method]
+
+    # Build 1D native array (shape [nz_native]) from the per-slice agg_metric dict
+    metric_1d = np.full(nz_native, np.nan)
+    for (z,), entry in agg_metric_native.items():
+        val = entry.get(primary_key)
+        if val is not None:
+            metric_1d[z] = val
+
+    # Interpolate to PAM50 space; returns Dict[str, Metric] with 1D data of length z_PAM50
+    metrics_pam50 = interpolate_metrics(
+        {primary_key: Metric(data=metric_1d, label=primary_key)},
+        fname_vert_level_PAM50,
+        fname_vert_level
+    )
+    pam50_values = metrics_pam50[primary_key].data
+
+    # Determine which vertebral levels are present in the native data to filter PAM50 output
+    im_native_levels = Image(fname_vert_level).change_orientation('RPI')
+    native_levels = set(
+        int(v) for v in np.unique(im_native_levels.data) if 0 < int(v) < 49
+    )
+
+    # Map each PAM50 z-slice to a vertebral level and build the output agg_metric
+    im_pam50_levels = Image(fname_vert_level_PAM50).change_orientation('RPI')
+
+    agg_metric_pam50 = {}
+    for z_pam50, val in enumerate(pam50_values):
+        if np.isnan(val):
+            continue
+        vert_level = get_vertebral_level_from_slice(im_pam50_levels, z_pam50)
+        if vert_level is None or vert_level not in native_levels:
+            continue
+        entry = {
+            'Label': label_name,
+            'VertLevel': (vert_level,),
+            'DistancePMJ': None,
+            primary_key: val,
+        }
+        agg_metric_pam50[(z_pam50,)] = entry
+
+    return agg_metric_pam50
+
+
 def main(argv: Sequence[str]):
     # Ensure that the "-list-labels" argument is always parsed last. That way, if `-f` is passed, then `-list-labels`
     # will see the new location and look there. (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3634)
@@ -289,6 +364,7 @@ def main(argv: Sequence[str]):
     fname_vert_level = arguments.vertfile
     perslice = arguments.perslice
     perlevel = arguments.perlevel
+    normalize_pam50 = arguments.normalize_PAM50
 
     # check if path_label is a file (e.g., single binary mask) instead of a folder (e.g., SCT atlas structure which
     # contains info_label.txt file)
@@ -384,6 +460,8 @@ def main(argv: Sequence[str]):
                f"To use vertebral level information, you may need to run "
                f"`sct_warp_template` to generate the appropriate level file in your working directory.", type=message_type)
         fname_vert_level = None
+        if normalize_pam50:
+            parser.error("Option '-normalize-PAM50' requires a valid '-vertfile'.")
     # Get dimensions of data and labels
     nx, ny, nz = data.data.shape
     nx_atlas, ny_atlas, nz_atlas, nt_atlas = labels.shape
@@ -409,11 +487,32 @@ def main(argv: Sequence[str]):
                                              map_cluster=None)
                 labels_id_user = [99]
 
+    if normalize_pam50 and not perslice:
+        parser.error("Option '-normalize-PAM50' requires option '-perslice 1'.")
+
+    fname_vert_level_PAM50 = os.path.join(__data_dir__, 'PAM50', 'template', 'PAM50_levels.nii.gz')
+
     for id_label in labels_id_user:
         printv('Estimation for label: ' + label_struc[id_label].name, verbose)
-        agg_metric = extract_metric(data, labels=labels, slices=slices, levels=levels, perslice=perslice,
-                                    perlevel=perlevel, fname_vert_level=fname_vert_level, method=method,
-                                    label_struc=label_struc, id_label=id_label, indiv_labels_ids=indiv_labels_ids)
+
+        if normalize_pam50:
+            agg_metric_native = extract_metric(
+                data, labels=labels, slices=slices, levels=levels,
+                perslice=1, perlevel=0,
+                fname_vert_level=fname_vert_level, method=method,
+                label_struc=label_struc, id_label=id_label, indiv_labels_ids=indiv_labels_ids)
+            agg_metric = _build_pam50_agg_metric(
+                agg_metric_native=agg_metric_native,
+                nz_native=nz,
+                label_name=label_struc[id_label].name,
+                method=method,
+                fname_vert_level=fname_vert_level,
+                fname_vert_level_PAM50=fname_vert_level_PAM50)
+        else:
+            agg_metric = extract_metric(
+                data, labels=labels, slices=slices, levels=levels, perslice=perslice,
+                perlevel=perlevel, fname_vert_level=fname_vert_level, method=method,
+                label_struc=label_struc, id_label=id_label, indiv_labels_ids=indiv_labels_ids)
 
         save_as_csv(agg_metric, fname_output, fname_in=fname_data, append=append_csv)
         append_csv = True  # when looping across labels, need to append results in the same file
