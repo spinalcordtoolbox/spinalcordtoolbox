@@ -133,11 +133,11 @@ def compute_expected_measurements(lesion_params, path_seg=None):
                     sc_width_interp = (decimal * sc_min_ap_diameters[z_ceil] + (1 - decimal) * sc_min_ap_diameters[z_floor])
                     tissue_bridge_interp = sc_width_interp if 'total' in key else sc_width_interp/2
                 else:
-                    # If 1/2 interp slices have lesion: use 0.0 as a placeholder value (FIXME: #5184/#5202)
+                    # If 1/2 interp slices have lesion: use the bridge from the other slice (i.e. interpolation will return the other slice's bridge value)
                     if tissue_bridge_ceil is None:
-                        tissue_bridge_ceil = 0.0
+                        tissue_bridge_ceil = tissue_bridge_floor
                     if tissue_bridge_floor is None:
-                        tissue_bridge_floor = 0.0
+                        tissue_bridge_floor = tissue_bridge_ceil
                     # If 2/2 interp slices have lesion: interpolate like normal
                     tissue_bridge_interp = (decimal * tissue_bridge_ceil + (1 - decimal) * tissue_bridge_floor)
 
