@@ -672,6 +672,7 @@ def main(argv: Sequence[str]):
                 path_qc=arguments.qc,
                 dataset=arguments.qc_dataset,
                 subject=arguments.qc_subject,
+                angle_qc=(verbose == 2),  # only output HOG angle plot if `-v 2` is passed
                 angle_type='angle_hog',
             )
 

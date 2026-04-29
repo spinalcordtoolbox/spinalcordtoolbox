@@ -1081,89 +1081,51 @@ def sct_process_segmentation(
         path_qc: str,
         dataset: Optional[str],
         subject: Optional[str],
+        angle_qc: Optional[bool] = False,
         angle_type: Optional[str] = 'angle_hog',
 ):
     """
-    Generate two QC report entries for sct_process_segmentation:
-      1. HOG angle overlay: a line per slice showing the estimated cord orientation angle
-         (obtained using spinalcordtoolbox.registration.algorithms.find_angle_hog).
-      2. AP split overlay: per-slice cyan/yellow lines showing anterior (length_anterior) and
+    Generate one (optionally two) QC report entries for sct_process_segmentation:
+      1. AP split overlay: per-slice cyan/yellow lines showing anterior (length_anterior) and
          posterior (length_posterior) cord lengths from the cord center of mass.
+      2. (Optional) Angle overlay: a line per slice showing the estimated cord orientation angle
+         (obtained using spinalcordtoolbox.registration.algorithms.find_angle_hog when angle_type='angle_hog').
     """
 
     command = 'sct_process_segmentation'
     cmdline = [command]
     cmdline.extend(argv)
 
-    # Axial orientation, switch between one anat image and one seg image
-    with create_qc_entry(
-        path_input=Path(fname_input).resolve(),
-        path_qc=Path(path_qc),
-        command=command,
-        cmdline=list2cmdline(cmdline),
-        plane='Axial',
-        dataset=dataset,
-        subject=subject,
-    ) as imgs_to_generate:
+    # Load the input images
+    img_input = Image(fname_input).change_orientation('SAL')
+    img_seg = Image(fname_seg).change_orientation('SAL')
+    # NOTE: We don't resample the image to 0.6mm iso as the angle_hog was computed on the original image
+    # TODO: consider slice by slice resampling (used e.g. in sct_deepseg_sagittal)
 
-        # Load the input images
-        img_input = Image(fname_input).change_orientation('SAL')
-        img_seg = Image(fname_seg).change_orientation('SAL')
-        # NOTE: We don't resample the image to 0.6mm iso as the angle_hog was computed on the original image
-        # TODO: consider slice by slice resampling (used e.g. in sct_deepseg_sagittal)
+    # Each slice is centered on the segmentation
+    logger.info('Find the center of each slice')
+    centers = np.array([ndimage.center_of_mass(slice) for slice in img_seg.data])
+    inf_nan_fill(centers[:, 0])
+    inf_nan_fill(centers[:, 1])
 
-        # Each slice is centered on the segmentation
-        logger.info('Find the center of each slice')
-        centers = np.array([ndimage.center_of_mass(slice) for slice in img_seg.data])
-        inf_nan_fill(centers[:, 0])
-        inf_nan_fill(centers[:, 1])
+    # If seg is available, use it to generate the radius
+    radius = get_max_axial_radius(img_seg) if fname_seg else (15, 15)
+    scale = 3.2  # we can consider increasing the number, then the mosaic can be zoomed in/out using the "Full size" button in the QC report
 
-        # If seg is available, use it to generate the radius
-        radius = get_max_axial_radius(img_seg) if fname_seg else (15, 15)
-        scale = 3.2  # we can consider increasing the number, then the mosaic can be zoomed in/out using the "Full size" button in the QC report
+    # Preprocess the input anat image to get the background image (used for both QC reports)
+    img_bg = equalize_histogram(mosaic(img_input, centers, radius, scale=scale))
+    # Fix the width to a specific size, and vary the height based on how many rows there are.
+    size_fig = [TARGET_WIDTH_INCH, TARGET_WIDTH_INCH * img_bg.shape[0] / img_bg.shape[1]]
 
-        # Generate the first QC report image - background image
-        img_bg = equalize_histogram(mosaic(img_input, centers, radius, scale=scale))
-        # Fix the width to a specific size, and vary the height based on how many rows there are.
-        size_fig = [TARGET_WIDTH_INCH, TARGET_WIDTH_INCH * img_bg.shape[0] / img_bg.shape[1]]
-        fig = mpl_figure.Figure()
-        fig.set_size_inches(*size_fig, forward=True)
-        mpl_backend_agg.FigureCanvasAgg(fig)
-        ax = fig.add_axes((0, 0, 1, 1))
-        ax.imshow(img_bg, cmap='gray', interpolation='none', aspect=1.0)
-        add_orientation_labels(ax, radius=tuple(r for r in radius))
-        ax.get_xaxis().set_visible(False)
-        ax.get_yaxis().set_visible(False)
-        img_path = str(imgs_to_generate['path_background_img'])
-        logger.debug('Save image %s', img_path)
-        fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
+    # Preprocess the input seg image to get the base image used for the overlay
+    img_temp = img_seg.copy()
+    img_temp.data = np.full_like(img_seg.data, np.nan)
+    # Create empty axes for the mosaic
+    img = mosaic(img_temp, centers, radius=radius, scale=scale)
+    img = np.ma.masked_less_equal(img, 0)
+    img.set_fill_value(0)
 
-        # Generate the second QC report image - overlay image with lines for HOG angles
-        fig = mpl_figure.Figure()
-        fig.set_size_inches(*size_fig, forward=True)
-        mpl_backend_agg.FigureCanvasAgg(fig)
-        ax = fig.add_axes((0, 0, 1, 1))
-        img_temp = img_seg.copy()
-        img_temp.data = np.full_like(img_seg.data, np.nan)
-        # Create empty axes for the mosaic
-        img = mosaic(img_temp, centers, radius=radius, scale=scale)
-        img = np.ma.masked_less_equal(img, 0)
-        img.set_fill_value(0)
-        ax.imshow(img, aspect=1.0)
-        # Plot HOG angle lines directly on the empty axes
-        add_angle_lines(ax, img_temp.dim[0], metrics,
-                        angle_type=angle_type,
-                        centers=centers,
-                        img_slice_shape=img_seg.data.shape[1:],
-                        radius=radius, scale=scale)
-        add_slice_numbers(ax, img_temp.dim[0], radius=radius, reverse=True)
-        ax.get_xaxis().set_visible(False)
-        ax.get_yaxis().set_visible(False)
-        img_path = str(imgs_to_generate['path_overlay_img'])
-        logger.debug('Save image %s', img_path)
-        fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
-
-    # QC entry 2: anterior (cyan) / posterior (yellow) cord lengths with RL axis (white).
+    # QC entry 1: anterior (cyan) / posterior (yellow) cord lengths with RL axis (white).
     # Variables from the first with-block (img_input, img_temp, img_bg, centers, radius, scale,
     # size_fig) remain in scope in Python and are reused here to avoid redundant computation.
     # Reference: Kang et al. J Clin Med 2023. https://doi.org/10.3390/jcm12124111 (Fig. 1)
@@ -1176,6 +1138,7 @@ def sct_process_segmentation(
         dataset=dataset,
         subject=subject,
     ) as imgs_to_generate:
+        # Generate the first QC report image - background image
         fig = mpl_figure.Figure()
         fig.set_size_inches(*size_fig, forward=True)
         mpl_backend_agg.FigureCanvasAgg(fig)
@@ -1188,6 +1151,7 @@ def sct_process_segmentation(
         logger.debug('Save image %s', img_path)
         fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
 
+        # Generate the second QC report image - overlay image with lines for anterior/posterior length
         fig = mpl_figure.Figure()
         fig.set_size_inches(*size_fig, forward=True)
         mpl_backend_agg.FigureCanvasAgg(fig)
@@ -1205,6 +1169,50 @@ def sct_process_segmentation(
         img_path = str(imgs_to_generate['path_overlay_img'])
         logger.debug('Save image %s', img_path)
         fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
+
+    # QC entry 2 (optional)
+    if angle_qc:
+        # Axial orientation, switch between one anat image and one seg image
+        with create_qc_entry(
+            path_input=Path(fname_input).resolve(),
+            path_qc=Path(path_qc),
+            command=command,
+            cmdline=list2cmdline(cmdline),
+            plane='Axial',
+            dataset=dataset,
+            subject=subject,
+        ) as imgs_to_generate:
+            # Generate the first QC report image - background image
+            fig = mpl_figure.Figure()
+            fig.set_size_inches(*size_fig, forward=True)
+            mpl_backend_agg.FigureCanvasAgg(fig)
+            ax = fig.add_axes((0, 0, 1, 1))
+            ax.imshow(img_bg, cmap='gray', interpolation='none', aspect=1.0)
+            add_orientation_labels(ax, radius=tuple(r for r in radius))
+            ax.get_xaxis().set_visible(False)
+            ax.get_yaxis().set_visible(False)
+            img_path = str(imgs_to_generate['path_background_img'])
+            logger.debug('Save image %s', img_path)
+            fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
+
+            # Generate the second QC report image - overlay image with lines for HOG angles
+            fig = mpl_figure.Figure()
+            fig.set_size_inches(*size_fig, forward=True)
+            mpl_backend_agg.FigureCanvasAgg(fig)
+            ax = fig.add_axes((0, 0, 1, 1))
+            ax.imshow(img, aspect=1.0)
+            # Plot HOG angle lines directly on the empty axes
+            add_angle_lines(ax, img_temp.dim[0], metrics,
+                            angle_type=angle_type,
+                            centers=centers,
+                            img_slice_shape=img_seg.data.shape[1:],
+                            radius=radius, scale=scale)
+            add_slice_numbers(ax, img_temp.dim[0], radius=radius, reverse=True)
+            ax.get_xaxis().set_visible(False)
+            ax.get_yaxis().set_visible(False)
+            img_path = str(imgs_to_generate['path_overlay_img'])
+            logger.debug('Save image %s', img_path)
+            fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
 
 
 def add_angle_lines(ax, num_slices, metrics, angle_type, centers, img_slice_shape,
