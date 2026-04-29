@@ -127,7 +127,7 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
         from spinalcordtoolbox.centerline import optic
         if param.contrast is None:
             raise ValueError("Missing param.contrast")
-        im_centerline = optic.detect_centerline(im_seg, param.contrast, remove_temp_files)
+        im_centerline = optic.detect_centerline(im_seg, param.contrast, remove_temp_files, verbose)
         x_centerline_fit, y_centerline_fit, z_centerline = find_and_sort_coord(im_centerline)
         # Compute derivatives using polynomial fit
         _, x_centerline_deriv = curve_fitting.polyfit_1d(z_centerline, x_centerline_fit, z_centerline, deg=param.degree)

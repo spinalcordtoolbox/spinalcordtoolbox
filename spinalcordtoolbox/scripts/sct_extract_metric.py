@@ -364,7 +364,7 @@ def main(argv: Sequence[str]):
         im_vertlevel_bin = im_vertlevel.copy()
         im_vertlevel_bin.data[im_vertlevel_bin.data > 0] = 1
         # Create temp path for outputs
-        temp_folder = TempFolder(basename="optic-detect-centerline")
+        temp_folder = TempFolder(basename="optic-detect-centerline", verbose=verbose)
         path_temp = temp_folder.get_path()
         # Extract centerline from segmentation
         im_centerline, _, _, _ = get_centerline(im_vertlevel_bin)
