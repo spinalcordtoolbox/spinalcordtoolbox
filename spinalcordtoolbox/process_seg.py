@@ -35,6 +35,8 @@ KEYS_DEFAULT = ['area',
                 'diameter_AP',
                 'diameter_AP_ellipse',
                 'diameter_RL',
+                'length_anterior',
+                'length_posterior',
                 'eccentricity',
                 'orientation',
                 'solidity',
@@ -456,6 +458,8 @@ def _measure_ap_diameter(seg_crop_r, seg_crop_r_rotated, dim, angle, iz, propert
         return {
             'ap_pixel_count': np.nan,
             'diameter_AP': np.nan,
+            'length_anterior': np.nan,
+            'length_posterior': np.nan,
         }
     else:
         _, _, [rl0, ap0] = compute_pca(rotated_bin)    # same as `y0, x0 = region.centroid`
@@ -463,28 +467,39 @@ def _measure_ap_diameter(seg_crop_r, seg_crop_r_rotated, dim, angle, iz, propert
 
         # Note: seg_crop_r_rotated is soft (due to the rotation) so we sum its values to account for softness
         # Sum non-zero pixels along AP axis, i.e., the number of pixels in the row corresponding to the center of mass along the RL axis
-        # Compute AP diameter average acrross 3 mm extent centered at rl0_r
+        # Compute AP diameter average across 3 mm extent centered at rl0_r
 
         # Use centroid for AP diameter
         extent_avg = 30  # extent of 3 mm (because seg was resampled to 0.1mm) used for averaging the minimum (to account for noise)
         indices = np.array([i for i in range(rl0_r - extent_avg//2, rl0_r + extent_avg//2)])
         # Ensure indices are within the segmentation bounds
         indices = indices[(indices >= 0) & (indices < seg_crop_r_rotated.shape[0])]
-        ap_pixels = np.sum(seg_crop_r_rotated[indices, :], axis=1).mean()
-        coord_ap = rl0_r
+        # Average the voxels across the 3 mm RL extent to get the mean AP array
+        ap_arr_mean = seg_crop_r_rotated[indices, :].mean(axis=0)
 
-        ap_diameter = ap_pixels * dim[1]
+        # Split the AP diameter at the cord CoM and sum to get anterior/posterior lengths (vox -> mm).
+        # The split column (ap0_r) is the CoM of the actual segmentation, computed by compute_pca() on the binary
+        # rotated segmentation (equivalent to region.centroid from measure.regionprops; see above).
+        # measure.regionprops fits the equivalent ellipse centered at region.centroid (the segmentation CoM),
+        # so the RL major axis (diameter_RL) also passes through this column.
+        # Inspiration: Kang et al. J Clin Med 2023, https://doi.org/10.3390/jcm12124111 (Fig. 1).
+        # In RPI orientation, axis 1 (columns) is the PA direction: low index = posterior, high index = anterior.
+        length_posterior = ap_arr_mean[:ap0_r].sum() * dim[1]
+        length_anterior = ap_arr_mean[ap0_r:].sum() * dim[1]
+        ap_diameter = length_posterior + length_anterior
 
         # Store all the rotated properties
         result = {
-            'ap_pixel_count': ap_pixels,
+            'ap_pixel_count': ap_arr_mean.sum(),
             'diameter_AP': ap_diameter,
+            'length_anterior': length_anterior,
+            'length_posterior': length_posterior,
         }
 
         # Debug plotting
         if verbose == 2:
             create_ap_diameter_plots(angle, ap0_r, ap_diameter, dim, iz, properties, rl0_r, properties["diameter_RL"],
-                                     seg_crop_r_rotated, seg_crop_r, coord_ap)
+                                     seg_crop_r_rotated, seg_crop_r)
 
     return result
 
