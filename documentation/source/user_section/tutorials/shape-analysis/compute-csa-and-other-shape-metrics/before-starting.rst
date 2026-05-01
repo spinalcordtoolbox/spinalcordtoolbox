@@ -7,6 +7,7 @@ You can either run those tutorials first, or download the necessary files below:
 
 #. Make sure that you have the following files in your working directory:
 
+   * ``single_subject/data/t2/t2.nii.gz``: An anatomical spinal cord scan in the T2 contrast.
    * ``single_subject/data/t2/t2_seg.nii.gz``: A 3D binary mask for the spinal cord of a T2 anatomical image.
    * ``single_subject/data/t2/t2_totalspineseg_discs.nii.gz``: An image containing intervertebral disc labels.
 
