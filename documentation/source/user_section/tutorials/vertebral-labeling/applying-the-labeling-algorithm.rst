@@ -1,7 +1,7 @@
 Applying the labeling algorithm
 ###############################
 
-The recommended workflow for vertebral and disc labeling is now based on :ref:`sct_deepseg_spine`, which uses TotalSpineSeg to generate disc labels (and optionally full multi-class spine segmentation).
+The recommended workflow for vertebral and disc labeling is now based on :ref:`sct_deepseg_spine`, which uses TotalSpineSeg to generate disc labels (and optionally a full multi-class spine segmentation).
 
 For most subsequent commands in this tutorial series (for example, template registration and per-level CSA with ``-discfile``), the main required output is the disc label file.
 
