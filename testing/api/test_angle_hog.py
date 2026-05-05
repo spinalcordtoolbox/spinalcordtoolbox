@@ -1,6 +1,6 @@
 # pytest unit tests for spinalcordtoolbox.register.algorithms::find_angle_hog
 
-from math import degrees, radians
+from math import degrees
 
 import numpy as np
 from scipy.ndimage import center_of_mass
@@ -107,30 +107,37 @@ def test_find_angle_hog_2():
     assert px == py, "expecting an isotropic image"
     assert img.dim == seg.dim, "expecting a segmentation which matches the image"
 
+    # test each slice independently
     for iz in range(nz):
         # rotate() only works correctly on floating point data
         original_slice = img.data[:, :, iz].astype(float)
         cx, cy = center_of_mass(seg.data[:, :, iz])
 
-        # we use a wider angle_range because the slice may already be somewhat
-        # rotated, and we want to rotate it some more
-        kwargs = dict(px=px, py=py, centermass=(cx, cy), angle_range=radians(20))
-        original_degrees = degrees(find_angle_hog_2(original_slice, **kwargs))
-
-        diffs = []
-        for expected_degrees in range(-10, 11):
+        degree_offsets = []
+        for extra_degrees in range(-20, 21):
+            # rotate the slice by some extra degrees
             rotated_slice = rotate(
                 original_slice,
-                -expected_degrees,  # skimage convention is the opposite of ours
+                -extra_degrees,  # skimage convention is the opposite of ours
                 center=(cy, cx),  # skimage convention is the opposite of ours
                 mode='edge',
             )
-            computed_degrees = degrees(find_angle_hog_2(rotated_slice, **kwargs))
-            diffs.append(abs_degree_diff(
-                original_degrees + expected_degrees,
-                computed_degrees,
-            ))
-        diffs = np.array(diffs)
+            # compute the new axis of symmetry
+            computed_degrees = degrees(
+                find_angle_hog_2(rotated_slice, px, py, (cx, cy))
+            )
+            # compute the implied original axis of symmetry
+            degree_offsets.append(
+                computed_degrees - extra_degrees
+            )
+        degree_offsets = np.array(degree_offsets)
+
+        # ignoring the outliers, the most likely "true" value for the original
+        # axis of symmetry is the median
+        median = np.median(degree_offsets)
+
+        # based on the median, we can compute the worst or average errors
+        diffs = np.abs(degree_offsets - median)
 
         assert diffs.max() <= 16
-        assert diffs.mean() <= 8
+        assert diffs.mean() <= 7
