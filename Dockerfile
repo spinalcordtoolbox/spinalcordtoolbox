@@ -51,6 +51,10 @@ RUN --mount=type=cache,target=/root/.cache/miniforge,sharing=locked \
     --mount=type=cache,target=/root/.cache/pip,sharing=locked \
     bash install_sct -y -c -g -p
 
+# Bind the installed SCT directory to a consistent location for later stages
+RUN ln -s /root/sct_$(cat spinalcordtoolbox/version.txt) /root/sct
+ENV SCT_DIR=/root/sct
+
 FROM build AS package
 
 ENV CONDA_PKGS_DIRS=/root/.conda/pkgs

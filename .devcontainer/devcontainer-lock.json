@@ -1,0 +1,19 @@
+{
+  "features": {
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
+      "version": "1.9.1",
+      "resolved": "ghcr.io/devcontainers/features/docker-outside-of-docker@sha256:dc89605f01ff2f24252c61f7c8ba2a58ccdbc14f2ebf87a7952d9e2b89834850",
+      "integrity": "sha256:dc89605f01ff2f24252c61f7c8ba2a58ccdbc14f2ebf87a7952d9e2b89834850"
+    },
+    "ghcr.io/devcontainers/features/git:1": {
+      "version": "1.3.5",
+      "resolved": "ghcr.io/devcontainers/features/git@sha256:27905dc196c01f77d6ba8709cb82eeaf330b3b108772e2f02d1cd0d826de1251",
+      "integrity": "sha256:27905dc196c01f77d6ba8709cb82eeaf330b3b108772e2f02d1cd0d826de1251"
+    },
+    "ghcr.io/miguelrodo/devcontainerfeatures/apptainer:1": {
+      "version": "1.1.3",
+      "resolved": "ghcr.io/miguelrodo/devcontainerfeatures/apptainer@sha256:c3a2c3dd13b654afe7bce975eab77032cece3767b9a1c6d3f8eb614ba941a13f",
+      "integrity": "sha256:c3a2c3dd13b654afe7bce975eab77032cece3767b9a1c6d3f8eb614ba941a13f"
+    }
+  }
+}
