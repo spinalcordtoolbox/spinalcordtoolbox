@@ -1815,7 +1815,9 @@ def find_angle_hog_2(
     Recognition Letters 16, no. 9 (September 1, 1995): 987–96, and improved
     by N. Pinon to use centermass distance and gradient magnitude information.
     """
-    hist = weighted_orientation_histogram(image, px, py, centermass)
+    # since the auto-convolution effectively doubles the angular resolution,
+    # we only need 180 bins to have a result with single-degree precision
+    hist = weighted_orientation_histogram(image, px, py, centermass, bins=180)
 
     # smoothing of the histogram, necessary to avoid digitization effects that
     # would favor angles 0, +/-45, +/-90, +/-135, 180
