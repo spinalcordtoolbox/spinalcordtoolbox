@@ -822,10 +822,18 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
 
             # detect rotation using the HOG method
             if rot_method in ['hog', 'pcahog']:
-                angle_src_hog, conf_score_src = find_angle_hog(data_src_im[:, :, iz], centermass_src[iz, :],
-                                                               px, py, angle_range=th_max_angle)
-                angle_dest_hog, conf_score_dest = find_angle_hog(data_dest_im[:, :, iz], centermass_dest[iz, :],
-                                                                 px, py, angle_range=th_max_angle)
+                angle_src_hog = find_angle_hog_2(
+                    data_src_im[:, :, iz],
+                    px, py,
+                    centermass_src[iz, :],
+                    angle_range=th_max_angle,
+                )
+                angle_dest_hog = find_angle_hog_2(
+                    data_dest_im[:, :, iz],
+                    px, py,
+                    centermass_dest[iz, :],
+                    angle_range=th_max_angle,
+                )
                 # In case no maxima is found (it should never happen)
                 if (angle_src_hog is None) or (angle_dest_hog is None):
                     logger.warning(f"Slice #{str(iz)} not angle found in dest or src. It will be ignored.")
