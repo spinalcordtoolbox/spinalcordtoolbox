@@ -12,7 +12,7 @@ import psutil
 from math import asin, cos, sin, acos, radians
 
 import numpy as np
-from scipy.ndimage import gaussian_filter, gaussian_filter1d, convolve, sobel, convolve1d, median_filter
+from scipy.ndimage import gaussian_filter, gaussian_filter1d, convolve, sobel, convolve1d
 from scipy.io import loadmat
 
 import spinalcordtoolbox.image as image
@@ -1807,7 +1807,6 @@ def find_angle_hog_2(
     py: float,  # size of each voxel along the PA axis, in physical units
     centermass: tuple[float, float],  # center of mass of the region of interest
     angle_range: float = radians(40),  # the maximum angle to consider, in radians
-    kmedian_size: int = 5,  # smoothing window size
 ) -> float:  # best angle found, in radians
     """
     Find the angle of an axial slice in RP orientation, based on the method
@@ -1821,7 +1820,7 @@ def find_angle_hog_2(
 
     # smoothing of the histogram, necessary to avoid digitization effects that
     # would favor angles 0, +/-45, +/-90, +/-135, 180
-    hist_smooth = median_filter(hist, size=kmedian_size, mode='wrap')
+    hist_smooth = gaussian_filter1d(hist, sigma=2, mode='wrap')
 
     # compute the circular auto-convolution of the histogram to obtain its
     # potential axes of approximate symmetry

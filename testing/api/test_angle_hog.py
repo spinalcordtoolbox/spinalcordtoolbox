@@ -139,5 +139,5 @@ def test_find_angle_hog_2():
         # based on the median, we can compute the worst or average errors
         diffs = np.abs(degree_offsets - median)
 
-        assert diffs.max() <= 14
-        assert diffs.mean() <= 6
+        assert diffs.max() <= 13
+        assert diffs.mean() <= 5
