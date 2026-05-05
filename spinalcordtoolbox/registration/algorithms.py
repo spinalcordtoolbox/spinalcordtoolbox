@@ -1743,7 +1743,7 @@ def weighted_orientation_histogram(
     px: float,  # size of each voxel along the RL axis, in physical units
     py: float,  # size of each voxel along the PA axis, in physical units
     centermass: tuple[float, float],  # center of mass of the region of interest
-    sigma: float = 10.0,  # radius for gaussian weighting around the centermass
+    sigma: float = 20.0,  # radius for gaussian weighting around the centermass
     bins: int = 360,  # number of bins for the histogram
 ) -> np.ndarray:
     """
