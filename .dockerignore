@@ -42,7 +42,7 @@ spinalcordtoolbox/sentry_dsn.py
 unit_testing/*.csv
 unit_testing/*.nii.gz
 unit_testing/*.roi
-testing/*.json
+testing/
 
 .vscode/settings.json
 test.sh
@@ -55,10 +55,30 @@ sct_example_data/
 **/peak_memory.txt
 **/memory_snapshots.txt
 
-# Documentation
-documentation/build
+# Documentation (full source, not just build artefacts)
+documentation/
 
-# Apptainer generated files
-/contrib/apptainer/*.sif
-/contrib/apptainer/*.tar.gz
-/contrib/apptainer/sct_apptainer_*/
+# Apptainer and Docker contrib dirs (not needed inside the image)
+contrib/apptainer/
+contrib/docker/
+
+# Files with no effect on build
+.devcontainer/devcontainer.json
+.github/*
+*.sif
+.git/
+
+# Community / project-metadata files (no effect on pip install)
+CHANGES.md
+CODE_OF_CONDUCT.md
+CONTRIBUTING.rst
+.readthedocs.yaml
+.gitignore
+.ci.sh
+
+# Platform-specific or workflow scripts not needed in the image
+install_sct.bat
+batch_processing.sh
+
+# Miscellaneous artefacts
+model_seg_spine_contrast_agnostic_install_error
