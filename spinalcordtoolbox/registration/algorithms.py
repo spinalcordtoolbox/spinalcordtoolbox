@@ -1806,7 +1806,7 @@ def find_angle_hog_2(
     px: float,  # size of each voxel along the RL axis, in physical units
     py: float,  # size of each voxel along the PA axis, in physical units
     centermass: tuple[float, float],  # center of mass of the region of interest
-    angle_range: float = radians(10),  # the maximum angle to consider, in radians
+    angle_range: float = radians(40),  # the maximum angle to consider, in radians
     kmedian_size: int = 5,  # smoothing window size
 ) -> float:  # best angle found, in radians
     """
