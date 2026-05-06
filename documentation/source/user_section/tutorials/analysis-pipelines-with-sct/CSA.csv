@@ -1,4 +1,4 @@
 Filename,Slice (I->S),VertLevel,MEAN(area),STD(area)
-sub-01_T2w_seg.nii.gz,161:203,2:3,83.5690681039387,2.82182217691781
-sub-03_T2w_seg.nii.gz,159:199,2:3,60.6215201725797,2.87402688226702
-sub-05_T2w_seg.nii.gz,159:190,2:3,68.763579167899,3.19840203029727
+multi_subject/output/data_processed/sub-01/anat/sub-01_T2w_seg.nii.gz,161:201,2:3,82.93934474867045,1.796411607824779
+multi_subject/output/data_processed/sub-03/anat/sub-03_T2w_seg.nii.gz,160:200,2:3,61.092162411539846,2.566031338254733
+multi_subject/output/data_processed/sub-05/anat/sub-05_T2w_seg.nii.gz,159:189,2:3,69.55896389705308,3.1786446036692757

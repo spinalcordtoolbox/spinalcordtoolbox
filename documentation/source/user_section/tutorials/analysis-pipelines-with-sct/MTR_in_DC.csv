@@ -1,2 +1,4 @@
 Filename,Slice (I->S),VertLevel,Label,Size [vox],MAP(),STD()
-single_subject/data/mt/mtr.nii.gz,8:17,2:4,dorsal columns,241.09229836605692,54.18151573788299,3.5528228390679315
+multi_subject/output/data_processed/sub-01/anat/mtr.nii.gz,3:16,2:5,dorsal columns,362.99853214935786,49.78844977926092,4.544740100058656
+multi_subject/output/data_processed/sub-03/anat/mtr.nii.gz,3:15,2:5,dorsal columns,275.4197997204345,49.37700548960756,4.7511394493178205
+multi_subject/output/data_processed/sub-05/anat/mtr.nii.gz,4:13,2:5,dorsal columns,226.4219907900724,49.15827368544715,4.450900586681125
