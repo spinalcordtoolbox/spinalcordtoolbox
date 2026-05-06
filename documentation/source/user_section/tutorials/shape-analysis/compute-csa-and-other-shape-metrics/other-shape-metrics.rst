@@ -25,13 +25,14 @@ CSV key                  Meaning
                          compression).
 ``orientation``          Angle (in degrees) between the AP axis of the spinal cord
                          and the AP axis of the image.
-``symmetry_dice``        Dice score between left and right (RL) hemicord of the
-                         spinal cord or anterior-posterior (AP) spinal cord.
-``symmetry_hausdorff``   Hausdorff distance between left and right (RL) hemicord of
-                         the spinal cord or anterior-posterior (AP) spinal cord.
-``symmetry_difference``  Absolute difference between left and right (RL) hemicord
-                         area of the spinal cord or anterior-posterior (AP) spinal
-                         cord.
+``symmetry_dice``        Dice score between the left and right (RL) hemicords or
+                         anterior and posterior (AP) halves of the spinal cord.
+``symmetry_hausdorff``   Hausdorff distance between the left and right (RL)
+                         hemicords or anterior and posterior (AP) halves of the
+                         spinal cord.
+``symmetry_difference``  Absolute difference between the left and right (RL)
+                         hemicords or anterior and posterior (AP) halves of the
+                         spinal cord.
 ``area_quadrant``        Cross-sectional area of the spinal cord in each quadrant
                          (anterior-left, anterior-right, posterior-left,
                          posterior-right).
