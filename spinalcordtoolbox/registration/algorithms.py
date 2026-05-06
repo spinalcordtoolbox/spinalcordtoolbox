@@ -822,13 +822,13 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
 
             # detect rotation using the HOG method
             if rot_method in ['hog', 'pcahog']:
-                angle_src_hog = find_angle_hog_2(
+                angle_src_hog = find_angle_hog(
                     data_src_im[:, :, iz],
                     px, py,
                     centermass_src[iz, :],
                     angle_range=th_max_angle,
                 )
-                angle_dest_hog = find_angle_hog_2(
+                angle_dest_hog = find_angle_hog(
                     data_dest_im[:, :, iz],
                     px, py,
                     centermass_dest[iz, :],
@@ -1637,7 +1637,7 @@ def circular_autoconvolution(array: np.ndarray) -> np.ndarray:
     return convolve1d(array, array, mode='wrap', origin=-(array.size//2))
 
 
-def find_angle_hog_2(
+def find_angle_hog(
     image: np.ndarray,
     px: float,  # size of each voxel along the RL axis, in physical units
     py: float,  # size of each voxel along the PA axis, in physical units

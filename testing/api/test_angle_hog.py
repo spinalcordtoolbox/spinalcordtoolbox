@@ -7,7 +7,7 @@ from scipy.ndimage import center_of_mass
 from skimage.transform import rotate
 
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.registration.algorithms import normalized_sobel, weighted_orientation_histogram, circular_autoconvolution, find_angle_hog_2
+from spinalcordtoolbox.registration.algorithms import normalized_sobel, weighted_orientation_histogram, circular_autoconvolution, find_angle_hog
 from spinalcordtoolbox.utils.sys import sct_test_path
 
 
@@ -96,7 +96,7 @@ def test_circular_autoconvolution():
             assert np.argmax(circular_autoconvolution(array)) == (2*axis + 1) % size
 
 
-def test_find_angle_hog_2():
+def test_find_angle_hog():
     """
     Test find_angle_hog on a real image before and after rotating it.
     """
@@ -124,7 +124,7 @@ def test_find_angle_hog_2():
             )
             # compute the new axis of symmetry
             computed_degrees = degrees(
-                find_angle_hog_2(rotated_slice, px, py, (cx, cy))
+                find_angle_hog(rotated_slice, px, py, (cx, cy))
             )
             # compute the implied original axis of symmetry
             degree_offsets.append(

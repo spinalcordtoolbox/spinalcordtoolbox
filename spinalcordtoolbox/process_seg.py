@@ -17,7 +17,7 @@ from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.aggregate_slicewise import Metric
 from spinalcordtoolbox.centerline.core import get_centerline
 from spinalcordtoolbox.resampling import resample_nib
-from spinalcordtoolbox.registration.algorithms import compute_pca, find_angle_hog_2
+from spinalcordtoolbox.registration.algorithms import compute_pca, find_angle_hog
 from spinalcordtoolbox.utils.shell import parse_num_list_inv
 from spinalcordtoolbox.utils.sys import sct_progress_bar
 
@@ -235,7 +235,7 @@ def _properties_image(im_r, nz, px, py, pz, pr, min_z_index, max_z_index, proper
         # TODO: explore different sigma values for the HOG method, i.e., the influence how far away pixels will vote for the orientation.
         # TODO: double-check if sigma is in voxel or mm units.
         # TODO: do we want to use the same sigma for all slices? As the spinal cord sizes vary across the z-axis.
-        angle_hog = find_angle_hog_2(
+        angle_hog = find_angle_hog(
             current_patch_im_scaled,
             px, py,  # TODO: is this the real resolution of current_patch_im_scaled?
             centermass_src,
