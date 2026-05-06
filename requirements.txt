@@ -77,7 +77,7 @@ requirements-parser
 scipy
 scikit-image
 scikit-learn
-totalspineseg[neuropoly] @ git+https://github.com/neuropoly/totalspineseg.git@nm/check_step1_before_continuing
+totalspineseg[neuropoly]
 xlwt
 # - torch<2.6: In January 2025, PyTorch changed the default of `torch.load()` to `weights_only=True`, breaking the
 #              loading of some of our models. We can set `weights_only=False` to retain the old behavior, however
