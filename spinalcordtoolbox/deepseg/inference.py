@@ -7,7 +7,6 @@ License: see the file LICENSE
 
 import logging
 import os
-import sys
 import shutil
 import time
 from pathlib import Path
@@ -440,13 +439,5 @@ def segment_totalspineseg(path_img, tmpdir, predictor, device, label_vert=False)
     for output_dirname in expected_outputs:
         fnames_out.append(os.path.join(tmpdir_nnunet, output_dirname, os.path.basename(path_img)))
         targets.append(f"_{name_remapping[output_dirname]}")
-
-    # Check to see if `totalspineseg` actually generated the outputs
-    # If processing fails, `totalspineseg` will not throw an exception, due to it needing to support
-    # parallel execution on multi-image datasets. So, we need to throw the exception ourselves.
-    missing_outputs = [f for f in fnames_out if not os.path.isfile(f)]
-    if missing_outputs:
-        sys.tracebacklimit = 0
-        raise FileNotFoundError(f"Spine model 'totalspineseg' did not generate expected output: {missing_outputs}")
 
     return fnames_out, targets

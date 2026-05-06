@@ -263,9 +263,9 @@ def test_deepseg_totalspineseg_empty_output(t2_zero, tmp_path, tmp_path_qc):
     Test that passing an empty input image will properly fail.
     """
     fname_out = str(tmp_path / "t2_deepseg.nii.gz")
-    with pytest.raises(FileNotFoundError) as e:
+    with pytest.raises(ValueError) as e:
         sct_deepseg.main(['spine',
                           '-i', t2_zero,
                           '-o', fname_out,
                           '-qc', tmp_path_qc])
-    assert "did not generate expected output" in str(e.value)
+    assert "step 1 failed to produce a valid segmentation" in str(e.value)
