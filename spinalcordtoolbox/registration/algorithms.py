@@ -12,7 +12,6 @@ import psutil
 from math import asin, cos, sin, acos, radians
 
 import numpy as np
-import matplotlib.pyplot as plt
 from scipy.ndimage import gaussian_filter, gaussian_filter1d, convolve, sobel, convolve1d
 from scipy.io import loadmat
 
@@ -1816,7 +1815,6 @@ def find_angle_hog_2(
     py: float,  # size of each voxel along the PA axis, in physical units
     centermass: tuple[float, float],  # center of mass of the region of interest
     angle_range: float = radians(40),  # the maximum angle to consider, in radians
-    debug: bool = False,
 ) -> float:  # best angle found, in radians
     """
     Find the angle of an axial slice in RP orientation, based on the method
@@ -1847,8 +1845,6 @@ def find_angle_hog_2(
     # This also corresponds to the fact that two axes of symmetry that are
     # 180 degrees apart are actually the same axis of symmetry.
     scores = []
-    scores_plot = []
-    from math import degrees
     for index in range(-hist_convo.size, hist_convo.size):
         angle = index * half_width
 
@@ -1862,54 +1858,6 @@ def find_angle_hog_2(
             # ties towards the smallest absolute angle, then take the positive
             # angle rather than the negative one if there's still a tie
             scores.append((score, -abs(index), angle))
-            scores_plot.append((degrees(angle), score))
 
     _, _, angle = max(scores)
-
-    if debug:
-        plot_orientation_histogram(hist)
-        plot_orientation_histogram(hist_smooth)
-        plot_orientation_histogram(hist_convo)
-        plot_angle_points(scores_plot)
-
     return angle
-
-
-def plot_orientation_histogram(hist):
-    fig, ax = plt.subplots(figsize=(6, 4), facecolor='white')
-
-    ax.bar(np.arange(180), hist, width=1.0, color='black', linewidth=0)
-
-    ax.set_xlim(0, 180)
-    ax.set_ylim(0, None)
-    ax.set_facecolor('white')
-
-    # Remove top/right spines to match the clean box style
-    for spine in ['top', 'right']:
-        ax.spines[spine].set_visible(False)
-
-    plt.tight_layout()
-    plt.show()
-
-
-def plot_angle_points(points):
-    """
-    Parameters:
-        points : list of [angle, value] pairs, or (N, 2) array
-    """
-    points = np.array(points)
-    angles = points[:, 0]
-    values = points[:, 1]
-
-    fig, ax = plt.subplots(figsize=(6, 4), facecolor='white')
-
-    bar_width = angles[1] - angles[0]  # infer width from spacing
-    ax.bar(angles, values, width=bar_width, color='black', linewidth=0, align='center')
-
-    ax.set_xlim(angles[0], angles[-1])
-    ax.set_ylim(0, None)
-    for spine in ['top', 'right']:
-        ax.spines[spine].set_visible(False)
-
-    plt.tight_layout()
-    plt.show()

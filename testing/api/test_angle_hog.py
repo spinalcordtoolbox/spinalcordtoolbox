@@ -123,9 +123,8 @@ def test_find_angle_hog_2():
                 mode='edge',
             )
             # compute the new axis of symmetry
-            debug = True if (iz == 33 and extra_degrees == -20) else False  # Problematic case from PR
             computed_degrees = degrees(
-                find_angle_hog_2(rotated_slice, px, py, (cx, cy), debug=debug),
+                find_angle_hog_2(rotated_slice, px, py, (cx, cy))
             )
             # compute the implied original axis of symmetry
             degree_offsets.append(
