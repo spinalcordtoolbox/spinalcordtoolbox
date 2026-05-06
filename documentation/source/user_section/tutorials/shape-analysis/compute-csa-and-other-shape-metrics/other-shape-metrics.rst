@@ -51,3 +51,7 @@ To demonstrate, below are the shape metrics provided in the CSV file produced by
 .. csv-table:: Additional shape metrics produced in ``csa_perlevel.csv`` (2/3)
    :file: other-shape-metrics-2.csv
    :header-rows: 1
+
+.. csv-table:: Additional shape metrics produced in ``csa_perlevel.csv`` (3/3)
+   :file: other-shape-metrics-3.csv
+   :header-rows: 1

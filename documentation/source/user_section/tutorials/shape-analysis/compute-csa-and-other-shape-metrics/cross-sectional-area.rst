@@ -35,14 +35,15 @@ First, we will start by computing the cord cross-sectional area (CSA) averaged a
 CSA (Per level)
 ===============
 
-Next, we will compute CSA for each individual vertebral level (rather than averaging).
+Next, we will compute CSA for each individual vertebral level (rather than averaging), as well as introducing a new flag (``-anat``) to compute symmetry metrics.
 
 .. code:: sh
 
-   sct_process_segmentation -i t2_seg.nii.gz -vert 3:4 -discfile t2_totalspineseg_discs.nii.gz -perlevel 1 -o csa_perlevel.csv
+   sct_process_segmentation -i t2_seg.nii.gz -anat t2.nii.gz -vert 3:4 -discfile t2_totalspineseg_discs.nii.gz -perlevel 1 -o csa_perlevel.csv
 
 :Input arguments:
    - ``-i`` : The input segmentation file.
+   - ``-anat``: A corresponding anatomical file, used to compute symmetry metrics.
    - ``-vert`` : The vertebral levels to compute metrics across. Vertebral levels can be specified individually (``3,4``) or as a range (``3:4``).
    - ``-discfile`` : Disc label file used to map slices to vertebral levels.
    - ``-perlevel`` : Set this option to 1 to turn on per-level computation.
