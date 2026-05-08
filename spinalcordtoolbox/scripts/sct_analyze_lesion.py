@@ -408,11 +408,12 @@ class AnalyzeLesion:
             axial_lesion_slices = np.unique(np.where(im_lesion_data)[2])  # [2] --> S-I direction in RPI
 
             # Compute the spinal cord A-P diameter for each axial slice with lesion at the midsagittal slice
-            sc_ap_diameter_mm = {}
-            for axial_slice in axial_lesion_slices:
-                diameter = self._compute_sc_ap_diameter_at_axial_slice(im_sc_data, axial_slice, p_lst)
-                if diameter is not None:
-                    sc_ap_diameter_mm[axial_slice] = diameter
+            sc_ap_diameter_mm = {
+                axial_slice: diameter
+                for axial_slice in axial_lesion_slices
+                if (diameter := self._compute_sc_ap_diameter_at_axial_slice(im_sc_data, axial_slice, p_lst))
+                    is not None
+            }
 
             if len(sc_ap_diameter_mm) > 0:
                 # Use the minimum A-P diameter as the total bridge width
