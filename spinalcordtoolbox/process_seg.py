@@ -230,8 +230,11 @@ def _properties_image(im, nz, px, py, pz, pr, min_z_index, max_z_index, property
         # TODO: explore different sigma values for the HOG method, i.e., the influence how far away pixels will vote for the orientation.
         # TODO: double-check if sigma is in voxel or mm units.
         # TODO: do we want to use the same sigma for all slices? As the spinal cord sizes vary across the z-axis.
-        angle_hog, conf_src = find_angle_hog(current_patch_im_scaled, centermass_src,
-                                             px, py, angle_range=40)    # 40 is taken from registration.algorithms.register2d_centermassrot
+        angle_hog = find_angle_hog(
+            current_patch_im_scaled,
+            centermass_src,
+            pr, pr,
+        )  # taken from registration.algorithms.register2d_centermassrot
 
         z_indices.append(iz)
         angle_hog_values.append(angle_hog)
