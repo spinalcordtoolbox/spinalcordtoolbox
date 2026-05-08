@@ -6,6 +6,7 @@
 **FEATURE**
  - **sct_dmri_moco, sct_fmri_moco**: Add deep learning-based motion correction algorithm (`-dl` flag). [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/5100)
  - **sct_process_segmentation**: Implement `length_anterior` and `length_posterior`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/5199)
+ - **sct_analyze_lesion**: Add new `-nli-slice` argument for fallback instead of `np.nan` when lesion is missing. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/5179)
 
 **ENHANCEMENT**
  - **sct_apply_transfo**: Reduce memory usage when warping 4D images by avoiding unnecessary copies of the data. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/5143)
@@ -23,6 +24,7 @@
  - **sct_flatten_sagittal**: Preserve `0-1` voxels for flattened binary images. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/5155)
  - **sct_qc**: Persist QC report UUID if one already exists. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/5178)
  - **sct_register_to_template**: Raise `parser.error` if `-ref subject` is passed alongside 3+ labels. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/5218)
+ - **sct_register_to_template**: Fix several bugs with `find_angle_hog` function to make computed HOG values consistent. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/5192)
 
 **INSTALLATION**
  - Improve Apptainer installation by fixing several `sct.def` bugs (install directory, task installation). [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/5160)
@@ -30,6 +32,7 @@
 **DOCUMENTATION**
  - **sct_deepseg**: Update the `lesion_ms` model citation to Benveniste et al. 2026. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/5209)
  - **sct_image**: Improve description of stitching in `sct_image` to avoid cropping. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/5151)
+ - Update web tutorials to include changes to the slides from the 2025 SCT Course. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/5197)
  - Replace `monai.io` with `project-monai.github.io`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/5132)
  - Add 2025 course links to website. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/5171)
  - Update Apptainer README to Detail SCT-Based Dataset Use Considerations . [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/5176)
