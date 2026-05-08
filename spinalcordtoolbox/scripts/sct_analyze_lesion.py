@@ -15,7 +15,7 @@ import numpy as np
 from skimage.measure import label
 from scipy.ndimage import center_of_mass
 
-from spinalcordtoolbox.image import Image, rpi_slice_to_orig_orientation
+from spinalcordtoolbox.image import Image, rpi_slice_to_orig_orientation, orig_orientation_to_rpi_slice
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
 from spinalcordtoolbox.metadata import read_label_file
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
@@ -140,10 +140,12 @@ class AnalyzeLesion:
     def __init__(self, fname_mask, fname_sc, fname_ref, path_template, path_ofolder, perslice, nli_slice, verbose):
         self.fname_mask = fname_mask
         # NB: We use `_RPI` to distinguish from the slice values that get output to the user (in original orientation)
-        self.interpolated_midsagittal_slice_RPI = None  # target float sagittal slice number used for the interpolation
-        self.interpolation_slices_RPI = None            # sagittal slices used for the interpolation
-        self.nli_slice = nli_slice                      # user-provided NLI slice number (in original orientation)
-        self.empty_lesion = False                       # bool to skip QC if no lesion is found
+        self.interpolated_midsagittal_slice_RPI = None   # target float sagittal slice number used for the interpolation
+        self.interpolation_slices_RPI = None             # sagittal slices used for the interpolation
+        self.nli_slice = nli_slice                       # user-provided NLI slice number (in original orientation)
+        self.nli_slice_RPI = (None if nli_slice is None  # user-provided NLI slice number (in RPI orientation)
+                              else orig_orientation_to_rpi_slice(nli_slice, Image(fname_mask)))
+        self.empty_lesion = False                        # bool to skip QC if no lesion is found
         self.fname_sc = fname_sc
         self.fname_ref = fname_ref
         self.path_template = path_template
@@ -497,7 +499,7 @@ class AnalyzeLesion:
         im_sc_data = Image(self.fname_sc).data
 
         # Compute the spinal cord A-P diameter at the NLI slice
-        sc_ap_diameter_mm = self._compute_sc_ap_diameter_at_axial_slice(im_sc_data, self.nli_slice, p_lst)
+        sc_ap_diameter_mm = self._compute_sc_ap_diameter_at_axial_slice(im_sc_data, self.nli_slice_RPI, p_lst)
 
         if sc_ap_diameter_mm is not None:
             # Since there is no lesion, we output the spinal cord A-P diameter as tissue bridge measurements
@@ -520,7 +522,7 @@ class AnalyzeLesion:
             self.measure_pd.loc[idx, 'interpolated_ventral_bridge_width [mm]'] = sc_ap_diameter_half_mm
             self.measure_pd.loc[idx, 'interpolated_total_bridge_width [mm]'] = sc_ap_diameter_mm
 
-            printv(f'  Spinal cord A-P diameter at NLI slice (z={self.nli_slice} in RPI): {np.round(sc_ap_diameter_mm, 2)} mm',
+            printv(f'  Spinal cord A-P diameter at NLI slice (z={self.nli_slice_RPI} in RPI): {np.round(sc_ap_diameter_mm, 2)} mm',
                    self.verbose, type='info')
             printv(f'  Interpolated midsagittal slice number: '
                    f'{round(rpi_slice_to_orig_orientation(im_lesion_data.shape, self.orientation, self.interpolated_midsagittal_slice_RPI, 0), 2)}',
@@ -1187,11 +1189,11 @@ class AnalyzeLesion:
 
         if self.nli_slice is not None:
             # Compute the spinal cord center of mass in the R-L axis at the NLI slice
-            spinal_cord_slice = im_sc_data[:, :, self.nli_slice]
+            spinal_cord_slice = im_sc_data[:, :, self.nli_slice_RPI]
             if np.any(spinal_cord_slice):
                 self.interpolated_midsagittal_slice_RPI = center_of_mass(spinal_cord_slice)[0]  # [0] --> R-L
             else:
-                printv(f'ERROR: No spinal cord found at the NLI slice (RPI, S-I axis): {self.nli_slice}. '
+                printv(f'ERROR: No spinal cord found at the NLI slice (RPI, S-I axis): {self.nli_slice_RPI}. '
                        f'Cannot compute midsagittal measurements.', self.verbose, 'error')
                 return
         else:
