@@ -1,7 +1,7 @@
 Computing the white matter segmentation
 #######################################
 
-In the previous step, we used :ref:`sct_deepseg_gm` to segment the gray matter. However, to get the white matter, we essentially need the "inverse" volume. (In other words, the full spinal cord segmentation minus the gray matter segmentation.)
+In the previous step, we used ``sct_deepseg graymatter`` to segment the gray matter. However, to get the white matter, we essentially need the "inverse" volume. (In other words, the full spinal cord segmentation minus the gray matter segmentation.)
 
 Segmenting the full spinal cord
 -------------------------------

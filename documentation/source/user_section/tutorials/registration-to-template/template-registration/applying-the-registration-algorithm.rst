@@ -7,12 +7,12 @@ To apply the registration algorithm, the following command is used:
 
 .. code:: sh
 
-   sct_register_to_template -i t2.nii.gz -s t2_seg.nii.gz -l t2_labels_vert.nii.gz -c t2 -qc ~/qc_singleSubj
+   sct_register_to_template -i t2.nii.gz -s t2_seg.nii.gz -ldisc t2_labels_vert.nii.gz -c t2 -qc ~/qc_singleSubj
 
 :Input arguments:
    - ``-i`` : Input image
    - ``-s`` : Segmented spinal cord corresponding to the input image
-   - ``-l`` : One or two labels located at the center of the spinal cord, on the mid-vertebral slice
+   - ``-ldisc`` : One or more disc labels used for landmark alignment between the subject space and the template space.
    - ``-c`` : Contrast of the image. Specifying this determines the version of the template to use. (Here, ``-c t2`` means that ``PAM50_t2.nii.gz`` will be used.)
    - ``-qc`` : Directory for Quality Control reporting. QC reports allow us to evaluate the results slice-by-slice.
 
