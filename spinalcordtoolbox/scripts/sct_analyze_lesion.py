@@ -974,6 +974,7 @@ class AnalyzeLesion:
         p_lst = im_lesion.dim[4:7]  # voxel size
 
         label_lst = [label for label in np.unique(im_lesion_data) if label]  # lesion label IDs list
+        assert len(label_lst) == self.lesion_count, "Lesion count has drifted (internal code issue, please report to SCT)"
 
         if self.path_template is not None:
             if os.path.isfile(self.path_levels):
@@ -1059,7 +1060,7 @@ class AnalyzeLesion:
 
         # Special case: no lesion but NLI slice and spinal cord segmentation are provided --> Compute spinal cord
         # A-P diameter at the NLI slice (if user provided the NLI slice)
-        if self.nli_slice is not None:
+        if self.lesion_count == 0 and self.nli_slice is not None:
             self._compute_sc_ap_diameter_at_nli(im_lesion_data, p_lst)
 
         if self.path_template is not None:
