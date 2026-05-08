@@ -93,6 +93,7 @@ def get_parser():
         '-fps',
         metavar='float',
         type=float,
+        default=5,
         help='The number of frames per second for output gif images. Only useful for sct_fmri_moco and '
              'sct_dmri_moco.')
 

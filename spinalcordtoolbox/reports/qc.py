@@ -314,7 +314,7 @@ class QcImage:
             gif_out_path = str(imgs_to_generate['path_background_img'])
 
         if self._fps is None:
-            self._fps = 3
+            self._fps = 5
         writer = mpl_animation.PillowWriter(self._fps)
         logger.info('Saving gif %s', gif_out_path)
         ani.save(gif_out_path, writer=writer, dpi=self.dpi)
