@@ -1469,7 +1469,7 @@ def main(argv: Sequence[str]):
 
     # Create QC report for tissue bridges (only if SC is provided)
     if arguments.qc is not None:
-        if fname_sc is not None and lesion_obj.empty_lesion is False:
+        if fname_sc is not None and lesion_obj.lesion_count > 0:
             sct_analyze_lesion(
                 fname_input=fname_mask,
                 fname_label=lesion_obj.fname_label,
