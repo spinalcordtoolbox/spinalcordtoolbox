@@ -824,14 +824,14 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
             if rot_method in ['hog', 'pcahog']:
                 angle_src_hog = find_angle_hog(
                     data_src_im[:, :, iz],
-                    px, py,
                     centermass_src[iz, :],
+                    px, py,
                     angle_range=th_max_angle,
                 )
                 angle_dest_hog = find_angle_hog(
                     data_dest_im[:, :, iz],
-                    px, py,
                     centermass_dest[iz, :],
+                    px, py,
                     angle_range=th_max_angle,
                 )
                 # In case no maxima is found (it should never happen)
@@ -1639,9 +1639,9 @@ def circular_autoconvolution(array: np.ndarray) -> np.ndarray:
 
 def find_angle_hog(
     image: np.ndarray,
+    centermass: tuple[float, float],  # center of mass of the region of interest
     px: float,  # size of each voxel along the RL axis, in physical units
     py: float,  # size of each voxel along the PA axis, in physical units
-    centermass: tuple[float, float],  # center of mass of the region of interest
     angle_range: float = radians(40),  # the maximum angle to consider, in radians
 ) -> float:  # best angle found, in radians
     """

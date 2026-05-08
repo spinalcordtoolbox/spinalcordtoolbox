@@ -237,8 +237,8 @@ def _properties_image(im_r, nz, px, py, pz, pr, min_z_index, max_z_index, proper
         # TODO: do we want to use the same sigma for all slices? As the spinal cord sizes vary across the z-axis.
         angle_hog = find_angle_hog(
             current_patch_im_scaled,
-            px, py,  # TODO: is this the real resolution of current_patch_im_scaled?
             centermass_src,
+            px, py,  # TODO: is this the real resolution of current_patch_im_scaled?
         )  # taken from registration.algorithms.register2d_centermassrot
 
         z_indices.append(iz)

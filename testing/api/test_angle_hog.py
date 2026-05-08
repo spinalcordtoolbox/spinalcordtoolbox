@@ -124,7 +124,7 @@ def test_find_angle_hog():
             )
             # compute the new axis of symmetry
             computed_degrees = degrees(
-                find_angle_hog(rotated_slice, px, py, (cx, cy))
+                find_angle_hog(rotated_slice, (cx, cy), px, py)
             )
             # compute the implied original axis of symmetry
             degree_offsets.append(
