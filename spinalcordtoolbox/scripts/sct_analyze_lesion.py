@@ -145,7 +145,7 @@ class AnalyzeLesion:
         self.nli_slice = nli_slice                       # user-provided NLI slice number (in original orientation)
         self.nli_slice_RPI = (None if nli_slice is None  # user-provided NLI slice number (in RPI orientation)
                               else orig_orientation_to_rpi_slice(nli_slice, Image(fname_mask)))
-        self.empty_lesion = False                        # bool to skip QC if no lesion is found
+        self.lesion_count = 0                            # used to skip QC if no lesion is found
         self.fname_sc = fname_sc
         self.fname_ref = fname_ref
         self.path_template = path_template
@@ -278,11 +278,10 @@ class AnalyzeLesion:
         total_length = np.round(np.sum(self.measure_pd['length [mm]']), 2)
         # Take max width across lesions --> max
         max_width = np.round(np.max(self.measure_pd['width [mm]']), 2)
-        lesion_count = 0 if self.empty_lesion else len(self.measure_pd['volume [mm3]'].values)
         printv('\nTotal volume = ' + str(total_volume) + ' mm^3', self.verbose, 'info')
         printv('Total length = ' + str(total_length) + ' mm', self.verbose, 'info')
         printv('Max width = ' + str(max_width) + ' mm', self.verbose, 'info')
-        printv('Lesion count = ' + str(lesion_count), self.verbose, 'info')
+        printv('Lesion count = ' + str(self.lesion_count), self.verbose, 'info')
 
     def reorient(self):
         if not self.orientation == 'RPI':
@@ -1174,7 +1173,7 @@ class AnalyzeLesion:
         im_lesion_data_largest_lesion = None
         # Only get the largest lesion if we're using automatic detection (no NLI slice provided)
         # and we have at least one lesion
-        if self.nli_slice is None and len(label_lst) > 0:
+        if self.nli_slice is None and self.lesion_count > 0:
             # Get the index of the largest lesion
             largest_lesion_idx = self.measure_pd.loc[pd.to_numeric(self.measure_pd['volume [mm3]']).idxmax()]['label']
             printv(f'Largest lesion index: {largest_lesion_idx}', self.verbose, 'info')
@@ -1311,12 +1310,13 @@ class AnalyzeLesion:
         im_2save.data = label(im.data, connectivity=2)
         im_2save.save(self.fname_label)
 
-        self.measure_pd['label'] = [label for label in np.unique(im_2save.data) if label]
-        printv('Lesion count = ' + str(len(self.measure_pd['label'])), self.verbose, 'info')
+        labels = [lesion_label for lesion_label in np.unique(im_2save.data) if lesion_label]
+        self.lesion_count = len(labels)
+        self.measure_pd['label'] = labels
+        printv(f'Lesion count = {self.lesion_count}', self.verbose, 'info')
 
         # Exit the script if no lesion is found, unless NLI slice is provided
-        if len(self.measure_pd['label']) == 0:
-            self.empty_lesion = True
+        if self.lesion_count == 0:
             # No NLI slice provided
             if self.nli_slice is None:
                 printv('ERROR: No lesion found in the input image. You can provide a slice corresponding to '
