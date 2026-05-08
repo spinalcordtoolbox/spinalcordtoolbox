@@ -1201,11 +1201,12 @@ class AnalyzeLesion:
             # TODO: try other number of slices above and below the lesion center of mass
             z_range = np.arange(z_center - 2, z_center + 3)   # 5 slices in total
             # 3: For each of these slices, compute the spinal cord center of mass in the x-axis (R-L direction)
-            stored_x_coordinates = []
-            for z in z_range:
-                spinal_cord_slice = im_sc_data[:, :, z]     # RPI --> selecting in the 3rd dimension (SI) to get axial slice
-                if np.any(spinal_cord_slice):  # Avoid empty slices
-                    stored_x_coordinates.append(center_of_mass(spinal_cord_slice)[0])   # [0] --> R-L
+            stored_x_coordinates = [
+                center_of_mass(spinal_cord_slice)[0]  # [0] --> R-L
+                for z in z_range
+                if np.any(  # Avoid empty slices
+                    spinal_cord_slice := im_sc_data[:, :, z])  # RPI --> selecting in the 3rd dimension (SI) to get axial slice
+            ]
             # 4. Calculate target position in right-left axis (x direction) for the interpolation (mean of spinal cord
             # center of mass (in the x-axis (R-L direction))
             self.interpolated_midsagittal_slice_RPI = np.mean(stored_x_coordinates)    # e.g., for [8.6, 8.6, 8.9, 8.8, 9.6] --> 8.7
