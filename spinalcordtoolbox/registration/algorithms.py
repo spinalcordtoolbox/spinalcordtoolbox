@@ -1547,31 +1547,58 @@ def find_index_halfmax(data1d):
     return xmin, xmax
 
 
-def normalized_sobel(
-    image: np.ndarray,  # can be any-dimensional
-    axis: int,  # the direction in which to take the partial derivative
-    p: float,  # the size of each voxel along the given axis, in physical units
-) -> np.ndarray:
+def find_angle_hog(
+    image: np.ndarray,
+    centermass: tuple[float, float],  # center of mass of the region of interest
+    px: float,  # size of each voxel along the RL axis, in physical units
+    py: float,  # size of each voxel along the PA axis, in physical units
+    angle_range: float = radians(40),  # the maximum angle to consider, in radians
+) -> float:  # best angle found, in radians
     """
-    Estimate the rate of change of the image values along the given axis.
-
-    The output array has the same number of dimensions as the input, but one
-    voxel is trimmed from all sides because the Sobel filter is unreliable
-    around the edges.
+    Find the angle of an axial slice in RP orientation, based on the method
+    described by Sun, "Symmetry Detection Using Gradient Information", Pattern
+    Recognition Letters 16, no. 9 (September 1, 1995): 987–96, and improved
+    by N. Pinon to use centermass distance and gradient magnitude information.
     """
-    # The Sobel filter computes the change in image values between the voxel
-    # 'before' and the voxel 'after' (and completely ignores the 'current'
-    # voxel), so it should be divided by 2*p to give a rate of change per
-    # physical unit.
-    # It also does a smoothing along every _other_ axis, which ends up scaling
-    # the image values by a factor of 4 for each smoothed axis, so we need to
-    # divide by this as well.
-    normalization = (2*p) * (4 ** (image.ndim-1))
+    # since the auto-convolution effectively doubles the angular resolution,
+    # we only need 180 bins to have a result with single-degree precision
+    hist = weighted_orientation_histogram(image, px, py, centermass, bins=180)
 
-    # tuple of slices used to trim 1 voxel from each side of the result
-    trim = tuple([slice(1, -1)] * image.ndim)
+    # smoothing of the histogram, necessary to avoid digitization effects that
+    # would favor angles 0, +/-45, +/-90, +/-135, 180
+    hist_smooth = gaussian_filter1d(hist, sigma=2, mode='wrap')
 
-    return (sobel(image, axis) / normalization)[trim]
+    # compute the circular auto-convolution of the histogram to obtain its
+    # potential axes of approximate symmetry
+    hist_convo = circular_autoconvolution(hist_smooth)
+
+    # each index step in the circular auto-convolution corresponds to
+    # a half index step for the axis of symmetry in the histogram
+    half_width = np.pi / hist_convo.size
+
+    # Because of the half-steps, we need to go around the circular
+    # auto-convolution twice to cover the entire histogram.
+    # One time covers the angles in the range -np.pi <= angle < 0, and the
+    # second time covers the angles in the range 0 <= angle < np.pi.
+    # This also corresponds to the fact that two axes of symmetry that are
+    # 180 degrees apart are actually the same axis of symmetry.
+    scores = []
+    for index in range(-hist_convo.size, hist_convo.size):
+        angle = index * half_width
+
+        # only consider angles within the desired range
+        if abs(angle) <= angle_range:
+
+            # negative indices wrap around
+            score = hist_convo[index]
+
+            # when taking the maximum, we want the highest scores, then break
+            # ties towards the smallest absolute angle, then take the positive
+            # angle rather than the negative one if there's still a tie
+            scores.append((score, -abs(index), angle))
+
+    _, _, angle = max(scores)
+    return angle
 
 
 def weighted_orientation_histogram(
@@ -1637,55 +1664,28 @@ def circular_autoconvolution(array: np.ndarray) -> np.ndarray:
     return convolve1d(array, array, mode='wrap', origin=-(array.size//2))
 
 
-def find_angle_hog(
-    image: np.ndarray,
-    centermass: tuple[float, float],  # center of mass of the region of interest
-    px: float,  # size of each voxel along the RL axis, in physical units
-    py: float,  # size of each voxel along the PA axis, in physical units
-    angle_range: float = radians(40),  # the maximum angle to consider, in radians
-) -> float:  # best angle found, in radians
+def normalized_sobel(
+    image: np.ndarray,  # can be any-dimensional
+    axis: int,  # the direction in which to take the partial derivative
+    p: float,  # the size of each voxel along the given axis, in physical units
+) -> np.ndarray:
     """
-    Find the angle of an axial slice in RP orientation, based on the method
-    described by Sun, "Symmetry Detection Using Gradient Information", Pattern
-    Recognition Letters 16, no. 9 (September 1, 1995): 987–96, and improved
-    by N. Pinon to use centermass distance and gradient magnitude information.
+    Estimate the rate of change of the image values along the given axis.
+
+    The output array has the same number of dimensions as the input, but one
+    voxel is trimmed from all sides because the Sobel filter is unreliable
+    around the edges.
     """
-    # since the auto-convolution effectively doubles the angular resolution,
-    # we only need 180 bins to have a result with single-degree precision
-    hist = weighted_orientation_histogram(image, px, py, centermass, bins=180)
+    # The Sobel filter computes the change in image values between the voxel
+    # 'before' and the voxel 'after' (and completely ignores the 'current'
+    # voxel), so it should be divided by 2*p to give a rate of change per
+    # physical unit.
+    # It also does a smoothing along every _other_ axis, which ends up scaling
+    # the image values by a factor of 4 for each smoothed axis, so we need to
+    # divide by this as well.
+    normalization = (2*p) * (4 ** (image.ndim-1))
 
-    # smoothing of the histogram, necessary to avoid digitization effects that
-    # would favor angles 0, +/-45, +/-90, +/-135, 180
-    hist_smooth = gaussian_filter1d(hist, sigma=2, mode='wrap')
+    # tuple of slices used to trim 1 voxel from each side of the result
+    trim = tuple([slice(1, -1)] * image.ndim)
 
-    # compute the circular auto-convolution of the histogram to obtain its
-    # potential axes of approximate symmetry
-    hist_convo = circular_autoconvolution(hist_smooth)
-
-    # each index step in the circular auto-convolution corresponds to
-    # a half index step for the axis of symmetry in the histogram
-    half_width = np.pi / hist_convo.size
-
-    # Because of the half-steps, we need to go around the circular
-    # auto-convolution twice to cover the entire histogram.
-    # One time covers the angles in the range -np.pi <= angle < 0, and the
-    # second time covers the angles in the range 0 <= angle < np.pi.
-    # This also corresponds to the fact that two axes of symmetry that are
-    # 180 degrees apart are actually the same axis of symmetry.
-    scores = []
-    for index in range(-hist_convo.size, hist_convo.size):
-        angle = index * half_width
-
-        # only consider angles within the desired range
-        if abs(angle) <= angle_range:
-
-            # negative indices wrap around
-            score = hist_convo[index]
-
-            # when taking the maximum, we want the highest scores, then break
-            # ties towards the smallest absolute angle, then take the positive
-            # angle rather than the negative one if there's still a tie
-            scores.append((score, -abs(index), angle))
-
-    _, _, angle = max(scores)
-    return angle
+    return (sobel(image, axis) / normalization)[trim]
