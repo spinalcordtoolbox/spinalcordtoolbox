@@ -17,7 +17,7 @@ This is equivalent to the MSCC (maximum spinal cord compression) metric (`Miyanj
 .. code:: sh
 
    sct_compute_compression -i t2_compressed_seg.nii.gz -vertfile t2_compressed_seg_labeled.nii.gz -l t2_compressed_labels-compression.nii.gz -metric diameter_AP -normalize-hc 0 -o ap_ratio.csv
-   
+
 :Input arguments:
    - ``-i`` : The input segmentation file.
    - ``-vertfile`` : Vertebral labeling file.
@@ -33,7 +33,7 @@ This is equivalent to the MSCC (maximum spinal cord compression) metric (`Miyanj
    :file: ap_ratio.csv
    :header-rows: 1
 
-:Legend:   
+:Legend:
    - **diameter_AP_ratio**: Ratio computed in the subject's native space.
    - **diameter_AP_ratio_PAM50**: Ratio computed in the PAM50 space.
    - **diameter_AP_ratio_PAM50_normalized**: Ratio computed in the PAM50 space and normalized with adult healthy participants.
@@ -46,7 +46,7 @@ This is equivalent to the MSCC (maximum spinal cord compression) metric (`Miyanj
 
 Compute ratio of **AP-diameter**  normalized with healthy controls
 ------------------------------------------------------------------
-We will add the flag ``-normalize-hc`` to use a database of adult healthy participants to normalize the anteroposterior diameters. 
+We will add the flag ``-normalize-hc`` to use a database of adult healthy participants to normalize the anteroposterior diameters.
 
 .. code:: sh
 
@@ -75,3 +75,23 @@ We will add the flag ``-normalize-hc`` to use a database of adult healthy partic
 .. note::
    - The flag ``-sex`` can be used to select the sex of adult healthy participants to use for the normalization.
    - The flag ``-age`` can be used to select the age range of adult healthy participants to use for normalization.
+
+
+Compute adapted Spinal Cord Occupation Ratio (aSCOR)
+-----------------------------------------------------
+
+You can also quantify spinal canal occupancy by first segmenting the canal, then computing aSCOR.
+
+.. code:: sh
+
+   sct_deepseg sc_canal_t2 -i t2_compressed.nii.gz -o t2_compressed_canal_seg.nii.gz -qc ~/qc_singleSubj
+   sct_compute_ascor -i-SC t2_compressed_seg.nii.gz -i-canal t2_compressed_canal_seg.nii.gz -perlevel 1 -o ascor.csv
+
+:Input arguments:
+   - ``-i-SC`` : Spinal cord segmentation input for ``sct_compute_ascor``.
+   - ``-i-canal`` : Spinal canal segmentation input for ``sct_compute_ascor``.
+   - ``-perlevel`` : Set to ``1`` to report per-level values.
+   - ``-o`` : Output CSV filename.
+
+:Output files/folders:
+   - ``ascor.csv`` : aSCOR values for the selected region/levels.
