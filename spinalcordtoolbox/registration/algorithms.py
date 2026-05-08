@@ -9,10 +9,10 @@ import logging
 import os  # FIXME
 import shutil
 import psutil
-from math import asin, cos, sin, acos
+from math import asin, cos, sin, acos, radians
 
 import numpy as np
-from scipy.ndimage import gaussian_filter, gaussian_filter1d, convolve
+from scipy.ndimage import gaussian_filter1d, sobel, convolve1d
 from scipy.io import loadmat
 
 import spinalcordtoolbox.image as image
@@ -718,7 +718,7 @@ def register_slicewise(fname_src, fname_dest, paramreg=None, fname_mask='', warp
 
 def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='warp_forward.nii.gz',
                              fname_warp_inv='warp_inverse.nii.gz', rot_method='pca', filter_size=0, path_qc='.',
-                             verbose=1, pca_eigenratio_th=1.6, th_max_angle=40):
+                             verbose=1, pca_eigenratio_th=1.6, th_max_angle=radians(40)):
     """
     Rotate the source image to match the orientation of the destination image, using the first and second eigenvector
     of the PCA. This function should be used on segmentations (not images).
@@ -810,7 +810,6 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
     # displacement_inverse = np.zeros([nz, 2])
     angle_src_dest = np.zeros(nz)
     z_nonzero = []
-    th_max_angle *= np.pi / 180
 
     # Loop across slices
     print()  # Add newline between last log message and the progress bar logging
@@ -823,16 +822,24 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
 
             # detect rotation using the HOG method
             if rot_method in ['hog', 'pcahog']:
-                angle_src_hog, conf_score_src = find_angle_hog(data_src_im[:, :, iz], centermass_src[iz, :],
-                                                               px, py, angle_range=th_max_angle)
-                angle_dest_hog, conf_score_dest = find_angle_hog(data_dest_im[:, :, iz], centermass_dest[iz, :],
-                                                                 px, py, angle_range=th_max_angle)
+                angle_src_hog = find_angle_hog(
+                    data_src_im[:, :, iz],
+                    centermass_src[iz, :],
+                    px, py,
+                    angle_range=th_max_angle,
+                )
+                angle_dest_hog = find_angle_hog(
+                    data_dest_im[:, :, iz],
+                    centermass_dest[iz, :],
+                    px, py,
+                    angle_range=th_max_angle,
+                )
                 # In case no maxima is found (it should never happen)
                 if (angle_src_hog is None) or (angle_dest_hog is None):
                     logger.warning(f"Slice #{str(iz)} not angle found in dest or src. It will be ignored.")
                     continue
                 if rot_method == 'hog':
-                    angle_src = -angle_src_hog  # flip sign to be consistent with PCA output
+                    angle_src = angle_src_hog
                     angle_dest = angle_dest_hog
 
             # Detect rotation using the PCA or PCA-HOG method
@@ -855,7 +862,7 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
                         angle_src = 0
                     elif rot_method == 'pcahog':
                         logger.info("Switched to method 'hog' for slice: {}".format(iz))
-                        angle_src = -angle_src_hog  # flip sign to be consistent with PCA output
+                        angle_src = angle_src_hog
                 if pca_eigenratio_dest < pca_eigenratio_th or angle_dest > th_max_angle or angle_dest < -th_max_angle:
                     if rot_method == 'pca':
                         angle_dest = 0
@@ -1540,153 +1547,145 @@ def find_index_halfmax(data1d):
     return xmin, xmax
 
 
-def find_angle_hog(image, centermass, px, py, angle_range=10):
+def find_angle_hog(
+    image: np.ndarray,
+    centermass: tuple[float, float],  # center of mass of the region of interest
+    px: float,  # size of each voxel along the RL axis, in physical units
+    py: float,  # size of each voxel along the PA axis, in physical units
+    angle_range: float = radians(40),  # the maximum angle to consider, in radians
+) -> float:  # best angle found, in radians
     """
-    Finds the angle of an image based on the method described by Sun, "Symmetry Detection Using Gradient Information."
-    Pattern Recognition Letters 16, no. 9 (September 1, 1995): 987–96, and improved by N. Pinon
-
-    :param: image : 2D numpy array to find symmetry axis on
-    :param: centermass: tuple of floats indicating the center of mass of the image
-    :param: px, py, dimensions of the pixels in the x and y direction
-    :param: angle_range : float or None, in deg, the angle will be searched in the range [-angle_range, angle_range], if None any angle might be returned
-    :return: angle found (in rad) and confidence score
+    Find the angle of an axial slice in RP orientation, based on the method
+    described by Sun, "Symmetry Detection Using Gradient Information", Pattern
+    Recognition Letters 16, no. 9 (September 1, 1995): 987–96, and improved
+    by N. Pinon to use centermass distance and gradient magnitude information.
     """
+    # since the auto-convolution effectively doubles the angular resolution,
+    # we only need 180 bins to have a result with single-degree precision
+    hist = weighted_orientation_histogram(image, px, py, centermass, bins=180)
 
-    # param that can actually be tweeked to influence method performance :
-    sigma = 10  # influence how far away pixels will vote for the orientation, if high far away pixels vote will count more, if low only closest pixels will participate
-    nb_bin = 360  # number of angle bins for the histogram, can be more or less than 360, if high, a higher precision might be achieved but there is the risk of
-    kmedian_size = 5
+    # smoothing of the histogram, necessary to avoid digitization effects that
+    # would favor angles 0, +/-45, +/-90, +/-135, 180
+    hist_smooth = gaussian_filter1d(hist, sigma=2, mode='wrap')
 
-    # Normalization of sigma relative to pixdim :
-    sigmax = sigma / px
-    sigmay = sigma / py
-    if nb_bin % 2 != 0:  # necessary to have even number of bins
-        nb_bin = nb_bin - 1
-    if angle_range is None:
-        angle_range = 90
+    # compute the circular auto-convolution of the histogram to obtain its
+    # potential axes of approximate symmetry
+    hist_convo = circular_autoconvolution(hist_smooth)
 
-    # Constructing mask based on center of mass that will influence the weighting of the orientation histogram
+    # each index step in the circular auto-convolution corresponds to
+    # a half index step for the axis of symmetry in the histogram
+    half_width = np.pi / hist_convo.size
+
+    # Because of the half-steps, we need to go around the circular
+    # auto-convolution twice to cover the entire histogram.
+    # One time covers the angles in the range -np.pi <= angle < 0, and the
+    # second time covers the angles in the range 0 <= angle < np.pi.
+    # This also corresponds to the fact that two axes of symmetry that are
+    # 180 degrees apart are actually the same axis of symmetry.
+    scores = []
+    for index in range(-hist_convo.size, hist_convo.size):
+        angle = index * half_width
+
+        # only consider angles within the desired range
+        if abs(angle) <= angle_range:
+
+            # negative indices wrap around
+            score = hist_convo[index]
+
+            # when taking the maximum, we want the highest scores, then break
+            # ties towards the smallest absolute angle, then take the positive
+            # angle rather than the negative one if there's still a tie
+            scores.append((score, -abs(index), angle))
+
+    _, _, angle = max(scores)
+    return angle
+
+
+def weighted_orientation_histogram(
+    image: np.ndarray,
+    px: float,  # size of each voxel along the RL axis, in physical units
+    py: float,  # size of each voxel along the PA axis, in physical units
+    centermass: tuple[float, float],  # center of mass of the region of interest
+    sigma: float = 30.0,  # radius for gaussian weighting around the centermass
+    bins: int = 360,  # number of bins for the histogram
+) -> np.ndarray:
+    """
+    Compute a weighted histogram of gradient orientations of the image.
+
+    The image should be a 2-dimensional axial slice in RP orientation.
+
+    The first bin is centered around 0 degrees, that is, the A direction.
+    The angles increase in the order A -> L -> P -> R -> A.
+    """
+    # the rate of change at each voxel along each axis, per physical unit
+    gradient_RL = normalized_sobel(image, axis=0, p=px)
+    gradient_PA = normalized_sobel(image, axis=1, p=py)
+
+    # the direction of maximum increase at each voxel, between -pi and +pi
+    orientation = np.arctan2(gradient_RL, gradient_PA)
+
+    # the magnitude of maximum increase at each voxel, scaled so that the
+    # largest value is 1.0
+    magnitude = np.linalg.norm([gradient_RL, gradient_PA], axis=0)
+    normalization = magnitude.max(initial=0)
+    if normalization > 0:
+        magnitude /= normalization
+
+    # a gaussian weight around the center of mass
     nx, ny = image.shape
-    xx, yy = np.mgrid[:nx, :ny]
-    seg_weighted_mask = np.exp(
-        -(((xx - centermass[0]) ** 2) / (2 * (sigmax ** 2)) + ((yy - centermass[1]) ** 2) / (2 * (sigmay ** 2))))
+    xx, yy = np.mgrid[1:(nx-1), 1:(ny-1)]  # trimmed like normalized_sobel
+    weight = np.exp(-0.5/sigma * (
+        (px * (xx-centermass[0])) ** 2 +
+        (py * (yy-centermass[1])) ** 2
+    ))
 
-    # Acquiring the orientation histogram :
-    grad_orient_histo = gradient_orientation_histogram(image, nb_bin=nb_bin, seg_weighted_mask=seg_weighted_mask)
+    # the orientation values are shifted so that 0 degrees falls in the center
+    # of the first bin, and taken modulo 2*pi to deal with wrap-around
+    hist, _ = np.histogram(
+        (orientation + np.pi/bins) % (2*np.pi),
+        bins=bins,
+        range=(0, 2*np.pi),
+        weights=magnitude*weight,
+    )
 
-    # Bins of the histogram :
-    # It is an array containing the central angle (in radians) for each bin of the orientation histogram, allowing you
-    # to map histogram indices to their corresponding angles.
-    repr_hist = np.linspace(-(np.pi - 2 * np.pi / nb_bin), (np.pi - 2 * np.pi / nb_bin), nb_bin - 1)
-
-    # Smoothing of the histogram, necessary to avoid digitization effects that will favor angles 0, 45, 90, -45, -90:
-    grad_orient_histo_smooth = circular_filter_1d(grad_orient_histo, kmedian_size, kernel='median')  # fft than square than ifft to calculate convolution
-
-    # Computing the circular autoconvolution of the histogram to obtain the axis of symmetry of the histogram :
-    grad_orient_histo_conv = circular_conv(grad_orient_histo_smooth, grad_orient_histo_smooth)
-
-    # Restraining angle search to the angle range :
-    index_restrain = int(np.ceil(np.true_divide(angle_range, 180) * nb_bin))
-    center = (nb_bin - 1) // 2
-    grad_orient_histo_conv_restrained = grad_orient_histo_conv[center - index_restrain + 1:center + index_restrain + 1]
-
-    # Finding the symmetry axis by searching for the maximum in the autoconvolution of the histogram :
-    index_angle_found = np.argmax(grad_orient_histo_conv_restrained) + (nb_bin // 2 - index_restrain)
-    angle_found = repr_hist[index_angle_found] / 2
-    angle_found_score = np.amax(grad_orient_histo_conv_restrained)
-
-    # Finding other maxima to compute confidence score
-    arg_maxs = scipy_signal.argrelmax(grad_orient_histo_conv_restrained, order=kmedian_size, mode='wrap')[0]
-
-    # Confidence score is the ratio of the 2 first maxima :
-    if len(arg_maxs) > 1:
-        conf_score = angle_found_score / grad_orient_histo_conv_restrained[arg_maxs[1]]
-    else:
-        conf_score = angle_found_score / np.mean(grad_orient_histo_conv)  # if no other maxima  in the region ratio of the maximum to the mean
-
-    return angle_found, conf_score
+    return hist
 
 
-def gradient_orientation_histogram(image, nb_bin, seg_weighted_mask=None):
+def circular_autoconvolution(array: np.ndarray) -> np.ndarray:
     """
-    This function takes an image as an input and return its orientation histogram
+    Compute the circular auto-convolution of a 1-dimensional array.
 
-    :param image: the image to compute the orientation histogram from, a 2D numpy array
-    :param nb_bin: the number of bins of the histogram, an int, for instance 360 for bins 1 degree large (can be more or less than 360)
-    :param seg_weighted_mask: optional, mask weighting the histogram count, base on segmentation, 2D numpy array between 0 and 1
-    :return grad_orient_histo: the histogram of the orientations of the image, a 1D numpy array of length nb_bin"""
-
-    h_kernel = np.array([[1, 2, 1],
-                         [0, 0, 0],
-                         [-1, -2, -1]]) / 4.0
-    v_kernel = h_kernel.T
-
-    # Normalization by median, to resolve scaling problems
-    median = np.median(image)
-    if median != 0:
-        image = image / median
-
-    # x and y gradients of the image
-    gradx = convolve(image, v_kernel)
-    grady = convolve(image, h_kernel)
-
-    # orientation gradient
-    orient = np.arctan2(grady, gradx)  # results are in the range -pi pi
-
-    # weight by gradient magnitude :  this step seems dumb, it alters the angles
-    grad_mag = ((np.abs(gradx.astype(object)) ** 2 + np.abs(grady.astype(object)) ** 2) ** 0.5)  # weird data type manipulation, cannot explain why it failed without it
-    if np.max(grad_mag) != 0:
-        grad_mag = grad_mag / np.max(grad_mag)  # to have map between 0 and 1 (and keep consistency with the seg_weihting map if provided)
-
-    if seg_weighted_mask is not None:
-        weighting_map = np.multiply(seg_weighted_mask, grad_mag)  # include weightning by segmentation
-    else:
-        weighting_map = grad_mag
-
-    # compute histogram :
-    grad_orient_histo = np.histogram(np.concatenate(orient), bins=nb_bin - 1, range=(-(np.pi - np.pi / nb_bin), (np.pi - np.pi / nb_bin)),
-                                     weights=np.concatenate(weighting_map))
-
-    return grad_orient_histo[0].astype(float)  # return only the values of the bins, not the bins (we know them)
-
-
-def circular_conv(signal1, signal2):
+    The result is a 1-dimensional array of the same size as the input.
+    A large value in position 2*i (modulo n) means that the input has an axis
+    of almost-symmetry in the center of position i.
+    A large value in position 2*i + 1 (modulo n) means that the input has an
+    axis of almost-symmetry between positions i and i+1.
     """
-    Takes two 1D numpy array and perform a circular convolution with them
-
-    :param signal1: 1D numpy array
-    :param signal2: 1D numpy array, same length as signal1
-    :return: signal_conv : 1D numpy array, result of circular convolution of signal1 and signal2"""
-
-    if signal1.shape != signal2.shape:
-        raise Exception("The two signals for circular convolution do not have the same shape")
-
-    signal2_extended = np.concatenate((signal2, signal2, signal2))  # replicate signal at both ends
-
-    signal_conv_extended = np.convolve(signal1, signal2_extended, mode="same")  # median filtering
-
-    signal_conv = signal_conv_extended[len(signal1):2*len(signal1)]  # truncate back the signal
-
-    return signal_conv
+    return convolve1d(array, array, mode='wrap', origin=-(array.size//2))
 
 
-def circular_filter_1d(signal, window_size, kernel='gaussian'):
+def normalized_sobel(
+    image: np.ndarray,  # can be any-dimensional
+    axis: int,  # the direction in which to take the partial derivative
+    p: float,  # the size of each voxel along the given axis, in physical units
+) -> np.ndarray:
     """
-    This function filters circularly the signal inputted with a median filter of inputted size, in this context\
-    circularly means that the signal is wrapped around and then filtered
+    Estimate the rate of change of the image values along the given axis.
 
-    :param signal: 1D numpy array
-    :param window_size: size of the kernel, an int
-    :return: signal_smoothed: 1D numpy array, same size as signal"""
+    The output array has the same number of dimensions as the input, but one
+    voxel is trimmed from all sides because the Sobel filter is unreliable
+    around the edges.
+    """
+    # The Sobel filter computes the change in image values between the voxel
+    # 'before' and the voxel 'after' (and completely ignores the 'current'
+    # voxel), so it should be divided by 2*p to give a rate of change per
+    # physical unit.
+    # It also does a smoothing along every _other_ axis, which ends up scaling
+    # the image values by a factor of 4 for each smoothed axis, so we need to
+    # divide by this as well.
+    normalization = (2*p) * (4 ** (image.ndim-1))
 
-    signal_extended = np.concatenate((signal, signal, signal))  # replicate signal at both ends
-    if kernel == 'gaussian':
-        signal_extended_smooth = gaussian_filter(signal_extended, window_size)  # gaussian
-    elif kernel == 'median':
-        signal_extended_smooth = scipy_signal.medfilt(signal_extended, window_size)  # median filtering
-    else:
-        raise Exception("Unknow type of kernel")
+    # tuple of slices used to trim 1 voxel from each side of the result
+    trim = tuple([slice(1, -1)] * image.ndim)
 
-    signal_smoothed = signal_extended_smooth[len(signal):2*len(signal)]  # truncate back the signal
-
-    return signal_smoothed
+    return (sobel(image, axis) / normalization)[trim]

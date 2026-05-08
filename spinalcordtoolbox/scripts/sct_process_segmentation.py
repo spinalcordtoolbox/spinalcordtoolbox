@@ -79,6 +79,10 @@ def get_parser(ascor=False):
             "  - angle_AP, angle_RL: Estimated angle between the cord centerline and the axial slice. This angle is "
             "used to correct for morphometric information.\n"
             "  - diameter_AP: Measured as average across 3 mm extent centred at cord mask center of mass.\n"
+            "  - length_anterior: Anterior length of the spinal cord along the AP axis, measured as average across "
+            "3 mm extent centred at cord mask center of mass, from the center of mass to the anterior cord edge.\n"
+            "  - length_posterior: Posterior length of the spinal cord along the AP axis, measured as average across "
+            "3 mm extent centred at cord mask center of mass, from the center of mass to the posterior cord edge.\n"
             "  - diameter_RL: Measured as the major axis of the ellipse fitted to the cord.\n"
             "  - eccentricity: Eccentricity of the ellipse that has the same second-moments as the spinal cord. "
             "The eccentricity is the ratio of the focal distance (distance between focal points) over the major axis "
@@ -91,9 +95,9 @@ def get_parser(ascor=False):
             "  - length: Length of the segmentation, computed by summing the slice thickness (corrected for the "
             "centerline angle at each slice) across the specified superior-inferior region.\n"
             "\n"
-            "  - symmetry_dice:  Dice score between left and right (RL) hemicord of the spinal cord or anterior-posterior (AP) spinal cord.\n"
-            "  - symmetry_hausdorff [mm]:  Hausdorff distance between left and right (RL) hemicord of the spinal cord or anterior-posterior (AP) spinal cord.\n"
-            "  - symmetry_difference [mm^2]:  Absolute difference between left and right (RL) hemicord area of the spinal cord or anterior-posterior (AP) spinal cord.\n"
+            "  - symmetry_dice:  Dice score between the left and right (RL) hemicords or anterior and posterior (AP) halves of the spinal cord.\n"
+            "  - symmetry_hausdorff [mm]:  Hausdorff distance between the left and right (RL) hemicords or anterior and posterior (AP) halves of the spinal cord.\n"
+            "  - symmetry_difference [mm^2]:  Absolute difference between the left and right (RL) hemicords or anterior and posterior (AP) halves of the spinal cord.\n"
             "  - area_quadrant:  Cross-sectional area of the spinal cord in each quadrant (anterior-left, anterior-right, posterior-left, posterior-right).\n"
             "IMPORTANT: There is a limit to the precision you can achieve for a given image resolution. SCT does not "
             "truncate spurious digits when performing angle correction, so please keep in mind that there may be "
@@ -480,7 +484,7 @@ def main(argv: Sequence[str]):
     else:
         if arguments.discfile is not None:
             # Copy the input files to the tempdir
-            temp_folder = TempFolder(basename="process-segmentation")
+            temp_folder = TempFolder(basename="process-segmentation", verbose=verbose)
             path_tmp_seg = temp_folder.copy_from(fname_segmentation)
             # label the segmentation by default, mimicking the old `-vertfile` workflow
             path_tmp_ctl = path_tmp_seg
@@ -535,13 +539,13 @@ def main(argv: Sequence[str]):
             else:
                 logger.warning(f"The centerline image does not cover slice(s) '{missing_slices}' of the segmentation. "
                                f"These slices will be excluded from the analysis.")
-                temp_folder = TempFolder(basename="process-segmentation-modified-seg")
+                temp_folder = TempFolder(basename="process-segmentation-modified-seg", verbose=verbose)
                 fname_segmentation = temp_folder.copy_from(fname_segmentation)
                 orig_orientation = im_seg.orientation
                 im_seg = im_seg.change_orientation('RPI')
                 im_seg.data[:, :, missing_slices] = 0
                 im_seg.change_orientation(orig_orientation)
-                im_seg.save(fname_segmentation)
+                im_seg.save(fname_segmentation, verbose=0)  # suppress overwrite in tmpdir
 
     if normalize_pam50 and not perslice:
         parser.error("Option '-normalize-PAM50' requires option '-perslice 1'.")
@@ -668,10 +672,12 @@ def main(argv: Sequence[str]):
                 path_qc=arguments.qc,
                 dataset=arguments.qc_dataset,
                 subject=arguments.qc_subject,
+                angle_qc=(verbose == 2),  # only output HOG angle plot if `-v 2` is passed
                 angle_type='angle_hog',
             )
 
-    display_open(file_out)
+    if verbose:
+        display_open(file_out)
 
 
 if __name__ == "__main__":

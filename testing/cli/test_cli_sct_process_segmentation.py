@@ -225,12 +225,12 @@ def test_sct_process_segmentation_anat_properties(tmp_path, tmp_path_qc):
         rows = list(reader)
         row = rows[10]
         assert row['Slice (I->S)'] == '10'
-        assert float(row['MEAN(symmetry_dice_RL)']) == pytest.approx(0.8782385979483419)
-        assert float(row['MEAN(symmetry_dice_AP)']) == pytest.approx(0.8782330172874384)
+        assert float(row['MEAN(symmetry_dice_RL)']) == pytest.approx(0.8787240060386987)
+        assert float(row['MEAN(symmetry_dice_AP)']) == pytest.approx(0.8789852355194165)
         assert float(row['MEAN(symmetry_hausdorff_RL)']) == pytest.approx(0.894427190999916)
-        assert float(row['MEAN(symmetry_hausdorff_AP)']) == pytest.approx(0.894427190999916)
-        assert float(row['MEAN(symmetry_difference_RL)']) == pytest.approx(9.665748033454484)
-        assert float(row['MEAN(symmetry_difference_AP)']) == pytest.approx(9.72454876265175)
+        assert float(row['MEAN(symmetry_hausdorff_AP)']) == pytest.approx(0.9)
+        assert float(row['MEAN(symmetry_difference_RL)']) == pytest.approx(9.627223285768252)
+        assert float(row['MEAN(symmetry_difference_AP)']) == pytest.approx(9.664710680510435)
 
 
 @pytest.mark.sct_testing

@@ -14,4 +14,6 @@ If you plan on using the labeled spinal cord to perform registration to the temp
 :1 label:
    If your image covers only 1 vertebrae, you can still provide a single label. Note that the transformation in this case will be limited to a Z-axis translation, as an affine transformation can't be determined for a single point.
 
-Due to its benefits, we recommend starting with 2 labels for your registration when possible. The :ref:`next page<extracting-specific-labels>` of this tutorial will show you how to extract 2 labels from the full set of labels produced by :ref:`sct_label_vertebrae`.
+Due to its benefits, we recommend starting with 2 labels for your registration when possible. The :ref:`next page<extracting-specific-labels>` of this tutorial will show you how to extract 2 labels from the disc labels produced by :ref:`sct_deepseg_spine`.
+
+If you are following a legacy workflow with :ref:`sct_label_vertebrae`, the same extraction procedure is still supported as an alternative.

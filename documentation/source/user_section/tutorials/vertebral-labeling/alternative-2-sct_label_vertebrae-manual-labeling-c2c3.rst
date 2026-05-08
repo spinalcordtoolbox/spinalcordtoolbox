@@ -1,7 +1,9 @@
-Alternative #1: Manually labeling the C2-C3 disc
+.. manual-labeling-c2-c3:
+
+Alternative #2: Manually labeling the C2-C3 disc
 ################################################
 
-If the fully automated approach fails, you can instead use a semi-automated approach by manually labeling the C2-C3 disc:
+If both fully automated approaches fail, you can instead use a semi-automated approach by manually labeling the C2-C3 disc:
 
 .. code:: sh
 

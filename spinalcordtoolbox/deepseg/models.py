@@ -550,7 +550,23 @@ TASKS = {
                              '(± standard deviation) of 1.10±1.13 x 0.51±0.24 x 3.27±1.95 mm³ reported in “RPI-” orientation ',
          'url': 'https://github.com/ivadomed/ms-lesion-agnostic',
          'models': ['model_seg_ms_lesion'],
-         'citation': "",  # TODO: #5062 (Update when new study is published)
+         'citation': textwrap.dedent("""
+             ```bibtex
+            @article{doi:10.1177/13524585261427333,
+                author = {Pierre-Louis Benveniste and Laurent Létourneau-Guillon and David Araujo and Lydia Chougar and Dumitru Fetco and Masaaki Hori and Kouhei Kamiya and Steven Messina and Charidimos Tsagkas and Bertrand Audoin and Rohit Bakshi and Elise Bannier and Daniel Blezek and Jean-Christophe Brisset and Virginie Callot and Erik Charlson and Michelle Chen and Olga Ciccarelli and Sarah Demortière and Gilles Edan and Massimo Filippi and Tobias Granberg and Cristina Granziera and Christopher C. Hemond and B. Mark Keegan and Anne Kerbrat and Jan Kirschke and Shannon Kolind and Pierre Labauge and Lisa Eunyoung Lee and Yaou Liu and Caterina Mainero and Julian McGinnis and Nilser Laines Medina and Mark Mühlau and Govind Nair and Kristin P. O’Grady and Jiwon Oh and Russell Ouellette and Alexandre Prat and Daniel S. Reich and Maria A. Rocca and Timothy M. Shepherd and Seth A. Smith and Leszek Stawiarz and Jason Talbott and Roger Tam and Shahamat Tauhid and Anthony Traboulsee and Constantina Andrada Treaba and Paola Valsasina and Zachary Vavasour and Marios Yiannakas and Hervé Lombaert and Julien Cohen-Adad},
+                title ={Generalizable spinal cord multiple sclerosis lesion segmentation across MRI contrasts, protocols, and centers},
+                journal = {Multiple Sclerosis Journal},
+                volume = {0},
+                number = {0},
+                pages = {13524585261427333},
+                year = {2026},
+                doi = {10.1177/13524585261427333},
+                note ={PMID: 42028790},
+                URL = {https://doi.org/10.1177/13524585261427333},
+                eprint = {https://doi.org/10.1177/13524585261427333},
+                abstract = { Background/Objectives: Characterizing spinal cord multiple sclerosis (MS) lesions in MRI is critical for diagnosis, monitoring, and treatment evaluation. However, current automated approaches for lesion detection and segmentation are typically designed for specific MRI contrasts or acquisition sites, limiting their generalizability in real-world clinical settings where imaging protocols vary widely. This work proposes a robust multi-site, multi-contrast segmentation framework for spinal cord lesions.Methods: The segmentation model was trained and evaluated on a large-scale dataset comprising 4428 annotated images from 1849 persons with MS across 23 imaging centers, encompassing six MRI contrasts (T1w, T2w, T2*w, PSIR, STIR, and UNIT1) acquired at 1.5 tesla (T), 3 T, and 7 T.Results: Likert-type assessment performed by neuroradiologist ratings demonstrated superior generalization of the model compared to existing contrast-specific pipelines (p < 0.01). Additional experiments evaluated robustness across spinal levels, acquisition resolutions, binarization thresholds, and quantitative evaluation on external labeled datasets.Conclusions: The proposed model can achieve accurate and reliable spinal cord MS lesion segmentation across heterogeneous MRI data, addressing a key barrier to clinical translation. The model is available in the Spinal Cord Toolbox v7.2 and higher.Code repository: https://github.com/ivadomed/seg-sc-ms-lesion-multicontrast }
+            }
+             ```"""),  # noqa E501 (line too long)
          'group': 'pathology'
          },
     'sc_canal_t2':

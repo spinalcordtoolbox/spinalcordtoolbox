@@ -17,7 +17,7 @@ You can try the ``lesion_ms`` on the sample T2w image using the following comman
 
 .. code:: sh
 
-   sct_deepseg lesion_ms -i t2.nii.gz -qc ./qc
+   sct_deepseg lesion_ms -i t2.nii.gz -qc ~/qc_singleSubj
 
 :Input arguments:
     - ``lesion_ms``: Task
@@ -42,7 +42,7 @@ As the model was trained on cropped images, we recommend cropping the input imag
 
    sct_deepseg spinalcord -i IMAGE_UNIT1 -o IMAGE_seg
    sct_crop_image -i IMAGE_UNIT1 -m IMAGE_seg -dilate 30x30x5
-   sct_deepseg lesion_ms_mp2rage -i IMAGE_UNIT1 -qc ./qc
+   sct_deepseg lesion_ms_mp2rage -i IMAGE_UNIT1 -qc ~/qc_singleSubj
 
 :Input arguments:
     - ``lesion_ms_mp2rage`` : Task to perform. In this case, we use the ``lesion_ms_mp2rage`` model

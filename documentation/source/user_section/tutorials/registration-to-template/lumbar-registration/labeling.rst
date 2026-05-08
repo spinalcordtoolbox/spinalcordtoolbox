@@ -74,3 +74,22 @@ The command below will add labels for the T9-T10 disc (numerical ID 17) and the 
    :align: center
 
    Input/output images for :ref:`sct_label_utils` ``-create``
+
+
+Visualizing the lumbar labels with QC
+=====================================
+
+After creating the labels, generate a QC report to verify that both landmarks are correctly placed on the anatomical image.
+
+.. code:: sh
+
+   sct_qc -i t2_lumbar.nii.gz -s t2_lumbar_labels.nii.gz -p sct_label_utils -qc ~/qc_singleSubj
+
+:Input arguments:
+   * ``-i`` : Input anatomical image.
+   * ``-s`` : Label image to overlay in the QC report.
+   * ``-p`` : Pipeline name shown in the QC metadata (here, ``sct_label_utils``).
+   * ``-qc`` : Output directory for QC reports.
+
+:Output files/folders:
+   * ``~/qc_singleSubj`` : QC report folder containing an entry for lumbar label placement.
