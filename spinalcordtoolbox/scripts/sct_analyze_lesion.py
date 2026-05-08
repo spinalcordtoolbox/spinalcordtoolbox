@@ -411,8 +411,7 @@ class AnalyzeLesion:
             sc_ap_diameter_mm = {
                 axial_slice: diameter
                 for axial_slice in axial_lesion_slices
-                if (diameter := self._compute_sc_ap_diameter_at_axial_slice(im_sc_data, axial_slice, p_lst))
-                    is not None
+                if (diameter := self._compute_sc_ap_diameter_at_axial_slice(im_sc_data, axial_slice, p_lst)) is not None
             }
 
             # Use the minimum A-P diameter as the total bridge width
