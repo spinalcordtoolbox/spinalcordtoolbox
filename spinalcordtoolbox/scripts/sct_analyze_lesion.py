@@ -526,8 +526,9 @@ class AnalyzeLesion:
                    f'{np.round(sc_ap_diameter_mm, 2)} mm',
                    self.verbose, type='info')
         else:
-            printv(f'ERROR: No spinal cord A-P diameter computed at the NLI slice {self.nli_slice}.',
-                   self.verbose, 'warning')
+            printv(f'ERROR: Could not compute spinal cord A-P diameter at the NLI slice {self.nli_slice}. '
+                   f'Please double check that the spinal cord mask covers the NLI slice.',
+                   self.verbose, 'error')
 
     def _measure_tissue_bridges(self, im_lesion_data, p_lst, idx):
         """
