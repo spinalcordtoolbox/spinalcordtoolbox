@@ -1238,7 +1238,7 @@ class AnalyzeLesion:
             raise ValueError("Two 'NaN' values passed. Cannot interpolate between two 'NaN' values.")
         # This case can occur for lesions that are present in only 1/2 interpolation slices.
         # The decision to fall back to 1/2 slices was made here: https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/5202#discussion_r3138996132
-        elif np.any(np.isnan(data1)) or np.any(np.isnan(data2)):
+        elif np.any(np.isnan(data1)) | np.any(np.isnan(data2)):
             printv("'NaN' value passed to interpolation. Falling back to single value instead of NaN.", type='info')
             data1 = np.where(np.isnan(data1), data2, data1)
             data2 = np.where(np.isnan(data2), data1, data2)
