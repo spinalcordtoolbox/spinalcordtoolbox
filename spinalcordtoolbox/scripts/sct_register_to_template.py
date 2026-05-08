@@ -391,7 +391,7 @@ def main(argv: Sequence[str]):
     if len(labels) > 2:
         if ref == 'subject':
             parser.error("'-ref subject' (rigid transform) is not compatible with 3+ labels (non-affine "
-                         "transform). Please use 'sct_label_utils -keep' to select 2 labels.")
+                         "transform). Please use 'sct_label_utils -keep' to select at most 2 labels.")
         elif label_type in ['disc', 'spinal', 'rootlet']:
             level_alignment = True
     path_tmp = tmp_create(basename="register-to-template")
