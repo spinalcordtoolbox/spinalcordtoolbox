@@ -1,6 +1,6 @@
 # Changelog
 
-## 7.3 (2026-04-23)
+## 7.3 (2026-05-08)
 [View detailed changelog](https://github.com/spinalcordtoolbox/spinalcordtoolbox/compare/7.1...7.3)
 
 **FEATURE**
