@@ -46,12 +46,11 @@ def get_vertebral_level_from_slice(im_vertlevel, idx_slice):
     """
     data_vertlevel = im_vertlevel.data
     # average non-null values and round to closest
-    try:
-        # find indices of non-null values
-        indx, indy = np.where(data_vertlevel[:, :, idx_slice])
+    indx, indy = np.where(data_vertlevel[:, :, idx_slice])
+    if indx.size and indy.size:
         vert_level = int(np.round(np.mean(data_vertlevel[indx, indy, idx_slice])))
-    except ValueError as e:
-        # slice is empty (no indx found). Do nothing.
-        logger.debug('Empty slice: z=%s (%s)', idx_slice, e)
+    # slice is empty (no indx found). Do nothing.
+    else:
+        logger.debug(f'Empty slice: z={idx_slice}')
         vert_level = None
     return vert_level
