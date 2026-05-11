@@ -44,7 +44,7 @@
         "ms-vscode-remote.remote-containers"
       ],
       "settings": {
-        "python.defaultInterpreterPath": "/root/sct/python/bin/python",
+        "python.defaultInterpreterPath": "/root/sct/python/envs/venv_sct/bin/python",
         "python.terminal.activateEnvironment": true,
         "python.terminal.activateEnvInCurrentTerminal": true,
         "python.linting.enabled": true,
@@ -68,7 +68,7 @@
 
   // Environment variables
   "remoteEnv": {
-    "PATH": "/root/sct/bin:/root/sct/python/bin:${containerEnv:PATH}",
+    "PATH": "/root/sct/bin:/root/sct/python/envs/venv_sct/bin:/root/sct/python/bin:${containerEnv:PATH}",
     "SCT_DIR": "/root/sct"
   },
 
