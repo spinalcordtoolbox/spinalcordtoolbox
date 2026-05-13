@@ -26,6 +26,11 @@ The following studies have used SCT:
 2026
 ----
 
+-  Callot *et al.* `7T magnetic resonance imaging of the human spinal cord in multiple sclerosis: Advances, insights and unmet needs <https://doi.org/10.1016/j.neurol.2026.04.003>`_, **Rev. Neurol.** 2026
+-  Streichenberger *et al.* `Quantitative Susceptibility Mapping of the Cervical Spinal Cord at 3T and Application to Multiple Sclerosis <https://doi.org/10.1002/nbm.70296>`_, **NMR Biomed.** 2026
+-  Krejčí *et al.* `Segmentation of spinal rootlets across MRI contrasts with RootletSeg <https://doi.org/10.1038/s41598-026-49164-0>`_, **Sci. Rep.** 2026
+-  Boushila *et al.* `Spinal nerves as landmarks for spinal cord segment delineation: cervical cross-sectional area measurement in healthy subjects <https://doi.org/10.1007/s00586-026-09979-x>`_, **Eur. Spine J.** 2026
+-  Arnest *et al.* `Spinal Cord Radiomics-Driven Machine Learning Predicts Meaningful Clinical Improvement After Surgery for Degenerative Cervical Myelopathy: A Pilot Study <https://doi.org/10.1007/s10278-026-01987-z>`_, **J. Imaging Inform. Med.** 2026
 -  Reniers *et al.* `Early and Progressive Spinal Cord Atrophy in Spinocerebellar Ataxia Type 1 <https://doi.org/10.1002/mds.70294>`_, **Mov. Disord.** 2026
 -  Mongay-Ochoa *et al.* `Assessing the cervical canal area in multiple sclerosis with spinal cord sagittal 2D T2-weighted sequences <https://doi.org/10.1007/s10334-026-01344-9>`_, **MAGMA** 2026
 -  Wang *et al.* `Association between quantitative cervical cord compression metrics and upper extremity impairments in degenerative cervical myelopathy: a cross-sectional study <https://doi.org/10.3389/fneur.2026.1728273>`_, **Front. Neurol.** 2026
