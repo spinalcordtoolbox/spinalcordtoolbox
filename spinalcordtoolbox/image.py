@@ -25,9 +25,9 @@ from scipy import ndimage
 import transforms3d.affines as affines
 
 from spinalcordtoolbox.types import Coordinate
-from spinalcordtoolbox.utils.fs import extract_fname, mv, tmp_create
-from spinalcordtoolbox.utils.sys import run_proc, LazyLoader
-from spinalcordtoolbox.scripts.sct_image import main as _stitch
+from spinalcordtoolbox.utils.fs import extract_fname, mv
+from spinalcordtoolbox.utils.sys import LazyLoader
+from spinalcordtoolbox.scripts.sct_stitching import main as _stitch
 
 nib = LazyLoader("nib", globals(), "nibabel")
 
