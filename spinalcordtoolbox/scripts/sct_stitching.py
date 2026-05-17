@@ -167,7 +167,8 @@ def dilate_msk(msk_i_data: np.ndarray, mm: int = 5, connectivity: int = 3):
 
     Args:
         mm (int, optional): The number of voxels to dilate the mask by. Defaults to 5.
-        connectivity (int, optional): Elements up to a squared distance of connectivity from the center are considered neighbors. connectivity may range from 1 (no diagonal elements are neighbors) to rank (all elements are neighbors).
+        connectivity (int, optional): Elements up to a squared distance of connectivity from the center are considered neighbors.
+        connectivity may range from 1 (no diagonal elements are neighbors) to rank (all elements are neighbors).
         inplace (bool, optional): Whether to modify the mask in place or return a new object. Defaults to False.
         verbose (bool, optional): Whether to print a message indicating that the mask was dilated. Defaults to True.
 
@@ -233,7 +234,7 @@ def n4_bias_field_correction(
                 return None
 
             q_form = nib_image.get_qform()
-            spacing = nib_image.header["pixdim"][1 : ndim + 1]
+            spacing = nib_image.header["pixdim"][1: ndim + 1]
 
             origin = np.zeros(ndim)
             origin[:3] = q_form[:3, 3]
@@ -355,7 +356,7 @@ def main(  # noqa: C901
             nii = f_name
         if bias_field:
             nii = n4_bias_field_correction(nii, crop=crop_to_bias_field)
-        ## Histogram equalization.
+        # Histogram equalization.
         if match_histogram:
             if histogram is None:
                 if len(niis) == 0:
@@ -622,5 +623,4 @@ if __name__ == "__main__":
         min_value=args.min_value,
         min_spacing=args.min_spacing,
         is_segmentation=args.is_segmentation,
-        dtype=args.dtype,
-    )
+        dtype=args.dtype,)
