@@ -75,8 +75,25 @@ RUN ./bin/conda-unpack
 
 FROM continuumio/miniconda3:24.11.1-0
 
+ARG USERNAME=sct
+ARG USER_UID=1000
+ARG USER_GID=1000
 ARG SCT_DEEPSEG_MODELS
 ENV SCT_DEEPSEG_MODELS=${SCT_DEEPSEG_MODELS:-""}
+
+# Setup time and locales
+RUN ln -fs /usr/share/zoneinfo/America/New_York /etc/localtime
+
+# Create non-root user for development
+RUN groupadd --gid $USER_GID $USERNAME \
+    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME -s /bin/bash \
+    && apt-get update \
+    && apt-get install -y sudo \
+    && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
+    && chmod 0440 /etc/sudoers.d/$USERNAME
+
+# Switch to non-root user
+USER $USERNAME
 
 # Copy SCT conda environment from build stage
 COPY --from=package /venv /venv_sct
