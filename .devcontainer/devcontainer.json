@@ -43,7 +43,7 @@
         "ms-vscode-remote.remote-containers"
       ],
       "settings": {
-        "python.defaultInterpreterPath": "/root/sct/python/envs/venv_sct/bin/python",
+        "python.defaultInterpreterPath": "/opt/conda/envs/venv_sct/bin/python",
         "python.terminal.activateEnvironment": true,
         "python.terminal.activateEnvInCurrentTerminal": true,
         "python.linting.enabled": true,
@@ -81,7 +81,7 @@
   ],
 
   // Run post-creation command to install dependencies
-  "postCreateCommand": "cp /root/sct/python/etc/profile.d/* /etc/profile.d/. && pip install -e .[docs]",
+  "postCreateCommand": "pip install -e . --use-pep517 && pip install -e .[docs]",
 
   // Forward ports if needed (e.g., for Jupyter or local development server)
   "forwardPorts": [
