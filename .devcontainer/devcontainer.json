@@ -3,8 +3,7 @@
 
   // Use a Dockerfile for custom image
   "build": {
-    "dockerfile": "../Dockerfile",
-    "target": "build"
+    "dockerfile": "../Dockerfile"
   },
 
   // Features to install
