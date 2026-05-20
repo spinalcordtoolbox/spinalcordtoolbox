@@ -107,13 +107,5 @@ RUN if [ -n "$SCT_DEEPSEG_MODELS" ]; then \
         done; \
     fi
 
-# Once build is validated, add non-root user and set locales
-
-# Setup time and locales
-# RUN ln -fs /usr/share/zoneinfo/America/New_York /etc/localtime
-
-# # Create non-root user for development
-# RUN groupadd -r sctdev && useradd -r -g sctdev sctdev
-
-# # Switch to non-root user
-# USER sctdev
+# Use bash terminal in login mode so /etc/profile.d scripts are sourced and conda environment is activated
+CMD ["bash", "-l"]
