@@ -81,6 +81,7 @@
     "source=spinalcordtoolbox-bashhistory,target=/commandhistory,type=volume"
   ],
 
+  "onCreateCommand": "sudo chmod ugo+rwx /commandhistory",
   // Run post-creation command to install dependencies
   "postCreateCommand": "pip install -e . --use-pep517 && pip install -e .[docs]",
 
