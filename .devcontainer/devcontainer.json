@@ -60,15 +60,16 @@
         "python.testing.pytestEnabled": true,
         "python.testing.unittestEnabled": false,
         "notebooks.codeLens.enabled": true,
-        "jupyter.notebookFileRoot": "${workspaceFolder}"
+        "jupyter.notebookFileRoot": "${workspaceFolder}",
+        "terminal.integrated.profiles.linux": {
+          "bash (login)": {
+            "path": "/bin/bash",
+            "args": ["-l"]
+          }
+        },
+        "terminal.integrated.defaultProfile.linux": "bash (login)"
       }
     }
-  },
-
-  // Environment variables
-  "remoteEnv": {
-    "PATH": "/root/sct/bin:/root/sct/python/envs/venv_sct/bin:/root/sct/python/bin:${containerEnv:PATH}",
-    "SCT_DIR": "/root/sct"
   },
 
   "containerEnv": {
