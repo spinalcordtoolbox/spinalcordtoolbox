@@ -51,10 +51,6 @@ RUN --mount=type=cache,target=/root/.cache/miniforge,sharing=locked \
     --mount=type=cache,target=/root/.cache/pip,sharing=locked \
     bash install_sct -y -c -g -p
 
-# Bind the installed SCT directory to a consistent location for later stages
-RUN ln -s /root/sct_$(cat spinalcordtoolbox/version.txt) /root/sct
-ENV SCT_DIR=/root/sct
-
 FROM build AS package
 
 ENV CONDA_PKGS_DIRS=/root/.conda/pkgs
@@ -67,11 +63,11 @@ RUN --mount=type=cache,target=/root/.conda/pkgs,sharing=locked \
     conda install -c conda-forge conda-pack && \
     cd /root/sct_${SCT_VERSION} && \
     conda-pack -p python/envs/venv_sct --compress-level 0 -j -1 --format tar && \
-    mkdir /venv && tar -xf venv_sct.tar -C /venv
+    mkdir -p /opt/conda/envs/venv_sct && tar -xf venv_sct.tar -C /opt/conda/envs/venv_sct
 
 # Unpack the conda environment and set it up for use
-WORKDIR /venv
-RUN ./bin/conda-unpack
+WORKDIR /opt/conda/envs/venv_sct
+RUN ./bin/conda-unpack -v
 
 FROM continuumio/miniconda3:24.11.1-0
 
@@ -96,8 +92,8 @@ RUN groupadd --gid $USER_GID $USERNAME \
 USER $USERNAME
 
 # Copy SCT conda environment from build stage
-COPY --from=package /venv /venv_sct
-ENV PATH="/venv_sct/bin:${PATH}"
+COPY --from=package --chmod=ugo=rwX  /opt/conda/envs/venv_sct /opt/conda/envs/venv_sct
+ENV PATH="/opt/conda/envs/venv_sct/bin:${PATH}"
 ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 
 # Install listed models if any (comma separated list, call sct_deepseg <model> -install for each)
