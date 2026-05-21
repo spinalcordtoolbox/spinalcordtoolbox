@@ -513,58 +513,43 @@ jobs:
     - name: Run pytest test suite
       run: sct_testing
 
-  apptainer:
-    name: Apptainer (Ubuntu Latest)
+  containers:
+    name: Docker (Ubuntu Latest)
     runs-on: ubuntu-latest
     steps:
-      - name: Maximize build space
+      - uses: actions/checkout@v4
+      - name: Extract version to Github env
         run: |
-          echo "-- Dotnet"
-          sudo rm -rf /usr/share/dotnet
-          echo "-- Android"
-          sudo rm -rf /usr/local/lib/android
-          echo "-- Haskell"
-          sudo rm -rf /opt/ghc
-          echo "-- CodeQL"
-          sudo rm -rf /opt/hostedtoolcache/CodeQL
-          df -h
-      - name: Install Apptainer + dependencies
+          export SCT_VERSION=$(cat spinalcordtoolbox/version.txt)
+          echo "SCT_VERSION=$SCT_VERSION" >> "$GITHUB_ENV"
+      # Instate this step once credentials are available
+      #- uses: docker/login-action@v3
+      #  with:
+          # NB: these secrets need to be set in the repo's Settings > Secrets > Actions
+      #    username: ${{ secrets.DOCKER_USERNAME }}
+      #    password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Build Docker image
+        uses: docker/build-push-action@v7.0.0
+        with:
+          context: .
+          push: false
+          load: true
+          tags: spinalcordtoolbox:${{ env.SCT_VERSION }}.dev0
+          cache-from: "type=registry,ref=spinalcordtoolbox/spinalcordtoolbox:${{ env.SCT_VERSION }}"
+          build-args: "SCT_DEEPSEG_MODELS=spinalcord,spine,gm_sc_7t_t2star"
+      - uses: eWaterCycle/setup-apptainer@v2
+      - name: Build Apptainer image from Docker image
         run: |
-          sudo apt update
-          sudo apt install -y software-properties-common
-          sudo add-apt-repository -y ppa:apptainer/ppa
-          sudo apt update
-          sudo apt install -y apptainer
-      - uses: actions/checkout@v6
-      - name: Get safe Git ref name
-        run: |
-          SAFE_REF=$(printf '%s' "${{ github.head_ref || github.ref_name }}" | sed 's/[^A-Za-z0-9._-]/_/g')
-          echo "SAFE_REF=$SAFE_REF" >> "$GITHUB_ENV"
-      - name: Bundle scripts into tarball
-        run: |
-          cd ./contrib/apptainer
-          ./bundle_for_release.sh "${{ github.head_ref || github.ref_name }}"
-      - name: Extract bundled tarball
-        run: |
-          mkdir apptainer_build
-          tar -xvf ./contrib/apptainer/sct_apptainer_$SAFE_REF.tar.gz -C ./apptainer_build
-      - name: Run installer scripts (with 'spine' task)
-        run: |
-          cd ./apptainer_build
-          ./install_sct_containered_$SAFE_REF.sh spine
-      - name: Install deepseg task post-install (with 'gm_sc_7t_t2star' task)
-        run: |
-          cd ./apptainer_build
-          ./install_deepseg_task.sh gm_sc_7t_t2star
+          apptainer build sct.sif docker-daemon:spinalcordtoolbox:${{ env.SCT_VERSION }}.dev0
       - name: Download sample data
         run: |
           curl -sL "https://github.com/spinalcordtoolbox/sct_tutorial_data/archive/refs/tags/SCT-Course-20251208.tar.gz" | tar -z -xf -
       - name: Run 'sct_deepseg spinalcord' (installed by default)
         run: |
-          apptainer exec apptainer_build/sct.sif sct_deepseg spinalcord -i sct_tutorial_data-SCT-Course-20251208/single_subject/data/t2/t2.nii.gz
+          apptainer exec sct.sif sct_deepseg spinalcord -i sct_tutorial_data-SCT-Course-20251208/single_subject/data/t2/t2.nii.gz
       - name: Run 'sct_deepseg spine' (added on install)
         run: |          
-          apptainer exec apptainer_build/sct.sif sct_deepseg spine -i sct_tutorial_data-SCT-Course-20251208/single_subject/data/t2/t2.nii.gz
+          apptainer exec sct.sif sct_deepseg spine -i sct_tutorial_data-SCT-Course-20251208/single_subject/data/t2/t2.nii.gz
       - name: Run 'sct_deepseg gm_sc_7t_t2star' (added in post-install)
         run: |          
-          apptainer exec apptainer_build/sct.sif sct_deepseg gm_sc_7t_t2star -i sct_tutorial_data-SCT-Course-20251208/single_subject/data/t2s/t2s.nii.gz
+          apptainer exec sct.sif sct_deepseg gm_sc_7t_t2star -i sct_tutorial_data-SCT-Course-20251208/single_subject/data/t2s/t2s.nii.gz
