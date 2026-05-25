@@ -147,9 +147,7 @@ jobs:
           path: artifacts_master
           name_is_regexp: true
           name: sct_example_data_.*\.json
-          # Note: Because `dawidd6/action-download-artifact@v21` doesn't have a corresponding
-          #       `merge-multiple` option, the downloaded json files get put into parent
-          #       folders with the same name as the file itself.
+          merge_multiple: 'true'
 
       - name: Diff summaries (PR vs. master)
         continue-on-error: true
@@ -161,7 +159,7 @@ jobs:
             # Full log output
             echo "::group::Diff for $os"
             # diff will throw exit code 1 if diff is non-empty, so use '|| true' to prevent the job from failing
-            diff -u "artifacts_master/sct_example_data_$os.json/sct_example_data_$os.json" "artifacts/sct_example_data_$os.json" > $DIFF_FILE || true
+            diff -u "artifacts_master/sct_example_data_$os.json" "artifacts/sct_example_data_$os.json" > $DIFF_FILE || true
             ydiff < $DIFF_FILE
             echo "::endgroup::"
           
