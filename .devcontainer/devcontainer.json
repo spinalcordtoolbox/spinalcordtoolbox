@@ -9,38 +9,27 @@
   // Features to install
   "features": {
     "ghcr.io/devcontainers/features/git:1": {},
-    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
-    "ghcr.io/miguelrodo/devcontainerfeatures/apptainer:1": {}
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1.10.0": {},
+    "ghcr.io/miguelrodo/devcontainerfeatures/apptainer:1.1.4": {},
+    "ghcr.io/postfinance/devcontainer-features/make:1.0.0": {}
   },
 
   // VSCode extensions
   "customizations": {
     "vscode": {
       "extensions": [
-        // Python development
         "ms-python.python",
         "ms-python.vscode-pylance",
         "ms-python.debugpy",
-
-        // Testing
         "ms-python.pytest",
-
-        // Data science & Jupyter
         "ms-toolsai.jupyter",
         "ms-toolsai.jupyter-keymap",
         "ms-toolsai.jupyter-renderers",
-
-        // Linting and formatting
         "ms-python.flake8",
-
-        // Documentation
         "lextudio.restructuredtext",
-
-        // Git
         "mhutchie.git-graph",
-
-        // General productivity
-        "ms-vscode-remote.remote-containers"
+        "ms-vscode-remote.remote-containers",
+        "ms-vscode.live-server"
       ],
       "settings": {
         "python.defaultInterpreterPath": "/opt/conda/envs/venv_sct/bin/python",
