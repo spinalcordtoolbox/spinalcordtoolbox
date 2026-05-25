@@ -36,7 +36,7 @@ jobs:
     steps:
 
     - name: Checkout spinalcordtoolbox
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: Install spinalcordtoolbox
       run: |
@@ -57,7 +57,7 @@ jobs:
         grep "# append_to_freeze" requirements.txt >> requirements-freeze.txt
 
     - name: Upload requirements-freeze.txt
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: requirements-freeze
         path: requirements-freeze.txt
@@ -66,7 +66,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout spinalcordtoolbox
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Create Installation Script Directory
         # KO: This directory makes artifacting everything together much easier later
@@ -95,7 +95,7 @@ jobs:
           mv sct_apptainer_${{ github.event.inputs.milestone_title }}.tar.gz ../../install_scripts
 
       - name: Upload Install Scripts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: install-scripts
           path: install_scripts/*
@@ -117,10 +117,10 @@ jobs:
         shell: bash
     steps:
     - name: Checkout spinalcordtoolbox
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: Download requirements-freeze.txt
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: requirements-freeze
 
@@ -164,7 +164,7 @@ jobs:
 
     - name: Upload QC
       if: always()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: Pytest QC (${{ matrix.os }})
         path: "${{ github.workspace }}/tempdir/qc-report-current"
@@ -185,18 +185,18 @@ jobs:
         git config --global user.name "GitHub Actions Bot"
 
     - name: Checkout spinalcordtoolbox (main branch)
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         ref: ${{ env.MAIN_BRANCH }}
         fetch-depth: 0
 
     - name: Download requirements-freeze.txt (for release)
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: requirements-freeze
 
     - name: Download Install Scripts
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: install-scripts
 

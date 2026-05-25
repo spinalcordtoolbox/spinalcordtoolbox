@@ -37,7 +37,7 @@ jobs:
         shell: bash
     steps:
       - name: Checkout SCT
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install SCT (Unix)
         if: runner.os != 'Windows'
@@ -75,13 +75,13 @@ jobs:
         run: bash batch_processing.sh
 
       - name: Upload QC results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: Batch Processing QC (${{ matrix.os }})
           path: "qc_example_data"
 
       - name: "Upload CSV files for easier batch_processing.sh updating"
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: Batch Processing CSV files (${{ matrix.os }})
           path: data/sct_example_data/**/*.csv
@@ -106,7 +106,7 @@ jobs:
 
       - name: Upload folder summary
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: sct_example_data_${{ matrix.os }}.json
           path: jsons
@@ -131,7 +131,7 @@ jobs:
           chmod +x ydiff
 
       - name: Download summaries
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         # See: https://github.com/actions/download-artifact?tab=readme-ov-file#download-all-artifacts
         with:
           path: artifacts
@@ -139,7 +139,7 @@ jobs:
 
       - name: Download summaries (master branch)
         id: download-artifact
-        uses: dawidd6/action-download-artifact@v8
+        uses: dawidd6/action-download-artifact@v21
         with:
           workflow: test-batch-processing.yml
           branch: master
@@ -147,7 +147,7 @@ jobs:
           path: artifacts_master
           name_is_regexp: true
           name: sct_example_data_.*\.json
-          # Note: Because `dawidd6/action-download-artifact@v8` doesn't have a corresponding
+          # Note: Because `dawidd6/action-download-artifact@v21` doesn't have a corresponding
           #       `merge-multiple` option, the downloaded json files get put into parent
           #       folders with the same name as the file itself.
 

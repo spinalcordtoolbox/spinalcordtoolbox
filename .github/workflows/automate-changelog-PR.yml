@@ -22,14 +22,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Set up Python (to install 'changelog')
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: '3.x'
     - name: Install 'changelog'
       run: |
         pip install git+https://github.com/neuropoly/changelog@master
     - name: Checkout '${{ github.event.repository.name }}'
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         path: ${{ github.event.repository.name }}
     - name: Update '${{ github.event.inputs.fname_changelog }}' for '${{ github.event.repository.name }}'
@@ -42,7 +42,7 @@ jobs:
         cd ${{ github.event.repository.name }}
         echo "${{ github.event.inputs.future_milestone_title }}.dev0" > spinalcordtoolbox/version.txt
     - name: Create pull request for updated changelog and version.txt
-      uses: peter-evans/create-pull-request@v6
+      uses: peter-evans/create-pull-request@v8
       with:
         path: "${{ github.event.repository.name }}"
         branch: "bot/v${{ github.event.inputs.milestone_title }}"
