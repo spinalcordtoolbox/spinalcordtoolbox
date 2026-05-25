@@ -529,6 +529,7 @@ jobs:
       - name: Docker Setup Buildx
         uses: docker/setup-buildx-action@v4.1.0
         with:
+          # Versions for buildx and BuildKit required to overstep bug for COPY --chmod using the X flag
           version: v0.34.1
           driver: docker-container
           driver-opts: image=moby/buildkit:v0.28.1
@@ -541,6 +542,17 @@ jobs:
           tags: spinalcordtoolbox:${{ env.SCT_VERSION }}
           cache-from: "type=registry,ref=neuropoly/sct:7.3"
           build-args: "SCT_DEEPSEG_MODELS=spinalcord,spine,gm_sc_7t_t2star"
+      - name: Maximize build space
+        run: |
+          echo "-- Dotnet"
+          sudo rm -rf /usr/share/dotnet
+          echo "-- Android"
+          sudo rm -rf /usr/local/lib/android
+          echo "-- Haskell"
+          sudo rm -rf /opt/ghc
+          echo "-- CodeQL"
+          sudo rm -rf /opt/hostedtoolcache/CodeQL
+          df -h
       - uses: eWaterCycle/setup-apptainer@v2
       - name: Build Apptainer image from Docker image
         run: |
