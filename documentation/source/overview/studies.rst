@@ -26,6 +26,7 @@ The following studies have used SCT:
 2026
 ----
 
+-  Boushila *et al.* `Super-resolution reconstruction of spinal cord MRI using deep learning: Application to multiple sclerosis atrophy measurement <https://doi.org/10.1016/j.bspc.2026.110588>`_, **Biomed. Signal Process. Control** 2026
 -  Miscioscia *et al.* `Spinal cord versus brain imaging biomarkers of multiple sclerosis trajectory combining 7T and 3T MRI <https://doi.org/10.1093/braincomms/fcag059>`_, **Brain Commun.** 2026
 -  Medina *et al.* `Automatic multiple sclerosis lesion segmentation in the spinal cord using 3T and 7T MP2RAGE images <https://doi.org/10.1016/j.msard.2026.107250>`_, **Mult. Scler. Relat. Disord.** 2026
 -  Farner *et al.* `Anti-Nogo-A NG101 treatment induces changes in spinal cord micro- and macrostructure following spinal cord injury <https://doi.org/10.1038/s41467-026-71412-0>`_, **Nat. Commun.** 2026
