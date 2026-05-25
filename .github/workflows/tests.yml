@@ -3,8 +3,6 @@ name: Tests
 on:
   workflow_dispatch:
   pull_request:
-    branches:
-      - '*'
   schedule:
     # https://docs.github.com/en/free-pro-team@latest/actions/reference/workflow-syntax-for-github-actions#onschedule
     # > Scheduled workflows run on the latest commit on the default or base branch
