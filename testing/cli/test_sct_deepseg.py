@@ -73,9 +73,9 @@ def cleanup_model_dirs():
      'lesion_ms',
      None,
      None),
-    (sct_test_path('t2s', 't2s.nii.gz'),
-     None,
-     't2s_seg_deepseg.nii.gz',
+    (sct_test_path('t2', 't2.nii.gz'),
+     None,  # no ground truth, just test if it runs
+     't2_seg_deepseg.nii.gz',
      'canal',
      None,
      None),
