@@ -73,6 +73,12 @@ def cleanup_model_dirs():
      'lesion_ms',
      None,
      None),
+    (sct_test_path('t2s', 't2s.nii.gz'),
+     None,
+     't2s_seg_deepseg.nii.gz',
+     'canal',
+     None,
+     None),
 ])
 @pytest.mark.usefixtures(cleanup_model_dirs.__name__)
 def test_segment_nifti_binary_seg(fname_image, fname_seg_manual, fname_out, task, thr, expected_dice,
