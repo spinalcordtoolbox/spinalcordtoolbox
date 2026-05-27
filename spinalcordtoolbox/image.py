@@ -79,6 +79,24 @@ def rpi_slice_to_orig_orientation(dim, orig_orientation, slice_number, axis):
     return (dim[axis] - 1 - slice_number) if inversion[axis] == -1 else slice_number
 
 
+def orig_orientation_to_rpi_slice(slice_number, img_src):
+    """Reorient an SI slice number to the corresponding SI slice number in RPI orientation."""
+    # TODO: This is basically a special case of `reorient_coordinates`, with similar function signature. Like
+    #       `rpi_slice_to_orig_orientation`, this function should be rewritten in a way that de-duplicates the API. The
+    #       only reason this is kept separate is to highlight another niche case of slice-reorientation that should be
+    #       considered when refactoring the API, and to consider various ways of doing the same thing.
+    #       Of note about this implementation is that:
+    #         1. We only need to convert a single value.
+    #         2. We don't want to reorient a whole coordinate, just the SI slice.
+    #         3. We already know the world axis (SI), and need to find the voxel axis (x/y/z) based on orig orientation.
+    orig_orientation = img_src.orientation
+    axis = next(orig_orientation.index(si) for si in ("I", "S") if si in orig_orientation)
+    coord = [0, 0, 0]
+    coord[axis] = slice_number
+    coord_rpi = Coordinate(coord.copy()).permute(img_src, "RPI", mode='absolute')
+    return coord_rpi[2]
+
+
 def reorient_coordinates(coords, img_src, orient_dest, mode='absolute'):
     """
     Reorient coordinates from source image orientation to destination orientation.
@@ -463,8 +481,8 @@ class Image(object):
 
         dtype_header = self.hdr.get_data_dtype()
         if dtype_header != dtype_data:
-            logger.warning(f"Image header specifies datatype '{dtype_header}', but array is of type "
-                           f"'{dtype_data}'. Header metadata will be overwritten to use '{dtype_data}'.")
+            logger.debug(f"Image header specifies datatype '{dtype_header}', but array is of type "
+                         f"'{dtype_data}'. Header metadata will be overwritten to use '{dtype_data}'.")
             self.hdr.set_data_dtype(dtype_data)
 
     def loadFromPath(self, path, mmap, verbose):

@@ -5,6 +5,7 @@ import shutil
 
 import pytest
 import warnings
+import numpy as np
 from torch.serialization import SourceChangeWarning
 
 import spinalcordtoolbox as sct
@@ -246,3 +247,31 @@ def test_deepseg_with_cropped_qc(qc_plane, tmp_path, tmp_path_qc):
                       '-qc', tmp_path_qc,
                       '-qc-plane', qc_plane,
                       '-qc-seg', sct_test_path('t2', 't2_fake_lesion_sc_seg.nii.gz')])
+
+
+@pytest.fixture(scope='session')
+def t2_zero(tmp_path_factory):
+    """
+    Create an empty-array version of `t2.nii.gz` to test failure case.
+    """
+    tmp_path = tmp_path_factory.mktemp('t2_zero')
+    fname_out = str(tmp_path / 't2_zero.nii.gz')
+
+    img = Image(sct_test_path('t2', 't2.nii.gz'))
+    img.data = np.zeros_like(img.data)
+    img.save(fname_out)
+
+    return fname_out
+
+
+def test_deepseg_totalspineseg_empty_output(t2_zero, tmp_path, tmp_path_qc):
+    """
+    Test that passing an empty input image will properly fail.
+    """
+    fname_out = str(tmp_path / "t2_deepseg.nii.gz")
+    with pytest.raises(ValueError) as e:
+        sct_deepseg.main(['spine',
+                          '-i', t2_zero,
+                          '-o', fname_out,
+                          '-qc', tmp_path_qc])
+    assert "step 1 failed to produce a valid segmentation" in str(e.value)

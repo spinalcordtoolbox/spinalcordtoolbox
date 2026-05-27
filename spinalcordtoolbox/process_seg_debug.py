@@ -166,7 +166,7 @@ def _setup_axis(ax, title, xlabel='y\nPosterior-Anterior (PA)', ylabel='x\nLeft-
 
 
 def create_ap_diameter_plots(angle_hog, ap0_r, ap_diameter, dim, iz, properties, rl0_r, rl_diameter,
-                             rotated_bin, seg_crop_r, coord_ap):
+                             rotated_bin, seg_crop_r):
     """
     """
     def _add_labels(ax):
@@ -232,13 +232,13 @@ def create_ap_diameter_plots(angle_hog, ap0_r, ap_diameter, dim, iz, properties,
     rotated_bin_bin = np.array(rotated_bin > 0.5, dtype='uint8')  # binarize the rotated segmentation
     right = np.nonzero(rotated_bin_bin[:, ap0_r])[0][0]
     left = np.nonzero(rotated_bin_bin[:, ap0_r])[0][-1]
-    if rotated_bin_bin[coord_ap, :].size > 0 and np.any(rotated_bin_bin[coord_ap, :]):
-        anterior = np.nonzero(rotated_bin_bin[coord_ap, :])[0][0]
-        posterior = np.nonzero(rotated_bin_bin[coord_ap, :])[0][-1]
+    if rotated_bin_bin[rl0_r, :].size > 0 and np.any(rotated_bin_bin[rl0_r, :]):
+        anterior = np.nonzero(rotated_bin_bin[rl0_r, :])[0][0]
+        posterior = np.nonzero(rotated_bin_bin[rl0_r, :])[0][-1]
     else:
         anterior = posterior = np.nan
-    ax1.plot([anterior, posterior], [coord_ap, coord_ap], color='red', linestyle='--', linewidth=2,
-             label=f'AP Diameter (rotated segmentation) = {ap_diameter:.2f} mm, coord_ap={coord_ap}')
+    ax1.plot([anterior, posterior], [rl0_r, rl0_r], color='red', linestyle='--', linewidth=2,
+             label=f'AP Diameter (rotated segmentation) = {ap_diameter:.2f} mm, rl0_r={rl0_r}')
     ax1.plot([ap0_r, ap0_r], [left, right], color='red', linestyle='solid', linewidth=2,
              label=f'RL Diameter (rotated segmentation) = {rl_diameter:.2f} mm')
 

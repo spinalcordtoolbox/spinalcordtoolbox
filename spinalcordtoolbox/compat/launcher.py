@@ -10,6 +10,8 @@ import os
 import subprocess
 import multiprocessing
 
+from numexpr.utils import detect_number_of_cores
+
 from spinalcordtoolbox import __file__ as package_init_file
 from spinalcordtoolbox.utils.sys import __sct_dir__
 
@@ -30,6 +32,10 @@ def main():
     # failing due to a missing `tensorflow` dependency (since the backend defaults to TF)
     env['VXM_BACKEND'] = 'pytorch'
     env['NEURITE_BACKEND'] = 'pytorch'
+
+    # Suppress a warning from `numexp`. This replicates the default behavior anyway, see:
+    #     https://github.com/pydata/numexpr/blob/1e3241d9883eeabc08b15d2d5b0f28a2804381fc/numexpr/utils.py#L138
+    env['NUMEXPR_MAX_THREADS'] = str(detect_number_of_cores())
 
     # Warn the user if they have `LD_LIBRARY_PATH` set (while not triggering false positives for our own path).
     sct_lib_path = os.path.join(__sct_dir__, 'python', 'envs', 'venv_sct', 'sct_ld_library_path')

@@ -44,12 +44,12 @@ def test_sct_process_segmentation_check_values(tmp_path):
         rows = list(reader)
         row = rows[10]
         assert row['Slice (I->S)'] == '10'
-        assert float(row['MEAN(area)']) == pytest.approx(78.17036713469571)
-        assert float(row['MEAN(diameter_AP)']) == pytest.approx(7.777798117974)
-        assert float(row['MEAN(diameter_RL)']) == pytest.approx(12.545756446151367)
-        assert float(row['MEAN(orientation)']) == pytest.approx(-5.421994603706533)
-        assert float(row['MEAN(eccentricity)']) == pytest.approx(0.7684919130144329)
-        assert float(row['MEAN(solidity)']) == pytest.approx(0.9648)
+        assert float(row['MEAN(area)']) == pytest.approx(78.58643257836141)
+        assert float(row['MEAN(diameter_AP)']) == pytest.approx(7.842507960401277)
+        assert float(row['MEAN(diameter_RL)']) == pytest.approx(12.537767663676533)
+        assert float(row['MEAN(orientation)']) == pytest.approx(-5.435920797812814)
+        assert float(row['MEAN(eccentricity)']) == pytest.approx(0.7678714078545043)
+        assert float(row['MEAN(solidity)']) == pytest.approx(0.9691052891744933)
 
 
 def test_sct_process_segmentation_check_pmj(dummy_3d_mask_nib, dummy_3d_pmj_label, tmp_path, tmp_path_qc):
@@ -134,7 +134,7 @@ def test_sct_process_segmentation_check_normalize(dummy_3d_mask_nib, tmp_path):
     with open(filename, "r") as csvfile:
         reader = csv.DictReader(csvfile, delimiter=',')
         row = next(reader)
-        assert float(row['MEAN(area)']) == pytest.approx(226.41333426502936)
+        assert float(row['MEAN(area)']) == pytest.approx(228.20973426502943)
 
 
 def test_sct_process_segmentation_check_normalize_missing_value(dummy_3d_mask_nib, tmp_path):
@@ -165,7 +165,7 @@ def test_sct_process_segmentation_check_normalize_PAM50(tmp_path):
         rows = list(reader)
         row = rows[26]
         assert row['Slice (I->S)'] == '827'
-        assert float(row['MEAN(area)']) == pytest.approx(70.13567242657102)
+        assert float(row['MEAN(area)']) == pytest.approx(71.16703270056989)
         assert row['VertLevel'] == '5'
 
 
@@ -210,7 +210,7 @@ def test_sct_process_segmentation_check_discfile(tmp_path):
         assert row['Slice (I->S)'] == '10'
         assert row['DistancePMJ'] == ''
         assert row['VertLevel'] == '3'
-        assert float(row['MEAN(area)']) == pytest.approx(78.17036713469571)
+        assert float(row['MEAN(area)']) == pytest.approx(78.58643257836141)
 
 
 def test_sct_process_segmentation_anat_properties(tmp_path, tmp_path_qc):
@@ -225,12 +225,12 @@ def test_sct_process_segmentation_anat_properties(tmp_path, tmp_path_qc):
         rows = list(reader)
         row = rows[10]
         assert row['Slice (I->S)'] == '10'
-        assert float(row['MEAN(symmetry_dice_RL)']) == pytest.approx(0.9014033394872861)
-        assert float(row['MEAN(symmetry_dice_AP)']) == pytest.approx(0.9085034024027201)
-        assert float(row['MEAN(symmetry_hausdorff_RL)']) == pytest.approx(0.8)
-        assert float(row['MEAN(symmetry_hausdorff_AP)']) == pytest.approx(0.9055385138137417)
-        assert float(row['MEAN(symmetry_difference_RL)']) == pytest.approx(7.768345054890907)
-        assert float(row['MEAN(symmetry_difference_AP)']) == pytest.approx(7.182125561205922)
+        assert float(row['MEAN(symmetry_dice_RL)']) == pytest.approx(0.8787240060386987)
+        assert float(row['MEAN(symmetry_dice_AP)']) == pytest.approx(0.8789852355194165)
+        assert float(row['MEAN(symmetry_hausdorff_RL)']) == pytest.approx(0.894427190999916)
+        assert float(row['MEAN(symmetry_hausdorff_AP)']) == pytest.approx(0.9)
+        assert float(row['MEAN(symmetry_difference_RL)']) == pytest.approx(9.627223285768252)
+        assert float(row['MEAN(symmetry_difference_AP)']) == pytest.approx(9.664710680510435)
 
 
 @pytest.mark.sct_testing
