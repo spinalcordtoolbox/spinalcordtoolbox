@@ -58,7 +58,7 @@ def get_parser():
         metavar=Metavar.file,
         help=textwrap.dedent("""
             Spinal canal segmentation mask to compute morphometrics from. Example: `sub-001_T2w_canal_seg.nii.gz`
-            Canal segmentation can be obtained with `sct_deepseg sc_canal_t2`.
+            Canal segmentation can be obtained with `sct_deepseg canal`.
         """),  # noqa: E501 (line too long)
     )
 
