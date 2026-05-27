@@ -145,7 +145,7 @@ You can replace "``rootlets``" with any of the task names in the table below to 
      - |spine| ``spine``
      - |canal| ``canal``
 
-.. |canal| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/canal.png
+.. |canal| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/spinal_canal_t2.png
    :target: deepseg/canal.html
 
 
