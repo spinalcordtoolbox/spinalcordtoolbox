@@ -35,8 +35,9 @@ IFS='|' read -r status_code original_url effective_url < <(
 # - `pipeline-hemis` -> private repository, will 404 (expected)
 # - `.ru` -> Russian domains, which don't play nicely with curl'ing from GitHub's servers
 # - `ieeexplore.ieee.org` -> oddly returns a "418 - I'm a teapot" error code instead of 403
+# - `thejns.org` -> returns 405 for both HEAD and GET requests, rather than the 403 it used to return (curling locally still gives 403, oddly)
 # - `%s` -> placeholder for a URL, which is used in our documentation's `conf.py` file
-if [[ "$original_url + $effective_url" =~ 'pipeline-hemis'|'.ru'|'ieeexplore.ieee.org'|'%s' ]];then
+if [[ "$original_url + $effective_url" =~ 'pipeline-hemis'|'.ru'|'ieeexplore.ieee.org'|'thejns.org'|'%s' ]];then
     echo -e "$filename: \x1B[33m⚠️ Warning - Skipping: $URL --> $LOCATION\x1B[0m"
     exit 0
 fi
@@ -80,7 +81,7 @@ fi
 #         'twitter.com', 'spiedigitallibrary.org', 'sciencedirect.com', 'wiley.com', 'sagepub.com',
 #         'ncbi.nlm.nih.gov', 'oxfordjournals.org', 'docker.com', 'liebertpub.com', 'tandfonline.com',
 #         'pnas.org', 'neurology.org', 'academic.oup.com', 'science.org', 'pubs.rsna.org', 'direct.mit.edu',
-#         'thejns.org', 'ajnr.org', 'bmj.com', and 'biorxiv.org'
+#         'ajnr.org', 'bmj.com', and 'biorxiv.org'
 if [[ $status_code -eq 403 ]];then
     echo "($status_code) $effective_url ($filename)" >> valid_urls.txt
     echo -e "$filename: \x1B[33m⚠️ Warning - Forbidden - status code: $status_code for domain $effective_url \x1B[0m"
