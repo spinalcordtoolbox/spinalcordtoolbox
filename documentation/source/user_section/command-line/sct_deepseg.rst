@@ -143,10 +143,10 @@ You can replace "``rootlets``" with any of the task names in the table below to 
 
    * - |rootlets| ``rootlets``
      - |spine| ``spine``
-     - |sc_canal_t2| ``sc_canal_t2``
+     - |canal| ``canal``
 
-.. |sc_canal_t2| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/spinal_canal_t2.png
-   :target: deepseg/sc_canal_t2.html
+.. |canal| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/canal.png
+   :target: deepseg/canal.html
 
 
 Retired models
@@ -205,5 +205,5 @@ If you absolutely require these models, you can downgrade to version of SCT list
    deepseg/tumor_edema_cavity_t1_t2
    deepseg/tumor_t2
    deepseg/rootlets
-   deepseg/sc_canal_t2
+   deepseg/canal
    deepseg/spine
