@@ -1,10 +1,10 @@
-.. _sct_deepseg_sc_canal_t2:
+.. _sct_deepseg_canal:
                 
-sc_canal_t2
+canal
 ===========
                 
 .. argparse::
-   :ref: spinalcordtoolbox.scripts.sct_deepseg.sc_canal_t2
-   :prog: sct_deepseg sc_canal_t2
+   :ref: spinalcordtoolbox.scripts.sct_deepseg.canal
+   :prog: sct_deepseg canal
    :markdownhelp:
 
