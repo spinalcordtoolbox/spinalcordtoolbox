@@ -224,7 +224,9 @@ fsleyes mt1.nii.gz -cm greyscale -a 100.0 label/template/PAM50_t2.nii.gz -cm gre
 # ======================================================================================================================
 
 # Register mt0->mt1 using z-regularized slicewise translations (algo=slicereg)
-# Note: Segmentation and mask can be re-used from "MT registration" section
+# Note: Segmentation and mask can be re-used from "Register MT to PAM50" section (or reproduced using commands below)
+# sct_deepseg spinalcord -i mt1.nii.gz -qc ~/qc_singleSubj
+# sct_create_mask -i mt1.nii.gz -p centerline,mt1_seg.nii.gz -size 35mm -f cylinder -o mask_mt1.nii.gz
 sct_register_multimodal -i mt0.nii.gz -d mt1.nii.gz -dseg mt1_seg.nii.gz -m mask_mt1.nii.gz -param step=1,type=im,algo=slicereg,metric=CC -x spline -qc ~/qc_singleSubj
 # Check results using FSLeyes
 fsleyes mt1.nii.gz mt0_reg.nii.gz &
