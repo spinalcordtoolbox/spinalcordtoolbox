@@ -500,9 +500,12 @@ fsleyes t2.nii.gz -cm greyscale t2_canal_seg_seg.nii.gz -cm red -a 70.0 &
 sct_compute_ascor -i-SC t2_seg.nii.gz -i-canal t2_canal_seg.nii.gz -perlevel 1 -o ascor.csv
 
 # Segment the spinal nerve rootlets
-sct_deepseg rootlets -i t2.nii.gz -qc ~/qc_singleSubj
+cd ../t2/
+sct_deepseg rootlets -i t2.nii.gz -o t2_rootlets.nii.gz -qc ~/qc_singleSubj
 # Check results using FSLeyes
 fsleyes t2.nii.gz -cm greyscale t2_rootlets.nii.gz -cm subcortical -a 70.0 &
+# Rootlets-based registration
+sct_register_to_template -i t2.nii.gz -s t2_seg.nii.gz -lrootlet t2_rootlets.nii.gz -c t2 -ofolder rootlets-reg -qc ~/qc_singleSubj
 
 # Multiple sclerosis lesion segmentation on T2-weighted images
 cd ../t2_ms/
