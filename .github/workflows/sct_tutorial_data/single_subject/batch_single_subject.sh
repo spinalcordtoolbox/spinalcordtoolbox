@@ -409,6 +409,10 @@ sct_extract_metric -i dti_FA.nii.gz -f label/atlas -l 4,5 -method wa -z 2:14 -o 
 # Functional MRI
 # ======================================================================================================================
 
+# the T2 segmentation will be reused, but it can also be generated using the commands below:
+# cd ../t2
+# sct_deepseg spinalcord -i t2.nii.gz
+
 cd ../fmri
 # Preprocessing steps
 # Average all fMRI time series to make it a 3D volume (needed by the next command)
@@ -422,11 +426,11 @@ sct_create_mask -i fmri.nii.gz -p centerline,t2_seg_reg.nii.gz -size 35mm -f cyl
 sct_fmri_moco -i fmri.nii.gz -m mask_fmri.nii.gz -qc ~/qc_singleSubj -qc-seg t2_seg_reg.nii.gz
 
 # Cord segmentation on motion-corrected averaged time series
-sct_deepseg spinalcord -i fmri_moco_mean.nii.gz -qc ~/qc_singleSubj/
+sct_deepseg spinalcord -i fmri_moco_mean.nii.gz -qc ~/qc_singleSubj
 # TSNR before/after motion correction with QC report
 sct_fmri_compute_tsnr -i fmri.nii.gz
 sct_fmri_compute_tsnr -i fmri_moco.nii.gz
-sct_qc -i fmri_tsnr.nii.gz -d fmri_moco_tsnr.nii.gz -s fmri_moco_mean_seg.nii.gz -p sct_fmri_compute_tsnr -qc ~/qc_singleSubj/
+sct_qc -i fmri_tsnr.nii.gz -d fmri_moco_tsnr.nii.gz -s fmri_moco_mean_seg.nii.gz -p sct_fmri_compute_tsnr -qc ~/qc_singleSubj
 
 # Register the template to the fMRI scan.
 # Note: here we don't rely on the segmentation because it is difficult to obtain one automatically. Instead, we rely on
