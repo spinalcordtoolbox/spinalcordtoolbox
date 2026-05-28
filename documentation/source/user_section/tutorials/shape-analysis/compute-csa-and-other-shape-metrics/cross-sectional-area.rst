@@ -15,7 +15,7 @@ First, we will start by computing the cord cross-sectional area (CSA) averaged a
 
 .. code:: sh
 
-   sct_process_segmentation -i t2_seg.nii.gz -vert 3:4 -discfile t2_totalspineseg_discs.nii.gz -o csa_c3c4.csv
+   sct_process_segmentation -i t2_seg.nii.gz -vert 2:3 -discfile t2_totalspineseg_discs.nii.gz -o csa_c2c3.csv
 
 :Input arguments:
    - ``-i`` : The input segmentation file.
@@ -24,7 +24,7 @@ First, we will start by computing the cord cross-sectional area (CSA) averaged a
    - ``-o`` : The output CSV file.
 
 :Output files/folders:
-   - ``csa_c3c4.csv`` : A file containing the CSA values and other shape metrics. This file is partially replicated in the table below.
+   - ``csa_c2c3.csv`` : A file containing the CSA values and other shape metrics. This file is partially replicated in the table below.
 
 .. csv-table:: CSA values computed for C3 and C4 vertebral levels (Averaged)
    :file: csa_c3c4.csv
@@ -39,7 +39,7 @@ Next, we will compute CSA for each individual vertebral level (rather than avera
 
 .. code:: sh
 
-   sct_process_segmentation -i t2_seg.nii.gz -anat t2.nii.gz -vert 3:4 -discfile t2_totalspineseg_discs.nii.gz -perlevel 1 -o csa_perlevel.csv
+   sct_process_segmentation -i t2_seg.nii.gz -anat t2.nii.gz -vert 2:3 -discfile t2_totalspineseg_discs.nii.gz -perlevel 1 -o csa_perlevel.csv
 
 :Input arguments:
    - ``-i`` : The input segmentation file.
@@ -132,7 +132,7 @@ Second, we compute CSA from a distance from the PMJ.
 
 .. code:: sh
 
-   sct_process_segmentation -i t2_seg.nii.gz -pmj t2_pmj.nii.gz -pmj-distance 64 -pmj-extent 30 \
+   sct_process_segmentation -i t2_seg.nii.gz -pmj t2_pmj.nii.gz -pmj-distance 60 -pmj-extent 30 \
                             -o csa_pmj.csv -qc ~/qc_singleSubj -qc-image t2.nii.gz
 
 :Input arguments:
@@ -157,4 +157,4 @@ Second, we compute CSA from a distance from the PMJ.
 
    .. code:: sh
 
-      sct_process_segmentation -i t2_seg.nii.gz -discfile t2_totalspineseg_discs.nii.gz -perslice 1 -normalize-PAM50 1 -o csa_PAM50.csv
+      sct_process_segmentation -i t2_seg.nii.gz -discfile t2_totalspineseg_discs.nii.gz -perslice 1 -normalize-PAM50 1 -o csa_pam50.csv

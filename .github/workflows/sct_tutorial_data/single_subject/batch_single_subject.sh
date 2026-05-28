@@ -136,6 +136,14 @@ sct_compute_compression -i t2_compressed_seg.nii.gz -vertfile t2_compressed_seg_
 # Compute ratio of AP diameter, normalized with healthy controls using `-normalize-hc 1`.
 sct_compute_compression -i t2_compressed_seg.nii.gz -vertfile t2_compressed_seg_labeled.nii.gz -l t2_compressed_labels-compression.nii.gz -metric diameter_AP -normalize-hc 1 -o ap_ratio_norm_PAM50.csv
 
+# Canal segmentation
+sct_deepseg sc_canal_t2 -i t2_compressed.nii.gz -o t2_compressed_canal_seg.nii.gz -qc ~/qc_singleSubj
+# Check results using FSLeyes
+fsleyes t2.nii.gz -cm greyscale t2_canal_seg_seg.nii.gz -cm red -a 70.0 &
+# Compute aSCOR (Adapted Spinal Cord Occupation Ratio)
+# i.e. Spinal cord to canal ratio using the canal seg
+sct_compute_ascor -i-SC t2_compressed_seg.nii.gz -i-canal t2_compressed_canal_seg.nii.gz -perlevel 1 -o ascor.csv
+
 
 
 # Registration to template
