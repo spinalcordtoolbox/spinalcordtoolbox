@@ -214,7 +214,7 @@ sct_register_multimodal -i "${SCT_DIR}/data/PAM50/template/PAM50_t2.nii.gz" -ise
 # sct_register_to_template -i mt1.nii.gz -s mt1_seg.nii.gz -ldisc label_c3c4.nii.gz -ref subject -param step=1,type=seg,algo=centermassrot:step=2,type=seg,algo=bsplinesyn,slicewise=1
 
 # Warp template
-sct_warp_template -d mt1.nii.gz -w warp_template2mt.nii.gz -a 1 -qc ~/qc_singleSubj
+sct_warp_template -d mt1.nii.gz -w warp_template2mt.nii.gz -a 0 -qc ~/qc_singleSubj
 # Check results using FSLeyes
 fsleyes mt1.nii.gz -cm greyscale -a 100.0 label/template/PAM50_t2.nii.gz -cm greyscale -dr 0 4000 -a 100.0 label/template/PAM50_gm.nii.gz -cm red-yellow -dr 0.4 1 -a 50.0 label/template/PAM50_wm.nii.gz -cm blue-lightblue -dr 0.4 1 -a 50.0 &
 
@@ -344,7 +344,7 @@ cd ../mt
 # Register template->mt using `-initwarp` with t2s to account for GM segmentation
 sct_register_multimodal -i "${SCT_DIR}/data/PAM50/template/PAM50_t2.nii.gz" -iseg "${SCT_DIR}/data/PAM50/template/PAM50_cord.nii.gz" -d mt1.nii.gz -dseg mt1_seg.nii.gz -param step=1,type=seg,algo=centermass:step=2,type=seg,algo=bsplinesyn,slicewise=1,iter=3 -m mask_mt1.nii.gz -initwarp ../t2s/warp_template2t2s.nii.gz -owarp warp_template2mt.nii.gz -qc ~/qc_singleSubj
 # Warp template
-sct_warp_template -d mt1.nii.gz -w warp_template2mt.nii.gz -qc ~/qc_singleSubj
+sct_warp_template -d mt1.nii.gz -w warp_template2mt.nii.gz -a 1 -qc ~/qc_singleSubj
 # Check results
 fsleyes mt1.nii.gz -cm greyscale -a 100.0 label/template/PAM50_t2.nii.gz -cm greyscale -dr 0 4000 -a 100.0 label/template/PAM50_gm.nii.gz -cm red-yellow -dr 0.4 1 -a 100.0 label/template/PAM50_wm.nii.gz -cm blue-lightblue -dr 0.4 1 -a 100.0 &
 
