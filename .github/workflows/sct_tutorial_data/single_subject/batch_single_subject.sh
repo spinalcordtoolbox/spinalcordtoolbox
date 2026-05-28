@@ -482,6 +482,9 @@ sct_analyze_lesion -m t2_lesion_seg.nii.gz -s t2_sc_seg.nii.gz -qc ~/qc_singleSu
 sct_warp_template -d t2.nii.gz -w ../t2/warp_template2anat.nii.gz
 sct_analyze_lesion -m t2_lesion_seg.nii.gz -s t2_sc_seg.nii.gz -f label -qc ~/qc_singleSubj
 
+# You can also use the legacy method if the new methods fail for your data (`-c t2s` is also supported)
+sct_deepseg_lesion -i t2.nii.gz -c t2
+
 # Segment the spinal cord on gradient echo EPI data
 cd ../fmri/
 # Crop extraneous tissue using the t2-based mask generated earlier

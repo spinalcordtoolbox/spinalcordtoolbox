@@ -17,12 +17,17 @@ You can try the ``lesion_ms`` on the sample T2w image using the following comman
 
 .. code:: sh
 
-   sct_deepseg lesion_ms -i t2.nii.gz -qc ~/qc_singleSubj
+   # Segment the spinal cord (to be used as input for lesion_ms QC)
+   sct_deepseg spinalcord -i t2.nii.gz -qc ~/qc_singleSubj
+   # Run sct_deepseg
+   sct_deepseg lesion_ms -i t2.nii.gz -qc ~/qc_singleSubj -qc-seg t2_seg.nii.gz -single-fold
 
 :Input arguments:
     - ``lesion_ms``: Task
     - ``-i`` : Input T2w image with fake lesion
     - ``-qc`` : Directory for Quality Control reporting. QC reports allow us to evaluate the segmentation slice-by-slice
+    - ``-qc-seg``: A segmentation used to center-crop the QC axial mosaic. Using the spinal cord segmentation provides a consistent FOV compared to the lesion segmentation.
+    - ``-single-fold``: Save processing time by using only a single fold of the model ensemble. Omit this argument for an improved 5-fold soft segmentation at the cost of longer processing time.
 
 ----
 
