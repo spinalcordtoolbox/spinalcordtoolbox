@@ -496,16 +496,6 @@ sct_crop_image -i fmri_moco_mean.nii.gz -m mask_fmri.nii.gz -b 0
 # Segment the cord using the cropped image
 sct_deepseg sc_epi -i fmri_moco_mean_crop.nii.gz -qc ~/qc_singleSubj
 
-# Canal segmentation
-cd ../t2
-sct_deepseg sc_canal_t2 -i t2.nii.gz -qc ~/qc_singleSubj
-# Check results using FSLeyes
-fsleyes t2.nii.gz -cm greyscale t2_canal_seg_seg.nii.gz -cm red -a 70.0 &
-
-# Compute aSCOR (Adapted Spinal Cord Occupation Ratio)
-# i.e. Spinal cord to canal ratio using the canal seg
-sct_compute_ascor -i-SC t2_seg.nii.gz -i-canal t2_canal_seg.nii.gz -perlevel 1 -o ascor.csv
-
 # Segment the spinal nerve rootlets
 cd ../t2/
 sct_deepseg rootlets -i t2.nii.gz -o t2_rootlets.nii.gz -qc ~/qc_singleSubj
