@@ -236,6 +236,36 @@ sct_compute_mtr -mt0 mt0_reg.nii.gz -mt1 mt1.nii.gz
 
 
 
+# Registering additional contrasts (contrast-agnostic registration with deep learning between T2 and T1)
+# ======================================================================================================================
+
+# Go to T2 folder
+cd ../t2
+
+# Segment the spinal cord on T2-weighted data
+sct_deepseg spinalcord -i t2.nii.gz -qc ~/qc_singleSubj
+# Create a mask around the spinal cord
+sct_create_mask -i t2.nii.gz -p centerline,t2_seg.nii.gz -size 35mm -o mask_t2.nii.gz
+# Crop around the spinal cord to speed up and improve the subsequent registration
+sct_crop_image -i t2.nii.gz -m mask_t2.nii.gz
+
+# Go to T1 folder
+cd ../t1
+
+# Segment the spinal cord on T1-weighted data
+sct_deepseg spinalcord -i t1.nii.gz -qc ~/qc_singleSubj
+# Create a mask around the spinal cord
+sct_create_mask -i t1.nii.gz -p centerline,t1_seg.nii.gz -size 35mm -o mask_t1.nii.gz
+# Crop around the spinal cord to speed up and improve the subsequent registration
+sct_crop_image -i t1.nii.gz -m mask_t1.nii.gz
+
+# Register T1->T2 using the contrast-agnostic deep learning method
+# Note: We use the cropped images to focus the registration on the spinal cord region
+# Note: The destination segmentation is provided for QC reporting only
+sct_register_multimodal -i t1_crop.nii.gz -d ../t2/t2_crop.nii.gz -param step=1,type=im,algo=dl -qc ~/qc_singleSubj -dseg ../t2/t2_seg.nii.gz
+
+
+
 # Registering additional contrasts (T2 lumbar data)
 # ======================================================================================================================
 cd ../t2_lumbar
