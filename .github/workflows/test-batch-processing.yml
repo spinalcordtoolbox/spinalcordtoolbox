@@ -20,6 +20,23 @@ env:
   SCT_PROGRESS_BAR: "off"
 
 jobs:
+  # Check that commands in tutorials match commands in batch_single_subject.sh
+  # This ensures the documentation stays in sync with the batch processing script.
+  check-batch-script-sync:
+    name: Check batch script sync
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout SCT
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - name: Check commands are in sync between
+        run: python3 .github/workflows/extract_commands.py
+
   batch_single_subject:
     name: Test batch_single_subject.sh
     strategy:
