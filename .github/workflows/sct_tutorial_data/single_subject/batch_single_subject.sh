@@ -74,9 +74,21 @@ fsleyes t2.nii.gz -cm greyscale t2_step1_canal.nii.gz -cm YlOrRd -a 70.0 t2_step
 # Check QC report: Go to your browser and do "refresh".
 
 # Optionally, you can use the generated disc labels to create a labeled segmentation
+# sct_label_vertebrae -i t2.nii.gz -s t2_seg.nii.gz -c t2 -discfile t2_totalspineseg_discs.nii.gz
+
+# If you wish to bypass the disc labeling model entirely and instead wish to use the legacy
+# vertebral labeling method (`sct_label_vertebrae`), you can do so.
 # Note: This approach is no longer recommended. Instead, use the disc labels directly in subsequent commands (e.g. `sct_process_segmentation`).
-sct_label_vertebrae -i t2.nii.gz -s t2_seg.nii.gz -c t2 -discfile t2_totalspineseg_discs.nii.gz
-# FIXME: Remove this command once the web tutorials are updated to no longer use labeled segmentations
+# sct_label_vertebrae -i t2.nii.gz -s t2_seg.nii.gz -c t2 -qc ~/qc_singleSubj
+
+# Optionally, if the legacy `sct_label_vertebrae` fails as well, you can initialize the command
+# by manually labeling the c2-c3 disc.
+# sct_label_utils -i t2.nii.gz -create-viewer 3 -o label_c2c3.nii.gz -msg "Click at the posterior tip of C2/C3 inter-vertebral disc"
+# sct_label_vertebrae -i t2.nii.gz -s t2_seg.nii.gz -c t2 -initlabel label_c2c3.nii.gz -qc ~/qc_singleSubj
+
+# If generating a labeled segmentation using `sct_label_vertebrae`, you can then extract vertebral
+# body labels from the segmentation using `-vert-body`.
+# sct_label_utils -i t2_seg_labeled.nii.gz -vert-body 3,9 -o t2_labels_vert.nii.gz
 
 
 
