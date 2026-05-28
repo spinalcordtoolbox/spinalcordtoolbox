@@ -40,9 +40,9 @@ As the model was trained on cropped images, we recommend cropping the input imag
 
 .. code:: sh
 
-   sct_deepseg spinalcord -i IMAGE_UNIT1 -o IMAGE_seg
-   sct_crop_image -i IMAGE_UNIT1 -m IMAGE_seg -dilate 30x30x5
-   sct_deepseg lesion_ms_mp2rage -i IMAGE_UNIT1 -qc ~/qc_singleSubj
+   sct_deepseg spinalcord -i <IMAGE_UNIT1> -o IMAGE_seg
+   sct_crop_image -i <IMAGE_UNIT1> -m IMAGE_seg -dilate 30x30x5
+   sct_deepseg lesion_ms_mp2rage -i <IMAGE_UNIT1> -qc ~/qc_singleSubj
 
 :Input arguments:
     - ``lesion_ms_mp2rage`` : Task to perform. In this case, we use the ``lesion_ms_mp2rage`` model
