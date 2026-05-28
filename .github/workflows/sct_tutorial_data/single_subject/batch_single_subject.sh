@@ -271,6 +271,7 @@ sct_register_multimodal -i t1_crop.nii.gz -d ../t2/t2_crop.nii.gz -param step=1,
 cd ../t2_lumbar
 
 # Use lumbar-specific `sct_deepseg` model to segment the spinal cord
+sct_deepseg sc_lumbar_t2 -install
 sct_deepseg sc_lumbar_t2 -i t2_lumbar.nii.gz -qc ~/qc_singleSubj
 
 # Generate labels for the 2 spinal cord landmarks: cauda equinea ('99') and T9-T10 disc ('17')
