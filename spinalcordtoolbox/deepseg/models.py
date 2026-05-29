@@ -689,7 +689,7 @@ def install_model(name_model, custom_url=None):
                     target_directory = folder(os.path.join(name_model, seed_name))
                     dirs_to_preserve = ()
                 logger.info(f"\nInstalling '{seed_name}'...")
-                urls_used[seed_name] = download.install_data(model_urls, target_directory, keep=(i>0),
+                urls_used[seed_name] = download.install_data(model_urls, target_directory, keep=(i > 0),
                                                              dirs_to_preserve=dirs_to_preserve)
     # Write `source.json` (for model provenance / updating)
     source_dict = {
