@@ -285,7 +285,7 @@ def get_parser(ascor=False):
         metavar=Metavar.file,
         default=None,
         type=get_absolute_path,
-        help="Input image used to compute spinal cord orientation (using HOG method). It is required to compute symmetry and quadrants area metrics."
+        help="Input image used to compute spinal cord orientation (using HOG method). It is required to compute symmetry and quadrants area metrics. "
              "Example: t2.nii.gz"
     )
     if is_sct_process_segmentation:
