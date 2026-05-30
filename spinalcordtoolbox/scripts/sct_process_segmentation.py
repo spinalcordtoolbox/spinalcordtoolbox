@@ -132,7 +132,7 @@ def get_parser(ascor=False):
             '-i',
             metavar=Metavar.file,
             type=get_absolute_path,
-            help="Mask to compute morphometrics from. Could be binary or weighted. E.g., spinal cord segmentation."
+            help="Mask to compute morphometrics from. Could be binary or weighted. E.g., spinal cord segmentation. "
                  "Example: seg.nii.gz"
         )
     optional = parser.optional_arggroup
