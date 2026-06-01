@@ -161,6 +161,8 @@ Retired models
 .. |sc_t2star| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/sc_t2star.png
     :target: deepseg/sc_t2star.html
 
+.. |sc_canal_t2| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/spinal_canal_t2.png
+
 These models have been replaced by newer, more advanced models. We recommend switching to the model listed in the table below.
 
 If you absolutely require these models, you can downgrade to version of SCT listed in the table below. If you do this, please let us know on the SCT Forum so we can better understand your use-case, and potentially reinstate the model if necessary.
@@ -181,6 +183,9 @@ If you absolutely require these models, you can downgrade to version of SCT list
    * - |sc_t2star| ``sc_t2star``
      - SCT Version ``6.5``
      - ``spinalcord`` (contrast-agnostic SC segmentation) and ``sc_epi`` (for EPI-BOLD fMRI SC segmentation)
+   * - |sc_canal_t2| ``sc_canal_t2``
+     - SCT Version ``7.3``
+     - ``canal`` (contrast-agnostic canal segmentation)
 
 .. toctree::
    :hidden:
