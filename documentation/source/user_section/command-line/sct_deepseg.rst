@@ -212,4 +212,5 @@ If you absolutely require these models, you can downgrade to version of SCT list
    deepseg/tumor_t2
    deepseg/rootlets
    deepseg/canal
+   deepseg/sc_canal_t2
    deepseg/spine
