@@ -162,6 +162,7 @@ Retired models
     :target: deepseg/sc_t2star.html
 
 .. |sc_canal_t2| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/spinal_canal_t2.png
+   :target: deepseg/sc_canal_t2.html
 
 These models have been replaced by newer, more advanced models. We recommend switching to the model listed in the table below.
 
