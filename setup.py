@@ -45,7 +45,6 @@ setup(
     extras_require={
         'docs': [
             'sphinxcontrib-programoutput',
-            'sphinxext-remoteliteralinclude',
             'sphinx_rtd_theme',
             'sphinx-copybutton',
             'furo==2023.09.10',
