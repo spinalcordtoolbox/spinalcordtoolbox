@@ -156,7 +156,7 @@ sct_compute_compression -i t2_compressed_seg.nii.gz -vertfile t2_compressed_seg_
 sct_compute_compression -i t2_compressed_seg.nii.gz -vertfile t2_compressed_seg_labeled.nii.gz -l t2_compressed_labels-compression.nii.gz -metric diameter_AP -normalize-hc 1 -o ap_ratio_norm_PAM50.csv
 
 # Canal segmentation
-sct_deepseg sc_canal_t2 -i t2_compressed.nii.gz -o t2_compressed_canal_seg.nii.gz -qc ~/qc_singleSubj
+sct_deepseg canal -i t2_compressed.nii.gz -o t2_compressed_canal_seg.nii.gz -qc ~/qc_singleSubj
 # Check results using FSLeyes
 fsleyes t2.nii.gz -cm greyscale t2_canal_seg_seg.nii.gz -cm red -a 70.0 &
 # Compute aSCOR (Adapted Spinal Cord Occupation Ratio)
