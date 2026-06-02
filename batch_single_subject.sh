@@ -18,7 +18,26 @@
 # ======================================================================================================================
 
 # If a command fails, set -e will make the whole script exit, instead of just resuming on the next line
-set -e
+set -ve
+
+# For full verbose, uncomment the next line
+# set -x
+
+# get starting time:
+start=$(date +%s)
+
+# Fetch OS type
+if uname -a | grep -i  darwin > /dev/null 2>&1; then
+  # OSX
+  open_command="open"
+elif uname -a | grep -i  linux > /dev/null 2>&1; then
+  # Linux
+  open_command="xdg-open"
+fi
+
+# download example data and enter our data directory
+sct_download_data -d sct_course_data
+cd "$SCT_DIR/data/sct_course_data/single_subject/data/"
 
 # Exit if user presses CTRL+C (Linux) or CMD+C (OSX)
 trap "echo Caught Keyboard Interrupt within script. Exiting now.; exit" INT
@@ -44,7 +63,7 @@ fi
 # ======================================================================================================================
 
 # Go to T2 folder
-cd data/t2
+cd t2
 # Spinal cord segmentation (using the new 2024 contrast-agnostic method)
 sct_deepseg spinalcord -i t2.nii.gz -qc ~/qc_singleSubj
 # The default output is t2_seg.nii.gz
@@ -515,3 +534,23 @@ fsleyes t2.nii.gz -cm greyscale t2_lesion_seg.nii.gz -cm red -a 70.0 &
 
 # Return to parent directory
 cd ..
+
+
+# Display results (to easily compare integrity across SCT versions)
+# ===========================================================================================
+set +v
+end=$(date +%s)
+runtime=$((end-start))
+echo "~~~"  # these are used to format as code when copy/pasting in github's markdown
+echo "Version:         $(sct_version)"
+echo "Ran on:          $(uname -nsr)"
+echo "Duration:        $((runtime / 3600))hrs $(((runtime / 60) % 60))min $((runtime % 60))sec"
+echo "---"
+# The file `test_batch_processing.py` will output tested values when run as a script
+"$SCT_DIR"/python/envs/venv_sct/bin/python "$SCT_DIR"/testing/batch_single_subject/test_batch_single_subject.py ||
+"$SCT_DIR"/python/envs/venv_sct/python.exe "$SCT_DIR"/testing/batch_single_subject/test_batch_single_subject.py
+echo "~~~"
+
+# Display syntax to open QC report on web browser
+echo "To open Quality Control (QC) report on a web-browser, run the following:"
+echo "$open_command $SCT_BP_QC_FOLDER/index.html"

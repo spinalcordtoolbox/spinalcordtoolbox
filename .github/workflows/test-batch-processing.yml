@@ -88,14 +88,9 @@ jobs:
       - name: Check dependencies
         run: sct_check_dependencies
 
-      - name: Download course data
-        run: sct_download_data -d sct_course_data
-
       - name: Run batch_single_subject.sh (local copy)
         run: |
-          cd $SCT_DIR/data/sct_course_data/single_subject
-          cp -rf $SCT_DIR/.github/workflows/sct_tutorial_data/single_subject/batch_single_subject.sh .
-          bash batch_single_subject.sh
+          bash "$SCT_DIR/batch_single_subject.sh"
 
       - name: Upload QC results
         uses: actions/upload-artifact@v4

@@ -12,9 +12,9 @@ from pathlib import Path
 PWD = Path(__file__).parent
 DOC_PATH = PWD.parent.parent / "documentation" / "source" / "user_section" / "tutorials"
 # FIXME: These are just copies of the upstream `sct_tutorial_data` scripts. We still need to figure out a way to
-#        have the scripts live in the SCT repo while also packaging the scripts alongside
+#        have the scripts live in the SCT repo while also packaging the scripts alongside the `sct_tutorial_data` repo
 SCRIPT_PATHS = [
-    PWD / "sct_tutorial_data" / "single_subject" / "batch_single_subject.sh",
+    PWD.parent.parent / "batch_single_subject.sh",
     PWD / "sct_tutorial_data" / "multi_subject" / "sample_usage.sh"
 ]
 
@@ -30,6 +30,7 @@ _SCT_CMD_RE = re.compile(r'^sct_[a-zA-Z0-9_]+')
 _PLACEHOLDER_RE_LST = [re.compile(r'<[A-Z][A-Z0-9_]*>')]     # e.g. <IMAGE>
 _SCT_VAR_ASSIGNMENT_RE = re.compile(r'^sct_[a-zA-Z0-9_]+=')  # e.g. sct_python=
 _SKIP_TUTORIAL_FILE = "before-starting.rst"                  # page with setup steps
+_SKIP_INITIAL_DOWNLOAD = "sct_download_data -d sct_course_data"  # only for full bash script
 
 
 # ---------------------------------------------------------------------------
@@ -154,6 +155,9 @@ def extract_commands_from_bash(content):
         stripped = line.lstrip()
         # Skip blank lines and comment lines
         if not stripped or stripped.startswith('#'):
+            continue
+        # Skip full dataset download command
+        if stripped == _SKIP_INITIAL_DOWNLOAD:
             continue
         cmd = normalize(stripped)
         if is_extractable_command(cmd):
