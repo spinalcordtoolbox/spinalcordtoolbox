@@ -218,7 +218,7 @@ jobs:
         git push --tags
 
     - name: Create release
-      uses: ncipollo/release-action@v1
+      uses: ncipollo/release-action@339a81892b84b4eeb0f6e744e4574d79d0d9b8dd # v1
       id: create_release
       with:
         tag: ${{ github.event.inputs.milestone_title }}
