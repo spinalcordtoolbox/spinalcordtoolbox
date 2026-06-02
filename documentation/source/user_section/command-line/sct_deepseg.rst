@@ -143,10 +143,10 @@ You can replace "``rootlets``" with any of the task names in the table below to 
 
    * - |rootlets| ``rootlets``
      - |spine| ``spine``
-     - |sc_canal_t2| ``sc_canal_t2``
+     - |canal| ``canal``
 
-.. |sc_canal_t2| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/spinal_canal_t2.png
-   :target: deepseg/sc_canal_t2.html
+.. |canal| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/canal.png
+   :target: deepseg/canal.html
 
 
 Retired models
@@ -160,6 +160,9 @@ Retired models
 
 .. |sc_t2star| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/sc_t2star.png
     :target: deepseg/sc_t2star.html
+
+.. |sc_canal_t2| image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_deepseg/spinal_canal_t2.png
+   :target: deepseg/sc_canal_t2.html
 
 These models have been replaced by newer, more advanced models. We recommend switching to the model listed in the table below.
 
@@ -181,6 +184,9 @@ If you absolutely require these models, you can downgrade to version of SCT list
    * - |sc_t2star| ``sc_t2star``
      - SCT Version ``6.5``
      - ``spinalcord`` (contrast-agnostic SC segmentation) and ``sc_epi`` (for EPI-BOLD fMRI SC segmentation)
+   * - |sc_canal_t2| ``sc_canal_t2``
+     - SCT Version ``7.3``
+     - ``canal`` (contrast-agnostic canal segmentation)
 
 .. toctree::
    :hidden:
@@ -205,5 +211,6 @@ If you absolutely require these models, you can downgrade to version of SCT list
    deepseg/tumor_edema_cavity_t1_t2
    deepseg/tumor_t2
    deepseg/rootlets
+   deepseg/canal
    deepseg/sc_canal_t2
    deepseg/spine
