@@ -310,6 +310,8 @@ def _build_pam50_agg_metric(agg_metric_native, nz_native, label_name, method,
         fname_vert_level_PAM50,
         fname_vert_level
     )
+
+    # Make the interpolate_metrics output compatible with the expected input of save_as_csv()
     # Get 1D ndarray with per-slice metric values in PAM50 space
     pam50_values = metrics_pam50[primary_key].data
 
@@ -333,7 +335,7 @@ def _build_pam50_agg_metric(agg_metric_native, nz_native, label_name, method,
         entry = {
             'Label': label_name,
             'VertLevel': (vert_level,),
-            'DistancePMJ': None,
+            'DistancePMJ': None,    # required by save_as_csv() but not relevant for PAM50 space
             primary_key: val,
         }
         agg_metric_pam50[(z_pam50,)] = entry
