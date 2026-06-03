@@ -37,7 +37,7 @@ jobs:
         shell: bash
     steps:
       - name: Checkout SCT
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install SCT (Unix)
         if: runner.os != 'Windows'
@@ -75,13 +75,13 @@ jobs:
         run: bash batch_processing.sh
 
       - name: Upload QC results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: Batch Processing QC (${{ matrix.os }})
           path: "qc_example_data"
 
       - name: "Upload CSV files for easier batch_processing.sh updating"
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: Batch Processing CSV files (${{ matrix.os }})
           path: data/sct_example_data/**/*.csv
@@ -106,7 +106,7 @@ jobs:
 
       - name: Upload folder summary
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: sct_example_data_${{ matrix.os }}.json
           path: jsons
@@ -131,25 +131,30 @@ jobs:
           chmod +x ydiff
 
       - name: Download summaries
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         # See: https://github.com/actions/download-artifact?tab=readme-ov-file#download-all-artifacts
         with:
           path: artifacts
           merge-multiple: true
 
+      - name: Get latest scheduled run ID on master
+        id: get-run-id
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          RUN_ID=$(gh api "repos/spinalcordtoolbox/spinalcordtoolbox/actions/workflows/test-batch-processing.yml/runs?branch=master&event=schedule&status=success&per_page=1" \
+            --jq '.workflow_runs[0].id')
+          echo "run-id=$RUN_ID" >> $GITHUB_OUTPUT
+
       - name: Download summaries (master branch)
-        id: download-artifact
-        uses: dawidd6/action-download-artifact@v8
+        uses: actions/download-artifact@v8
         with:
-          workflow: test-batch-processing.yml
-          branch: master
-          event: schedule
+          pattern: sct_example_data_*.json
+          merge-multiple: true
           path: artifacts_master
-          name_is_regexp: true
-          name: sct_example_data_.*\.json
-          # Note: Because `dawidd6/action-download-artifact@v8` doesn't have a corresponding
-          #       `merge-multiple` option, the downloaded json files get put into parent
-          #       folders with the same name as the file itself.
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: spinalcordtoolbox/spinalcordtoolbox
+          run-id: ${{ steps.get-run-id.outputs.run-id }}
 
       - name: Diff summaries (PR vs. master)
         continue-on-error: true
@@ -161,7 +166,7 @@ jobs:
             # Full log output
             echo "::group::Diff for $os"
             # diff will throw exit code 1 if diff is non-empty, so use '|| true' to prevent the job from failing
-            diff -u "artifacts_master/sct_example_data_$os.json/sct_example_data_$os.json" "artifacts/sct_example_data_$os.json" > $DIFF_FILE || true
+            diff -u "artifacts_master/sct_example_data_$os.json" "artifacts/sct_example_data_$os.json" > $DIFF_FILE || true
             ydiff < $DIFF_FILE
             echo "::endgroup::"
           
