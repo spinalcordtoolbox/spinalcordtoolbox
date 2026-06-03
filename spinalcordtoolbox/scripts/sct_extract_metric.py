@@ -283,12 +283,12 @@ def _build_pam50_agg_metric(agg_metric_native, nz_native, label_name, method,
                             fname_vert_level, fname_vert_level_PAM50):
     """
     Interpolate per-slice native-space metrics into PAM50 anatomical dimensions.
-    :param agg_metric_native: dict output of extract_metric() with perslice=True
+    :param agg_metric_native: per-slice native-space metrics (dict output of extract_metric() with perslice=True)
     :param nz_native: int: total z-slices in native image
-    :param label_name: str: atlas label name (for 'Label' CSV column)
+    :param label_name: str: atlas label name (for 'Label' CSV column), e.g., 'white matter'
     :param method: str: extraction method ('wa', 'ml', 'map', 'bin', 'median', 'max')
     :param fname_vert_level: str: native vertebral levels file (centerline-masked)
-    :param fname_vert_level_PAM50: str: canonical PAM50 template PAM50_levels.nii.gz
+    :param fname_vert_level_PAM50: str: PAM50 template PAM50_levels.nii.gz
     :return: dict keyed by (z,) PAM50 slice tuples, suitable for save_as_csv()
     """
     method_key_map = {
@@ -297,7 +297,7 @@ def _build_pam50_agg_metric(agg_metric_native, nz_native, label_name, method,
     }
     primary_key = method_key_map[method]
 
-    # Build 1D native array (shape [nz_native]) from the per-slice agg_metric dict
+    # Build 1D ndarray with per slice values from the agg_metric_native dict
     metric_1d = np.full(nz_native, np.nan)
     for (z,), entry in agg_metric_native.items():
         val = entry.get(primary_key)
@@ -310,6 +310,7 @@ def _build_pam50_agg_metric(agg_metric_native, nz_native, label_name, method,
         fname_vert_level_PAM50,
         fname_vert_level
     )
+    # Get 1D ndarray with per-slice metric values in PAM50 space
     pam50_values = metrics_pam50[primary_key].data
 
     # Determine which vertebral levels are present in the native data to filter PAM50 output
@@ -323,6 +324,7 @@ def _build_pam50_agg_metric(agg_metric_native, nz_native, label_name, method,
 
     agg_metric_pam50 = {}
     for z_pam50, val in enumerate(pam50_values):
+        # nan means that there was no data in the native space for that slice, so we skip it in the PAM50 space as well
         if np.isnan(val):
             continue
         vert_level = get_vertebral_level_from_slice(im_pam50_levels, z_pam50)
