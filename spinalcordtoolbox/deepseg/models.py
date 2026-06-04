@@ -199,11 +199,11 @@ MODELS = {
     },
     "model_seg_ms_lesion": {
          "url": {
-            "model_fold0": ["https://github.com/ivadomed/ms-lesion-agnostic/releases/download/r20260528/model_fold0.zip"],
-            "model_fold1": ["https://github.com/ivadomed/ms-lesion-agnostic/releases/download/r20260528/model_fold1.zip"],
-            "model_fold2": ["https://github.com/ivadomed/ms-lesion-agnostic/releases/download/r20260528/model_fold2.zip"],
-            "model_fold3": ["https://github.com/ivadomed/ms-lesion-agnostic/releases/download/r20260528/model_fold3.zip"],
-            "model_fold4": ["https://github.com/ivadomed/ms-lesion-agnostic/releases/download/r20260528/model_fold4.zip"]
+            "model_fold0": ["https://github.com/ivadomed/ms-lesion-agnostic/releases/download/r20250909/model_fold0.zip"],
+            "model_fold1": ["https://github.com/ivadomed/ms-lesion-agnostic/releases/download/r20250909/model_fold1.zip"],
+            "model_fold2": ["https://github.com/ivadomed/ms-lesion-agnostic/releases/download/r20250909/model_fold2.zip"],
+            "model_fold3": ["https://github.com/ivadomed/ms-lesion-agnostic/releases/download/r20250909/model_fold3.zip"],
+            "model_fold4": ["https://github.com/ivadomed/ms-lesion-agnostic/releases/download/r20250909/model_fold4.zip"]
          },
          "description": "Segmentation of spinal cord MS lesions",
          "contrasts": ["any"],
@@ -542,12 +542,12 @@ TASKS = {
         {'description': 'MS lesion segmentation on spinal cord MRI images',
          'long_description': 'This segmentation model for spinal cord MS lesion segmentation uses a 3D U-Net architecture. It outputs a binary '
                              'segmentation of MS lesions. The model was trained and evaluated on a large-scale dataset comprising 4,428 annotated '
-                             'images from 1,849 persons with MS across 24 imaging centers. The dataset included images acquired on GE, Siemens or '
+                             'images from 1,849 persons with MS across 23 imaging centers. The dataset included images acquired on GE, Siemens or '
                              'Philips MRI systems, at 1.5T, 3T or 7T, using six distinct MRI contrasts: T2w (n=3,060), T2*w (n=548), PSIR '
-                             '(n=363), UNIT1 (reconstructed uniform image from MP2RAGE sequence, n=343), STIR (n=92), T1w (n=22) and WMn (n=196), and spans '
-                             '2D axial (n=2,895), 2D sagittal (n=1,160), and 3D (n=569) acquisition planes. The field-of-view coverage varied '
+                             '(n=363), UNIT1 (reconstructed uniform image from MP2RAGE sequence, n=343), STIR (n=92), and T1w (n=22), and spans '
+                             '2D axial (n=2,895), 2D sagittal (n=1,160), and 3D (n=373) acquisition planes. The field-of-view coverage varied '
                              'across sites (brain and upper SC, or SC only). Image resolution exhibited high variability, with an average '
-                             '(± standard deviation) of 1.09±1.11 x 0.51±0.23 x 3.16±1.99 mm³ reported in “RPI-” orientation ',
+                             '(± standard deviation) of 1.10±1.13 x 0.51±0.24 x 3.27±1.95 mm³ reported in “RPI-” orientation ',
          'url': 'https://github.com/ivadomed/ms-lesion-agnostic',
          'models': ['model_seg_ms_lesion'],
          'citation': textwrap.dedent("""
@@ -678,7 +678,7 @@ def install_model(name_model, custom_url=None):
             auglab_add_trainer.add_trainer(trainer_name="nnUNetTrainerDAExt", overwrite=True)
         else:
             urls_used = {}
-            for i, (seed_name, model_urls) in enumerate(url_field.items()):
+            for seed_name, model_urls in url_field.items():
                 # For the ms_lesion model, we need to regroup the folds together
                 # For lesion_ms, we can extract all the folds to the same `nnunetTrainer` directory
                 if name_model == "model_seg_ms_lesion":
@@ -689,7 +689,7 @@ def install_model(name_model, custom_url=None):
                     target_directory = folder(os.path.join(name_model, seed_name))
                     dirs_to_preserve = ()
                 logger.info(f"\nInstalling '{seed_name}'...")
-                urls_used[seed_name] = download.install_data(model_urls, target_directory, keep=(i > 0),
+                urls_used[seed_name] = download.install_data(model_urls, target_directory, keep=True,
                                                              dirs_to_preserve=dirs_to_preserve)
     # Write `source.json` (for model provenance / updating)
     source_dict = {
