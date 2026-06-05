@@ -59,7 +59,7 @@ fi
 # START OF SCRIPT
 # ======================================================================================================================
 
-# Spinal cord segmentation
+# Spinal cord segmentation (dataset: data_spinalcord-segmentation)
 # ======================================================================================================================
 
 # Go to T2 folder
@@ -79,7 +79,7 @@ sct_deepseg -h
 
 
 
-# Vertebral labeling
+# Vertebral labeling (dataset: data_vertebral-labeling)
 # ======================================================================================================================
 
 # Vertebral disc labeling
@@ -111,7 +111,7 @@ fsleyes t2.nii.gz -cm greyscale t2_step1_canal.nii.gz -cm YlOrRd -a 70.0 t2_step
 
 
 
-# Shape-based analysis
+# Shape-based analysis (dataset: data_shape-metric-computation)
 # ======================================================================================================================
 
 # Compute cross-sectional area (CSA) of spinal cord and average it across levels C3 and C4
@@ -135,8 +135,9 @@ sct_process_segmentation -i t2_seg.nii.gz -discfile t2_totalspineseg_discs.nii.g
 
 
 
-# Quantifying spinal cord compression using maximum spinal cord compression (MSCC) and normalizing with database of healthy controls
+# Quantifying spinal cord compression using maximum spinal cord compression (MSCC) and normalizing with database of healthy controls (dataset: data_compression)
 # ======================================================================================================================
+
 cd ../t2_compression
 # Segment the spinal cord of the compressed spine
 sct_deepseg spinalcord -i t2_compressed.nii.gz -qc ~/qc_singleSubj
@@ -165,8 +166,9 @@ sct_compute_ascor -i-SC t2_compressed_seg.nii.gz -i-canal t2_compressed_canal_se
 
 
 
-# Registration to template
+# Registration to template (dataset: data_template-registration)
 # ======================================================================================================================
+
 cd ../t2
 
 # Create labels at C3 and T2 mid-vertebral levels. These labels are needed for template registration.
@@ -206,7 +208,7 @@ fsleyes t2.nii.gz -cm greyscale -a 100.0 label/template/PAM50_t2.nii.gz -cm grey
 
 
 
-# Registering additional contrasts (MT registration to T2 template)
+# Registering additional contrasts (MT registration to T2 template) (dataset: data_coregistration)
 # ======================================================================================================================
 
 # Go to mt folder
@@ -239,7 +241,7 @@ fsleyes mt1.nii.gz -cm greyscale -a 100.0 label/template/PAM50_t2.nii.gz -cm gre
 
 
 
-# Registering additional contrasts (MT0/MT1 coregistration to compute MTR)
+# Registering additional contrasts (MT0/MT1 coregistration to compute MTR) (dataset: data_mtr-computation)
 # ======================================================================================================================
 
 # Register mt0->mt1 using z-regularized slicewise translations (algo=slicereg)
@@ -255,7 +257,7 @@ sct_compute_mtr -mt0 mt0_reg.nii.gz -mt1 mt1.nii.gz
 
 
 
-# Registering additional contrasts (contrast-agnostic registration with deep learning between T2 and T1)
+# Registering additional contrasts (contrast-agnostic registration with deep learning between T2 and T1) (dataset: data_contrast-agnostic-registration)
 # ======================================================================================================================
 
 # Go to T2 folder
@@ -285,8 +287,9 @@ sct_register_multimodal -i t1_crop.nii.gz -d ../t2/t2_crop.nii.gz -param step=1,
 
 
 
-# Registering additional contrasts (T2 lumbar data)
+# Registering additional contrasts (T2 lumbar data) (dataset: data_lumbar-registration)
 # ======================================================================================================================
+
 cd ../t2_lumbar
 
 # Use lumbar-specific `sct_deepseg` model to segment the spinal cord
@@ -310,7 +313,7 @@ sct_register_to_template -i t2_lumbar.nii.gz -s t2_lumbar_seg.nii.gz -ldisc t2_l
 
 
 
-# Gray matter segmentation (GM/WM seg)
+# Gray matter segmentation (GM/WM seg) (dataset: data_gm-wm-segmentation)
 # ======================================================================================================================
 
 # Go to T2*-weighted data, which has good GM/WM contrast and high in-plane resolution
@@ -327,7 +330,7 @@ sct_maths -i t2s_seg.nii.gz -sub t2s_gmseg.nii.gz -thr 0 -o t2s_wmseg.nii.gz
 
 
 
-# Gray matter segmentation (Shape-based analysis and metric extraction)
+# Gray matter segmentation (Shape-based analysis and metric extraction) (dataset: data_gm-wm-metric-computation)
 # ======================================================================================================================
 
 # Compute cross-sectional area (CSA) of the gray and white matter for all slices in the volume.
@@ -346,7 +349,7 @@ sct_extract_metric -i t2s.nii.gz -f t2s_gmseg.nii.gz -method bin -z 2:12 -o t2s_
 
 
 
-# Gray matter segmentation (Improving registration results using binary segmentation masks)
+# Gray matter segmentation (Improving registration results using binary segmentation masks) (dataset: data_improving-registration-with-gm-seg)
 # ======================================================================================================================
 
 # Register template->t2s (using warping field generated from template<->t2 registration)
@@ -369,7 +372,7 @@ fsleyes mt1.nii.gz -cm greyscale -a 100.0 label/template/PAM50_t2.nii.gz -cm gre
 
 
 
-# Atlas-based analysis (Extracting metrics (MTR) in gray/white matter tracts)
+# Atlas-based analysis (Extracting metrics (MTR) in gray/white matter tracts) (dataset: data_atlas-based-analysis)
 # ======================================================================================================================
 
 # Extract MTR for each slice within the white matter (combined label: #51)
@@ -384,7 +387,7 @@ sct_extract_metric -i mtr.nii.gz -f label/atlas -method map -l 53 -vert 2:4 -ver
 
 
 
-# Diffusion-weighted MRI
+# Diffusion-weighted MRI (dataset: data_processing-dmri-data)
 # ======================================================================================================================
 
 cd ../dmri
@@ -425,7 +428,7 @@ sct_extract_metric -i dti_FA.nii.gz -f label/atlas -l 4,5 -method wa -z 2:14 -o 
 
 
 
-# Functional MRI
+# Functional MRI (dataset: data_processing-fmri-data)
 # ======================================================================================================================
 
 # the T2 segmentation will be reused, but it can also be generated using the commands below:
@@ -463,7 +466,7 @@ sct_register_multimodal -i "${SCT_DIR}/data/PAM50/template/PAM50_t2s.nii.gz" -is
 sct_warp_template -d fmri_moco_mean.nii.gz -w warp_template2fmri.nii.gz -a 0 -qc ~/qc_singleSubj
 
 
-# Other features
+# Spinal cord smoothing (dataset: data_spinalcord-smoothing)
 # ======================================================================================================================
 
 cd ../t1
@@ -477,16 +480,20 @@ sct_smooth_spinalcord -i t1.nii.gz -s t1_seg.nii.gz
 # Second-pass segmentation using the smoothed anatomical image
 sct_deepseg spinalcord -i t1_smooth.nii.gz -qc ~/qc_singleSubj
 
+
+
+# Visualizing misaligned cords (dataset: data_visualizing-misaligned-cords)
+# ======================================================================================================================
+
 # Align the spinal cord in the right-left direction using slice-wise translations.
 sct_flatten_sagittal -i t1.nii.gz -s t1_seg.nii.gz
 # Note: Use for visualization purposes only
 
 
 
-# New features (SCT v6.5, December 2024)
-# ======================================================================================================================
 
-# Lesion analysis for SCI
+# Lesion analysis for SCI (dataset: data_lesion-analysis)
+# ======================================================================================================================
 cd ../t2_lesion
 # Segment the spinal cord and intramedullary lesion using the SCIsegV2 model
 # Note: t2.nii.gz contains a fake lesion for the purpose of this tutorial
@@ -515,6 +522,10 @@ sct_crop_image -i fmri_moco_mean.nii.gz -m mask_fmri.nii.gz -b 0
 # Segment the cord using the cropped image
 sct_deepseg sc_epi -i fmri_moco_mean_crop.nii.gz -qc ~/qc_singleSubj
 
+
+# Rootlets-based registration (dataset: data_rootlets-registration)
+# ======================================================================================================================
+
 # Segment the spinal nerve rootlets
 cd ../t2/
 sct_deepseg rootlets -i t2.nii.gz -o t2_rootlets.nii.gz -qc ~/qc_singleSubj
@@ -522,6 +533,10 @@ sct_deepseg rootlets -i t2.nii.gz -o t2_rootlets.nii.gz -qc ~/qc_singleSubj
 fsleyes t2.nii.gz -cm greyscale t2_rootlets.nii.gz -cm subcortical -a 70.0 &
 # Rootlets-based registration
 sct_register_to_template -i t2.nii.gz -s t2_seg.nii.gz -lrootlet t2_rootlets.nii.gz -c t2 -ofolder rootlets-reg -qc ~/qc_singleSubj
+
+
+# Multiple sclerosis lesion segmentation (dataset: data_ms-lesion-segmentation)
+# ======================================================================================================================
 
 # Multiple sclerosis lesion segmentation on T2-weighted images
 cd ../t2_ms/
