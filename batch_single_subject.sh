@@ -436,8 +436,8 @@ sct_extract_metric -i dti_FA.nii.gz -f label/atlas -l 4,5 -method wa -z 2:14 -o 
 # ======================================================================================================================
 
 # the T2 segmentation will be reused, but it can also be generated using the commands below:
-# cd ../t2
-# sct_deepseg spinalcord -i t2.nii.gz
+cd ../t2
+sct_deepseg spinalcord -i t2.nii.gz
 
 cd ../fmri
 # Preprocessing steps
