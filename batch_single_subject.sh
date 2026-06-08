@@ -470,6 +470,15 @@ sct_register_multimodal -i "${SCT_DIR}/data/PAM50/template/PAM50_t2s.nii.gz" -is
 sct_warp_template -d fmri_moco_mean.nii.gz -w warp_template2fmri.nii.gz -a 0 -qc ~/qc_singleSubj
 
 
+# FIXME: Find a way to insert these commands into the above tutorial
+#        They were in our "New and upcoming features" section.
+# Segment the spinal cord on gradient echo EPI data
+# Crop extraneous tissue using the t2-based mask generated earlier
+sct_crop_image -i fmri_moco_mean.nii.gz -m mask_fmri.nii.gz -b 0
+# Segment the cord using the cropped image
+sct_deepseg sc_epi -i fmri_moco_mean_crop.nii.gz -qc ~/qc_singleSubj
+
+
 # Spinal cord smoothing (dataset: data_spinalcord-smoothing)
 # ======================================================================================================================
 
@@ -518,13 +527,6 @@ sct_analyze_lesion -m t2_lesion_seg.nii.gz -s t2_sc_seg.nii.gz -f label -qc ~/qc
 
 # You can also use the legacy method if the new methods fail for your data (`-c t2s` is also supported)
 sct_deepseg_lesion -i t2.nii.gz -c t2
-
-# Segment the spinal cord on gradient echo EPI data
-cd ../fmri/
-# Crop extraneous tissue using the t2-based mask generated earlier
-sct_crop_image -i fmri_moco_mean.nii.gz -m mask_fmri.nii.gz -b 0
-# Segment the cord using the cropped image
-sct_deepseg sc_epi -i fmri_moco_mean_crop.nii.gz -qc ~/qc_singleSubj
 
 
 # Rootlets-based registration (dataset: data_rootlets-registration)
