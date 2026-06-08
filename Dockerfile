@@ -1,4 +1,4 @@
-FROM python:3.10-slim-bullseye AS build
+FROM python:3.10-slim AS build
 
 ARG SCT_TOOLBOX_VERSION
 
@@ -7,12 +7,13 @@ ENV CONDA_PKGS_DIRS=/root/.conda/pkgs \
     MINIFORGE_CACHE_DIR=/root/.cache/miniforge \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    DEBIAN_FRONTEND=noninteractive
 
 # Install system dependencies
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
-    DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends \
+    apt-get update && apt-get install -y --no-install-recommends \
         build-essential \
         wget \
         git \
@@ -106,6 +107,3 @@ RUN if [ -n "$SCT_DEEPSEG_MODELS" ]; then \
             sleep 5; \
         done; \
     fi
-
-# Use bash terminal in login mode so /etc/profile.d scripts are sourced and conda environment is activated
-CMD ["bash", "-l"]
