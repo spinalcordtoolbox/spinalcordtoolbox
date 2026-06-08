@@ -109,6 +109,15 @@ fsleyes t2.nii.gz -cm greyscale t2_step1_canal.nii.gz -cm YlOrRd -a 70.0 t2_step
 # body labels from the segmentation using `-vert-body`.
 # sct_label_utils -i t2_seg_labeled.nii.gz -vert-body 3,9 -o t2_labels_vert.nii.gz
 
+# Create labels at C3 and T2 mid-vertebral levels. These labels are needed for template registration.
+sct_label_utils -i t2_totalspineseg_discs.nii.gz -keep 3,9 -o t2_labels_vert.nii.gz
+# Generate a QC report to visualize the two selected labels on the anatomical image
+sct_qc -i t2.nii.gz -s t2_labels_vert.nii.gz -p sct_label_utils -qc ~/qc_singleSubj
+
+# OPTIONAL: You might want to completely bypass sct_label_vertebrae and do the labeling manually. In that case, we
+# provide a viewer to do so conveniently. In the example command below, we will create labels at the inter-vertebral
+# discs C2-C3 (value=3), C3-C4 (value=4) and C4-C5 (value=5).
+# sct_label_utils -i t2.nii.gz -create-viewer 3,4,5 -o labels_disc.nii.gz -msg "Place labels at the posterior tip of each inter-vertebral disc. E.g. Label 3: C2/C3, Label 4: C3/C4, etc."
 
 
 # Shape-based analysis (dataset: data_shape-metric-computation)
@@ -170,16 +179,6 @@ sct_compute_ascor -i-SC t2_compressed_seg.nii.gz -i-canal t2_compressed_canal_se
 # ======================================================================================================================
 
 cd ../t2
-
-# Create labels at C3 and T2 mid-vertebral levels. These labels are needed for template registration.
-sct_label_utils -i t2_totalspineseg_discs.nii.gz -keep 3,9 -o t2_labels_vert.nii.gz
-# Generate a QC report to visualize the two selected labels on the anatomical image
-sct_qc -i t2.nii.gz -s t2_labels_vert.nii.gz -p sct_label_utils -qc ~/qc_singleSubj
-
-# OPTIONAL: You might want to completely bypass sct_label_vertebrae and do the labeling manually. In that case, we
-# provide a viewer to do so conveniently. In the example command below, we will create labels at the inter-vertebral
-# discs C2-C3 (value=3), C3-C4 (value=4) and C4-C5 (value=5).
-# sct_label_utils -i t2.nii.gz -create-viewer 3,4,5 -o labels_disc.nii.gz -msg "Place labels at the posterior tip of each inter-vertebral disc. E.g. Label 3: C2/C3, Label 4: C3/C4, etc."
 
 # Register t2->template.
 sct_register_to_template -i t2.nii.gz -s t2_seg.nii.gz -ldisc t2_labels_vert.nii.gz -c t2 -qc ~/qc_singleSubj
