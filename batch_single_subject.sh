@@ -243,10 +243,14 @@ fsleyes mt1.nii.gz -cm greyscale -a 100.0 label/template/PAM50_t2.nii.gz -cm gre
 # Registering additional contrasts (MT0/MT1 coregistration to compute MTR) (dataset: data_mtr-computation)
 # ======================================================================================================================
 
+# Segment cord
+sct_deepseg spinalcord -i mt1.nii.gz -qc ~/qc_singleSubj
+
+# Create a close mask around the spinal cord for more accurate registration (i.e. does not account for surrounding
+# tissue which could move independently from the cord)
+sct_create_mask -i mt1.nii.gz -p centerline,mt1_seg.nii.gz -size 35mm -f cylinder -o mask_mt1.nii.gz
+
 # Register mt0->mt1 using z-regularized slicewise translations (algo=slicereg)
-# Note: Segmentation and mask can be re-used from "Register MT to PAM50" section (or reproduced using commands below)
-# sct_deepseg spinalcord -i mt1.nii.gz -qc ~/qc_singleSubj
-# sct_create_mask -i mt1.nii.gz -p centerline,mt1_seg.nii.gz -size 35mm -f cylinder -o mask_mt1.nii.gz
 sct_register_multimodal -i mt0.nii.gz -d mt1.nii.gz -dseg mt1_seg.nii.gz -m mask_mt1.nii.gz -param step=1,type=im,algo=slicereg,metric=CC -x spline -qc ~/qc_singleSubj
 # Check results using FSLeyes
 fsleyes mt1.nii.gz mt0_reg.nii.gz &
