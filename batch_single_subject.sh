@@ -361,6 +361,12 @@ sct_register_multimodal -i "${SCT_DIR}/data/PAM50/template/PAM50_t2s.nii.gz" -is
 # Warp template
 sct_warp_template -d t2s.nii.gz -w warp_template2t2s.nii.gz -qc ~/qc_singleSubj
 # Compute vertebral level-based metrics using warped template (needed for the template's vertlevel file)
+# FIXME: In the dataset for this section, we only include t2s_wmseg. We should
+#   also amend the dataset to include t2s_gmseg.
+# Segment gray matter (check QC report afterwards)
+sct_deepseg graymatter -i t2s.nii.gz -o t2s_gmseg.nii.gz -qc ~/qc_singleSubj
+# Spinal cord segmentation
+sct_deepseg spinalcord -i t2s.nii.gz -qc ~/qc_singleSubj
 sct_process_segmentation -i t2s_gmseg.nii.gz -vert 2:5 -perlevel 1 -o csa_gm.csv -centerline t2s_seg.nii.gz -centerline-exclude-missing 1
 sct_process_segmentation -i t2s_wmseg.nii.gz -vert 2:5 -perlevel 1 -o csa_wm.csv -centerline t2s_seg.nii.gz -centerline-exclude-missing 1
 

@@ -55,3 +55,23 @@ To warp the registered template to the T2* space, you can use the following comm
 .. code:: sh
 
    sct_warp_template -d t2s.nii.gz -w warp_template2t2s.nii.gz -qc ~/qc_singleSubj
+
+
+Using the warped template to compute CSA (Per-level)
+----------------------------------------------------
+
+Now that we have a warped template, we can use it to compute metrics based on the vertebral levels (e.g. ``-vert 2:5``).
+
+.. code::
+
+   # get required segmentation files (FIXME)
+   sct_deepseg graymatter -i t2s.nii.gz -o t2s_gmseg.nii.gz -qc ~/qc_singleSubj
+   sct_deepseg spinalcord -i t2s.nii.gz -qc ~/qc_singleSubj
+
+   # compute CSA for gray matter using segmentation files
+   sct_process_segmentation -i t2s_gmseg.nii.gz -vert 2:5 -perlevel 1 -o csa_gm.csv -centerline t2s_seg.nii.gz -centerline-exclude-missing 1
+
+.. code::
+
+   sct_process_segmentation -i t2s_wmseg.nii.gz -vert 2:5 -perlevel 1 -o csa_wm.csv -centerline t2s_seg.nii.gz -centerline-exclude-missing 1
+
