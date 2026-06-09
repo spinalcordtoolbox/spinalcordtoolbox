@@ -2,7 +2,9 @@ name: Tests
 
 on:
   workflow_dispatch:
-  pull_request:
+  pull_request_target:
+    # Required for access to Dockerhub logins in secrets. Risks are mitigated by limiting permissions of the GITHUB_TOKEN and the Dockerhub token to read-only. If sensitive secrets are needed in the future, consider using an environment with required approval
+    # https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/review-deployments
     branches:
       - '*'
   schedule:
@@ -42,6 +44,8 @@ env:
     # Disable progress bars for less verbose output
     PIP_PROGRESS_BAR: "off"
     SCT_PROGRESS_BAR: "off"
+
+permissions: {}
 
 jobs:
 
