@@ -26,6 +26,7 @@ The following studies have used SCT:
 2026
 ----
 
+-  Yao *et al.* `Longitudinal Spinal Cord Atrophy in Patients With Neuromyelitis Optica Spectrum Disorder and Its Association With Rituximab Treatment <https://doi.org/10.1212/WNL.0000000000218120>`_, **Neurology** 2026
 -  Rubin *et al.* `Cerebrovascular risk factors impact on brain atrophy and DTI-ALPS decrease in neuromyelitis optica spectrum disorder <https://doi.org/10.1007/s00415-026-13881-3>`_, **J. Neurol.** 2026
 -  Boushila *et al.* `Super-resolution reconstruction of spinal cord MRI using deep learning: Application to multiple sclerosis atrophy measurement <https://doi.org/10.1016/j.bspc.2026.110588>`_, **Biomed. Signal Process. Control** 2026
 -  Miscioscia *et al.* `Spinal cord versus brain imaging biomarkers of multiple sclerosis trajectory combining 7T and 3T MRI <https://doi.org/10.1093/braincomms/fcag059>`_, **Brain Commun.** 2026
