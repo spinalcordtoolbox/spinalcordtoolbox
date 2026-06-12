@@ -541,7 +541,7 @@ def main(argv: Sequence[str]):
                 if axis >= data.ndim or data.shape[axis] == 1:
                     printv("ERROR: Zero division while taking -std along a singleton dimension", 1, 'error')
                 else:
-                    data = np.std(data, axis, ddof=1),
+                    data = np.std(data, axis, ddof=1)
                     if axis < 3:
                         # Taking std over a spatial axis, we should preserve it
                         data = np.expand_dims(data, axis)
