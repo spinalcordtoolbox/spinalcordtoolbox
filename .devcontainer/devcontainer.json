@@ -63,14 +63,18 @@
 
   "containerEnv": {
     "PROMPT_COMMAND": "history -a",
-    "HISTFILE": "/commandhistory/.bash_history"
+    "HISTFILE": "/commandhistory/.bash_history",
+    "PROOT_NO_SECCOMP": "1"
   },
 
   "mounts": [
     "source=spinalcordtoolbox-bashhistory,target=/commandhistory,type=volume"
   ],
 
-  "onCreateCommand": "sudo chmod ugo+rwx /commandhistory",
+  "onCreateCommand": {
+    "history": "sudo chmod ugo+rwx /commandhistory",
+    "apptainer": "bash .devcontainer/scripts/fix-apptainer-mksquashfs.sh"
+  },
   // Run post-creation command to install dependencies
   "postCreateCommand": "pip install -e . --use-pep517 && pip install -e .[docs]",
 
@@ -79,16 +83,30 @@
     8888  // Jupyter notebook
   ],
 
-  // Container execution settings
-  "runArgs": [
-    "--init",
-    "--security-opt",
-    "label=disable,seccomp=unconfined,apparmor=unconfined",
-    "--cap-add",
-    "SYS_ADMIN",
-    "--cap-add",
-    "SYS_CHROOT"
+  // Use an init system to handle signals and zombie processes.
+  "init": true,
+
+  // Runtime allowances for Apptainer non-suid builds inside Dockerized devcontainers.
+  // Keep dedicated devcontainer properties where available and reserve runArgs for
+  // settings that do not have top-level devcontainer equivalents.
+
+  // Security options recommended for nested Apptainer usage.
+  "securityOpt": [
+    "seccomp=unconfined",
+    "systempaths=unconfined",
+    "apparmor=unconfined"
   ],
 
-  "privileged": true
+  // PRoot fallback path during build can require ptrace.
+  "capAdd": [
+    "SYS_PTRACE"
+  ],
+
+  // Keep runArgs minimal for options not modeled as top-level devcontainer properties:
+  // - /dev/fuse for unprivileged FUSE mounts.
+  // - user namespace related sysctls for rootless operation.
+  // - PROOT_NO_SECCOMP=1 (set above) keeps PRoot seccomp from conflicting in nested runs.
+  "runArgs": [
+    "--device=/dev/fuse"
+  ]
 }
