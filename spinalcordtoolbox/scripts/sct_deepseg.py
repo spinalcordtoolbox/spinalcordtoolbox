@@ -254,6 +254,11 @@ def get_parser(subparser_to_return=None):
             metavar=Metavar.str,
             help="If provided, this string will be mentioned in the QC report as the subject the process was run on."
         )
+        misc.add_argument(
+            '-qc-contrast',
+            metavar=Metavar.str,
+            help="If provided, this string will be mentioned in the QC report as the contrast the process was run on."
+        )
         task_args['-qc-plane'] = misc.add_argument(
             "-qc-plane",
             metavar=Metavar.str,
@@ -560,6 +565,7 @@ def main(argv: Sequence[str]):
                 path_qc=os.path.abspath(arguments.qc),
                 dataset=arguments.qc_dataset,
                 subject=arguments.qc_subject,
+                contrast=arguments.qc_contrast,
             )
             path_custom_labels = os.path.join(
                 __sct_dir__, 'spinalcordtoolbox', 'reports',
@@ -604,6 +610,7 @@ def main(argv: Sequence[str]):
                     path_qc=os.path.abspath(arguments.qc),
                     dataset=arguments.qc_dataset,
                     subject=arguments.qc_subject,
+                    contrast=arguments.qc_contrast,
                     plane=arguments.qc_plane,
                     fname_qc_seg=fname_qc_seg
                 )

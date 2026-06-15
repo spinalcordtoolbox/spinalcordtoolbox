@@ -266,6 +266,11 @@ def get_parser():
         metavar=Metavar.str,
         help="If provided, this string will be mentioned in the QC report as the subject the process was run on."
     )
+    optional.add_argument(
+        '-qc-contrast',
+        metavar=Metavar.str,
+        help="If provided, this string will be mentioned in the QC report as the contrast the process was run on."
+    )
 
     # Arguments which implement shared functionality
     parser.add_common_args()
@@ -841,6 +846,7 @@ def main(argv: Sequence[str]):
             path_qc=os.path.abspath(arguments.qc),
             dataset=arguments.qc_dataset,
             subject=arguments.qc_subject,
+            contrast=arguments.qc_contrast,
         )
     display_viewer_syntax([fname_data, fname_template2anat], verbose=verbose)
     display_viewer_syntax([fname_template, fname_anat2template], verbose=verbose)
