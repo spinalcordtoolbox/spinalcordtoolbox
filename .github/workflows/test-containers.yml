@@ -12,31 +12,7 @@ on:
     # NB: 8AM UTC every day corresponds to 3AM/4AM depending on DST
     - cron:  '0 8 * * *'
 
-# The set of available runners on Github's infra is generous but
-# will never be complete: https://docs.github.com/en/free-pro-team@latest/actions/reference/workflow-syntax-for-github-actions#jobsjob_idruns-on
-# to cover other other platforms Linux distros, we use docker or WSL images.
-# These are therefore not perfectly accurate tests, but hopefully good enough.
-
-# We haven't figured out how to factor this -- to avoid the boilerplate. It seems impossible.
-# Github Actions is just not flexible enough. The best it has is the build matrix, but:
-# - the bad null case: if the build matrix generates no jobs, the UI prints a placeholder with the unevaluated `name:` expression like `${{matrix.name || matrix.os || 'Nightlies' }}`
-# - you cannot refer to the matrix parameters in a job's `if:`, so it is impossible to decide whether to run a job or not; it is possible to do so in a *step*'s `if:`. See https://github.community/t/conditional-matrices/17206/2.
-#   ideally we would have a build matrix with all the platforms covered
-#   ```
-#   if: ${{ !matrix.nightly || (github.event_name == 'schedule') }}
-#   ```
-#   but it's not allowed; that second half is legal but `matrix.nightly` is not.
-# - there's no way to mix the docker-based platforms with the windows ones in the same build matrix anyway, because specifying `container:`, even with an empty/undefined string, tries blindly to use the docker scripts
-
-# To keep feedback fast, we only run a selection of common platforms in CI
-# The others run nightly, and on changes to one of the central branches mentioned above in `on:`.
-
 env:
-    # Even when given -y, apt will still sometimes hang at a prompt if a package
-    # has clarifications to ask; DEBIAN_FRONTEND=noninteractive prevents that,
-    # This will be defined for non-debian platforms below too, but there's no harm in that.
-    # (TravisCI quietly defined this on all their platforms, but we have to give it manually on GithubCI.)
-    DEBIAN_FRONTEND: 'noninteractive'
     # Turns on color output for pytest. See: https://github.com/pytest-dev/pytest/issues/7443#issuecomment-656642591
     PY_COLORS: "1"
     # Disable progress bars for less verbose output
@@ -48,67 +24,33 @@ permissions: {}
 
 jobs:
   containers:
-    name: Docker (Ubuntu Latest)
+    name: Docker+Apptainer (Ubuntu Latest)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Extract SCT current dev version to Github env
         run: |
           export SCT_VERSION=$(cat spinalcordtoolbox/version.txt)
           echo "SCT_VERSION=$SCT_VERSION" >> "$GITHUB_ENV"
-      - name: Extract latest SCT release tag (semver sorted)
-        uses: oprypin/find-latest-tag@v1.1.3
-        id: sct-latest-release
+      - name: Build Docker and Apptainer images
+        uses: ./.github/actions/build-containers
+        id: build-containers
         with:
-          repository: spinalcordtoolbox/spinalcordtoolbox
-          releases-only: true
-          sort-tags: true
-      - uses: docker/login-action@v4
-        with:
-          # NB: these secrets need to be set in the repository settings
-          # NB: the Dockerhub token should be set to read-only
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_RO_PAT }}
-      - name: Docker Setup Buildx
-        uses: docker/setup-buildx-action@v4.1.0
-        with:
-          # Versions for buildx and BuildKit required to overstep bug for COPY --chmod using the X flag
-          version: v0.34.1
-          driver: docker-container
-          driver-opts: image=moby/buildkit:v0.28.1
-      - name: Build Docker image
-        uses: docker/build-push-action@v7.2.0
-        with:
-          context: .
+          tag: ${{ env.SCT_VERSION }}
           push: false
           load: true
-          tags: spinalcordtoolbox:${{ env.SCT_VERSION }}
-          cache-from: "type=registry,ref=neuropoly/sct:${{ steps.sct-latest-release.outputs.tag }}"
           build-args: "SCT_DEEPSEG_MODELS=spinalcord,spine,gm_sc_7t_t2star"
-      - name: Maximize build space
-        run: |
-          echo "-- Dotnet"
-          sudo rm -rf /usr/share/dotnet
-          echo "-- Android"
-          sudo rm -rf /usr/local/lib/android
-          echo "-- Haskell"
-          sudo rm -rf /opt/ghc
-          echo "-- CodeQL"
-          sudo rm -rf /opt/hostedtoolcache/CodeQL
-          df -h
-      - uses: eWaterCycle/setup-apptainer@v2
-      - name: Build Apptainer image from Docker image
-        run: |
-          apptainer build sct.sif docker-daemon:spinalcordtoolbox:${{ env.SCT_VERSION }}
+          docker-username: ${{ secrets.DOCKER_USERNAME }}
+          docker-token: ${{ secrets.DOCKER_RO_PAT }}
       - name: Download sample data
         run: |
           curl -sL "https://github.com/spinalcordtoolbox/sct_tutorial_data/archive/refs/tags/SCT-Course-20251208.tar.gz" | tar -z -xf -
       - name: Run 'sct_deepseg spinalcord' (installed by default)
         run: |
-          apptainer exec sct.sif sct_deepseg spinalcord -i sct_tutorial_data-SCT-Course-20251208/single_subject/data/t2/t2.nii.gz
+          apptainer exec ${{ steps.build-containers.outputs.apptainer-image }} sct_deepseg spinalcord -i sct_tutorial_data-SCT-Course-20251208/single_subject/data/t2/t2.nii.gz
       - name: Run 'sct_deepseg spine' (added on install)
         run: |          
-          apptainer exec sct.sif sct_deepseg spine -i sct_tutorial_data-SCT-Course-20251208/single_subject/data/t2/t2.nii.gz
-      - name: Run 'sct_deepseg gm_sc_7t_t2star' (added in post-install)
+          apptainer exec ${{ steps.build-containers.outputs.apptainer-image }} sct_deepseg spine -i sct_tutorial_data-SCT-Course-20251208/single_subject/data/t2/t2.nii.gz
+      - name: Run 'sct_deepseg gm_sc_7t_t2star' (added on install)
         run: |          
-          apptainer exec sct.sif sct_deepseg gm_sc_7t_t2star -i sct_tutorial_data-SCT-Course-20251208/single_subject/data/t2s/t2s.nii.gz
+          apptainer exec ${{ steps.build-containers.outputs.apptainer-image }} sct_deepseg gm_sc_7t_t2star -i sct_tutorial_data-SCT-Course-20251208/single_subject/data/t2s/t2s.nii.gz
