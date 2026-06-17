@@ -548,7 +548,7 @@ def plot_normative_comparison(file_out_csv, path_normative, subject_sex):
 
         ymin, ymax = ax.get_ylim()
 
-        if idx == 1:
+        if idx == 0:
             ax.legend(loc='upper right', fontsize=8)
         else:
             ax.get_legend().remove()
@@ -585,8 +585,6 @@ def plot_normative_comparison(file_out_csv, path_normative, subject_sex):
             else:
                 level = 'C' + str(v)
             ax.text(slice_x, ymin, level, ha='center', va='bottom', color='black', fontsize=8)
-
-        ax.invert_xaxis()
 
     title = 'Morphometric measures in PAM50 template space'
     fig.suptitle(title, fontweight='bold', fontsize=14, y=0.92)
