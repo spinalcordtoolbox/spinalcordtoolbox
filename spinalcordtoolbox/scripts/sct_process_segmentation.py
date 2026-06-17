@@ -562,6 +562,11 @@ def plot_normative_comparison(file_out_csv, path_normative, subject_sex):
         ax.yaxis.grid(True)
         ax.set_axisbelow(True)
 
+        # Crop to the subject's slice range
+        sub_min = df_sub['Slice (I->S)'].min()
+        sub_max = df_sub['Slice (I->S)'].max()
+        ax.set_xlim(sub_max, sub_min)  # inverted x-axis: larger slice number on left
+
         # Vertebral level annotations
         vert, ind_vert, ind_vert_mid = _get_vert_label_indices(df_norm)
         for x in ind_vert[1:-1]:
