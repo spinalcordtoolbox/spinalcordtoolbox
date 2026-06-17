@@ -644,6 +644,14 @@ def main(argv: Sequence[str]):
 
     save_as_csv(metrics_agg_merged, file_out, fname_in=fname_segmentation, append=append)
 
+    # Generate the normative comparison plot
+    if arguments.plot_normative:
+        if not normalize_pam50 or not perslice:
+            parser.error("Option '-plot-normative 1' requires '-normalize-PAM50 1' and '-perslice 1'.")
+        path_normative = os.path.join(__data_dir__, 'PAM50_normalized_metrics')
+        fname_png = plot_normative_comparison(file_out, path_normative, arguments.plot_normative_sex)
+        display_open(fname_png)
+
     # QC report (only for PMJ-based CSA)
     # TODO: refactor this with qc2. Replace arguments.qc_image with arguments.i
     if path_qc is not None:
