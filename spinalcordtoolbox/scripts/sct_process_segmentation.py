@@ -39,6 +39,7 @@ from spinalcordtoolbox.utils.sys import __data_dir__, LazyLoader
 
 pd = LazyLoader("pd", globals(), "pandas")
 mpl_ticker = LazyLoader("mpl_ticker", globals(), "matplotlib.ticker")
+sns = LazyLoader("sns", globals(), "seaborn")
 
 logger = logging.getLogger(__name__)
 
