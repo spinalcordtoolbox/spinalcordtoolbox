@@ -451,6 +451,145 @@ def _make_figure(metric, fit_results):
     return fname_img
 
 
+METRICS_PLOT = ['MEAN(area)', 'MEAN(diameter_AP)', 'MEAN(diameter_RL)', 'MEAN(compression_ratio)',
+                'MEAN(eccentricity)', 'MEAN(solidity)']
+
+METRICS_PLOT_DTYPE = {
+    'MEAN(diameter_AP)': 'float64',
+    'MEAN(area)': 'float64',
+    'MEAN(diameter_RL)': 'float64',
+    'MEAN(eccentricity)': 'float64',
+    'MEAN(solidity)': 'float64',
+}
+
+METRIC_TO_AXIS_LABEL = {
+    'MEAN(diameter_AP)': 'AP Diameter [mm]',
+    'MEAN(area)': 'Cross-Sectional Area [mm²]',
+    'MEAN(diameter_RL)': 'Transverse Diameter [mm]',
+    'MEAN(eccentricity)': 'Eccentricity [a.u.]',
+    'MEAN(solidity)': 'Solidity [%]',
+    'MEAN(compression_ratio)': 'Compression Ratio [a.u.]',
+}
+
+COLORS_SEX_PLOT = {'M': 'blue', 'F': 'red'}
+SEX_TO_LEGEND_PLOT = {'M': 'males', 'F': 'females'}
+
+
+def _load_normative_data(path_normative, path_participants):
+    """Load normative data from spine-generic PAM50-space CSV files."""
+    df = pd.DataFrame()
+    path_normative_csv = os.path.join(path_normative, "spinal_cord")
+    for fname in os.listdir(path_normative_csv):
+        if fname.endswith('PAM50.csv'):
+            df_sub = pd.read_csv(os.path.join(path_normative_csv, fname), dtype=METRICS_PLOT_DTYPE)
+            df = pd.concat([df, df_sub], axis=0, ignore_index=True)
+    if df.empty:
+        raise ValueError(f"No PAM50.csv files found in {path_normative_csv}")
+    df.insert(0, 'participant_id', df['Filename'].str.split('/').str[0])
+    df_participants = pd.read_csv(path_participants, sep='\t')
+    df = df.merge(df_participants[['age', 'sex', 'participant_id']], on='participant_id')
+    df['MEAN(compression_ratio)'] = df['MEAN(diameter_AP)'] / df['MEAN(diameter_RL)']
+    df['MEAN(solidity)'] = df['MEAN(solidity)'] * 100
+    return df
+
+
+def _get_vert_label_indices(df):
+    """Return vert series, disc boundary indices, and mid-vertebra indices for a normative dataframe."""
+    subjects = df['participant_id'].unique()
+    vert = df[df['participant_id'] == subjects[0]]['VertLevel']
+    ind_vert = vert.diff()[vert.diff() != 0].index.values
+    ind_vert = np.append(ind_vert, vert.index.values[-1])
+    ind_vert_mid = [int(ind_vert[i:i + 2].mean()) for i in range(len(ind_vert) - 1)]
+    return vert, ind_vert, ind_vert_mid
+
+
+def plot_normative_comparison(file_out_csv, path_normative, subject_sex):
+    """
+    Generate a figure comparing per-slice metrics from file_out_csv against normative spine-generic values.
+    The output PNG is saved with the same base path as file_out_csv (replacing .csv with .png).
+
+    :param file_out_csv: path to the CSV output produced by sct_process_segmentation (PAM50 space, perslice)
+    :param path_normative: path to folder containing PAM50 normative CSVs and participants.tsv
+    :param subject_sex: 'M' or 'F'
+    """
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+
+    path_participants = os.path.join(path_normative, 'participants.tsv')
+    if not os.path.isfile(path_participants):
+        raise FileNotFoundError(f"participants.tsv not found in {path_normative}")
+
+    # Load both normative data and subject data
+    df_norm = _load_normative_data(path_normative, path_participants)
+    df_sub = pd.read_csv(file_out_csv, dtype=METRICS_PLOT_DTYPE)
+    df_sub['MEAN(compression_ratio)'] = df_sub['MEAN(diameter_AP)'] / df_sub['MEAN(diameter_RL)']
+    df_sub['MEAN(solidity)'] = df_sub['MEAN(solidity)'] * 100
+
+    # Filter by sex and count subjects
+    df_norm_sex = df_norm[df_norm['sex'] == subject_sex] if subject_sex else df_norm
+    n_subjects = df_norm_sex['participant_id'].nunique()
+
+    # Extract subject ID from Filename column for the title
+    subject_id = df_sub['Filename'].iloc[0].split('/')[-1].split('_')[0]
+
+    fig, axes = plt.subplots(2, 3, figsize=(20, 10))
+    axs = axes.ravel()
+
+    for idx, metric in enumerate(METRICS_PLOT):
+        ax = axs[idx]
+
+        sex_label = SEX_TO_LEGEND_PLOT[subject_sex] if subject_sex else 'all subjects'
+        sns.lineplot(ax=ax, x='Slice (I->S)', y=metric, data=df_norm_sex, errorbar='sd',
+                     linewidth=2, color=COLORS_SEX_PLOT.get(subject_sex, 'gray'),
+                     label=f'spine-generic {sex_label} (N={n_subjects})')
+        sns.lineplot(ax=ax, x='Slice (I->S)', y=metric, data=df_sub, linewidth=2, color='green',
+                     label=subject_id)
+
+        ymin, ymax = ax.get_ylim()
+
+        if idx == 1:
+            ax.legend(loc='upper right', fontsize=8)
+        else:
+            ax.get_legend().remove()
+
+        ax.set_ylabel(METRIC_TO_AXIS_LABEL[metric], fontsize=14)
+        ax.set_xlabel('PAM50 Axial Slice #', fontsize=14)
+        ax.tick_params(axis='both', which='major', labelsize=8)
+        for spine in ['right', 'left', 'top']:
+            ax.spines[spine].set_visible(False)
+        ax.spines['bottom'].set_visible(True)
+        ax.yaxis.grid(True)
+        ax.set_axisbelow(True)
+
+        # Vertebral level annotations
+        vert, ind_vert, ind_vert_mid = _get_vert_label_indices(df_norm)
+        for x in ind_vert[1:-1]:
+            ax.axvline(df_norm.loc[x, 'Slice (I->S)'], color='black', linestyle='--', alpha=0.5, zorder=0)
+        for i, x in enumerate(ind_vert_mid):
+            v = vert.iloc[i] if i < len(vert) else None
+            slice_x = df_norm.loc[ind_vert_mid[i], 'Slice (I->S)']
+            if v is not None:
+                if v > 19:
+                    level = 'L' + str(v - 19)
+                elif v > 7:
+                    level = 'T' + str(v - 7)
+                else:
+                    level = 'C' + str(v)
+                ax.text(slice_x, ymin, level, ha='center', va='bottom', color='black', fontsize=8)
+
+        ax.invert_xaxis()
+
+    title = 'Morphometric measures in PAM50 template space'
+    fig.suptitle(title, fontweight='bold', fontsize=14, y=0.92)
+
+    fname_out_png = os.path.splitext(file_out_csv)[0] + '.png'
+    plt.savefig(fname_out_png, dpi=300, bbox_inches='tight')
+    plt.close(fig)
+    logger.info(f'Normative comparison figure saved: {fname_out_png}')
+    return fname_out_png
+
+
 def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
