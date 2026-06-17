@@ -570,18 +570,21 @@ def plot_normative_comparison(file_out_csv, path_normative, subject_sex):
         # Vertebral level annotations
         vert, ind_vert, ind_vert_mid = _get_vert_label_indices(df_norm)
         for x in ind_vert[1:-1]:
-            ax.axvline(df_norm.loc[x, 'Slice (I->S)'], color='black', linestyle='--', alpha=0.5, zorder=0)
-        for i, x in enumerate(ind_vert_mid):
-            v = vert.iloc[i] if i < len(vert) else None
-            slice_x = df_norm.loc[ind_vert_mid[i], 'Slice (I->S)']
-            if v is not None:
-                if v > 19:
-                    level = 'L' + str(v - 19)
-                elif v > 7:
-                    level = 'T' + str(v - 7)
-                else:
-                    level = 'C' + str(v)
-                ax.text(slice_x, ymin, level, ha='center', va='bottom', color='black', fontsize=8)
+            slice_val = df_norm.loc[x, 'Slice (I->S)']
+            if sub_min <= slice_val <= sub_max:
+                ax.axvline(slice_val, color='black', linestyle='--', alpha=0.5, zorder=0)
+        for mid_idx in ind_vert_mid:
+            slice_x = df_norm.loc[mid_idx, 'Slice (I->S)']
+            if not (sub_min <= slice_x <= sub_max):
+                continue
+            v = vert.loc[mid_idx]
+            if v > 19:
+                level = 'L' + str(v - 19)
+            elif v > 7:
+                level = 'T' + str(v - 7)
+            else:
+                level = 'C' + str(v)
+            ax.text(slice_x, ymin, level, ha='center', va='bottom', color='black', fontsize=8)
 
         ax.invert_xaxis()
 
