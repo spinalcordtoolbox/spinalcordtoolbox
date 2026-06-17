@@ -162,6 +162,14 @@ DATASET_DICT = {
         "download_type": "Templates",
         "default": True,
     },
+    "normative_plot_thumbnails": {
+        "mirrors": [
+            "https://github.com/user-attachments/files/29054242/normative_plot_thumbnails.zip"
+        ],
+        "default_location": os.path.join(__sct_dir__, "data", "normative_plot_thumbnails"),
+        "download_type": "Templates",
+        "default": True,
+    },
     "moco-dl_models": {
         "mirrors": [
             "https://github.com/ivadomed/moco-dl/releases/download/r20251127/models.zip"
