@@ -465,10 +465,10 @@ METRICS_PLOT_DTYPE = {
 METRIC_TO_AXIS_LABEL = {
     'MEAN(diameter_AP)': 'AP Diameter [mm]',
     'MEAN(area)': 'Cross-Sectional Area [mm²]',
-    'MEAN(diameter_RL)': 'Transverse Diameter [mm]',
+    'MEAN(diameter_RL)': 'RL Diameter [mm]',
     'MEAN(eccentricity)': 'Eccentricity [a.u.]',
     'MEAN(solidity)': 'Solidity [%]',
-    'MEAN(compression_ratio)': 'Compression Ratio [a.u.]',
+    'MEAN(compression_ratio)': 'AP/RLRatio [a.u.]',
 }
 
 COLORS_SEX_PLOT = {'M': 'blue', 'F': 'red'}
