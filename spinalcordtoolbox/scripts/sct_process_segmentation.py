@@ -572,6 +572,18 @@ def plot_normative_comparison(file_out_csv, path_normative, subject_sex):
         ax.yaxis.grid(True)
         ax.set_axisbelow(True)
 
+        # Thumbnail inset
+        import matplotlib.image as mpimg
+        thumb_file = METRIC_TO_THUMBNAIL.get(metric)
+        if thumb_file:
+            thumb_path = os.path.join(THUMBNAILS_DIR, thumb_file)
+            if os.path.isfile(thumb_path):
+                img = mpimg.imread(thumb_path)
+                y0 = 0.8 if idx < 3 else 0.85
+                axins = ax.inset_axes([0.9, y0, 0.20, 0.30])
+                axins.imshow(img)
+                axins.axis('off')
+
         # Crop to the subject's slice range
         sub_min = df_sub['Slice (I->S)'].min()
         sub_max = df_sub['Slice (I->S)'].max()
