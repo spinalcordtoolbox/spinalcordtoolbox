@@ -474,6 +474,16 @@ METRIC_TO_AXIS_LABEL = {
 COLORS_SEX_PLOT = {'M': 'blue', 'F': 'red'}
 SEX_TO_LEGEND_PLOT = {'M': 'males', 'F': 'females'}
 
+THUMBNAILS_DIR = os.path.join(__data_dir__, 'normative_plot_thumbnails')
+METRIC_TO_THUMBNAIL = {
+    'MEAN(diameter_AP)': 'ap_diam.png',
+    'MEAN(area)': 'csa.png',
+    'MEAN(diameter_RL)': 'rl_diam.png',
+    'MEAN(eccentricity)': 'eccentricity.png',
+    'MEAN(solidity)': 'solidity.png',
+    'MEAN(compression_ratio)': 'ap_rl_ratio.png',
+}
+
 
 def _load_normative_data(path_normative, path_participants):
     """Load normative data from spine-generic PAM50-space CSV files."""
