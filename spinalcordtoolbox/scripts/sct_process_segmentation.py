@@ -320,6 +320,25 @@ def get_parser(ascor=False):
     )
     if is_sct_process_segmentation:
         optional.add_argument(
+            '-plot-normative',
+            metavar=Metavar.int,
+            type=int,
+            choices=[0, 1],
+            default=0,
+            help="Set to 1 to generate a figure comparing the subject's morphometric metrics with normative values "
+                 "from the spine-generic dataset (PAM50 space). Requires `-normalize-PAM50 1` and `-perslice 1`. "
+                 "The normative data from `$SCT_DIR/data/PAM50_normalized_metrics` will be used. "
+                 "The output figure is saved alongside the output CSV file."
+        )
+        optional.add_argument(
+            '-plot-normative-sex',
+            metavar=Metavar.str,
+            choices=['M', 'F'],
+            help="Sex of the subject ('M' or 'F'), used to filter normative data when `-plot-normative 1` is set. "
+                 "If not provided, normative data from all subjects (both sexes) will be used."
+        )
+    if is_sct_process_segmentation:
+        optional.add_argument(
             '-qc',
             metavar=Metavar.folder,
             type=os.path.abspath,
