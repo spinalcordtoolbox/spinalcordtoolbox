@@ -243,8 +243,7 @@ jobs:
         bodyFile: ".github/workflows/release-body.md"
         artifacts: "install_sct-${{ github.event.inputs.milestone_title }}_win.bat,\
                     install_sct-${{ github.event.inputs.milestone_title }}_linux.sh,\
-                    install_sct-${{ github.event.inputs.milestone_title }}_macos.sh,\
-                    sct_apptainer_${{ github.event.inputs.milestone_title }}.tar.gz"
+                    install_sct-${{ github.event.inputs.milestone_title }}_macos.sh"
         draft: true
 
     - name: Update `stable` docs branch to point to new release
