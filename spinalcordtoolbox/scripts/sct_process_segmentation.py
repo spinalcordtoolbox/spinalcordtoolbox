@@ -520,28 +520,49 @@ def plot_normative_comparison(file_out_csv, path_normative, subject_sex):
 
     :param file_out_csv: path to the CSV output produced by sct_process_segmentation (PAM50 space, perslice)
     :param path_normative: path to folder containing PAM50 normative CSVs and participants.tsv
-    :param subject_sex: 'M' or 'F'
+    :param subject_sex: 'M' or 'F', or None to use all subjects
     """
     import matplotlib
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
 
+    # Output log
+    logger.info(f'\n Generating normative comparison figure for {file_out_csv} using normative data from {path_normative}')
+
     path_participants = os.path.join(path_normative, 'participants.tsv')
     if not os.path.isfile(path_participants):
         raise FileNotFoundError(f"participants.tsv not found in {path_normative}")
 
-    # Load both normative data and subject data
+    # Load normative and subject data
     df_norm = _load_normative_data(path_normative, path_participants)
     df_sub = pd.read_csv(file_out_csv, dtype=METRICS_PLOT_DTYPE)
     df_sub['MEAN(compression_ratio)'] = df_sub['MEAN(diameter_AP)'] / df_sub['MEAN(diameter_RL)']
     df_sub['MEAN(solidity)'] = df_sub['MEAN(solidity)'] * 100
 
-    # Filter by sex and count subjects
+    # Filter normative data by sex
     df_norm_sex = df_norm[df_norm['sex'] == subject_sex] if subject_sex else df_norm
     n_subjects = df_norm_sex['participant_id'].nunique()
+    sex_label = SEX_TO_LEGEND_PLOT[subject_sex] if subject_sex else 'all subjects'
 
-    # Extract subject ID from Filename column for the title
+    # Extract subject ID from Filename column for legend and title
     subject_id = df_sub['Filename'].iloc[0].split('/')[-1].split('_')[0]
+
+    # Subject slice range (computed once, used for cropping and filtering annotations)
+    sub_min = int(df_sub['Slice (I->S)'].min())
+    sub_max = int(df_sub['Slice (I->S)'].max())
+
+    # Vertebral level indices computed once outside the metric loop
+    vert, ind_vert, ind_vert_mid = _get_vert_label_indices(df_norm)
+
+    # Subject count per vertebral level computed once outside the metric loop
+    # Drop NaN rows on a reference metric before counting to exclude missing coverage
+    ref_metric = 'MEAN(area)'
+    n_per_level = (
+        df_norm_sex.dropna(subset=[ref_metric])
+        .groupby('VertLevel')['participant_id']
+        .nunique()
+        .to_dict()
+    )
 
     fig, axes = plt.subplots(2, 3, figsize=(20, 10))
     axs = axes.ravel()
@@ -549,7 +570,6 @@ def plot_normative_comparison(file_out_csv, path_normative, subject_sex):
     for idx, metric in enumerate(METRICS_PLOT):
         ax = axs[idx]
 
-        sex_label = SEX_TO_LEGEND_PLOT[subject_sex] if subject_sex else 'all subjects'
         sns.lineplot(ax=ax, x='Slice (I->S)', y=metric, data=df_norm_sex, errorbar='sd',
                      linewidth=2, color=COLORS_SEX_PLOT.get(subject_sex, 'gray'),
                      label=f'spine-generic {sex_label} (N={n_subjects})')
@@ -584,17 +604,16 @@ def plot_normative_comparison(file_out_csv, path_normative, subject_sex):
                 axins.imshow(img)
                 axins.axis('off')
 
-        # Crop to the subject's slice range
-        sub_min = df_sub['Slice (I->S)'].min()
-        sub_max = df_sub['Slice (I->S)'].max()
-        ax.set_xlim(sub_max, sub_min)  # inverted x-axis: larger slice number on left
+        # Crop x-axis to the subject's slice range (inverted: larger slice number on the left)
+        ax.set_xlim(sub_max, sub_min)
 
-        # Vertebral level annotations
-        vert, ind_vert, ind_vert_mid = _get_vert_label_indices(df_norm)
+        # Disc boundary lines
         for x in ind_vert[1:-1]:
             slice_val = df_norm.loc[x, 'Slice (I->S)']
             if sub_min <= slice_val <= sub_max:
                 ax.axvline(slice_val, color='black', linestyle='--', alpha=0.5, zorder=0)
+
+        # Vertebral level labels with subject count below (single text call, data coordinates)
         for mid_idx in ind_vert_mid:
             slice_x = df_norm.loc[mid_idx, 'Slice (I->S)']
             if not (sub_min <= slice_x <= sub_max):
@@ -606,9 +625,11 @@ def plot_normative_comparison(file_out_csv, path_normative, subject_sex):
                 level = 'T' + str(v - 7)
             else:
                 level = 'C' + str(v)
-            ax.text(slice_x, ymin, level, ha='center', va='bottom', color='black', fontsize=8)
+            n = n_per_level.get(v, 0)
+            ax.text(slice_x, ymin, f'{level}\n', ha='center', va='bottom', color='black', fontsize=7)
+            ax.text(slice_x, ymin, f'\nn={n}', ha='center', va='bottom', color='black', fontsize=6)
 
-    title = 'Morphometric measures in PAM50 template space'
+    title = f'Morphometric measures for {subject_id} in PAM50 template space'
     fig.suptitle(title, fontweight='bold', fontsize=14, y=0.92)
 
     fname_out_png = os.path.splitext(file_out_csv)[0] + '.png'
