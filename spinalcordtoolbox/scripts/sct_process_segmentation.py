@@ -26,7 +26,7 @@ from spinalcordtoolbox.aggregate_slicewise import aggregate_per_slice_or_level, 
 from spinalcordtoolbox.process_seg import compute_shape
 from spinalcordtoolbox.scripts import sct_maths
 from spinalcordtoolbox.csa_pmj import get_slices_for_pmj_distance
-from spinalcordtoolbox.get_spinal_level_from_rootlets import intersect_seg_and_rootlets, project_rootlets_to_segmentation
+from spinalcordtoolbox.get_spinal_level_from_rootlets import intersect_seg_and_rootlets, project_rootlets_to_segmentation, project_rootlets_to_segmentation2
 from spinalcordtoolbox.metrics_to_PAM50 import interpolate_metrics
 from spinalcordtoolbox.centerline.core import ParamCenterline
 from spinalcordtoolbox.image import add_suffix, splitext, Image
@@ -506,7 +506,7 @@ def main(argv: Sequence[str]):
             print(rootlets_levels)
 
             # Project the nerve rootlets intersection on the spinal cord segmentation to obtain spinal levels
-            fname_spinal_levels_ctl, fname_seg_projected = project_rootlets_to_segmentation(path_tmp_seg, path_tmp_rootlet, fname_intersect,
+            fname_spinal_levels_ctl, fname_seg_projected = project_rootlets_to_segmentation2(path_tmp_seg, path_tmp_rootlet, fname_intersect,
                                                                                             rootlets_levels)
             # Use the projected spinal levels to extract a labeled centerline from the input segmentation
             if verbose == 2:
