@@ -39,7 +39,7 @@ jobs:
           tag: ${{ env.SCT_VERSION }}
           push: false
           load: true
-          build-args: "SCT_DEEPSEG_MODELS=spinalcord,spine,gm_sc_7t_t2star"
+          build-args: "DEEPSEG_TASKS=spinalcord,spine,gm_sc_7t_t2star"
           docker-username: ${{ secrets.DOCKER_USERNAME }}
           docker-token: ${{ secrets.DOCKER_RO_PAT }}
       - name: Download sample data

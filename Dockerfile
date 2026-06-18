@@ -75,8 +75,8 @@ FROM continuumio/miniconda3:24.11.1-0
 ARG USERNAME=sct
 ARG USER_UID=1000
 ARG USER_GID=1000
-ARG SCT_DEEPSEG_MODELS
-ENV SCT_DEEPSEG_MODELS=${SCT_DEEPSEG_MODELS:-""}
+ARG DEEPSEG_TASKS
+ENV DEEPSEG_TASKS=${DEEPSEG_TASKS:-""}
 
 # Setup time and locales
 RUN ln -fs /usr/share/zoneinfo/America/New_York /etc/localtime
@@ -98,9 +98,9 @@ ENV PATH="/opt/conda/envs/venv_sct/bin:${PATH}"
 ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 
 # Install listed models if any (comma separated list, call sct_deepseg <model> -install for each)
-RUN if [ -n "$SCT_DEEPSEG_MODELS" ]; then \
-        echo "Installing deepseg models: $SCT_DEEPSEG_MODELS"; \
-        printf '%s\n' "$SCT_DEEPSEG_MODELS" | tr ',' '\n' | while read -r MODEL; do \
+RUN if [ -n "$DEEPSEG_TASKS" ]; then \
+        echo "Installing deepseg models: $DEEPSEG_TASKS"; \
+        printf '%s\n' "$DEEPSEG_TASKS" | tr ',' '\n' | while read -r MODEL; do \
             echo "Installing model: $MODEL"; \
             sct_deepseg "$MODEL" -install; \
             # Sleep for 5 seconds to avoid potential rate limits
