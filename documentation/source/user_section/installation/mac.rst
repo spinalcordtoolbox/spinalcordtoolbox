@@ -142,10 +142,63 @@ In the context of SCT, it can be used to test SCT in a specific OS environment; 
 Basic Installation (No GUI)
 ***************************
 
-First, `install Docker Desktop <https://docs.docker.com/desktop/install/mac-install/>`__. Then, follow the examples below to create an OS-specific SCT installation.
+First, `install Docker Desktop <https://docs.docker.com/desktop/install/mac-install/>`__ and launch it. Then, follow the examples below to create an OS-specific SCT installation.
 
-Docker Image: Ubuntu
-^^^^^^^^^^^^^^^^^^^^
+From an official release
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. versionadded:: 7.4
+
+Consult the `spinalcordtoolbox Docker registry <https://hub.docker.com/r/neuropoly/sct/tags>`__ to select a specific release and copy its tag (like ``7.4`` as in the example below). Then, you only need to pull the image to access the full extent of SCT features in that release :
+
+.. code:: bash
+
+   # Start from the Terminal
+   docker pull neuropoly/sct:7.4
+   # If the previous command says 'Cannot connect to the Docker daemon', make sure the docker service is running and you have the necessary permissions to access it
+
+Preinstalling DeepSeg tasks
+"""""""""""""""""""""""""""
+
+To inject DeepSeg tasks in an official release, you need to first pull the image, then run the following command, replacing ``{sct_version}`` with the version you want to install (e.g. ``7.4``):
+
+.. code:: bash
+
+    # Pull the Docker image for Ubuntu 22.04
+    docker pull neuropoly/sct:7.4
+    # Launch interactive mode (command-line inside container)
+    sudo docker run -it neuropoly/sct:7.4
+    # Now inside Docker container, install the DeepSeg tasks
+    sct_deepseg spinalcord -install
+    sct_deepseg tumor_t2 -install
+    # Save the state of the container as a docker image.
+    # Back on the Host machine, open a new terminal and run:
+    sudo docker ps -a  # list all containers (to find out the container ID)
+    # specify the ID, and also choose a name to use for the docker image, such as "sct_v7.0"
+    sudo docker commit <CONTAINER_ID> <IMAGE_NAME>/deepseg:spinalcord-tumor_t2
+
+From a local SCT installation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. versionadded:: 7.4
+
+Using the `Dockerfile` available in the SCT repository, you can build the container with your local modifications. Simply run the command below, replacing ``{local_sct_repository}`` with the path to your local copy of the SCT repository (e.g. ``/home/user/spinalcordtoolbox``):
+
+.. code:: sh
+
+    docker build -t <IMAGE_NAME>/sct:local {local_sct_repository}
+
+Preinstalling DeepSeg tasks
+"""""""""""""""""""""""""""
+
+You can inject DeepSeg tasks at build time by providing a comma-separated list of tasks as a build argument (``--build-arg``). For example, to install the ``spinalcord`` and ``tumor_t2`` tasks on a published Docker artifact:
+
+.. code:: sh
+
+    docker build --build-arg DEEPSEG_TASKS=spinalcord,tumor_t2 -t <IMAGE_NAME>/sct:local {local_sct_repository}
+
+SCT versions before 7.4
+^^^^^^^^^^^^^^^^^^^^^^^
 
 First, launch Docker Desktop, then open up a new Terminal window and run the commands below:
 
@@ -160,8 +213,8 @@ First, launch Docker Desktop, then open up a new Terminal window and run the com
    apt update
    apt install git bzip2 curl gcc git libdbus-1-3 libgl1-mesa-glx libglib2.0-0 libxkbcommon-x11-0 libxrender1
    # Note for above: libdbus-1-3, libgl1-mesa-glx, libglib2.0-0, libxkbcommon-x11-0, libxrender1 are required by PyQt
-   # Install SCT (you can change 7.0 for the version of your choice)
-   git clone --branch 7.0 https://github.com/spinalcordtoolbox/spinalcordtoolbox.git sct
+   # Install SCT (you can change 7.3 for the version of your choice)
+   git clone --branch 7.3 https://github.com/spinalcordtoolbox/spinalcordtoolbox.git sct
    cd sct
    ./install_sct -iy
    # For the previous command, it's normal if the last two checks show [FAIL] in red
@@ -172,10 +225,8 @@ First, launch Docker Desktop, then open up a new Terminal window and run the com
    # Save the state of the container as a docker image.
    # Back on the Host machine, open a new terminal and run:
    docker ps -a  # list all containers (to find out the container ID)
-   # specify the ID, and also choose a name to use for the docker image, such as "sct_v7.0"
+   # specify the ID, and also choose a name to use for the docker image, such as "sct_v7.3"
    docker commit <CONTAINER_ID> <IMAGE_NAME>/ubuntu:ubuntu22.04
-
-Alternatively, you can modify and use this `example Dockerfile for SCT <https://github.com/spinalcordtoolbox/spinalcordtoolbox/tree/master/contrib/docker>`__.
 
 Enable GUI Scripts (Optional)
 *****************************
@@ -194,7 +245,7 @@ First, save your Docker image if you haven't already done so:
 
    .. code:: bash
 
-      docker commit <CONTAINER_ID> <IMAGE_NAME>/ubuntu:ubuntu22.04
+      docker commit <CONTAINER_ID> <IMAGE_NAME>/<IMAGE_SPEC>
 
 Create an X11 server for handling display:
 
@@ -211,7 +262,7 @@ Create an X11 server for handling display:
 
    .. code:: bash
 
-      docker run -e DISPLAY=host.docker.internal:0 -it <IMAGE_NAME>/ubuntu:ubuntu22.04
+      docker run -e DISPLAY=host.docker.internal:0 -it <IMAGE_NAME>/<IMAGE_SPEC>
 
    (If this command says 'Cannot connect to the Docker daemon', try again after launching Docker Desktop.)
 
