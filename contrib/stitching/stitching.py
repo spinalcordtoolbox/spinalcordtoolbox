@@ -336,8 +336,6 @@ def main(  # noqa: C901
     store_ramp: bool = False,
     verbose: bool = False,
     min_value: float = 0,
-    bias_field: bool = True,
-    crop_to_bias_field: bool = False,
     crop_empty: bool = False,
     histogram: str | None = None,
     ramp_edge_min_value=5,
@@ -347,7 +345,9 @@ def main(  # noqa: C901
     dtype: type | str = float,
     save=True,
 ):
-    bias_field = True
+    # This is to prevent using antspyx depencies. Set to True if the dependency is ever added
+    bias_field = False
+    crop_to_bias_field = False,
     np.set_printoptions(precision=2, floatmode="fixed")
     if is_segmentation:
         bias_field = False
