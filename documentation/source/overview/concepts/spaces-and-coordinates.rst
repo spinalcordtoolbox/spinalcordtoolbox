@@ -88,4 +88,4 @@ References
   `Slicer <https://slicer.readthedocs.io/en/latest/user_guide/coordinate_systems.html>`_) reference coordinate system is different (LPS-).
 
 - `Matlab FieldTrip toolbox "How are the different head and MRI coordinate systems defined?"
-  <https://www.fieldtriptoolbox.org/faq/how_are_the_different_head_and_mri_coordinate_systems_defined>`_
+  <https://www.fieldtriptoolbox.org/faq/source/coordsys/>`_

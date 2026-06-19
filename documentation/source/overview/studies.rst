@@ -26,6 +26,13 @@ The following studies have used SCT:
 2026
 ----
 
+-  Yao *et al.* `Longitudinal Spinal Cord Atrophy in Patients With Neuromyelitis Optica Spectrum Disorder and Its Association With Rituximab Treatment <https://doi.org/10.1212/WNL.0000000000218120>`_, **Neurology** 2026
+-  Rubin *et al.* `Cerebrovascular risk factors impact on brain atrophy and DTI-ALPS decrease in neuromyelitis optica spectrum disorder <https://doi.org/10.1007/s00415-026-13881-3>`_, **J. Neurol.** 2026
+-  Boushila *et al.* `Super-resolution reconstruction of spinal cord MRI using deep learning: Application to multiple sclerosis atrophy measurement <https://doi.org/10.1016/j.bspc.2026.110588>`_, **Biomed. Signal Process. Control** 2026
+-  Miscioscia *et al.* `Spinal cord versus brain imaging biomarkers of multiple sclerosis trajectory combining 7T and 3T MRI <https://doi.org/10.1093/braincomms/fcag059>`_, **Brain Commun.** 2026
+-  Medina *et al.* `Automatic multiple sclerosis lesion segmentation in the spinal cord using 3T and 7T MP2RAGE images <https://doi.org/10.1016/j.msard.2026.107250>`_, **Mult. Scler. Relat. Disord.** 2026
+-  Farner *et al.* `Anti-Nogo-A NG101 treatment induces changes in spinal cord micro- and macrostructure following spinal cord injury <https://doi.org/10.1038/s41467-026-71412-0>`_, **Nat. Commun.** 2026
+-  Liffran *et al.* `Association Between Motor Pathway Damage and Motor Deficit in Upper and Lower Limb in People With MS <https://doi.org/10.1002/acn3.70418>`_, **Ann. Clin. Transl. Neurol.** 2026
 -  Callot *et al.* `7T magnetic resonance imaging of the human spinal cord in multiple sclerosis: Advances, insights and unmet needs <https://doi.org/10.1016/j.neurol.2026.04.003>`_, **Rev. Neurol.** 2026
 -  Streichenberger *et al.* `Quantitative Susceptibility Mapping of the Cervical Spinal Cord at 3T and Application to Multiple Sclerosis <https://doi.org/10.1002/nbm.70296>`_, **NMR Biomed.** 2026
 -  Krejčí *et al.* `Segmentation of spinal rootlets across MRI contrasts with RootletSeg <https://doi.org/10.1038/s41598-026-49164-0>`_, **Sci. Rep.** 2026
