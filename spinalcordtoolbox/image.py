@@ -1824,7 +1824,7 @@ def stitch_images(im_list: Sequence[Image], verbose: int = 1) -> Image:
     :return: An Image object containing the stitched volume.
     """
     nibs = [nib.Nifti1Image(im.data, im.hdr.get_best_affine()) for im in im_list]
-    nii_out, _ = _stitch(nibs, output=None, save=False, bias_field=False, verbose=bool(verbose))
+    nii_out, _ = _stitch(nibs, output=None, save=False, verbose=bool(verbose))
     return Image(nii_out.get_fdata(), hdr=nii_out.header)
 
 

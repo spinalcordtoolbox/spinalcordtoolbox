@@ -5,10 +5,6 @@
 # acvl_utils is a utility package used by `nnunetv2`. v0.2.1 broke usage of `nnunetv2`, so skip it:
 # See: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4679
 acvl_utils!=0.2.1
-# antspyx provides the `ants` module, optionally used by sct_stitching for N4 bias-field correction.
-# Note: SCT's `sct_image -stitch` always disables bias-field correction, so this dependency is
-# only required if invoking sct_stitching directly with bias-field correction enabled.
-antspyx
 # blosc2 is a utility package used by `nnunetv2`, and v3.9.0 required `numpy==2.0`
 # However, 3.9.0 specifically forgot to specify `>=2.0`, so it will break if installed alongside `numpy==1.26`
 # 3.9.1 and above re-added `numpy==1.26` support, so it is safe to skip this version but allow newer versions
