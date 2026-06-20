@@ -73,6 +73,7 @@ def create_qc_entry(
     plane: str,
     dataset: Optional[str],
     subject: Optional[str],
+    contrast: Optional[str] = None,
     image_extension: str = 'png',
 ) -> AbstractContextManager[dict[str, Path]]:
     """
@@ -98,7 +99,8 @@ def create_qc_entry(
         dataset = path_input.parent.parent.parent.name
     if subject is None:
         subject = path_input.parent.parent.name
-    contrast = path_input.parent.name
+    if contrast is None:
+        contrast = path_input.parent.name
     timestamp = mod_date.strftime('%Y_%m_%d_%H%M%S.%f')
 
     # Make sure the image directory exists
@@ -608,6 +610,7 @@ def sct_register(
     path_qc: str,
     dataset: str | None,
     subject: str | None,
+    contrast: str | None = None,
     p_resample: float | None = 0.6,
 ):
     """
@@ -626,6 +629,7 @@ def sct_register(
         plane='Axial',
         dataset=dataset,
         subject=subject,
+        contrast=contrast,
     ) as imgs_to_generate:
 
         img_input = Image(fname_input)
@@ -654,6 +658,7 @@ def sct_fmri_compute_tsnr(
     path_qc: str,
     dataset: str | None,
     subject: str | None,
+    contrast: str | None = None,
     p_resample: float | None = 0.6,
 ):
     """
@@ -674,6 +679,7 @@ def sct_fmri_compute_tsnr(
         plane='Axial',
         dataset=dataset,
         subject=subject,
+        contrast=contrast,
     ) as imgs_to_generate:
 
         img_input = Image(fname_input)
@@ -731,6 +737,7 @@ def sct_label_vertebrae(
     dataset: str | None,
     subject: str | None,
     path_custom_labels: str,
+    contrast: str | None = None,
     draw_text: bool = True,
     p_resample: float | None = None,
     offset_text: bool = True,
@@ -751,6 +758,7 @@ def sct_label_vertebrae(
         plane='Sagittal',
         dataset=dataset,
         subject=subject,
+        contrast=contrast,
     ) as imgs_to_generate:
 
         img_input = Image(fname_input)
@@ -857,6 +865,7 @@ def sct_label_utils(
     path_qc: str,
     dataset: str | None,
     subject: str | None,
+    contrast: str | None = None,
     p_resample: float | None = None,
 ):
     """
@@ -875,6 +884,7 @@ def sct_label_utils(
         plane='Sagittal',
         dataset=dataset,
         subject=subject,
+        contrast=contrast,
     ) as imgs_to_generate:
 
         img_input = Image(fname_input)
@@ -1381,6 +1391,7 @@ def sct_deepseg(
     subject: Optional[str],
     plane: Optional[str],
     fname_qc_seg: Optional[str],
+    contrast: Optional[str] = None,
 ):
     """
     Generate a QC report for sct_deepseg, based on which task was used.
@@ -1397,6 +1408,7 @@ def sct_deepseg(
         plane=plane,
         dataset=dataset,
         subject=subject,
+        contrast=contrast,
     ) as imgs_to_generate:
         # Custom QC to handle multiclass segmentation outside the spinal cord
         if "rootlets" in argv:
