@@ -58,14 +58,12 @@ sct_example_data/
 # Documentation (full source, not just build artefacts)
 documentation/
 
-# Apptainer and Docker contrib dirs (not needed inside the image)
-contrib/apptainer/
-contrib/docker/
-
 # Files with no effect on build
 .devcontainer/devcontainer.json
 .github/*
 *.sif
+*.img
+*.tar.gz
 .git/
 
 # Community / project-metadata files (no effect on pip install)
