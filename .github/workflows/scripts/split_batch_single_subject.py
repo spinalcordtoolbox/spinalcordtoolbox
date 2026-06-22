@@ -65,13 +65,15 @@ KNOWN_DATASETS = {
 def parse_sections(lines):
     sections = []
     skipped = []
-    i = 0
     n = len(lines)
+
     # Find START OF SCRIPT marker present in batch_single_subject.sh to avoid its preamble
     for idx, line in enumerate(lines):
         if 'START OF SCRIPT' in line:
             i = idx + 1
             break
+    else:
+        raise ValueError('Could not find "START OF SCRIPT" marker in input file. Cannot determine where the actual script starts.')
 
     while i < n:
         line = lines[i]
