@@ -77,21 +77,21 @@ def parse_sections(lines):
 
     while i < n:
         line = lines[i]
-        m = HEADER_RE.match(line)
-        if m and i + 1 < n and SEPARATOR_RE.match(lines[i + 1]):
+        m_header = HEADER_RE.match(line)
+        if m_header and i + 1 < n and SEPARATOR_RE.match(lines[i + 1]):
             # extract the dataset name and clean it from the title
-            title = m.group('title').strip()
-            match = DATASET_IN_TITLE_RE.search(title)
-            if match:
-                dataset = match.group('dataset').strip()
+            title = m_header.group('title').strip()
+            m_dataset = DATASET_IN_TITLE_RE.search(title)
+            if m_dataset:
+                dataset = m_dataset.group('dataset').strip()
                 title = DATASET_IN_TITLE_RE.sub('', title).strip()
 
             # if we found a header, but it doesn't contain a dataset marker, skip it and all lines until the next header
             else:
                 j = i + 2
                 while j < n:
-                    next_m = HEADER_RE.match(lines[j])
-                    if next_m and j + 1 < n and SEPARATOR_RE.match(lines[j + 1]):
+                    m_header_next = HEADER_RE.match(lines[j])
+                    if m_header_next and j + 1 < n and SEPARATOR_RE.match(lines[j + 1]):
                         break
                     j += 1
                 skipped.append({'title': title, 'start_line': i + 1})
@@ -107,8 +107,8 @@ def parse_sections(lines):
             body_lines = []
             j = i + 2
             while j < n:
-                next_m = HEADER_RE.match(lines[j])
-                if next_m and j + 1 < n and SEPARATOR_RE.match(lines[j + 1]):
+                m_header_next = HEADER_RE.match(lines[j])
+                if m_header_next and j + 1 < n and SEPARATOR_RE.match(lines[j + 1]):
                     break
                 body_lines.append(lines[j])
                 j += 1
@@ -166,9 +166,9 @@ def rewrite_cd_commands(body_lines: list, start_cwd: str = '') -> tuple:
             result.append(line)
             continue
 
-        m = CD_RE.match(line)
-        if m:
-            indent, target, tail = m.group(1), m.group(2), m.group(3)
+        m_cd = CD_RE.match(line)
+        if m_cd:
+            indent, target, tail = m_cd.group(1), m_cd.group(2), m_cd.group(3)
             # Absolute paths, shell variables ($…), home (~), subshells (`…)
             # — leave them verbatim but still track the cwd change if possible.
             if target[0] in ('/', '$', '~', '`'):
