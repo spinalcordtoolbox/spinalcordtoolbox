@@ -13,12 +13,11 @@
 # installation is successful.
 #
 # USAGE
-#   ./install_sct [-h] [-i] [-y] [-g] [-d] [-b] [-v] [-p]
+#   ./install_sct [-h] [-i] [-y] [-g] [-d] [-b] [-v]
 #
 # OPTIONS
 #  -h   Show this help
 #  -i   Install in-place; this is the default when working from git.
-#  -p   Install package (forced); this is the default when working from a release.
 #  -y   Install without interruption with 'yes' as default answer
 #  -g   Install with GPU version of PyTorch ('no' by default)
 #  -d   Prevent the (re)-installation of the data/ directory
@@ -413,13 +412,10 @@ for arg in "$@"; do
   esac
 done
 
-while getopts ":iygdbcvhp" opt; do
+while getopts ":iygdbcvh" opt; do
   case $opt in
   i)
     SCT_INSTALL_TYPE="in-place"
-    ;;
-  p)
-    SCT_INSTALL_TYPE="package"
     ;;
   y)
     echo " non-interactive mode"
@@ -749,11 +745,7 @@ fi
   # https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4352
   SYSTEM_VERSION_COMPAT=0 python/envs/venv_sct/bin/pip install -r "$REQUIREMENTS_FILE" --ignore-installed certifi &&
   print info "Installing spinalcordtoolbox..." &&
-  if [[ "$SCT_INSTALL_TYPE" == "package" ]]; then
-    python/envs/venv_sct/bin/pip install . --use-pep517
-  else
-    python/envs/venv_sct/bin/pip install -e . --use-pep517
-  fi
+  python/envs/venv_sct/bin/pip install -e . --use-pep517
 ) ||
   die "Failed running pip install: $?"
 

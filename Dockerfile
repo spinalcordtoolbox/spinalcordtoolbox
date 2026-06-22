@@ -1,9 +1,6 @@
 # syntax=docker/dockerfile:1
 FROM python:3.10-slim AS build
 
-ARG SCT_TOOLBOX_VERSION
-
-ENV SCT_TOOLBOX_VERSION=${SCT_TOOLBOX_VERSION:-"7.3"}
 ENV CONDA_PKGS_DIRS=/root/.conda/pkgs \
     MINIFORGE_CACHE_DIR=/root/.cache/miniforge \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
@@ -25,9 +22,6 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         libxkbcommon-x11-0 \
         libxrender1
 
-# Clone SCT from repository
-ADD https://github.com/spinalcordtoolbox/spinalcordtoolbox.git#${SCT_TOOLBOX_VERSION} /tmp/spinalcordtoolbox
-
 # Copy local build context and overwrite the cloned version
 ADD setup.py \
     setup.cfg \
@@ -35,52 +29,33 @@ ADD setup.py \
     MANIFEST.in \
     requirements.txt \
     install_sct \
-    LICENSE /tmp/sct_build_context/
-ADD spinalcordtoolbox /tmp/sct_build_context/spinalcordtoolbox/
-ADD data/ /tmp/sct_build_context/data/
-ADD contrib/ /tmp/sct_build_context/contrib/
-
-WORKDIR /tmp/sct_build_context
-RUN if [ -f setup.py ]; then \
-        cp -r $PWD/* /tmp/spinalcordtoolbox/. ; \
-    fi
+    LICENSE /opt/sct/
+ADD spinalcordtoolbox /opt/sct/spinalcordtoolbox/
+ADD data/ /opt/sct/data/
+ADD contrib/ /opt/sct/contrib/
 
 # Install SCT and dependencies
-WORKDIR /tmp/spinalcordtoolbox
+WORKDIR /opt/sct
 RUN --mount=type=cache,target=/root/.cache/miniforge,sharing=locked \
     --mount=type=cache,target=/root/.conda/pkgs,sharing=locked \
     --mount=type=cache,target=/root/.mamba/pkgs,sharing=locked \
     --mount=type=cache,target=/root/.cache/pip,sharing=locked \
-    bash install_sct -y -c -g -p
+    bash install_sct -y -c -g
 
-FROM build AS package
-
-ENV CONDA_PKGS_DIRS=/root/.conda/pkgs
-
-# Package the conda environment for deployment
-RUN --mount=type=cache,target=/root/.conda/pkgs,sharing=locked \
-    --mount=type=cache,target=/root/.mamba/pkgs,sharing=locked \
-    export SCT_VERSION=$(cat /tmp/spinalcordtoolbox/spinalcordtoolbox/version.txt) && \
-    export PATH="/root/sct_${SCT_VERSION}/python/bin:${PATH}" && \
-    conda install -c conda-forge conda-pack && \
-    cd /root/sct_${SCT_VERSION} && \
-    conda-pack -p python/envs/venv_sct --compress-level 0 -j -1 --format tar && \
-    mkdir -p /opt/conda/envs/venv_sct && tar -xf venv_sct.tar -C /opt/conda/envs/venv_sct
-
-# Unpack the conda environment and set it up for use
-WORKDIR /opt/conda/envs/venv_sct
-RUN ./bin/conda-unpack -v
-
-FROM continuumio/miniconda3:24.11.1-0
+FROM debian:bookworm-slim
 
 ARG USERNAME=sct
 ARG USER_UID=1000
 ARG USER_GID=1000
 ARG DEEPSEG_TASKS
+
 ENV DEEPSEG_TASKS=${DEEPSEG_TASKS:-""}
 
 # Setup time and locales
 RUN ln -fs /usr/share/zoneinfo/America/New_York /etc/localtime
+
+# Set bash shell as default
+SHELL ["/bin/bash", "-c"]
 
 # Create non-root user for development
 RUN groupadd --gid $USER_GID $USERNAME \
@@ -94,13 +69,16 @@ RUN groupadd --gid $USER_GID $USERNAME \
 USER $USERNAME
 
 # Copy SCT conda environment from build stage
-COPY --from=package --chmod=ugo=rwX  /opt/conda/envs/venv_sct /opt/conda/envs/venv_sct
-ENV PATH="/opt/conda/envs/venv_sct/bin:${PATH}"
+# COPY --from=package --chmod=ugo=rwX  /opt/conda/envs/venv_sct /opt/conda/envs/venv_sct
+COPY --from=build --chmod=ugo=rwX /opt/sct/ /opt/sct/
+ENV PATH="/opt/sct/bin:${PATH}"
+ENV SCT_DIR=/opt/sct
 ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 
 # Install listed models if any (comma separated list, call sct_deepseg <model> -install for each)
 RUN if [ -n "$DEEPSEG_TASKS" ]; then \
         echo "Installing deepseg models: $DEEPSEG_TASKS"; \
+        source /opt/sct/python/bin/activate && \
         printf '%s\n' "$DEEPSEG_TASKS" | tr ',' '\n' | while read -r MODEL; do \
             echo "Installing model: $MODEL"; \
             sct_deepseg "$MODEL" -install; \
