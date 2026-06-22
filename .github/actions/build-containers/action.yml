@@ -1,7 +1,46 @@
+# This action:
+# - builds the SCT Docker image from the repository Dockerfile;
+# - can load the image locally for downstream steps;
+# - can push the image to the registry; and
+# - can package the image as an Apptainer tarball for artifact upload.
+#
+# To use it from this repository, include it in a workflow with the appropriate inputs. For example:
+#
+# ```yaml
+#  - uses: ./.github/actions/build-containers
+#    with:
+#      tag: "v1.2.3"
+#      docker-username: ${{ secrets.DOCKER_USERNAME }}
+#      docker-token: ${{ secrets.DOCKER_TOKEN }}
+#      ...
+# ```
+#
+# To use it from another repository, reference it with the repository and path. For example:
+#
+# ```yaml
+#  - uses: spinalcordtoolbox/spinalcordtoolbox/.github/actions/build-containers@main
+#    with:
+#      ...
+# ```
+#
+# See https://docs.github.com/en/actions/tutorials/create-actions/create-a-composite-action#creating-an-action-metadata-file.
 name: Build SCT containers
 description: |
   Build SCT Docker image from current Dockerfile. SCT repository must
   be checked out in the workflow for this action to work.
+
+# Inputs grouped by purpose:
+# - Authentication:
+#   - docker-username
+#   - docker-token
+# - Docker build behavior:
+#   - tag
+#   - push
+#   - load
+#   - cache-from-tag
+#   - build-args
+# - Apptainer packaging:
+#   - upload-apptainer
 inputs:
   tag:
     description: "Tag to apply to the built Docker image."
@@ -48,6 +87,13 @@ inputs:
       NB: the workflow must have write permissions to the repository.
     required: false
     default: false
+
+# Outputs grouped by behavior:
+# - Always exposed:
+#   - image-tag: the Docker tag used for the build.
+#   - apptainer-image: the Apptainer tarball name, which is always produced.
+# - Only when upload-apptainer is true:
+#   - apptainer-artifact: the artifact name used for upload.
 outputs:
   image-tag:
     description: "Tag applied to the built Docker image."
@@ -62,6 +108,8 @@ outputs:
       The filename of the built Apptainer image. This is the same regardless
       of whether upload-apptainer is true, as the image is built regardless.
     value: ${{ format('sct_apptainer_{0}.tar.gz', inputs.tag) }}
+
+# Composite steps that build the Docker image and, optionally, the Apptainer image.
 runs:
   using: "composite"
   steps:
@@ -79,7 +127,7 @@ runs:
         # NB: the Dockerhub token should be set to read-only
         username: ${{ inputs.docker-username }}
         password: ${{ inputs.docker-token }}
-    - name: Docker Setup Buildx
+    - name: Setup Docker image builder
       uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4.1.0
       with:
         # Versions for buildx and BuildKit required to overstep bug for COPY --chmod using the X flag
@@ -96,7 +144,7 @@ runs:
         cache-from: "type=registry,ref=neuropoly/sct:${{ inputs.cache-from-tag || steps.sct-latest-release.outputs.tag }}"
         cache-to: "type=inline"
         build-args: ${{ inputs.build-args }}
-    - name: Maximize build space
+    - name: Maximize build space for apptainer build
       shell: bash
       run: |
         echo "-- Dotnet"
@@ -108,7 +156,8 @@ runs:
         echo "-- CodeQL"
         sudo rm -rf /opt/hostedtoolcache/CodeQL
         df -h
-    - uses: eWaterCycle/setup-apptainer@3f706d898c9db585b1d741b4692e66755f3a1b40 # v2.0.0
+    - name: Setup Apptainer image builder
+      uses: eWaterCycle/setup-apptainer@3f706d898c9db585b1d741b4692e66755f3a1b40 # v2.0.0
     - name: Build Apptainer image from Docker image
       shell: bash
       run: |
