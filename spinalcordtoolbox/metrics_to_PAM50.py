@@ -33,10 +33,19 @@ def interpolate_metrics(metrics, fname_vert_levels_PAM50, fname_vert_levels):
     level_slices_PAM50 = [get_slices_from_vertebral_levels(im_seg_labeled_PAM50, level) for level in levels]
     level_slices_im = [get_slices_from_vertebral_levels(im_seg_labeled, level) for level in levels]
 
-    # Find the mean scaling between the image and PAM50 (excluding first and last levels)
-    scales = [len(slices_PAM50)/len(slices_im) for slices_PAM50, slices_im
-              in zip(level_slices_PAM50[1:-1], level_slices_im[1:-1])]
-    scale_mean = np.mean(scales)
+    # Find the mean scaling between the image and PAM50 (excluding first and last levels to avoid
+    # edge effects from potentially incomplete levels)
+    inner_scales = [len(slices_PAM50)/len(slices_im) for slices_PAM50, slices_im
+                    in zip(level_slices_PAM50[1:-1], level_slices_im[1:-1])
+                    if len(slices_im) > 0]
+    if inner_scales:
+        scale_mean = np.mean(inner_scales)
+    else:
+        # Fall back to all available levels when fewer than 3 levels are present
+        # This is done to pass test on mt/mtr.nii.gz and PAM50_levels.nii.gz that only has 2 levels (C4, C5)
+        all_scales = [len(slices_PAM50)/len(slices_im) for slices_PAM50, slices_im
+                      in zip(level_slices_PAM50, level_slices_im) if len(slices_im) > 0]
+        scale_mean = np.mean(all_scales) if all_scales else np.nan
 
     # Initialize a metrics dict filled by NaN with number of rows equal to number of slices in PAM50 template
     z = im_seg_labeled_PAM50.dim[2]  # z == number of slices
