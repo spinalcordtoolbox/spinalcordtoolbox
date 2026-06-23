@@ -76,9 +76,10 @@ jobs:
           push: ${{ github.event.inputs.dry_run == 'False' }}
           load: true
           cache-from-tag: ""
-          upload-apptainer: true
+          upload-apptainer: ${{ github.event.inputs.dry_run == 'False' }}
           docker-username: ${{ secrets.DOCKER_USERNAME }}
           docker-token: ${{ secrets.DOCKER_RW_PAT }}
+          apptainer-token: ${{ secrets.GHCR_RW_PAT }}
 
   generate-install-methods:
     runs-on: ubuntu-latest
@@ -211,11 +212,6 @@ jobs:
       uses: actions/download-artifact@v8
       with:
         name: install-scripts
-
-    - name: Download Apptainer image
-      uses: actions/download-artifact@v8
-      with:
-        name: ${{ needs.generate-containers.outputs.apptainer-artifact }}
 
     - name: Commit requirements-freeze.txt (for release)
       run: |

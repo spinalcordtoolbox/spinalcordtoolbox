@@ -2,7 +2,7 @@
 # - builds the SCT Docker image from the repository Dockerfile;
 # - can load the image locally for downstream steps;
 # - can push the image to the registry; and
-# - can package the image as an Apptainer tarball for artifact upload.
+# - can push the apptainer image to ghcr.io
 #
 # To use it from this repository, include it in a workflow with the appropriate inputs. For example:
 #
@@ -41,6 +41,7 @@ description: |
 #   - build-args
 # - Apptainer packaging:
 #   - upload-apptainer
+#   - apptainer-token
 inputs:
   tag:
     description: "Tag to apply to the built Docker image."
@@ -82,11 +83,16 @@ inputs:
     default: ""
   upload-apptainer:
     description: |
-      Whether to upload the built Apptainer image to artifacts, with artifact
-      name apptainer-image-{ tag }.
-      NB: the workflow must have write permissions to the repository.
+      Whether to upload the built Apptainer image to ghcr.io.
+      NB: the workflow must have write permissions to repository's packages.
     required: false
     default: false
+  apptainer-token:
+    description: |
+      Personal access token for ghcr.io authentication.
+      NB: adjust the permissions of the token according to the needs of the workflow.
+    required: false
+    default: ""
 
 # Outputs grouped by behavior:
 # - Always exposed:
@@ -105,9 +111,9 @@ outputs:
     value: ${{ inputs.upload-apptainer == 'true' && format('apptainer-image-{0}', inputs.tag) || '' }}
   apptainer-image:
     description: |
-      The filename of the built Apptainer image. This is the same regardless
+      The filename of the built Apptainer image on ghcr.io. This is the same regardless
       of whether upload-apptainer is true, as the image is built regardless.
-    value: ${{ format('sct_apptainer_{0}.tar.gz', inputs.tag) }}
+    value: ${{ format('sct_apptainer_{0}', inputs.tag) }}
 
 # Composite steps that build the Docker image and, optionally, the Apptainer image.
 runs:
@@ -161,10 +167,10 @@ runs:
     - name: Build Apptainer image from Docker image
       shell: bash
       run: |
-        apptainer build sct_apptainer_${{ inputs.tag }}.tar.gz docker-daemon:neuropoly/sct:${{ inputs.tag }}
+        apptainer build sct_apptainer_${{ inputs.tag }}.sif docker-daemon:neuropoly/sct:${{ inputs.tag }}
     - name: Upload apptainer image
-      uses: actions/upload-artifact@v7
+      shell: bash
       if: ${{ inputs.upload-apptainer == 'true' }}
-      with:
-        name: apptainer-image-${{ inputs.tag }}
-        path: sct_apptainer_${{ inputs.tag }}.tar.gz
+      run: |
+        echo "${{ inputs.apptainer-token }}" | apptainer registry login -u "${{ github.actor }}" --password-stdin oras://ghcr.io
+        apptainer push sct_apptainer_${{ inputs.tag }}.sif oras://ghcr.io/spinalcordtoolbox/sct:${{ inputs.tag }}
