@@ -269,7 +269,7 @@ buffer_references = {}
 def buffer_reference(path, bias_field: bool, crop=False):
     if path in buffer_references:
         return buffer_references[path]
-    reference = n4_bias_field_correction(nib.load(path), crop) if bias_field else get_array(nib.load(path))  # type: ignore
+    reference = n4_bias_field_correction(nib.load(path), crop=crop) if bias_field else get_array(nib.load(path))  # type: ignore
     buffer_references[path] = reference
     return reference
 
