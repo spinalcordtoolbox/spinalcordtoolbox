@@ -218,58 +218,16 @@ def n4_bias_field_correction(
     crop=False,
 ):
     try:
-        import ants
         import ants.utils.bias_correction as bc  # pip install antspyx==0.4.2
         from ants.utils.convert_nibabel import from_nibabel, to_nibabel
 
     except ModuleNotFoundError as err:
         raise ModuleNotFoundError("n4 bias field correction uses ants install it with pip install antspyx==0.4.2") from err
-        # 5.3 or higher
-        import ants
-        import ants.ops.bias_correction as bc  # pip install antspyx
-
-        # TODO add conversion and remove this
-
-        def from_nibabel(nib_image):
-            """
-            Converts a given Nifti image into an ANTsPy image
-
-            Parameters
-            ----------
-                img: NiftiImage
-
-            Returns
-            -------
-                ants_image: ANTsImage
-            """
-            ndim = nib_image.ndim
-
-            if ndim < 3:
-                print("Dimensionality is less than 3.")
-                return None
-
-            q_form = nib_image.get_qform()
-            spacing = nib_image.header["pixdim"][1: ndim + 1]
-
-            origin = np.zeros(ndim)
-            origin[:3] = q_form[:3, 3]
-
-            direction = np.diag(np.ones(ndim))
-            direction[:3, :3] = q_form[:3, :3] / spacing[:3]
-
-            ants_img = ants.from_numpy(data=nib_image.get_fdata(), origin=origin.tolist(), spacing=spacing.tolist(), direction=direction)
-
-            return ants_img
-
-        def to_nibabel(img: ants.core.ants_image.ANTsImage):
-            try:
-                from nibabel.nifti1 import Nifti1Image
-            except ModuleNotFoundError as e:
-                raise ModuleNotFoundError(
-                    "Could not import nibabel, for conversion to nibabel. Install nibabel with pip install nibabel"
-                ) from e
-            affine = get_ras_affine(rotation=img.direction, spacing=img.spacing, origin=img.origin)
-            return Nifti1Image(img.numpy(), affine, nib.header)
+        # NOTE (denisseantunez, issue #5106): this fallback was previously written for newer ants
+        # (5.3+) versions that moved bias_correction to a different module path. SCT already bundles
+        # some ANTs functionality as precompiled binaries (e.g. isct_antsRegistration). If N4 bias
+        # correction is added that way in the future, this function could be rewritten to shell out
+        # to a binary instead of requiring antspyx.
 
     if convergence is None:
         convergence = {"iters": [50, 50, 50, 50], "tol": 1e-07}
