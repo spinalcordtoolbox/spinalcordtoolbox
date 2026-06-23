@@ -78,51 +78,35 @@ def parse_sections(lines):
     while i < n:
         line = lines[i]
         m_header = HEADER_RE.match(line)
-        if m_header and i + 1 < n and SEPARATOR_RE.match(lines[i + 1]):
-            # extract the dataset name and clean it from the title
-            title = m_header.group('title')
-            m_dataset = DATASET_IN_TITLE_RE.search(title)
-            if m_dataset:
-                dataset = m_dataset.group('dataset')
-                title = DATASET_IN_TITLE_RE.sub('', title)
-
-            # if we found a header, but it doesn't contain a dataset marker, skip it and all lines until the next header
-            else:
-                j = i + 2
-                while j < n:
-                    m_header_next = HEADER_RE.match(lines[j])
-                    if m_header_next and j + 1 < n and SEPARATOR_RE.match(lines[j + 1]):
-                        break
-                    j += 1
-                skipped.append({'title': title, 'start_line': i + 1})
-                print(
-                    f'WARNING: skipping section at line {i + 1} '
-                    f'"{title}" — no (dataset: ...) marker in header.',
-                    file=sys.stderr,
-                )
-                i = j
-                continue
-
-            # collect body until next header+separator or EOF
-            body_lines = []
-            j = i + 2
-            while j < n:
-                m_header_next = HEADER_RE.match(lines[j])
-                if m_header_next and j + 1 < n and SEPARATOR_RE.match(lines[j + 1]):
-                    break
-                body_lines.append(lines[j])
-                j += 1
-
-            sections.append({
-                'title': title,
-                'dataset': dataset,
-                'start_line': i + 1,
-                'end_line': j,
-                'body': body_lines,
-            })
-            i = j
-        else:
+        if not (m_header and i + 1 < n and SEPARATOR_RE.match(lines[i + 1])):
             i += 1
+            continue
+
+        # collect body until next header+separator or EOF
+        j = i + 2
+        while j < n:
+            m_header_next = HEADER_RE.match(lines[j])
+            if m_header_next and j + 1 < n and SEPARATOR_RE.match(lines[j + 1]):
+                break
+            j += 1
+
+        # construct the section (depending on whether the header had a dataset or not)
+        section = {'title': m_header.group('title'), 'body': lines[i+2:j],
+                   'start_line': i + 1, 'end_line': j}
+        m_dataset = DATASET_IN_TITLE_RE.search(section['title'])
+        if m_dataset:  # extract the dataset name and clean it from the title
+            section['title'] = DATASET_IN_TITLE_RE.sub('', section['title'])
+            section['dataset'] = m_dataset.group('dataset')
+            sections.append(section)
+        else:
+            print(
+                f'WARNING: skipping section at line {i + 1} '
+                f'"{section["title"]}" — no (dataset: ...) marker in header.',
+                file=sys.stderr,
+            )
+            skipped.append(section)
+
+        i = j
 
     return sections
 
