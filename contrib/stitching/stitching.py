@@ -347,7 +347,7 @@ def main(  # noqa: C901
 ):
     # This is to prevent using antspyx depencies. Set to True if the dependency is ever added
     bias_field = False
-    crop_to_bias_field = False,
+    crop_to_bias_field = False
     np.set_printoptions(precision=2, floatmode="fixed")
     if is_segmentation:
         bias_field = False
