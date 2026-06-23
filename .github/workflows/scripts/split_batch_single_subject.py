@@ -127,7 +127,7 @@ def parse_sections(lines):
 # - Group 1: leading whitespace
 # - Group 2: target path
 # - Group 3: trailing whitespace / inline comment (preserved verbatim)
-CD_RE = re.compile(r'^(\s*)cd\s+(\S+)([ \t]*(?:#.*)?)$')
+CD_RE = re.compile(r'^(\s*)cd\s+(\S+)(\s*(?:#.*)?)$')
 
 
 def resolve_cd(target, virtual_cwd):
