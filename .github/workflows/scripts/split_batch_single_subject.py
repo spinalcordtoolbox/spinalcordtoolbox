@@ -10,7 +10,7 @@ from pathlib import Path
 
 HEADER_RE = re.compile(r'^\s*#\s*(?P<title>.+?)\s*$')
 SEPARATOR_RE = re.compile(r'^\s*#\s*={5,}\s*$')
-DATASET_IN_TITLE_RE = re.compile(r'\(dataset:\s*(?P<dataset>[^\)]+)\)')
+DATASET_IN_TITLE_RE = re.compile(r'\s*\(dataset:\s*(?P<dataset>[^)]+?)\s*\)')
 
 # FIXME: List of dataset zip assets published on the sct_tutorial_data
 #   GitHub release page.  Any dataset in this set that is NOT referenced by at
@@ -80,11 +80,11 @@ def parse_sections(lines):
         m_header = HEADER_RE.match(line)
         if m_header and i + 1 < n and SEPARATOR_RE.match(lines[i + 1]):
             # extract the dataset name and clean it from the title
-            title = m_header.group('title').strip()
+            title = m_header.group('title')
             m_dataset = DATASET_IN_TITLE_RE.search(title)
             if m_dataset:
-                dataset = m_dataset.group('dataset').strip()
-                title = DATASET_IN_TITLE_RE.sub('', title).strip()
+                dataset = m_dataset.group('dataset')
+                title = DATASET_IN_TITLE_RE.sub('', title)
 
             # if we found a header, but it doesn't contain a dataset marker, skip it and all lines until the next header
             else:
