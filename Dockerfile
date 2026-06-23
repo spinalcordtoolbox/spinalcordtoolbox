@@ -44,6 +44,10 @@ RUN --mount=type=cache,target=/root/.cache/miniforge,sharing=locked \
 
 FROM debian:bookworm-slim
 
+LABEL org.opencontainers.image.source="https://github.com/spinalcordtoolbox/spinalcordtoolbox"
+LABEL org.opencontainers.image.description="Comprehensive and open-source library of analysis tools for MRI of the spinal cord."
+LABEL org.opencontainers.image.licenses="LGPL-3.0"
+
 ARG USERNAME=sct
 ARG USER_UID=1000
 ARG USER_GID=1000
