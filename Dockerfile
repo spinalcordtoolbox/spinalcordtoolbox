@@ -24,12 +24,12 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 
 # Copy local build context and overwrite the cloned version
 ADD setup.py \
-    setup.cfg \
     README.rst \
     MANIFEST.in \
     requirements.txt \
     install_sct \
-    LICENSE /opt/sct/
+    LICENSE \
+    /opt/sct/
 ADD spinalcordtoolbox /opt/sct/spinalcordtoolbox/
 ADD data/ /opt/sct/data/
 ADD contrib/ /opt/sct/contrib/
@@ -58,9 +58,6 @@ ENV DEEPSEG_TASKS=${DEEPSEG_TASKS:-""}
 # Setup time and locales
 RUN ln -fs /usr/share/zoneinfo/America/New_York /etc/localtime
 
-# Set bash shell as default
-SHELL ["/bin/bash", "-c"]
-
 # Create non-root user for development
 RUN groupadd --gid $USER_GID $USERNAME \
     && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME -s /bin/bash \
@@ -79,10 +76,13 @@ ENV PATH="/opt/sct/bin:${PATH}"
 ENV SCT_DIR=/opt/sct
 ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 
+# Set bash shell as default
+SHELL ["/opt/sct/python/bin/conda", "run", "-n", "venv_sct", "/bin/bash", "-c"]
+
 # Install listed models if any (comma separated list, call sct_deepseg <model> -install for each)
 RUN if [ -n "$DEEPSEG_TASKS" ]; then \
         echo "Installing deepseg models: $DEEPSEG_TASKS"; \
-        source /opt/sct/python/bin/activate && \
+        set -euo pipefail; \
         printf '%s\n' "$DEEPSEG_TASKS" | tr ',' '\n' | while read -r MODEL; do \
             echo "Installing model: $MODEL"; \
             sct_deepseg "$MODEL" -install; \
