@@ -20,8 +20,9 @@ SCRIPT_PATHS = [
 
 logger = logging.getLogger(__name__)
 
-# Matches the opening of a code block directive (language is optional)
-_CODE_BLOCK_RE = re.compile(r'^\s*\.\.\s+code(?:-block)?::(?:\s+\S+)?\s*$')
+# Matches the opening of a code block directive (language is optional).
+# Group 1 captures the leading whitespace (directive's own indentation level).
+_CODE_BLOCK_RE = re.compile(r'^(\s*)\.\.\s+code(?:-block)?::(?:\s+\S+)?\s*$')
 
 # A command name is sct_ followed by word characters
 _SCT_CMD_RE = re.compile(r'^sct_[a-zA-Z0-9_]+')
@@ -110,29 +111,28 @@ def extract_code_block_lines(content):
     i = 0
     while i < len(lines):
         line = lines[i]
-        if _CODE_BLOCK_RE.match(line):
+        m_code_block = _CODE_BLOCK_RE.match(line)
+        if m_code_block:
+            directive_indent = m_code_block.group(1)
             # Skip blank lines immediately after directive header
             i += 1
             while i < len(lines) and not lines[i].strip():
                 i += 1
             if i >= len(lines):
                 return
-            # Determine indent from first content line
+            # Determine indent string from first content line
             first = lines[i]
-            block_indent = len(first) - len(first.lstrip())
+            block_indent_len = len(first) - len(first.lstrip())
+            block_indent = first[:block_indent_len]
+            if not block_indent.startswith(directive_indent) or block_indent == directive_indent:
+                raise ValueError(f"Malformed code block at line {i+1}: {first!r}")
+            # Extract lines of code (removing the block indent)
             block_lines = []
             while i < len(lines):
                 line = lines[i]
-                if line.strip() == '':
-                    # Blank lines are allowed inside the block
-                    block_lines.append('')
-                    i += 1
-                    continue
-                current_indent = len(line) - len(line.lstrip())
-                if current_indent < block_indent:
+                if line.strip() and not line.startswith(block_indent):
                     break
-                # Strip only the block-level indentation, preserve relative indent
-                block_lines.append(line[block_indent:])
+                block_lines.append(line.removeprefix(block_indent))
                 i += 1
             yield block_lines
         else:
