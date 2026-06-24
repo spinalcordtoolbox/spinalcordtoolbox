@@ -70,10 +70,9 @@ def get_parser():
     image.add_argument(
         '-stitch',
         action='store_true',
-        help='Stitch multiple images acquired in the same orientation utilizing '
-             'the algorithm by Lavdas, Glocker et al. (https://doi.org/10.1016/j.crad.2019.01.012).'
-             'The first image is used as the reference.'
-             'Ensure to use the image with the largest dimensions first to avoid cropping of the images.'
+        help='Stitch multiple images acquired in the same orientation, utilizing '
+             'distance-transform ramp blending in overlapping regions, based on the '
+             'algorithm by Graf et al. (https://doi.org/10.1007/s00330-024-11047-1).'
              )
     image.add_argument(
         '-qc',
