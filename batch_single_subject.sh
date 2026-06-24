@@ -192,8 +192,7 @@ sct_register_to_template -i t2.nii.gz -s t2_seg.nii.gz -ldisc t2_labels_vert.nii
 # Register t2->template in compressed cord (example command)
 # In case of highly compressed cord, the algo columnwise can be used, which allows for more deformation than bsplinesyn.
 # NB: In the example below, the registration is done in the subject space (no straightening) using a single label point at disc C3-C4 (<LABEL_DISC>).
-# sct_register_to_template -i <IMAGE> -s <SEGMENTATION> -ldisc <LABEL_DISC> -ref subject -param step=1,type=seg,
-# algo=centermassrot:step=2,type=seg,algo=columnwise
+## sct_register_to_template -i "$IMAGE" -s "$SEGMENTATION" -ldisc "$LABEL_DISC" -ref subject -param step=1,type=seg,algo=centermassrot:step=2,type=seg,algo=columnwise
 
 # Warp template objects (T2, cord segmentation, vertebral levels, etc.). Here we use -a 0 because we don’t need the
 # white matter atlas at this point.
@@ -531,6 +530,12 @@ sct_deepseg spinalcord -i t2.nii.gz -qc ~/qc_singleSubj
 sct_deepseg lesion_ms -i t2.nii.gz -qc ~/qc_singleSubj -qc-seg t2_seg.nii.gz -single-fold
 # Check results using FSLeyes
 fsleyes t2.nii.gz -cm greyscale t2_lesion_seg.nii.gz -cm red -a 70.0 &
+
+# Multiple sclerosis lesion segmentation on MP2RAGE images
+# Commented out for now due to lack of appropriate public data
+# sct_deepseg spinalcord -i "$IMAGE_UNIT1" -o "$IMAGE_SEG"
+# sct_crop_image -i "$IMAGE_UNIT1" -m "$IMAGE_SEG" -dilate 30x30x5
+# sct_deepseg lesion_ms_mp2rage -i "$IMAGE_UNIT1" -qc ~/qc_singleSubj
 
 # Return to parent directory
 cd ..
