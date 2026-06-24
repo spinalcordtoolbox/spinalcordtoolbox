@@ -89,7 +89,7 @@ If you wish to benefit from the cutting-edge version of SCT, or if you wish to c
 
     .. code:: sh
 
-      git checkout <revision_of_interest>
+        git checkout <revision_of_interest>
 
 #. Run the installer and follow the instructions
 
@@ -127,9 +127,9 @@ Consult the `spinalcordtoolbox Docker registry <https://hub.docker.com/r/neuropo
 
 .. code:: bash
 
-   # Start from the Terminal
-   docker pull neuropoly/sct:7.4
-   # If the previous command says 'Cannot connect to the Docker daemon', make sure the docker service is running and you have the necessary permissions to access it
+    # Start from the Terminal
+    docker pull neuropoly/sct:7.4
+    # If the previous command says 'Cannot connect to the Docker daemon', make sure the docker service is running and you have the necessary permissions to access it
 
 Preinstalling DeepSeg tasks
 """""""""""""""""""""""""""
@@ -165,7 +165,7 @@ Using the `Dockerfile` available in the SCT repository, you can build the contai
 Preinstalling DeepSeg tasks
 """""""""""""""""""""""""""
 
-You can inject DeepSeg tasks at build time by providing a comma-separated list of tasks as a build argument (``--build-arg``). For example, to install the ``spinalcord`` and ``tumor_t2`` tasks on a published Docker artifact:
+You can inject DeepSeg tasks at build time by providing a comma-separated list of tasks as a build argument (``--build-arg``). For example, to install the ``spinalcord`` and ``tumor_t2`` tasks:
 
 .. code:: sh
 
@@ -243,17 +243,17 @@ Then, to forward the X11 server:
         xhost +local:docker
 
 #. In your Terminal window, run:
-   
+
     .. code:: bash
 
         sudo docker run -it --rm --privileged -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix <IMAGE_NAME>/<IMAGE_SPEC>``
 
 You can test whether GUI scripts are available by running the following command in your Docker container:
- 
+
     .. code:: bash
-   
+
         sct_check_dependencies
-      
+
 You should see two green ``[OK]`` symbols at the bottom of the report for "PyQT" and "matplotlib" checks, which represent the GUI features provided by SCT are now available.
 
 .. _pip-install:

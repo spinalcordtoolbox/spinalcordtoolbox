@@ -301,18 +301,18 @@ To inject DeepSeg tasks in an official release, you need to first pull the image
 
 .. code:: bash
 
-    # Pull the Docker image for Ubuntu 22.04
-    docker pull neuropoly/sct:7.4
-    # Launch interactive mode (command-line inside container)
-    sudo docker run -it neuropoly/sct:7.4
-    # Now inside Docker container, install the DeepSeg tasks
-    sct_deepseg spinalcord -install
-    sct_deepseg tumor_t2 -install
-    # Save the state of the container as a docker image.
-    # Back on the Host machine, open a new terminal and run:
-    sudo docker ps -a  # list all containers (to find out the container ID)
-    # specify the ID, and also choose a name to use for the docker image, such as "sct_v7.4"
-    sudo docker commit <CONTAINER_ID> <IMAGE_NAME>/deepseg:spinalcord-tumor_t2
+   # Pull the Docker image for Ubuntu 22.04
+   docker pull neuropoly/sct:7.4
+   # Launch interactive mode (command-line inside container)
+   sudo docker run -it neuropoly/sct:7.4
+   # Now inside Docker container, install the DeepSeg tasks
+   sct_deepseg spinalcord -install
+   sct_deepseg tumor_t2 -install
+   # Save the state of the container as a docker image.
+   # Back on the Host machine, open a new terminal and run:
+   sudo docker ps -a  # list all containers (to find out the container ID)
+   # specify the ID, and also choose a name to use for the docker image, such as "sct_v7.4"
+   sudo docker commit <CONTAINER_ID> <IMAGE_NAME>/deepseg:spinalcord-tumor_t2
 
 From a local SCT installation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -328,11 +328,11 @@ Using the `Dockerfile` available in the SCT repository, you can build the contai
 Preinstalling DeepSeg tasks
 """""""""""""""""""""""""""
 
-You can inject DeepSeg tasks at build time by providing a comma-separated list of tasks as a build argument (``--build-arg``). For example, to install the ``spinalcord`` and ``tumor_t2`` tasks on a published Docker artifact:
+You can inject DeepSeg tasks at build time by providing a comma-separated list of tasks as a build argument (``--build-arg``). For example, to install the ``spinalcord`` and ``tumor_t2`` tasks:
 
 .. code:: sh
 
-    docker build --build-arg DEEPSEG_TASKS=spinalcord,tumor_t2 -t <IMAGE_NAME>/sct:local {local_sct_repository}
+   docker build --build-arg DEEPSEG_TASKS=spinalcord,tumor_t2 -t <IMAGE_NAME>/sct:local {local_sct_repository}
 
 SCT versions before 7.4
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -401,7 +401,7 @@ First, save your Docker image if you have not already done so:
 
 
 8. You can test whether GUI scripts are available by running the following command in your Docker container:
- 
+
    .. code:: bash
 
       mkdir /tmp/runtime-root

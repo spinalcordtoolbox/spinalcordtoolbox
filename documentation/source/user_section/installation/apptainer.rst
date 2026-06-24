@@ -47,15 +47,15 @@ Using the `Dockerfile` available in the SCT repository, you can build the contai
     apptainer build sct.sif dockerfile://{local_sct_repository}
 
 Preinstalling DeepSeg tasks
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+"""""""""""""""""""""""""""
 
 .. versionadded:: 7.4
 
-You can inject DeepSeg tasks at build time by providing a comma-separated list of tasks as a build argument (``--build-arg``). For example, to install the ``spinalcord`` and ``tumor_t2`` tasks on a published Docker artifact:
+You can inject DeepSeg tasks at build time by providing a comma-separated list of tasks as a build argument (``--build-arg``). For example, to install the ``spinalcord`` and ``tumor_t2`` tasks:
 
 .. code:: sh
 
-    apptainer build --build-arg DEEPSEG_TASKS=spinalcord,tumor_t2 sct.sif docker://neuropoly/sct:{sct_version}
+    apptainer build --build-arg DEEPSEG_TASKS=spinalcord,tumor_t2 sct.sif dockerfile://{local_sct_repository}
 
 SCT versions before 7.4
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -104,8 +104,7 @@ Apptainer containers are static by default. In order to install new ``sct_deepse
 
     .. code:: sh
 
-        SCT_ENV_PATH=/opt/conda/envs/venv_sct
-        MODEL_DIR=$SCT_ENV_PATH/lib/python3.10/site-packages/data/deepseg_models
+        MODEL_DIR=/opt/sct/data/deepseg_models
         apptainer overlay create --size 20480 --sparse --create-dir $MODEL_DIR sct_deepseg_models.img
 
     This will create a 20GB overlay file named ``sct_deepseg_models.img``. You can adjust the size as needed, but 20GB should be sufficient for most users.
@@ -122,7 +121,7 @@ Apptainer containers are static by default. In order to install new ``sct_deepse
 
         apptainer shell --overlay sct_deepseg_models.img sct.sif
 
-Model download should complete successfully and persist in the overlay image. You can thus reuse it with future ``apptainer`` commands or ``shell`` sessions to avoid having to redownload models each time !
+Model download should complete successfully and persist in the overlay image. You can thus reuse it with future ``apptainer`` commands to avoid having to redownload models each time !
 
 SCT versions before 7.4
 ^^^^^^^^^^^^^^^^^^^^^^^
