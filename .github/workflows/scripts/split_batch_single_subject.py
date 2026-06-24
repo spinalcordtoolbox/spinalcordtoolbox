@@ -186,9 +186,7 @@ def write_scripts(sections, outdir):
     for idx, section in enumerate(sections, start=1):
         name = section['title']
         dataset = section['dataset']  # always present — sections without dataset are skipped in parse_sections
-        slug = make_slug(name)
-        dataset_slug = make_slug(dataset)
-        fname = f"{idx:02d}_{slug}_{dataset_slug}.sh"
+        fname = f"{idx:02d}_{make_slug(name)}_{make_slug(dataset)}.sh"
         fpath = outdir / fname
         body = section['body']
 
