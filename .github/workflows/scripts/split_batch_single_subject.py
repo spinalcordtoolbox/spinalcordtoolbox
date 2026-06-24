@@ -1,7 +1,6 @@
 import argparse
 import json
 import os
-import posixpath
 import re
 import stat
 import sys
@@ -122,53 +121,42 @@ def parse_sections(lines):
 # isolated mini-script always navigates correctly regardless of where the shell
 # started.
 
+# Assumptions made to simplify the code:
+#   * Data directories are always a single subdirectory name, optionally
+#     preceded by `../` (e.g. `cd t2`, `cd ../mt`, `cd "$DIR"`).
+#   * Data directories are always relative to `$DATA_DIR`.
+#   * No spaces, glob characters, or multi-part paths.
 
-# NB: regex that matches a live (non-commented) bare `cd TARGET` line.
+# NB: regex that matches a live (non-commented) `cd TARGET` line.
 # - Group 1: leading whitespace
-# - Group 2: target path
+# - Group 2: path (which may be quoted)
 # - Group 3: trailing whitespace / inline comment (preserved verbatim)
 CD_RE = re.compile(r'^(\s*)cd\s+(\S+)(\s*(?:#.*)?)$')
 
 
-def resolve_cd(target, virtual_cwd):
-    """Return the new virtual_cwd after `cd TARGET`, rooted at DATA_DIR (='').
-
-    Uses POSIX path arithmetic so that `..` at the root stays at the root
-    (same behaviour as a real shell on a dataset root).
-    """
-    rooted = posixpath.normpath('/' + virtual_cwd + '/' + target)
-    rel = rooted.lstrip('/')
-    return '' if rel == '.' else rel
-
-
 def rewrite_cd_commands(body_lines: list, start_cwd: str = '') -> tuple:
-    virtual_cwd = start_cwd
+    current_cwd = start_cwd
     result = []
     for line in body_lines:
-        # Leave comment lines alone (they may contain example `cd` commands)
-        if line.lstrip().startswith('#'):
+        # Deconstruct the `cd` command from the regex groups (if present)
+        m = CD_RE.match(line)
+        if not m:
             result.append(line)
             continue
+        indent, dir_name, tail = m.groups()
 
-        m_cd = CD_RE.match(line)
-        if m_cd:
-            indent, target, tail = m_cd.group(1), m_cd.group(2), m_cd.group(3)
-            # Absolute paths, shell variables ($…), home (~), subshells (`…)
-            # — leave them verbatim but still track the cwd change if possible.
-            if target[0] in ('/', '$', '~', '`'):
-                result.append(line)
-                continue
+        # Strip surrounding quotes (but only in pairs, just in case of `cd "$ENV"/path`
+        if len(dir_name) >= 2 and dir_name[0] in ('"', "'") and dir_name[-1] == dir_name[0]:
+            dir_name = dir_name[1:-1]
+        # Both `cd t2` and `cd ../t2` resolve to the same subdirectory
+        # relative to `$DATA_DIR` given the flat, single-depth layout.
+        if dir_name.startswith('../'):
+            dir_name = dir_name[3:]
 
-            new_cwd = resolve_cd(target, virtual_cwd)
-            virtual_cwd = new_cwd
+        current_cwd = dir_name
+        result.append(f'{indent}cd "$DATA_DIR/{current_cwd}"{tail}\n')
 
-            if new_cwd:
-                result.append(f'{indent}cd "$DATA_DIR/{new_cwd}"{tail}\n')
-            else:
-                result.append(f'{indent}cd "$DATA_DIR"{tail}\n')
-        else:
-            result.append(line)
-    return result, virtual_cwd
+    return result, current_cwd
 
 
 # ==============================================================================
