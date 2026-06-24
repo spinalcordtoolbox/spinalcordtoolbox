@@ -72,8 +72,7 @@
   ],
 
   "onCreateCommand": {
-    "history": "sudo chmod ugo+rwx /commandhistory",
-    "apptainer": "bash .devcontainer/scripts/fix-apptainer-mksquashfs.sh"
+    "history": "sudo chmod ugo+rwx /commandhistory"
   },
   // Run post-creation command to install dependencies
   "postCreateCommand": "pip install -e . --use-pep517 && pip install -e .[docs]",
@@ -104,7 +103,6 @@
 
   // Keep runArgs minimal for options not modeled as top-level devcontainer properties:
   // - /dev/fuse for unprivileged FUSE mounts.
-  // - user namespace related sysctls for rootless operation.
   // - PROOT_NO_SECCOMP=1 (set above) keeps PRoot seccomp from conflicting in nested runs.
   "runArgs": [
     "--device=/dev/fuse"
