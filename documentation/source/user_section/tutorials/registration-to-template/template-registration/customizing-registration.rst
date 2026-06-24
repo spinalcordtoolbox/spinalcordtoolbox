@@ -90,3 +90,20 @@ This argument is used to specify disc labels, rather than vertebral body labels.
 :Tiny field of view: Conversely, if you have a very small field of view (e.g., covering only C3/C4), you can create a unique label at disc C3/C4 (value=4) and use ``-ldisc`` for registration. In that case, a single translation (no scaling) will be performed between the template and the subject.
 
 Disc labels can be created using :ref:`sct_deepseg_spine`.
+
+----
+
+Sample customized registration commands
+***************************************
+
+Disc-based registration (large FOV):
+
+.. code:: sh
+
+   sct_register_to_template -i t2.nii.gz -s t2_seg.nii.gz -ldisc t2_totalspineseg_discs.nii.gz -c t2
+
+Advanced parameters:
+
+.. code:: sh
+
+   sct_register_to_template -i t2.nii.gz -s t2_seg.nii.gz -ldisc t2_labels_vert.nii.gz -qc ~/qc_singleSubj -ofolder advanced_param -c t2 -param step=1,type=seg,algo=rigid:step=2,type=seg,metric=CC,algo=bsplinesyn,slicewise=1,iter=3:step=3,type=im,metric=CC,algo=syn,slicewise=1,iter=2

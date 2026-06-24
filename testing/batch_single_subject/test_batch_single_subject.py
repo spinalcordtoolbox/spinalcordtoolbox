@@ -1,4 +1,4 @@
-# pytest unit tests to validate the results of the batch_processing.sh script
+# pytest unit tests to validate the results of the batch_single_subject.sh script
 
 import csv
 from pathlib import Path
@@ -8,8 +8,8 @@ import pytest
 from spinalcordtoolbox.utils.sys import sct_dir_local_path
 
 SCT_DIR = Path(sct_dir_local_path())
-CACHE_DIR = SCT_DIR / "testing" / "batch_processing" / "cached_results"
-OUTPUT_DIR = SCT_DIR / "data" / "sct_example_data"
+CACHE_DIR = SCT_DIR / "testing" / "batch_single_subject" / "cached_results"
+OUTPUT_DIR = SCT_DIR / "data" / "sct_course_data" / "single_subject" / "data"
 
 # TODO: We can and should be verifying more results produced by this pipeline, but which values?
 TESTED_VALUES = [("t2/csa_c2c3.csv", 0, "MEAN(area)"),
@@ -31,15 +31,15 @@ def get_csv_float_value(csv_filepath, row, column):
 
 # macOS currently fails due to https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3194
 @pytest.mark.parametrize("csv_filepath,row,column", TESTED_VALUES)
-def test_batch_processing_results(csv_filepath, row, column):
-    """Ensure that new batch_processing.sh results are approximately equal to the cached baseline results."""
+def test_batch_single_subject_results(csv_filepath, row, column):
+    """Ensure that new batch_single_subject.sh results are approximately equal to the cached baseline results."""
     # Skip the test if we're missing the corresponding CSV
     csv_output = OUTPUT_DIR / csv_filepath
     csv_cached = CACHE_DIR / csv_filepath
     if not csv_output.exists():
         pytest.skip(f"Batch output file '{OUTPUT_DIR / csv_filepath}' could not be found to test against.")
     assert csv_cached.is_file(), f"{csv_cached} not present. Please check the SCT installation."
-    assert csv_output.is_file(), f"{csv_output} not present. Was batch_processing.sh run beforehand?"
+    assert csv_output.is_file(), f"{csv_output} not present. Was batch_single_subject.sh run beforehand?"
     expected_value = get_csv_float_value(csv_cached, row, column)
     actual_value = get_csv_float_value(csv_output, row, column)
     # These values are associated with a specific GitHub Actions CPU runner:
@@ -55,8 +55,8 @@ def test_batch_processing_results(csv_filepath, row, column):
         assert actual_value == pytest.approx(expected_value)  # Default rel_tolerance: 1e-6
 
 
-def display_batch_processing_results():
-    """Utility function to avoid having to use 'awk' in the batch_processing.sh script."""
+def display_batch_single_subject_results():
+    """Utility function to avoid having to use 'awk' in the batch_single_subject.sh script."""
     max_len = len(max([v[0] for v in TESTED_VALUES], key=len))
     for csv_filepath, row, column in TESTED_VALUES:
         value = get_csv_float_value(OUTPUT_DIR/csv_filepath, row, column)
@@ -64,4 +64,4 @@ def display_batch_processing_results():
 
 
 if __name__ == "__main__":
-    display_batch_processing_results()
+    display_batch_single_subject_results()

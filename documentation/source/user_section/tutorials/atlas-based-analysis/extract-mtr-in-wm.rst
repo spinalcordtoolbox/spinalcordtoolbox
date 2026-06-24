@@ -5,7 +5,7 @@ Now that the atlas has been warped to the MT space, it can be used to extract MT
 
 .. code::
 
-   sct_extract_metric -i mtr.nii.gz -f label/atlas -method map -l 51 -o mtr_in_wm.csv
+   sct_extract_metric -i mtr.nii.gz -f label/atlas -method map -l 51 -vert 2:5 -o mtr_in_wm.csv
 
 :Input arguments:
    - ``-i`` : Image to extract values from.
@@ -23,3 +23,13 @@ The label volume fraction is indicated as “``Size [vox]``”, which gives you 
 .. warning::
 
    Be careful to always check the associated volume fraction of your metrics (indicated by the Size [vox] column). This is especially relevant if you are restricting the metric computation to a subset of vertebral levels or axial slices; if the number of voxels included in the computation is too low, your quantifications will be unreliable. If you publish, we recommend including the volume fraction associated with all estimated metrics.
+
+
+Using the atlas to extract MTR in CST
+-------------------------------------
+
+This command showcases some alternate options you can choose, e.g. different labels, quantification methods, and slice ranges.
+
+.. code::
+
+   sct_extract_metric -i dti_FA.nii.gz -f label/atlas -l 4,5 -method wa -z 2:14 -o fa_in_cst.csv
