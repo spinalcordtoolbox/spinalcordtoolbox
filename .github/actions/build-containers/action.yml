@@ -99,21 +99,21 @@ inputs:
 #   - image-tag: the Docker tag used for the build.
 #   - apptainer-image: the Apptainer tarball name, which is always produced.
 # - Only when upload-apptainer is true:
-#   - apptainer-artifact: the artifact name used for upload.
+#   - apptainer-package: the package name used for upload to ghcr.io.
 outputs:
   image-tag:
     description: "Tag applied to the built Docker image."
     value: ${{ inputs.tag }}
-  apptainer-artifact:
+  apptainer-package:
     description: |
-      If upload-apptainer input is true, the name of the artifact to which
+      If upload-apptainer input is true, the name of the package to which
       the Apptainer image was uploaded. Otherwise, an empty string.
-    value: ${{ inputs.upload-apptainer == 'true' && format('apptainer-image-{0}', inputs.tag) || '' }}
+    value: ${{ inputs.upload-apptainer == 'true' && format('spinalcordtoolbox/sct:{0}', inputs.tag) || '' }}
   apptainer-image:
     description: |
       The filename of the built Apptainer image on ghcr.io. This is the same regardless
       of whether upload-apptainer is true, as the image is built regardless.
-    value: ${{ format('sct_apptainer_{0}', inputs.tag) }}
+    value: ${{ format('sct_apptainer_{0}.sif', inputs.tag) }}
 
 # Composite steps that build the Docker image and, optionally, the Apptainer image.
 runs:
@@ -164,6 +164,8 @@ runs:
         df -h
     - name: Setup Apptainer image builder
       uses: eWaterCycle/setup-apptainer@3f706d898c9db585b1d741b4692e66755f3a1b40 # v2.0.0
+      with:
+        apptainer-version: 1.5.2
     - name: Build Apptainer image from Docker image
       shell: bash
       run: |
