@@ -166,9 +166,9 @@ def rewrite_cd_commands(body_lines: list, start_cwd: str = '') -> tuple:
 
 # helper functions when generating mini-script files
 def make_slug(s):
-    s = s.lower()
-    s = re.sub(r"[^a-z0-9]+", '-', s)
-    s = re.sub(r'-+', '-', s).strip('-')
+    s = s.lower()                          # lowercase
+    s = re.sub(r"[^a-z0-9]+", '-', s)      # replace non-alphanumeric with hyphen
+    s = re.sub(r'-+', '-', s).strip('-')   # collapse multiple and strip leading/trailing hyphens
     return s or 'section'
 
 
