@@ -19,11 +19,9 @@ To use this model on the sample data, run the following command:
 :Output files/folders:
    - ``t2_seg.nii.gz`` : 3D binary mask of the segmented spinal cord. (You can also choose your own output filename using the ``-o`` argument.)
 
-You can also choose your own output filename using the “-o” argument:
+     .. code:: sh
 
-.. code:: sh
-
-   sct_deepseg spinalcord -i t2.nii.gz -o test/t2_seg_2.nii.gz
+        sct_deepseg spinalcord -i t2.nii.gz -o test/t2_seg_2.nii.gz
 
 Once the command has finished, at the bottom of your terminal there will be instructions for inspecting the results using :ref:`Quality Control (QC) <qc>` reports. If running the command multiple times, you may also simply refresh the webpage that was generated previously to see the new results.
 
