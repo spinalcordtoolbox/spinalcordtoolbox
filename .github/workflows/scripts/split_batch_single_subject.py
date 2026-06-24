@@ -191,8 +191,8 @@ def section_starts_with_cd(body_lines):
     return False
 
 
-def write_scripts(sections, outdir):
-    outdir.mkdir(parents=True, exist_ok=True)
+def write_scripts(sections, path_out):
+    path_out.mkdir(parents=True, exist_ok=True)
     manifest = []
     current_cwd = ''  # NB: Will result in `cd "$DATA_DIR/"` if the first section has no `cd` of its own.
     for idx, section in enumerate(sections, start=1):
@@ -202,7 +202,7 @@ def write_scripts(sections, outdir):
         name = section['title']
         dataset = section['dataset']  # always present — sections without dataset are skipped in parse_sections
         fname = f"{idx:02d}_{make_slug(name).upper()}_{make_slug(dataset)}.sh"
-        fpath = outdir / fname
+        fpath = path_out / fname
 
         with fpath.open('w', newline='\n') as fh:
             # write the header and section title to the mini-script
@@ -241,29 +241,34 @@ def write_scripts(sections, outdir):
     return manifest
 
 
+# ==============================================================================
+#                        main function and CLI entry point
+# ==============================================================================
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('input', help='Path to batch_single_subject.sh')
     p.add_argument('--out', default='.github/workflows/scripts/batch_single_subject', help='Output directory for mini-scripts')
     args = p.parse_args(argv)
 
-    inp = Path(args.input)
-    if not inp.exists():
-        print(f'Error: {inp} not found', file=sys.stderr)
+    path_in = Path(args.input)
+    if not path_in.exists():
+        print(f'Error: {path_in} not found', file=sys.stderr)
         return 2
 
-    lines = inp.read_text(encoding='utf8').splitlines()
+    lines = path_in.read_text(encoding='utf-8').splitlines()
     sections = parse_sections(lines)
     if not sections:
         print('No sections with a (dataset: ...) marker detected. Exiting.', file=sys.stderr)
         return 1
 
-    outdir = Path(args.out)
-    manifest = write_scripts(sections, outdir)
+    path_out = Path(args.out)
+    manifest = write_scripts(sections, path_out)
 
-    manifest_path = outdir / 'sections.json'
+    manifest_path = path_out / 'sections.json'
     manifest_path.write_text(json.dumps(manifest, indent=2), encoding='utf8')
-    print(f'Wrote {len(manifest)} mini-scripts to {outdir} and manifest to {manifest_path}')
+    print(f'Wrote {len(manifest)} mini-scripts to {path_out} and manifest to {manifest_path}')
 
     # Cross-reference datasets found in the script against the known release assets.
     referenced_datasets = {entry['dataset'] for entry in manifest}
