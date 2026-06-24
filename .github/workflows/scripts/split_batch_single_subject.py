@@ -1,6 +1,5 @@
 import argparse
 import json
-import os
 import re
 import stat
 import sys
@@ -164,7 +163,6 @@ def rewrite_cd_commands(body_lines: list, start_cwd: str = '') -> tuple:
 # ==============================================================================
 
 
-# helper functions when generating mini-script files
 def make_slug(s):
     s = s.lower()                          # lowercase
     s = re.sub(r"[^a-z0-9]+", '-', s)      # replace non-alphanumeric with hyphen
@@ -179,52 +177,58 @@ echo "== Running mini-script generated from batch_single_subject.sh =="
 """
 
 
+def section_starts_with_cd(body_lines):
+    for line in body_lines:
+        stripped = line.strip()
+        if not stripped or stripped.startswith('#'):
+            continue
+        # If an SCT command is encountered, the section is assumed to not start with a CD command,
+        # even if one comes later.
+        if stripped.startswith('sct_'):
+            return False
+        if bool(CD_RE.match(line)):
+            return True
+    return False
+
+
 def write_scripts(sections, outdir):
     outdir.mkdir(parents=True, exist_ok=True)
     manifest = []
-    current_cwd = ''
+    current_cwd = ''  # NB: Will result in `cd "$DATA_DIR/"` if the first section has no `cd` of its own.
     for idx, section in enumerate(sections, start=1):
+        # construct the file path from the title and dataset
+        # this results in a long filenames with redundant info, but is good for provenance
+        # and helps avoid cases where e.g. the same title/dataset are used for multiple sections
         name = section['title']
         dataset = section['dataset']  # always present — sections without dataset are skipped in parse_sections
         fname = f"{idx:02d}_{make_slug(name).upper()}_{make_slug(dataset)}.sh"
         fpath = outdir / fname
-        body = section['body']
-
-        # Determine whether the section body opens with its own `cd` (ignoring
-        # blank lines and comments).  If it does not, we must inject the
-        # carried cwd so relative file-path arguments in the section commands
-        # still resolve correctly.
-        section_starts_with_cd = False
-        for line in body:
-            stripped = line.strip()
-            if not stripped or stripped.startswith('#'):
-                continue
-            section_starts_with_cd = bool(CD_RE.match(line))
-            break
 
         with fpath.open('w', newline='\n') as fh:
+            # write the header and section title to the mini-script
             fh.write(make_header())
             fh.write('\n')
             fh.write(f'echo "== Section: {name} (dataset: {dataset}) =="\n')
             fh.write('\n')
 
-            # Inject the implied starting directory when the section body has
-            # no opening `cd` of its own.  This mirrors the carry-over that
-            # the original chained script relies on between sections.
-            if not section_starts_with_cd and current_cwd:
+            # determine whether the section body opens with its own `cd` (ignoring blank lines and comments).
+            # if it doesn't, we need to inject the current cwd to make sure relative paths point to the right files.
+            body = section['body']
+            if not section_starts_with_cd(body) and current_cwd:
                 fh.write('# Starting directory carried over from previous section in original script\n')
                 fh.write(f'cd "$DATA_DIR/{current_cwd}"\n')
                 fh.write('\n')
 
-            # Rewrite relative `cd` commands to use $DATA_DIR-absolute paths,
-            # starting from whatever cwd was carried in.
-            rewritten, current_cwd = rewrite_cd_commands(body, current_cwd)
-            for bl in rewritten:
-                fh.write(bl.rstrip('\n') + '\n')
+            # write the body lines to the script (making sure to rewrite any `cd` commands so that they always point
+            # to the correct subdirectory relative to `$DATA_DIR`)
+            body, current_cwd = rewrite_cd_commands(body, current_cwd)
+            for body_line in body:
+                fh.write(body_line.rstrip('\n') + '\n')
 
-        # FIXME make script executable
-        st = os.stat(str(fpath))
-        os.chmod(str(fpath), st.st_mode | stat.S_IEXEC)
+        # make the script executable. we only set the owner execute bit because
+        # this always runs using the default GHA user in a temporary Ubuntu container,
+        # thus group/other execute permissions are unnecessary.
+        fpath.chmod(fpath.stat().st_mode | stat.S_IEXEC)
 
         manifest.append({
             'name': name,
