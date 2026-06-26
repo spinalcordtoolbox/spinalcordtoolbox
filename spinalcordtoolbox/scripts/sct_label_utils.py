@@ -270,7 +270,7 @@ def main(argv: Sequence[str]):
         out = sct_labels.remove_missing_labels(img, ref)
     elif arguments.remove_sym is not None:
         # first pass use img as source
-        ref = Image(arguments.remove_reference)
+        ref = Image(arguments.remove_sym)
         out = sct_labels.remove_missing_labels(img, ref)
 
         # second pass use previous pass result as reference
