@@ -291,19 +291,52 @@ def main(argv: Sequence[str]):
             out = launch_sagittal_viewer(img, parse_num_list(arguments.create_viewer), msg)
 
     printv("Generating output files...")
-    out.save(path=output_fname, dtype=dtype)
-    display_viewer_syntax([input_filename, output_fname], verbose=verbose)
+    if arguments.remove_sym is not None:
+        # If the user provided the '-remove-sym' option, we expect two output names separated by a comma
+        output_names = output_fname.split(',')
+        if len(output_names) != 2:
+            # Raise an error if the user did not provide two output names
+            raise ValueError("When using '-remove-sym', you must provide two output names separated by a comma. Example: '-o output1.nii.gz,output2.nii.gz'")
+        else:
+            out.save(path=output_names[0], dtype=dtype)
+            ref_out.save(path=output_names[1], dtype=dtype)
+            display_viewer_syntax([input_filename, output_names[0]], verbose=verbose)
+            display_viewer_syntax([arguments.remove_sym, output_names[1]], verbose=verbose)
+        if arguments.qc is not None:
+            # In this case we have two output files, so we will generate QC for both
+            qc2.sct_label_utils(
+                fname_input=input_filename,
+                fname_seg=output_names[0],
+                command='sct_label_utils',
+                argv=argv,
+                path_qc=os.path.abspath(arguments.qc),
+                dataset=arguments.qc_dataset,
+                subject=arguments.qc_subject,
+            )
+            qc2.sct_label_utils(
+                fname_input=arguments.remove_sym,
+                fname_seg=output_names[1],
+                command='sct_label_utils',
+                argv=argv,
+                path_qc=os.path.abspath(arguments.qc),
+                dataset=arguments.qc_dataset,
+                subject=arguments.qc_subject,
+            )
 
-    if arguments.qc is not None:
-        qc2.sct_label_utils(
-            fname_input=input_filename,
-            fname_seg=output_fname,
-            command='sct_label_utils',
-            argv=argv,
-            path_qc=os.path.abspath(arguments.qc),
-            dataset=arguments.qc_dataset,
-            subject=arguments.qc_subject,
-        )
+    else:
+        out.save(path=output_fname, dtype=dtype)
+        display_viewer_syntax([input_filename, output_fname], verbose=verbose)
+
+        if arguments.qc is not None:
+            qc2.sct_label_utils(
+                fname_input=input_filename,
+                fname_seg=output_fname,
+                command='sct_label_utils',
+                argv=argv,
+                path_qc=os.path.abspath(arguments.qc),
+                dataset=arguments.qc_dataset,
+                subject=arguments.qc_subject,
+            )
 
 
 def display_voxel(img: Image, verbose: int = 1) -> Sequence[Coordinate]:
