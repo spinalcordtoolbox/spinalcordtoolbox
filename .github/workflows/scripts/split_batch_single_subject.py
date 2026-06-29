@@ -62,7 +62,6 @@ KNOWN_DATASETS = {
 
 def parse_sections(lines):
     sections = []
-    skipped = []
     n = len(lines)
 
     # Find START OF SCRIPT marker present in batch_single_subject.sh to avoid its preamble
@@ -102,7 +101,6 @@ def parse_sections(lines):
                 f'"{section["title"]}" — no (dataset: ...) marker in header.',
                 file=sys.stderr,
             )
-            skipped.append(section)
 
         i = j
 
