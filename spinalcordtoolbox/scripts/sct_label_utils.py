@@ -46,10 +46,7 @@ def get_parser():
         metavar=Metavar.file,
         nargs='+',
         default=None,
-        help="Output image. Note: Only some label utilities create an output image. "
-             "`-remove-sym` produces two output images, so provide two space-separated filenames "
-             "(one for `-i`, one for `-remove-sym`). If omitted, a `_sym` suffix is added to the "
-             "input filenames. (default: labels.nii.gz)"
+        help="Output image (default: labels.nii.gz). Note: Only some label utilities create an output image."
     )
     io_group.add_argument(
         '-ilabel',
