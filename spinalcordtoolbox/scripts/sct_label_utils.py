@@ -20,7 +20,7 @@ import textwrap
 import numpy as np
 
 import spinalcordtoolbox.labels as sct_labels
-from spinalcordtoolbox.image import Image, zeros_like
+from spinalcordtoolbox.image import Image, zeros_like, add_suffix
 from spinalcordtoolbox.types import Coordinate
 from spinalcordtoolbox.reports import qc2
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
@@ -44,8 +44,12 @@ def get_parser():
     io_group.add_argument(
         '-o',
         metavar=Metavar.file,
-        default='labels.nii.gz',
-        help="Output image. Note: Only some label utilities create an output image."
+        nargs='+',
+        default=None,
+        help="Output image. Note: Only some label utilities create an output image. "
+             "`-remove-sym` produces two output images, so provide two space-separated filenames "
+             "(one for `-i`, one for `-remove-sym`). If omitted, a `_sym` suffix is added to the "
+             "input filenames. (default: labels.nii.gz)"
     )
     io_group.add_argument(
         '-ilabel',
@@ -153,8 +157,8 @@ def get_parser():
     func_group.add_argument(
         '-remove-sym',
         metavar=Metavar.file,
-        help="Remove labels from input image (`-i`) and reference image (specified here) that don't match. You must "
-             "provide two output names separated by `,`."
+        help="Remove labels from input image (`-i`) and reference image (specified here) that don't match. This "
+             "produces two output images; use `-o` to provide two space-separated output filenames."
     )
     func_group.add_argument(
         '-remove',
@@ -214,7 +218,19 @@ def main(argv: Sequence[str]):
     set_loglevel(verbose=verbose, caller_module_name=__name__)
 
     input_filename = arguments.i
-    output_fname = arguments.o
+
+    # Validate the output filename(s) early, before any processing occurs.
+    # `-remove-sym` produces two outputs (filtered `-i` and filtered reference); every other
+    # function produces a single output.
+    n_expected = 2 if arguments.remove_sym is not None else 1
+    if arguments.o is None:
+        if arguments.remove_sym is not None:
+            arguments.o = [add_suffix(arguments.i, '_sym'), add_suffix(arguments.remove_sym, '_sym')]
+        else:
+            arguments.o = ['labels.nii.gz']
+    elif len(arguments.o) != n_expected:
+        parser.error(f"'-o' expects {n_expected} filename(s) but got {len(arguments.o)}")
+    output_fnames = arguments.o
 
     img = Image(input_filename)
     dtype = None
@@ -275,7 +291,6 @@ def main(argv: Sequence[str]):
 
         # second pass use previous pass result as reference
         ref_out = sct_labels.remove_missing_labels(ref, out)
-        ref_out.save(path=ref.absolutepath)
     elif arguments.remove is not None:
         labels = arguments.remove
         out = sct_labels.remove_labels_from_image(img, labels)
@@ -291,46 +306,20 @@ def main(argv: Sequence[str]):
             out = launch_sagittal_viewer(img, parse_num_list(arguments.create_viewer), msg)
 
     printv("Generating output files...")
+    # `-remove-sym` filters both `-i` and the reference image, so it produces two
+    # (input, result) pairs. Every other function produces a single pair.
     if arguments.remove_sym is not None:
-        # If the user provided the '-remove-sym' option, we expect two output names separated by a comma
-        output_names = output_fname.split(',')
-        if len(output_names) != 2:
-            # Raise an error if the user did not provide two output names
-            raise ValueError("When using '-remove-sym', you must provide two output names separated by a comma. Example: '-o output1.nii.gz,output2.nii.gz'")
-        else:
-            out.save(path=output_names[0], dtype=dtype)
-            ref_out.save(path=output_names[1], dtype=dtype)
-            display_viewer_syntax([input_filename, output_names[0]], verbose=verbose)
-            display_viewer_syntax([arguments.remove_sym, output_names[1]], verbose=verbose)
-        if arguments.qc is not None:
-            # In this case we have two output files, so we will generate QC for both
-            qc2.sct_label_utils(
-                fname_input=input_filename,
-                fname_seg=output_names[0],
-                command='sct_label_utils',
-                argv=argv,
-                path_qc=os.path.abspath(arguments.qc),
-                dataset=arguments.qc_dataset,
-                subject=arguments.qc_subject,
-            )
-            qc2.sct_label_utils(
-                fname_input=arguments.remove_sym,
-                fname_seg=output_names[1],
-                command='sct_label_utils',
-                argv=argv,
-                path_qc=os.path.abspath(arguments.qc),
-                dataset=arguments.qc_dataset,
-                subject=arguments.qc_subject,
-            )
-
+        inputs, results = [input_filename, arguments.remove_sym], [out, ref_out]
     else:
-        out.save(path=output_fname, dtype=dtype)
-        display_viewer_syntax([input_filename, output_fname], verbose=verbose)
+        inputs, results = [input_filename], [out]
 
+    for fname_input, fname_output, result in zip(inputs, output_fnames, results):
+        result.save(path=fname_output, dtype=dtype)
+        display_viewer_syntax([fname_input, fname_output], verbose=verbose)
         if arguments.qc is not None:
             qc2.sct_label_utils(
-                fname_input=input_filename,
-                fname_seg=output_fname,
+                fname_input=fname_input,
+                fname_seg=fname_output,
                 command='sct_label_utils',
                 argv=argv,
                 path_qc=os.path.abspath(arguments.qc),
