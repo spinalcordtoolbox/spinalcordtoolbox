@@ -120,15 +120,21 @@ def parse_sections(lines):
 
 # Assumptions made to simplify the code:
 #   * Data directories are always a single subdirectory name, optionally
-#     preceded by `../` (e.g. `cd t2`, `cd ../mt`, `cd "$DIR"`).
+#     preceded by `../` (e.g. `cd t2`, `cd ../mt`).
 #   * Data directories are always relative to `$DATA_DIR`.
-#   * No spaces, glob characters, or multi-part paths.
+#   * No spaces, glob characters, variables, or multi-part paths.
 
 # NB: regex that matches a live (non-commented) `cd TARGET` line.
 # - Group 1: leading whitespace
 # - Group 2: path (which may be quoted)
 # - Group 3: trailing whitespace / inline comment (preserved verbatim)
-CD_RE = re.compile(r'^(\s*)cd\s+(\S+)(\s*(?:#.*)?)$')
+CD_LINE_RE = re.compile(r'^(\s*)cd\s+(\S+)(\s*(?:#.*)?)$')
+
+# NB: regex that validates our path assumptions.
+# - Optional leading `../`.
+# - A single directory name, with no special characters.
+# - Optional trailing slash `/`.
+CD_PATH_RE = re.compile(r'^(?:\.\./)?(?<dir_name>[-_0-9A-Za-z]+)/?$')
 
 
 def rewrite_cd_commands(body_lines: list, start_cwd: str = '') -> tuple:
@@ -136,20 +142,19 @@ def rewrite_cd_commands(body_lines: list, start_cwd: str = '') -> tuple:
     result = []
     for line in body_lines:
         # Deconstruct the `cd` command from the regex groups (if present)
-        m = CD_RE.match(line)
-        if not m:
+        m_cd_line = CD_LINE_RE.match(line)
+        if not m_cd_line:
             result.append(line)
             continue
-        indent, dir_name, tail = m.groups()
+        indent, target, tail = m_cd_line.groups()
 
-        # Strip surrounding quotes (but only in pairs, just in case of `cd "$ENV"/path`
-        if len(dir_name) >= 2 and dir_name[0] in ('"', "'") and dir_name[-1] == dir_name[0]:
-            dir_name = dir_name[1:-1]
+        m_cd_path = CD_PATH_RE.match(target)
+        if not m_cd_path:
+            raise ValueError(f'Could not parse `cd` target "{target}" in input file.')
+        dir_name = m_cd_path.group('dir_name')
+
         # Both `cd t2` and `cd ../t2` resolve to the same subdirectory
         # relative to `$DATA_DIR` given the flat, single-depth layout.
-        if dir_name.startswith('../'):
-            dir_name = dir_name[3:]
-
         current_cwd = dir_name
         result.append(f'{indent}cd "$DATA_DIR/{current_cwd}"{tail}\n')
 
@@ -184,7 +189,7 @@ def section_starts_with_cd(body_lines):
         # even if one comes later.
         if stripped.startswith('sct_'):
             return False
-        if bool(CD_RE.match(line)):
+        if bool(CD_LINE_RE.match(line)):
             return True
     return False
 
