@@ -225,7 +225,7 @@ MODELS = {
          "framework": "nnunetv2",
          "thr": None,  # Images are already binarized
          "default": False,
-         "cropped_image": True, # This model was trained on cropped images, so the input images should be cropped before inference.
+         "cropped_image": True,  # This model was trained on cropped images, so the input images should be cropped before inference.
      },
     "model_seg_canal": {
         "url": [
