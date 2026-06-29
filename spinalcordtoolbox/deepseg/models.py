@@ -199,17 +199,17 @@ MODELS = {
     },
     "model_seg_ms_lesion": {
          "url": {
-            "model_fold0": ["https://github.com/ivadomed/ms-lesion-agnostic/releases/download/r20250909/model_fold0.zip"],
-            "model_fold1": ["https://github.com/ivadomed/ms-lesion-agnostic/releases/download/r20250909/model_fold1.zip"],
-            "model_fold2": ["https://github.com/ivadomed/ms-lesion-agnostic/releases/download/r20250909/model_fold2.zip"],
-            "model_fold3": ["https://github.com/ivadomed/ms-lesion-agnostic/releases/download/r20250909/model_fold3.zip"],
-            "model_fold4": ["https://github.com/ivadomed/ms-lesion-agnostic/releases/download/r20250909/model_fold4.zip"]
+            "model_fold0": ["https://github.com/ivadomed/seg-sc-ms-lesion-multicontrast/releases/download/r20260629/model_fold0.zip"],
+            "model_fold1": ["https://github.com/ivadomed/seg-sc-ms-lesion-multicontrast/releases/download/r20260629/model_fold1.zip"],
+            "model_fold2": ["https://github.com/ivadomed/seg-sc-ms-lesion-multicontrast/releases/download/r20260629/model_fold2.zip"],
+            "model_fold3": ["https://github.com/ivadomed/seg-sc-ms-lesion-multicontrast/releases/download/r20260629/model_fold3.zip"],
+            "model_fold4": ["https://github.com/ivadomed/seg-sc-ms-lesion-multicontrast/releases/download/r20260629/model_fold4.zip"]
          },
          "description": "Segmentation of spinal cord MS lesions",
          "contrasts": ["any"],
          "framework": "nnunetv2",
          "thr": None,  # Images are already binarized
-         "default": False,
+         "default": False
      },
     "model_seg_canal": {
         "url": [
