@@ -420,7 +420,7 @@ TASKS = {
                              'orientations, as well as multiple scanner manufacturers and field strengths.',
          'url': 'https://github.com/ivadomed/model_seg_sci',
          'models': ['model_seg_sci_multiclass_sc_lesion_nnunet'],
-         'citation': textwrap.dedent("""
+         'citation': textwrap.dedent(r"""
              ```bibtex
              @InProceedings{10.1007/978-3-031-82007-6_19,
                             author="Karthik, Enamundram Naga and Valo{\v{s}}ek, Jan and Farner, Lynn and Pfyffer, Dario and Schading-Sassenhausen, Simon and Lebret, Anna and David, Gergely and Smith, Andrew C. and Weber II, Kenneth A. and Seif, Maryam and Freund, Patrick and Cohen-Adad, Julien",
