@@ -134,7 +134,7 @@ CD_LINE_RE = re.compile(r'^(\s*)cd\s+(\S+)(\s*(?:#.*)?)$')
 # - Optional leading `../`.
 # - A single directory name, with no special characters.
 # - Optional trailing slash `/`.
-CD_PATH_RE = re.compile(r'^(?:\.\./)?(?<dir_name>[-_0-9A-Za-z]+)/?$')
+CD_PATH_RE = re.compile(r'^(?:\.\./)?(?P<dir_name>[-_0-9A-Za-z]+)/?$')
 
 
 def rewrite_cd_commands(body_lines: list, start_cwd: str = '') -> tuple:
