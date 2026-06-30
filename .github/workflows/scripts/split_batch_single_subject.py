@@ -270,7 +270,7 @@ def main(argv=None):
     manifest = write_scripts(sections, path_out)
 
     manifest_path = path_out / 'sections.json'
-    manifest_path.write_text(json.dumps(manifest, indent=2), encoding='utf8')
+    manifest_path.write_text(json.dumps(manifest, indent=2), encoding='utf-8')
     print(f'Wrote {len(manifest)} mini-scripts to {path_out} and manifest to {manifest_path}')
 
     # Cross-reference datasets found in the script against the known release assets.
