@@ -25,8 +25,9 @@ from scipy import ndimage
 import transforms3d.affines as affines
 
 from spinalcordtoolbox.types import Coordinate
-from spinalcordtoolbox.utils.fs import extract_fname, mv, tmp_create
-from spinalcordtoolbox.utils.sys import run_proc, LazyLoader
+from spinalcordtoolbox.utils.fs import extract_fname, mv
+from spinalcordtoolbox.utils.sys import LazyLoader
+from contrib.stitching.stitching import main as _stitch
 
 nib = LazyLoader("nib", globals(), "nibabel")
 
@@ -1812,51 +1813,19 @@ def compute_cross_corr_3d(image: Image, coord, xrange=list(range(-10, 10)), xshi
     return x + xrange[ind_peak]
 
 
-def stitch_images(im_list: Sequence[Image], fname_out: str = 'stitched.nii.gz', verbose: int = 1) -> Image:
+def stitch_images(im_list: Sequence[Image], verbose: int = 1) -> Image:
     """
-    Stitch two (or more) images utilizing the C++-precompiled binaries of Biomedia-MIRA's stitching toolkit
-    (https://github.com/biomedia-mira/stitching) by placing a system call.
+    Stitch two or more images into a single volume using distance-transform ramp blending
+    in overlapping regions.
 
-    :param im_list: list of Image objects to stitch
-    :param fname_out: filename for stitched output image
-    :param verbose: adjusts the verbosity of the logging
-    :return: An Image object containing the stitched data array
+    :param im_list: A sequence of Image objects to stitch (minimum 2).
+    :param verbose: Verbosity level (0 = silent, 1 = progress messages).
+
+    :return: An Image object containing the stitched volume.
     """
-    # preserve original orientation (we assume it's consistent among all images)
-    orig_ornt = im_list[0].orientation
-
-    # reorient input files and save them to a temp directory
-    path_tmp = tmp_create(basename="stitch-images")
-    fnames_in = []
-    for im_in in im_list:
-        temp_file_path = os.path.join(path_tmp, os.path.basename(im_in.absolutepath))
-        im_in_rpi = change_orientation(im_in, 'RPI')
-        im_in_rpi.save(temp_file_path, verbose=verbose)
-        fnames_in.append(temp_file_path)
-
-    # C++ stitching module by Glocker et al. uses the first image as reference image
-    # and allocates an array (to be filled by subsequent images along the z-axis)
-    # based on the dimensions (x,y) of the reference image.
-    # As subsequent images are padded to the x-/y- dimensions of the reference image,
-    # it is important to use the image with the largest dimensions as the first
-    # argument to the input of the C++ binary, to ensure the images are not cropped.
-
-    # order fs_names in descending order based on dimensions (largest -> smallest)
-    fnames_in_sorted = sorted(fnames_in, key=lambda fname: max(Image(fname).dim), reverse=True)
-
-    # ensure that a tmp_path is used for the output of the stitching binary, since sct_image will re-save the image
-    fname_out = os.path.join(path_tmp, os.path.basename(fname_out))
-
-    cmd = ['isct_stitching', '-i'] + fnames_in_sorted + ['-o', fname_out, '-a']
-    status, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
-    if status != 0:
-        raise RuntimeError(f"Subprocess call to `isct_stitching` returned exit code {status} along with the following "
-                           f"output:\n{output}")
-
-    # reorient the output image back to the original orientation of the input images
-    im_out = change_orientation(Image(fname_out), orig_ornt)
-
-    return im_out
+    nibs = [nib.Nifti1Image(im.data, im.hdr.get_best_affine()) for im in im_list]
+    nii_out, _ = _stitch(nibs, output=None, save=False, verbose=bool(verbose))
+    return Image(nii_out.get_fdata(), hdr=nii_out.header)
 
 
 def generate_stitched_qc_images(ims_in: Sequence[Image], im_out: Image) -> Tuple[Image, Image]:

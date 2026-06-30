@@ -101,7 +101,7 @@ The table below provides individual references for novel methods used in SCT's :
    * - :ref:`sct_get_centerline`
      - Gros C *et al.* "`Automatic spinal cord localization, robust to MRI contrasts using global curve optimization. <https://www.sciencedirect.com/science/article/pii/S136184151730186X>`__" **Med Image Anal** 2018.
    * - :ref:`sct_image` ``-stitch``
-     - Lavdis I, Glocker B *et al.* `Machine learning in whole-body MRI: experiences and challenges from an applied study using multicentre data <https://doi.org/10.1016/j.crad.2019.01.012>`__ **Clinical Radiology** 2019.
+     - Graf R *et al.* "`Generating synthetic high-resolution spinal STIR and T1w images from T2w FSE and low-resolution axial Dixon. <https://doi.org/10.1007/s00330-024-11047-1>`__" **Eur Radiol** 2024.
    * - :ref:`sct_label_vertebrae`
      - Ullmann E *et al.* "`Automatic labeling of vertebral levels using a robust template-based approach. <https://onlinelibrary.wiley.com/doi/10.1155/2014/719520>`__" **Int J Biomed Imaging** 2014.
    * - :ref:`sct_process_segmentation` ``-pmj`` / ``-normalize``
