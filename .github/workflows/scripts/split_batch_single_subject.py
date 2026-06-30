@@ -121,6 +121,8 @@ def parse_sections(lines):
 # Assumptions made to simplify the code:
 #   * Data directories are always a single subdirectory name, optionally
 #     preceded by `../` (e.g. `cd t2`, `cd ../mt`).
+#   * Exceptionally, a bare `..` is allowed (which produces an empty
+#     subdirectory name).
 #   * Data directories are always relative to `$DATA_DIR`.
 #   * No spaces, glob characters, variables, or multi-part paths.
 
@@ -134,7 +136,8 @@ CD_LINE_RE = re.compile(r'^(\s*)cd\s+(\S+)(\s*(?:#.*)?)$')
 # - Optional leading `../`.
 # - A single directory name, with no special characters.
 # - Optional trailing slash `/`.
-CD_PATH_RE = re.compile(r'^(?:\.\./)?(?P<dir_name>[-_0-9A-Za-z]+)/?$')
+# - Or, literally `..`.
+CD_PATH_RE = re.compile(r'^(?:\.\./)?(?P<dir_name>[-_0-9A-Za-z]+)/?$|^\.\.$')
 
 
 def rewrite_cd_commands(body_lines: list, start_cwd: str = '') -> tuple:
@@ -151,7 +154,7 @@ def rewrite_cd_commands(body_lines: list, start_cwd: str = '') -> tuple:
         m_cd_path = CD_PATH_RE.match(target)
         if not m_cd_path:
             raise ValueError(f'Could not parse `cd` target "{target}" in input file.')
-        dir_name = m_cd_path.group('dir_name')
+        dir_name = m_cd_path.group('dir_name') or ''
 
         # Both `cd t2` and `cd ../t2` resolve to the same subdirectory
         # relative to `$DATA_DIR` given the flat, single-depth layout.
