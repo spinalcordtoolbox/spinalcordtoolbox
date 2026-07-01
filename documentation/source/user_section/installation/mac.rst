@@ -16,7 +16,15 @@ Supported Operating Systems
 Mac computers with Apple silicon
 --------------------------------
 
-If your computer uses Apple silicon (M1, M2, M3, etc.), you need to make sure `Rosetta 2 <https://en.wikipedia.org/wiki/Rosetta_(software)#Rosetta_2>`__ is installed before installing or running SCT. To do this, you can open a Terminal and run:
+If your computer uses Apple silicon (M1, M2, M3, etc.), you can either :
+
+- Install `Rosetta 2 <https://en.wikipedia.org/wiki/Rosetta_(software)#Rosetta_2>`__. See below for the installation instructions.
+- Use the `Docker installation method <#docker-install-macos>`__ given further down on this page.
+
+Rosetta installation
+====================
+
+Open a Terminal and run:
 
 .. code:: sh
 
@@ -47,14 +55,15 @@ Installation Options
 Option 1: Install from Package (recommended)
 --------------------------------------------
 
-The simplest way to install SCT is to do it via a stable release. First, navigate to the `latest release <https://github.com/spinalcordtoolbox/spinalcordtoolbox/releases>`__, then download the install script for SCT (``install_sct-<version>_macos.sh``). Major changes to each release are listed in the :doc:`/dev_section/CHANGES`.
+The simplest way to install SCT is to do it via a stable release. First, navigate to the `latest release <https://github.com/spinalcordtoolbox/spinalcordtoolbox/releases>`__, currently |version|, then download the install script for SCT (:substitution-code:`install_sct-|version|_macos.sh`). Major changes to each release are listed in the :doc:`/dev_section/CHANGES`.
 
 Once you have downloaded SCT, open a new Terminal in the location of the downloaded script, then launch the installer the ``bash`` command. For example, if the script was downloaded to `Downloads/`, then you would run:
 
-.. code:: sh
+.. code-block:: sh
+   :substitutions:
 
    cd ~/Downloads
-   bash install_sct-<version>_macos.sh
+   bash install_sct-|version|_macos.sh
 
 
 Option 2: Install from GitHub (development)
@@ -149,32 +158,34 @@ From an official release
 
 .. versionadded:: 7.4
 
-Consult the `spinalcordtoolbox Docker registry <https://hub.docker.com/r/neuropoly/sct/tags>`__ to select a specific release and copy its tag (like ``7.4`` as in the example below). Then, you only need to pull the image to access the full extent of SCT features in that release :
+Consult the `spinalcordtoolbox Docker registry <https://hub.docker.com/r/neuropoly/sct/tags>`__ to select a specific release and copy its tag (like |version| as in the example below). Then, you only need to pull the image to access the full extent of SCT features in that release :
 
-.. code:: bash
+.. code-block:: bash
+   :substitutions:
 
    # Start from the Terminal
-   docker pull neuropoly/sct:7.4
+   docker pull neuropoly/sct:|version|
    # If the previous command says 'Cannot connect to the Docker daemon', make sure the docker service is running and you have the necessary permissions to access it
 
 Preinstalling DeepSeg tasks
 """""""""""""""""""""""""""
 
-To inject DeepSeg tasks in an official release, you need to first pull the image, then run the following command, replacing ``{sct_version}`` with the version you want to install (e.g. ``7.4``):
+To inject DeepSeg tasks in an official release, you need to first pull the image, then run the following command, replacing the version (|version| in the example below) with the one you want to use :
 
-.. code:: bash
+.. code-block:: bash
+   :substitutions:
 
    # Pull the Docker image for Ubuntu 22.04
-   docker pull neuropoly/sct:7.4
+   docker pull neuropoly/sct:|version|
    # Launch interactive mode (command-line inside container)
-   sudo docker run -it neuropoly/sct:7.4
+   sudo docker run -it neuropoly/sct:|version|
    # Now inside Docker container, install the DeepSeg tasks
    sct_deepseg spinalcord -install
    sct_deepseg tumor_t2 -install
    # Save the state of the container as a docker image.
    # Back on the Host machine, open a new terminal and run:
    sudo docker ps -a  # list all containers (to find out the container ID)
-   # specify the ID, and also choose a name to use for the docker image, such as "sct_v7.0"
+   # specify the ID, and also choose a name to use for the docker image, such as "sct_v|version|"
    sudo docker commit <CONTAINER_ID> <IMAGE_NAME>/deepseg:spinalcord-tumor_t2
 
 From a local SCT installation
@@ -200,7 +211,7 @@ You can inject DeepSeg tasks at build time by providing a comma-separated list o
 SCT versions before 7.4
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-First, launch Docker Desktop, then open up a new Terminal window and run the commands below:
+First, launch Docker Desktop, then open up a new Terminal window and run the commands below, replacing 7.3 with the version of your choice:
 
 .. code:: bash
 

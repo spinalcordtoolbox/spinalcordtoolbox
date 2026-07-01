@@ -27,9 +27,9 @@ From an official release
 
 .. versionadded:: 7.4
 
-#. Select the version of SCT you want to install, either from the `release page <https://github.com/spinalcordtoolbox/spinalcordtoolbox/releases>`__ or from the `DockerHub repository <https://hub.docker.com/r/neuropoly/sct/tags>`__.
+#. Select the version of SCT you want to install, either from the `release page <https://github.com/spinalcordtoolbox/spinalcordtoolbox/releases>`__ (latest version is |version|) or from the `DockerHub repository <https://hub.docker.com/r/neuropoly/sct/tags>`__.
 
-#. Open a new Terminal window and run the following commands, replacing ``{sct_version}`` with the version you want to install (e.g. ``7.4``):
+#. Open a new Terminal window and run the following commands, replacing ``{sct_version}`` with the version you want to install (e.g. the latest release, |version|):
 
     .. code:: sh
 
