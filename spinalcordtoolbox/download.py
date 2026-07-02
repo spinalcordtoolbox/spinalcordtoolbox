@@ -66,7 +66,7 @@ DATASET_DICT = {
     },
     "PAM50": {
         "mirrors": [
-            "https://github.com/spinalcordtoolbox/PAM50/releases/download/r20250730/PAM50-r20250730.zip",
+            "https://github.com/spinalcordtoolbox/PAM50/releases/download/r20250730/PAM50-r20251014.zip",
             "https://osf.io/zchkp/?action=download"
         ],
         "default_location": os.path.join(__sct_dir__, "data", "PAM50"),
@@ -156,7 +156,7 @@ DATASET_DICT = {
     },
     "PAM50_normalized_metrics": {
         "mirrors": [
-            "https://github.com/spinalcordtoolbox/PAM50-normalized-metrics/archive/refs/tags/r20250321.zip"
+            "https://github.com/spinalcordtoolbox/PAM50-normalized-metrics/archive/refs/tags/r20251014.zip"
         ],
         "default_location": os.path.join(__sct_dir__, "data", "PAM50_normalized_metrics"),
         "download_type": "Templates",
