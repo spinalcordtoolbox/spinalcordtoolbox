@@ -127,14 +127,21 @@ MODELS = {
     #       - Models do not have a `.json` sidecar file, since they were not developed with ivadomed
     #       - So, threshold value is stored here, within the model dict
     #       - Binarization is applied within SCT code
+    # v4 model: trained on sc-crop cropped volumes. crop_pad_defaults match sc_crop.detect() defaults.
     "model_seg_sc_contrast_agnostic_nnunet": {
         "url": [
-            "https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/releases/download/v3.0/model_contrast_agnostic_20250123.zip"
+            "https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/releases/download/v4.0/model_contrast_agnostic_20260628.zip"
         ],
         "description": "Spinal cord segmentation agnostic to MRI contrasts",
         "contrasts": ["any"],
         "framework": "nnunetv2",
-        "thr": None,  # We're now using an nnUNet model, which does not need a threshold
+        "thr": None,
+        "crop": True,
+        "crop_pad_defaults": {
+            "pad_superior": 40.0, "pad_inferior": 100.0,
+            "pad_left": 15.0, "pad_right": 15.0,
+            "pad_anterior": 15.0, "pad_posterior": 22.0,
+        },
         "default": True,
     },
     "model_seg_sci_multiclass_sc_lesion_nnunet": {
