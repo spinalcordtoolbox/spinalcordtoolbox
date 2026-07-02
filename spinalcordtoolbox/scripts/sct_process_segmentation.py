@@ -326,7 +326,7 @@ def get_parser(ascor=False):
             choices=[0, 1],
             default=0,
             help="Set to 1 to generate a figure comparing the subject's morphometric metrics with normative values "
-                 "from the spine-generic dataset (PAM50 space). Requires `-normalize-PAM50 1` and `-perslice 1`. "
+                 "from the https://github.com/spinalcordtoolbox/PAM50-normalized-metrics repo. Requires `-normalize-PAM50 1` and `-perslice 1`. "
                  "The normative data from `$SCT_DIR/data/PAM50_normalized_metrics` will be used. "
                  "The output figure is saved alongside the output CSV file."
         )
@@ -486,7 +486,7 @@ METRIC_TO_THUMBNAIL = {
 
 
 def _load_normative_data(path_normative, path_participants):
-    """Load normative data from spine-generic PAM50-space CSV files."""
+    """Load normative data from $SCT_DIR/data/PAM50_normalized_metrics PAM50-space CSV files."""
     df = pd.DataFrame()
     path_normative_csv = os.path.join(path_normative, "spinal_cord")
     for fname in os.listdir(path_normative_csv):
@@ -515,7 +515,7 @@ def _get_vert_label_indices(df):
 
 def plot_normative_comparison(file_out_csv, path_normative, subject_sex):
     """
-    Generate a figure comparing per-slice metrics from file_out_csv against normative spine-generic values.
+    Generate a figure comparing per-slice metrics from file_out_csv against normative values.
     The output PNG is saved with the same base path as file_out_csv (replacing .csv with .png).
 
     :param file_out_csv: path to the CSV output produced by sct_process_segmentation (PAM50 space, perslice)
@@ -572,7 +572,7 @@ def plot_normative_comparison(file_out_csv, path_normative, subject_sex):
 
         sns.lineplot(ax=ax, x='Slice (I->S)', y=metric, data=df_norm_sex, errorbar='sd',
                      linewidth=2, color=COLORS_SEX_PLOT.get(subject_sex, 'gray'),
-                     label=f'spine-generic {sex_label} (N={n_subjects})')
+                     label=f'Control subjects {sex_label} (N={n_subjects})')
         sns.lineplot(ax=ax, x='Slice (I->S)', y=metric, data=df_sub, linewidth=2, color='green',
                      label=subject_id)
 
