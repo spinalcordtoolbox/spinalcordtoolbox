@@ -29,10 +29,11 @@
         "lextudio.restructuredtext",
         "mhutchie.git-graph",
         "ms-vscode-remote.remote-containers",
-        "ms-vscode.live-server"
+        "ms-vscode.live-server",
+        "trond-snekvik.simple-rst"
       ],
       "settings": {
-        "python.defaultInterpreterPath": "/opt/conda/envs/venv_sct/bin/python",
+        "python.defaultInterpreterPath": "/opt/sct/python/envs/venv_sct/bin/python",
         "python.terminal.activateEnvironment": true,
         "python.terminal.activateEnvInCurrentTerminal": true,
         "python.linting.enabled": true,
