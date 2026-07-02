@@ -472,10 +472,10 @@ METRIC_TO_AXIS_LABEL = {
 }
 
 METRIC_TO_YLIM = {
-    'MEAN(area)': (0, 100),
-    'MEAN(diameter_AP)': (0, 12),
+    'MEAN(area)': (0, 130),
+    'MEAN(diameter_AP)': (0, 15),
     'MEAN(diameter_RL)': (0, 20),
-    'MEAN(compression_ratio)': (0, 1.2),
+    'MEAN(compression_ratio)': (0, 2.5),
     'MEAN(eccentricity)': (0, 1.2),
     'MEAN(solidity)': (70, 110),
 }
@@ -585,11 +585,11 @@ def plot_normative_comparison(file_out_csv, path_normative, subject_sex):
         sns.lineplot(ax=ax, x='Slice (I->S)', y=metric, data=df_sub, linewidth=2, color='green',
                      label=subject_id)
 
-        ymin, ymax = ax.get_ylim()
-        print(f"Metric: {metric}, y-limits before adjustment: ({ymin}, {ymax})")
+        df_norm_min, df_norm_max = df_norm_sex[metric].agg(['min', 'max'])
+        df_sub_min, df_sub_max = df_sub[metric].agg(['min', 'max'])
         if metric in METRIC_TO_YLIM:
             fixed_ymin, fixed_ymax = METRIC_TO_YLIM[metric]
-            ymin, ymax = min(ymin, fixed_ymin), max(ymax, fixed_ymax)
+            ymin, ymax = min(fixed_ymin, df_norm_min, df_sub_min), max(fixed_ymax, df_norm_max, df_sub_max)
             ax.set_ylim(ymin, ymax)
 
         if idx == 0:
