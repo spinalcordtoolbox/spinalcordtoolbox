@@ -718,6 +718,11 @@ def install_model(name_model, custom_url=None):
                 if name_model == "model_seg_ms_lesion":
                     target_directory = folder(name_model)
                     dirs_to_preserve = ("nnUNetTrainer",)
+                    # On the first fold, wipe any stale nnUNetTrainer* dirs so that a trainer rename
+                    # during a model upgrade doesn't leave two coexisting trainer dirs (len != 1 crash).
+                    if seed_name == next(iter(url_field)):
+                        for stale in glob.glob(os.path.join(target_directory, "nnUNetTrainer*")):
+                            shutil.rmtree(stale)
                 # For other multi-seed models, create subfolders for each seed
                 else:
                     target_directory = folder(os.path.join(name_model, seed_name))
