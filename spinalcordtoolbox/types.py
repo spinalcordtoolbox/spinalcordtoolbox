@@ -36,7 +36,9 @@ class Coordinate:
                              "string with coordinates delimited by commas.")
 
         if len(coord) == 3:
-            coord.append(0)
+            # Use concatenation rather than `coord.append(0)` to avoid mutating a
+            # list passed in by the caller (see issue #5220).
+            coord = coord + [0]
         elif len(coord) != 4:
             raise ValueError("Parameter must be a list with coordinates [x, y, z] or [x, y, z, value].")
 
