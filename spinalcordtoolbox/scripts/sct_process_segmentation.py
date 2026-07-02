@@ -39,6 +39,7 @@ from spinalcordtoolbox.utils.sys import __data_dir__, LazyLoader
 
 pd = LazyLoader("pd", globals(), "pandas")
 mpl_ticker = LazyLoader("mpl_ticker", globals(), "matplotlib.ticker")
+sns = LazyLoader("sns", globals(), "seaborn")
 
 logger = logging.getLogger(__name__)
 
@@ -319,6 +320,25 @@ def get_parser(ascor=False):
     )
     if is_sct_process_segmentation:
         optional.add_argument(
+            '-plot-normative',
+            metavar=Metavar.int,
+            type=int,
+            choices=[0, 1],
+            default=0,
+            help="Set to 1 to generate a figure comparing the subject's morphometric metrics with normative values "
+                 "from the https://github.com/spinalcordtoolbox/PAM50-normalized-metrics repo. Requires `-normalize-PAM50 1` and `-perslice 1`. "
+                 "The normative data from `$SCT_DIR/data/PAM50_normalized_metrics` will be used. "
+                 "The output figure is saved alongside the output CSV file."
+        )
+        optional.add_argument(
+            '-plot-normative-sex',
+            metavar=Metavar.str,
+            choices=['M', 'F'],
+            help="Sex of the subject ('M' or 'F'), used to filter normative data when `-plot-normative 1` is set. "
+                 "If not provided, normative data from all subjects (both sexes) will be used."
+        )
+    if is_sct_process_segmentation:
+        optional.add_argument(
             '-qc',
             metavar=Metavar.folder,
             type=os.path.abspath,
@@ -429,6 +449,208 @@ def _make_figure(metric, fit_results):
     fig.savefig(fname_img)
 
     return fname_img
+
+
+METRICS_PLOT = ['MEAN(area)', 'MEAN(diameter_AP)', 'MEAN(diameter_RL)', 'MEAN(compression_ratio)',
+                'MEAN(eccentricity)', 'MEAN(solidity)']
+
+METRICS_PLOT_DTYPE = {
+    'MEAN(diameter_AP)': 'float64',
+    'MEAN(area)': 'float64',
+    'MEAN(diameter_RL)': 'float64',
+    'MEAN(eccentricity)': 'float64',
+    'MEAN(solidity)': 'float64',
+}
+
+METRIC_TO_AXIS_LABEL = {
+    'MEAN(diameter_AP)': 'AP Diameter [mm]',
+    'MEAN(area)': 'Cross-Sectional Area [mm²]',
+    'MEAN(diameter_RL)': 'RL Diameter [mm]',
+    'MEAN(eccentricity)': 'Eccentricity [a.u.]',
+    'MEAN(solidity)': 'Solidity [%]',
+    'MEAN(compression_ratio)': 'AP/RLRatio [a.u.]',
+}
+
+METRIC_TO_YLIM = {
+    'MEAN(area)': (0, 130),
+    'MEAN(diameter_AP)': (0, 15),
+    'MEAN(diameter_RL)': (0, 20),
+    'MEAN(compression_ratio)': (0, 2.5),
+    'MEAN(eccentricity)': (0, 1.2),
+    'MEAN(solidity)': (70, 110),
+}
+
+COLORS_SEX_PLOT = {'M': 'blue', 'F': 'red'}
+SEX_TO_LEGEND_PLOT = {'M': 'males', 'F': 'females'}
+
+THUMBNAILS_DIR = os.path.join(__data_dir__, 'normative_plot_thumbnails')
+METRIC_TO_THUMBNAIL = {
+    'MEAN(diameter_AP)': 'ap_diam.png',
+    'MEAN(area)': 'csa.png',
+    'MEAN(diameter_RL)': 'rl_diam.png',
+    'MEAN(eccentricity)': 'eccentricity.png',
+    'MEAN(solidity)': 'solidity.png',
+    'MEAN(compression_ratio)': 'ap_rl_ratio.png',
+}
+
+
+def _load_normative_data(path_normative, path_participants):
+    """Load normative data from $SCT_DIR/data/PAM50_normalized_metrics PAM50-space CSV files."""
+    df = pd.DataFrame()
+    path_normative_csv = os.path.join(path_normative, "spinal_cord")
+    for fname in os.listdir(path_normative_csv):
+        if fname.endswith('PAM50.csv'):
+            df_sub = pd.read_csv(os.path.join(path_normative_csv, fname), dtype=METRICS_PLOT_DTYPE)
+            df = pd.concat([df, df_sub], axis=0, ignore_index=True)
+    if df.empty:
+        raise ValueError(f"No PAM50.csv files found in {path_normative_csv}")
+    df.insert(0, 'participant_id', df['Filename'].str.split('/').str[0])
+    df_participants = pd.read_csv(path_participants, sep='\t')
+    df = df.merge(df_participants[['age', 'sex', 'participant_id']], on='participant_id')
+    df['MEAN(compression_ratio)'] = df['MEAN(diameter_AP)'] / df['MEAN(diameter_RL)']
+    df['MEAN(solidity)'] = df['MEAN(solidity)'] * 100
+    return df
+
+
+def _get_vert_label_indices(df):
+    """Return vert series, disc boundary indices, and mid-vertebra indices for a normative dataframe."""
+    subjects = df['participant_id'].unique()
+    vert = df[df['participant_id'] == subjects[0]]['VertLevel']
+    ind_vert = vert.diff()[vert.diff() != 0].index.values
+    ind_vert = np.append(ind_vert, vert.index.values[-1])
+    ind_vert_mid = [int(ind_vert[i:i + 2].mean()) for i in range(len(ind_vert) - 1)]
+    return vert, ind_vert, ind_vert_mid
+
+
+def plot_normative_comparison(file_out_csv, path_normative, subject_sex):
+    """
+    Generate a figure comparing per-slice metrics from file_out_csv against normative values.
+    The output PNG is saved with the same base path as file_out_csv (replacing .csv with .png).
+
+    :param file_out_csv: path to the CSV output produced by sct_process_segmentation (PAM50 space, perslice)
+    :param path_normative: path to folder containing PAM50 normative CSVs and participants.tsv
+    :param subject_sex: 'M' or 'F', or None to use all subjects
+    """
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+
+    # Output log
+    logger.info(f'\n Generating normative comparison figure for {file_out_csv} using normative data from {path_normative}')
+
+    path_participants = os.path.join(path_normative, 'participants.tsv')
+    if not os.path.isfile(path_participants):
+        raise FileNotFoundError(f"participants.tsv not found in {path_normative}")
+
+    # Load normative and subject data
+    df_norm = _load_normative_data(path_normative, path_participants)
+    df_sub = pd.read_csv(file_out_csv, dtype=METRICS_PLOT_DTYPE)
+    df_sub['MEAN(compression_ratio)'] = df_sub['MEAN(diameter_AP)'] / df_sub['MEAN(diameter_RL)']
+    df_sub['MEAN(solidity)'] = df_sub['MEAN(solidity)'] * 100
+
+    # Filter normative data by sex
+    df_norm_sex = df_norm[df_norm['sex'] == subject_sex] if subject_sex else df_norm
+    n_subjects = df_norm_sex['participant_id'].nunique()
+    sex_label = SEX_TO_LEGEND_PLOT[subject_sex] if subject_sex else 'all subjects'
+
+    # Extract subject ID from Filename column for legend and title
+    subject_id = df_sub['Filename'].iloc[0].split('/')[-1].split('_')[0]
+
+    # Subject slice range (computed once, used for cropping and filtering annotations)
+    sub_min = int(df_sub['Slice (I->S)'].min())
+    sub_max = int(df_sub['Slice (I->S)'].max())
+
+    # Vertebral level indices computed once outside the metric loop
+    vert, ind_vert, ind_vert_mid = _get_vert_label_indices(df_norm)
+
+    # Subject count per vertebral level computed once outside the metric loop
+    # Drop NaN rows on a reference metric before counting to exclude missing coverage
+    ref_metric = 'MEAN(area)'
+    n_per_level = (
+        df_norm_sex.dropna(subset=[ref_metric])
+        .groupby('VertLevel')['participant_id']
+        .nunique()
+        .to_dict()
+    )
+
+    fig, axes = plt.subplots(2, 3, figsize=(20, 10))
+    axs = axes.ravel()
+
+    for idx, metric in enumerate(METRICS_PLOT):
+        ax = axs[idx]
+
+        sns.lineplot(ax=ax, x='Slice (I->S)', y=metric, data=df_norm_sex, errorbar='sd',
+                     linewidth=2, color=COLORS_SEX_PLOT.get(subject_sex, 'gray'),
+                     label=f'Control subjects {sex_label} (N={n_subjects})')
+        sns.lineplot(ax=ax, x='Slice (I->S)', y=metric, data=df_sub, linewidth=2, color='green',
+                     label=subject_id)
+
+        df_norm_min, df_norm_max = df_norm_sex[metric].agg(['min', 'max'])
+        df_sub_min, df_sub_max = df_sub[metric].agg(['min', 'max'])
+        if metric in METRIC_TO_YLIM:
+            fixed_ymin, fixed_ymax = METRIC_TO_YLIM[metric]
+            ymin, ymax = min(fixed_ymin, df_norm_min, df_sub_min), max(fixed_ymax, df_norm_max, df_sub_max)
+            ax.set_ylim(ymin, ymax)
+
+        if idx == 0:
+            ax.legend(loc='upper right', fontsize=8)
+        else:
+            ax.get_legend().remove()
+
+        ax.set_ylabel(METRIC_TO_AXIS_LABEL[metric], fontsize=14)
+        ax.set_xlabel('PAM50 Axial Slice #', fontsize=14)
+        ax.tick_params(axis='both', which='major', labelsize=8)
+        for spine in ['right', 'left', 'top']:
+            ax.spines[spine].set_visible(False)
+        ax.spines['bottom'].set_visible(True)
+        ax.yaxis.grid(True)
+        ax.set_axisbelow(True)
+
+        # Thumbnail inset
+        import matplotlib.image as mpimg
+        thumb_file = METRIC_TO_THUMBNAIL.get(metric)
+        if thumb_file:
+            thumb_path = os.path.join(THUMBNAILS_DIR, thumb_file)
+            if os.path.isfile(thumb_path):
+                img = mpimg.imread(thumb_path)
+                y0 = 0.8 if idx < 3 else 0.85
+                axins = ax.inset_axes([0.9, y0, 0.20, 0.30])
+                axins.imshow(img)
+                axins.axis('off')
+
+        # Crop x-axis to the subject's slice range (inverted: larger slice number on the left)
+        ax.set_xlim(sub_max, sub_min)
+
+        # Disc boundary lines
+        for x in ind_vert[1:-1]:
+            slice_val = df_norm.loc[x, 'Slice (I->S)']
+            if sub_min <= slice_val <= sub_max:
+                ax.axvline(slice_val, color='black', linestyle='--', alpha=0.5, zorder=0)
+
+        # Vertebral level labels with subject count below (single text call, data coordinates)
+        for mid_idx in ind_vert_mid:
+            slice_x = df_norm.loc[mid_idx, 'Slice (I->S)']
+            if not (sub_min <= slice_x <= sub_max):
+                continue
+            v = vert.loc[mid_idx]
+            if v > 19:
+                level = 'L' + str(v - 19)
+            elif v > 7:
+                level = 'T' + str(v - 7)
+            else:
+                level = 'C' + str(v)
+            n = n_per_level.get(v, 0)
+            ax.text(slice_x, ymin, f'{level}\n', ha='center', va='bottom', color='black', fontsize=7)
+            ax.text(slice_x, ymin, f'\nn={n}', ha='center', va='bottom', color='black', fontsize=6)
+
+    title = f'Morphometric measures for {subject_id} in PAM50 template space'
+    fig.suptitle(title, fontweight='bold', fontsize=14, y=0.92)
+
+    fname_out_png = os.path.splitext(file_out_csv)[0] + '.png'
+    plt.savefig(fname_out_png, dpi=300, bbox_inches='tight')
+    plt.close(fig)
+    logger.info(f'Normative comparison figure saved: {fname_out_png}')
+    return fname_out_png
 
 
 def main(argv: Sequence[str]):
@@ -623,6 +845,14 @@ def main(argv: Sequence[str]):
             line['MEAN(area)'] = normalize_csa(line['MEAN(area)'], data_predictors, data_subject)
 
     save_as_csv(metrics_agg_merged, file_out, fname_in=fname_segmentation, append=append)
+
+    # Generate the normative comparison plot
+    if arguments.plot_normative:
+        if not normalize_pam50 or not perslice:
+            parser.error("Option '-plot-normative 1' requires '-normalize-PAM50 1' and '-perslice 1'.")
+        path_normative = os.path.join(__data_dir__, 'PAM50_normalized_metrics')
+        fname_png = plot_normative_comparison(file_out, path_normative, arguments.plot_normative_sex)
+        display_open(fname_png)
 
     # QC report (only for PMJ-based CSA)
     # TODO: refactor this with qc2. Replace arguments.qc_image with arguments.i
