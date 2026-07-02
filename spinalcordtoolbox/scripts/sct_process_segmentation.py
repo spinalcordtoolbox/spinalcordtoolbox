@@ -471,6 +471,15 @@ METRIC_TO_AXIS_LABEL = {
     'MEAN(compression_ratio)': 'AP/RLRatio [a.u.]',
 }
 
+METRIC_TO_YLIM = {
+    'MEAN(area)': (0, 100),
+    'MEAN(diameter_AP)': (0, 12),
+    'MEAN(diameter_RL)': (0, 20),
+    'MEAN(compression_ratio)': (0, 1.2),
+    'MEAN(eccentricity)': (0, 1.2),
+    'MEAN(solidity)': (70, 110),
+}
+
 COLORS_SEX_PLOT = {'M': 'blue', 'F': 'red'}
 SEX_TO_LEGEND_PLOT = {'M': 'males', 'F': 'females'}
 
@@ -577,6 +586,11 @@ def plot_normative_comparison(file_out_csv, path_normative, subject_sex):
                      label=subject_id)
 
         ymin, ymax = ax.get_ylim()
+        print(f"Metric: {metric}, y-limits before adjustment: ({ymin}, {ymax})")
+        if metric in METRIC_TO_YLIM:
+            fixed_ymin, fixed_ymax = METRIC_TO_YLIM[metric]
+            ymin, ymax = min(ymin, fixed_ymin), max(ymax, fixed_ymax)
+            ax.set_ylim(ymin, ymax)
 
         if idx == 0:
             ax.legend(loc='upper right', fontsize=8)
