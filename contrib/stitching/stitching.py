@@ -14,7 +14,7 @@
 # ==============================================================================
 
 # This file is vendored from TPTBox (https://github.com/Hendrik-code/TPTBox)
-# Source: TPTBox/stitching/stitching.py
+# Source: https://github.com/Hendrik-code/TPTBox/blob/main/TPTBox/stitching/stitching.py
 #
 # Citation:
 #   Graf, R., Platzek, PS., Riedel, E.O. et al.
