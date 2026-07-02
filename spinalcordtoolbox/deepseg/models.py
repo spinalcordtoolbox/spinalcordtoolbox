@@ -204,20 +204,28 @@ MODELS = {
         "thr": None,  # Images are already binarized when splitting into sc-seg + lesion-seg
         "default": False,
     },
+    # MS lesion model retrained on sc-crop cropped volumes (release r20260629).
+    # Training padding: sup=40, inf=100, lr=20, ap=20 (see seg-sc-ms-lesion-multicontrast/sc_cropping/).
     "model_seg_ms_lesion": {
-         "url": {
-            "model_fold0": ["https://github.com/ivadomed/ms-lesion-agnostic/releases/download/r20250909/model_fold0.zip"],
-            "model_fold1": ["https://github.com/ivadomed/ms-lesion-agnostic/releases/download/r20250909/model_fold1.zip"],
-            "model_fold2": ["https://github.com/ivadomed/ms-lesion-agnostic/releases/download/r20250909/model_fold2.zip"],
-            "model_fold3": ["https://github.com/ivadomed/ms-lesion-agnostic/releases/download/r20250909/model_fold3.zip"],
-            "model_fold4": ["https://github.com/ivadomed/ms-lesion-agnostic/releases/download/r20250909/model_fold4.zip"]
-         },
-         "description": "Segmentation of spinal cord MS lesions",
-         "contrasts": ["any"],
-         "framework": "nnunetv2",
-         "thr": None,  # Images are already binarized
-         "default": False,
-     },
+        "url": {
+            "model_fold0": ["https://github.com/ivadomed/seg-sc-ms-lesion-multicontrast/releases/download/r20260629/model_fold0.zip"],
+            "model_fold1": ["https://github.com/ivadomed/seg-sc-ms-lesion-multicontrast/releases/download/r20260629/model_fold1.zip"],
+            "model_fold2": ["https://github.com/ivadomed/seg-sc-ms-lesion-multicontrast/releases/download/r20260629/model_fold2.zip"],
+            "model_fold3": ["https://github.com/ivadomed/seg-sc-ms-lesion-multicontrast/releases/download/r20260629/model_fold3.zip"],
+            "model_fold4": ["https://github.com/ivadomed/seg-sc-ms-lesion-multicontrast/releases/download/r20260629/model_fold4.zip"],
+        },
+        "description": "Segmentation of spinal cord MS lesions",
+        "contrasts": ["any"],
+        "framework": "nnunetv2",
+        "thr": None,  # Images are already binarized
+        "crop": True,
+        "crop_pad_defaults": {
+            "pad_superior": 40.0, "pad_inferior": 100.0,
+            "pad_left": 20.0, "pad_right": 20.0,
+            "pad_anterior": 20.0, "pad_posterior": 20.0,
+        },
+        "default": False,
+    },
     "model_seg_canal": {
         "url": [
             "https://github.com/ivadomed/model-canal-seg/releases/download/r20260406/model-canal-seg-r20260406.zip"
