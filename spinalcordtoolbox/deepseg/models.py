@@ -232,6 +232,11 @@ MODELS = {
          "thr": None,  # Images are already binarized
          "default": False,
          "cropped_image": True,  # This model was trained on cropped images, so the input images should be cropped before inference.
+         "crop_pad_defaults": {
+             "pad_superior": 40.0, "pad_inferior": 100.0,
+             "pad_left": 20.0, "pad_right": 20.0,
+             "pad_anterior": 20.0, "pad_posterior": 20.0,
+         },
      },
     "model_seg_canal": {
         "url": [
