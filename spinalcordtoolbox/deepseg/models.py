@@ -40,6 +40,7 @@ MODELS = {
         "contrasts": ["t1"],
         "framework": "ivadomed",
         "thr": 0.0,  # Only for display in argparse help (postprocessing.binarize_prediction is not present in model json)
+        "crop": False,
         "default": False,
     },
     "mice_uqueensland_gm": {
@@ -51,6 +52,7 @@ MODELS = {
         "contrasts": ["t1"],
         "framework": "ivadomed",
         "thr": 0.0,  # Only for display in argparse help (postprocessing.binarize_prediction is not present in model json)
+        "crop": False,
         "default": False,
     },
     "t2_tumor": {
@@ -61,6 +63,7 @@ MODELS = {
         "contrasts": ["t2"],
         "framework": "ivadomed",
         "thr": 0.5,  # Only for display in argparse help (mirrors postprocessing.binarize_prediction, which is 0.5 in model json)
+        "crop": False,
         "default": False,
     },
     "findcord_tumor": {
@@ -71,6 +74,7 @@ MODELS = {
         "contrasts": ["t2"],
         "framework": "ivadomed",
         "thr": 0.5,  # Only for display in argparse help (mirrors postprocessing.binarize_prediction, which is 0.5 in model json)
+        "crop": False,
         "default": False,
     },
     "model_seg_sctumor-edema-cavity_t2-t1_unet3d-multichannel": {
@@ -81,6 +85,7 @@ MODELS = {
         "contrasts": ["t2", "t1"],
         "framework": "ivadomed",
         "thr": 0.5,  # Only for display in argparse help (mirrors postprocessing.binarize_prediction, which is 0.5 in model json)
+        "crop": False,
         "default": False,
     },
     "model_seg_exvivo_gm-wm_t2_unet2d-multichannel-softseg": {
@@ -91,6 +96,7 @@ MODELS = {
         "contrasts": ["t2"],
         "framework": "ivadomed",
         "thr": 0.0,  # Only for display in argparse help (postprocessing.binarize_prediction is not present in model json)
+        "crop": False,
         "default": False,
     },
     "model_7t_multiclass_gm_sc_unet2d": {
@@ -102,6 +108,7 @@ MODELS = {
         "contrasts": ["t2star"],
         "framework": "ivadomed",
         "thr": 0.5,  # Only for display in argparse help (mirrors postprocessing.binarize_prediction, which is 0.5 in model json)
+        "crop": False,
         "default": False,
     },
     "model_seg_epfl_t2w_lumbar_sc": {
@@ -112,6 +119,7 @@ MODELS = {
         "contrasts": ["t2"],
         "framework": "ivadomed",
         "thr": 0.5,  # Only for display in argparse help (mirrors postprocessing.binarize_prediction, which is 0.5 in model json)
+        "crop": False,
         "default": False,
     },
     # NB: Handling image binarization threshold for ivadomed vs. non-ivadomed models:
@@ -127,16 +135,45 @@ MODELS = {
     #       - Models do not have a `.json` sidecar file, since they were not developed with ivadomed
     #       - So, threshold value is stored here, within the model dict
     #       - Binarization is applied within SCT code
+    # v4 model: trained on sc-crop cropped volumes. crop_pad_defaults match sc_crop.detect() defaults.
     "model_seg_sc_contrast_agnostic_nnunet": {
         "url": [
-            "https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/releases/download/v3.0/model_contrast_agnostic_20250123.zip"
+            "https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/releases/download/v4.0/model_contrast_agnostic_20260628.zip"
         ],
         "description": "Spinal cord segmentation agnostic to MRI contrasts",
         "contrasts": ["any"],
         "framework": "nnunetv2",
-        "thr": None,  # We're now using an nnUNet model, which does not need a threshold
+        "thr": None,
+        "crop": True,
+        "crop_pad_defaults": {
+            "pad_superior": 40.0, "pad_inferior": 100.0,
+            "pad_left": 15.0, "pad_right": 15.0,
+            "pad_anterior": 15.0, "pad_posterior": 22.0,
+        },
         "default": True,
     },
+    # MS lesion model retrained on sc-crop cropped volumes (release r20260629).
+    # Training padding: sup=40, inf=100, lr=20, ap=20 (see seg-sc-ms-lesion-multicontrast/sc_cropping/).
+    "model_seg_ms_lesion": {
+        "url": {
+            "model_fold0": ["https://github.com/ivadomed/seg-sc-ms-lesion-multicontrast/releases/download/r20260629/model_fold0.zip"],
+            "model_fold1": ["https://github.com/ivadomed/seg-sc-ms-lesion-multicontrast/releases/download/r20260629/model_fold1.zip"],
+            "model_fold2": ["https://github.com/ivadomed/seg-sc-ms-lesion-multicontrast/releases/download/r20260629/model_fold2.zip"],
+            "model_fold3": ["https://github.com/ivadomed/seg-sc-ms-lesion-multicontrast/releases/download/r20260629/model_fold3.zip"],
+            "model_fold4": ["https://github.com/ivadomed/seg-sc-ms-lesion-multicontrast/releases/download/r20260629/model_fold4.zip"],
+        },
+        "description": "Segmentation of spinal cord MS lesions",
+        "contrasts": ["any"],
+        "framework": "nnunetv2",
+        "thr": None,  # Images are already binarized
+        "crop": True,
+        "crop_pad_defaults": {
+            "pad_superior": 40.0, "pad_inferior": 100.0,
+            "pad_left": 20.0, "pad_right": 20.0,
+            "pad_anterior": 20.0, "pad_posterior": 20.0,
+        },
+        "default": False,
+     },
     "model_seg_sci_multiclass_sc_lesion_nnunet": {
         "url": [
             "https://github.com/ivadomed/model_seg_sci/releases/download/r20240729/model_SCIsegV2_r20240729.zip"
@@ -145,6 +182,7 @@ MODELS = {
         "contrasts": ["t2"],
         "framework": "nnunetv2",
         "thr": None,  # Images are already binarized when splitting into sc-seg + lesion-seg
+        "crop": False,
         "default": False,
     },
     "model_seg_spinal_rootlets_nnunet": {
@@ -155,6 +193,7 @@ MODELS = {
         "contrasts": ["t2", "UNIT1", "T1w-INV1", "T1w-INV2"],
         "framework": "nnunetv2",
         "thr": None,  # Multiclass rootlets model (1.0, 2.0, 3.0...) -> no thresholding
+        "crop": False,
         "default": False,
     },
     "model_seg_gm_wm_mouse_nnunet": {
@@ -165,6 +204,7 @@ MODELS = {
          "contrasts": ["t1"],
          "framework": "nnunetv2",
          "thr": None,  # Images are already binarized when splitting into gm-seg and wm-seg
+         "crop": False,
          "default": False,
      },
     "model_seg_sc_epi_nnunet": {
@@ -175,6 +215,7 @@ MODELS = {
          "contrasts": ["bold"],
          "framework": "nnunetv2",
          "thr": None,  # Images are already binarized
+         "crop": False,
          "default": False,
      },
     "model_seg_ms_lesion_mp2rage": {
@@ -185,6 +226,7 @@ MODELS = {
          "contrasts": ["UNIT1"],
          "framework": "nnunetv2",
          "thr": None,  # Images are already binarized
+         "crop": False,
          "default": False,
      },
     "model_seg_ms_sc_lesion_bavaria_quebec_nnunet": {
@@ -195,22 +237,9 @@ MODELS = {
         "contrasts": ["t2"],
         "framework": "nnunetv2",
         "thr": None,  # Images are already binarized when splitting into sc-seg + lesion-seg
+        "crop": False,
         "default": False,
     },
-    "model_seg_ms_lesion": {
-         "url": {
-            "model_fold0": ["https://github.com/ivadomed/ms-lesion-agnostic/releases/download/r20250909/model_fold0.zip"],
-            "model_fold1": ["https://github.com/ivadomed/ms-lesion-agnostic/releases/download/r20250909/model_fold1.zip"],
-            "model_fold2": ["https://github.com/ivadomed/ms-lesion-agnostic/releases/download/r20250909/model_fold2.zip"],
-            "model_fold3": ["https://github.com/ivadomed/ms-lesion-agnostic/releases/download/r20250909/model_fold3.zip"],
-            "model_fold4": ["https://github.com/ivadomed/ms-lesion-agnostic/releases/download/r20250909/model_fold4.zip"]
-         },
-         "description": "Segmentation of spinal cord MS lesions",
-         "contrasts": ["any"],
-         "framework": "nnunetv2",
-         "thr": None,  # Images are already binarized
-         "default": False,
-     },
     "model_seg_canal": {
         "url": [
             "https://github.com/ivadomed/model-canal-seg/releases/download/r20260406/model-canal-seg-r20260406.zip"
@@ -219,6 +248,7 @@ MODELS = {
         "contrasts": ["all"],
         "framework": "nnunetv2",
         "thr": None,  # Images are already binarized
+        "crop": False,
         "default": False,
     },
     "model_seg_spine_contrast_agnostic": {
@@ -231,6 +261,7 @@ MODELS = {
          "contrasts": ["any"],
          "framework": "nnunetv2",
          "thr": None,  # Images are already binarized
+         "crop": False,
          "default": False,
      },
     "model_seg_gm_contrast_region_agnostic": {
@@ -241,6 +272,7 @@ MODELS = {
         "contrasts": ["any"],
         "framework": "nnunetv2",
         "thr": None,
+        "crop": False,
         "default": False,
      },
 }
@@ -393,7 +425,9 @@ TASKS = {
                              'SCI (Acute, Intermediate and Chronic; Pre/Post-operative) patients. Segmentations have been '
                              'tested with the following contrasts: '
                              '[T1w, T2w, T2star, MTon_MTS, GRE_T1w, DWI, mp2rage_UNIT1, PSIR, STIR, EPI], but '
-                             'other contrasts that are close visual matches may also work well with this model.',
+                             'other contrasts that are close visual matches may also work well with this model. '
+                             'The model automatically detects and crops the spinal cord before inference (sc-crop pipeline). '
+                             'Pass `-no-crop` to skip cropping and run inference on the full image.',
          'url': 'https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/',
          'models': ['model_seg_sc_contrast_agnostic_nnunet'],
          'citation': textwrap.dedent("""
@@ -684,6 +718,11 @@ def install_model(name_model, custom_url=None):
                 if name_model == "model_seg_ms_lesion":
                     target_directory = folder(name_model)
                     dirs_to_preserve = ("nnUNetTrainer",)
+                    # On the first fold, wipe any stale nnUNetTrainer* dirs so that a trainer rename
+                    # during a model upgrade doesn't leave two coexisting trainer dirs (len != 1 crash).
+                    if seed_name == next(iter(url_field)):
+                        for stale in glob.glob(os.path.join(target_directory, "nnUNetTrainer*")):
+                            shutil.rmtree(stale)
                 # For other multi-seed models, create subfolders for each seed
                 else:
                     target_directory = folder(os.path.join(name_model, seed_name))

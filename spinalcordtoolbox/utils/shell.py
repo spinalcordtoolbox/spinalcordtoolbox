@@ -62,6 +62,7 @@ IMTYPES_COLORMAP = {
     'softseg-2':   {'fsleyes': 'blue-lightblue',        'fslview': 'Blue-Lightblue',        'itksnap': 'gray'},
     'softseg-3':   {'fsleyes': 'brain_colours_2winter', 'fslview': 'Brain_Colours_2winter', 'itksnap': 'gray'},
     'softseg-4':   {'fsleyes': 'brain_colours_3warm',   'fslview': 'Brain_Colours_3warm',   'itksnap': 'gray'},
+    'cropbox':     {'fsleyes': None,                    'fslview': 'Red',                   'itksnap': 'seg'},
 }
 
 
@@ -142,26 +143,29 @@ def _construct_fslview_syntax(viewer, files, im_types, minmax, opacities, mode):
 
 
 def _construct_fsleyes_syntax(viewer, files, im_types, minmax, opacities):
-    cmd = viewer
+    # Build each file + its options as a separate token so the command can be
+    # printed across multiple lines with \ continuation — copy-paste safe.
+    parts = [viewer]
     n = itertools.cycle([1, 2, 3, 4])  # There are 4 colormaps for segs
     for i in range(len(files)):
-        cmd += ' ' + files[i]
+        token = files[i]
         if im_types:
             if im_types[i]:
                 key = im_types[i]
-                # use different colormaps for each subsequent seg
                 if key in ("seg", "softseg"):
                     key = f"{key}-{next(n)}"
-                cmd += ' -cm ' + IMTYPES_COLORMAP[key]['fsleyes']
+                if key == 'cropbox':
+                    token += ' -ot mask -mc 1 1 0 -o -w 3 -d'
+                else:
+                    token += ' -cm ' + IMTYPES_COLORMAP[key]['fsleyes']
         if minmax:
             if minmax[i]:
-                cmd += ' -dr ' + ' '.join(minmax[i].split(','))  # a b
+                token += ' -dr ' + ' '.join(minmax[i].split(','))
         if opacities:
             if opacities[i]:
-                cmd += ' -a ' + str(float(opacities[i]) * 100)  # in percentage
-    cmd += ' &'
-
-    return cmd
+                token += ' -a ' + str(float(opacities[i]) * 100)
+        parts.append(token)
+    return ' \\\n  '.join(parts) + ' &'
 
 
 def _construct_itksnap_syntax(viewer, files, im_types):
