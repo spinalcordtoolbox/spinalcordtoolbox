@@ -591,8 +591,12 @@ def main(argv: Sequence[str]):
     path_ref = os.path.join(__data_dir__, 'PAM50_normalized_metrics')
     # Fetch the subfolder that contains the "sub-{site}_{contrast}_PAM50.csv" files
     # It is in the spinal_cord folder of the data directory if it exists, otherwise it is in the first subfolder of the PAM50_normalized_metrics folder
-    path_ref_hc = os.path.join(__data_dir__, 'PAM50_normalized_metrics', 'spinal_cord') if path_ref_hc.exists() else path_ref_hc = next((folder for (folder, _, filenames) in os.walk(path_ref)
-        if any((f.startswith('sub-') and f.endswith('.csv')) for f in filenames)), None)
+    path_ref_hc_spinal_cord = os.path.join(path_ref, 'spinal_cord')
+    if os.path.isdir(path_ref_hc_spinal_cord):
+        path_ref_hc = path_ref_hc_spinal_cord
+    else:
+        path_ref_hc = next((folder for (folder, _, filenames) in os.walk(path_ref)
+                            if any((f.startswith('sub-') and f.endswith('.csv')) for f in filenames)), None)
     # Check if path_ref with normalized metrics exists
     if arguments.normalize_hc and not os.path.isdir(path_ref):
         raise FileNotFoundError(f"Directory with normalized PAM50 metrics {path_ref} does not exist.\n"
