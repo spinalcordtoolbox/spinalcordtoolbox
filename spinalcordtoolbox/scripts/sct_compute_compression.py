@@ -588,7 +588,7 @@ def main(argv: Sequence[str]):
             raise ValueError(f"Shape mismatch between compression labels [{img_labels.data.shape}], vertebral labels [{img_vertfile.data.shape}]"
                              f" and segmentation [{img_seg.data.shape}]). "
                              f"Please verify that your compression labels and vertebral labels were done in the same space as your input segmentation.")
-    path_ref = os.path.join(__data_dir__, 'PAM50_normalized_metrics')
+    path_ref = os.path.join(__data_dir__, 'PAM50_normalized_metrics', 'spinal_cord')
     # Fetch the subfolder that contains the "sub-{site}_{contrast}_PAM50.csv" files
     path_ref_hc = next((folder for (folder, _, filenames) in os.walk(path_ref)
                         if any((f.startswith('sub-') and f.endswith('.csv')) for f in filenames)), None)
