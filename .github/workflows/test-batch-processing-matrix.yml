@@ -39,19 +39,17 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Restore cached SCT installation
-        id: cache-sct
-        uses: actions/cache@v5
+      - name: Install SCT
+        run: ./install_sct -y
+
+      - name: Save SCT installation to cache
+        uses: actions/cache/save@v5
         with:
           path: |
             python/
             bin/
             data/
           key: sct-${{ runner.os }}-${{ github.sha }}
-
-      - name: Install SCT
-        if: steps.cache-sct.outputs.cache-hit != 'true'
-        run: ./install_sct -y
 
   # run each mini-script in parallel across multiple runners, with each job downloading the same SCT installation from
   # cache and downloading the relevant dataset for that section. The resulting CSV files are uploaded as artifacts for
@@ -75,10 +73,7 @@ jobs:
             bin/
             data/
           key: sct-${{ runner.os }}-${{ github.sha }}
-
-      - name: Install SCT (cache miss fallback)
-        if: steps.cache-sct.outputs.cache-hit != 'true'
-        run: ./install_sct -y
+          fail-on-cache-miss: true
 
       - name: Set up SCT environment variables
         run: |
@@ -138,10 +133,7 @@ jobs:
             bin/
             data/
           key: sct-${{ runner.os }}-${{ github.sha }}
-
-      - name: Install SCT (cache miss fallback)
-        if: steps.cache-sct.outputs.cache-hit != 'true'
-        run: ./install_sct -y
+          fail-on-cache-miss: true
 
       - name: Set up SCT environment variables
         run: |
