@@ -634,7 +634,7 @@ def plot_normative_comparison(file_out_csv, path_normative, subject_sex):
         ax.set_ylim(ymin, ymax)
 
         if idx == 0:
-            ax.legend(loc='upper right', fontsize=8)
+            ax.legend(loc='upper left', fontsize=8)
         else:
             ax.get_legend().remove()
 
