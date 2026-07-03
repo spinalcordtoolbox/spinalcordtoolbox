@@ -588,10 +588,11 @@ def main(argv: Sequence[str]):
             raise ValueError(f"Shape mismatch between compression labels [{img_labels.data.shape}], vertebral labels [{img_vertfile.data.shape}]"
                              f" and segmentation [{img_seg.data.shape}]). "
                              f"Please verify that your compression labels and vertebral labels were done in the same space as your input segmentation.")
-    path_ref = os.path.join(__data_dir__, 'PAM50_normalized_metrics', 'spinal_cord')
+    path_ref = os.path.join(__data_dir__, 'PAM50_normalized_metrics')
     # Fetch the subfolder that contains the "sub-{site}_{contrast}_PAM50.csv" files
-    path_ref_hc = next((folder for (folder, _, filenames) in os.walk(path_ref)
-                        if any((f.startswith('sub-') and f.endswith('.csv')) for f in filenames)), None)
+    # It is in the spinal_cord folder of the data directory if it exists, otherwise it is in the first subfolder of the PAM50_normalized_metrics folder
+    path_ref_hc = os.path.join(__data_dir__, 'PAM50_normalized_metrics', 'spinal_cord') if path_ref_hc.exists() else path_ref_hc = next((folder for (folder, _, filenames) in os.walk(path_ref)
+        if any((f.startswith('sub-') and f.endswith('.csv')) for f in filenames)), None)
     # Check if path_ref with normalized metrics exists
     if arguments.normalize_hc and not os.path.isdir(path_ref):
         raise FileNotFoundError(f"Directory with normalized PAM50 metrics {path_ref} does not exist.\n"
