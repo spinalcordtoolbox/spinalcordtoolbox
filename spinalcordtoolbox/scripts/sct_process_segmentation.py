@@ -618,7 +618,7 @@ def plot_normative_comparison(file_out_csv, path_normative, subject_sex):
         .to_dict()
     )
 
-    fig, axes = plt.subplots(2, 3, figsize=(20, 10))
+    fig, axes = plt.subplots(2, 3, figsize=(20, 10), gridspec_kw={'hspace': 0.15})
     axs = axes.ravel()
 
     for idx, metric in enumerate(METRICS_PLOT):
@@ -639,7 +639,13 @@ def plot_normative_comparison(file_out_csv, path_normative, subject_sex):
             ax.get_legend().remove()
 
         ax.set_ylabel(METRIC_TO_AXIS_LABEL[metric], fontsize=14)
-        ax.set_xlabel('PAM50 Axial Slice #', fontsize=14)
+        if idx < 3:
+            # Top row: drop the x-axis label/ticks to save space (bottom row already shows them,
+            # and slice ranges/vertebral levels are shared across rows)
+            ax.set_xlabel('')
+            ax.tick_params(axis='x', which='major', labelbottom=False)
+        else:
+            ax.set_xlabel('PAM50 Axial Slice #', fontsize=14)
         ax.tick_params(axis='both', which='major', labelsize=8)
         for spine in ['right', 'left', 'top']:
             ax.spines[spine].set_visible(False)
@@ -680,9 +686,14 @@ def plot_normative_comparison(file_out_csv, path_normative, subject_sex):
                 level = 'T' + str(v - 7)
             else:
                 level = 'C' + str(v)
-            n = n_per_level.get(v, 0)
-            ax.text(slice_x, ymin, f'{level}\n', ha='center', va='bottom', color='black', fontsize=7)
-            ax.text(slice_x, ymin, f'\nn={n}', ha='center', va='bottom', color='black', fontsize=6)
+            if idx < 3:
+                # Only show the vertebral level label for the top row
+                ax.text(slice_x, ymin, f'{level}', ha='center', va='bottom', color='black', fontsize=7)
+            if idx >= 3:
+                # Subject count only shown on the bottom row to save space (same value across rows)
+                n = n_per_level.get(v, 0)
+                ax.text(slice_x, ymin, f'{level}\n', ha='center', va='bottom', color='black', fontsize=7)
+                ax.text(slice_x, ymin, f'\nn={n}', ha='center', va='bottom', color='black', fontsize=6)
 
     title = f'Morphometric measures for {subject_id} in PAM50 template space'
     fig.suptitle(title, fontweight='bold', fontsize=14, y=0.92)
