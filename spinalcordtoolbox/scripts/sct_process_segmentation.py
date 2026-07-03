@@ -626,7 +626,7 @@ def plot_normative_comparison(file_out_csv, path_normative, subject_sex):
 
         sns.lineplot(ax=ax, x='Slice (I->S)', y=metric, data=df_norm_sex, errorbar='sd',
                      linewidth=2, color=COLORS_SEX_PLOT.get(subject_sex, 'gray'),
-                     label=f'Control subjects {sex_label} (N={n_subjects})')
+                     label=f'Normative data {sex_label} (N={n_subjects})')
         sns.lineplot(ax=ax, x='Slice (I->S)', y=metric, data=df_sub, linewidth=2, color='green',
                      label=subject_id)
 
