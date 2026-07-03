@@ -47,7 +47,7 @@ jobs:
             python/
             bin/
             data/
-          key: sct-${{ runner.os }}-${{ hashFiles('requirements.txt', 'setup.cfg', 'setup.py', 'install_sct') }}
+          key: sct-${{ runner.os }}-${{ github.sha }}
 
       - name: Install SCT
         if: steps.cache-sct.outputs.cache-hit != 'true'
@@ -74,7 +74,7 @@ jobs:
             python/
             bin/
             data/
-          key: sct-${{ runner.os }}-${{ hashFiles('requirements.txt', 'setup.cfg', 'setup.py', 'install_sct') }}
+          key: sct-${{ runner.os }}-${{ github.sha }}
 
       - name: Install SCT (cache miss fallback)
         if: steps.cache-sct.outputs.cache-hit != 'true'
@@ -137,7 +137,7 @@ jobs:
             python/
             bin/
             data/
-          key: sct-${{ runner.os }}-${{ hashFiles('requirements.txt', 'setup.cfg', 'setup.py', 'install_sct') }}
+          key: sct-${{ runner.os }}-${{ github.sha }}
 
       - name: Install SCT (cache miss fallback)
         if: steps.cache-sct.outputs.cache-hit != 'true'
