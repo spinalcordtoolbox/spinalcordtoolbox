@@ -289,6 +289,7 @@ def main(argv=None):
         for ds in unaccounted:
             print(f'  - {ds}', file=sys.stderr)
         print(file=sys.stderr)
+        return 1
 
     return 0
 
