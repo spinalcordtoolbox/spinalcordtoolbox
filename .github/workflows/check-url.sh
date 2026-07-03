@@ -35,8 +35,8 @@ IFS='|' read -r status_code original_url effective_url < <(
 # - `pipeline-hemis` -> private repository, will 404 (expected)
 # - `.ru` -> Russian domains, which don't play nicely with curl'ing from GitHub's servers
 # - `ieeexplore.ieee.org` -> oddly returns a "418 - I'm a teapot" error code instead of 403
-# - `%s` -> placeholder for a URL, which is used in our documentation's `conf.py` file
-if [[ "$original_url + $effective_url" =~ 'pipeline-hemis'|'.ru'|'ieeexplore.ieee.org'|'%s' ]];then
+# - `sct_tutorial_data` -> partial URL, which is used in our documentation's `conf.py` file
+if [[ "$original_url + $effective_url" =~ 'pipeline-hemis'|'.ru'|'ieeexplore.ieee.org'|'sct_tutorial_data' ]];then
     echo -e "$filename: \x1B[33m⚠️ Warning - Skipping: $URL --> $LOCATION\x1B[0m"
     exit 0
 fi
