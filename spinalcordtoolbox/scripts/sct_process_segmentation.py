@@ -471,14 +471,22 @@ METRIC_TO_AXIS_LABEL = {
     'MEAN(compression_ratio)': 'AP/RLRatio [a.u.]',
 }
 
-METRIC_TO_YLIM = {
-    'MEAN(area)': (0, 130),
-    'MEAN(diameter_AP)': (0, 15),
-    'MEAN(diameter_RL)': (0, 20),
-    'MEAN(compression_ratio)': (0, 2.5),
-    'MEAN(eccentricity)': (0, 1.2),
-    'MEAN(solidity)': (70, 110),
+# Physical measures are unbounded absolute quantities, so their axis is scaled off of the normative
+# mean +/- SD envelope (padded) instead of a fixed range. They can never be negative.
+PHYSICAL_METRICS_YLIM = ['MEAN(area)', 'MEAN(diameter_AP)', 'MEAN(diameter_RL)']
+
+# Ratio/percentage measures have a natural expected range regardless of the normative data's scale.
+METRICS_FIXED_YLIM = {
+    'MEAN(compression_ratio)': (0.0, 1.0),
+    'MEAN(eccentricity)': (0.0, 1.0),
+    'MEAN(solidity)': (80.0, 100.0),
 }
+# Solidity is a percentage (area / convex area) and can never exceed 100% by definition
+METRICS_YLIM_CAP = {
+    'MEAN(solidity)': 100.0,
+}
+# The padding fraction used to extend the y-axis limits beyond the normative mean +/- SD envelope, or beyond the subject's own min/max if they fall outside that envelope.
+YLIM_PADDING_FRACTION = 0.10
 
 COLORS_SEX_PLOT = {'M': 'blue', 'F': 'red'}
 SEX_TO_LEGEND_PLOT = {'M': 'males', 'F': 'females'}
@@ -520,6 +528,43 @@ def _get_vert_label_indices(df):
     ind_vert = np.append(ind_vert, vert.index.values[-1])
     ind_vert_mid = [int(ind_vert[i:i + 2].mean()) for i in range(len(ind_vert) - 1)]
     return vert, ind_vert, ind_vert_mid
+
+
+def _extend_bound(value, fraction, upper):
+    """Pad `value` outward (away from zero) by `fraction`, in the requested direction."""
+    if upper:
+        return value * (1 + fraction) if value >= 0 else value * (1 - fraction)
+    return value * (1 - fraction) if value >= 0 else value * (1 + fraction)
+
+
+def _compute_ylim(metric, df_norm_sex, df_sub):
+    """
+    Compute y-axis bounds for `metric`.
+
+    Physical measures (area, diameters) are clamped to the normative mean +/- SD envelope (padded by
+    YLIM_PADDING_FRACTION), floored at 0. Ratio/percentage measures use a fixed expected range instead.
+    In both cases, bounds are widened (with the same padding, applied to the subject's own value) if the
+    subject's data falls outside them.
+    """
+    sub_min, sub_max = df_sub[metric].min(), df_sub[metric].max()
+
+    if metric in PHYSICAL_METRICS_YLIM:
+        grouped = df_norm_sex.groupby('Slice (I->S)')[metric]
+        norm_upper = (grouped.mean() + grouped.std()).max()
+        ymin, ymax = 0.0, _extend_bound(norm_upper, YLIM_PADDING_FRACTION, upper=True)
+    else:
+        ymin, ymax = METRICS_FIXED_YLIM[metric]
+
+    if sub_min < ymin:
+        ymin = _extend_bound(sub_min, YLIM_PADDING_FRACTION, upper=False)
+    if sub_max > ymax:
+        ymax = _extend_bound(sub_max, YLIM_PADDING_FRACTION, upper=True)
+
+    cap = METRICS_YLIM_CAP.get(metric)
+    if cap is not None:
+        ymax = min(ymax, cap)
+
+    return ymin, ymax
 
 
 def plot_normative_comparison(file_out_csv, path_normative, subject_sex):
@@ -585,12 +630,8 @@ def plot_normative_comparison(file_out_csv, path_normative, subject_sex):
         sns.lineplot(ax=ax, x='Slice (I->S)', y=metric, data=df_sub, linewidth=2, color='green',
                      label=subject_id)
 
-        df_norm_min, df_norm_max = df_norm_sex[metric].agg(['min', 'max'])
-        df_sub_min, df_sub_max = df_sub[metric].agg(['min', 'max'])
-        if metric in METRIC_TO_YLIM:
-            fixed_ymin, fixed_ymax = METRIC_TO_YLIM[metric]
-            ymin, ymax = min(fixed_ymin, df_norm_min, df_sub_min), max(fixed_ymax, df_norm_max, df_sub_max)
-            ax.set_ylim(ymin, ymax)
+        ymin, ymax = _compute_ylim(metric, df_norm_sex, df_sub)
+        ax.set_ylim(ymin, ymax)
 
         if idx == 0:
             ax.legend(loc='upper right', fontsize=8)
