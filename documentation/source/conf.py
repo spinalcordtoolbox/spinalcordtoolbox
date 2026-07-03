@@ -95,10 +95,13 @@ exclude_patterns = []
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
 
+with open('sct_tutorial_data_url.txt') as f:
+    base_url = f.read().strip()
+
 extlinks = {
     # e.g. :sct_tutorial_data:`data_template-registration.zip` gets expanded into:
     # 'github.com/spinalcordtoolbox/sct_tutorial_data/releases/download/<tag>/data_template-registration.zip'
-    'sct_tutorial_data': ('https://github.com/spinalcordtoolbox/sct_tutorial_data/releases/download/r20260522_dev0/%s', '%s')
+    'sct_tutorial_data': (f'{base_url}/%s', '%s')
 }
 
 

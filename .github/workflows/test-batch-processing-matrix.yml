@@ -91,7 +91,7 @@ jobs:
         run: |
           echo "Section: ${{ matrix.name }}"
           echo "Dataset: ${{ matrix.dataset }}"
-          BASE_URL=$(python3 -c "import re, sys; m = re.search(r\"'sct_tutorial_data':\\s*\\('([^']+)'\", open('documentation/source/conf.py').read()); print(m.group(1).replace('%s', ''))")
+          BASE_URL = $(< "documentation/source/sct_tutorial_data_url.txt")
           
           echo "Downloading from: ${BASE_URL}${{ matrix.dataset }}.zip"
           curl -fsSL -o "${{ matrix.dataset }}.zip" "${BASE_URL}${{ matrix.dataset }}.zip"
