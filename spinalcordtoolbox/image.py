@@ -1823,7 +1823,7 @@ def stitch_images(im_list: Sequence[Image], verbose: int = 1) -> Image:
 
     :return: An Image object containing the stitched volume.
     """
-    nibs = [nib.Nifti1Image(im.data, im.hdr.get_best_affine()) for im in im_list]
+    nibs = [nib.Nifti1Image(im.data, im.hdr.get_best_affine(), im.header) for im in im_list]
 
     # `_stitch` returns (nii_out, nii_occ) where nii_occ is the optional occupancy/ramp
     # array (only populated when store_ramp=True, which we never pass here)
