@@ -621,6 +621,11 @@ def plot_normative_comparison(file_out_csv, path_normative, subject_sex):
     fig, axes = plt.subplots(2, 3, figsize=(20, 10), gridspec_kw={'hspace': 0.15})
     axs = axes.ravel()
 
+    # AP and RL diameter share the same y-axis scale/ticks so they are visually comparable
+    diam_metrics = ['MEAN(diameter_AP)', 'MEAN(diameter_RL)']
+    diam_ylims = [_compute_ylim(m, df_norm_sex, df_sub) for m in diam_metrics]
+    shared_diam_ylim = (min(y[0] for y in diam_ylims), max(y[1] for y in diam_ylims))
+
     for idx, metric in enumerate(METRICS_PLOT):
         ax = axs[idx]
 
@@ -630,7 +635,10 @@ def plot_normative_comparison(file_out_csv, path_normative, subject_sex):
         sns.lineplot(ax=ax, x='Slice (I->S)', y=metric, data=df_sub, linewidth=2, color='green',
                      label=subject_id)
 
-        ymin, ymax = _compute_ylim(metric, df_norm_sex, df_sub)
+        if metric in diam_metrics:
+            ymin, ymax = shared_diam_ylim
+        else:
+            ymin, ymax = _compute_ylim(metric, df_norm_sex, df_sub)
         ax.set_ylim(ymin, ymax)
 
         if idx == 0:
