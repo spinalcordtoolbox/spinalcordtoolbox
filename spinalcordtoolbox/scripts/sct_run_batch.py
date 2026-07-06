@@ -372,7 +372,7 @@ def run_single(subj_dir, script, script_args, path_segmanual, path_data, path_da
 
     # Strip the `.sh` extension from the script for building error logs
     # TODO: we should probably strip all extensions
-    script_base = re.sub('\\.sh$', '', os.path.basename(script))
+    script_base = re.sub(r'\.sh$', '', os.path.basename(script))
     script_full = os.path.abspath(os.path.expanduser(script))
 
     if os.path.sep in subj_dir:
@@ -413,7 +413,7 @@ def run_single(subj_dir, script, script_args, path_segmanual, path_data, path_da
     if sys.platform.startswith("win32"):
         with open(script_full) as f:
             first_line = f.readline()
-        shebang_pattern = re.compile("^#!.*/.*sh\b.*")
+        shebang_pattern = re.compile(r'^#!.*/.*sh\b')
         if script_full.endswith('.sh') or shebang_pattern.match(first_line):
             bash_exe = _find_nonsys32_bash_exe()
             if bash_exe:
