@@ -491,7 +491,7 @@ class SmartFormatter(argparse.ArgumentDefaultsHelpFormatter):
             li = li.rstrip()  # strip trailing whitespace
             if len(li) > 0:
                 # Check for ANSI graphics control sequences, and increase width to compensate
-                width_adjusted = width + len("".join(re.findall("\\x1b\[[0-9;]+m", li)))  # noqa: W605
+                width_adjusted = width + len("".join(re.findall(r"\x1b\[[0-9;]+m", li)))
                 # Split the line into two parts: the first line, and wrapped lines
                 init_wrap = textwrap.fill(li, width_adjusted).splitlines()
                 first = init_wrap[0]
