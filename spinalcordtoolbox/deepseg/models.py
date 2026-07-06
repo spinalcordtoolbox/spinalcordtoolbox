@@ -334,7 +334,7 @@ TASKS = {
                              '(https://github.com/ivadomed/findcord_tumor).',
          'url': 'https://github.com/ivadomed/model_seg_sctumor-edema-cavity_t2-t1_unet3d-multichannel',
          'models': ['findcord_tumor', 'model_seg_sctumor-edema-cavity_t2-t1_unet3d-multichannel'],
-         'citation': textwrap.dedent("""
+         'citation': textwrap.dedent(r"""
              ```bibtex
              @article{LEMAY2021102766,
                       title={Automatic multiclass intramedullary spinal cord tumor segmentation on MRI with deep learning},
@@ -379,7 +379,7 @@ TASKS = {
                              'external multicentric database. For more information, see the following URL.',
          'url': 'https://github.com/ivadomed/model_seg_gm-wm_t2star_7t_unet3d-multiclass',
          'models': ['model_7t_multiclass_gm_sc_unet2d'],
-         'citation': textwrap.dedent("""
+         'citation': textwrap.dedent(r"""
              ```bibtex
              @misc{medina20212d,
                    title={2D Multi-Class Model for Gray and White Matter Segmentation of the Cervical Spinal Cord at 7T},
@@ -415,7 +415,7 @@ TASKS = {
                              'other contrasts that are close visual matches may also work well with this model.',
          'url': 'https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/',
          'models': ['model_seg_sc_contrast_agnostic_nnunet'],
-         'citation': textwrap.dedent("""
+         'citation': textwrap.dedent(r"""
              ```bibtex
              @article{bedard2025towards,
                   title={Towards contrast-agnostic soft segmentation of the spinal cord},
@@ -439,7 +439,7 @@ TASKS = {
                              'orientations, as well as multiple scanner manufacturers and field strengths.',
          'url': 'https://github.com/ivadomed/model_seg_sci',
          'models': ['model_seg_sci_multiclass_sc_lesion_nnunet'],
-         'citation': textwrap.dedent("""
+         'citation': textwrap.dedent(r"""
              ```bibtex
              @InProceedings{10.1007/978-3-031-82007-6_19,
                             author="Karthik, Enamundram Naga and Valo{\v{s}}ek, Jan and Farner, Lynn and Pfyffer, Dario and Schading-Sassenhausen, Simon and Lebret, Anna and David, Gergely and Smith, Andrew C. and Weber II, Kenneth A. and Seif, Maryam and Freund, Patrick and Cohen-Adad, Julien",
@@ -467,16 +467,16 @@ TASKS = {
                              'subject, 45 images).',
          'url': 'https://github.com/ivadomed/model-spinal-rootlets',
          'models': ['model_seg_spinal_rootlets_nnunet'],
-         'citation': textwrap.dedent("""
+         'citation': textwrap.dedent(r"""
              ```bibtex
              @misc{krejci2025rootletsegdeeplearningmethod,
-                   title={RootletSeg: Deep learning method for spinal rootlets segmentation across MRI contrasts}, 
+                   title={RootletSeg: Deep learning method for spinal rootlets segmentation across MRI contrasts},
                    author={Katerina Krejci and Jiri Chmelik and Sandrine Bédard and Falk Eippert and Ulrike Horn and Virginie Callot and Julien Cohen-Adad and Jan Valosek},
                    year={2025},
                    eprint={2509.16255},
                    archivePrefix={arXiv},
                    primaryClass={q-bio.TO},
-                   url={https://arxiv.org/abs/2509.16255}, 
+                   url={https://arxiv.org/abs/2509.16255},
              }
              ```"""),  # noqa E501 (line too long)
          },
@@ -491,7 +491,7 @@ TASKS = {
                              'the University of Zurich.',
          'url': 'https://github.com/ivadomed/model_seg_mouse-sc_wm-gm_t1',
          'models': ['model_seg_gm_wm_mouse_nnunet'],
-         'citation': textwrap.dedent("""
+         'citation': textwrap.dedent(r"""
              ```bibtex
              @software{cohen_adad_2024_10819207,
                        author={Cohen-Adad, Julien},
@@ -516,7 +516,7 @@ TASKS = {
                              'dataset has healthy control subjects. The model has been trained in a human-in-the-loop active learning fashion.',
          'url': 'https://github.com/sct-pipeline/fmri-segmentation',
          'models': ['model_seg_sc_epi_nnunet'],
-         'citation': textwrap.dedent("""
+         'citation': textwrap.dedent(r"""
              ```
              @article{Banerjee2025.01.07.631402,
                       author={Banerjee, Rohan and Kaptan, Merve and Tinnermann, Alexandra and Khatibi, Ali and Dabbagh, Alice and B{\"u}chel, Christian and K{\"u}ndig, Christian W. and Law, Christine S.W. and Pfyffer, Dario and Lythgoe, David J. and Tsivaka, Dimitra and Van De Ville, Dimitri and Eippert, Falk and Muhammad, Fauziyya and Glover, Gary H. and David, Gergely and Haynes, Grace and Haaker, Jan and Brooks, Jonathan C. W. and Finsterbusch, J{\"u}rgen and Martucci, Katherine T. and Hemmerling, Kimberly J. and Mobarak-Abadi, Mahdi and Hoggarth, Mark A. and Howard, Matthew A. and Bright, Molly G. and Kinany, Nawal and Kowalczyk, Olivia S. and Freund, Patrick and Barry, Robert L. and Mackey, Sean and Vahdat, Shahabeddin and Schading, Simon and McMahon, Stephen B. and Parish, Todd and Marchand-Pauvert, V{\'e}ronique and Chen, Yufen and Smith, Zachary A. and Weber, Kenneth A. and De Leener, Benjamin and Cohen-Adad, Julien},
@@ -543,10 +543,10 @@ TASKS = {
                              f'Aix-Marseille University, Marseille, France). {CROP_MESSAGE}',
          'url': 'https://github.com/ivadomed/model_seg_ms_mp2rage',
          'models': ['model_seg_ms_lesion_mp2rage'],
-         'citation': textwrap.dedent("""
+         'citation': textwrap.dedent(r"""
              ```bibtex
              @inproceedings{laines2024automatic,
-                 author={Laines Medina, N. and Mchinda, S. and Testud, B. and Demorti{\\`e}re, S. and Chen, M. and Granziera, G. and Reich, D. and Tsagkas, C. and Cohen-Adad, 
+                 author={Laines Medina, N. and Mchinda, S. and Testud, B. and Demorti{\`e}re, S. and Chen, M. and Granziera, G. and Reich, D. and Tsagkas, C. and Cohen-Adad,
                  J. and Callot, V.},
                  title={Automatic Multiple Sclerosis Lesion Segmentation in the Spinal Cord on 3T and 7T MP2RAGE Images},
                  booktitle={Proceedings of the 40th Annual Scientific Meeting of the ESMRMB},
@@ -569,7 +569,7 @@ TASKS = {
                              '(± standard deviation) of 1.10±1.13 x 0.51±0.24 x 3.27±1.95 mm³ reported in “RPI-” orientation ',
          'url': 'https://github.com/ivadomed/ms-lesion-agnostic',
          'models': ['model_seg_ms_lesion'],
-         'citation': textwrap.dedent("""
+         'citation': textwrap.dedent(r"""
              ```bibtex
             @article{doi:10.1177/13524585261427333,
                 author = {Pierre-Louis Benveniste and Laurent Létourneau-Guillon and David Araujo and Lydia Chougar and Dumitru Fetco and Masaaki Hori and Kouhei Kamiya and Steven Messina and Charidimos Tsagkas and Bertrand Audoin and Rohit Bakshi and Elise Bannier and Daniel Blezek and Jean-Christophe Brisset and Virginie Callot and Erik Charlson and Michelle Chen and Olga Ciccarelli and Sarah Demortière and Gilles Edan and Massimo Filippi and Tobias Granberg and Cristina Granziera and Christopher C. Hemond and B. Mark Keegan and Anne Kerbrat and Jan Kirschke and Shannon Kolind and Pierre Labauge and Lisa Eunyoung Lee and Yaou Liu and Caterina Mainero and Julian McGinnis and Nilser Laines Medina and Mark Mühlau and Govind Nair and Kristin P. O’Grady and Jiwon Oh and Russell Ouellette and Alexandre Prat and Daniel S. Reich and Maria A. Rocca and Timothy M. Shepherd and Seth A. Smith and Leszek Stawiarz and Jason Talbott and Roger Tam and Shahamat Tauhid and Anthony Traboulsee and Constantina Andrada Treaba and Paola Valsasina and Zachary Vavasour and Marios Yiannakas and Hervé Lombaert and Julien Cohen-Adad},
