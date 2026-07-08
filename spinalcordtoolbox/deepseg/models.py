@@ -42,7 +42,6 @@ MODELS = {
         "thr": 0.0,  # Only for display in argparse help (postprocessing.binarize_prediction is not present in model json)
         "crop": False,
         "default": False,
-        "cropped_image": False,
     },
     "mice_uqueensland_gm": {
         "url": [
@@ -55,7 +54,6 @@ MODELS = {
         "thr": 0.0,  # Only for display in argparse help (postprocessing.binarize_prediction is not present in model json)
         "crop": False,
         "default": False,
-        "cropped_image": False,
     },
     "t2_tumor": {
         "url": [
@@ -67,7 +65,6 @@ MODELS = {
         "thr": 0.5,  # Only for display in argparse help (mirrors postprocessing.binarize_prediction, which is 0.5 in model json)
         "crop": False,
         "default": False,
-        "cropped_image": False,
     },
     "findcord_tumor": {
         "url": [
@@ -79,7 +76,6 @@ MODELS = {
         "thr": 0.5,  # Only for display in argparse help (mirrors postprocessing.binarize_prediction, which is 0.5 in model json)
         "crop": False,
         "default": False,
-        "cropped_image": False,
     },
     "model_seg_sctumor-edema-cavity_t2-t1_unet3d-multichannel": {
         "url": [
@@ -91,7 +87,6 @@ MODELS = {
         "thr": 0.5,  # Only for display in argparse help (mirrors postprocessing.binarize_prediction, which is 0.5 in model json)
         "crop": False,
         "default": False,
-        "cropped_image": False,
     },
     "model_seg_exvivo_gm-wm_t2_unet2d-multichannel-softseg": {
         "url": [
@@ -103,7 +98,6 @@ MODELS = {
         "thr": 0.0,  # Only for display in argparse help (postprocessing.binarize_prediction is not present in model json)
         "crop": False,
         "default": False,
-        "cropped_image": False,
     },
     "model_7t_multiclass_gm_sc_unet2d": {
         "url": [
@@ -116,7 +110,6 @@ MODELS = {
         "thr": 0.5,  # Only for display in argparse help (mirrors postprocessing.binarize_prediction, which is 0.5 in model json)
         "crop": False,
         "default": False,
-        "cropped_image": False,
     },
     "model_seg_epfl_t2w_lumbar_sc": {
         "url": [
@@ -128,7 +121,6 @@ MODELS = {
         "thr": 0.5,  # Only for display in argparse help (mirrors postprocessing.binarize_prediction, which is 0.5 in model json)
         "crop": False,
         "default": False,
-        "cropped_image": False,
     },
     # NB: Handling image binarization threshold for ivadomed vs. non-ivadomed models:
     #   - All models:
@@ -159,7 +151,6 @@ MODELS = {
             "pad_anterior": 15.0, "pad_posterior": 22.0,
         },
         "default": True,
-        "cropped_image": False,
     },
     "model_seg_ms_lesion": {
         "url": {
@@ -191,7 +182,6 @@ MODELS = {
         "thr": None,  # Images are already binarized when splitting into sc-seg + lesion-seg
         "crop": False,
         "default": False,
-        "cropped_image": False,
     },
     "model_seg_spinal_rootlets_nnunet": {
         "url": [
@@ -203,7 +193,6 @@ MODELS = {
         "thr": None,  # Multiclass rootlets model (1.0, 2.0, 3.0...) -> no thresholding
         "crop": False,
         "default": False,
-        "cropped_image": False,
     },
     "model_seg_gm_wm_mouse_nnunet": {
          "url": [
@@ -215,7 +204,6 @@ MODELS = {
          "thr": None,  # Images are already binarized when splitting into gm-seg and wm-seg
          "crop": False,
          "default": False,
-         "cropped_image": False,
      },
     "model_seg_sc_epi_nnunet": {
          "url": [
@@ -227,7 +215,6 @@ MODELS = {
          "thr": None,  # Images are already binarized
          "crop": False,
          "default": False,
-         "cropped_image": False,
      },
     "model_seg_ms_lesion_mp2rage": {
          "url": [
@@ -239,7 +226,6 @@ MODELS = {
          "thr": None,  # Images are already binarized
          "crop": False,
          "default": False,
-         "cropped_image": False,
      },
     "model_seg_ms_sc_lesion_bavaria_quebec_nnunet": {
         "url": [
@@ -251,23 +237,7 @@ MODELS = {
         "thr": None,  # Images are already binarized when splitting into sc-seg + lesion-seg
         "crop": False,
         "default": False,
-        "cropped_image": False,
     },
-    "model_seg_ms_lesion": {
-         "url": {
-            "model_fold0": ["https://github.com/ivadomed/seg-sc-ms-lesion-multicontrast/releases/download/r20260703/model_fold0.zip"],
-            "model_fold1": ["https://github.com/ivadomed/seg-sc-ms-lesion-multicontrast/releases/download/r20260703/model_fold1.zip"],
-            "model_fold2": ["https://github.com/ivadomed/seg-sc-ms-lesion-multicontrast/releases/download/r20260703/model_fold2.zip"],
-            "model_fold3": ["https://github.com/ivadomed/seg-sc-ms-lesion-multicontrast/releases/download/r20260703/model_fold3.zip"],
-            "model_fold4": ["https://github.com/ivadomed/seg-sc-ms-lesion-multicontrast/releases/download/r20260703/model_fold4.zip"]
-         },
-         "description": "Segmentation of spinal cord MS lesions",
-         "contrasts": ["any"],
-         "framework": "nnunetv2",
-         "thr": None,  # Images are already binarized
-         "default": False,
-         "cropped_image": True,  # This model was trained on cropped images, so the input images should be cropped before inference.
-     },
     "model_seg_canal": {
         "url": [
             "https://github.com/ivadomed/model-canal-seg/releases/download/r20260406/model-canal-seg-r20260406.zip"
@@ -278,7 +248,6 @@ MODELS = {
         "thr": None,  # Images are already binarized
         "crop": False,
         "default": False,
-        "cropped_image": False,
     },
     "model_seg_spine_contrast_agnostic": {
          # NB: Rather than hardcoding the URLs ourselves, use the URLs from the totalspineseg package.
@@ -292,7 +261,6 @@ MODELS = {
          "thr": None,  # Images are already binarized
          "crop": False,
          "default": False,
-         "cropped_image": False,
      },
     "model_seg_gm_contrast_region_agnostic": {
         "url": [
@@ -304,7 +272,6 @@ MODELS = {
         "thr": None,
         "crop": False,
         "default": False,
-        "cropped_image": False,
      },
 }
 
