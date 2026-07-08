@@ -397,8 +397,10 @@ def main(argv: Sequence[str]):
             # Some models (e.g. `model_seg_ms_lesion`) are made up of multiple folds, each of which needs its
             # own URL. So, figure out how many URLs are expected per model, then split up the flat list of URLs
             # provided by the user accordingly.
-            n_urls_per_model = [len(models.MODELS[name_model]['url']) if isinstance(models.MODELS[name_model]['url'], dict) else 1
-                for name_model in models_to_install]  # It it's a dict, then it's a multifold model, and we need 1 URL per fold. Else, we need 1 URL.
+            n_urls_per_model = [
+                len(models.MODELS[name_model]['url']) if isinstance(models.MODELS[name_model]['url'], dict) else 1
+                for name_model in models_to_install
+            ]  # It it's a dict, then it's a multifold model, and we need 1 URL per fold. Else, we need 1 URL.
             n_urls_expected = sum(n_urls_per_model)
             if len(arguments.custom_url) != n_urls_expected:
                 parser.error(f"Expected {n_urls_expected} URL(s) for task '{arguments.task}', "
