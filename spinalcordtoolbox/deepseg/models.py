@@ -695,7 +695,7 @@ def install_model(name_model, custom_url=None):
         # Multi-fold/multi-seed model: one custom URL is expected per fold, in the same order as the default URLs
         if len(custom_url) != len(default_url):
             raise ValueError(f"Expected {len(default_url)} custom URL(s) for model '{name_model}' "
-                              f"(one per fold: {list(default_url.keys())}), but got {len(custom_url)} instead.")
+                f"(one per fold: {list(default_url.keys())}), but got {len(custom_url)} instead.")
         url_field = {seed_name: [url] for seed_name, url in zip(default_url.keys(), custom_url)}
     else:
         url_field = [custom_url]  # [] -> mimic a list of mirror URLs
