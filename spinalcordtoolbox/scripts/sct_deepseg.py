@@ -394,10 +394,19 @@ def main(argv: Sequence[str]):
     if arguments.install:
         models_to_install = models.TASKS[arguments.task]['models']
         if arguments.custom_url:
-            if len(arguments.custom_url) != len(models_to_install):
-                parser.error(f"Expected {len(models_to_install)} URL(s) for task {arguments.install}, "
+            # Some models (e.g. `model_seg_ms_lesion`) are made up of multiple folds, each of which needs its
+            # own URL. So, figure out how many URLs are expected per model, then split up the flat list of URLs
+            # provided by the user accordingly.
+            n_urls_per_model = [len(models.MODELS[name_model]['url']) if isinstance(models.MODELS[name_model]['url'], dict) else 1
+                                 for name_model in models_to_install]  # It it's a dict, then it's a multifold model, and we need 1 URL per fold. Else, we need 1 URL.
+            n_urls_expected = sum(n_urls_per_model)
+            if len(arguments.custom_url) != n_urls_expected:
+                parser.error(f"Expected {n_urls_expected} URL(s) for task '{arguments.task}', "
                              f"but got {len(arguments.custom_url)} URL(s) instead.")
-            for name_model, custom_url in zip(models_to_install, arguments.custom_url):
+            i = 0
+            for name_model, n_urls in zip(models_to_install, n_urls_per_model):
+                custom_url = arguments.custom_url[i] if n_urls == 1 else arguments.custom_url[i:i + n_urls]
+                i += n_urls
                 models.install_model(name_model, custom_url)
         else:
             for name_model in models_to_install:
