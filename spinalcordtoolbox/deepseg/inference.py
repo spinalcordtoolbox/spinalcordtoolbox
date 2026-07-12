@@ -297,7 +297,6 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device, ensemble=F
     # sc-crop: detect the SC and crop before inference; bbox is used to uncrop after.
     # Cropping is done here in the original orientation (sc-crop is orientation-agnostic),
     # before the reorientation step below (which preserves the orientation after cropping).
-    bbox = None
     if crop:
         img_nii = nib.load(path_img_tmp)
         bbox = sc_crop.detect(img_nii, **(crop_pad or {}))
