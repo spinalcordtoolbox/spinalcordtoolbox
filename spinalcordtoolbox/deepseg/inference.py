@@ -253,11 +253,6 @@ def average_nnunet_predictions(pred, probabilities=False):
 
 # ── sc-crop helpers ──────────────────────────────────────────────────────────
 
-def _cropbox_path(out_fname, fallback_fname):
-    """Return the path where the crop box mask is saved (next to the output, else next to the input)."""
-    return add_suffix(out_fname if out_fname else fallback_fname, "_cropbox")
-
-
 def _warn_if_cord_truncated(img_out, bbox):
     """Warn (red) if the segmentation reaches a crop face interior to the image.
     Suggests the -box-* flag and current value for each truncated face."""
@@ -309,7 +304,8 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device, ensemble=F
         bbox.update(box_overrides or {})
         if not (bbox["xmax"] >= bbox["xmin"] and bbox["ymax"] >= bbox["ymin"] and bbox["zmax"] >= bbox["zmin"]):
             raise ValueError("sc-crop: invalid bounding box — check that -box-* values are not inverted.")
-        sc_crop.save_bbox_nifti(bbox, img_nii, _cropbox_path(out_fname, orig_fname or path_img))
+        fname_cropbox = add_suffix(out_fname if out_fname else (orig_fname or path_img), "_cropbox")
+        sc_crop.save_bbox_nifti(bbox, img_nii, fname_cropbox)
         nib.save(sc_crop.crop(img_nii, bbox), path_img_tmp)
 
     # Get the original orientation of the image, for example LPI
