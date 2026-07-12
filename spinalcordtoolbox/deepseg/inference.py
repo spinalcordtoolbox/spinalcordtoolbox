@@ -251,25 +251,6 @@ def average_nnunet_predictions(pred, probabilities=False):
     return pred
 
 
-# ── sc-crop helpers ──────────────────────────────────────────────────────────
-
-def _warn_if_cord_truncated(img_out, bbox):
-    """Warn (red) if the segmentation reaches a crop face interior to the image.
-    Suggests the -box-* flag and current value for each truncated face."""
-    truncated = sc_crop.check_seg_truncation(
-        nib.Nifti1Image(np.asanyarray(img_out.data), img_out.affine), bbox
-    )
-    if not truncated:
-        return
-    suggestions = "  ".join(f"-box-{key} {bbox[key]}" for key in truncated)
-    logger.warning(stylize(
-        f"\nWARNING: the segmentation reaches the crop box at: {', '.join(truncated)}.\n"
-        f"The spinal cord is likely truncated by the crop.", ["Red", "Bold"]))
-    logger.warning(stylize(
-        f"Current values: {suggestions}\n"
-        f"Open *_cropbox.nii.gz in FSLeyes and re-run with adjusted -box-* values.\n", "Green"))
-
-
 def segment_nnunet(path_img, tmpdir, predictor, device: torch.device, ensemble=False, soft_ms_lesion=False,
                    crop=False, crop_pad=None, box_overrides=None, orig_fname=None, out_fname=None):
     """
@@ -377,8 +358,16 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device, ensemble=F
     # sc-crop: restore the prediction to the full image space.
     if crop:
         seg_full = sc_crop.uncrop(nib.Nifti1Image(np.asanyarray(img_out.data).astype(np.uint8), img_out.affine), bbox)
+        truncated = sc_crop.check_seg_truncation(seg_full, bbox)
+        if truncated:
+            suggestions = "  ".join(f"-box-{key} {bbox[key]}" for key in truncated)
+            logger.warning(stylize(
+                f"\nWARNING: the segmentation reaches the crop box at: {', '.join(truncated)}.\n"
+                f"The spinal cord is likely truncated by the crop.", ["Red", "Bold"]))
+            logger.warning(stylize(
+                f"Current values: {suggestions}\n"
+                f"Open *_cropbox.nii.gz in FSLeyes and re-run with adjusted -box-* values.\n", "Green"))
         img_out = Image(np.asanyarray(seg_full.dataobj), hdr=seg_full.header)
-        _warn_if_cord_truncated(img_out, bbox)
 
     labels = {k: v for k, v in predictor.dataset_json['labels'].items() if k != 'background'}
     # for the canal model, keep only the largest object
