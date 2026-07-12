@@ -411,12 +411,22 @@ def main(argv: Sequence[str]):
     # Get pipeline model names
     name_models = models.TASKS[arguments.task]['models']
 
-    # -box-* are only valid when crop is active (i.e. model has "crop": True and -no-crop is not set).
-    _box_keys = ('xmin', 'xmax', 'ymin', 'ymax', 'zmin', 'zmax')
-    if any(getattr(arguments, f'box_{k}', None) is not None for k in _box_keys):
-        crop_active = any(models.MODELS[m].get('cropped_image') for m in name_models) and not getattr(arguments, 'no_crop', False)
-        if not crop_active:
-            parser.error("-box-* arguments are only valid when the sc-crop pipeline is active.")
+    # Parse -no-crop / -box-* once, here, and reuse `crop_active`/`box_overrides` below instead of
+    # re-deriving them per model in the pipeline loop.
+    # NB: today's crop-enabled tasks ('spinalcord', 'lesion_ms') each have exactly one model, so a
+    # single task-level `crop_active` is equivalent to a per-model check. If a future task ever mixes
+    # cropped and non-cropped models, this will need to move back inside the loop.
+    crop_active = (any(models.MODELS[m].get('cropped_image') for m in name_models)
+                   and not getattr(arguments, 'no_crop', False))
+    box_overrides = {
+        key: getattr(arguments, f'box_{key}', None)
+        for key in ('xmin', 'xmax', 'ymin', 'ymax', 'zmin', 'zmax')
+    }
+    box_overrides = {k: v for k, v in box_overrides.items() if v is not None}
+
+    # -box-* are only valid when crop is active.
+    if box_overrides and not crop_active:
+        parser.error("-box-* arguments are only valid when the sc-crop pipeline is active.")
 
     # Check if all input images and contrasts have been specified (only relevant for 'tumor-edema-cavity_t1-t2')
     if arguments.task == 'tumor_edema_cavity_t1_t2':
@@ -514,12 +524,7 @@ def main(argv: Sequence[str]):
             # Padding defaults from the model are passed to sc_crop.detect() internally.
             # The user can override individual crop box faces (voxel indices) via -box-*.
             # Pass -no-crop to skip this pipeline and run inference on the full image.
-            if models.MODELS[name_model].get('cropped_image') and not getattr(arguments, 'no_crop', False):
-                box_overrides = {
-                    key: getattr(arguments, f'box_{key}', None)
-                    for key in ('xmin', 'xmax', 'ymin', 'ymax', 'zmin', 'zmax')
-                }
-                box_overrides = {k: v for k, v in box_overrides.items() if v is not None}
+            if crop_active:
                 extra_inference_kwargs['crop'] = True
                 extra_inference_kwargs['crop_pad'] = models.MODELS[name_model].get('crop_pad_defaults', {})
                 extra_inference_kwargs['box_overrides'] = box_overrides
