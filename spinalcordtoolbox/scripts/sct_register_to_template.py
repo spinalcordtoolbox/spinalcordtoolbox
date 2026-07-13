@@ -225,6 +225,7 @@ def get_parser():
               f"  - slicewise={paramregmulti.steps['1'].slicewise}\n"
               f"  - smoothWarpXY={paramregmulti.steps['1'].smoothWarpXY}\n"
               f"  - pca_eigenratio_th={paramregmulti.steps['1'].pca_eigenratio_th}\n"
+              f"  - rot_method={paramregmulti.steps['1'].rot_method}\n"
               f"\n"
               f"step=2\n"
               f"  - type={paramregmulti.steps['2'].type}\n"
@@ -235,7 +236,8 @@ def get_parser():
               f"  - gradStep={paramregmulti.steps['2'].gradStep}\n"
               f"  - slicewise={paramregmulti.steps['2'].slicewise}\n"
               f"  - smoothWarpXY={paramregmulti.steps['2'].smoothWarpXY}\n"
-              f"  - pca_eigenratio_th={paramregmulti.steps['1'].pca_eigenratio_th}")
+              f"  - pca_eigenratio_th={paramregmulti.steps['2'].pca_eigenratio_th}\n"
+              f"  - rot_method={paramregmulti.steps['2'].rot_method}")
     )
     optional.add_argument(
         '-centerline-algo',
