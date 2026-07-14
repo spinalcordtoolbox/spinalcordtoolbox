@@ -364,8 +364,8 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device, ensemble=F
                 f"\nWARNING: the segmentation reaches the crop box at: {', '.join(truncated)}.\n"
                 f"The spinal cord is likely truncated by the crop.", ["Red", "Bold"]))
             logger.warning(stylize(
-                f"Open *_cropbox.nii.gz in FSLeyes, read off the voxel index of the truncated face(s), "
-                f"and re-run with the corresponding -box-* value(s).\n", "Green"))
+                "Open *_cropbox.nii.gz in FSLeyes, read off the voxel index of the truncated face(s), "
+                "and re-run with the corresponding -box-* value(s).\n", "Green"))
         img_out = Image(np.asanyarray(seg_full.dataobj), hdr=seg_full.header)
 
     labels = {k: v for k, v in predictor.dataset_json['labels'].items() if k != 'background'}
