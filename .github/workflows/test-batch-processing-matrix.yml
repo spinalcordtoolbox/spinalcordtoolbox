@@ -94,7 +94,7 @@ jobs:
           BASE_URL=$(< documentation/source/sct_tutorial_data_url.txt)
           
           echo "Downloading from: ${BASE_URL}${{ matrix.dataset }}.zip"
-          curl -fsSL -o "${{ matrix.dataset }}.zip" "${BASE_URL}${{ matrix.dataset }}.zip"
+          curl -fsSL -o "${{ matrix.dataset }}.zip" "${BASE_URL}/${{ matrix.dataset }}.zip"
           mkdir -p "$SCT_DIR/data"
           unzip -q "${{ matrix.dataset }}.zip" -d "$SCT_DIR/data/"
           
