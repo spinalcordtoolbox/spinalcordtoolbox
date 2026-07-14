@@ -33,10 +33,9 @@ def check_dl_args(argv):
 
     if forbidden:
         raise ValueError(
-            "The following options cannot be used together with -dl (DL-based motion correction): "
-            + ", ".join(forbidden)
-            + "\nDL module does not support b-value threshold (-bvalmin), grouping (-g), "
-              "final interpolation (-x), or advanced ANTs parameters (-param)."
+            f"The following options cannot be used together with -dl (DL-based motion correction): {', '.join(forbidden)}\n"
+            "DL module does not support b-value threshold (-bvalmin), grouping (-g), final interpolation (-x), "
+            "or advanced ANTs parameters (-param)."
         )
 
 

@@ -90,16 +90,16 @@ def main(argv: Sequence[str]):
     else:
         dimensionality = '3'
 
-    cmd = ['isct_ComposeMultiTransform', dimensionality, 'warp_final' + ext_out, '-R', fname_dest] + fname_warp_list_invert
+    cmd = ['isct_ComposeMultiTransform', dimensionality, f'warp_final{ext_out}', '-R', fname_dest] + fname_warp_list_invert
     _, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
 
     # check if output was generated
-    if not os.path.isfile('warp_final' + ext_out):
+    if not os.path.isfile(f'warp_final{ext_out}'):
         raise ValueError(f"Warping field was not generated! {output}")
 
     # Generate output files
     printv('\nGenerate output files...', verbose)
-    generate_output_file('warp_final' + ext_out, os.path.join(path_out, file_out + ext_out))
+    generate_output_file(f'warp_final{ext_out}', os.path.join(path_out, file_out + ext_out))
 
 
 # ==========================================================================================

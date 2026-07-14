@@ -29,7 +29,7 @@ def centerline2roi(fname_image, folder_output='.', verbose=0):
     """
     # TODO: change folder_output to fname_out
     path_data, file_data, ext_data = extract_fname(fname_image)
-    fname_output = file_data + '.roi'
+    fname_output = f'{file_data}.roi'
 
     date_now = datetime.datetime.now()
     ROI_TEMPLATE = 'Begin Marker ROI\n' \
@@ -107,11 +107,11 @@ def detect_centerline(img, contrast, remove_temp_files=1, verbose=0):
     # reorient the input image to RPI + convert to .nii
     img_int16.change_orientation('RPI')
     file_img = 'img_rpi_uint16'
-    img_int16.save(file_img + '.nii')
+    img_int16.save(f'{file_img}.nii')
 
     # call the OptiC method to generate the spinal cord centerline
     optic_input = file_img
-    optic_filename = file_img + '_optic'
+    optic_filename = f'{file_img}_optic'
     os.environ["FSLOUTPUTTYPE"] = "NIFTI_PAIR"
     cmd_optic = [
         'isct_spine_detect',
@@ -126,7 +126,7 @@ def detect_centerline(img, contrast, remove_temp_files=1, verbose=0):
     run_proc(cmd_optic, is_sct_binary=True, verbose=0)
 
     # convert .img and .hdr files to .nii.gz
-    img_ctl = Image(file_img + '_optic_ctr.hdr')
+    img_ctl = Image(f'{file_img}_optic_ctr.hdr')
     img_ctl.change_orientation(img_orientation)
 
     # return to initial folder

@@ -333,13 +333,10 @@ def display_voxel(img: Image, verbose: int = 1) -> Sequence[Coordinate]:
     """
 
     coordinates_input = img.getNonZeroCoordinates(sorting='value')
-    useful_notation = ''
+    useful_notation = ':'.join(str(coord) for coord in coordinates_input)
 
     for coord in coordinates_input:
-        printv('Position=(' + str(coord.x) + ',' + str(coord.y) + ',' + str(coord.z) + ') -- Value= ' + str(coord.value), verbose=verbose)
-        if useful_notation:
-            useful_notation = useful_notation + ':'
-        useful_notation += str(coord)
+        printv(f'Position=({coord.x},{coord.y},{coord.z}) -- Value= {coord.value}', verbose=verbose)
 
     printv('All labels (useful syntax):', verbose=verbose)
     printv(useful_notation, verbose=verbose)

@@ -158,7 +158,7 @@ def main(argv: Sequence[str]):
         fname_out = arguments.o
     else:
         path, file_name, ext = extract_fname(fname_image)
-        fname_out = file_name + '_seg' + ext
+        fname_out = f'{file_name}_seg{ext}'
 
     threshold = arguments.thr
 

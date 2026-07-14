@@ -107,7 +107,7 @@ def get_absolute_path(fname):
     if os.path.isfile(fname) or os.path.isdir(fname):
         return os.path.realpath(fname)
     else:
-        printv('\nERROR: ' + fname + ' does not exist. Exit program.\n', 1, 'error')
+        printv(f'\nERROR: {fname} does not exist. Exit program.\n', 1, 'error')
 
 
 def check_file_exist(fname, verbose=1):
@@ -118,10 +118,10 @@ def check_file_exist(fname, verbose=1):
         fname_to_test = fname
     if os.path.isfile(fname_to_test):
         if verbose:
-            printv('  OK: ' + fname, verbose, 'normal')
+            printv(f'  OK: {fname}', verbose, 'normal')
         return True
     else:
-        printv('\nERROR: The file ' + fname + ' does not exist. Exit program.\n', 1, 'error')
+        printv(f'\nERROR: The file {fname} does not exist. Exit program.\n', 1, 'error')
         return False
 
 

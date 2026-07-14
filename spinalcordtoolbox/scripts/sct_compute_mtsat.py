@@ -124,7 +124,7 @@ def get_json_file_name(fname, check_exist=False):
     basename, ext = splitext(fname)
     if ext not in list_ext:
         raise ValueError("Problem with file: {}. Extension should be one of {}".format(fname, list_ext))
-    fname_json = basename + '.json'
+    fname_json = f'{basename}.json'
 
     if check_exist:
         if not os.path.isfile(fname_json):

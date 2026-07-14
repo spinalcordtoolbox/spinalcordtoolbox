@@ -86,8 +86,8 @@ def main(argv: Sequence[str]):
     tmp_dir = os.path.abspath(tmp_dir)
 
     # copy input files to tmp directory
-    fname_input1_tmp = 'tmp1_' + ''.join(extract_fname(fname_input1)[1:])
-    fname_input2_tmp = 'tmp2_' + ''.join(extract_fname(fname_input2)[1:])
+    fname_input1_tmp = f'tmp1_{"".join(extract_fname(fname_input1)[1:])}'
+    fname_input2_tmp = f'tmp2_{"".join(extract_fname(fname_input2)[1:])}'
     copy(fname_input1, os.path.join(tmp_dir, fname_input1_tmp))
     copy(fname_input2, os.path.join(tmp_dir, fname_input2_tmp))
     fname_input1 = fname_input1_tmp
@@ -137,7 +137,7 @@ def main(argv: Sequence[str]):
     # # commented for now as it does not cover all the feature of isct_dice_coefficient
     # #from spinalcordtoolbox.image import Image, compute_dice
     # #dice = compute_dice(Image(fname_input1), Image(fname_input2), mode='3d', zboundaries=False)
-    # #printv('Dice (python-based) = ' + str(dice), verbose)
+    # #printv(f'Dice (python-based) = {dice}', verbose)
 
     status, output = run_proc(cmd, verbose, is_sct_binary=True)
 

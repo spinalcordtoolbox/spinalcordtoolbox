@@ -138,7 +138,7 @@ class SpinalCordStraightener(object):
             # TODO: remove system call
             sct_resample.main([
                 '-i', 'centerline_rpi_native.nii.gz',
-                '-mm', str(px_r) + 'x' + str(py_r) + 'x' + str(pz_r),
+                '-mm', f'{px_r}x{py_r}x{pz_r}',
                 '-o', 'centerline_rpi.nii.gz',
                 '-v', '0',
             ])
@@ -264,7 +264,7 @@ class SpinalCordStraightener(object):
                 sct_image.main([
                     '-i', 'centerline_rpi_native.nii.gz',
                     '-o', 'tmp.centerline_pad_native.nii.gz',
-                    '-pad', '0,0,' + str(padding_z),
+                    '-pad', f'0,0,{padding_z}',
                     '-v', '0',
                 ])
                 image_centerline_pad = Image('centerline_rpi_native.nii.gz')
@@ -372,7 +372,7 @@ class SpinalCordStraightener(object):
             plt.plot(range_points, dist_curved)
             plt.plot(range_points, dist_straight)
             plt.grid(True)
-            plt.savefig('fig_straighten_' + datetime.now().strftime("%y%m%d%H%M%S%f") + '.png')
+            plt.savefig(f'fig_straighten_{datetime.now():%y%m%d%H%M%S%f}.png')
             plt.close()
 
         lookup_curved2straight = list(range(centerline.number_of_points))
@@ -613,7 +613,7 @@ class SpinalCordStraightener(object):
             if fname_output == '':
                 fname_straight = generate_output_file(os.path.join(path_tmp, "tmp.anat_rigid_warp.nii.gz"),
                                                       os.path.join(self.path_output,
-                                                                   file_anat + "_straight" + ext_anat), verbose)
+                                                                   f"{file_anat}_straight{ext_anat}"), verbose)
             else:
                 fname_straight = generate_output_file(os.path.join(path_tmp, "tmp.anat_rigid_warp.nii.gz"),
                                                       os.path.join(self.path_output, fname_output),

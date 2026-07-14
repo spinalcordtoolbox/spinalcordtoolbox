@@ -177,7 +177,7 @@ class AnatomicalCanvas(FigureCanvas):
         self.view.set_clim(vmin=self.vmin_updated, vmax=self.vmax_updated)
         # self.view.set_clim(self._parent._controller.vmin_updated,
         #                    self._parent._controller.vmax_updated)
-        logger.debug("vmin_updated="+str(self.vmin_updated)+", vmax_updated="+str(self.vmax_updated))
+        logger.debug(f"vmin_updated={self.vmin_updated}, vmax_updated={self.vmax_updated}")
         self.plot_position()
         self.plot_points()
         self.view.figure.canvas.draw()
@@ -236,7 +236,7 @@ class AnatomicalCanvas(FigureCanvas):
                 self.previous_point = (event.xdata, event.ydata)
                 return
 
-            logger.debug("X=" + str(event.xdata) + ", Y=" + str(event.ydata))
+            logger.debug(f"X={event.xdata}, Y={event.ydata}")
             xlim, ylim = self._axes.get_xlim(), self._axes.get_ylim()
             x_factor = (event.xdata - xlim[0]) / float(xlim[1] - xlim[0])  # between 0 and 1. No change: 0.5
             y_factor = (event.ydata - ylim[1]) / float(ylim[0] - ylim[1])

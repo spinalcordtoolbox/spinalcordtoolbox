@@ -29,7 +29,7 @@ def _fill_z_holes(zz_lst, data, z_spaccing):
         denom_interpolation = (lenght_hole + 1)
 
         if phys_lenght_hole < 10:
-            logger.warning('Filling a hole in the segmentation around z_slice #:' + str(z_ref_start))
+            logger.warning(f'Filling a hole in the segmentation around z_slice #:{z_ref_start}')
 
             for idx_z, z_hole_cur in enumerate(hole_cur_lst):
                 num_interpolation = (lenght_hole - idx_z - 1) * slice_ref_start  # Contribution of the bottom ref slice
@@ -77,7 +77,7 @@ def _remove_blobs(data):
             for obj_id in range(1, num_obj2clean + 1):
                 # if the blob has a volume < 10% of the bigger connected object, then remove it
                 if np.sum(labeled_obj2clean == obj_id) < 0.1 * np.sum(bigger_obj):
-                    logger.warning('Removing small objects above slice #' + str(z_max))
+                    logger.warning(f'Removing small objects above slice #{z_max}')
                     data[np.where(labeled_obj2clean == obj_id)] = 0
 
     return data

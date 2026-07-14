@@ -154,7 +154,7 @@ def print_fail(more=None):
 def add_bash_profile(string):
     bash_profile = os.path.expanduser(os.path.join("~", ".bash_profile"))
     with io.open(bash_profile, "a") as file_bash:
-        file_bash.write("\n" + string)
+        file_bash.write(f"\n{string}")
 
 
 def get_dependencies(requirements_txt=None):
@@ -240,7 +240,7 @@ def main(argv: Sequence[str]):
     else:
         os_running = 'unknown'
 
-    print('OS: ' + os_running + ' (' + platform.platform() + ')')
+    print(f'OS: {os_running} ({platform.platform()})')
     print('CPU cores: Available: {}, Used by ITK functions: {}'.format(psutil.cpu_count(), int(os.getenv('ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS', 0))))
 
     ram = psutil.virtual_memory()
@@ -400,7 +400,7 @@ def main(argv: Sequence[str]):
         print(output)
         e = 1
     if complete_test:
-        print('>> ' + cmd)
+        print(f'>> {cmd}')
         print((status, output), '\n')
 
     # check PropSeg compatibility with OS

@@ -101,8 +101,8 @@ class NURBS:
                 nb_points = len(P_x)
                 if self.nbControle > nb_points - 1:
                     raise ArithmeticError('There are too few points to compute. The number of points of the curve must '
-                                          'be strictly superior to degre + 2, in this case: ' + str(self.nbControle)
-                                          + '. Either change degree to a lower value, or add points to the curve.')
+                                          f'be strictly superior to degre + 2, in this case: {self.nbControle}. '
+                                          'Either change degree to a lower value, or add points to the curve.')
 
                 # compute weights based on curve density
                 w = [1.0] * len(P_x)
@@ -134,7 +134,7 @@ class NURBS:
                     last_error_curve = error_curve
 
                     # compute the nurbs based on input data and number of controle points
-                    logger.debug('Test: # of control points = ' + str(self.nbControle))
+                    logger.debug(f'Test: # of control points = {self.nbControle}')
                     try:
                         if not twodim:
                             self.pointsControle = self.reconstructGlobalApproximation(P_x, P_y, P_z, self.degre,

@@ -902,7 +902,7 @@ def compute_dice(image1, image2, mode='3d', label=1, zboundaries=False):
     """
     MODES = ['3d', '2d-slices']
     if mode not in MODES:
-        raise ValueError('\n\nERROR: mode must be one of these values:' + ',  '.join(MODES))
+        raise ValueError(f'\n\nERROR: mode must be one of these values:{",  ".join(MODES)}')
 
     dice = 0.0  # default value of dice is 0
 

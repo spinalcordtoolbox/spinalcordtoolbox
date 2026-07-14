@@ -114,8 +114,8 @@ class DetectPMJ:
 
         self.orientation_im = Image(self.fname_im).orientation  # to re-orient the data at the end
 
-        self.slice2D_im = extract_fname(self.fname_im)[1] + '_midSag.nii'  # file used to do the detection, with only one slice
-        self.dection_map_pmj = extract_fname(self.fname_im)[1] + '_map_pmj'  # file resulting from the detection
+        self.slice2D_im = f'{extract_fname(self.fname_im)[1]}_midSag.nii'  # file used to do the detection, with only one slice
+        self.dection_map_pmj = f'{extract_fname(self.fname_im)[1]}_map_pmj'  # file resulting from the detection
 
         # path to the pmj detector
         self.pmj_model = os.path.join(__data_dir__, 'pmj_models', '{}_model'.format(self.contrast))
@@ -168,9 +168,9 @@ class DetectPMJ:
             im_mask.change_orientation(self.orientation_im).save(self.fname_out)
 
             x_pmj, y_pmj, z_pmj = np.where(im_mask.data == 50)
-            printv('\tx_pmj = ' + str(x_pmj[0]), self.verbose, 'info')
-            printv('\ty_pmj = ' + str(y_pmj[0]), self.verbose, 'info')
-            printv('\tz_pmj = ' + str(z_pmj[0]), self.verbose, 'info')
+            printv(f'\tx_pmj = {x_pmj[0]}', self.verbose, 'info')
+            printv(f'\ty_pmj = {y_pmj[0]}', self.verbose, 'info')
+            printv(f'\tz_pmj = {z_pmj[0]}', self.verbose, 'info')
 
     def get_max_position(self):
         """Find the position of the PMJ by thresholding the probabilistic map."""
@@ -197,8 +197,8 @@ class DetectPMJ:
         print(cmd_pmj)
         run_proc(cmd_pmj, verbose=0, is_sct_binary=True)
 
-        img = nib.load(self.dection_map_pmj + '_svm.hdr')  # convert .img and .hdr files to .nii
-        nib.save(img, self.dection_map_pmj + '.nii')  # NB: Use nib.save instead of Image.save for hdr file
+        img = nib.load(f'{self.dection_map_pmj}_svm.hdr')  # convert .img and .hdr files to .nii
+        nib.save(img, f'{self.dection_map_pmj}.nii')  # NB: Use nib.save instead of Image.save for hdr file
 
         self.dection_map_pmj += '.nii'  # fname of the resulting detection map
 
@@ -283,7 +283,7 @@ def main(argv: Sequence[str]):
         fname_seg = arguments.s
         if not os.path.isfile(fname_seg):
             fname_seg = None
-            printv('WARNING: -s input file: "' + arguments.s + '" does not exist.\nDetecting PMJ without using segmentation information', 1, 'warning')
+            printv(f'WARNING: -s input file: "{arguments.s}" does not exist.\nDetecting PMJ without using segmentation information', 1, 'warning')
     else:
         fname_seg = None
 
@@ -299,7 +299,7 @@ def main(argv: Sequence[str]):
     if arguments.o is not None:
         fname_o = arguments.o
     else:
-        fname_o = extract_fname(fname_in)[1] + '_pmj.nii.gz'
+        fname_o = f'{extract_fname(fname_in)[1]}_pmj.nii.gz'
 
     path_qc = arguments.qc
 

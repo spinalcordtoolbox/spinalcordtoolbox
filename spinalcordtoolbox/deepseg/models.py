@@ -801,9 +801,9 @@ def has_ivadomed_files(path_model):
     Check if model path contains A) a named .pt/.onnx model file and B) a named ivadomed json configuration file
     """
     name_model = Path(path_model).name
-    path_pt = os.path.join(path_model, name_model + '.pt')
-    path_onnx = os.path.join(path_model, name_model + '.onnx')
-    path_json = os.path.join(path_model, name_model + '.json')
+    path_pt = os.path.join(path_model, f'{name_model}.pt')
+    path_onnx = os.path.join(path_model, f'{name_model}.onnx')
+    path_json = os.path.join(path_model, f'{name_model}.json')
     return (os.path.exists(path_pt) or os.path.exists(path_onnx)) and os.path.exists(path_json)
 
 
@@ -981,7 +981,7 @@ def get_metadata(folder_model):
     :param path_model: str: Model folder
     :return: dict
     """
-    fname_metadata = os.path.join(folder_model, os.path.basename(folder_model) + '.json')
+    fname_metadata = os.path.join(folder_model, f'{os.path.basename(folder_model)}.json')
     with open(fname_metadata, "r") as fhandle:
         metadata = json.load(fhandle)
     return metadata

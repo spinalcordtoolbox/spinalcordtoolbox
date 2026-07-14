@@ -56,11 +56,11 @@ class WarpTemplate:
         # printv(arguments)
         # printv(arguments)
         printv('\nCheck parameters:')
-        printv('  Working directory ........ ' + os.getcwd())
-        printv('  Destination image ........ ' + self.fname_src)
-        printv('  Warping field ............ ' + self.fname_transfo)
-        printv('  Path template ............ ' + self.path_template)
-        printv('  Output folder ............ ' + self.folder_out + "\n")
+        printv(f'  Working directory ........ {os.getcwd()}')
+        printv(f'  Destination image ........ {self.fname_src}')
+        printv(f'  Warping field ............ {self.fname_transfo}')
+        printv(f'  Path template ............ {self.path_template}')
+        printv(f'  Output folder ............ {self.folder_out}\n')
 
         # create output folder
         if not os.path.exists(self.folder_out):
@@ -102,7 +102,7 @@ def warp_label(path_label, folder_label, file_label, fname_src, fname_transfo, p
             combined_labels_id_groups, clusters_apriori = \
             spinalcordtoolbox.metadata.read_label_file(os.path.join(path_label, folder_label), file_label)
     except Exception as error:
-        printv('\nWARNING: Cannot warp label ' + folder_label + ': ' + str(error), 1, 'warning')
+        printv(f'\nWARNING: Cannot warp label {folder_label}: {error}', 1, 'warning')
         raise
     else:
         # create output folder

@@ -338,7 +338,7 @@ def main(argv: Sequence[str]):
                                                                    map_cluster=[indiv_labels_ids[i_label] in map_cluster for
                                                                                 map_cluster in map_clusters].index(True))
     else:
-        raise RuntimeError(path_label + ' does not exist')
+        raise RuntimeError(f'{path_label} does not exist')
 
     # check syntax of labels asked by user
     labels_id_user = check_labels(indiv_labels_ids + combined_labels_ids, parse_num_list(labels_user))
@@ -410,7 +410,7 @@ def main(argv: Sequence[str]):
                 labels_id_user = [99]
 
     for id_label in labels_id_user:
-        printv('Estimation for label: ' + label_struc[id_label].name, verbose)
+        printv(f'Estimation for label: {label_struc[id_label].name}', verbose)
         agg_metric = extract_metric(data, labels=labels, slices=slices, levels=levels, perslice=perslice,
                                     perlevel=perlevel, fname_vert_level=fname_vert_level, method=method,
                                     label_struc=label_struc, id_label=id_label, indiv_labels_ids=indiv_labels_ids)

@@ -383,7 +383,7 @@ def run_proc(cmd, verbose=1, raise_exception=True, cwd=None, env=None, is_sct_bi
         if output:
             if verbose == 2:
                 logger.debug(f"output => {output.strip()}")
-            output_final += output.strip() + '\n'
+            output_final = f'{output_final}{output.strip()}\n'
 
     status = process.returncode
     output = output_final.rstrip()

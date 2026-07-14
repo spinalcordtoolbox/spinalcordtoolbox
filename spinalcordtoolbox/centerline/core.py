@@ -183,7 +183,7 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
             fig_title = 'Algo={}, NumberPoints={}'.format(param.algo_fitting, point_number)
 
         else:
-            logger.error('algo_fitting "' + param.algo_fitting + '" does not exist.')
+            logger.error(f'algo_fitting "{param.algo_fitting}" does not exist.')
             raise ValueError
 
         # Create an image with the centerline
@@ -241,7 +241,7 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
             import matplotlib.pyplot as plt
             plt.figure(figsize=(16, 10))
             plt.subplot(3, 1, 1)
-            plt.title(fig_title + '\nRMSE[mm]={:0.2f}, LaplacianMax={:0.2f}'.format(fit_results.rmse, fit_results.laplacian_max))
+            plt.title(f"{fig_title}\nRMSE[mm]={fit_results.rmse:0.2f}, LaplacianMax={fit_results.laplacian_max:0.2f}")
             plt.plot(z_mean * pz, x_mean * px, 'ro')
             plt.plot(z_ref * pz, x_centerline_fit * px, 'k')
             plt.plot(z_ref * pz, x_centerline_fit * px, 'k.')
@@ -266,7 +266,7 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
             plt.xlabel("Z [mm]")
             plt.legend(['X-deriv', 'Y-deriv'])
 
-            plt.savefig('fig_centerline_' + datetime.now().strftime("%y%m%d-%H%M%S%f") + '_' + param.algo_fitting + '.png')
+            plt.savefig(f'fig_centerline_{datetime.now():%y%m%d-%H%M%S%f}_{param.algo_fitting}.png')
             plt.close()
 
     # Construct the outputs (still in RPI- orientation)

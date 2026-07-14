@@ -478,7 +478,7 @@ def propseg(img_input, options_dict):
     if arguments.init is not None:
         init_option = float(arguments.init)
         if init_option < 0:
-            printv('Command-line usage error: ' + str(init_option) + " is not a valid value for '-init'", 1, 'error')
+            printv(f"Command-line usage error: {init_option} is not a valid value for '-init'", 1, 'error')
             sys.exit(1)
     if arguments.init_centerline is not None:
         if str(arguments.init_centerline) == "viewer":

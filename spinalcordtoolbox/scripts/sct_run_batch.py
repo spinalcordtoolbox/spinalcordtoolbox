@@ -377,7 +377,7 @@ def run_single(subj_dir, script, script_args, path_segmanual, path_data, path_da
 
     if os.path.sep in subj_dir:
         subject, session = subj_dir.split(os.path.sep)
-        subject_session = subject + '_' + session
+        subject_session = f'{subject}_{session}'
     else:
         subject = subj_dir
         subject_session = subject
@@ -580,7 +580,7 @@ def main(argv: Sequence[str]):
         os_running = 'windows'
     else:
         os_running = platform_running
-    print('OS: ' + os_running + ' (' + platform.platform() + ')')
+    print(f'OS: {os_running} ({platform.platform()})')
 
     # Display number of CPU cores
     print('CPU cores: Available: {} | Threads used by ITK Programs: {}'.format(multiprocessing.cpu_count(), arguments.itk_threads))

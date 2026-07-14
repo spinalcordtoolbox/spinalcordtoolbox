@@ -110,7 +110,7 @@ def display_viewer_syntax(files, verbose, im_types=[], minmax=[], opacities=[], 
         cmd_strings[viewer] = cmd
 
         if verbose:
-            printv(cmd + "\n", verbose=1, type='info')
+            printv(f"{cmd}\n", verbose=1, type='info')
 
     return cmd_strings
 
@@ -120,23 +120,23 @@ def _construct_fslview_syntax(viewer, files, im_types, minmax, opacities, mode):
     n = itertools.cycle([1, 2, 3, 4])  # There are 4 colormaps for segs
     # add mode (only supported by fslview for the moment)
     if mode:
-        cmd += ' -m ' + mode
+        cmd = f'{cmd} -m {mode}'
     for i in range(len(files)):
-        cmd += ' ' + files[i]
+        cmd = f'{cmd} {files[i]}'
         if im_types:
             if im_types[i]:
                 key = im_types[i]
                 # use different colormaps for each subsequent seg
                 if key in ("seg", "softseg"):
                     key = f"{key}-{next(n)}"  # There are 4 colormaps for segs, so take modulo
-                cmd += ' -l ' + IMTYPES_COLORMAP[key]['fslview']
+                cmd = f'{cmd} -l {IMTYPES_COLORMAP[key]["fslview"]}'
         if minmax:
             if minmax[i]:
-                cmd += ' -b ' + minmax[i]  # a,b
+                cmd = f'{cmd} -b {minmax[i]}'  # a,b
         if opacities:
             if opacities[i]:
-                cmd += ' -t ' + opacities[i]
-    cmd += ' &'
+                cmd = f'{cmd} -t {opacities[i]}'
+    cmd = f'{cmd} &'
 
     return cmd
 
@@ -145,21 +145,21 @@ def _construct_fsleyes_syntax(viewer, files, im_types, minmax, opacities):
     cmd = viewer
     n = itertools.cycle([1, 2, 3, 4])  # There are 4 colormaps for segs
     for i in range(len(files)):
-        cmd += ' ' + files[i]
+        cmd = f'{cmd} {files[i]}'
         if im_types:
             if im_types[i]:
                 key = im_types[i]
                 # use different colormaps for each subsequent seg
                 if key in ("seg", "softseg"):
                     key = f"{key}-{next(n)}"
-                cmd += ' -cm ' + IMTYPES_COLORMAP[key]['fsleyes']
+                cmd = f'{cmd} -cm {IMTYPES_COLORMAP[key]["fsleyes"]}'
         if minmax:
             if minmax[i]:
-                cmd += ' -dr ' + ' '.join(minmax[i].split(','))  # a b
+                cmd = f'{cmd} -dr {" ".join(minmax[i].split(","))}'  # a b
         if opacities:
             if opacities[i]:
-                cmd += ' -a ' + str(float(opacities[i]) * 100)  # in percentage
-    cmd += ' &'
+                cmd = f'{cmd} -a {float(opacities[i]) * 100}'  # in percentage
+    cmd = f'{cmd} &'
 
     return cmd
 
@@ -229,9 +229,9 @@ class SCTArgumentParser(argparse.ArgumentParser):
         """
         # Source: https://stackoverflow.com/a/4042861
         self.print_help(sys.stderr)
-        message_formatted = (ANSIColors16.Bold + ANSIColors16.LightRed
-                             + f'\n{self.prog}: error: {message}\n\n'
-                             + ANSIColors16.ResetAll)
+        message_formatted = (f'{ANSIColors16.Bold}{ANSIColors16.LightRed}'
+                             f'\n{self.prog}: error: {message}\n\n'
+                             f'{ANSIColors16.ResetAll}')
         self.exit(2, message_formatted)
 
     # == STANDARD ARGUMENT GROUPS == #
@@ -613,11 +613,11 @@ def parse_num_list_inv(list_int):
                 str_num = str_num[:-len(str(list_int[i - 1]))] + str(list_int[i])
             # if not, add it along with the new int value
             else:
-                str_num += ':' + str(list_int[i])
+                str_num = f'{str_num}:{list_int[i]}'
                 colon_is_present = True
         # I(i-1) != I(i)-1
         else:
-            str_num += ';' + str(list_int[i])
+            str_num = f'{str_num};{list_int[i]}'
             colon_is_present = False
 
     return str_num

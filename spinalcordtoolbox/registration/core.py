@@ -73,7 +73,7 @@ def register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg=
     else:
         path, file_out, ext_out = extract_fname(fname_output)
         path_out = path if not path_out else path_out
-        file_out_inv = file_out + '_inv'
+        file_out_inv = f'{file_out}_inv'
 
     # create temporary folder
     path_tmp = tmp_create(basename="register-wrapper")
@@ -266,7 +266,7 @@ def register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg=
     fname_src2dest = os.path.join(path_out, file_out + ext_out)
     generate_output_file(os.path.join(path_tmp, "src_reg.nii"), fname_src2dest, param.verbose)
     if fname_output_warp == '':
-        fname_output_warp = os.path.join(path_out, 'warp_' + file_src + '2' + file_dest + '.nii.gz')
+        fname_output_warp = os.path.join(path_out, f'warp_{file_src}2{file_dest}.nii.gz')
     generate_output_file(os.path.join(path_tmp, "warp_src2dest.nii.gz"), fname_output_warp, param.verbose)
 
     # generate dest -> src output files
@@ -274,7 +274,7 @@ def register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg=
         fname_dest2src = os.path.join(path_out, file_out_inv + ext_dest)
         generate_output_file(os.path.join(path_tmp, "dest_reg.nii"), fname_dest2src, param.verbose)
         if fname_output_warpinv == '':
-            fname_output_warpinv = os.path.join(path_out, 'warp_' + file_dest + '2' + file_src + '.nii.gz')
+            fname_output_warpinv = os.path.join(path_out, f'warp_{file_dest}2{file_src}.nii.gz')
         generate_output_file(os.path.join(path_tmp, "warp_dest2src.nii.gz"), fname_output_warpinv, param.verbose)
     else:
         # we skip generating files if there is no inverse warping field (i.e. we're doing a one-way registration)
@@ -451,12 +451,12 @@ def register(src, dest, step, param):
         # rename warping fields
         _, _, output_ext = extract_fname(warp_forward_out)
         if output_ext in ['.txt', '.mat']:
-            warp_forward = 'warp_forward_' + str(step.step) + output_ext
+            warp_forward = f'warp_forward_{step.step}{output_ext}'
             os.rename(warp_forward_out, warp_forward)
-            warp_inverse = '-warp_forward_' + str(step.step) + output_ext
+            warp_inverse = f'-warp_forward_{step.step}{output_ext}'
         else:
-            warp_forward = 'warp_forward_' + str(step.step) + '.nii.gz'
-            warp_inverse = 'warp_inverse_' + str(step.step) + '.nii.gz'
+            warp_forward = f'warp_forward_{step.step}.nii.gz'
+            warp_inverse = f'warp_inverse_{step.step}.nii.gz'
             os.rename(warp_forward_out, warp_forward)
             os.rename(warp_inverse_out, warp_inverse)
 

@@ -211,7 +211,7 @@ class Transform:
         img_src = Image(fname_src)
         nx, ny, nz, nt, px, py, pz, pt = img_src.dim
         # nx, ny, nz, nt, px, py, pz, pt = get_dimension(fname_src)
-        printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz) + ' x ' + str(nt), verbose)
+        printv(f'  {nx} x {ny} x {nz} x {nt}', verbose)
 
         # if 3d
         if nt == 1:
@@ -277,8 +277,8 @@ class Transform:
             # apply transfo
             printv('\nApply transformation to each 3D volume...', verbose)
             for it in range(nt):
-                file_data_split = 'data_T' + str(it).zfill(4) + '.nii'
-                file_data_split_reg = 'data_reg_T' + str(it).zfill(4) + '.nii'
+                file_data_split = f'data_T{it:04}.nii'
+                file_data_split_reg = f'data_reg_T{it:04}.nii'
 
                 isct_antsApplyTransforms(
                     dimensionality='3',

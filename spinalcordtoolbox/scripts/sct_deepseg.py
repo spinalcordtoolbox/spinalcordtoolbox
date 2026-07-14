@@ -272,7 +272,7 @@ def get_parser(subparser_to_return=None):
             metavar=Metavar.file,
             help="Segmentation file to use for cropping the QC. This option is useful when you want to QC a region "
                  "that is different from the output segmentation. For example, it might be useful to provide a "
-                 "dilated cord segmentation to expand the QC field of view." + note_qc_seg
+                 f"dilated cord segmentation to expand the QC field of view.{note_qc_seg}"
         )
 
         # Add common arguments
@@ -546,7 +546,7 @@ def main(argv: Sequence[str]):
                     }
                 ]
             }
-            with open(splitext(fname_seg)[0] + ".json", "w") as fp:
+            with open(f"{splitext(fname_seg)[0]}.json", "w") as fp:
                 json.dump(sidecar_json, fp, indent=4)
 
         # Use the result of the current model as additional input of the next model

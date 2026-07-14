@@ -137,7 +137,7 @@ def smooth1d(x, window_len, window='hanning'):
     if window == 'flat':  # moving average
         w = np.ones(window_len, 'd')
     else:
-        w = eval('np.' + window + '(window_len)')
+        w = getattr(np, window)(window_len)
 
     y = np.convolve(w / w.sum(), s, mode='valid')
     return y[int(np.ceil(window_len/2-1)):-int(np.floor(window_len/2))]
