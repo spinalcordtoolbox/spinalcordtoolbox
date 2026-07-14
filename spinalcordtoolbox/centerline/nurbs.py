@@ -253,7 +253,6 @@ class NURBS:
         return result
 
     def N(self, i, k, x):
-        global Nik_temp
         if k == 1:
             tab = [[np.poly1d(1), i + 1]]
         else:
@@ -274,7 +273,6 @@ class NURBS:
         return tab
 
     def Np(self, i, k, x):
-        global Nik_temp_deriv, Nik_temp
         if k == 1:
             tab = [[np.poly1d(0), i + 1]]
         else:
