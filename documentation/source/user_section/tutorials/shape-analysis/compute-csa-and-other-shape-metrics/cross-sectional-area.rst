@@ -27,7 +27,7 @@ First, we will start by computing the cord cross-sectional area (CSA) averaged a
    - ``csa_c2c3.csv`` : A file containing the CSA values and other shape metrics. This file is partially replicated in the table below.
 
 .. csv-table:: CSA values computed for C3 and C4 vertebral levels (Averaged)
-   :file: csa_c3c4.csv
+   :file: csa_c2c3.csv
    :header-rows: 1
 
 .. _csa-perlevel:

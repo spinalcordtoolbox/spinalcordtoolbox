@@ -1413,7 +1413,7 @@ def sct_deepseg(
         elif plane == 'Axial':
             sct_deepseg_axial(
                 imgs_to_generate, fname_input, fname_seg, fname_seg2, species, fname_qc_seg,
-                radius=(27, 27) if "sc_canal_t2" in argv else (15, 15))
+                radius=(27, 27) if "canal" in argv else (15, 15))
         else:
             assert plane == 'Sagittal', (f"`plane` must be either 'Axial' "
                                          f"or 'Sagittal', but got {plane}")

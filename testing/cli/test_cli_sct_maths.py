@@ -65,6 +65,24 @@ def test_sct_maths_add_integer_no_checks():
     sct_maths.main(argv=['-i', sct_test_path('mt', 'mtr.nii.gz'), '-add', '1', '-o', 'test.nii.gz'])
 
 
+@pytest.mark.parametrize('axis_name, axis', [('x', 0), ('y', 1), ('z', 2), ('t', 3)])
+def test_sct_maths_std_4d_output(axis_name, axis, tmp_path):
+    """Run -std on 4D data and verify that the output remains an array with the expected shape."""
+    data = np.arange(2 * 3 * 4 * 5, dtype=np.float32).reshape(2, 3, 4, 5)
+    path_in = str(tmp_path / "im_4d.nii.gz")
+    path_out = str(tmp_path / f"im_std_{axis_name}.nii.gz")
+    Image(data).save(path_in)
+
+    sct_maths.main(['-i', path_in, '-std', axis_name, '-o', path_out])
+
+    expected = np.std(data, axis=axis, ddof=1)
+    if axis < 3:
+        expected = np.expand_dims(expected, axis)
+    actual = Image(path_out).data
+    assert actual.shape == expected.shape
+    np.testing.assert_allclose(actual, expected)
+
+
 @pytest.mark.parametrize('dim', ['0', '1', '2'])
 def test_sct_maths_symmetrize(dim, tmp_path):
     """Run the CLI script, then verify that symmetrize properly flips and

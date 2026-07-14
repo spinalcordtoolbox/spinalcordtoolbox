@@ -16,7 +16,7 @@ def t2_canal_seg(tmp_path_factory):
     """Mean segmented image for QC report generation."""
     tmp_path = tmp_path_factory.mktemp('t2_canal_seg')
     path_out = str(tmp_path / 't2_canal_seg.nii.gz')
-    sct_deepseg.main(argv=['sc_canal_t2', '-i', sct_test_path('t2', 't2.nii.gz'),
+    sct_deepseg.main(argv=['canal', '-i', sct_test_path('t2', 't2.nii.gz'),
                      '-o', path_out, '-qc', str(tmp_path)])
     return path_out
 

@@ -84,7 +84,7 @@ You can also quantify spinal canal occupancy by first segmenting the canal, then
 
 .. code:: sh
 
-   sct_deepseg sc_canal_t2 -i t2_compressed.nii.gz -o t2_compressed_canal_seg.nii.gz -qc ~/qc_singleSubj
+   sct_deepseg canal -i t2_compressed.nii.gz -o t2_compressed_canal_seg.nii.gz -qc ~/qc_singleSubj
    sct_compute_ascor -i-SC t2_compressed_seg.nii.gz -i-canal t2_compressed_canal_seg.nii.gz -perlevel 1 -o ascor.csv
 
 :Input arguments:

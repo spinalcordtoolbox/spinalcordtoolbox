@@ -57,7 +57,7 @@ jobs:
       - name: Dependencies
         run: |  # NB: glu is needed for PyQT testing (https://stackoverflow.com/a/66486957/7584115)
           pacman -Syu --noconfirm gcc git curl glu
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Install SCT
         run: |
           ./.ci.sh -i
@@ -80,7 +80,7 @@ jobs:
       - name: Dependencies
         run: |  # NB: libgl1-mesa-dev is needed for PyQT testing (https://stackoverflow.com/q/33085297/7584115)
           apt update && apt install -y libglib2.0-0t64 libgl1-mesa-dev procps gcc git curl
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Install SCT
         run: |
           ./.ci.sh -i
@@ -103,7 +103,7 @@ jobs:
       - name: Dependencies
         run: |  # NB: libgl1-mesa-dev is needed for PyQT testing (https://stackoverflow.com/q/33085297/7584115)
           apt update && apt install -y libglib2.0-0 libgl1-mesa-dev procps gcc git curl
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Install SCT
         run: |
           ./.ci.sh -i
@@ -132,7 +132,7 @@ jobs:
           echo "deb http://archive.debian.org/debian-security/ buster/updates main non-free contrib" >> /etc/apt/sources.list
           echo "deb-src http://archive.debian.org/debian-security/ buster/updates main non-free contrib" >> /etc/apt/sources.list
           apt update && apt install -y libglib2.0-0 libgl1-mesa-dev procps gcc git curl libgl1-mesa-dev
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Install SCT
         run: |
           ./.ci.sh -i
@@ -157,7 +157,7 @@ jobs:
         # NB: We echo "archive.debian.org" to address https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4105
         run: |  
           apt update && apt install -y libglib2.0-0 libgl1-mesa-dev procps gcc git curl
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Install SCT
         run: |
           ./.ci.sh -i
@@ -187,7 +187,7 @@ jobs:
           sed -i -e "s|mirrorlist=|#mirrorlist=|g" /etc/yum.repos.d/CentOS-*
           sed -i -e "s|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g" /etc/yum.repos.d/CentOS-*
           yum install -y gcc git curl mesa-libGL
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Install SCT
         run: |
           ./.ci.sh -i
@@ -206,7 +206,7 @@ jobs:
       - name: Dependencies
         run: |  # NB: mesa-libGL is needed for PyQT testing (https://stackoverflow.com/a/65408967/7584115)
           yum install -y gcc git mesa-libGL
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Install SCT
         run: |
           ./.ci.sh -i
@@ -221,7 +221,7 @@ jobs:
     name: Ubuntu 22.04 (Jammy Jellyfish)
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Install SCT
         run: |
           ./.ci.sh -i
@@ -233,7 +233,7 @@ jobs:
           ./.ci.sh -t
       - name: Upload QC
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: Pytest QC (${{ runner.os }})
           path: "/tmp/pytest-of-runner/pytest-current/qc-report-current"
@@ -249,7 +249,7 @@ jobs:
       - name: Dependencies
         run: |
           # github runners come with dev-tools pre-installed
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Install SCT
         run: |
           ./.ci.sh -i
@@ -267,7 +267,7 @@ jobs:
       - name: Dependencies
         run: |
           # github runners come with dev-tools pre-installed
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Install SCT
         run: |
           ./.ci.sh -i
@@ -289,7 +289,7 @@ jobs:
       - name: Dependencies
         run: |
           # github runners come with dev-tools pre-installed
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Install SCT
         run: |
           ./.ci.sh -i
@@ -308,7 +308,7 @@ jobs:
    if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
    runs-on: macos-15-intel
    steps:
-     - uses: actions/checkout@v4
+     - uses: actions/checkout@v6
      - name: Install SCT
        run: |
          ./.ci.sh -i
@@ -331,7 +331,7 @@ jobs:
       run:
         shell: wsl-bash {0} # https://github.com/marketplace/actions/setup-wsl#default-shell
     steps:
-    - uses: Vampire/setup-wsl@v5
+    - uses: Vampire/setup-wsl@d1da7f2c0322a5ee4f24975344f67fc0f5baf364 # v7
       with:
         # other WSL container choices at: https://github.com/marketplace/actions/setup-wsl#distribution
         distribution: Ubuntu-24.04
@@ -342,7 +342,7 @@ jobs:
     - name: Use unix line endings
       shell: bash
       run: |
-        # Github's actions/checkout@v4 when run on Windows mangles the line-endings to DOS-style
+        # Github's actions/checkout@v6 when run on Windows mangles the line-endings to DOS-style
         # but we're running Linux *on top* of Windows, so we need to not mangle them!
         # https://github.com/actions/checkout/issues/135#issuecomment-602171132
         # https://github.com/actions/virtual-environments/issues/50#issuecomment-663920265
@@ -353,7 +353,7 @@ jobs:
         # NB: this one needs sudo, so the global DEBIAN_FRONTEND doesn't get through.
         # NB: mesa-utils is needed for PyQT testing (https://github.com/Microsoft/WSL/issues/1246#issuecomment-356425862)
         sudo apt update && sudo DEBIAN_FRONTEND=noninteractive apt install -y gcc git curl mesa-utils
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: Copy SCT from $GITHUB_WORKSPACE to ~
       run: |
         cd ..
@@ -389,7 +389,7 @@ jobs:
       run:
         shell: wsl-bash {0} # https://github.com/marketplace/actions/setup-wsl#default-shell
     steps:
-    - uses: Vampire/setup-wsl@v5
+    - uses: Vampire/setup-wsl@d1da7f2c0322a5ee4f24975344f67fc0f5baf364 # v7
       with:
         # other WSL container choices at: https://github.com/marketplace/actions/setup-wsl#distribution
         distribution: Ubuntu-22.04
@@ -400,7 +400,7 @@ jobs:
     - name: Use unix line endings
       shell: bash
       run: |
-        # Github's actions/checkout@v4 when run on Windows mangles the line-endings to DOS-style
+        # Github's actions/checkout@v6 when run on Windows mangles the line-endings to DOS-style
         # but we're running Linux *on top* of Windows, so we need to not mangle them!
         # https://github.com/actions/checkout/issues/135#issuecomment-602171132
         # https://github.com/actions/virtual-environments/issues/50#issuecomment-663920265
@@ -411,7 +411,7 @@ jobs:
         # NB: this one needs sudo, so the global DEBIAN_FRONTEND doesn't get through.
         # NB: mesa-utils is needed for PyQT testing (https://github.com/Microsoft/WSL/issues/1246#issuecomment-356425862)
         sudo apt update && sudo DEBIAN_FRONTEND=noninteractive apt install -y gcc git curl mesa-utils
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: Copy SCT from $GITHUB_WORKSPACE to ~
       run: |
         cd ..
@@ -443,7 +443,7 @@ jobs:
       run:
         shell: cmd
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: Install SCT
       # NB: In real-world usage, it's assumed that the user would download the
       # install_sct.bat file from the Downloads page, and _not_ the full repo.
@@ -482,7 +482,7 @@ jobs:
       run:
         shell: cmd
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: Install SCT
       # NB: In real-world usage, it's assumed that the user would download the
       # install_sct.bat file from the Downloads page, and _not_ the full repo.
@@ -535,7 +535,7 @@ jobs:
           sudo add-apt-repository -y ppa:apptainer/ppa
           sudo apt update
           sudo apt install -y apptainer
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Get safe Git ref name
         run: |
           SAFE_REF=$(printf '%s' "${{ github.head_ref || github.ref_name }}" | sed 's/[^A-Za-z0-9._-]/_/g')

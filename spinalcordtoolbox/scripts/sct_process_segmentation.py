@@ -75,7 +75,7 @@ def get_parser(ascor=False):
         description=(
             "Compute the following morphometric measures based on the spinal cord segmentation:\n"
             "  - area [mm^2]: Cross-sectional area, measured by counting pixels in each slice. Partial volume can be "
-            "accounted for by inputing a mask comprising values within [0,1]. Can be normalized when specifying the flag `-normalize`\n"
+            "accounted for by inputting a mask comprising values within [0,1]. Can be normalized when specifying the flag `-normalize`\n"
             "  - angle_AP, angle_RL: Estimated angle between the cord centerline and the axial slice. This angle is "
             "used to correct for morphometric information.\n"
             "  - diameter_AP: Measured as average across 3 mm extent centred at cord mask center of mass.\n"
@@ -132,7 +132,7 @@ def get_parser(ascor=False):
             '-i',
             metavar=Metavar.file,
             type=get_absolute_path,
-            help="Mask to compute morphometrics from. Could be binary or weighted. E.g., spinal cord segmentation."
+            help="Mask to compute morphometrics from. Could be binary or weighted. E.g., spinal cord segmentation. "
                  "Example: seg.nii.gz"
         )
     optional = parser.optional_arggroup
@@ -285,7 +285,7 @@ def get_parser(ascor=False):
         metavar=Metavar.file,
         default=None,
         type=get_absolute_path,
-        help="Input image used to compute spinal cord orientation (using HOG method). It is required to compute symmetry and quadrants area metrics."
+        help="Input image used to compute spinal cord orientation (using HOG method). It is required to compute symmetry and quadrants area metrics. "
              "Example: t2.nii.gz"
     )
     if is_sct_process_segmentation:

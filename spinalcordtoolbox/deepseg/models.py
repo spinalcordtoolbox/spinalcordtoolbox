@@ -211,12 +211,12 @@ MODELS = {
          "thr": None,  # Images are already binarized
          "default": False,
      },
-    "model_seg_canal_t2w": {
+    "model_seg_canal": {
         "url": [
-            "https://github.com/ivadomed/model-canal-seg/releases/download/r20241126/model-canal-seg_r20241126.zip"
+            "https://github.com/ivadomed/model-canal-seg/releases/download/r20260406/model-canal-seg-r20260406.zip"
         ],
-        "description": "Segmentation of spinal canal on T2w contrast",
-        "contrasts": ["t2"],
+        "description": "Segmentation of spinal canal on all contrasts",
+        "contrasts": ["all"],
         "framework": "nnunetv2",
         "thr": None,  # Images are already binarized
         "default": False,
@@ -569,9 +569,9 @@ TASKS = {
              ```"""),  # noqa E501 (line too long)
          'group': 'pathology'
          },
-    'sc_canal_t2':
-        {'description': 'Segmentation of spinal canal on T2w contrast',
-         'long_description': 'This model segments the spinal canal, or in an anatomic definition the dural sac, on T2w contrast. '
+    'canal':
+        {'description': 'Segmentation of spinal canal on all contrasts',
+         'long_description': 'This model segments the spinal canal, or in an anatomic definition the dural sac, on all contrasts. '
                              'Uses a 3D U-Net, trained with the nnUNetV2 framework. It is a single-class model outputting the binary canal segmentation. '
                              'Training consisted of an active learning procedure, correcting segmentations with ITK Snap. Last training '
                              'procedure can be found here : https://github.com/ivadomed/model-canal-seg/issues/20 '
@@ -579,7 +579,7 @@ TASKS = {
                              'keep the largest connected component of the segmentation, since spinal canal is connected, to avoid '
                              'false positives segmentations of other anatomical structures.',
          'url': 'https://github.com/ivadomed/model-canal-seg',
-         'models': ['model_seg_canal_t2w'],
+         'models': ['model_seg_canal'],
          'citation': None
          },
     'spine':
