@@ -123,7 +123,7 @@ sct_qc -i t2.nii.gz -s t2_labels_vert.nii.gz -p sct_label_utils -qc ~/qc_singleS
 # Shape-based analysis (dataset: data_shape-metric-computation)
 # ======================================================================================================================
 
-# Compute cross-sectional area (CSA) of spinal cord and average it across levels C3 and C4
+# Compute cross-sectional area (CSA) of spinal cord and average it across levels C2 and C3
 sct_process_segmentation -i t2_seg.nii.gz -vert 2:3 -discfile t2_totalspineseg_discs.nii.gz -o csa_c2c3.csv
 # Aggregate CSA value per level (including new anat-based symmetry metrics)
 sct_process_segmentation -i t2_seg.nii.gz -anat t2.nii.gz -vert 2:3 -discfile t2_totalspineseg_discs.nii.gz -perlevel 1 -o csa_perlevel.csv
