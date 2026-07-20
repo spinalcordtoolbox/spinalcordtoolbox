@@ -280,8 +280,24 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device, ensemble=F
     # before the reorientation step below (which preserves the orientation after cropping).
     if crop:
         img_nii = nib.load(path_img_tmp)
-        bbox = sc_crop.detect(img_nii, **(crop_pad or {}))
-        bbox.update(box_overrides or {})
+        box_overrides = box_overrides or {}
+        try:
+            bbox = sc_crop.detect(img_nii, **(crop_pad or {}))
+        except RuntimeError:
+            # Detection found no cord at all, so there's no bbox to patch with box_overrides.
+            # Fall back to the full image instead, letting box_overrides (if any) restrict
+            # only the face(s) the user actually specified.
+            if not box_overrides:
+                raise
+            shape = img_nii.shape
+            bbox = {
+                "xmin": 0, "xmax": shape[0] - 1,
+                "ymin": 0, "ymax": shape[1] - 1,
+                "zmin": 0, "zmax": shape[2] - 1,
+                "original_axcodes": "".join(nib.aff2axcodes(img_nii.affine)),
+                "_original_img": img_nii,
+            }
+        bbox.update(box_overrides)
         if not (bbox["xmax"] >= bbox["xmin"] and bbox["ymax"] >= bbox["ymin"] and bbox["zmax"] >= bbox["zmin"]):
             raise ValueError("sc-crop: invalid bounding box — check that -box-* values are not inverted.")
         fname_cropbox = add_suffix(out_fname if out_fname else (orig_fname or path_img), "_cropbox")

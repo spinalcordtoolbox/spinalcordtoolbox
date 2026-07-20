@@ -333,7 +333,9 @@ def get_parser(subparser_to_return=None):
                 crop_group.add_argument(
                     f"-box-{key}", type=int, metavar="VOX", default=None,
                     help=f"Override the {key} face of the crop box (voxel index in the original image space). "
-                         f"Inspect `*_cropbox.nii.gz` in FSLeyes to find the current value and adjust.")
+                         f"Inspect `*_cropbox.nii.gz` in FSLeyes to find the current value and adjust. "
+                         f"If spinal cord detection fails outright, any face not overridden falls back to "
+                         f"the edge of the full image.")
 
         # Add input cropping note specific to the `lesion_ms_mp2rage` task
         if task_name == 'lesion_ms_mp2rage':
