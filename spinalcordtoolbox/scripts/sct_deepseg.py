@@ -323,19 +323,19 @@ def get_parser(subparser_to_return=None):
                 help="If set, only 1 fold will be used for inference instead of the full 5-fold ensemble. This will speed up inference, but may reduce segmentation quality."
             )
 
-        # -box-* lets the user override specific crop box face positions (voxel indices) for tasks whose
-        # model has "cropped_image": True. The model was trained on cropped images, so there is no
-        # "-no-crop" escape hatch: running it on the full image would be out-of-distribution input.
-        task_has_crop = any(models.MODELS[m].get('cropped_image') for m in task_dict['models'])
-        if task_has_crop:
-            crop_group = subparser.add_argument_group('\nSC-CROP box override')
-            for key in ('xmin', 'xmax', 'ymin', 'ymax', 'zmin', 'zmax'):
-                crop_group.add_argument(
-                    f"-box-{key}", type=int, metavar="VOX", default=None,
-                    help=f"Override the {key} face of the crop box (voxel index in the original image space). "
-                         f"Inspect `*_cropbox.nii.gz` in FSLeyes to find the current value and adjust. "
-                         f"If spinal cord detection fails outright, any face not overridden falls back to "
-                         f"the edge of the full image.")
+        # -box-* lets the user override specific crop box face positions (voxel indices), for models
+        # that use the sc-crop pipeline. Whether a task's model actually uses sc-crop is only known
+        # once the model is installed (see `models.is_crop_model()`), so the flag is exposed for every
+        # task; it's a no-op (rejected with an error) for tasks whose model doesn't use cropping.
+        crop_group = subparser.add_argument_group('\nSC-CROP box override')
+        for key in ('xmin', 'xmax', 'ymin', 'ymax', 'zmin', 'zmax'):
+            crop_group.add_argument(
+                f"-box-{key}", type=int, metavar="VOX", default=None,
+                help=f"Override the {key} face of the crop box (voxel index in the original image space). "
+                     f"Only valid for models using the sc-crop pipeline. "
+                     f"Inspect `*_cropbox.nii.gz` in FSLeyes to find the current value and adjust. "
+                     f"If spinal cord detection fails outright, any face not overridden falls back to "
+                     f"the edge of the full image.")
 
         # Add input cropping note specific to the `lesion_ms_mp2rage` task
         if task_name == 'lesion_ms_mp2rage':
@@ -407,21 +407,14 @@ def main(argv: Sequence[str]):
     # Get pipeline model names
     name_models = models.TASKS[arguments.task]['models']
 
-    # Parse -box-* once, here, and reuse `crop_active`/`box_overrides` below instead of re-deriving
-    # them per model in the pipeline loop.
-    # NB: today's crop-enabled tasks ('spinalcord', 'lesion_ms') each have exactly one model, so a
-    # single task-level `crop_active` is equivalent to a per-model check. If a future task ever mixes
-    # cropped and non-cropped models, this will need to move back inside the loop.
-    crop_active = any(models.MODELS[m].get('cropped_image') for m in name_models)
+    # Parse -box-* once, here, and reuse `box_overrides` below in the pipeline loop.
+    # Whether a given model actually uses the sc-crop pipeline (`crop_active`) is only knowable
+    # once the model is installed, so it's determined per-model, inside the loop.
     box_overrides = {
         key: getattr(arguments, f'box_{key}', None)
         for key in ('xmin', 'xmax', 'ymin', 'ymax', 'zmin', 'zmax')
     }
     box_overrides = {k: v for k, v in box_overrides.items() if v is not None}
-
-    # -box-* are only valid when crop is active.
-    if box_overrides and not crop_active:
-        parser.error("-box-* arguments are only valid when the sc-crop pipeline is active.")
 
     # Check if all input images and contrasts have been specified (only relevant for 'tumor-edema-cavity_t1-t2')
     if arguments.task == 'tumor_edema_cavity_t1_t2':
@@ -458,6 +451,12 @@ def main(argv: Sequence[str]):
             path_models = models.find_model_folder_paths(path_model)
             if not models.is_valid(path_models):
                 parser.error("The input model is invalid: {}".format(path_models))
+
+        # Determine crop_active from the installed model's own metadata (see models.is_crop_model()),
+        # not from the model's name, since -custom-url can point to a differently-trained artifact.
+        crop_active = models.is_crop_model(path_model)
+        if box_overrides and not crop_active:
+            parser.error("-box-* arguments are only valid for models using the sc-crop pipeline.")
 
         # Order input images (only relevant for 'tumor-edema-cavity_t1-t2')
         if arguments.task == 'tumor_edema_cavity_t1_t2':
@@ -520,7 +519,7 @@ def main(argv: Sequence[str]):
             # The user can override individual crop box faces (voxel indices) via -box-*.
             if crop_active:
                 extra_inference_kwargs['crop'] = True
-                extra_inference_kwargs['crop_pad'] = models.load_crop_metadata(name_model)
+                extra_inference_kwargs['crop_pad'] = models.load_crop_metadata(path_model)
                 extra_inference_kwargs['box_overrides'] = box_overrides
                 extra_inference_kwargs['orig_fname'] = arguments.i[0]
                 extra_inference_kwargs['out_fname'] = getattr(arguments, 'o', None)
