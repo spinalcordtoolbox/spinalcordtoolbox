@@ -520,7 +520,7 @@ def main(argv: Sequence[str]):
             # The user can override individual crop box faces (voxel indices) via -box-*.
             if crop_active:
                 extra_inference_kwargs['crop'] = True
-                extra_inference_kwargs['crop_pad'] = models.MODELS[name_model].get('crop_pad_defaults', {})
+                extra_inference_kwargs['crop_pad'] = models.load_crop_metadata(name_model)
                 extra_inference_kwargs['box_overrides'] = box_overrides
                 extra_inference_kwargs['orig_fname'] = arguments.i[0]
                 extra_inference_kwargs['out_fname'] = getattr(arguments, 'o', None)

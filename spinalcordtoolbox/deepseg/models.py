@@ -13,6 +13,7 @@ import logging
 import textwrap
 import shutil
 import glob
+import yaml
 from pathlib import Path
 from importlib.metadata import metadata
 
@@ -135,7 +136,7 @@ MODELS = {
     #       - Models do not have a `.json` sidecar file, since they were not developed with ivadomed
     #       - So, threshold value is stored here, within the model dict
     #       - Binarization is applied within SCT code
-    # v4 model: trained on sc-crop cropped volumes. crop_pad_defaults match sc_crop.detect() defaults.
+    # v4 model: trained on sc-crop cropped volumes.
     "model_seg_sc_contrast_agnostic_nnunet": {
         "url": [
             "https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/releases/download/v4.0/model_contrast_agnostic_20260628.zip"
@@ -144,11 +145,6 @@ MODELS = {
         "contrasts": ["any"],
         "framework": "nnunetv2",
         "thr": None,  # We're now using an nnUNet model, which does not need a threshold
-        "crop_pad_defaults": {
-            "pad_superior": 40.0, "pad_inferior": 100.0,
-            "pad_left": 15.0, "pad_right": 15.0,
-            "pad_anterior": 15.0, "pad_posterior": 22.0,
-        },
         "default": True,
         "cropped_image": True,
     },
@@ -232,11 +228,6 @@ MODELS = {
          "thr": None,  # Images are already binarized
          "default": False,
          "cropped_image": True,  # This model was trained on cropped images, so the input images should be cropped before inference.
-         "crop_pad_defaults": {
-             "pad_superior": 40.0, "pad_inferior": 100.0,
-             "pad_left": 20.0, "pad_right": 20.0,
-             "pad_anterior": 20.0, "pad_posterior": 20.0,
-         },
      },
     "model_seg_canal": {
         "url": [
@@ -676,6 +667,30 @@ def folder(name_model):
     :return: str: Folder to model
     """
     return os.path.join(__deepseg_dir__, name_model)
+
+
+# sc_crop.detect() padding kwargs; see sc_crop.crop.detect() for the meaning of each face.
+CROP_PAD_KEYS = ('pad_superior', 'pad_inferior', 'pad_left', 'pad_right', 'pad_anterior', 'pad_posterior')
+
+
+def load_crop_metadata(name_model):
+    """
+    Load sc-crop padding overrides bundled with an installed model, if any.
+
+    Models trained on cropped volumes may ship a `crop_metadata.yaml` file at the root of their
+    release .zip, giving the padding (in mm) used to build their training crops. This lets the
+    padding travel with the model artifact itself, rather than being guessed from the model name
+    in `MODELS`. If the file is absent, `sc_crop.detect()` falls back to its own built-in defaults.
+
+    :param name_model: str: Name of model.
+    :return: dict: `sc_crop.detect()` padding kwargs (empty if the model has no override file).
+    """
+    path_yaml = os.path.join(folder(name_model), "crop_metadata.yaml")
+    if not os.path.isfile(path_yaml):
+        return {}
+    with open(path_yaml, "r") as fp:
+        crop_metadata = yaml.safe_load(fp)
+    return {key: crop_metadata[key] for key in CROP_PAD_KEYS if key in crop_metadata}
 
 
 def install_model(name_model, custom_url=None):
