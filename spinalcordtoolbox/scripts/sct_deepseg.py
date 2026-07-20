@@ -323,17 +323,11 @@ def get_parser(subparser_to_return=None):
                 help="If set, only 1 fold will be used for inference instead of the full 5-fold ensemble. This will speed up inference, but may reduce segmentation quality."
             )
 
-        # -no-crop disables the sc-crop pipeline for tasks whose model has "crop": True.
-        # -box-* lets the user override specific crop box face positions (voxel indices) after detection.
+        # -box-* lets the user override specific crop box face positions (voxel indices) for tasks whose
+        # model has "cropped_image": True. The model was trained on cropped images, so there is no
+        # "-no-crop" escape hatch: running it on the full image would be out-of-distribution input.
         task_has_crop = any(models.MODELS[m].get('cropped_image') for m in task_dict['models'])
         if task_has_crop:
-            params.add_argument(
-                "-no-crop",
-                action="store_true",
-                help="Disable the spinal cord detection and cropping pipeline (sc-crop). "
-                     "By default, the image is automatically cropped around the spinal cord before inference "
-                     "and the segmentation is restored to the original image space. "
-                     "Pass `-no-crop` to skip this step and run inference on the full image.")
             crop_group = subparser.add_argument_group('\nSC-CROP box override')
             for key in ('xmin', 'xmax', 'ymin', 'ymax', 'zmin', 'zmax'):
                 crop_group.add_argument(
@@ -411,13 +405,12 @@ def main(argv: Sequence[str]):
     # Get pipeline model names
     name_models = models.TASKS[arguments.task]['models']
 
-    # Parse -no-crop / -box-* once, here, and reuse `crop_active`/`box_overrides` below instead of
-    # re-deriving them per model in the pipeline loop.
+    # Parse -box-* once, here, and reuse `crop_active`/`box_overrides` below instead of re-deriving
+    # them per model in the pipeline loop.
     # NB: today's crop-enabled tasks ('spinalcord', 'lesion_ms') each have exactly one model, so a
     # single task-level `crop_active` is equivalent to a per-model check. If a future task ever mixes
     # cropped and non-cropped models, this will need to move back inside the loop.
-    crop_active = (any(models.MODELS[m].get('cropped_image') for m in name_models)
-                   and not getattr(arguments, 'no_crop', False))
+    crop_active = any(models.MODELS[m].get('cropped_image') for m in name_models)
     box_overrides = {
         key: getattr(arguments, f'box_{key}', None)
         for key in ('xmin', 'xmax', 'ymin', 'ymax', 'zmin', 'zmax')
@@ -523,7 +516,6 @@ def main(argv: Sequence[str]):
             # crop-flagged models: detect SC, crop, run inference, uncrop (sc-crop pipeline).
             # Padding defaults from the model are passed to sc_crop.detect() internally.
             # The user can override individual crop box faces (voxel indices) via -box-*.
-            # Pass -no-crop to skip this pipeline and run inference on the full image.
             if crop_active:
                 extra_inference_kwargs['crop'] = True
                 extra_inference_kwargs['crop_pad'] = models.MODELS[name_model].get('crop_pad_defaults', {})
