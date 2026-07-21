@@ -1,3 +1,8 @@
+__pycache__
+Dockerfile
+install_sct_log.txt
+.git/*
+
 .DS_Store
 
 *~
@@ -20,13 +25,10 @@
 /.cache
 /bin
 /python
-/data
-/models
 tmp/**/*
 spinalcordtoolbox_v*
 dev/atlas/create_atlas/results
 dev/atlas/validate_atlas/tmp.*
-sct_testing_data
 
 scripts/.idea/misc.xml
 scripts/.idea/modules.xml
@@ -40,7 +42,7 @@ spinalcordtoolbox/sentry_dsn.py
 unit_testing/*.csv
 unit_testing/*.nii.gz
 unit_testing/*.roi
-testing/*.json
+testing/
 
 .vscode/settings.json
 test.sh
@@ -53,13 +55,28 @@ sct_example_data/
 **/peak_memory.txt
 **/memory_snapshots.txt
 
-# Documentation
-documentation/build
+# Documentation (full source, not just build artefacts)
+documentation/
 
-# Apptainer generated files
+# Files with no effect on build
+.devcontainer/devcontainer.json
+.github/*
 *.sif
 *.img
 *.tar.gz
+.git/
 
-# Installation logs
-install_sct_log.txt
+# Community / project-metadata files (no effect on pip install)
+CHANGES.md
+CODE_OF_CONDUCT.md
+CONTRIBUTING.rst
+.readthedocs.yaml
+.gitignore
+.ci.sh
+
+# Platform-specific or workflow scripts not needed in the image
+install_sct.bat
+batch_processing.sh
+
+# Miscellaneous artefacts
+model_seg_spine_contrast_agnostic_install_error
