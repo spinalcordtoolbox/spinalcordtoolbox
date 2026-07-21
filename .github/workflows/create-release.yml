@@ -63,6 +63,9 @@ jobs:
         path: requirements-freeze.txt
 
   generate-containers:
+    environment:
+      name: docker-read-write
+      deployment: false
     runs-on: ubuntu-latest
     outputs:
       image-tag: ${{ steps.build_containers.outputs.image-tag }}
