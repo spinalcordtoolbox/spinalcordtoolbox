@@ -252,7 +252,7 @@ def average_nnunet_predictions(pred, probabilities=False):
 
 
 def segment_nnunet(path_img, tmpdir, predictor, device: torch.device, ensemble=False, soft_ms_lesion=False,
-                   crop=False, crop_pad=None, box_overrides=None, orig_fname=None, out_fname=None):
+                   crop=False, crop_pad=None, box_overrides=None, out_fname=None):
     """
     This script is used to run inference on a single subject using a nnUNetV2 model.
     For soft segmentation of MS lesions, set `soft_ms_lesion=True`. Output segmentation will be thresholded at 1e-3.
@@ -300,7 +300,7 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device, ensemble=F
         bbox.update(box_overrides)
         if not (bbox["xmax"] >= bbox["xmin"] and bbox["ymax"] >= bbox["ymin"] and bbox["zmax"] >= bbox["zmin"]):
             raise ValueError("sc-crop: invalid bounding box — check that -box-* values are not inverted.")
-        fname_cropbox = add_suffix(out_fname if out_fname else (orig_fname or path_img), "_cropbox")
+        fname_cropbox = add_suffix(out_fname if out_fname else path_img, "_cropbox")
         sc_crop.save_bbox_nifti(bbox, img_nii, fname_cropbox)
         nib.save(sc_crop.crop(img_nii, bbox), path_img_tmp)
 

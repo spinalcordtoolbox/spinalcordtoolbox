@@ -521,7 +521,6 @@ def main(argv: Sequence[str]):
                 extra_inference_kwargs['crop'] = True
                 extra_inference_kwargs['crop_pad'] = models.load_crop_metadata(path_model)
                 extra_inference_kwargs['box_overrides'] = box_overrides
-                extra_inference_kwargs['orig_fname'] = arguments.i[0]
                 extra_inference_kwargs['out_fname'] = getattr(arguments, 'o', None)
             # Run inference
             im_lst, target_lst = inference.segment_non_ivadomed(
