@@ -72,11 +72,11 @@ jobs:
       - uses: ./.github/actions/build-containers
         id: build_containers
         with:
-          tag: ${{ github.event.inputs.milestone_title }}
+          tag: ${{ github.event.inputs.milestone_title || 'dev' }}
           push: ${{ github.event.inputs.dry_run == 'False' }}
           load: true
           cache-from-tag: ""
-          upload-apptainer: ${{ github.event.inputs.dry_run == 'False' }}
+          upload-apptainer: ${{ !(github.event_name == 'schedule') || github.event.inputs.dry_run == 'False' }}
           docker-username: ${{ secrets.DOCKER_USERNAME }}
           docker-token: ${{ secrets.DOCKER_RW_PAT }}
           apptainer-token: ${{ secrets.GHCR_RW_PAT }}
