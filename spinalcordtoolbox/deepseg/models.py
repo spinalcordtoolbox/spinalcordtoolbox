@@ -670,7 +670,7 @@ def _load_crop_yaml(path_model):
     if not os.path.isfile(path_yaml):
         return {}
     with open(path_yaml, "r") as fp:
-        return yaml.safe_load(fp)
+        return yaml.safe_load(fp) or {}
 
 
 def is_crop_model(path_model):
