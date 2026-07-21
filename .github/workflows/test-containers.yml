@@ -28,7 +28,12 @@ jobs:
     name: Docker+Apptainer (Ubuntu Latest)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
+        with:
+          # Fetch the commit on the forked repository
+          repo: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
+          # Check out the specific commit from the PR branch
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Extract SCT current dev version to Github env
         run: |
           export SCT_VERSION=$(cat spinalcordtoolbox/version.txt)

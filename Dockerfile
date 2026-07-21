@@ -70,11 +70,9 @@ RUN groupadd --gid $USER_GID $USERNAME \
 USER $USERNAME
 
 # Copy SCT conda environment from build stage
-# COPY --from=package --chmod=ugo=rwX  /opt/conda/envs/venv_sct /opt/conda/envs/venv_sct
 COPY --from=build --chmod=ugo=rwX /opt/sct/ /opt/sct/
 ENV PATH="/opt/sct/bin:${PATH}"
 ENV SCT_DIR=/opt/sct
-ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 
 # Set bash shell as default
 SHELL ["/opt/sct/python/bin/conda", "run", "-n", "venv_sct", "/bin/bash", "-c"]
