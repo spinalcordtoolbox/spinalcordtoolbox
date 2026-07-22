@@ -224,9 +224,9 @@ def init_sct():
         def _format(record):
             res = old_format(record)
             if record.levelno >= logging.ERROR:
-                res = "\x1B[31;1m{}\x1B[0m".format(res)
+                res = f"\x1B[31;1m{res}\x1B[0m"
             elif record.levelno >= logging.WARNING:
-                res = "\x1B[33m{}\x1B[0m".format(res)
+                res = f"\x1B[33m{res}\x1B[0m"
             else:
                 pass
             return res
@@ -241,7 +241,7 @@ def init_sct():
     logging.root.addHandler(hdlr)
 
     # Display SCT version
-    logger.info('\n--\nSpinal Cord Toolbox ({})\n'.format(__version__))
+    logger.info(f'\n--\nSpinal Cord Toolbox ({__version__})\n')
 
     # Display command (Only if called from CLI: check for .py in first arg)
     # Use next(iter()) to not fail on empty list (vs. sys.argv[0])
@@ -276,10 +276,10 @@ def send_email(addr_to, addr_from, subject, message='', passwd=None, filename=No
     if not isinstance(body, bytes):
         body = body.encode("utf-8")
 
-    body_html = """
+    body_html = f"""
 <html><pre style="font: monospace"><body>
-{}
-</body></pre></html>""".format(body).encode()
+{body}
+</body></pre></html>""".encode()
 
     if html:
         msg.attach(MIMEText(body_html, 'html', "utf-8"))
@@ -356,7 +356,7 @@ def run_proc(cmd, verbose=1, raise_exception=True, cwd=None, env=None, is_sct_bi
             cmd[0] = path
         elif isinstance(cmd, str):
             rem = cmd.split(" ", 1)[1:]
-            cmd = path if len(rem) == 0 else "{} {}".format(path, rem[0])
+            cmd = path if len(rem) == 0 else f"{path} {rem[0]}"
 
         # also, for windows, add the bin directory to the path (to allow ANTs to access 'msvc-runtime' DLLs)
         # see also: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4655#issuecomment-2430178901
@@ -475,7 +475,7 @@ def _version_string():
     install_type, sct_commit, sct_branch, version_sct = _git_info()
     if install_type == "package":
         return version_sct
-    return "{install_type}-{sct_branch}-{sct_commit}".format(**locals())
+    return f"{install_type}-{sct_branch}-{sct_commit}"
 
 
 def _git_info(commit_env='SCT_COMMIT', branch_env='SCT_BRANCH'):

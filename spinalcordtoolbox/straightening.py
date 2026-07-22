@@ -199,10 +199,10 @@ class SpinalCordStraightener(object):
         start_point = (z_centerline[inferior_bound] - middle_slice) * factor_curved_straight + middle_slice
         end_point = (z_centerline[superior_bound] - middle_slice) * factor_curved_straight + middle_slice
 
-        logger.info('Length of spinal cord: {}'.format(length_centerline))
-        logger.info('Size of spinal cord in z direction: {}'.format(size_z_centerline))
-        logger.info('Ratio length/size: {}'.format(factor_curved_straight))
-        logger.info('Safe zone boundaries (curved space): {}'.format(bound_curved))
+        logger.info(f'Length of spinal cord: {length_centerline}')
+        logger.info(f'Size of spinal cord in z direction: {size_z_centerline}')
+        logger.info(f'Ratio length/size: {factor_curved_straight}')
+        logger.info(f'Safe zone boundaries (curved space): {bound_curved}')
 
         # 4. compute and generate straight space
         # points along curved centerline are already regularly spaced.
@@ -252,7 +252,7 @@ class SpinalCordStraightener(object):
                 centerline_straight.save_centerline(image=discs_ref_image, fname_output='discs_ref_image.nii.gz')
 
         else:
-            logger.info('Start/end points (straight space): {}'.format([start_point, end_point]))
+            logger.info(f'Start/end points (straight space): {[start_point, end_point]}')
             logger.info('Pad input volume to account for spinal cord length...')
             offset_z = 0
 
@@ -338,7 +338,7 @@ class SpinalCordStraightener(object):
             end_point_coord = image_centerline_pad.transfo_phys2pix([[0, 0, end_point]])[0]
 
             number_of_voxel = nx * ny * nz
-            logger.debug('Number of voxels: {}'.format(number_of_voxel))
+            logger.debug(f'Number of voxels: {number_of_voxel}')
 
             time_centerlines = time.time()
 
@@ -355,7 +355,7 @@ class SpinalCordStraightener(object):
             )
 
             time_centerlines = time.time() - time_centerlines
-            logger.info('Time to generate centerline: {} ms'.format(np.round(time_centerlines * 1000.0)))
+            logger.info(f'Time to generate centerline: {np.round(time_centerlines * 1000.0)} ms')
 
         if verbose == 2:
             # TODO: use OO
@@ -395,7 +395,7 @@ class SpinalCordStraightener(object):
         z_centerline_straight = centerline_straight.points[:, 2]
         bound_straight = [z_centerline_straight[coord_bound_straight_inferior],
                           z_centerline_straight[coord_bound_straight_superior]]
-        logger.info('Safe zone boundaries (straight space): {}'.format(bound_straight))
+        logger.info(f'Safe zone boundaries (straight space): {bound_straight}')
         # Remove duplicates from the start and end of the lookup table
         # This is necessary because `get_closest_index` will repeat itself once the first/last indexes are reached
         # NB: Any slice index set to `0` will have its warping field value set to `-100000` (i.e. no warping)
@@ -625,8 +625,8 @@ class SpinalCordStraightener(object):
             rmtree(path_tmp)
 
         if self.accuracy_results:
-            logger.info('Maximum x-y error: {} mm'.format(self.max_distance_straightening))
-            logger.info('Accuracy of straightening (MSE): {} mm'.format(self.mse_straightening))
+            logger.info(f'Maximum x-y error: {self.max_distance_straightening} mm')
+            logger.info(f'Accuracy of straightening (MSE): {self.mse_straightening} mm')
 
         # display elapsed time
         self.elapsed_time = int(np.round(time.time() - start_time))

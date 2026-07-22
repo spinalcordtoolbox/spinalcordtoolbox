@@ -105,7 +105,7 @@ def main(argv: Sequence[str]):
     im_list = [Image(fname) for fname in arguments.i]
     im_concat = concat_data(im_list, dim=3, squeeze_data=False)
     im_concat.save(arguments.o)
-    printv("Generated file: {}".format(arguments.o))
+    printv(f"Generated file: {arguments.o}")
 
     # Concatenate bvals and bvecs
     bvals_concat = ''
@@ -133,11 +133,11 @@ def main(argv: Sequence[str]):
     new_f = open(arguments.obval, 'w')
     new_f.write(bvals_concat)
     new_f.close()
-    printv("Generated file: {}".format(arguments.obval))
+    printv(f"Generated file: {arguments.obval}")
     new_f = open(arguments.obvec, 'w')
     new_f.write(bvecs_concat)
     new_f.close()
-    printv("Generated file: {}".format(arguments.obvec))
+    printv(f"Generated file: {arguments.obvec}")
 
 
 if __name__ == "__main__":

@@ -861,13 +861,13 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
                     if rot_method == 'pca':
                         angle_src = 0
                     elif rot_method == 'pcahog':
-                        logger.info("Switched to method 'hog' for slice: {}".format(iz))
+                        logger.info(f"Switched to method 'hog' for slice: {iz}")
                         angle_src = angle_src_hog
                 if pca_eigenratio_dest < pca_eigenratio_th or angle_dest > th_max_angle or angle_dest < -th_max_angle:
                     if rot_method == 'pca':
                         angle_dest = 0
                     elif rot_method == 'pcahog':
-                        logger.info("Switched to method 'hog' for slice: {}".format(iz))
+                        logger.info(f"Switched to method 'hog' for slice: {iz}")
                         angle_dest = angle_dest_hog
 
             if not rot_method == 'none':
@@ -896,7 +896,7 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
             plt.grid()
             plt.xlabel('z')
             plt.ylabel('Angle (deg)')
-            plt.title("Regularized cord angle estimation (filter_size: {})".format(filter_size))
+            plt.title(f"Regularized cord angle estimation (filter_size: {filter_size})")
             plt.savefig(os.path.join(path_qc, 'register2d_centermassrot_regularize_rotation.png'))
             plt.close()
         # update variable

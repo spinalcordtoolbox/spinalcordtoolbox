@@ -421,8 +421,6 @@ def list_datasets():
             dataset_status = stylize(dataset_status, color[is_installed(dataset_name)])
         table += f"{dataset_status}{download_type:<20s}\n"
 
-    table += '\nLegend: {} | {} (in the $SCT_DIR/data folder)\n\n'.format(
-            stylize("installed", color[True]),
-            stylize("not installed", color[False]))
+    table += f'\nLegend: {stylize("installed", color[True])} | {stylize("not installed", color[False])} (in the $SCT_DIR/data folder)\n\n'
 
     return table

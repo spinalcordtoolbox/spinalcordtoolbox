@@ -417,7 +417,7 @@ def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.3, npy
         if orientation != 'RPI':
             img = Image(name_resample)
             img.change_orientation(orientation)
-            name_resample = add_suffix(img.absolutepath, "_{}".format(orientation.lower()))
+            name_resample = add_suffix(img.absolutepath, f"_{orientation.lower()}")
             img.save(path=name_resample, mutable=True)
 
         return name_resample

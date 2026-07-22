@@ -236,7 +236,7 @@ class ExtractGLCM:
                         for m in self.metric_lst:  # compute the GLCM property (m.split('_')[0]) of the voxel xx,yy,zz
                             dct_metric[m].data[xx, yy, zz] = graycoprops(dct_glcm[m.split('_')[2]], m.split('_')[0])[0][0]
 
-                        pbar.set_postfix(pos="{}/{}".format(zz, len(self.dct_im_seg["im"])))
+                        pbar.set_postfix(pos=f"{zz}/{len(self.dct_im_seg['im'])}")
                         pbar.update(1)
 
         for m in self.metric_lst:

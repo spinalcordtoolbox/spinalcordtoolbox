@@ -674,7 +674,7 @@ def install_model(name_model, custom_url=None):
     :param name: str: Name of model.
     :return: None
     """
-    logger.info("\nINSTALLING MODEL: {}".format(name_model))
+    logger.info(f"\nINSTALLING MODEL: {name_model}")
     url_field = MODELS[name_model]['url'] if not custom_url else [custom_url]  # [] -> mimic a list of mirror URLs
     # List of mirror URLs corresponding to a single model
     if isinstance(url_field, list):
@@ -875,7 +875,7 @@ def list_tasks_string():
 
     # Display coloured output
     color = {True: 'LightGreen', False: 'LightRed'}
-    table = "{}{}\n".format('TASK'.ljust(task_width), 'DESCRIPTION')
+    table = f"{'TASK'.ljust(task_width)}DESCRIPTION\n"
     table += f"{'=' * table_width}\n"
 
     sorted_groups = _group_tasks(sorted(TASKS, key=_priority_then_alpha))
@@ -900,13 +900,11 @@ def list_tasks_string():
             table += f"{task_status}{description_status}\n"
 
     # Add a legend to denote which tools are installed or not and the end
-    table += '\nLegend: {} | {}\n\n'.format(
-            stylize("installed", color[True]),
-            stylize("not installed", color[False]))
+    table += f'\nLegend: {stylize("installed", color[True])} | {stylize("not installed", color[False])}\n\n'
 
     table += 'To read in-depth descriptions of the training data, model architecture, '
     table += 'etc. used for these tasks, type the following command:\n\n'
-    table += '    {}'.format(stylize('sct_deepseg -task-details', ['LightBlue', 'Bold']))
+    table += f"    {stylize('sct_deepseg -task-details', ['LightBlue', 'Bold'])}"
     return table
 
 
@@ -930,15 +928,12 @@ def display_list_tasks():
         # Grab the details of the task from the TASKS dict
         task_details = TASKS[task_name]
 
-        # Boilerplate reduction; define the formatting string once and re-use it throughout
-        fmt_str = "{} {}"
-
         # Lead with the task name, bolded to draw the user's attention
-        print(fmt_str.format(task_label.ljust(padded_len), stylize(task_name, 'Bold')))
+        print(f"{task_label.ljust(padded_len)} {stylize(task_name, 'Bold')}")
 
         # List out the valid contrasts for this model
         contrast_str = ', '.join(get_required_contrasts(task_name))
-        print(fmt_str.format(contrast_label.ljust(padded_len), contrast_str))
+        print(f"{contrast_label.ljust(padded_len)} {contrast_str}")
 
         # List out the model(s) used by this task
         task_models = task_details['models']
@@ -946,7 +941,7 @@ def display_list_tasks():
         # Filter out models which are missing necessary files to avoid misleading the user
         model_validity = [is_valid(path_model) for path_model in model_paths]
         model_str = ', '.join([model_name for model_name, validity in zip(task_models, model_validity)])
-        print(fmt_str.format(model_label.ljust(padded_len), model_str))
+        print(f"{model_label.ljust(padded_len)} {model_str}")
 
         # Write out the "long" description, wrapped to fit within the console the user is using
         formatted_description = '\n'.join(textwrap.wrap(
@@ -957,18 +952,18 @@ def display_list_tasks():
             subsequent_indent=' ' * (padded_len + 1),
 
         ))
-        print(fmt_str.format(description_label.ljust(padded_len), formatted_description))
+        print(f"{description_label.ljust(padded_len)} {formatted_description}")
 
         # The URL where the model was downloaded from; 'cyan' formatting is forced in case the console doesn't do it
         formatted_url = stylize(task_details['url'], styles='Cyan')
-        print(fmt_str.format(url_label.ljust(padded_len), formatted_url))
+        print(f"{url_label.ljust(padded_len)} {formatted_url}")
 
         # Whether the model is installed already or not
         formatted_installed = (
             stylize("Yes", 'LightGreen') if all(model_validity)
             else stylize("No", 'LightRed')
         )
-        print(fmt_str.format(installed_label.ljust(padded_len), formatted_installed))
+        print(f"{installed_label.ljust(padded_len)} {formatted_installed}")
 
         # Add a separating newline
         print('')

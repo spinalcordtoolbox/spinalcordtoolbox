@@ -557,7 +557,7 @@ def multicomponent_split(im):
     for i, im in enumerate(im_out):
         im.data = data_out[i]
         im.hdr.set_intent('vector', (), '')
-        im.absolutepath = add_suffix(im.absolutepath, '_{}'.format(i))
+        im.absolutepath = add_suffix(im.absolutepath, f'_{i}')
     return im_out
 
 

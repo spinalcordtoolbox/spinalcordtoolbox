@@ -59,10 +59,9 @@ def main(argv: Sequence[str]):
         path_warp = fname_warp_list[idx_warp]
         if path_warp.endswith((".nii", ".nii.gz")) \
                 and Image(fname_warp_list[idx_warp]).header.get_intent()[0] != 'vector':
-            raise ValueError("Displacement field in {} is invalid: should be encoded"
+            raise ValueError(f"Displacement field in {path_warp} is invalid: should be encoded"
                              " in a 5D file with vector intent code"
-                             " (see https://web.archive.org/web/20241009085040/https://nifti.nimh.nih.gov/pub/dist/src/niftilib/nifti1.h"
-                             .format(path_warp))
+                             " (see https://web.archive.org/web/20241009085040/https://nifti.nimh.nih.gov/pub/dist/src/niftilib/nifti1.h)")
 
     # check if destination file is 3d
     check_dim(fname_dest, dim_lst=[3])

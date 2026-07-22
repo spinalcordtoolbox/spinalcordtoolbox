@@ -210,9 +210,9 @@ class NURBS:
                                  "the best results. \nDifference between fitted NURBS curve and input data = {} mm".
                                  format(nbControle_that_last_worked, np.round(self.error_curve_that_last_worked, 2)))
                 else:
-                    logger.debug('Number of control points of the optimal NURBS = {}'.format(self.nbControle))
+                    logger.debug(f'Number of control points of the optimal NURBS = {self.nbControle}')
             else:
-                logger.debug('In NURBS we get nurbs_ctl_points = {}'.format(nbControl))
+                logger.debug(f'In NURBS we get nurbs_ctl_points = {nbControl}')
                 w = [1.0] * len(P_x)
                 self.nbControl = nbControl  # increase nbeControle if "short data"
                 if not twodim:
@@ -946,7 +946,7 @@ def getSize(x, y, z, file_name=None):
     s = 0
     for i in range(len(x) - 1):
         s += sqrt((p1 * (x[i + 1] - x[i]))**2 + (p2 * (y[i + 1] - y[i]))**2 + (p3 * (z[i + 1] - z[i])**2))
-    logger.debug('Centerline size: {}'.format(s))
+    logger.debug(f'Centerline size: {s}')
     return s
 
 

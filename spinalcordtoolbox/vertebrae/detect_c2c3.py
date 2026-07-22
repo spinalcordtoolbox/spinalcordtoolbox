@@ -48,7 +48,7 @@ def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, verbose=1):
     :return:
     """
     # path to the pmj detector
-    path_model = os.path.join(__data_dir__, 'c2c3_disc_models', '{}_model'.format(contrast))
+    path_model = os.path.join(__data_dir__, 'c2c3_disc_models', f'{contrast}_model')
     # check if model exists
     if not os.path.isfile(f'{path_model}.yml'):
         raise FileNotFoundError(

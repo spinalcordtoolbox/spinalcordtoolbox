@@ -543,7 +543,7 @@ def parse_num_list(str_num):
             b = int(m.group("last"))
             list_num += [x for x in range(a, b + 1) if x not in list_num]
             continue
-        raise ValueError("unexpected group element {} group spec {}".format(element, str_num))
+        raise ValueError(f"unexpected group element {element} group spec {str_num}")
 
     return list_num
 

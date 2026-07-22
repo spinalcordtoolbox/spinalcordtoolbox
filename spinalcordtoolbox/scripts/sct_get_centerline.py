@@ -193,7 +193,7 @@ def main(argv: Sequence[str]):
         param_centerline.algo_fitting = 'optic'
         param_centerline.contrast = contrast_type
     else:
-        printv("ERROR: The selected method is not available: {}. Please look at the help.".format(method), type='error')
+        printv(f"ERROR: The selected method is not available: {method}. Please look at the help.", type='error')
         return
 
     # Extrapolate and regularize (or detect if optic) cord centerline

@@ -27,7 +27,7 @@ class SagittalController(base.BaseController):
 
     def select_point(self, x, y, z, label):
         if not self.valid_point(x, y, z):
-            raise ValueError('Invalid coordinates {}'.format((x, y, z)))
+            raise ValueError(f'Invalid coordinates {(x, y, z)}')
 
         existing_point = [i for i, j in enumerate(self.points) if j[3] == label]
 

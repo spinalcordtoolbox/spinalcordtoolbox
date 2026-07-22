@@ -140,15 +140,15 @@ def print_line(string):
 
 
 def print_ok(more=None):
-    print("[{}OK{}]{}".format(ANSIColors16.LightGreen, ANSIColors16.ResetAll, more if more is not None else ""))
+    print(f"[{ANSIColors16.LightGreen}OK{ANSIColors16.ResetAll}]{more if more is not None else ''}")
 
 
 def print_warning(more=None):
-    print("[{}WARNING{}]{}".format(ANSIColors16.LightYellow, ANSIColors16.ResetAll, more if more is not None else ""))
+    print(f"[{ANSIColors16.LightYellow}WARNING{ANSIColors16.ResetAll}]{more if more is not None else ''}")
 
 
 def print_fail(more=None):
-    print("[{}FAIL{}]{}".format(ANSIColors16.LightRed, ANSIColors16.ResetAll, more if more is not None else ""))
+    print(f"[{ANSIColors16.LightRed}FAIL{ANSIColors16.ResetAll}]{more if more is not None else ''}")
 
 
 def add_bash_profile(string):
@@ -209,8 +209,8 @@ def main(argv: Sequence[str]):
           "\n------------------")
 
     print("SCT info:")
-    print("- version: {}".format(__version__))
-    print("- path: {0}".format(__sct_dir__))
+    print(f"- version: {__version__}")
+    print(f"- path: {__sct_dir__}")
 
     # initialization
     install_software = 0
@@ -241,11 +241,11 @@ def main(argv: Sequence[str]):
         os_running = 'unknown'
 
     print(f'OS: {os_running} ({platform.platform()})')
-    print('CPU cores: Available: {}, Used by ITK functions: {}'.format(psutil.cpu_count(), int(os.getenv('ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS', 0))))
+    print(f'CPU cores: Available: {psutil.cpu_count()}, Used by ITK functions: {int(os.getenv("ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS", 0))}')
 
     ram = psutil.virtual_memory()
     factor_MB = 1024 * 1024
-    print('RAM: Total: {}MB, Used: {}MB, Available: {}MB'.format(ram.total // factor_MB, ram.used // factor_MB, ram.available // factor_MB))
+    print(f'RAM: Total: {ram.total // factor_MB}MB, Used: {ram.used // factor_MB}MB, Available: {ram.available // factor_MB}MB')
 
     # Check if SCT was installed with GPU version of torch (NB: On macOS, `torch` will always be CPU-only)
     gpu_torch_installed = ("+cpu" not in __torch_version__) and not sys.platform.startswith('darwin')
@@ -344,10 +344,10 @@ def main(argv: Sequence[str]):
     path_python = sys.executable
     if __sct_dir__ in path_python:
         print_ok()
-        print('  Using bundled python {} at {}'.format(sys.version, path_python))
+        print(f'  Using bundled python {sys.version} at {path_python}')
     else:
         print_warning()
-        print('  Using system python which is unsupported: {}'.format(path_python))
+        print(f'  Using system python which is unsupported: {path_python}')
 
     # Import matplotlib.pyplot here (before PyQt can be imported) in order to mitigate a libgcc error
     # See also: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3511#issuecomment-912167649

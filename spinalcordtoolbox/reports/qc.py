@@ -440,7 +440,7 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
         action_list = [QcImage.listed_seg]
         def qcslice_layout(x): return x.mosaic()[:2]
     else:
-        raise ValueError("Unrecognized process: {}".format(process))
+        raise ValueError(f"Unrecognized process: {process}")
 
     slice_subtypes = {'Axial': Axial, 'Sagittal': Sagittal}
     if plane not in slice_subtypes.keys():

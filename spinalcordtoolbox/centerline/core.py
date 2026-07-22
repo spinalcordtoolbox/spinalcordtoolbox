@@ -155,18 +155,18 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
         if param.algo_fitting == 'polyfit':
             x_centerline_fit, x_centerline_deriv = curve_fitting.polyfit_1d(z_mean, x_mean, z_ref, deg=param.degree)
             y_centerline_fit, y_centerline_deriv = curve_fitting.polyfit_1d(z_mean, y_mean, z_ref, deg=param.degree)
-            fig_title = 'Algo={}, Deg={}'.format(param.algo_fitting, param.degree)
+            fig_title = f'Algo={param.algo_fitting}, Deg={param.degree}'
 
         elif param.algo_fitting == 'bspline':
             x_centerline_fit, x_centerline_deriv = curve_fitting.bspline(z_mean, x_mean, z_ref, param.smooth, pz=pz)
             y_centerline_fit, y_centerline_deriv = curve_fitting.bspline(z_mean, y_mean, z_ref, param.smooth, pz=pz)
-            fig_title = 'Algo={}, Smooth={}'.format(param.algo_fitting, param.smooth)
+            fig_title = f'Algo={param.algo_fitting}, Smooth={param.smooth}'
 
         elif param.algo_fitting == 'linear':
             # Simple linear interpolation
             x_centerline_fit, x_centerline_deriv = curve_fitting.linear(z_mean, x_mean, z_ref, param.smooth, pz=pz)
             y_centerline_fit, y_centerline_deriv = curve_fitting.linear(z_mean, y_mean, z_ref, param.smooth, pz=pz)
-            fig_title = 'Algo={}, Smooth={}'.format(param.algo_fitting, param.smooth)
+            fig_title = f'Algo={param.algo_fitting}, Smooth={param.smooth}'
 
         elif param.algo_fitting == 'nurbs':
             from spinalcordtoolbox.centerline.nurbs import b_spline_nurbs
@@ -180,7 +180,7 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
             # Normalize derivatives to z_deriv
             x_centerline_deriv = x_centerline_deriv / z_centerline_deriv
             y_centerline_deriv = y_centerline_deriv / z_centerline_deriv
-            fig_title = 'Algo={}, NumberPoints={}'.format(param.algo_fitting, point_number)
+            fig_title = f'Algo={param.algo_fitting}, NumberPoints={point_number}'
 
         else:
             logger.error(f'algo_fitting "{param.algo_fitting}" does not exist.')

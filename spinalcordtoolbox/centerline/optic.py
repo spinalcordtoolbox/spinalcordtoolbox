@@ -79,7 +79,7 @@ def detect_centerline(img, contrast, remove_temp_files=1, verbose=0):
     """
 
     # Fetch path to Optic model based on contrast
-    optic_models_path = sct_dir_local_path('data', 'optic_models', '{}_model'.format(contrast))
+    optic_models_path = sct_dir_local_path('data', 'optic_models', f'{contrast}_model')
 
     logger.debug('Detecting the spinal cord using OptiC')
     img_orientation = img.orientation
