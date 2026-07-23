@@ -522,7 +522,7 @@ def main(argv: Sequence[str]):
                 extra_inference_kwargs['crop'] = True
                 extra_inference_kwargs['crop_pad'] = crop_pad
                 extra_inference_kwargs['box_overrides'] = box_overrides
-                extra_inference_kwargs['out_fname'] = getattr(arguments, 'o', None)
+                extra_inference_kwargs['out_fname'] = arguments.o
             # Run inference
             im_lst, target_lst = inference.segment_non_ivadomed(
                 path_model, model_type, input_filenames, thr,
@@ -654,8 +654,7 @@ def main(argv: Sequence[str]):
         im_types.append(check_image_kind(Image(output_filename)))
         opacities.append('0.7')
     # If a crop box was saved (sc-crop with -fast), add it as a yellow outline overlay in FSLeyes.
-    _out = getattr(arguments, 'o', None)
-    fname_cropbox = add_suffix(_out if _out else arguments.i[0], "_cropbox")
+    fname_cropbox = add_suffix(arguments.o if arguments.o else arguments.i[0], "_cropbox")
     if os.path.isfile(fname_cropbox):
         images.append(fname_cropbox)
         im_types.append('cropbox')
