@@ -275,3 +275,59 @@ def test_deepseg_totalspineseg_empty_output(t2_zero, tmp_path, tmp_path_qc):
                           '-o', fname_out,
                           '-qc', tmp_path_qc])
     assert "step 1 failed to produce a valid segmentation" in str(e.value)
+
+
+@pytest.mark.parametrize('box_overrides', [
+    [],  # default: sc-crop pipeline via automatic detection only
+    ['-box-zmin', '0'],  # partial override: widen one face beyond the detected box
+    ['-box-xmin', '10', '-box-xmax', '59', '-box-ymin', '0', '-box-ymax', '54',
+     '-box-zmin', '3', '-box-zmax', '48'],  # full manual override, bypasses detection entirely
+])
+@pytest.mark.usefixtures(cleanup_model_dirs.__name__)
+def test_deepseg_crop_box_override(box_overrides, tmp_path, tmp_path_qc):
+    """
+    Test the sc-crop pipeline (spinalcord task) with no override, a partial `-box-*` override
+    (patched onto the detected box), and a full `-box-*` override (bypasses detection entirely).
+    """
+    fname_out = str(tmp_path / "t2_seg_deepseg.nii.gz")
+    sct_deepseg.main(['spinalcord', '-i', sct_test_path('t2', 't2.nii.gz'), '-o', fname_out,
+                      '-qc', tmp_path_qc] + box_overrides)
+
+    assert os.path.isfile(fname_out)
+    assert os.path.isfile(add_suffix(fname_out, "_cropbox"))  # crop-active models always produce this
+
+    im_seg = Image(fname_out)
+    im_seg_manual = Image(sct_test_path('t2', 't2_seg-manual.nii.gz'))
+    dice_segmentation = compute_dice(im_seg, im_seg_manual, mode='3d', zboundaries=False)
+    assert dice_segmentation > 0.95
+
+
+def test_deepseg_box_override_rejected_for_non_crop_model(tmp_path, tmp_path_qc):
+    """
+    `-box-*` should be rejected for models that don't use the sc-crop pipeline.
+    """
+    fname_out = str(tmp_path / "t2_seg_deepseg.nii.gz")
+    with pytest.raises(SystemExit):
+        sct_deepseg.main(['rootlets', '-i', sct_test_path('t2', 't2.nii.gz'), '-o', fname_out,
+                          '-qc', tmp_path_qc, '-box-xmin', '0'])
+
+
+def test_deepseg_crop_detection_failure_raises_without_box_override(t2_zero, tmp_path, tmp_path_qc):
+    """
+    If sc-crop detection fails outright (no cord found) and no `-box-*` is given to fall back
+    on, the error should propagate instead of being silently swallowed.
+    """
+    fname_out = str(tmp_path / "t2_seg_deepseg.nii.gz")
+    with pytest.raises(RuntimeError):
+        sct_deepseg.main(['spinalcord', '-i', t2_zero, '-o', fname_out, '-qc', tmp_path_qc])
+
+
+def test_deepseg_crop_detection_failure_falls_back_to_full_image(t2_zero, tmp_path, tmp_path_qc):
+    """
+    If sc-crop detection fails outright but `-box-*` faces are given, fall back to the full
+    image extent for the faces not overridden, instead of crashing.
+    """
+    fname_out = str(tmp_path / "t2_seg_deepseg.nii.gz")
+    sct_deepseg.main(['spinalcord', '-i', t2_zero, '-o', fname_out, '-qc', tmp_path_qc,
+                      '-box-zmin', '0'])
+    assert os.path.isfile(fname_out)
