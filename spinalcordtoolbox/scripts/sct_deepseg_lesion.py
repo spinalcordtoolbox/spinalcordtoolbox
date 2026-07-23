@@ -120,10 +120,9 @@ def main(argv: Sequence[str]):
 
     remove_temp_files = arguments.r
 
-    algo_config_stg = '\nMethod:'
-    algo_config_stg += f'\n\tCenterline algorithm: {ctr_algo}'
-    algo_config_stg += f'\n\tAssumes brain section included in the image: {brain_bool}\n'
-    printv(algo_config_stg)
+    printv('\nMethod:'
+           f'\n\tCenterline algorithm: {ctr_algo}'
+           f'\n\tAssumes brain section included in the image: {brain_bool}\n')
 
     # Segment image
     from spinalcordtoolbox.image import Image

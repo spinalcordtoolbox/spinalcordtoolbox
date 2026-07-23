@@ -178,10 +178,10 @@ class Transform:
             if path_warp in self.list_warpinv:
                 use_inverse.append('-i')
                 # list_warp[idx_warp] = path_warp[1:]  # remove '-'
-                fname_warp_list_invert += [[use_inverse[idx_warp], list_warp[idx_warp]]]
+                fname_warp_list_invert.extend([[use_inverse[idx_warp], list_warp[idx_warp]]])
             else:
                 use_inverse.append('')
-                fname_warp_list_invert += [[path_warp]]
+                fname_warp_list_invert.append([path_warp])
             path_warp = list_warp[idx_warp]
             if path_warp.endswith((".nii", ".nii.gz")) \
                     and Image(list_warp[idx_warp]).header.get_intent()[0] != 'vector':

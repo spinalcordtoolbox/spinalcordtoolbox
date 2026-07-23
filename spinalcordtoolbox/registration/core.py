@@ -208,9 +208,9 @@ def register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg=
 
     if warp_forward_winv:
         cmd.append('-i')
-        cmd += reversed(warp_forward_winv)
+        cmd.extend(reversed(warp_forward_winv))
     if warp_forward:
-        cmd += reversed(warp_forward)
+        cmd.extend(reversed(warp_forward))
 
     status, output = run_proc(cmd, is_sct_binary=True)
     if status != 0:
@@ -223,9 +223,9 @@ def register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg=
 
     if warp_inverse_winv:
         cmd.append('-i')
-        cmd += reversed(warp_inverse_winv)
+        cmd.extend(reversed(warp_inverse_winv))
     if warp_inverse:
-        cmd += reversed(warp_inverse)
+        cmd.extend(reversed(warp_inverse))
 
     status, output = run_proc(cmd, is_sct_binary=True)
     if status != 0:

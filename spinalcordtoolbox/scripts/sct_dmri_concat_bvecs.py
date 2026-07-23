@@ -56,37 +56,17 @@ def main(argv: Sequence[str]):
         path_in, file_in, ext_in = extract_fname(fname_bvecs_list[0])
         fname_out = f'{path_in}bvecs_concat{ext_in}'
 
-    # # Open bvec files and collect values
-    # nb_files = len(fname_bvecs_list)
-    # bvecs_all = []
-    # for i_fname in fname_bvecs_list:
-    #     bvecs = []
-    #     with open(i_fname) as f:
-    #         for line in f:
-    #             bvec_line = map(float, line.split())
-    #             bvecs.append(bvec_line)
-    #     bvecs_all.append(bvecs)
-    #     f.close()
-    # # Concatenate
-    # bvecs_concat = ''
-    # for i in range(0, 3):
-    #     for j in range(0, nb_files):
-    #         bvecs_concat += ' '.join(str(v) for v in bvecs_all[j][i])
-    #         bvecs_concat += ' '
-    #     bvecs_concat += '\n'
-    #
-
     # Open bvec files and collect values
-    bvecs_all = ['', '', '']
-    for i_fname in fname_bvecs_list:
+    bvecs_all = [[], [], []]
+    if fname_bvecs_list:
         from dipy.data.fetcher import read_bvals_bvecs
+    for i_fname in fname_bvecs_list:
         bval_i, bvec_i = read_bvals_bvecs(None, i_fname)
-        for i in range(0, 3):
-            bvecs_all[i] += ' '.join(str(v) for v in map(lambda n: '%.16f' % n, bvec_i[:, i]))
-            bvecs_all[i] += ' '
+        for i in range(3):
+            bvecs_all[i].extend(f'{n:.16f}' for n in bvec_i[:, i])
 
     # Concatenate
-    bvecs_concat = '\n'.join(str(v) for v in bvecs_all)
+    bvecs_concat = '\n'.join(' '.join(v) for v in bvecs_all)
 
     # Write new bvec
     new_f = open(fname_out, 'w')

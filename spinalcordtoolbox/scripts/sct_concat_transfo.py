@@ -52,10 +52,10 @@ def main(argv: Sequence[str]):
         # Check if this transformation should be inverted
         if path_warp in warpinv_filename:
             use_inverse.append('-i')
-            fname_warp_list_invert += [[use_inverse[idx_warp], fname_warp_list[idx_warp]]]
+            fname_warp_list_invert.extend([[use_inverse[idx_warp], fname_warp_list[idx_warp]]])
         else:
             use_inverse.append('')
-            fname_warp_list_invert += [[path_warp]]
+            fname_warp_list_invert.append([path_warp])
         path_warp = fname_warp_list[idx_warp]
         if path_warp.endswith((".nii", ".nii.gz")) \
                 and Image(fname_warp_list[idx_warp]).header.get_intent()[0] != 'vector':

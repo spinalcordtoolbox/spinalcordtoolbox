@@ -410,17 +410,22 @@ def list_datasets():
     :rtype: str
     """
     color = {True: 'LightGreen', False: 'LightRed'}
-    table = f"{'DATASET NAME':<30s}{'TYPE':<20s}\n"
-    table += f"{'-' * 50}\n"
+    table = [
+        "DATASET NAME".ljust(30), "TYPE".ljust(20), "\n"
+        "-" * 50, "\n",
+    ]
     sorted_datasets = sorted(DATASET_DICT,
                              key=lambda k: DATASET_DICT[k]['download_type'] + k)
     for dataset_name in sorted_datasets:
-        download_type = DATASET_DICT[dataset_name]['download_type']
+        download_type = DATASET_DICT[dataset_name]['download_type'].ljust(20)
         dataset_status = dataset_name.ljust(30)
         if download_type != "Binaries":
             dataset_status = stylize(dataset_status, color[is_installed(dataset_name)])
-        table += f"{dataset_status}{download_type:<20s}\n"
+        table.extend([dataset_status, download_type, "\n"])
 
-    table += f'\nLegend: {stylize("installed", color[True])} | {stylize("not installed", color[False])} (in the $SCT_DIR/data folder)\n\n'
+    table.extend([
+        "\nLegend: ", stylize("installed", color[True]), " | ", stylize("not installed", color[False]),
+        " (in the $SCT_DIR/data folder)\n\n",
+    ])
 
-    return table
+    return "".join(table)

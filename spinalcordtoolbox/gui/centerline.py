@@ -295,9 +295,9 @@ def launch_centerline_dialog(im_input_orig, im_output, params):
     """
     im_input = im_input_orig.copy()  # need to copy otherwise the field absolutepath becomes None when exiting
     params.input_file_name = im_input.absolutepath
-    params.subtitle += u"[KEYBOARD] Up/Down arrows: Navigate the superior-inferior direction" \
-                       "\n[MOUSE] Right click: Change brightness (left/right) and contrast (up/down)." \
-                       "\n[MOUSE] Scrolling middle button: Zoom in/out."
+    params.subtitle += ("[KEYBOARD] Up/Down arrows: Navigate the superior-inferior direction"
+                        "\n[MOUSE] Right click: Change brightness (left/right) and contrast (up/down)."
+                        "\n[MOUSE] Scrolling middle button: Zoom in/out.")
     controller = CenterlineController(im_input, params, im_output)
     controller.reformat_image()
 

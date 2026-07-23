@@ -542,11 +542,11 @@ def main(argv: Sequence[str]):
 
         cache_input_files = [ftmp_seg]
         if level_alignment:
-            cache_input_files += [
+            cache_input_files.extend([
                 ftmp_template_seg,
                 ftmp_label,
                 ftmp_template_label,
-            ]
+            ])
         cache_sig = cache_signature(
             input_files=cache_input_files,
             input_params={"version": __version__},

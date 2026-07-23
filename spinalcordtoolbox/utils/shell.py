@@ -193,7 +193,7 @@ def _construct_itksnap_syntax(viewer, files, im_types):
     cmd = f"{viewer} -g {main_image}"
     # 2. '-o' is used for any remaining grayscale images not used as the main image (`-g`)
     if gray_images:
-        cmd += f" -o {' '.join(gray_images)}"
+        cmd = f"{cmd} -o {' '.join(gray_images)}"
     # 3. '-s' is used for any images with 1 value (binary segmentations) or >1 values (labeled segmentations).
     #    NB: There can only be one segmentation per ITKSnap command. (ITKSnap can't toggle segmentations like FSLeyes.)
     #        To get around this, we duplicate the command so that there is one command per segmentation.
@@ -541,7 +541,7 @@ def parse_num_list(str_num):
         if m is not None:
             a = int(m.group("first"))
             b = int(m.group("last"))
-            list_num += [x for x in range(a, b + 1) if x not in list_num]
+            list_num.extend(x for x in range(a, b + 1) if x not in list_num)
             continue
         raise ValueError(f"unexpected group element {element} group spec {str_num}")
 

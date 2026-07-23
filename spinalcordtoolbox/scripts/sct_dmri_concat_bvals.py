@@ -55,17 +55,13 @@ def main(argv: Sequence[str]):
         fname_out = f'{path_in}bvals_concat{ext_in}'
 
     # Open bval files and concatenate
-    bvals_concat = ''
-    # for file_i in fname_bval_list:
-    #     f = open(file_i, 'r')
-    #     for line in f:
-    #         bvals_concat += line
-    #     f.close()
     from dipy.data.fetcher import read_bvals_bvecs
-    for i_fname in fname_bval_list:
-        bval_i, bvec_i = read_bvals_bvecs(i_fname, None)
-        bvals_concat += ' '.join(str(v) for v in bval_i)
-        bvals_concat += ' '
+    bvals_concat = ' '.join(
+        str(v)
+        for i_fname in fname_bval_list
+        for bval_i, bvec_i in read_bvals_bvecs(i_fname, None)
+        for v in bval_i
+    )
 
     # Write new bval
     new_f = open(fname_out, 'w')

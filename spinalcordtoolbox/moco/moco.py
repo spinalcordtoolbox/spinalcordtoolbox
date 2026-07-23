@@ -471,7 +471,7 @@ def moco_wrapper(param):
         args = ['-i', im_moco.absolutepath, '-bvec', param.fname_bvecs, '-a', '1', '-v', '0']
         if not param.fname_bvals == '':
             # if bvals file is provided
-            args += ['-bval', param.fname_bvals]
+            args.extend(['-bval', param.fname_bvals])
         fname_b0, fname_b0_mean, fname_dwi, fname_dwi_mean = sct_dmri_separate_b0_and_dwi.main(argv=args)
     else:
         fname_moco_mean = add_suffix(im_moco.absolutepath, '_mean')
@@ -795,11 +795,11 @@ def register(param, file_src, file_dest, file_mat, file_out, im_mask=None):
                    '--smoothing-sigmas', param.smooth,
                    '--verbose', '1',
                    '--output', f'[{file_mat},{file_out_concat}]']
-            cmd += get_interpolation('isct_antsRegistration', param.interp)
+            cmd.extend(get_interpolation('isct_antsRegistration', param.interp))
             if im_mask is not None:
                 # if user specified a mask, make sure there are non-null voxels in the image before running the registration
                 if np.count_nonzero(im_mask.data):
-                    cmd += ['--masks', im_mask.absolutepath]
+                    cmd.extend(['--masks', im_mask.absolutepath])
                 else:
                     # Mask only contains zeros. Copying the image instead of estimating registration.
                     copy(file_src, file_out_concat, verbose=0)
@@ -816,9 +816,9 @@ def register(param, file_src, file_dest, file_mat, file_out, im_mask=None):
                    '--smoothingSigmas', param.smooth,
                    '--verbose', '1',
                    '--output', f'[{file_mat},{file_out_concat}]']
-            cmd += get_interpolation('isct_antsSliceRegularizedRegistration', param.interp)
+            cmd.extend(get_interpolation('isct_antsSliceRegularizedRegistration', param.interp))
             if im_mask is not None:
-                cmd += ['--mask', im_mask.absolutepath]
+                cmd.extend(['--mask', im_mask.absolutepath])
         # run command
         if do_registration:
             kw.update(dict(is_sct_binary=True))

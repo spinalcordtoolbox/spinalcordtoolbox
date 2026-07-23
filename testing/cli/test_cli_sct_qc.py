@@ -105,7 +105,7 @@ def test_sct_qc_totalspineseg_custom_labels(custom_labels, err_msg, totalspinese
         custom_mapping_file = os.path.join(tmp_path_qc, 'custom_mapping.json')
         with open(custom_mapping_file, 'w') as f:
             json.dump(custom_labels, f)
-        args += ['-custom-labels', custom_mapping_file]
+        args.extend(['-custom-labels', custom_mapping_file])
 
     # If an err message was supplied, check for a raised error
     if err_msg:

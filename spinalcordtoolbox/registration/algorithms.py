@@ -254,12 +254,12 @@ def register_step_ants_registration(src, dest, step, masking, ants_registration_
            '--output', f'[step{step.step},{scr_regStep}]',
            '--interpolation', 'BSpline[3]',
            '--verbose', ('1' if verbose >= 1 else '0'),
-           ] + masking
+           *masking]
 
     # add init translation
     if step.init:
         init_dict = {'geometric': '0', 'centermass': '1', 'origin': '2'}
-        cmd += ['-r', f'[{dest},{src},{init_dict[step.init]}]']
+        cmd.extend(['-r', f'[{dest},{src},{init_dict[step.init]}]'])
 
     # run command
     status, output = run_proc(cmd, verbose, is_sct_binary=True)
@@ -1355,7 +1355,7 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
         # add init translation
         if not paramreg.init == '':
             init_dict = {'geometric': '0', 'centermass': '1', 'origin': '2'}
-            cmd += ['-r', f'[dest_Z{num}.nii,src_Z{num}.nii,{init_dict[paramreg.init]}]']
+            cmd.extend(['-r', f'[dest_Z{num}.nii,src_Z{num}.nii,{init_dict[paramreg.init]}]'])
 
         try:
             # run registration

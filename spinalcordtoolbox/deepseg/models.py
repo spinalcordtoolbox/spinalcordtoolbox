@@ -875,17 +875,21 @@ def list_tasks_string():
 
     # Display coloured output
     color = {True: 'LightGreen', False: 'LightRed'}
-    table = f"{'TASK'.ljust(task_width)}DESCRIPTION\n"
-    table += f"{'=' * table_width}\n"
+    table = [
+        "TASK".ljust(task_width), "DESCRIPTION\n",
+        "=" * table_width, "\n",
+    ]
 
     sorted_groups = _group_tasks(sorted(TASKS, key=_priority_then_alpha))
 
     for group_name, group_tasks in sorted_groups.items():
         # Format the group name in all-caps w/ underscores replaced with spaces
-        formatted_group_name = " ".join(group_name.split('_')).upper()
+        formatted_group_name = group_name.replace("_", " ").upper()
         # Add the header for this group
-        table += f"\n{formatted_group_name}\n"
-        table += f"{'-' * table_width}\n"
+        table.extend([
+            "\n", formatted_group_name, "\n",
+            "-" * table_width, "\n",
+        ])
         # Print out the task details
         for task_name in group_tasks:
             # Grab the details for this task from our dict
@@ -897,15 +901,16 @@ def list_tasks_string():
             task_status = stylize(task_name.ljust(task_width), color[all(are_models_valid)])
             description_status = stylize(task_details['description'], color[all(are_models_valid)])
             # Add it to the task list
-            table += f"{task_status}{description_status}\n"
+            table.extend([task_status, description_status, "\n"])
 
     # Add a legend to denote which tools are installed or not and the end
-    table += f'\nLegend: {stylize("installed", color[True])} | {stylize("not installed", color[False])}\n\n'
-
-    table += 'To read in-depth descriptions of the training data, model architecture, '
-    table += 'etc. used for these tasks, type the following command:\n\n'
-    table += f"    {stylize('sct_deepseg -task-details', ['LightBlue', 'Bold'])}"
-    return table
+    table.extend([
+        "\nLegend: ", stylize("installed", color[True]), " | ", stylize("not installed", color[False]),
+        "\n\nTo read in-depth descriptions of the training data, model architecture, etc. "
+        "used for these tasks, type the following command:"
+        "\n\n    ", stylize("sct_deepseg -task-details", ['LightBlue', 'Bold']),
+    ])
+    return ''.join(table)
 
 
 def display_list_tasks():

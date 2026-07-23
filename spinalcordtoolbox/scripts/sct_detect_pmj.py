@@ -198,9 +198,10 @@ class DetectPMJ:
         run_proc(cmd_pmj, verbose=0, is_sct_binary=True)
 
         img = nib.load(f'{self.dection_map_pmj}_svm.hdr')  # convert .img and .hdr files to .nii
-        nib.save(img, f'{self.dection_map_pmj}.nii')  # NB: Use nib.save instead of Image.save for hdr file
+        fname_nii = f'{self.dection_map_pmj}.nii'
+        nib.save(img, fname_nii)  # NB: Use nib.save instead of Image.save for hdr file
 
-        self.dection_map_pmj += '.nii'  # fname of the resulting detection map
+        self.dection_map_pmj = fname_nii  # fname of the resulting detection map
 
     def extract_sagittal_slice(self):
         """Extract the sagittal slice where the detection is done.
