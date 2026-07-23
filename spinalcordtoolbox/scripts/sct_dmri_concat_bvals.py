@@ -59,8 +59,7 @@ def main(argv: Sequence[str]):
     bvals_concat = ' '.join(
         str(v)
         for i_fname in fname_bval_list
-        for bval_i, bvec_i in read_bvals_bvecs(i_fname, None)
-        for v in bval_i
+        for v in read_bvals_bvecs(i_fname, None)[0]
     )
 
     # Write new bval

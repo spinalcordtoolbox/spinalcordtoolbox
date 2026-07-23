@@ -127,7 +127,7 @@ def main(argv: Sequence[str]):
         # Concatenate bvecs
         for i in range(3):
             bvecs_concat[i].extend(f'{n:.16f}' for n in bvec[:, i])
-    bvals_concat = ''.join(bvals_concat)
+    bvals_concat = ' '.join(bvals_concat)
     bvecs_concat = '\n'.join(' '.join(v) for v in bvecs_concat)
 
     # Write files
