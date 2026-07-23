@@ -294,7 +294,7 @@ def main(argv: Sequence[str]):
         if status == 0:
             # Fetch only version number (full output of 'fsleyes --version' is 'fsleyes/FSLeyes version 0.34.2')
             fsleyes_version = output.split()[2]
-            print_ok(more=(" (%s)" % fsleyes_version))
+            print_ok(more=f" ({fsleyes_version})")
         else:
             print('[  ]')
             print('  ', (status, output))
@@ -355,9 +355,9 @@ def main(argv: Sequence[str]):
 
     for dep_pkg, dep_ver_spec in get_dependencies():
         if dep_ver_spec is None:
-            print_line('Check if %s is installed' % (dep_pkg))
+            print_line(f'Check if {dep_pkg} is installed')
         else:
-            print_line('Check if %s (%s) is installed' % (dep_pkg, dep_ver_spec))
+            print_line(f'Check if {dep_pkg} ({dep_ver_spec}) is installed')
 
         try:
             module_name, suppress_stderr = resolve_module(dep_pkg)
@@ -369,9 +369,9 @@ def main(argv: Sequence[str]):
             version = get_version(module)
 
             if dep_ver_spec is not None and version is not None and dep_ver_spec != version:
-                print_warning(more=(" (%s != %s mandated version))" % (version, dep_ver_spec)))
+                print_warning(more=f" ({version} != {dep_ver_spec} mandated version))")
             elif version is not None:
-                print_ok(more=(" (%s)" % version))
+                print_ok(more=f" ({version})")
             else:
                 print_ok()
 

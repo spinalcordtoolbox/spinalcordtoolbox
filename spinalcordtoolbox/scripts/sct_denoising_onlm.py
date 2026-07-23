@@ -137,8 +137,8 @@ def main(argv: Sequence[str]):
             den = nlmeans.nlmeans(data, sigma=sigma, mask=mask, rician=False, block_radius=block_radius)
 
     t = time()
-    printv("total time: %s" % (time() - t))
-    printv("vol size", den.shape)
+    printv(f"total time: {time() - t}")
+    printv(f"vol size {den.shape}")
 
     axial_middle = int(data.shape[2] / 2)
 

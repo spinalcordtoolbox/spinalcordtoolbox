@@ -109,7 +109,7 @@ def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, evecs, file_
     from spinalcordtoolbox.image import Image
     nii = Image(fname_in)
     data = nii.data
-    printv('data.shape (%d, %d, %d, %d)' % data.shape)
+    printv(f'data.shape {data.shape}')
 
     # open bvecs/bvals
     from dipy.io import read_bvals_bvecs

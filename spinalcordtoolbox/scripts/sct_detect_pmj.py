@@ -292,7 +292,7 @@ def main(argv: Sequence[str]):
     if arguments.ofolder is not None:
         path_results = arguments.ofolder
         if not os.path.isdir(path_results) and os.path.exists(path_results):
-            printv("ERROR output directory %s is not a valid directory" % path_results, 1, 'error')
+            printv(f"ERROR output directory {path_results} is not a valid directory", 1, 'error')
         if not os.path.exists(path_results):
             os.makedirs(path_results)
     else:

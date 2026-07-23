@@ -292,7 +292,7 @@ def send_email(addr_to, addr_from, subject, message='', passwd=None, filename=No
         part = MIMEBase('application', 'octet-stream')
         part.set_payload((attachment).read())
         encoders.encode_base64(part)
-        part.add_header('Content-Disposition', "attachment; filename= %s" % filename)
+        part.add_header('Content-Disposition', 'attachment', filename=filename)
         msg.attach(part)
 
     # send email
@@ -369,7 +369,7 @@ def run_proc(cmd, verbose=1, raise_exception=True, cwd=None, env=None, is_sct_bi
         cmdline = list2cmdline(cmd)
 
     if verbose:
-        printv("%s # in %s" % (cmdline, cwd), 1, 'code')
+        printv(f"{cmdline} # in {cwd}", 1, 'code')
 
     shell = isinstance(cmd, str)
 

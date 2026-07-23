@@ -788,7 +788,7 @@ def register(param, file_src, file_dest, file_mat, file_out, im_mask=None):
         if im_data.orientation[2] in 'LR':
             cmd = ['isct_antsRegistration',
                    '-d', '2',
-                   '--transform', 'Affine[%s]' % param.gradStep,
+                   '--transform', f'Affine[{param.gradStep}]',
                    '--metric', f'{param.metric}[{file_dest},{file_src},1,{metric_radius},{sampling}]',
                    '--convergence', param.iter,
                    '--shrink-factors', '1',
@@ -809,7 +809,7 @@ def register(param, file_src, file_dest, file_mat, file_out, im_mask=None):
         else:
             cmd = ['isct_antsSliceRegularizedRegistration',
                    '--polydegree', param.poly,
-                   '--transform', 'Translation[%s]' % param.gradStep,
+                   '--transform', f'Translation[{param.gradStep}]',
                    '--metric', f'{param.metric}[{file_dest},{file_src},1,{metric_radius},{sampling}]',
                    '--iterations', param.iter,
                    '--shrinkFactors', '1',

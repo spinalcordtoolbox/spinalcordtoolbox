@@ -295,7 +295,7 @@ def main(argv: Sequence[str]):
         param.path_results = arguments.ofolder
 
     if not os.path.isdir(param.path_results) and os.path.exists(param.path_results):
-        printv("ERROR output directory %s is not a valid directory" % param.path_results, 1, 'error')
+        printv(f"ERROR output directory {param.path_results} is not a valid directory", 1, 'error')
     if not os.path.exists(param.path_results):
         os.makedirs(param.path_results)
 

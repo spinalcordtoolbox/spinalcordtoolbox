@@ -154,7 +154,7 @@ def fake_3dimage():
         for z in range(shape[2]):
             for y in range(shape[1]):
                 for x in range(shape[0]):
-                    sys.stdout.write(" % 3d" % data[x, y, z])
+                    sys.stdout.write(f" {data[x, y, z]: 3d}")
                 sys.stdout.write("\n")
             sys.stdout.write("\n")
 

@@ -160,7 +160,7 @@ class AnalyzeLesion:
             if set(np.unique(Image(fname_mask).data)) == set([0.0]):
                 printv('WARNING: Empty masked image', self.verbose, 'warning')
             else:
-                printv("ERROR input file %s is not binary file with 0 and 1 values" % fname_mask, 1, 'error')
+                printv(f"ERROR input file {fname_mask} is not binary file with 0 and 1 values", 1, 'error')
 
         if fname_sc is not None:
             if not Image(fname_mask).dim[0:3] == Image(fname_sc).dim[0:3]:
@@ -1431,12 +1431,12 @@ def main(argv: Sequence[str]):
     # TODO: check this in the parser
     # if not os.path.isdir(path_template) and os.path.exists(path_template):
     #     path_template = None
-    #     printv("ERROR output directory %s is not a valid directory" % path_template, 1, 'error')
+    #     printv(f"ERROR output directory {path_template} is not a valid directory", 1, 'error')
 
     # Output Folder
     path_results = os.path.expanduser(arguments.ofolder)        # expand '~' to user home directory
     # if not os.path.isdir(path_results) and os.path.exists(path_results):
-    #     printv("ERROR output directory %s is not a valid directory" % path_results, 1, 'error')
+    #     printv(f"ERROR output directory {path_results} is not a valid directory", 1, 'error')
     if not os.path.exists(path_results):
         os.makedirs(path_results)
 

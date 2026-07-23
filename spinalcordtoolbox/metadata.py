@@ -132,10 +132,10 @@ class InfoLabel(object):
 
         def w(x):
             # Writer in bytes encoding (for py3k compatibility)
-            file.write(b"%s\n" % bytes(x.encode()))
+            file.write(x.encode() + b'\n')
 
         if header is not None:
-            w("# %s" % header)
+            w(f"# {header}")
 
         w("# Keyword=IndivLabels (Please DO NOT change this line)")
         w("# ID, name, file")

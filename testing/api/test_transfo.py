@@ -53,7 +53,7 @@ def fake_3dimage():
         for z in range(shape[2]):
             for y in range(shape[1]):
                 for x in range(shape[0]):
-                    sys.stdout.write(" % 3d" % data[x, y, z])
+                    sys.stdout.write(f" {data[x, y, z]: 3d}")
                 sys.stdout.write("\n")
             sys.stdout.write("\n")
 
@@ -157,15 +157,15 @@ def test_transfo_figure_out_ants_frame_exhaustive(tmp_path):
         aff_dst = img_dst.header.get_best_affine()
         pt_src = np.array(np.unravel_index(np.argmin(np.abs(dat_src - value)), dat_src.shape))  # , order="F"))
         pt_dst = np.array(np.unravel_index(np.argmin(np.abs(dat_dst - value)), dat_dst.shape))  # , order="F"))
-        print("Point %s -> %s" % (pt_src, pt_dst))
+        print(f"Point {pt_src} -> {pt_dst}")
 
         pos_src = np.matmul(aff_src, np.hstack((pt_src, [1])).reshape((4, 1)))
         pos_dst = np.matmul(aff_dst, np.hstack((pt_dst, [1])).reshape((4, 1)))
 
         displacement = (pos_dst - pos_src).T[:3]
-        print("Displacement (physical): %s" % (displacement))
+        print(f"Displacement (physical): {displacement}")
         displacement = pt_dst - pt_src
-        print("Displacement (logical): %s" % (displacement))
+        print(f"Displacement (logical): {displacement}")
 
         assert dat_src.shape == dat_dst.shape
 
@@ -251,7 +251,7 @@ def test_transfo_exhaustive_wrt_orientations(tmp_path):
             min_ = np.round(np.min(np.abs(dat_dst - value)), 2)
             pt_dst = np.array(np.unravel_index(np.argmin(np.abs(dat_dst - value)), dat_dst.shape))  # , order="F"))
 
-        print(" Point %s -> %s (%s) %s" % (pt_src, pt_dst, dat_dst[tuple(pt_dst)], min_))
+        print(f" Point {pt_src} -> {pt_dst} ({dat_dst[tuple(pt_dst)]}) {min_}")
         if min_ != 0:
             orientations_dk.append(orientation)
             continue
@@ -261,13 +261,13 @@ def test_transfo_exhaustive_wrt_orientations(tmp_path):
 
         displacement = (pos_dst - pos_src).reshape((-1))[:3]
         # displacement_log = pt_dst - pt_src
-        # print(" Displacement (logical): %s" % (displacement_log))
+        # print(f" Displacement (logical): {displacement_log}")
         if not np.allclose(displacement, shift_wanted):
             orientations_ng.append(orientation)
-            print(" \x1B[31;1mDisplacement (physical): %s\x1B[0m" % (displacement))
+            print(f" \x1B[31;1mDisplacement (physical): {displacement}\x1B[0m")
         else:
             orientations_ok.append(orientation)
-            print(" Displacement (physical): %s" % (displacement))
+            print(f" Displacement (physical): {displacement}")
         print("")
 
     print(f"Orientations OK: {' '.join(orientations_ok)}")
@@ -338,7 +338,7 @@ def notest_transfo_more_exhaustive_wrt_orientations():
                 min_ = np.round(np.min(np.abs(dat_dst - value)), 1)
                 pt_dst = np.array(np.unravel_index(np.argmin(np.abs(dat_dst - value)), dat_dst.shape))  # , order="F"))
 
-            print(" Point %s -> %s (%s) %s" % (pt_src, pt_dst, dat_dst[tuple(pt_dst)], min_))
+            print(f" Point {pt_src} -> {pt_dst} ({dat_dst[tuple(pt_dst)]}) {min_}")
             if min_ != 0:
                 orientations_dk.append((orientation_src, orientation_ref))
                 continue
@@ -348,13 +348,13 @@ def notest_transfo_more_exhaustive_wrt_orientations():
 
             displacement = (pos_dst - pos_src).reshape((-1))[:3]
             # displacement_log = pt_dst - pt_src
-            # print(" Displacement (logical): %s" % (displacement_log))
+            # print(f" Displacement (logical): {displacement_log}")
             if not np.allclose(displacement, shift_wanted):
                 orientations_ng.append((orientation_src, orientation_ref))
-                print(" \x1B[31;1mDisplacement (physical): %s\x1B[0m" % (displacement))
+                print(f" \x1B[31;1mDisplacement (physical): {displacement}\x1B[0m")
             else:
                 orientations_ok.append((orientation_src, orientation_ref))
-                print(" Displacement (physical): %s" % (displacement))
+                print(f" Displacement (physical): {displacement}")
             print("")
 
     def ori_str(x):

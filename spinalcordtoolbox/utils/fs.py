@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 def tmp_create(basename):
     """Create temporary folder and return its path
     """
-    prefix = f"sct_{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}_{basename}_"
+    prefix = f"sct_{datetime.datetime.now():%Y-%m-%d_%H-%M-%S}_{basename}_"
     tmpdir = tempfile.mkdtemp(prefix=prefix)
     logger.debug(f"Creating temporary folder ({tmpdir})")
     return tmpdir
@@ -84,7 +84,7 @@ def copy_helper(src, dst, verbose=1):
 def rmtree(folder, verbose=1):
     """Recursively remove folder, almost like shutil.rmtree
     """
-    printv("rm -rf %s" % (folder), verbose=verbose, type="code")
+    printv(f"rm -rf {folder}", verbose=verbose, type="code")
     shutil.rmtree(folder, ignore_errors=True)
 
 
@@ -223,7 +223,7 @@ def cache_save(cachefile, sig):
 
 def mv(src, dst, verbose=1):
     """Move a file from src to dst (adding a logging message)."""
-    printv("mv %s %s" % (src, dst), verbose=verbose, type="code")
+    printv(f"mv {src} {dst}", verbose=verbose, type="code")
     # NB: We specify `shutil.copyfile` to override the default of `shutil.copy2`.
     #     (`copy2` copies file metadata, but doing so fails with a PermissionError on WSL installations where the
     #     src/dest are on different devices. So, we use `copyfile` instead, which doesn't preserve file metadata.)
@@ -238,10 +238,9 @@ def copy(src, dst, verbose=1):
     if not os.path.isfile(src):
         folder = os.path.dirname(src)
         contents = os.listdir(folder)
-        raise Exception("Couldn't find %s in %s (contents: %s)"
-                        % (os.path.basename(src), folder, contents))
+        raise Exception(f"Couldn't find {os.path.basename(src)} in {folder} (contents: {contents})")
     try:
-        printv("cp %s %s" % (src, dst), verbose=verbose, type="code")
+        printv(f"cp {src} {dst}", verbose=verbose, type="code")
         shutil.copy(src, dst)
     except Exception as e:
         if sys.hexversion < 0x03000000:

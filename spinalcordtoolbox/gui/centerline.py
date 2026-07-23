@@ -124,7 +124,7 @@ class CenterlineController(base.BaseController):
     @mode.setter
     def mode(self, value):
         if value not in self.MODES:
-            raise ValueError('Invalid mode %', value)
+            raise ValueError(f'Invalid mode {value}')
 
         if value != self._mode:
             self._mode = value
@@ -159,7 +159,7 @@ class Centerline(base.BaseDialog):
         else:
             cmd_key = 'Ctrl'
 
-        custom_mode = QtWidgets.QRadioButton('Mode Custom [%s+T]' % cmd_key)
+        custom_mode = QtWidgets.QRadioButton(f'Mode Custom [{cmd_key}+T]')
         custom_mode.mode = 'CUSTOM'
         custom_mode.setToolTip('Manually select the axis slice on sagittal plane')
         custom_mode.toggled.connect(self.on_toggle_mode)
@@ -167,7 +167,7 @@ class Centerline(base.BaseDialog):
         custom_mode.axial_title = 'Click in the center of the spinal cord'
         layout.addWidget(custom_mode)
 
-        auto_mode = QtWidgets.QRadioButton('Mode Auto [%s+T]' % cmd_key)
+        auto_mode = QtWidgets.QRadioButton(f'Mode Auto [{cmd_key}+T]')
         auto_mode.mode = 'AUTO'
         auto_mode.setToolTip('Automatically move down the axis slice on the sagittal plane')
         auto_mode.toggled.connect(self.on_toggle_mode)
@@ -192,11 +192,11 @@ class Centerline(base.BaseDialog):
         else:
             cmd_key = 'Ctrl'
 
-        skip = QtWidgets.QPushButton('Skip [%s+F]' % cmd_key)
+        skip = QtWidgets.QPushButton(f'Skip [{cmd_key}+F]')
         ctrl_layout.insertWidget(2, skip)
         skip.clicked.connect(self.on_skip_label)
 
-        clean = QtWidgets.QPushButton('Delete all [%s+D]' % cmd_key)
+        clean = QtWidgets.QPushButton(f'Delete all [{cmd_key}+D]')
         ctrl_layout.insertWidget(2, clean)
         clean.clicked.connect(self.on_delete_all_labels)
         # TODO: try the setShortcut attribute
