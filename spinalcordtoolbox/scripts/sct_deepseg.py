@@ -325,7 +325,7 @@ def get_parser(subparser_to_return=None):
 
         # -box-* lets the user override specific crop box face positions (voxel indices), for models
         # that use the sc-crop pipeline. Whether a task's model actually uses sc-crop is only known
-        # once the model is installed (see `models.is_crop_model()`), so the flag is exposed for every
+        # once the model is installed (see `models.load_crop_metadata()`), so the flag is exposed for every
         # task; it's a no-op (rejected with an error) for tasks whose model doesn't use cropping.
         crop_group = subparser.add_argument_group('\nSC-CROP box override')
         for key in ('xmin', 'xmax', 'ymin', 'ymax', 'zmin', 'zmax'):
@@ -452,9 +452,10 @@ def main(argv: Sequence[str]):
             if not models.is_valid(path_models):
                 parser.error("The input model is invalid: {}".format(path_models))
 
-        # Determine crop_active from the installed model's own metadata (see models.is_crop_model()),
-        # not from the model's name, since -custom-url can point to a differently-trained artifact.
-        crop_active = models.is_crop_model(path_model)
+        # Determine crop_active from the installed model's own metadata (see
+        # models.load_crop_metadata()), not from the model's name, since -custom-url can point
+        # to a differently-trained artifact.
+        crop_active, crop_pad = models.load_crop_metadata(path_model)
         if box_overrides and not crop_active:
             parser.error("-box-* arguments are only valid for models using the sc-crop pipeline.")
 
@@ -519,7 +520,7 @@ def main(argv: Sequence[str]):
             # The user can override individual crop box faces (voxel indices) via -box-*.
             if crop_active:
                 extra_inference_kwargs['crop'] = True
-                extra_inference_kwargs['crop_pad'] = models.load_crop_metadata(path_model)
+                extra_inference_kwargs['crop_pad'] = crop_pad
                 extra_inference_kwargs['box_overrides'] = box_overrides
                 extra_inference_kwargs['out_fname'] = getattr(arguments, 'o', None)
             # Run inference

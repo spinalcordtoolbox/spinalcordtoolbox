@@ -654,46 +654,28 @@ def folder(name_model):
 CROP_PAD_KEYS = ('pad_superior', 'pad_inferior', 'pad_left', 'pad_right', 'pad_anterior', 'pad_posterior')
 
 
-def _load_crop_yaml(path_model):
+def load_crop_metadata(path_model):
     """
-    Load `crop_metadata.yaml` from an installed model folder, if present.
+    Load an installed model's sc-crop metadata, if any.
 
-    Models trained on cropped volumes may ship this file at the root of their release .zip,
-    describing whether/how they use the sc-crop pipeline. This lets that information travel
-    with the model artifact itself, rather than being guessed from the model's name in `MODELS`
-    (which would be wrong for a model installed via `-custom-url`).
+    Models trained on cropped volumes may ship a `crop_metadata.yaml` file at the root of their
+    release .zip, describing whether/how they use the sc-crop pipeline. This lets that
+    information travel with the model artifact itself, rather than being guessed from the
+    model's name in `MODELS` (which would be wrong for a model installed via `-custom-url`).
+    If the model has no such file, it's treated as not using sc-crop.
 
     :param path_model: str: Path to the installed model folder.
-    :return: dict: parsed YAML content, or {} if the model has no such file.
+    :return: (bool, dict): whether the model uses sc-crop, and any `sc_crop.detect()` padding
+        kwargs it specifies (empty if none given, since `sc_crop.detect()` has its own defaults).
     """
     path_yaml = os.path.join(path_model, "crop_metadata.yaml")
     if not os.path.isfile(path_yaml):
-        return {}
+        return False, {}
     with open(path_yaml, "r") as fp:
-        return yaml.safe_load(fp) or {}
-
-
-def is_crop_model(path_model):
-    """
-    Whether an installed model uses the sc-crop pipeline. Models without a `crop_metadata.yaml`
-    (see `_load_crop_yaml()`) are treated as not using it.
-
-    :param path_model: str: Path to the installed model folder.
-    :return: bool
-    """
-    return bool(_load_crop_yaml(path_model).get('cropped_image', False))
-
-
-def load_crop_metadata(path_model):
-    """
-    Load sc-crop padding overrides bundled with an installed model, if any (see `_load_crop_yaml()`).
-    If the model has no override file, `sc_crop.detect()` falls back to its own built-in defaults.
-
-    :param path_model: str: Path to the installed model folder.
-    :return: dict: `sc_crop.detect()` padding kwargs (empty if the model has no override file).
-    """
-    crop_metadata = _load_crop_yaml(path_model)
-    return {key: crop_metadata[key] for key in CROP_PAD_KEYS if key in crop_metadata}
+        crop_metadata = yaml.safe_load(fp) or {}
+    is_crop = bool(crop_metadata.get('cropped_image', False))
+    crop_pad = {key: crop_metadata[key] for key in CROP_PAD_KEYS if key in crop_metadata}
+    return is_crop, crop_pad
 
 
 def install_model(name_model, custom_url=None):
