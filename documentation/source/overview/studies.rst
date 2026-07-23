@@ -26,6 +26,9 @@ The following studies have used SCT:
 2026
 ----
 
+-  Suette *et al.* `Stable Reduction of Upper Cervical Spinal Cord Area in Cervical Dystonia <https://doi.org/10.1016/j.parkreldis.2026.108417>`_, **Park. Relat. Disord.** 2026
+-  Cronin *et al.* `Multi-shot diffusion tensor imaging in the lumbosacral spinal cord: Characterizing heterogeneity in healthy tissue and differences in multiple sclerosis <https://doi.org/10.1162/IMAG.a.1296>`_, **Imaging Neurosci.** 2026
+-  Gaubert *et al.* `Multicenter Assessment of Combined Brain and Cervical Spinal cord 3T MP2RAGE T1 Measurements for Reliable Tissue Microstructure Quantification <https://doi.org/10.1002/nbm.70350>`_, **NMR Biomed.** 2026
 -  Rejc *et al.* `Spinal cord lesion characteristics and early standing ability with and without epidural stimulation <https://doi.org/10.1007/s00221-026-07333-7>`_, **Exp. Brain Res.** 2026
 -  Huang *et al.* `An MRI-based radiomics model for precision subtyping of hereditary spastic paraplegia: discriminating SPG4 from SPG5 <https://doi.org/10.1007/s00234-026-04064-y>`_, **Neuroradiology** 2026
 -  Yao *et al.* `Longitudinal Spinal Cord Atrophy in Patients With Neuromyelitis Optica Spectrum Disorder and Its Association With Rituximab Treatment <https://doi.org/10.1212/WNL.0000000000218120>`_, **Neurology** 2026
