@@ -278,16 +278,19 @@ def test_deepseg_totalspineseg_empty_output(t2_zero, tmp_path, tmp_path_qc):
 
 
 @pytest.mark.parametrize('box_overrides', [
-    [],  # default: sc-crop pipeline via automatic detection only
+    [],  # default: sc-crop pipeline via automatic detection only, no override
     ['-box-zmin', '0'],  # partial override: widen one face beyond the detected box
     ['-box-xmin', '10', '-box-xmax', '59', '-box-ymin', '0', '-box-ymax', '54',
-     '-box-zmin', '3', '-box-zmax', '48'],  # full manual override, bypasses detection entirely
+     '-box-zmin', '3', '-box-zmax', '48'],  # all 6 faces overridden -- still patched onto a
+    # successful detection here (t2.nii.gz has a visible cord, so detect() always succeeds);
+    # this does NOT exercise the "detection failed, skip detect() entirely" fallback path --
+    # see test_deepseg_crop_detection_failure_falls_back_to_full_image for that.
 ])
 @pytest.mark.usefixtures(cleanup_model_dirs.__name__)
 def test_deepseg_crop_box_override(box_overrides, tmp_path, tmp_path_qc):
     """
-    Test the sc-crop pipeline (spinalcord task) with no override, a partial `-box-*` override
-    (patched onto the detected box), and a full `-box-*` override (bypasses detection entirely).
+    Test the sc-crop pipeline (spinalcord task) with no override, a partial `-box-*` override,
+    and all 6 faces overridden -- all three patched onto a successful automatic detection.
     """
     fname_out = str(tmp_path / "t2_seg_deepseg.nii.gz")
     sct_deepseg.main(['spinalcord', '-i', sct_test_path('t2', 't2.nii.gz'), '-o', fname_out,
