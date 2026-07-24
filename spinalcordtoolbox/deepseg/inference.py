@@ -281,23 +281,31 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device, ensemble=F
     if crop:
         img_nii = nib.load(path_img_tmp)
         box_overrides = box_overrides or {}
-        try:
-            bbox = sc_crop.detect(img_nii, **(crop_pad or {}))
-        except RuntimeError:
-            # Detection found no cord at all, so there's no bbox to patch with box_overrides.
-            # Fall back to the full image instead, letting box_overrides (if any) restrict
-            # only the face(s) the user actually specified.
-            if not box_overrides:
-                raise
-            shape = img_nii.shape
-            bbox = {
-                "xmin": 0, "xmax": shape[0] - 1,
-                "ymin": 0, "ymax": shape[1] - 1,
-                "zmin": 0, "zmax": shape[2] - 1,
-                "original_axcodes": "".join(nib.aff2axcodes(img_nii.affine)),
-                "_original_img": img_nii,
-            }
-        bbox.update(box_overrides)
+        box_faces = ('xmin', 'xmax', 'ymin', 'ymax', 'zmin', 'zmax')
+        if all(face in box_overrides for face in box_faces):
+            # All 6 faces given manually: skip detection entirely rather than running it just
+            # to immediately overwrite every value it would have produced.
+            bbox = {face: box_overrides[face] for face in box_faces}
+            bbox["original_axcodes"] = "".join(nib.aff2axcodes(img_nii.affine))
+            bbox["_original_img"] = img_nii
+        else:
+            try:
+                bbox = sc_crop.detect(img_nii, **(crop_pad or {}))
+            except RuntimeError:
+                # Detection found no cord at all, so there's no bbox to patch with box_overrides.
+                # Fall back to the full image instead, letting box_overrides (if any) restrict
+                # only the face(s) the user actually specified.
+                if not box_overrides:
+                    raise
+                shape = img_nii.shape
+                bbox = {
+                    "xmin": 0, "xmax": shape[0] - 1,
+                    "ymin": 0, "ymax": shape[1] - 1,
+                    "zmin": 0, "zmax": shape[2] - 1,
+                    "original_axcodes": "".join(nib.aff2axcodes(img_nii.affine)),
+                    "_original_img": img_nii,
+                }
+            bbox.update(box_overrides)
         if not (bbox["xmax"] >= bbox["xmin"] and bbox["ymax"] >= bbox["ymin"] and bbox["zmax"] >= bbox["zmin"]):
             raise ValueError("sc-crop: invalid bounding box — check that -box-* values are not inverted.")
         fname_cropbox = add_suffix(out_fname if out_fname else path_img, "_cropbox")

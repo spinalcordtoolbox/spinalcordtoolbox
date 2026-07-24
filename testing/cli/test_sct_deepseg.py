@@ -2,6 +2,7 @@
 
 import os
 import shutil
+from unittest import mock
 
 import pytest
 import warnings
@@ -12,6 +13,7 @@ import spinalcordtoolbox as sct
 from spinalcordtoolbox.image import Image, compute_dice, add_suffix, check_image_kind
 from spinalcordtoolbox.utils.sys import sct_test_path, __deepseg_dir__
 import spinalcordtoolbox.deepseg.models
+import spinalcordtoolbox.deepseg.inference
 
 from spinalcordtoolbox.scripts import sct_deepseg, sct_resample
 
@@ -281,16 +283,13 @@ def test_deepseg_totalspineseg_empty_output(t2_zero, tmp_path, tmp_path_qc):
     [],  # default: sc-crop pipeline via automatic detection only, no override
     ['-box-zmin', '0'],  # partial override: widen one face beyond the detected box
     ['-box-xmin', '10', '-box-xmax', '59', '-box-ymin', '0', '-box-ymax', '54',
-     '-box-zmin', '3', '-box-zmax', '48'],  # all 6 faces overridden -- still patched onto a
-    # successful detection here (t2.nii.gz has a visible cord, so detect() always succeeds);
-    # this does NOT exercise the "detection failed, skip detect() entirely" fallback path --
-    # see test_deepseg_crop_detection_failure_falls_back_to_full_image for that.
+     '-box-zmin', '3', '-box-zmax', '48'],  # all 6 faces given: skips detection entirely
 ])
 @pytest.mark.usefixtures(cleanup_model_dirs.__name__)
 def test_deepseg_crop_box_override(box_overrides, tmp_path, tmp_path_qc):
     """
-    Test the sc-crop pipeline (spinalcord task) with no override, a partial `-box-*` override,
-    and all 6 faces overridden -- all three patched onto a successful automatic detection.
+    Test the sc-crop pipeline (spinalcord task) with no override, a partial `-box-*` override
+    (patched onto the detected box), and a full `-box-*` override (skips detection entirely).
     """
     fname_out = str(tmp_path / "t2_seg_deepseg.nii.gz")
     sct_deepseg.main(['spinalcord', '-i', sct_test_path('t2', 't2.nii.gz'), '-o', fname_out,
@@ -303,6 +302,21 @@ def test_deepseg_crop_box_override(box_overrides, tmp_path, tmp_path_qc):
     im_seg_manual = Image(sct_test_path('t2', 't2_seg-manual.nii.gz'))
     dice_segmentation = compute_dice(im_seg, im_seg_manual, mode='3d', zboundaries=False)
     assert dice_segmentation > 0.95
+
+
+@pytest.mark.usefixtures(cleanup_model_dirs.__name__)
+def test_deepseg_full_box_override_skips_detection(tmp_path, tmp_path_qc):
+    """
+    When all 6 `-box-*` faces are given, sc_crop.detect() should not be called at all --
+    there's no point running detection just to overwrite every value it would have produced.
+    """
+    fname_out = str(tmp_path / "t2_seg_deepseg.nii.gz")
+    with mock.patch("spinalcordtoolbox.deepseg.inference.sc_crop.detect") as mock_detect:
+        sct_deepseg.main(['spinalcord', '-i', sct_test_path('t2', 't2.nii.gz'), '-o', fname_out,
+                          '-qc', tmp_path_qc,
+                          '-box-xmin', '10', '-box-xmax', '59', '-box-ymin', '0', '-box-ymax', '54',
+                          '-box-zmin', '3', '-box-zmax', '48'])
+    mock_detect.assert_not_called()
 
 
 def test_deepseg_box_override_rejected_for_non_crop_model(tmp_path, tmp_path_qc):
