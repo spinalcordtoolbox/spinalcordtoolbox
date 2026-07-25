@@ -323,19 +323,18 @@ def get_parser(subparser_to_return=None):
                 help="If set, only 1 fold will be used for inference instead of the full 5-fold ensemble. This will speed up inference, but may reduce segmentation quality."
             )
 
-        # -box-* lets the user override specific crop box face positions (voxel indices), for models
-        # that use the sc-crop pipeline. Whether a task's model actually uses sc-crop is only known
-        # once the model is installed (see `models.load_crop_metadata()`), so the flag is exposed for every
-        # task; it's a no-op (rejected with an error) for tasks whose model doesn't use cropping.
-        crop_group = subparser.add_argument_group('\nSC-CROP box override')
-        for key in ('xmin', 'xmax', 'ymin', 'ymax', 'zmin', 'zmax'):
-            crop_group.add_argument(
-                f"-box-{key}", type=int, metavar="VOX", default=None,
-                help=f"Override the {key} face of the crop box (voxel index in the original image space). "
-                     f"Only valid for models using the sc-crop pipeline. "
-                     f"Inspect `*_cropbox.nii.gz` in FSLeyes to find the current value and adjust. "
-                     f"If spinal cord detection fails outright, any face not overridden falls back to "
-                     f"the edge of the full image.")
+        # -box-* lets the user override specific crop box face positions (voxel indices), for
+        # tasks whose model has "cropped_image": True (see models.load_crop_metadata()).
+        task_has_crop = any(models.MODELS[m].get('cropped_image') for m in task_dict['models'])
+        if task_has_crop:
+            crop_group = subparser.add_argument_group('\nSC-CROP box override')
+            for key in ('xmin', 'xmax', 'ymin', 'ymax', 'zmin', 'zmax'):
+                crop_group.add_argument(
+                    f"-box-{key}", type=int, metavar="VOX", default=None,
+                    help=f"Override the {key} face of the crop box (voxel index in the original image space). "
+                         f"Inspect `*_cropbox.nii.gz` in FSLeyes to find the current value and adjust. "
+                         f"If spinal cord detection fails outright, any face not overridden falls back to "
+                         f"the edge of the full image.")
 
         # Add input cropping note specific to the `lesion_ms_mp2rage` task
         if task_name == 'lesion_ms_mp2rage':
@@ -453,9 +452,10 @@ def main(argv: Sequence[str]):
                 parser.error("The input model is invalid: {}".format(path_models))
 
         # Determine crop_active from the installed model's own metadata (see
-        # models.load_crop_metadata()), not from the model's name, since -custom-url can point
-        # to a differently-trained artifact.
-        crop_active, crop_pad = models.load_crop_metadata(path_model)
+        # models.load_crop_metadata()): "cropped_image" says whether the model is expected to
+        # crop, but the padding -- and the final decision, if -custom-url points to a
+        # differently-trained artifact -- comes from the model folder actually on disk.
+        crop_active, crop_pad = models.load_crop_metadata(name_model, path_model)
         if box_overrides and not crop_active:
             parser.error("-box-* arguments are only valid for models using the sc-crop pipeline.")
 
@@ -653,7 +653,7 @@ def main(argv: Sequence[str]):
         images.append(output_filename)
         im_types.append(check_image_kind(Image(output_filename)))
         opacities.append('0.7')
-    # If a crop box was saved (sc-crop with -fast), add it as a yellow outline overlay in FSLeyes.
+    # If a crop box was saved (sc-crop pipeline was active), add it as a yellow outline overlay in FSLeyes.
     fname_cropbox = add_suffix(arguments.o if arguments.o else arguments.i[0], "_cropbox")
     if os.path.isfile(fname_cropbox):
         images.append(fname_cropbox)

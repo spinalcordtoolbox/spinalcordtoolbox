@@ -319,14 +319,27 @@ def test_deepseg_full_box_override_skips_detection(tmp_path, tmp_path_qc):
     mock_detect.assert_not_called()
 
 
-def test_deepseg_box_override_rejected_for_non_crop_model(tmp_path, tmp_path_qc):
+def test_deepseg_box_override_rejected_for_non_crop_model(tmp_path, tmp_path_qc, capsys):
     """
-    `-box-*` should be rejected for models that don't use the sc-crop pipeline.
+    `-box-*` isn't even exposed as an argument for models that don't use the sc-crop pipeline.
     """
     fname_out = str(tmp_path / "t2_seg_deepseg.nii.gz")
     with pytest.raises(SystemExit):
         sct_deepseg.main(['rootlets', '-i', sct_test_path('t2', 't2.nii.gz'), '-o', fname_out,
                           '-qc', tmp_path_qc, '-box-xmin', '0'])
+    assert "unrecognized arguments: -box-xmin 0" in capsys.readouterr().err
+
+
+def test_deepseg_crop_box_override_invalid_bbox_raises(tmp_path, tmp_path_qc):
+    """
+    Inverted `-box-*` coordinates (a face's min > its max) should raise a clear error rather
+    than silently producing an empty or nonsensical crop.
+    """
+    fname_out = str(tmp_path / "t2_seg_deepseg.nii.gz")
+    with pytest.raises(ValueError) as e:
+        sct_deepseg.main(['spinalcord', '-i', sct_test_path('t2', 't2.nii.gz'), '-o', fname_out,
+                          '-qc', tmp_path_qc, '-box-zmin', '40', '-box-zmax', '10'])
+    assert "invalid bounding box" in str(e.value)
 
 
 def test_deepseg_crop_detection_failure_raises_without_box_override(t2_zero, tmp_path, tmp_path_qc):
@@ -335,8 +348,9 @@ def test_deepseg_crop_detection_failure_raises_without_box_override(t2_zero, tmp
     on, the error should propagate instead of being silently swallowed.
     """
     fname_out = str(tmp_path / "t2_seg_deepseg.nii.gz")
-    with pytest.raises(RuntimeError):
+    with pytest.raises(RuntimeError) as e:
         sct_deepseg.main(['spinalcord', '-i', t2_zero, '-o', fname_out, '-qc', tmp_path_qc])
+    assert "No spinal cord detected" in str(e.value)
 
 
 def test_deepseg_crop_detection_failure_falls_back_to_full_image(t2_zero, tmp_path, tmp_path_qc):

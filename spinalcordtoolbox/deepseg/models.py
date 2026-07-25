@@ -138,6 +138,7 @@ MODELS = {
         "framework": "nnunetv2",
         "thr": None,  # We're now using an nnUNet model, which does not need a threshold
         "default": True,
+        "cropped_image": True,
     },
     "model_seg_sci_multiclass_sc_lesion_nnunet": {
         "url": [
@@ -212,6 +213,7 @@ MODELS = {
          "framework": "nnunetv2",
          "thr": None,  # Images are already binarized
          "default": False,
+         "cropped_image": True,
      },
     "model_seg_canal": {
         "url": [
@@ -654,26 +656,64 @@ def folder(name_model):
 CROP_PAD_KEYS = ('pad_superior', 'pad_inferior', 'pad_left', 'pad_right', 'pad_anterior', 'pad_posterior')
 
 
-def load_crop_metadata(path_model):
+def _read_source_json(path_model):
     """
-    Load an installed model's sc-crop metadata, if any.
-
-    Models trained on cropped volumes may ship a `crop_metadata.yaml` file at the root of their
-    release .zip, describing whether/how they use the sc-crop pipeline. This lets that
-    information travel with the model artifact itself, rather than being guessed from the
-    model's name in `MODELS` (which would be wrong for a model installed via `-custom-url`).
-    If the model has no such file, it's treated as not using sc-crop.
+    Read an installed model's provenance file, if present.
 
     :param path_model: str: Path to the installed model folder.
-    :return: (bool, dict): whether the model uses sc-crop, and any `sc_crop.detect()` padding
-        kwargs it specifies (empty if none given, since `sc_crop.detect()` has its own defaults).
+    :return: dict: parsed `source.json` content, or {} if missing.
     """
+    source_path = os.path.join(path_model, "source.json")
+    if not os.path.isfile(source_path):
+        return {}
+    with open(source_path, "r") as fp:
+        return json.load(fp)
+
+
+def load_crop_metadata(name_model, path_model):
+    """
+    Determine whether an installed model uses the sc-crop pipeline, and its padding.
+
+    `MODELS[name_model]['cropped_image']` says whether this model is *expected* to use
+    sc-crop -- used before the model is even installed (e.g. to decide whether to expose
+    `-box-*` at all). The actual decision, and the padding, come from a `crop_metadata.yaml`
+    file at the root of the model's release .zip, if present -- so both travel with the actual
+    artifact on disk, rather than being hardcoded here (which would be wrong for a model
+    installed via `-custom-url`, since that can point to a differently-trained artifact).
+
+    If the model isn't expected to use sc-crop, nothing else is checked. If it is, but no
+    `crop_metadata.yaml` is found:
+    - for an official install (no `-custom-url`), this means the release is missing a file it
+      should have -- raise, since silently skipping cropping would produce out-of-distribution
+      predictions with the model none the wiser.
+    - for a `-custom-url` install, the artifact may simply not be a cropped model at all (e.g.
+      an older release); treat it as not using sc-crop instead of raising.
+
+    :param name_model: str: Name of model (key into MODELS).
+    :param path_model: str: Path to the installed model folder.
+    :return: (bool, dict): whether the model uses sc-crop, and any `sc_crop.detect()` padding
+        kwargs found (empty if none, since `sc_crop.detect()` has its own defaults).
+    """
+    if not MODELS.get(name_model, {}).get('cropped_image', False):
+        return False, {}
+
     path_yaml = os.path.join(path_model, "crop_metadata.yaml")
     if not os.path.isfile(path_yaml):
+        is_custom = _read_source_json(path_model).get('custom', False)
+        if not is_custom:
+            raise RuntimeError(
+                f"Model '{name_model}' should use the sc-crop pipeline, but no "
+                f"crop_metadata.yaml was found in its installed folder ('{path_model}'). "
+                f"The release is likely missing this file -- reinstall with `-install`, "
+                f"or check the model's release assets."
+            )
         return False, {}
+
     with open(path_yaml, "r") as fp:
         crop_metadata = yaml.safe_load(fp) or {}
-    is_crop = bool(crop_metadata.get('cropped_image', False))
+    # Absence of the key defaults to True: a model author who ships this file at all is
+    # presumed to mean "yes, crop" unless they explicitly say otherwise.
+    is_crop = bool(crop_metadata.get('cropped_image', True))
     crop_pad = {key: crop_metadata[key] for key in CROP_PAD_KEYS if key in crop_metadata}
     return is_crop, crop_pad
 
@@ -751,12 +791,10 @@ def is_up_to_date(path_model):
 
     :return: bool: whether the model is up-to-date
     """
-    source_path = os.path.join(path_model, "source.json")
-    if not os.path.isfile(source_path):
+    source_dict = _read_source_json(path_model)
+    if not source_dict:
         logger.warning("Provenance file 'source.json' missing!")
         return False  # NB: This will force a reinstall
-    with open(source_path, "r") as fp:
-        source_dict = json.load(fp)
     model_name = source_dict["model_name"]
     if model_name not in MODELS:
         logger.warning(f"Model name '{model_name}' from source.json does not match model names in SCT source code.")
