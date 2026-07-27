@@ -375,11 +375,11 @@ def main(argv: Sequence[str]):
 
     # printv(arguments)
     printv('\nCheck parameters:', verbose)
-    printv('  Data:                 ' + fname_data, verbose)
-    printv('  Landmarks:            ' + fname_landmarks, verbose)
-    printv('  Segmentation:         ' + fname_seg, verbose)
-    printv('  Path template:        ' + path_template, verbose)
-    printv('  Remove temp files:    ' + str(param.remove_temp_files), verbose)
+    printv(f'  Data:                 {fname_data}', verbose)
+    printv(f'  Landmarks:            {fname_landmarks}', verbose)
+    printv(f'  Segmentation:         {fname_seg}', verbose)
+    printv(f'  Path template:        {path_template}', verbose)
+    printv(f'  Remove temp files:    {param.remove_temp_files}', verbose)
 
     # Compute center-of-mass of the rootlets segmentation:
     if label_type == 'rootlet':
@@ -453,7 +453,7 @@ def main(argv: Sequence[str]):
     # if only one label is present, force affine transformation to be Tx,Ty,Tz only (no scaling)
     if len(labels) == 1:
         paramregmulti.steps['0'].dof = 'Tx_Ty_Tz'
-        printv('WARNING: Only one label is present. Forcing initial transformation to: ' + paramregmulti.steps['0'].dof,
+        printv(f'WARNING: Only one label is present. Forcing initial transformation to: {paramregmulti.steps["0"].dof}',
                1, 'warning')
 
     # Project labels onto the spinal cord centerline because later, an affine transformation is estimated between the
@@ -544,11 +544,11 @@ def main(argv: Sequence[str]):
 
         cache_input_files = [ftmp_seg]
         if level_alignment:
-            cache_input_files += [
+            cache_input_files.extend([
                 ftmp_template_seg,
                 ftmp_label,
                 ftmp_template_label,
-            ]
+            ])
         cache_sig = cache_signature(
             input_files=cache_input_files,
             input_params={"version": __version__},
@@ -731,13 +731,13 @@ def main(argv: Sequence[str]):
         # sub-sample in z-direction
         # TODO: refactor to use python module instead of doing i/o
         printv('\nSub-sample in z-direction (for faster processing)...', verbose)
-        sct_resample.main(['-i', ftmp_template, '-o', add_suffix(ftmp_template, '_sub'), '-f', '1x1x' + zsubsample, '-v', '0'])
+        sct_resample.main(['-i', ftmp_template, '-o', add_suffix(ftmp_template, '_sub'), '-f', f'1x1x{zsubsample}', '-v', '0'])
         ftmp_template = add_suffix(ftmp_template, '_sub')
-        sct_resample.main(['-i', ftmp_template_seg, '-o', add_suffix(ftmp_template_seg, '_sub'), '-f', '1x1x' + zsubsample, '-v', '0'])
+        sct_resample.main(['-i', ftmp_template_seg, '-o', add_suffix(ftmp_template_seg, '_sub'), '-f', f'1x1x{zsubsample}', '-v', '0'])
         ftmp_template_seg = add_suffix(ftmp_template_seg, '_sub')
-        sct_resample.main(['-i', ftmp_data, '-o', add_suffix(ftmp_data, '_sub'), '-f', '1x1x' + zsubsample, '-v', '0'])
+        sct_resample.main(['-i', ftmp_data, '-o', add_suffix(ftmp_data, '_sub'), '-f', f'1x1x{zsubsample}', '-v', '0'])
         ftmp_data = add_suffix(ftmp_data, '_sub')
-        sct_resample.main(['-i', ftmp_seg, '-o', add_suffix(ftmp_seg, '_sub'), '-f', '1x1x' + zsubsample, '-v', '0'])
+        sct_resample.main(['-i', ftmp_seg, '-o', add_suffix(ftmp_seg, '_sub'), '-f', f'1x1x{zsubsample}', '-v', '0'])
         ftmp_seg = add_suffix(ftmp_seg, '_sub')
 
         # Registration straight spinal cord to template
@@ -815,8 +815,8 @@ def main(argv: Sequence[str]):
 
     # Generate output files
     printv('\nGenerate output files...', verbose)
-    fname_template2anat = os.path.join(path_output, 'template2anat' + ext_data)
-    fname_anat2template = os.path.join(path_output, 'anat2template' + ext_data)
+    fname_template2anat = os.path.join(path_output, f'template2anat{ext_data}')
+    fname_anat2template = os.path.join(path_output, f'anat2template{ext_data}')
     generate_output_file(os.path.join(path_tmp, "warp_template2anat.nii.gz"), os.path.join(path_output, "warp_template2anat.nii.gz"), verbose=verbose)
     generate_output_file(os.path.join(path_tmp, "warp_anat2template.nii.gz"), os.path.join(path_output, "warp_anat2template.nii.gz"), verbose=verbose)
     generate_output_file(os.path.join(path_tmp, "template2anat.nii.gz"), fname_template2anat, verbose=verbose)
@@ -835,7 +835,7 @@ def main(argv: Sequence[str]):
 
     # display elapsed time
     elapsed_time = time.time() - start_time
-    printv('\nFinished! Elapsed time: ' + str(int(np.round(elapsed_time))) + 's', verbose)
+    printv(f'\nFinished! Elapsed time: {int(np.round(elapsed_time))}s', verbose)
 
     if arguments.qc is not None:
         qc2.sct_register(

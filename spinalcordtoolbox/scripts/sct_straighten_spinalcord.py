@@ -241,7 +241,7 @@ def main(argv: Sequence[str]):
 
     fname_straight = sc_straight.straighten()
 
-    printv("\nFinished! Elapsed time: {} s".format(sc_straight.elapsed_time), verbose)
+    printv(f"\nFinished! Elapsed time: {sc_straight.elapsed_time} s", verbose)
 
     # Generate QC report
     if path_qc is not None:

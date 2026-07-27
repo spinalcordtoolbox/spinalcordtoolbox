@@ -334,7 +334,7 @@ TASKS = {
                              '(https://github.com/ivadomed/findcord_tumor).',
          'url': 'https://github.com/ivadomed/model_seg_sctumor-edema-cavity_t2-t1_unet3d-multichannel',
          'models': ['findcord_tumor', 'model_seg_sctumor-edema-cavity_t2-t1_unet3d-multichannel'],
-         'citation': textwrap.dedent("""
+         'citation': textwrap.dedent(r"""
              ```bibtex
              @article{LEMAY2021102766,
                       title={Automatic multiclass intramedullary spinal cord tumor segmentation on MRI with deep learning},
@@ -379,7 +379,7 @@ TASKS = {
                              'external multicentric database. For more information, see the following URL.',
          'url': 'https://github.com/ivadomed/model_seg_gm-wm_t2star_7t_unet3d-multiclass',
          'models': ['model_7t_multiclass_gm_sc_unet2d'],
-         'citation': textwrap.dedent("""
+         'citation': textwrap.dedent(r"""
              ```bibtex
              @misc{medina20212d,
                    title={2D Multi-Class Model for Gray and White Matter Segmentation of the Cervical Spinal Cord at 7T},
@@ -415,7 +415,7 @@ TASKS = {
                              'other contrasts that are close visual matches may also work well with this model.',
          'url': 'https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/',
          'models': ['model_seg_sc_contrast_agnostic_nnunet'],
-         'citation': textwrap.dedent("""
+         'citation': textwrap.dedent(r"""
              ```bibtex
              @article{bedard2025towards,
                   title={Towards contrast-agnostic soft segmentation of the spinal cord},
@@ -439,7 +439,7 @@ TASKS = {
                              'orientations, as well as multiple scanner manufacturers and field strengths.',
          'url': 'https://github.com/ivadomed/model_seg_sci',
          'models': ['model_seg_sci_multiclass_sc_lesion_nnunet'],
-         'citation': textwrap.dedent("""
+         'citation': textwrap.dedent(r"""
              ```bibtex
              @InProceedings{10.1007/978-3-031-82007-6_19,
                             author="Karthik, Enamundram Naga and Valo{\v{s}}ek, Jan and Farner, Lynn and Pfyffer, Dario and Schading-Sassenhausen, Simon and Lebret, Anna and David, Gergely and Smith, Andrew C. and Weber II, Kenneth A. and Seif, Maryam and Freund, Patrick and Cohen-Adad, Julien",
@@ -467,16 +467,16 @@ TASKS = {
                              'subject, 45 images).',
          'url': 'https://github.com/ivadomed/model-spinal-rootlets',
          'models': ['model_seg_spinal_rootlets_nnunet'],
-         'citation': textwrap.dedent("""
+         'citation': textwrap.dedent(r"""
              ```bibtex
              @misc{krejci2025rootletsegdeeplearningmethod,
-                   title={RootletSeg: Deep learning method for spinal rootlets segmentation across MRI contrasts}, 
+                   title={RootletSeg: Deep learning method for spinal rootlets segmentation across MRI contrasts},
                    author={Katerina Krejci and Jiri Chmelik and Sandrine Bédard and Falk Eippert and Ulrike Horn and Virginie Callot and Julien Cohen-Adad and Jan Valosek},
                    year={2025},
                    eprint={2509.16255},
                    archivePrefix={arXiv},
                    primaryClass={q-bio.TO},
-                   url={https://arxiv.org/abs/2509.16255}, 
+                   url={https://arxiv.org/abs/2509.16255},
              }
              ```"""),  # noqa E501 (line too long)
          },
@@ -491,7 +491,7 @@ TASKS = {
                              'the University of Zurich.',
          'url': 'https://github.com/ivadomed/model_seg_mouse-sc_wm-gm_t1',
          'models': ['model_seg_gm_wm_mouse_nnunet'],
-         'citation': textwrap.dedent("""
+         'citation': textwrap.dedent(r"""
              ```bibtex
              @software{cohen_adad_2024_10819207,
                        author={Cohen-Adad, Julien},
@@ -516,7 +516,7 @@ TASKS = {
                              'dataset has healthy control subjects. The model has been trained in a human-in-the-loop active learning fashion.',
          'url': 'https://github.com/sct-pipeline/fmri-segmentation',
          'models': ['model_seg_sc_epi_nnunet'],
-         'citation': textwrap.dedent("""
+         'citation': textwrap.dedent(r"""
              ```
              @article{Banerjee2025.01.07.631402,
                       author={Banerjee, Rohan and Kaptan, Merve and Tinnermann, Alexandra and Khatibi, Ali and Dabbagh, Alice and B{\"u}chel, Christian and K{\"u}ndig, Christian W. and Law, Christine S.W. and Pfyffer, Dario and Lythgoe, David J. and Tsivaka, Dimitra and Van De Ville, Dimitri and Eippert, Falk and Muhammad, Fauziyya and Glover, Gary H. and David, Gergely and Haynes, Grace and Haaker, Jan and Brooks, Jonathan C. W. and Finsterbusch, J{\"u}rgen and Martucci, Katherine T. and Hemmerling, Kimberly J. and Mobarak-Abadi, Mahdi and Hoggarth, Mark A. and Howard, Matthew A. and Bright, Molly G. and Kinany, Nawal and Kowalczyk, Olivia S. and Freund, Patrick and Barry, Robert L. and Mackey, Sean and Vahdat, Shahabeddin and Schading, Simon and McMahon, Stephen B. and Parish, Todd and Marchand-Pauvert, V{\'e}ronique and Chen, Yufen and Smith, Zachary A. and Weber, Kenneth A. and De Leener, Benjamin and Cohen-Adad, Julien},
@@ -543,10 +543,10 @@ TASKS = {
                              f'Aix-Marseille University, Marseille, France). {CROP_MESSAGE}',
          'url': 'https://github.com/ivadomed/model_seg_ms_mp2rage',
          'models': ['model_seg_ms_lesion_mp2rage'],
-         'citation': textwrap.dedent("""
+         'citation': textwrap.dedent(r"""
              ```bibtex
              @inproceedings{laines2024automatic,
-                 author={Laines Medina, N. and Mchinda, S. and Testud, B. and Demorti{\\`e}re, S. and Chen, M. and Granziera, G. and Reich, D. and Tsagkas, C. and Cohen-Adad, 
+                 author={Laines Medina, N. and Mchinda, S. and Testud, B. and Demorti{\`e}re, S. and Chen, M. and Granziera, G. and Reich, D. and Tsagkas, C. and Cohen-Adad,
                  J. and Callot, V.},
                  title={Automatic Multiple Sclerosis Lesion Segmentation in the Spinal Cord on 3T and 7T MP2RAGE Images},
                  booktitle={Proceedings of the 40th Annual Scientific Meeting of the ESMRMB},
@@ -569,7 +569,7 @@ TASKS = {
                              '(± standard deviation) of 1.10±1.13 x 0.51±0.24 x 3.27±1.95 mm³ reported in “RPI-” orientation ',
          'url': 'https://github.com/ivadomed/ms-lesion-agnostic',
          'models': ['model_seg_ms_lesion'],
-         'citation': textwrap.dedent("""
+         'citation': textwrap.dedent(r"""
              ```bibtex
             @article{doi:10.1177/13524585261427333,
                 author = {Pierre-Louis Benveniste and Laurent Létourneau-Guillon and David Araujo and Lydia Chougar and Dumitru Fetco and Masaaki Hori and Kouhei Kamiya and Steven Messina and Charidimos Tsagkas and Bertrand Audoin and Rohit Bakshi and Elise Bannier and Daniel Blezek and Jean-Christophe Brisset and Virginie Callot and Erik Charlson and Michelle Chen and Olga Ciccarelli and Sarah Demortière and Gilles Edan and Massimo Filippi and Tobias Granberg and Cristina Granziera and Christopher C. Hemond and B. Mark Keegan and Anne Kerbrat and Jan Kirschke and Shannon Kolind and Pierre Labauge and Lisa Eunyoung Lee and Yaou Liu and Caterina Mainero and Julian McGinnis and Nilser Laines Medina and Mark Mühlau and Govind Nair and Kristin P. O’Grady and Jiwon Oh and Russell Ouellette and Alexandre Prat and Daniel S. Reich and Maria A. Rocca and Timothy M. Shepherd and Seth A. Smith and Leszek Stawiarz and Jason Talbott and Roger Tam and Shahamat Tauhid and Anthony Traboulsee and Constantina Andrada Treaba and Paola Valsasina and Zachary Vavasour and Marios Yiannakas and Hervé Lombaert and Julien Cohen-Adad},
@@ -674,7 +674,7 @@ def install_model(name_model, custom_url=None):
     :param name: str: Name of model.
     :return: None
     """
-    logger.info("\nINSTALLING MODEL: {}".format(name_model))
+    logger.info(f"\nINSTALLING MODEL: {name_model}")
     url_field = MODELS[name_model]['url'] if not custom_url else [custom_url]  # [] -> mimic a list of mirror URLs
     # List of mirror URLs corresponding to a single model
     if isinstance(url_field, list):
@@ -801,9 +801,9 @@ def has_ivadomed_files(path_model):
     Check if model path contains A) a named .pt/.onnx model file and B) a named ivadomed json configuration file
     """
     name_model = Path(path_model).name
-    path_pt = os.path.join(path_model, name_model + '.pt')
-    path_onnx = os.path.join(path_model, name_model + '.onnx')
-    path_json = os.path.join(path_model, name_model + '.json')
+    path_pt = os.path.join(path_model, f'{name_model}.pt')
+    path_onnx = os.path.join(path_model, f'{name_model}.onnx')
+    path_json = os.path.join(path_model, f'{name_model}.json')
     return (os.path.exists(path_pt) or os.path.exists(path_onnx)) and os.path.exists(path_json)
 
 
@@ -875,17 +875,21 @@ def list_tasks_string():
 
     # Display coloured output
     color = {True: 'LightGreen', False: 'LightRed'}
-    table = "{}{}\n".format('TASK'.ljust(task_width), 'DESCRIPTION')
-    table += f"{'=' * table_width}\n"
+    table = [
+        "TASK".ljust(task_width), "DESCRIPTION\n",
+        "=" * table_width, "\n",
+    ]
 
     sorted_groups = _group_tasks(sorted(TASKS, key=_priority_then_alpha))
 
     for group_name, group_tasks in sorted_groups.items():
         # Format the group name in all-caps w/ underscores replaced with spaces
-        formatted_group_name = " ".join(group_name.split('_')).upper()
+        formatted_group_name = group_name.replace("_", " ").upper()
         # Add the header for this group
-        table += f"\n{formatted_group_name}\n"
-        table += f"{'-' * table_width}\n"
+        table.extend([
+            "\n", formatted_group_name, "\n",
+            "-" * table_width, "\n",
+        ])
         # Print out the task details
         for task_name in group_tasks:
             # Grab the details for this task from our dict
@@ -897,17 +901,16 @@ def list_tasks_string():
             task_status = stylize(task_name.ljust(task_width), color[all(are_models_valid)])
             description_status = stylize(task_details['description'], color[all(are_models_valid)])
             # Add it to the task list
-            table += f"{task_status}{description_status}\n"
+            table.extend([task_status, description_status, "\n"])
 
     # Add a legend to denote which tools are installed or not and the end
-    table += '\nLegend: {} | {}\n\n'.format(
-            stylize("installed", color[True]),
-            stylize("not installed", color[False]))
-
-    table += 'To read in-depth descriptions of the training data, model architecture, '
-    table += 'etc. used for these tasks, type the following command:\n\n'
-    table += '    {}'.format(stylize('sct_deepseg -task-details', ['LightBlue', 'Bold']))
-    return table
+    table.extend([
+        "\nLegend: ", stylize("installed", color[True]), " | ", stylize("not installed", color[False]),
+        "\n\nTo read in-depth descriptions of the training data, model architecture, etc. "
+        "used for these tasks, type the following command:"
+        "\n\n    ", stylize("sct_deepseg -task-details", ['LightBlue', 'Bold']),
+    ])
+    return ''.join(table)
 
 
 def display_list_tasks():
@@ -930,15 +933,12 @@ def display_list_tasks():
         # Grab the details of the task from the TASKS dict
         task_details = TASKS[task_name]
 
-        # Boilerplate reduction; define the formatting string once and re-use it throughout
-        fmt_str = "{} {}"
-
         # Lead with the task name, bolded to draw the user's attention
-        print(fmt_str.format(task_label.ljust(padded_len), stylize(task_name, 'Bold')))
+        print(f"{task_label.ljust(padded_len)} {stylize(task_name, 'Bold')}")
 
         # List out the valid contrasts for this model
         contrast_str = ', '.join(get_required_contrasts(task_name))
-        print(fmt_str.format(contrast_label.ljust(padded_len), contrast_str))
+        print(f"{contrast_label.ljust(padded_len)} {contrast_str}")
 
         # List out the model(s) used by this task
         task_models = task_details['models']
@@ -946,7 +946,7 @@ def display_list_tasks():
         # Filter out models which are missing necessary files to avoid misleading the user
         model_validity = [is_valid(path_model) for path_model in model_paths]
         model_str = ', '.join([model_name for model_name, validity in zip(task_models, model_validity)])
-        print(fmt_str.format(model_label.ljust(padded_len), model_str))
+        print(f"{model_label.ljust(padded_len)} {model_str}")
 
         # Write out the "long" description, wrapped to fit within the console the user is using
         formatted_description = '\n'.join(textwrap.wrap(
@@ -957,18 +957,18 @@ def display_list_tasks():
             subsequent_indent=' ' * (padded_len + 1),
 
         ))
-        print(fmt_str.format(description_label.ljust(padded_len), formatted_description))
+        print(f"{description_label.ljust(padded_len)} {formatted_description}")
 
         # The URL where the model was downloaded from; 'cyan' formatting is forced in case the console doesn't do it
         formatted_url = stylize(task_details['url'], styles='Cyan')
-        print(fmt_str.format(url_label.ljust(padded_len), formatted_url))
+        print(f"{url_label.ljust(padded_len)} {formatted_url}")
 
         # Whether the model is installed already or not
         formatted_installed = (
             stylize("Yes", 'LightGreen') if all(model_validity)
             else stylize("No", 'LightRed')
         )
-        print(fmt_str.format(installed_label.ljust(padded_len), formatted_installed))
+        print(f"{installed_label.ljust(padded_len)} {formatted_installed}")
 
         # Add a separating newline
         print('')
@@ -981,7 +981,7 @@ def get_metadata(folder_model):
     :param path_model: str: Model folder
     :return: dict
     """
-    fname_metadata = os.path.join(folder_model, os.path.basename(folder_model) + '.json')
+    fname_metadata = os.path.join(folder_model, f'{os.path.basename(folder_model)}.json')
     with open(fname_metadata, "r") as fhandle:
         metadata = json.load(fhandle)
     return metadata
