@@ -9,8 +9,10 @@ import sys
 from typing import Sequence
 
 from spinalcordtoolbox.utils.fs import extract_fname
-from spinalcordtoolbox.utils.sys import init_sct, set_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, set_loglevel, LazyLoader
 from spinalcordtoolbox.utils.shell import Metavar, SCTArgumentParser
+
+fetcher = LazyLoader("fetcher", globals(), "dipy.data.fetcher")
 
 
 def get_parser():
@@ -55,12 +57,11 @@ def main(argv: Sequence[str]):
         fname_out = f'{path_in}bvals_concat{ext_in}'
 
     # Open bval files and concatenate
-    from dipy.data.fetcher import read_bvals_bvecs
-    bvals_concat = ' '.join(
-        str(v)
-        for i_fname in fname_bval_list
-        for v in read_bvals_bvecs(i_fname, None)[0]
-    )
+    bvals_all = []
+    for i_fname in fname_bval_list:
+        bvals, _ = fetcher.read_bvals_bvecs(i_fname, None)
+        bvals_all.extend(str(n) for n in bvals)
+    bvals_concat = ' '.join(bvals_all)
 
     # Write new bval
     new_f = open(fname_out, 'w')

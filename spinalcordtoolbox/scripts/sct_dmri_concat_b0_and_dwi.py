@@ -108,27 +108,27 @@ def main(argv: Sequence[str]):
     printv(f"Generated file: {arguments.o}")
 
     # Concatenate bvals and bvecs
-    bvals_concat = []
-    bvecs_concat = [[], [], []]
+    bvals_all = []
+    bvecs_all = [[], [], []]
     i_dwi = 0  # counter for DWI files, to read in bvec/bval files
     for ftype, fname in zip(arguments.order, arguments.i, strict=True):
         if ftype == 'b0':
             # count number of b=0
             n_b0 = Image(fname).dim[3]
-            bval = np.zeros(n_b0)
-            bvec = np.zeros((n_b0, 3))
+            bvals = np.zeros(n_b0)
+            bvecs = np.zeros((n_b0, 3))
         else:
             assert ftype == 'dwi'  # enforced by `choices=['b0', 'dwi']` in `get_parser()`
             # read bval/bvec files
-            bval, bvec = fetcher.read_bvals_bvecs(arguments.bval[i_dwi], arguments.bvec[i_dwi])
+            bvals, bvecs = fetcher.read_bvals_bvecs(arguments.bval[i_dwi], arguments.bvec[i_dwi])
             i_dwi += 1
         # Concatenate bvals
-        bvals_concat.extend(str(v) for v in bval)
+        bvals_all.extend(str(n) for n in bvals)
         # Concatenate bvecs
         for i in range(3):
-            bvecs_concat[i].extend(f'{n:.16f}' for n in bvec[:, i])
-    bvals_concat = ' '.join(bvals_concat)
-    bvecs_concat = '\n'.join(' '.join(v) for v in bvecs_concat)
+            bvecs_all[i].extend(f'{n:.16f}' for n in bvecs[:, i])
+    bvals_concat = ' '.join(bvals_all)
+    bvecs_concat = '\n'.join(' '.join(v) for v in bvecs_all)
 
     # Write files
     new_f = open(arguments.obval, 'w')
