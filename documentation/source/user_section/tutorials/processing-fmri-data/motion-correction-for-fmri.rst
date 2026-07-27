@@ -51,11 +51,11 @@ Then, we can use the :ref:`sct_qc` command to compare the tSNR maps before and a
 .. code::
 
    # Cord segmentation on motion-corrected averaged time series
-   sct_deepseg spinalcord -i fmri_moco_mean.nii.gz -qc ~/qc_singleSubj/
+   sct_deepseg spinalcord -i fmri_moco_mean.nii.gz -qc ~/qc_singleSubj
    # TSNR before/after motion correction with QC report
    sct_fmri_compute_tsnr -i fmri.nii.gz
    sct_fmri_compute_tsnr -i fmri_moco.nii.gz
-   sct_qc -i fmri_tsnr.nii.gz -d fmri_moco_tsnr.nii.gz -s fmri_moco_mean_seg.nii.gz -p sct_fmri_compute_tsnr -qc ~/qc_singleSubj/
+   sct_qc -i fmri_tsnr.nii.gz -d fmri_moco_tsnr.nii.gz -s fmri_moco_mean_seg.nii.gz -p sct_fmri_compute_tsnr -qc ~/qc_singleSubj
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/processing-fmri-data/tsnr_qc.png
    :align: center
