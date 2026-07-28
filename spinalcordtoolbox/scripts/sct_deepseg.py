@@ -455,7 +455,8 @@ def main(argv: Sequence[str]):
         # models.load_crop_metadata()): "cropped_image" says whether the model is expected to
         # crop, but the padding -- and the final decision, if -custom-url points to a
         # differently-trained artifact -- comes from the model folder actually on disk.
-        crop_active, crop_pad = models.load_crop_metadata(name_model, path_model)
+        crop_pad = models.load_crop_metadata(name_model, path_model)
+        crop_active = bool(crop_pad)
         if box_overrides and not crop_active:
             parser.error("-box-* arguments are only valid for models using the sc-crop pipeline.")
 

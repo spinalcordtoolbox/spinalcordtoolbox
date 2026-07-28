@@ -672,14 +672,16 @@ def _read_source_json(path_model):
 
 def load_crop_metadata(name_model, path_model):
     """
-    Determine whether an installed model uses the sc-crop pipeline, and its padding.
+    Determine an installed model's sc-crop padding, if it uses the sc-crop pipeline at all.
 
     `MODELS[name_model]['cropped_image']` says whether this model is *expected* to use
     sc-crop -- used before the model is even installed (e.g. to decide whether to expose
-    `-box-*` at all). The actual decision, and the padding, come from a `crop_metadata.yaml`
-    file at the root of the model's release .zip, if present -- so both travel with the actual
-    artifact on disk, rather than being hardcoded here (which would be wrong for a model
-    installed via `-custom-url`, since that can point to a differently-trained artifact).
+    `-box-*` at all). The actual decision, and the padding, come from whether a
+    `crop_metadata.yaml` file is present at the root of the model's release .zip -- so both
+    travel with the actual artifact on disk, rather than being hardcoded here (which would be
+    wrong for a model installed via `-custom-url`, since that can point to a differently-trained
+    artifact). A release only ever bundles this file for a model that actually uses sc-crop, so
+    its mere presence is the signal -- there's no separate flag inside the file for this.
 
     If the model isn't expected to use sc-crop, nothing else is checked. If it is, but no
     `crop_metadata.yaml` is found:
@@ -689,13 +691,19 @@ def load_crop_metadata(name_model, path_model):
     - for a `-custom-url` install, the artifact may simply not be a cropped model at all (e.g.
       an older release); treat it as not using sc-crop instead of raising.
 
+    Padding is required to be fully specified in `crop_metadata.yaml` whenever the model does
+    use sc-crop -- callers must not fall back to `sc_crop.detect()`'s own default padding, since
+    those defaults can change between `sc-crop` versions, silently shifting the crop a model was
+    actually trained on.
+
     :param name_model: str: Name of model (key into MODELS).
     :param path_model: str: Path to the installed model folder.
-    :return: (bool, dict): whether the model uses sc-crop, and any `sc_crop.detect()` padding
-        kwargs found (empty if none, since `sc_crop.detect()` has its own defaults).
+    :return: dict: `sc_crop.detect()` padding kwargs, one entry per key in `CROP_PAD_KEYS`, or
+        `{}` if this model doesn't use the sc-crop pipeline. Callers should treat a non-empty
+        return as "sc-crop is active" (i.e. use `bool(load_crop_metadata(...))`).
     """
     if not MODELS.get(name_model, {}).get('cropped_image', False):
-        return False, {}
+        return {}
 
     path_yaml = os.path.join(path_model, "crop_metadata.yaml")
     if not os.path.isfile(path_yaml):
@@ -707,15 +715,19 @@ def load_crop_metadata(name_model, path_model):
                 f"The release is likely missing this file -- reinstall with `-install`, "
                 f"or check the model's release assets."
             )
-        return False, {}
+        return {}
 
     with open(path_yaml, "r") as fp:
         crop_metadata = yaml.safe_load(fp) or {}
-    # Absence of the key defaults to True: a model author who ships this file at all is
-    # presumed to mean "yes, crop" unless they explicitly say otherwise.
-    is_crop = bool(crop_metadata.get('cropped_image', True))
-    crop_pad = {key: crop_metadata[key] for key in CROP_PAD_KEYS if key in crop_metadata}
-    return is_crop, crop_pad
+
+    missing_keys = [key for key in CROP_PAD_KEYS if key not in crop_metadata]
+    if missing_keys:
+        raise RuntimeError(
+            f"Model '{name_model}'s crop_metadata.yaml ('{path_yaml}') is missing padding "
+            f"key(s) {missing_keys} -- all of {list(CROP_PAD_KEYS)} must be specified "
+            f"explicitly, so cropping doesn't silently depend on sc_crop's own defaults."
+        )
+    return {key: crop_metadata[key] for key in CROP_PAD_KEYS}
 
 
 def install_model(name_model, custom_url=None):
