@@ -13,7 +13,6 @@ import logging
 import textwrap
 import shutil
 import glob
-import yaml
 from pathlib import Path
 from importlib.metadata import metadata
 
@@ -677,21 +676,21 @@ def load_crop_metadata(name_model, path_model):
     `MODELS[name_model]['cropped_image']` says whether this model is *expected* to use
     sc-crop -- used before the model is even installed (e.g. to decide whether to expose
     `-box-*` at all). The actual decision, and the padding, come from whether a
-    `crop_metadata.yaml` file is present at the root of the model's release .zip -- so both
+    `crop_metadata.json` file is present at the root of the model's release .zip -- so both
     travel with the actual artifact on disk, rather than being hardcoded here (which would be
     wrong for a model installed via `-custom-url`, since that can point to a differently-trained
     artifact). A release only ever bundles this file for a model that actually uses sc-crop, so
     its mere presence is the signal -- there's no separate flag inside the file for this.
 
     If the model isn't expected to use sc-crop, nothing else is checked. If it is, but no
-    `crop_metadata.yaml` is found:
+    `crop_metadata.json` is found:
     - for an official install (no `-custom-url`), this means the release is missing a file it
       should have -- raise, since silently skipping cropping would produce out-of-distribution
       predictions with the model none the wiser.
     - for a `-custom-url` install, the artifact may simply not be a cropped model at all (e.g.
       an older release); treat it as not using sc-crop instead of raising.
 
-    Padding is required to be fully specified in `crop_metadata.yaml` whenever the model does
+    Padding is required to be fully specified in `crop_metadata.json` whenever the model does
     use sc-crop -- callers must not fall back to `sc_crop.detect()`'s own default padding, since
     those defaults can change between `sc-crop` versions, silently shifting the crop a model was
     actually trained on.
@@ -705,25 +704,25 @@ def load_crop_metadata(name_model, path_model):
     if not MODELS.get(name_model, {}).get('cropped_image', False):
         return {}
 
-    path_yaml = os.path.join(path_model, "crop_metadata.yaml")
-    if not os.path.isfile(path_yaml):
+    path_json = os.path.join(path_model, "crop_metadata.json")
+    if not os.path.isfile(path_json):
         is_custom = _read_source_json(path_model).get('custom', False)
         if not is_custom:
             raise RuntimeError(
                 f"Model '{name_model}' should use the sc-crop pipeline, but no "
-                f"crop_metadata.yaml was found in its installed folder ('{path_model}'). "
+                f"crop_metadata.json was found in its installed folder ('{path_model}'). "
                 f"The release is likely missing this file -- reinstall with `-install`, "
                 f"or check the model's release assets."
             )
         return {}
 
-    with open(path_yaml, "r") as fp:
-        crop_metadata = yaml.safe_load(fp) or {}
+    with open(path_json, "r") as fp:
+        crop_metadata = json.load(fp)
 
     missing_keys = [key for key in CROP_PAD_KEYS if key not in crop_metadata]
     if missing_keys:
         raise RuntimeError(
-            f"Model '{name_model}'s crop_metadata.yaml ('{path_yaml}') is missing padding "
+            f"Model '{name_model}'s crop_metadata.json ('{path_json}') is missing padding "
             f"key(s) {missing_keys} -- all of {list(CROP_PAD_KEYS)} must be specified "
             f"explicitly, so cropping doesn't silently depend on sc_crop's own defaults."
         )
