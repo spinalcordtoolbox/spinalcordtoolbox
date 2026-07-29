@@ -592,6 +592,10 @@ def main(argv: Sequence[str]):
         # Use the result of the current model as additional input of the next model
         fname_prior = fname_seg
 
+    # If a crop box was saved (sc-crop pipeline was active), its filename is derived the same way
+    # for both the QC report and the FSLeyes viewer command below.
+    fname_cropbox = add_suffix(arguments.o if arguments.o else arguments.i[0], "_cropbox")
+
     if arguments.qc is not None:
         if arguments.task == 'spine':
             common_args = dict(
@@ -647,6 +651,17 @@ def main(argv: Sequence[str]):
                     plane=arguments.qc_plane,
                     fname_qc_seg=fname_qc_seg
                 )
+            # Separate QC entry for the crop box itself, so users can tell a bad crop apart
+            # from a bad segmentation (see qc2.sct_deepseg_cropbox() docstring).
+            if crop_active and os.path.isfile(fname_cropbox):
+                qc2.sct_deepseg_cropbox(
+                    fname_input=arguments.i[0],
+                    fname_cropbox=fname_cropbox,
+                    argv=argv,
+                    path_qc=os.path.abspath(arguments.qc),
+                    dataset=arguments.qc_dataset,
+                    subject=arguments.qc_subject,
+                )
 
     images = [arguments.i[0]]
     im_types = ['anat']
@@ -656,7 +671,6 @@ def main(argv: Sequence[str]):
         im_types.append(check_image_kind(Image(output_filename)))
         opacities.append('0.7')
     # If a crop box was saved (sc-crop pipeline was active), add it as a yellow outline overlay in FSLeyes.
-    fname_cropbox = add_suffix(arguments.o if arguments.o else arguments.i[0], "_cropbox")
     if os.path.isfile(fname_cropbox):
         images.append(fname_cropbox)
         im_types.append('cropbox')

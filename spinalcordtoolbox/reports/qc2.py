@@ -41,6 +41,7 @@ mpl_cm = LazyLoader("mpl_cm", globals(), "matplotlib.cm")
 mpl_colors = LazyLoader("mpl_colors", globals(), "matplotlib.colors")
 mpl_backend_agg = LazyLoader("mpl_backend_agg", globals(), "matplotlib.backends.backend_agg")
 mpl_patheffects = LazyLoader("mpl_patheffects", globals(), "matplotlib.patheffects")
+mpl_patches = LazyLoader("mpl_patches", globals(), "matplotlib.patches")
 mpl_collections = LazyLoader("mpl_collections", globals(), "matplotlib.collections")
 nib_orientations = LazyLoader("nib_orientations", globals(), "nibabel.orientations")
 
@@ -85,7 +86,7 @@ def create_qc_entry(
     The body of the `with` block should create these two image files.
     When the `with` block exits, the QC report is updated, with proper file synchronization.
     """
-    if plane not in ['Axial', 'Sagittal']:
+    if plane not in ['Axial', 'Sagittal', 'Cropbox']:
         raise ValueError(f'Invalid plane: {plane!r}')
 
     logger.info('\n*** Generating Quality Control (QC) html report ***')
@@ -1766,6 +1767,151 @@ def sct_deepseg_sagittal(
     img_path = str(imgs_to_generate['path_overlay_img'])
     logger.debug('Save image %s', img_path)
     fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
+
+
+# One entry per panel: (label, axis fixed at the box center, (axis shown as x, axis shown as y))
+# in RPI-oriented voxel space (axis 0 = R/L, axis 1 = P/A, axis 2 = I/S).
+_CROPBOX_QC_PLANES = (
+    ('Axial', 2, (0, 1)),
+    ('Coronal', 1, (0, 2)),
+    ('Sagittal', 0, (1, 2)),
+)
+
+
+def _cropbox_panel_slice(data: np.ndarray, center: np.ndarray, fixed_axis: int, xaxis: int, yaxis: int) -> np.ndarray:
+    """
+    Extract a single 2D slice through `center`, perpendicular to `fixed_axis`, oriented so that
+    `xaxis`/`yaxis` (indices into the original 3D array) map to imshow's (column, row).
+    """
+    slicer = [slice(None)] * 3
+    slicer[fixed_axis] = int(center[fixed_axis])
+    data2d = data[tuple(slicer)]
+    remaining_axes = [a for a in range(3) if a != fixed_axis]
+    return np.transpose(data2d, (remaining_axes.index(yaxis), remaining_axes.index(xaxis)))
+
+
+def _cropbox_window_range(bbox_min: np.ndarray, bbox_max: np.ndarray, axis: int,
+                          shape: tuple, margin_frac: float = 0.25) -> tuple:
+    """
+    Voxel range [lo, hi) along `axis`, spanning the box's own extent plus a margin (for
+    anatomical context), clamped to the image bounds. Used to zoom each QC panel in on the box
+    instead of showing the full image.
+    """
+    lo, hi = int(bbox_min[axis]), int(bbox_max[axis])
+    margin = max(5, round((hi - lo) * margin_frac))
+    return max(0, lo - margin), min(shape[axis], hi + margin + 1)
+
+
+def sct_deepseg_cropbox(
+    fname_input: str,
+    fname_cropbox: str,
+    argv: Sequence[str],
+    path_qc: str,
+    dataset: Optional[str],
+    subject: Optional[str],
+):
+    """
+    Generate a QC report entry for the sc-crop bounding box: one slice per orthogonal plane
+    (axial, coronal, sagittal), each centered on the box, with the box's extent outlined. This is
+    a separate report entry from the segmentation QC report, so users can tell a bad crop (box
+    missed the cord) apart from a bad segmentation (box is fine, but the prediction inside it is
+    wrong) — the segmentation QC report is always cropped around the segmentation and can't show
+    whether the box itself was placed correctly.
+    """
+    command = 'sct_deepseg'
+    cmdline = [command]
+    cmdline.extend(argv)
+
+    with create_qc_entry(
+        # NB: identify this entry by the cropbox file rather than the anatomical input, so it's
+        # distinguishable from the segmentation QC entry in the report's "File" column (the two
+        # would otherwise be identical -- same input file, same subject/contrast, same timestamp
+        # down to the second).
+        path_input=Path(fname_cropbox).resolve(),
+        path_qc=Path(path_qc),
+        command=command,
+        cmdline=list2cmdline(cmdline),
+        plane='Cropbox',
+        dataset=dataset,
+        subject=subject,
+    ) as imgs_to_generate:
+        img_input = Image(fname_input).change_orientation('RPI')
+        img_box = Image(fname_cropbox).change_orientation('RPI')
+        shape = img_input.data.shape
+
+        coords = np.argwhere(img_box.data > 0)
+        if coords.size == 0:
+            raise ValueError(f"Crop box mask '{fname_cropbox}' is empty — nothing to display.")
+        bbox_min, bbox_max = coords.min(axis=0), coords.max(axis=0)
+        center = (bbox_min + bbox_max) // 2
+
+        # Extract every panel up front so widths can be derived from their actual aspect ratio
+        # (width / height) instead of splitting the figure into equal-width columns: with a fixed
+        # pixel aspect (imshow's aspect=1.0, needed for anatomically-correct proportions), an
+        # equal-width column whose shape doesn't match its panel's aspect ratio gets letterboxed
+        # by matplotlib -- visible as the empty margins around each slice.
+        # Each panel is windowed to the box's own extent (+25% margin for anatomical context)
+        # instead of the full image, so the box fills most of the available space -- consistent
+        # with every other report in this file (e.g. sct_deepseg_axial's radius-based mosaic),
+        # none of which display the full, un-zoomed image either.
+        panels_input = {}
+        panels_box = {}
+        for label, fixed_axis, (xaxis, yaxis) in _CROPBOX_QC_PLANES:
+            x0, x1 = _cropbox_window_range(bbox_min, bbox_max, xaxis, shape)
+            y0, y1 = _cropbox_window_range(bbox_min, bbox_max, yaxis, shape)
+            full_input = _cropbox_panel_slice(img_input.data, center, fixed_axis, xaxis, yaxis)
+            full_box = _cropbox_panel_slice(img_box.data, center, fixed_axis, xaxis, yaxis)
+            panels_input[label] = full_input[y0:y1, x0:x1]
+            panels_box[label] = full_box[y0:y1, x0:x1]
+
+        # Fix the total width to TARGET_WIDTH_INCH (as every other report does) and derive a shared
+        # row height so that each panel's own width (at that height) sums up to the total width.
+        aspect_ratios = {label: p.shape[1] / p.shape[0] for label, p in panels_input.items()}
+        height_fig = TARGET_WIDTH_INCH / sum(aspect_ratios.values())
+        panel_widths = {label: height_fig * ratio for label, ratio in aspect_ratios.items()}
+
+        # Background image: the anatomical slices, one per plane
+        fig = mpl_figure.Figure()
+        fig.set_size_inches(TARGET_WIDTH_INCH, height_fig, forward=True)
+        mpl_backend_agg.FigureCanvasAgg(fig)
+        x_offset = 0.0
+        for label, _, _ in _CROPBOX_QC_PLANES:
+            w_frac = panel_widths[label] / TARGET_WIDTH_INCH
+            ax = fig.add_axes((x_offset, 0, w_frac, 1))
+            ax.imshow(equalize_histogram(panels_input[label]), cmap='gray', origin='lower',
+                      interpolation='none', aspect=1.0)
+            ax.set_title(label, fontsize=6)
+            ax.get_xaxis().set_visible(False)
+            ax.get_yaxis().set_visible(False)
+            x_offset += w_frac
+        img_path = str(imgs_to_generate['path_background_img'])
+        logger.debug('Save image %s', img_path)
+        fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
+
+        # Overlay image: the box outline, one per plane, same layout as the background
+        fig = mpl_figure.Figure()
+        fig.set_size_inches(TARGET_WIDTH_INCH, height_fig, forward=True)
+        mpl_backend_agg.FigureCanvasAgg(fig)
+        x_offset = 0.0
+        for label, _, _ in _CROPBOX_QC_PLANES:
+            w_frac = panel_widths[label] / TARGET_WIDTH_INCH
+            ax = fig.add_axes((x_offset, 0, w_frac, 1))
+            panel = panels_box[label]
+            ys, xs = np.where(panel > 0)
+            if len(xs):
+                rect = mpl_patches.Rectangle(
+                    (xs.min(), ys.min()), xs.max() - xs.min(), ys.max() - ys.min(),
+                    fill=False, edgecolor='#ff0000', linewidth=1.5)
+                ax.add_patch(rect)
+            ax.set_xlim(0, panel.shape[1])
+            ax.set_ylim(0, panel.shape[0])
+            ax.set_aspect(1.0)
+            ax.get_xaxis().set_visible(False)
+            ax.get_yaxis().set_visible(False)
+            x_offset += w_frac
+        img_path = str(imgs_to_generate['path_overlay_img'])
+        logger.debug('Save image %s', img_path)
+        fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
 
 
 def sct_analyze_lesion(
