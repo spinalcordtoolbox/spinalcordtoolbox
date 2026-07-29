@@ -42,7 +42,7 @@ nilearn
 # - Notes for `nnunetv2-neuropoly` (our fork):
 # 2.6+ is now compatible with older versions of torch (>=2.1.2), so we can use the latest version.
 nnunetv2-neuropoly
-# sc-crop: SC detection+cropping for `crop`-flagged models (e.g. contrast-agnostic spinalcord -fast).
+# sc-crop: SC detection+cropping for models with "cropped_image": True in MODELS (e.g. contrast-agnostic spinalcord).
 sc-crop>=0.11.0
 # SCT is compatible, however the upgrade to numpy==2.0.0 broke *many* upstream packages. Let's try again later. See https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4535
 numpy<2

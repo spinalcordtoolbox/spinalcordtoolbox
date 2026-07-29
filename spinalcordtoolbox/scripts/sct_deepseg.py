@@ -517,8 +517,9 @@ def main(argv: Sequence[str]):
             if arguments.task == 'lesion_ms':
                 extra_inference_kwargs['ensemble'] = True
             # crop-flagged models: detect SC, crop, run inference, uncrop (sc-crop pipeline).
-            # Padding defaults from the model are passed to sc_crop.detect() internally.
-            # The user can override individual crop box faces (voxel indices) via -box-*.
+            # The model's own padding (from crop_metadata.json, see models.load_crop_metadata())
+            # is passed to sc_crop.detect() internally. The user can override individual crop
+            # box faces (voxel indices) via -box-*.
             if crop_active:
                 extra_inference_kwargs['crop'] = True
                 extra_inference_kwargs['crop_pad'] = crop_pad
