@@ -1770,12 +1770,22 @@ def sct_deepseg_sagittal(
 
 
 # One entry per panel: (label, axis fixed at the box center, (axis shown as x, axis shown as y))
-# in RPI-oriented voxel space (axis 0 = R/L, axis 1 = P/A, axis 2 = I/S).
+# in RPI-oriented voxel space (axis 0 = R/L, axis 1 = P/A, axis 2 = I/S). Each triple is chosen
+# so imshow (column 0 = left edge, row 0 = bottom edge with origin='lower') reads as the standard
+# radiological convention: R on the left, superior/anterior toward the top.
+_RPI_AXIS_LETTERS = ('R', 'P', 'I')
 _CROPBOX_QC_PLANES = (
     ('Axial', 2, (0, 1)),
     ('Coronal', 1, (0, 2)),
     ('Sagittal', 0, (1, 2)),
 )
+
+
+def _cropbox_axis_labels(xaxis: int, yaxis: int) -> tuple:
+    """((top, bottom), (left, right)) anatomical letters for a panel's x/y axes, in RPI space."""
+    opposite = dict(zip("RASLPI", "LPIRAS"))
+    x_letter, y_letter = _RPI_AXIS_LETTERS[xaxis], _RPI_AXIS_LETTERS[yaxis]
+    return (opposite[y_letter], y_letter), (x_letter, opposite[x_letter])
 
 
 def _cropbox_panel_slice(data: np.ndarray, center: np.ndarray, fixed_axis: int, xaxis: int, yaxis: int) -> np.ndarray:
@@ -1871,16 +1881,35 @@ def sct_deepseg_cropbox(
         panel_widths = {label: height_fig * ratio for label, ratio in aspect_ratios.items()}
 
         # Background image: the anatomical slices, one per plane
+        text_args = dict(
+            color='yellow',
+            fontsize=4,
+            path_effects=[
+                mpl_patheffects.Stroke(linewidth=1, foreground='black'),
+                mpl_patheffects.Normal(),
+            ],
+        )
         fig = mpl_figure.Figure()
         fig.set_size_inches(TARGET_WIDTH_INCH, height_fig, forward=True)
         mpl_backend_agg.FigureCanvasAgg(fig)
         x_offset = 0.0
-        for label, _, _ in _CROPBOX_QC_PLANES:
+        for label, _, (xaxis, yaxis) in _CROPBOX_QC_PLANES:
             w_frac = panel_widths[label] / TARGET_WIDTH_INCH
             ax = fig.add_axes((x_offset, 0, w_frac, 1))
-            ax.imshow(equalize_histogram(panels_input[label]), cmap='gray', origin='lower',
+            panel = panels_input[label]
+            ax.imshow(equalize_histogram(panel), cmap='gray', origin='lower',
                       interpolation='none', aspect=1.0)
             ax.set_title(label, fontsize=6)
+            (top, bottom), (left, right) = _cropbox_axis_labels(xaxis, yaxis)
+            h, w = panel.shape
+            # Inset the anchor point a few pixels in from the edge, so the label sits fully
+            # inside the panel instead of being centered on the border (where it would be half
+            # cut off) -- no need for xlim/ylim padding (blank margin) or clip_on=False either.
+            inset = max(2, round(0.03 * min(w, h)))
+            ax.text(w / 2, h - inset, top, ha='center', va='top', **text_args)
+            ax.text(w / 2, inset, bottom, ha='center', va='bottom', **text_args)
+            ax.text(inset, h / 2, left, ha='left', va='center', **text_args)
+            ax.text(w - inset, h / 2, right, ha='right', va='center', **text_args)
             ax.get_xaxis().set_visible(False)
             ax.get_yaxis().set_visible(False)
             x_offset += w_frac
