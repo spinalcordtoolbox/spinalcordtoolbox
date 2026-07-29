@@ -362,7 +362,7 @@ def _make_figure(metric, fit_results):
     from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
     from matplotlib.figure import Figure
 
-    fname_img = tempfile.NamedTemporaryFile().name + '.png'
+    fname_img = f'{tempfile.NamedTemporaryFile().name}.png'
     z, csa, angle_ap, angle_rl = [], [], [], []
     for key, value in metric.items():
         z.append(key[0])
@@ -586,7 +586,7 @@ def main(argv: Sequence[str]):
         # Save array of the centerline in a .csv file if verbose == 2
         if verbose == 2:
             fname_ctl_csv, _ = splitext(add_suffix(arguments.i, '_centerline_extrapolated'))
-            np.savetxt(fname_ctl_csv + '.csv', centerline, delimiter=",")
+            np.savetxt(f'{fname_ctl_csv}.csv', centerline, delimiter=",")
     else:
         length_from_pmj = None
     # Aggregate metrics
@@ -610,7 +610,7 @@ def main(argv: Sequence[str]):
     if arguments.normalize is not None:
         data_subject = pd.DataFrame([arguments.normalize])
         path_model = os.path.join(__sct_dir__, 'data', 'csa_normalization_models',
-                                  '_'.join(sorted(data_subject.columns)) + '.csv')
+                                  f'{"_".join(sorted(data_subject.columns))}.csv')
         if not os.path.isfile(path_model):
             parser.error('Invalid choice of predictors in -normalize. Please specify sex and brain-volume or sex, brain-volume and thalamus-volume.')
         # Get normalization model

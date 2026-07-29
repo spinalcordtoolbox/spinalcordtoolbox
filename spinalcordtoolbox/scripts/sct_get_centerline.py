@@ -180,7 +180,7 @@ def main(argv: Sequence[str]):
         file_output = os.path.join(path_data, file_data+ext_data)
     else:
         path_data, file_data, ext_data = extract_fname(fname_data)
-        file_output = os.path.join(path_data, file_data+'_centerline.nii.gz')
+        file_output = os.path.join(path_data, f'{file_data}_centerline.nii.gz')
 
     if method == 'viewer':
         # Manual labeling of cord centerline
@@ -193,7 +193,7 @@ def main(argv: Sequence[str]):
         param_centerline.algo_fitting = 'optic'
         param_centerline.contrast = contrast_type
     else:
-        printv("ERROR: The selected method is not available: {}. Please look at the help.".format(method), type='error')
+        printv(f"ERROR: The selected method is not available: {method}. Please look at the help.", type='error')
         return
 
     # Extrapolate and regularize (or detect if optic) cord centerline

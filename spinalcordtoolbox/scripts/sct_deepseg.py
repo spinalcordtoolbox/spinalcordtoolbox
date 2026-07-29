@@ -272,7 +272,7 @@ def get_parser(subparser_to_return=None):
             metavar=Metavar.file,
             help="Segmentation file to use for cropping the QC. This option is useful when you want to QC a region "
                  "that is different from the output segmentation. For example, it might be useful to provide a "
-                 "dilated cord segmentation to expand the QC field of view." + note_qc_seg
+                 f"dilated cord segmentation to expand the QC field of view.{note_qc_seg}"
         )
 
         # Add common arguments
@@ -401,7 +401,7 @@ def main(argv: Sequence[str]):
     # Deal with input/output
     for file in arguments.i:
         if not os.path.isfile(file):
-            parser.error("This file does not exist: {}".format(file))
+            parser.error(f"This file does not exist: {file}")
 
     # Get pipeline model names
     name_models = models.TASKS[arguments.task]['models']
@@ -420,8 +420,8 @@ def main(argv: Sequence[str]):
         required_contrasts = models.get_required_contrasts(arguments.task)
         if len(arguments.i) != len(required_contrasts):
             parser.error(
-                "{} input files found. Please provide all required input files for the task {}, i.e. contrasts: {}."
-                .format(len(arguments.i), arguments.task, ', '.join(required_contrasts)))
+                f"{len(arguments.i)} input files found. Please provide all required input files for the task {arguments.task}, i.e. contrasts: {', '.join(required_contrasts)}."
+                )
         if len(arguments.c) != len(arguments.i):
             parser.error(f"{len(arguments.i)} input files provided, but {len(arguments.c)} contrasts passed. "
                          f"Number of contrasts should match the number of inputs.")
@@ -436,12 +436,12 @@ def main(argv: Sequence[str]):
             path_model = models.folder(name_model)
             path_models = models.find_model_folder_paths(path_model)
             if not models.is_valid(path_models):
-                printv("Model {} is not installed. Installing it now...".format(name_model))
+                printv(f"Model {name_model} is not installed. Installing it now...")
                 models.install_model(name_model)
                 path_models = models.find_model_folder_paths(path_model)  # Re-parse to find newly downloaded folders
             # Check folder version file ('{path_model}/source.json')
             elif not models.is_up_to_date(path_model):
-                printv("Model {} is out of date. Re-installing it now...".format(name_model))
+                printv(f"Model {name_model} is out of date. Re-installing it now...")
                 models.install_model(name_model)
                 path_models = models.find_model_folder_paths(path_model)  # Re-parse to find newly downloaded folders
         # If it is not, check if this is a path to a valid model
@@ -449,7 +449,7 @@ def main(argv: Sequence[str]):
             path_model = os.path.abspath(name_model)
             path_models = models.find_model_folder_paths(path_model)
             if not models.is_valid(path_models):
-                parser.error("The input model is invalid: {}".format(path_models))
+                parser.error(f"The input model is invalid: {path_models}")
 
         # Determine crop_active from the installed model's own metadata (see
         # models.load_crop_metadata()): "cropped_image" says whether the model is expected to
@@ -586,7 +586,7 @@ def main(argv: Sequence[str]):
                     }
                 ]
             }
-            with open(splitext(fname_seg)[0] + ".json", "w") as fp:
+            with open(f"{splitext(fname_seg)[0]}.json", "w") as fp:
                 json.dump(sidecar_json, fp, indent=4)
 
         # Use the result of the current model as additional input of the next model

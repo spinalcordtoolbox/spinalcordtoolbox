@@ -52,7 +52,7 @@ def segment_and_average_volumes(model_paths, input_filenames, options, use_gpu=F
             ivadomed.inference.segment_volume function.
         :param use_gpu: bool. Whether to try to perform inference using CUDA. (NB: Only a single GPU will be used.)
 
-        :return: list, list: List of Image objects containing the soft segmentation(s), one per prediction class, \
+        :return: list, list: List of Image objects containing the soft segmentation(s), one per prediction class,
             List of target suffix associated with each prediction
     """
     if not isinstance(model_paths, list):
@@ -487,11 +487,10 @@ def segment_totalspineseg(path_img, tmpdir, predictor, device, label_vert=False)
         "step2_output": "totalspineseg_all",
     }
     fnames_out, targets = [], []
-    expected_outputs = ["step1_levels"]
-    if label_vert:
-        expected_outputs += ["step2_output"]
-    else:
-        expected_outputs += ["step1_output"]
+    expected_outputs = [
+        "step1_levels",
+        "step2_output" if label_vert else "step1_output",
+    ]
     for output_dirname in expected_outputs:
         fnames_out.append(os.path.join(tmpdir_nnunet, output_dirname, os.path.basename(path_img)))
         targets.append(f"_{name_remapping[output_dirname]}")
