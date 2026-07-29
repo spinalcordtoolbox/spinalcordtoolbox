@@ -401,5 +401,11 @@ def test_deepseg_crop_box_qc_report_entry(tmp_path, tmp_path_qc):
     cropbox_entries = [e for e in new_entries if e['plane'] == 'Cropbox']
     assert len(cropbox_entries) == 1
     entry = cropbox_entries[0]
+    assert entry['command'] == 'sc_crop'
+    # Neither field should mention 'sct_deepseg', so searching for either tool's name in the QC
+    # report reliably shows only that tool's rows -- not both, due to some shared substring.
+    assert 'sct_deepseg' not in entry['command']
+    assert 'sct_deepseg' not in entry['cmdline']
+    assert entry['cmdline'] == f"sc_crop -i {sct_test_path('t2', 't2.nii.gz')} --bbox {fname_cropbox}"
     assert (Path(tmp_path_qc) / entry['backgroundImage']).is_file()
     assert (Path(tmp_path_qc) / entry['overlayImage']).is_file()

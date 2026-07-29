@@ -657,7 +657,6 @@ def main(argv: Sequence[str]):
                 qc2.sct_deepseg_cropbox(
                     fname_input=arguments.i[0],
                     fname_cropbox=fname_cropbox,
-                    argv=argv,
                     path_qc=os.path.abspath(arguments.qc),
                     dataset=arguments.qc_dataset,
                     subject=arguments.qc_subject,

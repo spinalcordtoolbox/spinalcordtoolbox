@@ -1815,7 +1815,6 @@ def _cropbox_window_range(bbox_min: np.ndarray, bbox_max: np.ndarray, axis: int,
 def sct_deepseg_cropbox(
     fname_input: str,
     fname_cropbox: str,
-    argv: Sequence[str],
     path_qc: str,
     dataset: Optional[str],
     subject: Optional[str],
@@ -1828,9 +1827,14 @@ def sct_deepseg_cropbox(
     wrong) — the segmentation QC report is always cropped around the segmentation and can't show
     whether the box itself was placed correctly.
     """
-    command = 'sct_deepseg'
-    cmdline = [command]
-    cmdline.extend(argv)
+    # NB: labeled 'sc_crop' (rather than 'sct_deepseg', the tool that actually produced this
+    # entry) with a standalone `sc_crop --bbox` command that reproduces the same crop, instead of
+    # the `sct_deepseg` command that was really run. This is still a real, runnable command (not
+    # a fabricated one) -- and it means neither "command" nor "cmdline" contains "sct_deepseg"
+    # for this entry, so searching "sct_deepseg" in the QC report reliably shows *only*
+    # segmentation rows, and searching "sc_crop" shows only crop-box rows, in either direction.
+    command = 'sc_crop'
+    cmdline = ['sc_crop', '-i', fname_input, '--bbox', fname_cropbox]
 
     with create_qc_entry(
         # NB: identify this entry by the cropbox file rather than the anatomical input, so it's
