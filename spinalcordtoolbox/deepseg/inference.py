@@ -309,6 +309,12 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device, ensemble=F
         if not (bbox["xmax"] >= bbox["xmin"] and bbox["ymax"] >= bbox["ymin"] and bbox["zmax"] >= bbox["zmin"]):
             raise ValueError("sc-crop: invalid bounding box — check that -box-* values are not inverted.")
         fname_cropbox = add_suffix(out_fname if out_fname else path_img, "_cropbox")
+        # If -o points to a not-yet-existing subdirectory, create it -- sct_deepseg.py does the
+        # same for the segmentation output, but only after this function returns, which is too
+        # late for the cropbox file (saved here, earlier in the pipeline).
+        path_out = os.path.dirname(fname_cropbox)
+        if path_out and not os.path.exists(path_out):
+            os.makedirs(path_out)
         sc_crop.save_bbox_nifti(bbox, img_nii, fname_cropbox)
         nib.save(sc_crop.crop(img_nii, bbox), path_img_tmp)
 

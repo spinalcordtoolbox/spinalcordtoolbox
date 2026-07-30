@@ -401,3 +401,17 @@ def test_deepseg_crop_detection_failure_falls_back_to_full_image(t2_zero, tmp_pa
     sct_deepseg.main(['spinalcord', '-i', t2_zero, '-o', fname_out, '-qc', tmp_path_qc,
                       '-box-zmin', '0'])
     assert os.path.isfile(fname_out)
+
+
+@pytest.mark.usefixtures(cleanup_model_dirs.__name__)
+def test_deepseg_crop_creates_output_subdirectory(tmp_path, tmp_path_qc):
+    """
+    `-o` pointing to a not-yet-existing subdirectory shouldn't crash when saving the cropbox
+    file, which is written earlier in the pipeline than sct_deepseg.py's own output-directory
+    creation.
+    """
+    fname_out = str(tmp_path / "subdir" / "t2_seg_deepseg.nii.gz")
+    sct_deepseg.main(['spinalcord', '-i', sct_test_path('t2', 't2.nii.gz'), '-o', fname_out,
+                      '-qc', tmp_path_qc])
+    assert os.path.isfile(fname_out)
+    assert os.path.isfile(add_suffix(fname_out, "_cropbox"))
