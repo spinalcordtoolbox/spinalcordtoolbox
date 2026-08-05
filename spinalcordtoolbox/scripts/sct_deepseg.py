@@ -21,7 +21,7 @@ from textwrap import dedent
 import functools
 
 from spinalcordtoolbox.reports import qc2
-from spinalcordtoolbox.image import splitext, Image, check_image_kind, add_suffix
+from spinalcordtoolbox.image import splitext, Image, check_image_kind
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax, ActionCreateFolder
 from spinalcordtoolbox.utils.sys import init_sct, printv, __sct_dir__, set_loglevel, __version__, _git_info
 from spinalcordtoolbox.utils.sys import LazyLoader
@@ -391,6 +391,7 @@ def main(argv: Sequence[str]):
             for name_model, n_urls in zip(models_to_install, n_urls_per_model):
                 custom_url = arguments.custom_url[i] if n_urls == 1 else arguments.custom_url[i:i + n_urls]
                 i += n_urls
+                models.install_model(name_model, custom_url)
         else:
             for name_model in models_to_install:
                 models.install_model(name_model)
