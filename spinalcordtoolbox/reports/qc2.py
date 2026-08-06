@@ -1769,47 +1769,44 @@ def sct_deepseg_sagittal(
     fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
 
 
-# One entry per panel: (label, axis fixed at the box center, (axis shown as x, axis shown as y))
-# in RPI-oriented voxel space (axis 0 = R/L, axis 1 = P/A, axis 2 = I/S). Each triple is chosen
-# so imshow (column 0 = left edge, row 0 = bottom edge with origin='lower') reads as the standard
-# radiological convention: R on the left, superior/anterior toward the top.
-_RPI_AXIS_LETTERS = ('R', 'P', 'I')
-_CROPBOX_QC_PLANES = (
-    ('Axial', 2, (0, 1)),
-    ('Coronal', 1, (0, 2)),
-    ('Sagittal', 0, (1, 2)),
-)
+# Per-plane orientation code and axis labels for the sc-crop bounding-box QC panels. Each code's
+# 1st letter is the axis fixed at the box center (perpendicular to the panel), 2nd letter is
+# "top", 3rd letter is "left" -- matching the SAL/RSP conventions already used by the axial and
+# sagittal reports elsewhere in this file ('Coronal' has no existing precedent, so it follows the
+# same rule with 'ASL'). Using a single shared orientation for all 3 planes doesn't work: e.g.
+# under 'SAL', only S/A/L (never their opposites) are index-0 letters on any axis, so a plane
+# needing 'P' on the left (like Sagittal, established by the existing RSP-based report) can't be
+# built from a single 'SAL'-oriented array.
+_CROPBOX_QC_PLANES = {
+    'Axial':    ('SAL', ('A', 'P'), ('L', 'R')),
+    'Coronal':  ('ASL', ('S', 'I'), ('L', 'R')),
+    'Sagittal': ('RSP', ('S', 'I'), ('P', 'A')),
+}
 
 
-def _cropbox_axis_labels(xaxis: int, yaxis: int) -> tuple:
-    """((top, bottom), (left, right)) anatomical letters for a panel's x/y axes, in RPI space."""
-    opposite = dict(zip("RASLPI", "LPIRAS"))
-    x_letter, y_letter = _RPI_AXIS_LETTERS[xaxis], _RPI_AXIS_LETTERS[yaxis]
-    return (opposite[y_letter], y_letter), (x_letter, opposite[x_letter])
-
-
-def _cropbox_panel_slice(data: np.ndarray, center: np.ndarray, fixed_axis: int, xaxis: int, yaxis: int) -> np.ndarray:
+def _extract_cropbox_panel(fname: str, plane: str, bbox_min: np.ndarray, bbox_max: np.ndarray,
+                           margin_frac: float = 0.25) -> np.ndarray:
     """
-    Extract a single 2D slice through `center`, perpendicular to `fixed_axis`, oriented so that
-    `xaxis`/`yaxis` (indices into the original 3D array) map to imshow's (column, row).
+    Extract a single 2D panel from `fname`: the slice through the box's center, reoriented for
+    `plane` (see `_CROPBOX_QC_PLANES`) and cropped to the box's own extent (`bbox_min`/`bbox_max`,
+    already in that same orientation) plus a margin, for anatomical context, instead of showing
+    the full image.
     """
-    slicer = [slice(None)] * 3
-    slicer[fixed_axis] = int(center[fixed_axis])
-    data2d = data[tuple(slicer)]
-    remaining_axes = [a for a in range(3) if a != fixed_axis]
-    return np.transpose(data2d, (remaining_axes.index(yaxis), remaining_axes.index(xaxis)))
+    orientation, _, _ = _CROPBOX_QC_PLANES[plane]
+    data = Image(fname).change_orientation(orientation).data
 
+    def bounds(axis):
+        lo, hi = int(bbox_min[axis]), int(bbox_max[axis])
+        margin = max(5, round((hi - lo) * margin_frac))
+        return max(0, lo - margin), min(data.shape[axis], hi + margin + 1)
 
-def _cropbox_window_range(bbox_min: np.ndarray, bbox_max: np.ndarray, axis: int,
-                          shape: tuple, margin_frac: float = 0.25) -> tuple:
-    """
-    Voxel range [lo, hi) along `axis`, spanning the box's own extent plus a margin (for
-    anatomical context), clamped to the image bounds. Used to zoom each QC panel in on the box
-    instead of showing the full image.
-    """
-    lo, hi = int(bbox_min[axis]), int(bbox_max[axis])
-    margin = max(5, round((hi - lo) * margin_frac))
-    return max(0, lo - margin), min(shape[axis], hi + margin + 1)
+    # Axis 0 is always the axis fixed at the box center, axis 1 always vertical, axis 2 always
+    # horizontal -- by construction of the per-plane orientation codes above, so no further axis
+    # bookkeeping is needed here (unlike a single-shared-orientation approach would require).
+    panel = data[int((bbox_min[0] + bbox_max[0]) // 2)]
+    y0, y1 = bounds(1)
+    x0, x1 = bounds(2)
+    return panel[y0:y1, x0:x1]
 
 
 def sct_deepseg_cropbox(
@@ -1849,16 +1846,6 @@ def sct_deepseg_cropbox(
         dataset=dataset,
         subject=subject,
     ) as imgs_to_generate:
-        img_input = Image(fname_input).change_orientation('RPI')
-        img_box = Image(fname_cropbox).change_orientation('RPI')
-        shape = img_input.data.shape
-
-        coords = np.argwhere(img_box.data > 0)
-        if coords.size == 0:
-            raise ValueError(f"Crop box mask '{fname_cropbox}' is empty — nothing to display.")
-        bbox_min, bbox_max = coords.min(axis=0), coords.max(axis=0)
-        center = (bbox_min + bbox_max) // 2
-
         # Extract every panel up front so widths can be derived from their actual aspect ratio
         # (width / height) instead of splitting the figure into equal-width columns: with a fixed
         # pixel aspect (imshow's aspect=1.0, needed for anatomically-correct proportions), an
@@ -1868,15 +1855,19 @@ def sct_deepseg_cropbox(
         # instead of the full image, so the box fills most of the available space -- consistent
         # with every other report in this file (e.g. sct_deepseg_axial's radius-based mosaic),
         # none of which display the full, un-zoomed image either.
-        panels_input = {}
-        panels_box = {}
-        for label, fixed_axis, (xaxis, yaxis) in _CROPBOX_QC_PLANES:
-            x0, x1 = _cropbox_window_range(bbox_min, bbox_max, xaxis, shape)
-            y0, y1 = _cropbox_window_range(bbox_min, bbox_max, yaxis, shape)
-            full_input = _cropbox_panel_slice(img_input.data, center, fixed_axis, xaxis, yaxis)
-            full_box = _cropbox_panel_slice(img_box.data, center, fixed_axis, xaxis, yaxis)
-            panels_input[label] = full_input[y0:y1, x0:x1]
-            panels_box[label] = full_box[y0:y1, x0:x1]
+        images = {'input': fname_input, 'box': fname_cropbox}
+        panels = {name: {} for name in images}
+        for plane, (orientation, _, _) in _CROPBOX_QC_PLANES.items():
+            # The box's own extent (in this plane's orientation) determines both the center slice
+            # and the crop window, so it's recomputed per plane rather than shared across planes.
+            box_data = Image(fname_cropbox).change_orientation(orientation).data
+            coords = np.argwhere(box_data > 0)
+            if coords.size == 0:
+                raise ValueError(f"Crop box mask '{fname_cropbox}' is empty — nothing to display.")
+            bbox_min, bbox_max = coords.min(axis=0), coords.max(axis=0)
+            for image_name, fname in images.items():
+                panels[image_name][plane] = _extract_cropbox_panel(fname, plane, bbox_min, bbox_max)
+        panels_input, panels_box = panels['input'], panels['box']
 
         # Fix the total width to TARGET_WIDTH_INCH (as every other report does) and derive a shared
         # row height so that each panel's own width (at that height) sums up to the total width.
@@ -1897,21 +1888,23 @@ def sct_deepseg_cropbox(
         fig.set_size_inches(TARGET_WIDTH_INCH, height_fig, forward=True)
         mpl_backend_agg.FigureCanvasAgg(fig)
         x_offset = 0.0
-        for label, _, (xaxis, yaxis) in _CROPBOX_QC_PLANES:
+        for label, (_, (top, bottom), (left, right)) in _CROPBOX_QC_PLANES.items():
             w_frac = panel_widths[label] / TARGET_WIDTH_INCH
             ax = fig.add_axes((x_offset, 0, w_frac, 1))
             panel = panels_input[label]
-            ax.imshow(equalize_histogram(panel), cmap='gray', origin='lower',
+            # origin='upper' (row 0 at the top), matching every other report in this file --
+            # correct here since row 0 of `panel` is always the panel's own "top" letter, by
+            # construction of the per-plane orientation codes in `_CROPBOX_QC_PLANES`.
+            ax.imshow(equalize_histogram(panel), cmap='gray', origin='upper',
                       interpolation='none', aspect=1.0)
             ax.set_title(label, fontsize=6)
-            (top, bottom), (left, right) = _cropbox_axis_labels(xaxis, yaxis)
             h, w = panel.shape
             # Inset the anchor point a few pixels in from the edge, so the label sits fully
             # inside the panel instead of being centered on the border (where it would be half
             # cut off) -- no need for xlim/ylim padding (blank margin) or clip_on=False either.
             inset = max(2, round(0.03 * min(w, h)))
-            ax.text(w / 2, h - inset, top, ha='center', va='top', **text_args)
-            ax.text(w / 2, inset, bottom, ha='center', va='bottom', **text_args)
+            ax.text(w / 2, inset, top, ha='center', va='top', **text_args)
+            ax.text(w / 2, h - inset, bottom, ha='center', va='bottom', **text_args)
             ax.text(inset, h / 2, left, ha='left', va='center', **text_args)
             ax.text(w - inset, h / 2, right, ha='right', va='center', **text_args)
             ax.get_xaxis().set_visible(False)
@@ -1926,7 +1919,7 @@ def sct_deepseg_cropbox(
         fig.set_size_inches(TARGET_WIDTH_INCH, height_fig, forward=True)
         mpl_backend_agg.FigureCanvasAgg(fig)
         x_offset = 0.0
-        for label, _, _ in _CROPBOX_QC_PLANES:
+        for label in _CROPBOX_QC_PLANES:
             w_frac = panel_widths[label] / TARGET_WIDTH_INCH
             ax = fig.add_axes((x_offset, 0, w_frac, 1))
             panel = panels_box[label]
@@ -1937,7 +1930,9 @@ def sct_deepseg_cropbox(
                     fill=False, edgecolor='#ff0000', linewidth=1.5)
                 ax.add_patch(rect)
             ax.set_xlim(0, panel.shape[1])
-            ax.set_ylim(0, panel.shape[0])
+            # Inverted (vs. the background's origin='upper'): row 0 (small y) must map to the top
+            # of the panel here too, so the box outline stays aligned with the anatomical image.
+            ax.set_ylim(panel.shape[0], 0)
             ax.set_aspect(1.0)
             ax.get_xaxis().set_visible(False)
             ax.get_yaxis().set_visible(False)
