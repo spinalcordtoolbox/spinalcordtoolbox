@@ -389,7 +389,7 @@ def main(argv: Sequence[str]):
                              f"but got {len(arguments.custom_url)} URL(s) instead.")
             i = 0
             for name_model, n_urls in zip(models_to_install, n_urls_per_model):
-                custom_url = arguments.custom_url[i] if n_urls == 1 else arguments.custom_url[i:i + n_urls]
+                custom_url = arguments.custom_url[i:i + n_urls]
                 i += n_urls
                 models.install_model(name_model, custom_url)
         else:
