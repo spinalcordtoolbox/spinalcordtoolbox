@@ -689,7 +689,7 @@ def install_model(name_model, custom_url=None):
             n_urls_expected = len(default_url) if isinstance(default_url, dict) else 1
             # Multi-fold/multi-seed model: one custom URL is expected per fold, in the same order as the default URLs
             if len(custom_url) == n_urls_expected:
-                url_field = {seed_name: [url] for seed_name, url in zip(default_url.keys(), custom_url)}           
+                url_field = {seed_name: [url] for seed_name, url in zip(default_url.keys(), custom_url)}
             # Multi-fold model with the wrong number of URLs passed, or
             # single-fold model with multiple URLs passed
             else:
