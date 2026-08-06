@@ -677,18 +677,25 @@ def install_model(name_model, custom_url=None):
     :return: None
     """
     logger.info(f"\nINSTALLING MODEL: {name_model}")
-    default_url = MODELS[name_model]['url']
-    if not custom_url:
-        url_field = default_url
-    elif isinstance(default_url, dict):
-        # Multi-fold/multi-seed model: one custom URL is expected per fold, in the same order as the default URLs
-        if len(custom_url) != len(default_url):
-            raise ValueError(
-                f"Expected {len(default_url)} custom URL(s) for model '{name_model}' "
-                f"(one per fold: {list(default_url.keys())}), but got {len(custom_url)} instead.")
-        url_field = {seed_name: [url] for seed_name, url in zip(default_url.keys(), custom_url)}
-    else:
-        url_field = [custom_url]  # [] -> mimic a list of mirror URLs
+    url_field = default_url = MODELS[name_model]['url']
+    if custom_url is not None:
+        if not isinstance(custom_url, list):
+            raise ValueError(f"Expected a list of model URLs for custom_url, got: {custom_url}")
+        # Single-fold/seed model
+        elif len(custom_url) == 1:
+            url_field = custom_url
+        # Multiple URLs passed, see how many are expected
+        else:
+            n_urls_expected = len(default_url) if isinstance(default_url, dict) else 1
+            # Multi-fold/multi-seed model: one custom URL is expected per fold, in the same order as the default URLs
+            if len(custom_url) == n_urls_expected:
+                url_field = {seed_name: [url] for seed_name, url in zip(default_url.keys(), custom_url)}           
+            # Multi-fold model with the wrong number of URLs passed, or
+            # single-fold model with multiple URLs passed
+            else:
+                raise ValueError(
+                    f"Expected {n_urls_expected} custom URL(s) for model '{name_model}' "
+                    f"but got {len(custom_url)} instead.")
     # List of mirror URLs corresponding to a single model
     if isinstance(url_field, list):
         model_urls = url_field
