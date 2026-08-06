@@ -8,7 +8,7 @@ ENV CONDA_PKGS_DIRS=/root/.conda/pkgs \
     PYTHONUNBUFFERED=1 \
     DEBIAN_FRONTEND=noninteractive
 
-# Install system dependencies
+# Install build dependencies
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     apt-get update && apt-get install -y --no-install-recommends \
@@ -57,6 +57,16 @@ ENV DEEPSEG_TASKS=${DEEPSEG_TASKS:-""}
 
 # Setup time and locales
 RUN ln -fs /usr/share/zoneinfo/America/New_York /etc/localtime
+
+# Install runtime dependencies
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y --no-install-recommends \
+        libdbus-1-3 \
+        libgl1-mesa-glx \
+        libglib2.0-0 \
+        libxkbcommon-x11-0 \
+        libxrender1
 
 # Create non-root user for development
 RUN groupadd --gid $USER_GID $USERNAME \
