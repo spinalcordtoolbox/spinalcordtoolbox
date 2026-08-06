@@ -1914,7 +1914,8 @@ def sct_deepseg_cropbox(
         logger.debug('Save image %s', img_path)
         fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
 
-        # Overlay image: the box outline, one per plane, same layout as the background
+        # Overlay image: the box outline, one per plane, same layout as the background. Yellow to
+        # match the crop box's appearance when viewed as an overlay in FSLeyes (see sct_deepseg.py).
         fig = mpl_figure.Figure()
         fig.set_size_inches(TARGET_WIDTH_INCH, height_fig, forward=True)
         mpl_backend_agg.FigureCanvasAgg(fig)
@@ -1927,7 +1928,7 @@ def sct_deepseg_cropbox(
             if len(xs):
                 rect = mpl_patches.Rectangle(
                     (xs.min(), ys.min()), xs.max() - xs.min(), ys.max() - ys.min(),
-                    fill=False, edgecolor='#ff0000', linewidth=1.5)
+                    fill=False, edgecolor='yellow', linewidth=1.5)
                 ax.add_patch(rect)
             ax.set_xlim(0, panel.shape[1])
             # Inverted (vs. the background's origin='upper'): row 0 (small y) must map to the top
