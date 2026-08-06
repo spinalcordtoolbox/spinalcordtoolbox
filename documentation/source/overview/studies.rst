@@ -26,6 +26,10 @@ The following studies have used SCT:
 2026
 ----
 
+-  Boushila *et al.* `A lightweight method for regression-based normalization of the cross-sectional area for cervical spinal cord atrophy assessment <https://doi.org/10.1007/s11517-026-03644-7>`_, **Med. Biol. Eng. Comput.** 2026
+-  Cronin *et al.* `1D Pre-Acquisition Navigator Correcting Respiratory-Induced Field Fluctuations in Multi-Echo Gradient-Echo Imaging of the Thoracic Spinal Cord <https://doi.org/10.1002/mrm.70528>`_, **Magn. Reson. Med.** 2026
+-  Farah *et al.* `Pre and postoperative perfusion MRI in degenerative cervical myelopathy suggest different patterns of pathophysiological compensatory mechanisms <https://doi.org/10.1016/j.neuchi.2026.101862>`_, **Neurochirurgie** 2026
+-  da Graca *et al.* `Longitudinal spinal cord MRI in adult 5q-SMA: biomarker and pathophysiological insights  <https://doi.org/10.1007/s00415-026-14013-7>`_, **J. Neurol.** 2026
 -  Suette *et al.* `Stable Reduction of Upper Cervical Spinal Cord Area in Cervical Dystonia <https://doi.org/10.1016/j.parkreldis.2026.108417>`_, **Park. Relat. Disord.** 2026
 -  Cronin *et al.* `Multi-shot diffusion tensor imaging in the lumbosacral spinal cord: Characterizing heterogeneity in healthy tissue and differences in multiple sclerosis <https://doi.org/10.1162/IMAG.a.1296>`_, **Imaging Neurosci.** 2026
 -  Gaubert *et al.* `Multicenter Assessment of Combined Brain and Cervical Spinal cord 3T MP2RAGE T1 Measurements for Reliable Tissue Microstructure Quantification <https://doi.org/10.1002/nbm.70350>`_, **NMR Biomed.** 2026
