@@ -672,7 +672,7 @@ def install_model(name_model, custom_url=None):
     Download and install specified model under SCT installation dir.
 
     :param name: str: Name of model.
-    :param custom_url: str or list: URL (single-model / single-mirror case) or list of URLs, one per fold/seed
+    :param custom_url: list of URLs, either 1 for single-model / single-mirror case or one per fold/seed
         (for models made up of several folds/seeds, e.g. `model_seg_ms_lesion`).
     :return: None
     """
