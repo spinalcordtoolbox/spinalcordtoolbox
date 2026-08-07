@@ -41,7 +41,6 @@ MODELS = {
         "framework": "ivadomed",
         "thr": 0.0,  # Only for display in argparse help (postprocessing.binarize_prediction is not present in model json)
         "default": False,
-        "cropped_image": False,
     },
     "mice_uqueensland_gm": {
         "url": [
@@ -53,7 +52,6 @@ MODELS = {
         "framework": "ivadomed",
         "thr": 0.0,  # Only for display in argparse help (postprocessing.binarize_prediction is not present in model json)
         "default": False,
-        "cropped_image": False,
     },
     "t2_tumor": {
         "url": [
@@ -64,7 +62,6 @@ MODELS = {
         "framework": "ivadomed",
         "thr": 0.5,  # Only for display in argparse help (mirrors postprocessing.binarize_prediction, which is 0.5 in model json)
         "default": False,
-        "cropped_image": False,
     },
     "findcord_tumor": {
         "url": [
@@ -75,7 +72,6 @@ MODELS = {
         "framework": "ivadomed",
         "thr": 0.5,  # Only for display in argparse help (mirrors postprocessing.binarize_prediction, which is 0.5 in model json)
         "default": False,
-        "cropped_image": False,
     },
     "model_seg_sctumor-edema-cavity_t2-t1_unet3d-multichannel": {
         "url": [
@@ -86,7 +82,6 @@ MODELS = {
         "framework": "ivadomed",
         "thr": 0.5,  # Only for display in argparse help (mirrors postprocessing.binarize_prediction, which is 0.5 in model json)
         "default": False,
-        "cropped_image": False,
     },
     "model_seg_exvivo_gm-wm_t2_unet2d-multichannel-softseg": {
         "url": [
@@ -97,7 +92,6 @@ MODELS = {
         "framework": "ivadomed",
         "thr": 0.0,  # Only for display in argparse help (postprocessing.binarize_prediction is not present in model json)
         "default": False,
-        "cropped_image": False,
     },
     "model_7t_multiclass_gm_sc_unet2d": {
         "url": [
@@ -109,7 +103,6 @@ MODELS = {
         "framework": "ivadomed",
         "thr": 0.5,  # Only for display in argparse help (mirrors postprocessing.binarize_prediction, which is 0.5 in model json)
         "default": False,
-        "cropped_image": False,
     },
     "model_seg_epfl_t2w_lumbar_sc": {
         "url": [
@@ -120,7 +113,6 @@ MODELS = {
         "framework": "ivadomed",
         "thr": 0.5,  # Only for display in argparse help (mirrors postprocessing.binarize_prediction, which is 0.5 in model json)
         "default": False,
-        "cropped_image": False,
     },
     # NB: Handling image binarization threshold for ivadomed vs. non-ivadomed models:
     #   - All models:
@@ -135,16 +127,17 @@ MODELS = {
     #       - Models do not have a `.json` sidecar file, since they were not developed with ivadomed
     #       - So, threshold value is stored here, within the model dict
     #       - Binarization is applied within SCT code
+    # v4 model: trained on sc-crop cropped volumes.
     "model_seg_sc_contrast_agnostic_nnunet": {
         "url": [
-            "https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/releases/download/v3.0/model_contrast_agnostic_20250123.zip"
+            "https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/releases/download/v4.0/model_contrast_agnostic_20260628.zip"
         ],
         "description": "Spinal cord segmentation agnostic to MRI contrasts",
         "contrasts": ["any"],
         "framework": "nnunetv2",
         "thr": None,  # We're now using an nnUNet model, which does not need a threshold
         "default": True,
-        "cropped_image": False,
+        "cropped_image": True,
     },
     "model_seg_sci_multiclass_sc_lesion_nnunet": {
         "url": [
@@ -155,7 +148,6 @@ MODELS = {
         "framework": "nnunetv2",
         "thr": None,  # Images are already binarized when splitting into sc-seg + lesion-seg
         "default": False,
-        "cropped_image": False,
     },
     "model_seg_spinal_rootlets_nnunet": {
         "url": [
@@ -166,7 +158,6 @@ MODELS = {
         "framework": "nnunetv2",
         "thr": None,  # Multiclass rootlets model (1.0, 2.0, 3.0...) -> no thresholding
         "default": False,
-        "cropped_image": False,
     },
     "model_seg_gm_wm_mouse_nnunet": {
          "url": [
@@ -177,7 +168,6 @@ MODELS = {
          "framework": "nnunetv2",
          "thr": None,  # Images are already binarized when splitting into gm-seg and wm-seg
          "default": False,
-         "cropped_image": False,
      },
     "model_seg_sc_epi_nnunet": {
          "url": [
@@ -188,7 +178,6 @@ MODELS = {
          "framework": "nnunetv2",
          "thr": None,  # Images are already binarized
          "default": False,
-         "cropped_image": False,
      },
     "model_seg_ms_lesion_mp2rage": {
          "url": [
@@ -199,7 +188,6 @@ MODELS = {
          "framework": "nnunetv2",
          "thr": None,  # Images are already binarized
          "default": False,
-         "cropped_image": False,
      },
     "model_seg_ms_sc_lesion_bavaria_quebec_nnunet": {
         "url": [
@@ -210,7 +198,6 @@ MODELS = {
         "framework": "nnunetv2",
         "thr": None,  # Images are already binarized when splitting into sc-seg + lesion-seg
         "default": False,
-        "cropped_image": False,
     },
     "model_seg_ms_lesion": {
          "url": {
@@ -225,7 +212,7 @@ MODELS = {
          "framework": "nnunetv2",
          "thr": None,  # Images are already binarized
          "default": False,
-         "cropped_image": True,  # This model was trained on cropped images, so the input images should be cropped before inference.
+         "cropped_image": True,
      },
     "model_seg_canal": {
         "url": [
@@ -236,7 +223,6 @@ MODELS = {
         "framework": "nnunetv2",
         "thr": None,  # Images are already binarized
         "default": False,
-        "cropped_image": False,
     },
     "model_seg_spine_contrast_agnostic": {
          # NB: Rather than hardcoding the URLs ourselves, use the URLs from the totalspineseg package.
@@ -249,7 +235,6 @@ MODELS = {
          "framework": "nnunetv2",
          "thr": None,  # Images are already binarized
          "default": False,
-         "cropped_image": False,
      },
     "model_seg_gm_contrast_region_agnostic": {
         "url": [
@@ -260,7 +245,6 @@ MODELS = {
         "framework": "nnunetv2",
         "thr": None,
         "default": False,
-        "cropped_image": False,
      },
 }
 
@@ -667,6 +651,84 @@ def folder(name_model):
     return os.path.join(__deepseg_dir__, name_model)
 
 
+# sc_crop.detect() padding kwargs; see sc_crop.crop.detect() for the meaning of each face.
+CROP_PAD_KEYS = ('pad_superior', 'pad_inferior', 'pad_left', 'pad_right', 'pad_anterior', 'pad_posterior')
+
+
+def _read_source_json(path_model):
+    """
+    Read an installed model's provenance file, if present.
+
+    :param path_model: str: Path to the installed model folder.
+    :return: dict: parsed `source.json` content, or {} if missing.
+    """
+    source_path = os.path.join(path_model, "source.json")
+    if not os.path.isfile(source_path):
+        return {}
+    with open(source_path, "r") as fp:
+        return json.load(fp)
+
+
+def load_crop_metadata(name_model, path_model):
+    """
+    Determine an installed model's sc-crop padding, if it uses the sc-crop pipeline at all.
+
+    `MODELS[name_model]['cropped_image']` says whether this model is *expected* to use
+    sc-crop -- used before the model is even installed (e.g. to decide whether to expose
+    `-box-*` at all). The actual decision, and the padding, come from whether a
+    `crop_metadata.json` file is present at the root of the model's release .zip -- so both
+    travel with the actual artifact on disk, rather than being hardcoded here (which would be
+    wrong for a model installed via `-custom-url`, since that can point to a differently-trained
+    artifact). A release only ever bundles this file for a model that actually uses sc-crop, so
+    its mere presence is the signal -- there's no separate flag inside the file for this.
+
+    If the model isn't expected to use sc-crop, nothing else is checked. If it is, but no
+    `crop_metadata.json` is found:
+    - for an official install (no `-custom-url`), this means the release is missing a file it
+      should have -- raise, since silently skipping cropping would produce out-of-distribution
+      predictions with the model none the wiser.
+    - for a `-custom-url` install, the artifact may simply not be a cropped model at all (e.g.
+      an older release); treat it as not using sc-crop instead of raising.
+
+    Padding is required to be fully specified in `crop_metadata.json` whenever the model does
+    use sc-crop -- callers must not fall back to `sc_crop.detect()`'s own default padding, since
+    those defaults can change between `sc-crop` versions, silently shifting the crop a model was
+    actually trained on.
+
+    :param name_model: str: Name of model (key into MODELS).
+    :param path_model: str: Path to the installed model folder.
+    :return: dict: `sc_crop.detect()` padding kwargs, one entry per key in `CROP_PAD_KEYS`, or
+        `{}` if this model doesn't use the sc-crop pipeline. Callers should treat a non-empty
+        return as "sc-crop is active" (i.e. use `bool(load_crop_metadata(...))`).
+    """
+    if not MODELS.get(name_model, {}).get('cropped_image', False):
+        return {}
+
+    path_json = os.path.join(path_model, "crop_metadata.json")
+    if not os.path.isfile(path_json):
+        is_custom = _read_source_json(path_model).get('custom', False)
+        if not is_custom:
+            raise RuntimeError(
+                f"Model '{name_model}' should use the sc-crop pipeline, but no "
+                f"crop_metadata.json was found in its installed folder ('{path_model}'). "
+                f"The release is likely missing this file -- reinstall with `-install`, "
+                f"or check the model's release assets."
+            )
+        return {}
+
+    with open(path_json, "r") as fp:
+        crop_metadata = json.load(fp)
+
+    missing_keys = [key for key in CROP_PAD_KEYS if key not in crop_metadata]
+    if missing_keys:
+        raise RuntimeError(
+            f"Model '{name_model}'s crop_metadata.json ('{path_json}') is missing padding "
+            f"key(s) {missing_keys} -- all of {list(CROP_PAD_KEYS)} must be specified "
+            f"explicitly, so cropping doesn't silently depend on sc_crop's own defaults."
+        )
+    return {key: crop_metadata[key] for key in CROP_PAD_KEYS}
+
+
 def install_model(name_model, custom_url=None):
     """
     Download and install specified model under SCT installation dir.
@@ -740,12 +802,10 @@ def is_up_to_date(path_model):
 
     :return: bool: whether the model is up-to-date
     """
-    source_path = os.path.join(path_model, "source.json")
-    if not os.path.isfile(source_path):
+    source_dict = _read_source_json(path_model)
+    if not source_dict:
         logger.warning("Provenance file 'source.json' missing!")
         return False  # NB: This will force a reinstall
-    with open(source_path, "r") as fp:
-        source_dict = json.load(fp)
     model_name = source_dict["model_name"]
     if model_name not in MODELS:
         logger.warning(f"Model name '{model_name}' from source.json does not match model names in SCT source code.")

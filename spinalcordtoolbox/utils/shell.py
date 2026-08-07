@@ -62,6 +62,7 @@ IMTYPES_COLORMAP = {
     'softseg-2':   {'fsleyes': 'blue-lightblue',        'fslview': 'Blue-Lightblue',        'itksnap': 'gray'},
     'softseg-3':   {'fsleyes': 'brain_colours_2winter', 'fslview': 'Brain_Colours_2winter', 'itksnap': 'gray'},
     'softseg-4':   {'fsleyes': 'brain_colours_3warm',   'fslview': 'Brain_Colours_3warm',   'itksnap': 'gray'},
+    'cropbox':     {'fsleyes': None,                    'fslview': 'Red',                   'itksnap': 'seg'},
 }
 
 
@@ -152,7 +153,10 @@ def _construct_fsleyes_syntax(viewer, files, im_types, minmax, opacities):
                 # use different colormaps for each subsequent seg
                 if key in ("seg", "softseg"):
                     key = f"{key}-{next(n)}"
-                cmd = f'{cmd} -cm {IMTYPES_COLORMAP[key]["fsleyes"]}'
+                if key == 'cropbox':
+                    cmd = f'{cmd} -ot mask -mc 1 1 0 -o -w 3 -d'
+                else:
+                    cmd = f'{cmd} -cm {IMTYPES_COLORMAP[key]["fsleyes"]}'
         if minmax:
             if minmax[i]:
                 cmd = f'{cmd} -dr {" ".join(minmax[i].split(","))}'  # a b

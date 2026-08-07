@@ -77,6 +77,8 @@ def resolve_module(framework_name):
         'matplotlib-inline': (None, False),
         # The `nnunetv2-neuropoly` fork maps to the `nnunetv2` name
         'nnunetv2-neuropoly': ('nnunetv2', False),
+        # pip package `sc-crop` is imported as `sc_crop`
+        'sc-crop': ('sc_crop', False),
     }
 
     try:
