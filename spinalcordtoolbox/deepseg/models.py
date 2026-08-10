@@ -734,10 +734,30 @@ def install_model(name_model, custom_url=None):
     Download and install specified model under SCT installation dir.
 
     :param name: str: Name of model.
+    :param custom_url: list of URLs, either 1 for single-model / single-mirror case or one per fold/seed
+        (for models made up of several folds/seeds, e.g. `model_seg_ms_lesion`).
     :return: None
     """
     logger.info(f"\nINSTALLING MODEL: {name_model}")
-    url_field = MODELS[name_model]['url'] if not custom_url else [custom_url]  # [] -> mimic a list of mirror URLs
+    url_field = default_url = MODELS[name_model]['url']
+    if custom_url is not None:
+        if not isinstance(custom_url, list):
+            raise ValueError(f"Expected a list of model URLs for custom_url, got: {custom_url}")
+        # Single-fold/seed model
+        elif len(custom_url) == 1:
+            url_field = custom_url
+        # Multiple URLs passed, see how many are expected
+        else:
+            n_urls_expected = len(default_url) if isinstance(default_url, dict) else 1
+            # Multi-fold/multi-seed model: one custom URL is expected per fold, in the same order as the default URLs
+            if len(custom_url) == n_urls_expected:
+                url_field = {seed_name: [url] for seed_name, url in zip(default_url.keys(), custom_url)}
+            # Multi-fold model with the wrong number of URLs passed, or
+            # single-fold model with multiple URLs passed
+            else:
+                raise ValueError(
+                    f"Expected {n_urls_expected} custom URL(s) for model '{name_model}' "
+                    f"but got {len(custom_url)} instead.")
     # List of mirror URLs corresponding to a single model
     if isinstance(url_field, list):
         model_urls = url_field
