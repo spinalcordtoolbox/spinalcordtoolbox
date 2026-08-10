@@ -452,11 +452,19 @@ def main(argv: Sequence[str]):
     fname_vert_level = None
     normalize_pam50 = arguments.normalize_PAM50
     temp_folder = None
+    spinal_level=False
     # make sure we have a valid VertLevel file (used for aggregation + VertLevel column)
     if arguments.vertfile is not None and arguments.discfile is not None:
         parser.error("Both '-vertfile' and '-discfile' were specified. Please only specify one of these options.")
+    if arguments.vertfile is not None and arguments.spinal_level is not None:
+        parser.error("Both '-vertfile' and '-spinal_level' were specified. Please only specify one of these options.")
+    if arguments.discfile is not None and arguments.spinal_level is not None:
+        parser.error("Both '-discfile' and '-spinal_level' were specified. Please only specify one of these options.")
+    if arguments.discfile is not None and arguments.spinal_level is not None and arguments.vertfile is not None:
+        parser.error("'-discfile', '-vertfile' and '-spinal_level' were specified. Please only specify one of these options.")
     elif arguments.spinal_level is not None:
         fname_vert_level = arguments.spinal_level
+        spinal_level=True
     elif arguments.discfile is not None:
         fname_vert_level = arguments.discfile
     elif arguments.vertfile is not None:
@@ -603,14 +611,14 @@ def main(argv: Sequence[str]):
             metrics_agg[key] = aggregate_per_slice_or_level(metrics[key], slices=slices,
                                                             levels=levels,
                                                             distance_pmj=distance_pmj, perslice=perslice,
-                                                            perlevel=perlevel, fname_vert_level=fname_vert_level,
+                                                            perlevel=perlevel, fname_vert_level=fname_vert_level, spinal_level=spinal_level,
                                                             group_funcs=(('SUM', func_sum),), length_pmj=length_from_pmj)
         else:
             # For other metrics, we compute the average and standard deviation across slices
             metrics_agg[key] = aggregate_per_slice_or_level(metrics[key], slices=slices,
                                                             levels=levels,
                                                             distance_pmj=distance_pmj, perslice=perslice,
-                                                            perlevel=perlevel, fname_vert_level=fname_vert_level,
+                                                            perlevel=perlevel, fname_vert_level=fname_vert_level, spinal_level=spinal_level,
                                                             group_funcs=group_funcs, length_pmj=length_from_pmj)
     metrics_agg_merged = merge_dict(metrics_agg)
     # Normalize CSA values (MEAN(area))

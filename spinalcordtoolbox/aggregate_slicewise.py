@@ -255,7 +255,7 @@ def func_wa(data, mask=None, map_clusters=None):
 
 
 def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], distance_pmj=None, perslice=None,
-                                 perlevel=False, fname_vert_level=None, group_funcs=(('MEAN', func_wa),), map_clusters=None, length_pmj=None):
+                                 perlevel=False, fname_vert_level=None, spinal_level=False, group_funcs=(('MEAN', func_wa),), map_clusters=None, length_pmj=None):
     """
     The aggregation will be performed along the last dimension of 'metric' ndarray.
 
@@ -367,6 +367,10 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], distan
             agg_metric[slicegroup]['VertLevel'] = vertgroups[slicegroups.index(slicegroup)]
             if agg_metric[slicegroup]['VertLevel'][0] is None:
                 agg_metric[slicegroup]['VertLevel'] = None
+        if spinal_level:
+            agg_metric[slicegroup]['SpinalLevel'] = agg_metric[slicegroup]['VertLevel']
+        else:
+            agg_metric[slicegroup]['SpinalLevel'] = None
         # Loop across functions (e.g.: MEAN, STD)
         for (name, func) in group_funcs:
             try:
@@ -583,7 +587,7 @@ def save_as_csv(agg_metric, fname_out, fname_in=None, append=False):
     if not append or not os.path.isfile(fname_out):
         with open(fname_out, 'w', newline='') as csvfile:
             # spamwriter = csv.writer(csvfile, delimiter=',')
-            header = ['Timestamp', 'SCT Version', 'Filename', 'Slice (I->S)', 'VertLevel', 'DistancePMJ']
+            header = ['Timestamp', 'SCT Version', 'Filename', 'Slice (I->S)', 'VertLevel', 'SpinalLevel', 'DistancePMJ']
             first_metric_group = next(iter(agg_metric.values()), {})
             for item in list_item:
                 for key in first_metric_group.keys():
@@ -603,6 +607,7 @@ def save_as_csv(agg_metric, fname_out, fname_in=None, append=False):
             line.append(fname_in)  # file name associated with the results
             line.append(parse_num_list_inv(slicegroup))  # list all slices in slicegroup
             line.append(parse_num_list_inv(agg_metric[slicegroup]['VertLevel']))  # list vertebral levels
+            line.append(parse_num_list_inv(agg_metric[slicegroup]['SpinalLevel']))  # list spinal levels
             if agg_metric[slicegroup]['DistancePMJ'] is not None:
                 line.append(str(agg_metric[slicegroup]['DistancePMJ']))  # distance from PMJ
             else:
