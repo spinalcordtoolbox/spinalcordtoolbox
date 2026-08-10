@@ -194,13 +194,14 @@ def get_parser(subparser_to_return=None):
             action="store_true")
         seg.add_argument(
             "-custom-url",
-            nargs="+",  # NB: `nargs="+"` won't work for installing custom ensemble models, but we no longer have any
-            # NB: For multi-model tasks, provide multiple URLs. For single models, just provide one URL.
-            #     We don't mention it in the help because we no longer have any multi-model tasks.
-            #     But, if we were to re-add a multi-model task one day, we could selectively amend this message.
+            nargs="+",
+            # NB: For multi-model tasks, or for tasks whose model is made of several folds/seeds (e.g. `lesion_ms`),
+            #     provide one URL per model/fold, in order. For single models, just provide one URL.
             help=f"URL(s) pointing to the `.zip` asset for a model release. This option can be used with `-install` to "
                  f"install a specific version of a model. To use this option, navigate to the 'Releases' page of the model, "
                  f"find release you wish to install, and right-click + copy the URL of the `.zip` listed under 'Assets'.\n"
+                 f"If the model is made up of multiple folds/seeds (e.g. `lesion_ms`), provide one URL per fold, in the "
+                 f"same order as the folds are listed for the model.\n"
                  f"Example:\n"
                  f"`sct_deepseg {task_name} -install -custom-url CUSTOM_URL`\n"
                  f"`sct_deepseg {task_name} -i t2.nii.gz`")
@@ -375,10 +376,21 @@ def main(argv: Sequence[str]):
     if arguments.install:
         models_to_install = models.TASKS[arguments.task]['models']
         if arguments.custom_url:
-            if len(arguments.custom_url) != len(models_to_install):
-                parser.error(f"Expected {len(models_to_install)} URL(s) for task {arguments.install}, "
+            # Some models (e.g. `model_seg_ms_lesion`) are made up of multiple folds, each of which needs its
+            # own URL. So, figure out how many URLs are expected per model, then split up the flat list of URLs
+            # provided by the user accordingly.
+            n_urls_per_model = [
+                len(models.MODELS[name_model]['url']) if isinstance(models.MODELS[name_model]['url'], dict) else 1
+                for name_model in models_to_install
+            ]  # It it's a dict, then it's a multifold model, and we need 1 URL per fold. Else, we need 1 URL.
+            n_urls_expected = sum(n_urls_per_model)
+            if len(arguments.custom_url) != n_urls_expected:
+                parser.error(f"Expected {n_urls_expected} URL(s) for task '{arguments.task}', "
                              f"but got {len(arguments.custom_url)} URL(s) instead.")
-            for name_model, custom_url in zip(models_to_install, arguments.custom_url):
+            i = 0
+            for name_model, n_urls in zip(models_to_install, n_urls_per_model):
+                custom_url = arguments.custom_url[i:i + n_urls]
+                i += n_urls
                 models.install_model(name_model, custom_url)
         else:
             for name_model in models_to_install:
