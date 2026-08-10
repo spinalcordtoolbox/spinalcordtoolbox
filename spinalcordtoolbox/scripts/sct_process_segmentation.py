@@ -452,7 +452,7 @@ def main(argv: Sequence[str]):
     fname_vert_level = None
     normalize_pam50 = arguments.normalize_PAM50
     temp_folder = None
-    spinal_level=False
+    spinal_level = False
     # make sure we have a valid VertLevel file (used for aggregation + VertLevel column)
     if arguments.vertfile is not None and arguments.discfile is not None:
         parser.error("Both '-vertfile' and '-discfile' were specified. Please only specify one of these options.")
@@ -464,7 +464,7 @@ def main(argv: Sequence[str]):
         parser.error("'-discfile', '-vertfile' and '-spinal_level' were specified. Please only specify one of these options.")
     elif arguments.spinal_level is not None:
         fname_vert_level = arguments.spinal_level
-        spinal_level=True
+        spinal_level = True
     elif arguments.discfile is not None:
         fname_vert_level = arguments.discfile
     elif arguments.vertfile is not None:
