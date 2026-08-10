@@ -26,6 +26,7 @@ The following studies have used SCT:
 2026
 ----
 
+-  Büeler *et al.* `Navigator readouts with optimized processing improve spinal cord and gray matter segmentability in multi-echo gradient-echo imaging <https://doi.org/10.1162/IMAG.a.1320>`_, **Imaging Neurosci.** 2026
 -  Boushila *et al.* `A lightweight method for regression-based normalization of the cross-sectional area for cervical spinal cord atrophy assessment <https://doi.org/10.1007/s11517-026-03644-7>`_, **Med. Biol. Eng. Comput.** 2026
 -  Cronin *et al.* `1D Pre-Acquisition Navigator Correcting Respiratory-Induced Field Fluctuations in Multi-Echo Gradient-Echo Imaging of the Thoracic Spinal Cord <https://doi.org/10.1002/mrm.70528>`_, **Magn. Reson. Med.** 2026
 -  Farah *et al.* `Pre and postoperative perfusion MRI in degenerative cervical myelopathy suggest different patterns of pathophysiological compensatory mechanisms <https://doi.org/10.1016/j.neuchi.2026.101862>`_, **Neurochirurgie** 2026
