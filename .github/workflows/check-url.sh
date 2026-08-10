@@ -38,8 +38,8 @@ IFS='|' read -r status_code original_url effective_url < <(
 # - `thejns.org` -> returns 405 for both HEAD and GET requests, rather than the 403 it used to return (curling locally still gives 403, oddly)
 # - `sct_tutorial_data` -> partial URL, which is used in our documentation's `conf.py` file
 # - `biorxiv.org` -> throws 429 for requests to the main citation page, but allows PDFs
-if [[ "$original_url + $effective_url" =~ 'pipeline-hemis'|'\.ru'|'ieeexplore\.ieee\.org'|'thejns\.org'|'sct_tutorial_data' ]] ||
-   [[ "$original_url + $effective_url" =~ 'biorxiv\.org' && ! "$original_url + $effective_url" =~ '\.pdf' ]]; then
+if [[ "$original_url + $effective_url" =~ pipeline-hemis|\.ru|ieeexplore\.ieee\.org|thejns\.org|sct_tutorial_data ]] ||
+   [[ "$original_url + $effective_url" =~ biorxiv\.org && ! "$original_url + $effective_url" =~ \.pdf ]]; then
     echo -e "$filename: \x1B[33m⚠️ Warning - Skipping: $URL --> $LOCATION\x1B[0m"
     exit 0
 fi
