@@ -297,7 +297,9 @@ def _build_pam50_agg_metric(agg_metric_native, nz_native, label_name, method,
     }
     primary_key = method_key_map[method]
 
-    # Build 1D ndarray with per slice values from the agg_metric_native dict
+    # Convert metrics from extract_metric() form (one dict per slice, multiple metrics) to
+    # compute_shape() form (one Metric object per metric, multiple slices), since that is the
+    # form expected by interpolate_metrics()
     metric_1d = np.full(nz_native, np.nan)
     for (z,), entry in agg_metric_native.items():
         val = entry.get(primary_key)
@@ -311,8 +313,8 @@ def _build_pam50_agg_metric(agg_metric_native, nz_native, label_name, method,
         fname_vert_level
     )
 
-    # Make the interpolate_metrics output compatible with the expected input of save_as_csv()
-    # Get 1D ndarray with per-slice metric values in PAM50 space
+    # Convert interpolated metrics back into the expected form, from one Metric object per metric
+    # back into one dict per slice, since that is the form expected by save_as_csv()
     pam50_values = metrics_pam50[primary_key].data
 
     # Determine which vertebral levels are present in the native data to filter PAM50 output
