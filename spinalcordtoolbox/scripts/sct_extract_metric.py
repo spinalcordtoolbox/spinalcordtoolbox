@@ -26,8 +26,7 @@ from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, list_type,
 from spinalcordtoolbox.utils.sys import init_sct, printv, __data_dir__, set_loglevel
 from spinalcordtoolbox.utils.fs import check_file_exist, extract_fname, get_absolute_path, TempFolder
 from spinalcordtoolbox.scripts import sct_maths
-from spinalcordtoolbox.metrics_to_PAM50 import interpolate_metrics
-from spinalcordtoolbox.template import get_vertebral_level_from_slice
+from spinalcordtoolbox.metrics_to_PAM50 import build_pam50_agg_metric
 
 
 class Param:
@@ -279,74 +278,6 @@ def get_parser():
     return parser
 
 
-def _build_pam50_agg_metric(agg_metric_native, nz_native, label_name, method,
-                            fname_vert_level, fname_vert_level_PAM50):
-    """
-    Interpolate per-slice native-space metrics into PAM50 anatomical dimensions.
-    :param agg_metric_native: per-slice native-space metrics (dict output of extract_metric() with perslice=True)
-    :param nz_native: int: total z-slices in native image
-    :param label_name: str: atlas label name (for 'Label' CSV column), e.g., 'white matter'
-    :param method: str: extraction method ('wa', 'ml', 'map', 'bin', 'median', 'max')
-    :param fname_vert_level: str: native vertebral levels file (centerline-masked)
-    :param fname_vert_level_PAM50: str: PAM50 template PAM50_levels.nii.gz
-    :return: dict keyed by (z,) PAM50 slice tuples, suitable for save_as_csv()
-    """
-    method_key_map = {
-        'wa': 'WA()', 'ml': 'ML()', 'map': 'MAP()',
-        'bin': 'BIN()', 'median': 'MEDIAN()', 'max': 'MAX()'
-    }
-    primary_key = method_key_map[method]
-
-    # Convert metrics from extract_metric() form (one dict per slice, multiple metrics) to
-    # compute_shape() form (one Metric object per metric, multiple slices), since that is the
-    # form expected by interpolate_metrics()
-    metric_1d = np.full(nz_native, np.nan)
-    for (z,), entry in agg_metric_native.items():
-        val = entry.get(primary_key)
-        if val is not None:
-            metric_1d[z] = val
-
-    # Interpolate to PAM50 space; returns Dict[str, Metric] with 1D data of length z_PAM50
-    metrics_pam50 = interpolate_metrics(
-        {primary_key: Metric(data=metric_1d, label=primary_key)},
-        fname_vert_level_PAM50,
-        fname_vert_level
-    )
-
-    # Convert interpolated metrics back into the expected form, from one Metric object per metric
-    # back into one dict per slice, since that is the form expected by save_as_csv()
-    pam50_values = metrics_pam50[primary_key].data
-
-    # Determine which vertebral levels are present in the native data to filter PAM50 output
-    # (excluding 0 and values >=49, which are reserved/non-vertebral-level labels in the PAM50
-    # convention: https://spinalcordtoolbox.com/stable/user_section/tutorials/vertebral-labeling/labeling-conventions.html)
-    im_native_levels = Image(fname_vert_level).change_orientation('RPI')
-    native_levels = set(
-        int(v) for v in np.unique(im_native_levels.data) if 0 < int(v) < 49
-    )
-
-    # Map each PAM50 z-slice to a vertebral level and build the output agg_metric
-    im_pam50_levels = Image(fname_vert_level_PAM50).change_orientation('RPI')
-
-    agg_metric_pam50 = {}
-    for z_pam50, val in enumerate(pam50_values):
-        # nan means that there was no data in the native space for that slice, so we skip it in the PAM50 space as well
-        if np.isnan(val):
-            continue
-        vert_level = get_vertebral_level_from_slice(im_pam50_levels, z_pam50)
-        if vert_level is None or vert_level not in native_levels:
-            continue
-        entry = {
-            'Label': label_name,
-            'VertLevel': (vert_level,),
-            'DistancePMJ': None,    # required by save_as_csv() but not relevant for PAM50 space
-            primary_key: val,
-        }
-        agg_metric_pam50[(z_pam50,)] = entry
-
-    return agg_metric_pam50
-
-
 def main(argv: Sequence[str]):
     # Ensure that the "-list-labels" argument is always parsed last. That way, if `-f` is passed, then `-list-labels`
     # will see the new location and look there. (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3634)
@@ -509,7 +440,7 @@ def main(argv: Sequence[str]):
                                     perlevel=perlevel, fname_vert_level=fname_vert_level, method=method,
                                     label_struc=label_struc, id_label=id_label, indiv_labels_ids=indiv_labels_ids)
         if normalize_pam50:
-            agg_metric = _build_pam50_agg_metric(
+            agg_metric = build_pam50_agg_metric(
                 agg_metric_native=agg_metric,
                 nz_native=nz,
                 label_name=label_struc[id_label].name,
