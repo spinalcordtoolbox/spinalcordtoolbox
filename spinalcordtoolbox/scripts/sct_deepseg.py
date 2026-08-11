@@ -194,13 +194,14 @@ def get_parser(subparser_to_return=None):
             action="store_true")
         seg.add_argument(
             "-custom-url",
-            nargs="+",  # NB: `nargs="+"` won't work for installing custom ensemble models, but we no longer have any
-            # NB: For multi-model tasks, provide multiple URLs. For single models, just provide one URL.
-            #     We don't mention it in the help because we no longer have any multi-model tasks.
-            #     But, if we were to re-add a multi-model task one day, we could selectively amend this message.
+            nargs="+",
+            # NB: For multi-model tasks, or for tasks whose model is made of several folds/seeds (e.g. `lesion_ms`),
+            #     provide one URL per model/fold, in order. For single models, just provide one URL.
             help=f"URL(s) pointing to the `.zip` asset for a model release. This option can be used with `-install` to "
                  f"install a specific version of a model. To use this option, navigate to the 'Releases' page of the model, "
                  f"find release you wish to install, and right-click + copy the URL of the `.zip` listed under 'Assets'.\n"
+                 f"If the model is made up of multiple folds/seeds (e.g. `lesion_ms`), provide one URL per fold, in the "
+                 f"same order as the folds are listed for the model.\n"
                  f"Example:\n"
                  f"`sct_deepseg {task_name} -install -custom-url CUSTOM_URL`\n"
                  f"`sct_deepseg {task_name} -i t2.nii.gz`")
@@ -272,7 +273,7 @@ def get_parser(subparser_to_return=None):
             metavar=Metavar.file,
             help="Segmentation file to use for cropping the QC. This option is useful when you want to QC a region "
                  "that is different from the output segmentation. For example, it might be useful to provide a "
-                 "dilated cord segmentation to expand the QC field of view." + note_qc_seg
+                 f"dilated cord segmentation to expand the QC field of view.{note_qc_seg}"
         )
 
         # Add common arguments
@@ -375,10 +376,21 @@ def main(argv: Sequence[str]):
     if arguments.install:
         models_to_install = models.TASKS[arguments.task]['models']
         if arguments.custom_url:
-            if len(arguments.custom_url) != len(models_to_install):
-                parser.error(f"Expected {len(models_to_install)} URL(s) for task {arguments.install}, "
+            # Some models (e.g. `model_seg_ms_lesion`) are made up of multiple folds, each of which needs its
+            # own URL. So, figure out how many URLs are expected per model, then split up the flat list of URLs
+            # provided by the user accordingly.
+            n_urls_per_model = [
+                len(models.MODELS[name_model]['url']) if isinstance(models.MODELS[name_model]['url'], dict) else 1
+                for name_model in models_to_install
+            ]  # It it's a dict, then it's a multifold model, and we need 1 URL per fold. Else, we need 1 URL.
+            n_urls_expected = sum(n_urls_per_model)
+            if len(arguments.custom_url) != n_urls_expected:
+                parser.error(f"Expected {n_urls_expected} URL(s) for task '{arguments.task}', "
                              f"but got {len(arguments.custom_url)} URL(s) instead.")
-            for name_model, custom_url in zip(models_to_install, arguments.custom_url):
+            i = 0
+            for name_model, n_urls in zip(models_to_install, n_urls_per_model):
+                custom_url = arguments.custom_url[i:i + n_urls]
+                i += n_urls
                 models.install_model(name_model, custom_url)
         else:
             for name_model in models_to_install:
@@ -388,7 +400,7 @@ def main(argv: Sequence[str]):
     # Deal with input/output
     for file in arguments.i:
         if not os.path.isfile(file):
-            parser.error("This file does not exist: {}".format(file))
+            parser.error(f"This file does not exist: {file}")
 
     # Get pipeline model names
     name_models = models.TASKS[arguments.task]['models']
@@ -398,8 +410,8 @@ def main(argv: Sequence[str]):
         required_contrasts = models.get_required_contrasts(arguments.task)
         if len(arguments.i) != len(required_contrasts):
             parser.error(
-                "{} input files found. Please provide all required input files for the task {}, i.e. contrasts: {}."
-                .format(len(arguments.i), arguments.task, ', '.join(required_contrasts)))
+                f"{len(arguments.i)} input files found. Please provide all required input files for the task {arguments.task}, i.e. contrasts: {', '.join(required_contrasts)}."
+                )
         if len(arguments.c) != len(arguments.i):
             parser.error(f"{len(arguments.i)} input files provided, but {len(arguments.c)} contrasts passed. "
                          f"Number of contrasts should match the number of inputs.")
@@ -414,12 +426,12 @@ def main(argv: Sequence[str]):
             path_model = models.folder(name_model)
             path_models = models.find_model_folder_paths(path_model)
             if not models.is_valid(path_models):
-                printv("Model {} is not installed. Installing it now...".format(name_model))
+                printv(f"Model {name_model} is not installed. Installing it now...")
                 models.install_model(name_model)
                 path_models = models.find_model_folder_paths(path_model)  # Re-parse to find newly downloaded folders
             # Check folder version file ('{path_model}/source.json')
             elif not models.is_up_to_date(path_model):
-                printv("Model {} is out of date. Re-installing it now...".format(name_model))
+                printv(f"Model {name_model} is out of date. Re-installing it now...")
                 models.install_model(name_model)
                 path_models = models.find_model_folder_paths(path_model)  # Re-parse to find newly downloaded folders
         # If it is not, check if this is a path to a valid model
@@ -427,7 +439,7 @@ def main(argv: Sequence[str]):
             path_model = os.path.abspath(name_model)
             path_models = models.find_model_folder_paths(path_model)
             if not models.is_valid(path_models):
-                parser.error("The input model is invalid: {}".format(path_models))
+                parser.error(f"The input model is invalid: {path_models}")
 
         # Order input images (only relevant for 'tumor-edema-cavity_t1-t2')
         if arguments.task == 'tumor_edema_cavity_t1_t2':
@@ -546,7 +558,7 @@ def main(argv: Sequence[str]):
                     }
                 ]
             }
-            with open(splitext(fname_seg)[0] + ".json", "w") as fp:
+            with open(f"{splitext(fname_seg)[0]}.json", "w") as fp:
                 json.dump(sidecar_json, fp, indent=4)
 
         # Use the result of the current model as additional input of the next model

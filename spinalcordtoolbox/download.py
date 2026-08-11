@@ -30,15 +30,6 @@ logger = logging.getLogger(__name__)
 # downloaded to (relative to the repo) if a location isn't passed by
 # the user.
 DATASET_DICT = {
-    "sct_example_data": {
-        "mirrors": [
-            "https://github.com/spinalcordtoolbox/sct_example_data/releases/download/r20180525/20180525_sct_example_data.zip",
-            "https://osf.io/kjcgs/?action=download",
-        ],
-        "default_location": os.path.join(__sct_dir__, "data", "sct_example_data"),
-        "download_type": "Datasets",
-        "default": False,
-    },
     "sct_testing_data": {
         "mirrors": [
             "https://github.com/spinalcordtoolbox/sct_testing_data/releases/download/r20250506/sct_testing_data-r20250506.zip",
@@ -50,7 +41,7 @@ DATASET_DICT = {
     },
     "sct_course_data": {
         "mirrors": [
-            "https://github.com/spinalcordtoolbox/sct_tutorial_data/archive/refs/tags/SCT-Course-20251208.zip",
+            "https://github.com/spinalcordtoolbox/sct_tutorial_data/archive/refs/tags/r20260522_dev0.zip",
         ],
         "default_location": os.path.join(__sct_dir__, "data", "sct_course_data"),
         "download_type": "SCT Course Files",
@@ -191,7 +182,7 @@ def download_data(urls):
     exceptions = []
     for url in urls:
         try:
-            logger.info('Trying URL: %s' % url)
+            logger.info('Trying URL: %s', url)
             retry = Retry(total=3, backoff_factor=0.5, status_forcelist=[500, 503, 504])
             session = requests.Session()
             session.mount('https://', HTTPAdapter(max_retries=retry))
@@ -208,11 +199,11 @@ def download_data(urls):
             if not filename:
                 # this handles cases where you're loading something like an index page
                 # instead of a specific file. e.g. https://osf.io/ugscu/?action=view.
-                raise ValueError("Unable to determine target filename for URL: %s" % (url,))
+                raise ValueError(f"Unable to determine target filename for URL: {url}")
 
             tmp_path = os.path.join(tempfile.mkdtemp(), filename)
 
-            logger.info('Downloading: %s' % filename)
+            logger.info('Downloading: %s', filename)
 
             with open(tmp_path, 'wb') as tmp_file:
                 total = int(response.headers.get('content-length', 1))
@@ -228,7 +219,7 @@ def download_data(urls):
             return tmp_path, url
 
         except Exception as e:
-            logger.warning("Link download error, trying next mirror (error was: %s)" % e)
+            logger.warning("Link download error, trying next mirror (error was: %s)", e)
             exceptions.append(e)
     else:
         raise Exception('Download error', exceptions)
@@ -238,7 +229,7 @@ def unzip(compressed, dest_folder):
     """
     Extract compressed file to the dest_folder. Can handle .zip, .tar.gz.
     """
-    logger.info('Unzip data to: %s' % dest_folder)
+    logger.info('Unzip data to: %s', dest_folder)
 
     formats = {'.zip': zipfile.ZipFile,
                '.tar.gz': tarfile.open,
@@ -247,7 +238,7 @@ def unzip(compressed, dest_folder):
         if compressed.lower().endswith(format):
             break
     else:
-        raise TypeError('ERROR: The file %s is of wrong format' % (compressed,))
+        raise TypeError(f'ERROR: The file {compressed} is of wrong format')
 
     try:
         open(compressed).extractall(dest_folder)
@@ -410,19 +401,22 @@ def list_datasets():
     :rtype: str
     """
     color = {True: 'LightGreen', False: 'LightRed'}
-    table = f"{'DATASET NAME':<30s}{'TYPE':<20s}\n"
-    table += f"{'-' * 50}\n"
+    table = [
+        "DATASET NAME".ljust(30), "TYPE".ljust(20), "\n"
+        "-" * 50, "\n",
+    ]
     sorted_datasets = sorted(DATASET_DICT,
                              key=lambda k: DATASET_DICT[k]['download_type'] + k)
     for dataset_name in sorted_datasets:
-        download_type = DATASET_DICT[dataset_name]['download_type']
+        download_type = DATASET_DICT[dataset_name]['download_type'].ljust(20)
         dataset_status = dataset_name.ljust(30)
         if download_type != "Binaries":
             dataset_status = stylize(dataset_status, color[is_installed(dataset_name)])
-        table += f"{dataset_status}{download_type:<20s}\n"
+        table.extend([dataset_status, download_type, "\n"])
 
-    table += '\nLegend: {} | {} (in the $SCT_DIR/data folder)\n\n'.format(
-            stylize("installed", color[True]),
-            stylize("not installed", color[False]))
+    table.extend([
+        "\nLegend: ", stylize("installed", color[True]), " | ", stylize("not installed", color[False]),
+        " (in the $SCT_DIR/data folder)\n\n",
+    ])
 
-    return table
+    return "".join(table)

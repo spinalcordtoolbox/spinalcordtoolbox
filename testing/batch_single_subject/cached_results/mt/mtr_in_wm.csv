@@ -1,0 +1,2 @@
+Timestamp,SCT Version,Filename,Slice (I->S),VertLevel,DistancePMJ,Label,Size [vox],MAP(),STD()
+"2026-05-29 19:37:37","git-HEAD-5d5854682f20fa65c6d748efe0ded6d5cb1aab24","/home/runner/work/spinalcordtoolbox/spinalcordtoolbox/data/sct_course_data/single_subject/data/mt/mtr.nii.gz","4:17","2:5","","white matter",1012.4931358497257,54.05076215545097,5.1064363820213305

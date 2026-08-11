@@ -1,0 +1,3 @@
+Timestamp,SCT Version,Filename,Slice (I->S),VertLevel,DistancePMJ,Label,Size [vox],WA(),STD()
+"2026-05-29 19:40:11","git-HEAD-5d5854682f20fa65c6d748efe0ded6d5cb1aab24","/home/runner/work/spinalcordtoolbox/spinalcordtoolbox/data/sct_course_data/single_subject/data/dmri/dti_FA.nii.gz","2:14","","","WM left lateral corticospinal tract",76.69490831988706,0.7670982489541446,0.15835059722633105
+"2026-05-29 19:40:11","git-HEAD-5d5854682f20fa65c6d748efe0ded6d5cb1aab24","/home/runner/work/spinalcordtoolbox/spinalcordtoolbox/data/sct_course_data/single_subject/data/dmri/dti_FA.nii.gz","2:14","","","WM right lateral corticospinal tract",77.84118122417107,0.7692442212591967,0.14812183513334157

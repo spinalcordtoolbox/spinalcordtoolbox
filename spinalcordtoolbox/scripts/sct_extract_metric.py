@@ -418,7 +418,7 @@ def main(argv: Sequence[str]):
                                                                    map_cluster=[indiv_labels_ids[i_label] in map_cluster for
                                                                                 map_cluster in map_clusters].index(True))
     else:
-        raise RuntimeError(path_label + ' does not exist')
+        raise RuntimeError(f'{path_label} does not exist')
 
     # check syntax of labels asked by user
     labels_id_user = check_labels(indiv_labels_ids + combined_labels_ids, parse_num_list(labels_user))
@@ -497,7 +497,7 @@ def main(argv: Sequence[str]):
     fname_vert_level_PAM50 = os.path.join(__data_dir__, 'PAM50', 'template', 'PAM50_levels.nii.gz')
 
     for id_label in labels_id_user:
-        printv('Estimation for label: ' + label_struc[id_label].name, verbose)
+        printv(f'Estimation for label: {label_struc[id_label].name}', verbose)
 
         if normalize_pam50:
             agg_metric_native = extract_metric(
@@ -513,10 +513,9 @@ def main(argv: Sequence[str]):
                 fname_vert_level=fname_vert_level,
                 fname_vert_level_PAM50=fname_vert_level_PAM50)
         else:
-            agg_metric = extract_metric(
-                data, labels=labels, slices=slices, levels=levels, perslice=perslice,
-                perlevel=perlevel, fname_vert_level=fname_vert_level, method=method,
-                label_struc=label_struc, id_label=id_label, indiv_labels_ids=indiv_labels_ids)
+            agg_metric = extract_metric(data, labels=labels, slices=slices, levels=levels, perslice=perslice,
+                                        perlevel=perlevel, fname_vert_level=fname_vert_level, method=method,
+                                        label_struc=label_struc, id_label=id_label, indiv_labels_ids=indiv_labels_ids)
 
         save_as_csv(agg_metric, fname_output, fname_in=fname_data, append=append_csv)
         append_csv = True  # when looping across labels, need to append results in the same file

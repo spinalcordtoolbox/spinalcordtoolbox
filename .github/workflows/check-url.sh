@@ -36,8 +36,9 @@ IFS='|' read -r status_code original_url effective_url < <(
 # - `.ru` -> Russian domains, which don't play nicely with curl'ing from GitHub's servers
 # - `ieeexplore.ieee.org` -> oddly returns a "418 - I'm a teapot" error code instead of 403
 # - `thejns.org` -> returns 405 for both HEAD and GET requests, rather than the 403 it used to return (curling locally still gives 403, oddly)
-# - `%s` -> placeholder for a URL, which is used in our documentation's `conf.py` file
-if [[ "$original_url + $effective_url" =~ 'pipeline-hemis'|'.ru'|'ieeexplore.ieee.org'|'thejns.org'|'%s' ]];then
+# - `sct_tutorial_data` -> partial URL, which is used in our documentation's `conf.py` file
+# - `biorxiv.org` -> throws 429 for any requests
+if [[ "$original_url + $effective_url" =~ pipeline-hemis|\.ru|ieeexplore\.ieee\.org|thejns\.org|sct_tutorial_data|biorxiv\.org ]]; then
     echo -e "$filename: \x1B[33m⚠️ Warning - Skipping: $URL --> $LOCATION\x1B[0m"
     exit 0
 fi

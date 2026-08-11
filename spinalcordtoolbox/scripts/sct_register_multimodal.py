@@ -404,7 +404,7 @@ def main(argv: Sequence[str]):
 
     # display elapsed time
     elapsed_time = time.time() - start_time
-    printv('\nFinished! Elapsed time: ' + str(int(np.round(elapsed_time))) + 's', verbose)
+    printv(f'\nFinished! Elapsed time: {int(np.round(elapsed_time))}s', verbose)
 
     if arguments.qc is not None:
         qc2.sct_register(
