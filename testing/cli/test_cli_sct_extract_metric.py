@@ -65,8 +65,10 @@ def test_sct_extract_metric_normalize_pam50(tmp_path):
     with open(fname_out, 'r') as f:
         rows = list(csv.DictReader(f))
     assert len(rows) > 0
-    assert all(r['VertLevel'] != '' for r in rows)
-    assert all(r['WA()'] not in ('', 'nan') for r in rows)
+    assert all(r['Label'] == 'white matter' for r in rows)
+    assert all(int(r['VertLevel']) in [4, 5] for r in rows)
+    assert all((800 < int(r['Slice (I->S)']) < 870) for r in rows)
+    assert all((30 < float(r['WA()']) < 36) for r in rows)
 
 
 def test_sct_extract_metric_normalize_pam50_missing_perslice(tmp_path):
