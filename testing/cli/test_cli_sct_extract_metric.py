@@ -51,7 +51,6 @@ def test_sct_extract_metric_vertfile_doesnt_exists():
         assert e.value.code == 2
 
 
-@pytest.mark.sct_testing
 def test_sct_extract_metric_normalize_pam50(tmp_path):
     """Verify that -normalize-PAM50 outputs per-slice metrics in PAM50 space with VertLevel populated."""
     fname_out = str(tmp_path / 'quantif_mtr_pam50.csv')
