@@ -493,29 +493,25 @@ def main(argv: Sequence[str]):
 
     if normalize_pam50 and not perslice:
         parser.error("Option '-normalize-PAM50' requires option '-perslice 1'.")
+    if normalize_pam50 and perlevel:
+        parser.error("Option '-normalize-PAM50' is not compatible with option '-perlevel 1'.")
 
     fname_vert_level_PAM50 = os.path.join(__data_dir__, 'PAM50', 'template', 'PAM50_levels.nii.gz')
 
     for id_label in labels_id_user:
         printv(f'Estimation for label: {label_struc[id_label].name}', verbose)
 
+        agg_metric = extract_metric(data, labels=labels, slices=slices, levels=levels, perslice=perslice,
+                                    perlevel=perlevel, fname_vert_level=fname_vert_level, method=method,
+                                    label_struc=label_struc, id_label=id_label, indiv_labels_ids=indiv_labels_ids)
         if normalize_pam50:
-            agg_metric_native = extract_metric(
-                data, labels=labels, slices=slices, levels=levels,
-                perslice=1, perlevel=0,
-                fname_vert_level=fname_vert_level, method=method,
-                label_struc=label_struc, id_label=id_label, indiv_labels_ids=indiv_labels_ids)
             agg_metric = _build_pam50_agg_metric(
-                agg_metric_native=agg_metric_native,
+                agg_metric_native=agg_metric,
                 nz_native=nz,
                 label_name=label_struc[id_label].name,
                 method=method,
                 fname_vert_level=fname_vert_level,
                 fname_vert_level_PAM50=fname_vert_level_PAM50)
-        else:
-            agg_metric = extract_metric(data, labels=labels, slices=slices, levels=levels, perslice=perslice,
-                                        perlevel=perlevel, fname_vert_level=fname_vert_level, method=method,
-                                        label_struc=label_struc, id_label=id_label, indiv_labels_ids=indiv_labels_ids)
 
         save_as_csv(agg_metric, fname_output, fname_in=fname_data, append=append_csv)
         append_csv = True  # when looping across labels, need to append results in the same file
