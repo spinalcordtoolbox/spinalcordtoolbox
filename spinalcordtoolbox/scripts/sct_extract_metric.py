@@ -318,6 +318,8 @@ def _build_pam50_agg_metric(agg_metric_native, nz_native, label_name, method,
     pam50_values = metrics_pam50[primary_key].data
 
     # Determine which vertebral levels are present in the native data to filter PAM50 output
+    # (excluding 0 and values >=49, which are reserved/non-vertebral-level labels in the PAM50
+    # convention: https://spinalcordtoolbox.com/stable/user_section/tutorials/vertebral-labeling/labeling-conventions.html)
     im_native_levels = Image(fname_vert_level).change_orientation('RPI')
     native_levels = set(
         int(v) for v in np.unique(im_native_levels.data) if 0 < int(v) < 49
