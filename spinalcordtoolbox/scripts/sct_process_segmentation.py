@@ -454,14 +454,12 @@ def main(argv: Sequence[str]):
     temp_folder = None
     spinal_level = False
     # make sure we have a valid VertLevel file (used for aggregation + VertLevel column)
-    if arguments.vertfile is not None and arguments.discfile is not None:
-        parser.error("Both '-vertfile' and '-discfile' were specified. Please only specify one of these options.")
-    if arguments.vertfile is not None and arguments.spinal_level is not None:
-        parser.error("Both '-vertfile' and '-spinal_level' were specified. Please only specify one of these options.")
-    if arguments.discfile is not None and arguments.spinal_level is not None:
-        parser.error("Both '-discfile' and '-spinal_level' were specified. Please only specify one of these options.")
-    if arguments.discfile is not None and arguments.spinal_level is not None and arguments.vertfile is not None:
-        parser.error("'-discfile', '-vertfile' and '-spinal_level' were specified. Please only specify one of these options.")
+    vertlevel_args = ["vertfile", "discfile", "spinal-level"]
+    vertlevel_args_user = [arg for arg in vertlevel_args
+                           if getattr(arguments, arg.replace("-", "_")) is not None]
+    if len(vertlevel_args_user) > 1:
+        parser.error(f"Multiple vertlevel file arguments specified (-{', -'.join(vertlevel_args_user)}). "
+                     f"Please choose only 1 of the following {len(vertlevel_args)} arguments: -{', -'.join(vertlevel_args)}.")    
     elif arguments.spinal_level is not None:
         fname_vert_level = arguments.spinal_level
         spinal_level = True
