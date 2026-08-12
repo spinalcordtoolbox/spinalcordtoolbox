@@ -164,7 +164,9 @@ def get_parser():
             Slice range to estimate the metric from. First slice is 0. Example: `5:23`
 
             You can also select specific slices using commas. Example: `0,2,3,5,12`
-        """),
+
+            Note: When using `-normalize-PAM50`, this argument still refers to slices in the native image space, since metrics are aggregated before being interpolated into PAM50 space.
+        """),  # noqa: E501 (line too long)
     )
     optional.add_argument(
         '-perslice',
