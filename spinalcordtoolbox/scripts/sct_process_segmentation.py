@@ -459,7 +459,7 @@ def main(argv: Sequence[str]):
                            if getattr(arguments, arg.replace("-", "_")) is not None]
     if len(vertlevel_args_user) > 1:
         parser.error(f"Multiple vertlevel file arguments specified (-{', -'.join(vertlevel_args_user)}). "
-                     f"Please choose only 1 of the following {len(vertlevel_args)} arguments: -{', -'.join(vertlevel_args)}.")    
+                     f"Please choose only 1 of the following {len(vertlevel_args)} arguments: -{', -'.join(vertlevel_args)}.")
     elif arguments.spinal_level is not None:
         fname_vert_level = arguments.spinal_level
         spinal_level = True
@@ -634,8 +634,8 @@ def main(argv: Sequence[str]):
         data_subject['inter-BV_sex'] = data_subject['brain-volume']*data_subject['sex']
         for line in metrics_agg_merged.values():
             line['MEAN(area)'] = normalize_csa(line['MEAN(area)'], data_predictors, data_subject)
-
-    save_as_csv(metrics_agg_merged, file_out, fname_in=fname_segmentation, append=append)
+    level_column_name = "SpinalLevel" if spinal_level else "VertLevel"
+    save_as_csv(metrics_agg_merged, file_out, level_column_name, fname_in=fname_segmentation, append=append)
 
     # QC report (only for PMJ-based CSA)
     # TODO: refactor this with qc2. Replace arguments.qc_image with arguments.i
