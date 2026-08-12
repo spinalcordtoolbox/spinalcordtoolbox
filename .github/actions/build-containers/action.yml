@@ -157,6 +157,7 @@ runs:
         load: ${{ inputs.load == 'true' }}
         tags: neuropoly/sct:${{ inputs.tag }}
         cache-from: "type=registry,ref=neuropoly/sct:${{ inputs.cache-from-tag || steps.sct-latest-release.outputs.tag }}"
+        cache-to: "type=inline"
         build-args: ${{ inputs.build-args }}
     - name: Maximize build space for apptainer build
       shell: bash
