@@ -576,7 +576,7 @@ def main(argv: Sequence[str]):
                                          remove_temp_files=arguments.r)
     if normalize_pam50:
         if arguments.spinal_level is not None:
-            fname_vert_level_PAM50 = os.path.join(__data_dir__, 'PAM50', 'template', 'PAM50_spinal_levels.nii.gz')  # consider creating a sepearet spinal level from the rootlets
+            fname_vert_level_PAM50 = os.path.join(__data_dir__, 'PAM50', 'template', 'PAM50_spinal_levels.nii.gz')
         else:
             fname_vert_level_PAM50 = os.path.join(__data_dir__, 'PAM50', 'template', 'PAM50_levels.nii.gz')
         metrics_native_space = metrics  # Save metrics in native space to use them for HOG angle QC
