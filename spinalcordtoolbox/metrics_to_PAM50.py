@@ -89,7 +89,7 @@ def interpolate_metrics(metrics, fname_vert_levels_PAM50, fname_vert_levels):
 def build_pam50_agg_metric(agg_metric_native, nz_native, label_name, method,
                            fname_vert_level, fname_vert_level_PAM50):
     """
-    Interpolate per-slice native-space metrics into PAM50 anatomical dimensions.
+    Adapt `interpolate_metrics()` to the per-slice output of `extract_metric()`.
     :param agg_metric_native: per-slice native-space metrics (dict output of extract_metric() with perslice=True)
     :param nz_native: int: total z-slices in native image
     :param label_name: str: atlas label name (for 'Label' CSV column), e.g., 'white matter'
