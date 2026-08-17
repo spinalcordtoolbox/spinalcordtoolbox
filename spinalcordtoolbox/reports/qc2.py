@@ -1769,18 +1769,16 @@ def sct_deepseg_sagittal(
     fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
 
 
-# Per-plane orientation code and axis labels for the sc-crop bounding-box QC panels. Each code's
-# 1st letter is the axis fixed at the box center (perpendicular to the panel), 2nd letter is
-# "top", 3rd letter is "left" -- matching the SAL/RSP conventions already used by the axial and
-# sagittal reports elsewhere in this file ('Coronal' has no existing precedent, so it follows the
-# same rule with 'ASL'). Using a single shared orientation for all 3 planes doesn't work: e.g.
-# under 'SAL', only S/A/L (never their opposites) are index-0 letters on any axis, so a plane
-# needing 'P' on the left (like Sagittal, established by the existing RSP-based report) can't be
-# built from a single 'SAL'-oriented array.
+# Mimic the 'Ortho view' from FSLeyes using a single slice from each of the 3 orthogonal planes.
+# - The plane order (sagittal -> coronal -> axial) follows the default FSLeyes order
+# - The orientations below are chosen simply so that, after extracting a panel,
+#   the x/y axes of the 2D array correspond to the labels shown below.
+# - NB: FSLeyes uses radiological orientation (R -> L), but historically SCT's QC reports have used
+#   neurological orientation (L -> R), so we follow that precedent here.
 _ORTHO_QC_PLANES = {
-    'Axial':    ('SAL', ('A', 'P'), ('L', 'R')),
-    'Coronal':  ('ASL', ('S', 'I'), ('L', 'R')),
     'Sagittal': ('RSP', ('S', 'I'), ('P', 'A')),
+    'Coronal':  ('ASL', ('S', 'I'), ('L', 'R')),
+    'Axial':    ('SAL', ('A', 'P'), ('L', 'R')),
 }
 
 
