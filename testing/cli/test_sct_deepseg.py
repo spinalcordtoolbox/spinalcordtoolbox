@@ -1,7 +1,9 @@
 # pytest unit tests for spinalcordtoolbox.deepseg
 
+import json
 import os
 import shutil
+from pathlib import Path
 from unittest import mock
 
 import pytest
@@ -376,3 +378,34 @@ def test_deepseg_crop_creates_output_subdirectory(tmp_path, tmp_path_qc):
                       '-qc', tmp_path_qc])
     assert os.path.isfile(fname_out)
     assert os.path.isfile(add_suffix(fname_out, "_cropbox"))
+
+
+@pytest.mark.usefixtures(cleanup_model_dirs.__name__)
+def test_deepseg_crop_box_qc_report_entry(tmp_path, tmp_path_qc):
+    """
+    Crop-active models should get a separate QC report entry (plane='Ortho', i.e. an orthographic view) for the crop box
+    itself, distinct from the segmentation entry.
+    """
+    # `tmp_path_qc` is session-scoped (shared across tests), so record which entries already
+    # exist before this test runs its own segmentation.
+    path_json = Path(tmp_path_qc) / '_json'
+    existing = set(path_json.glob('qc_*.json')) if path_json.is_dir() else set()
+
+    fname_out = str(tmp_path / "t2_seg_deepseg.nii.gz")
+    sct_deepseg.main(['spinalcord', '-i', sct_test_path('t2', 't2.nii.gz'), '-o', fname_out,
+                      '-qc', tmp_path_qc])
+    fname_cropbox = add_suffix(fname_out, "_cropbox")
+    assert os.path.isfile(fname_cropbox)
+
+    new_entries = [json.loads(p.read_text()) for p in path_json.glob('qc_*.json') if p not in existing]
+    cropbox_entries = [e for e in new_entries if e['plane'] == 'Ortho']  # Orthographic view
+    assert len(cropbox_entries) == 1
+    entry = cropbox_entries[0]
+    assert entry['command'] == 'sc_crop'
+    # Neither field should mention 'sct_deepseg', so searching for either tool's name in the QC
+    # report reliably shows only that tool's rows -- not both, due to some shared substring.
+    assert 'sct_deepseg' not in entry['command']
+    assert 'sct_deepseg' not in entry['cmdline']
+    assert entry['cmdline'] == f"sc_crop -i {sct_test_path('t2', 't2.nii.gz')} --bbox {fname_cropbox}"
+    assert (Path(tmp_path_qc) / entry['backgroundImage']).is_file()
+    assert (Path(tmp_path_qc) / entry['overlayImage']).is_file()
