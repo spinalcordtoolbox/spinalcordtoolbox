@@ -383,7 +383,7 @@ def test_deepseg_crop_creates_output_subdirectory(tmp_path, tmp_path_qc):
 @pytest.mark.usefixtures(cleanup_model_dirs.__name__)
 def test_deepseg_crop_box_qc_report_entry(tmp_path, tmp_path_qc):
     """
-    Crop-active models should get a separate QC report entry (plane='Cropbox') for the crop box
+    Crop-active models should get a separate QC report entry (plane='Ortho', i.e. an orthographic view) for the crop box
     itself, distinct from the segmentation entry.
     """
     # `tmp_path_qc` is session-scoped (shared across tests), so record which entries already
@@ -398,7 +398,7 @@ def test_deepseg_crop_box_qc_report_entry(tmp_path, tmp_path_qc):
     assert os.path.isfile(fname_cropbox)
 
     new_entries = [json.loads(p.read_text()) for p in path_json.glob('qc_*.json') if p not in existing]
-    cropbox_entries = [e for e in new_entries if e['plane'] == 'Cropbox']
+    cropbox_entries = [e for e in new_entries if e['plane'] == 'Ortho']  # Orthographic view
     assert len(cropbox_entries) == 1
     entry = cropbox_entries[0]
     assert entry['command'] == 'sc_crop'

@@ -86,7 +86,7 @@ def create_qc_entry(
     The body of the `with` block should create these two image files.
     When the `with` block exits, the QC report is updated, with proper file synchronization.
     """
-    if plane not in ['Axial', 'Sagittal', 'Cropbox']:
+    if plane not in ['Axial', 'Sagittal', 'Ortho']:
         raise ValueError(f'Invalid plane: {plane!r}')
 
     logger.info('\n*** Generating Quality Control (QC) html report ***')
@@ -1777,22 +1777,23 @@ def sct_deepseg_sagittal(
 # under 'SAL', only S/A/L (never their opposites) are index-0 letters on any axis, so a plane
 # needing 'P' on the left (like Sagittal, established by the existing RSP-based report) can't be
 # built from a single 'SAL'-oriented array.
-_CROPBOX_QC_PLANES = {
+_ORTHO_QC_PLANES = {
     'Axial':    ('SAL', ('A', 'P'), ('L', 'R')),
     'Coronal':  ('ASL', ('S', 'I'), ('L', 'R')),
     'Sagittal': ('RSP', ('S', 'I'), ('P', 'A')),
 }
 
 
-def _extract_cropbox_panel(fname: str, plane: str, bbox_min: np.ndarray, bbox_max: np.ndarray,
-                           margin_frac: float = 0.25) -> np.ndarray:
+def _extract_ortho_panel(fname: str, plane: str, bbox_min: np.ndarray, bbox_max: np.ndarray,
+                         margin_frac: float = 0.25) -> np.ndarray:
     """
-    Extract a single 2D panel from `fname`: the slice through the box's center, reoriented for
-    `plane` (see `_CROPBOX_QC_PLANES`) and cropped to the box's own extent (`bbox_min`/`bbox_max`,
-    already in that same orientation) plus a margin, for anatomical context, instead of showing
-    the full image.
+    Extract a single 2D panel from `fname` for use in constructing an orthographic view of a 3D image.
+
+    Use the slice through the box's center, reoriented for `plane` (see `_ORTHO_QC_PLANES`) and cropped to
+    the box's own extent (`bbox_min`/`bbox_max`, already in that same orientation) plus a margin, for
+    anatomical context, instead of showing the full image.
     """
-    orientation, _, _ = _CROPBOX_QC_PLANES[plane]
+    orientation, _, _ = _ORTHO_QC_PLANES[plane]
     data = Image(fname).change_orientation(orientation).data
 
     def bounds(axis):
@@ -1842,7 +1843,7 @@ def sct_deepseg_cropbox(
         path_qc=Path(path_qc),
         command=command,
         cmdline=list2cmdline(cmdline),
-        plane='Cropbox',
+        plane='Ortho',
         dataset=dataset,
         subject=subject,
     ) as imgs_to_generate:
@@ -1857,7 +1858,7 @@ def sct_deepseg_cropbox(
         # none of which display the full, un-zoomed image either.
         images = {'input': fname_input, 'box': fname_cropbox}
         panels = {name: {} for name in images}
-        for plane, (orientation, _, _) in _CROPBOX_QC_PLANES.items():
+        for plane, (orientation, _, _) in _ORTHO_QC_PLANES.items():
             # The box's own extent (in this plane's orientation) determines both the center slice
             # and the crop window, so it's recomputed per plane rather than shared across planes.
             box_data = Image(fname_cropbox).change_orientation(orientation).data
@@ -1866,7 +1867,7 @@ def sct_deepseg_cropbox(
                 raise ValueError(f"Crop box mask '{fname_cropbox}' is empty — nothing to display.")
             bbox_min, bbox_max = coords.min(axis=0), coords.max(axis=0)
             for image_name, fname in images.items():
-                panels[image_name][plane] = _extract_cropbox_panel(fname, plane, bbox_min, bbox_max)
+                panels[image_name][plane] = _extract_ortho_panel(fname, plane, bbox_min, bbox_max)
         panels_input, panels_box = panels['input'], panels['box']
 
         # Fix the total width to TARGET_WIDTH_INCH (as every other report does) and derive a shared
@@ -1888,13 +1889,13 @@ def sct_deepseg_cropbox(
         fig.set_size_inches(TARGET_WIDTH_INCH, height_fig, forward=True)
         mpl_backend_agg.FigureCanvasAgg(fig)
         x_offset = 0.0
-        for label, (_, (top, bottom), (left, right)) in _CROPBOX_QC_PLANES.items():
+        for label, (_, (top, bottom), (left, right)) in _ORTHO_QC_PLANES.items():
             w_frac = panel_widths[label] / TARGET_WIDTH_INCH
             ax = fig.add_axes((x_offset, 0, w_frac, 1))
             panel = panels_input[label]
             # origin='upper' (row 0 at the top), matching every other report in this file --
             # correct here since row 0 of `panel` is always the panel's own "top" letter, by
-            # construction of the per-plane orientation codes in `_CROPBOX_QC_PLANES`.
+            # construction of the per-plane orientation codes in `_ORTHO_QC_PLANES`.
             ax.imshow(equalize_histogram(panel), cmap='gray', origin='upper',
                       interpolation='none', aspect=1.0)
             ax.set_title(label, fontsize=6)
@@ -1920,7 +1921,7 @@ def sct_deepseg_cropbox(
         fig.set_size_inches(TARGET_WIDTH_INCH, height_fig, forward=True)
         mpl_backend_agg.FigureCanvasAgg(fig)
         x_offset = 0.0
-        for label in _CROPBOX_QC_PLANES:
+        for label in _ORTHO_QC_PLANES:
             w_frac = panel_widths[label] / TARGET_WIDTH_INCH
             ax = fig.add_axes((x_offset, 0, w_frac, 1))
             panel = panels_box[label]
