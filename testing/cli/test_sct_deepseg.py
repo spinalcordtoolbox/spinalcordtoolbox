@@ -2,6 +2,7 @@
 
 import json
 import os
+import shlex
 import shutil
 from pathlib import Path
 from unittest import mock
@@ -406,6 +407,7 @@ def test_deepseg_crop_box_qc_report_entry(tmp_path, tmp_path_qc):
     # report reliably shows only that tool's rows -- not both, due to some shared substring.
     assert 'sct_deepseg' not in entry['command']
     assert 'sct_deepseg' not in entry['cmdline']
-    assert entry['cmdline'] == f"sc_crop -i {sct_test_path('t2', 't2.nii.gz')} --bbox {fname_cropbox}"
+    cmdline = ["sc_crop", "-i", str(sct_test_path('t2', 't2.nii.gz')), "--bbox", str(fname_cropbox)]
+    assert entry['cmdline'] == " ".join(shlex.quote(x) for x in cmdline)
     assert (Path(tmp_path_qc) / entry['backgroundImage']).is_file()
     assert (Path(tmp_path_qc) / entry['overlayImage']).is_file()
