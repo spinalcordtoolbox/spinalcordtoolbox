@@ -13,6 +13,7 @@ import logging
 import textwrap
 import shutil
 import glob
+import re
 from pathlib import Path
 from importlib.metadata import metadata
 
@@ -228,8 +229,11 @@ MODELS = {
          # NB: Rather than hardcoding the URLs ourselves, use the URLs from the totalspineseg package.
          # This means that when the totalspineseg package is updated, the URLs will be too, thus triggering
          # a re-installation of the model URLs
-         "url": dict([meta.split(', ') for meta in metadata('totalspineseg').get_all('Project-URL')
-                      if meta.startswith('Dataset')]),
+         "url": {
+             k: re.findall(r'https?://\S+', v)
+             for k, v in (meta.split(', ', 1) for meta in metadata('totalspineseg').get_all('Project-URL'))
+             if k.startswith('Dataset')
+         },
          "description": "Instance segmentation of vertebrae, intervertebral discs (IVDs), spinal cord, and spinal canal on multi-contrasts MRI scans.",
          "contrasts": ["any"],
          "framework": "nnunetv2",
@@ -729,6 +733,16 @@ def load_crop_metadata(name_model, path_model):
     return {key: crop_metadata[key] for key in CROP_PAD_KEYS}
 
 
+def is_list_of_urls(obj):
+    """Check if an object is a list of URLs."""
+    if not isinstance(obj, list):
+        return False
+    for url in obj:
+        if not isinstance(url, str) or not url.startswith("http"):
+            return False
+    return True
+
+
 def install_model(name_model, custom_url=None):
     """
     Download and install specified model under SCT installation dir.
@@ -759,17 +773,20 @@ def install_model(name_model, custom_url=None):
                     f"Expected {n_urls_expected} custom URL(s) for model '{name_model}' "
                     f"but got {len(custom_url)} instead.")
     # List of mirror URLs corresponding to a single model
-    if isinstance(url_field, list):
+    if is_list_of_urls(url_field):
         model_urls = url_field
         # Make sure to preserve the internal folder structure for nnUNet-based models (to allow re-use with 3D Slicer)
         urls_used = download.install_data(model_urls, folder(name_model), dirs_to_preserve=("nnUNetTrainer",))
     # Dict of lists, with each list corresponding to a different model seed for ensembling
     else:
-        if not isinstance(url_field, dict):
-            raise ValueError("Invalid url field in MODELS")
+        if not isinstance(url_field, dict) and all(is_list_of_urls(urls) for urls in url_field.values()):
+            raise ValueError(f"Invalid url field in MODELS: {url_field}")
         # totalspineseg handles data downloading itself, so just pass the urls along
         if name_model in TASKS['spine']['models']:
-            tss_init.init_inference(data_path=Path(folder(name_model)), quiet=False, dict_urls=url_field,
+            # Totalspineseg expects exactly 1 URL string per model (rather than a list of mirrors)
+            dict_urls = {seed_name: (urls[0] if isinstance(urls, list) else urls)
+                         for seed_name, urls in url_field.items()}
+            tss_init.init_inference(data_path=Path(folder(name_model)), quiet=False, dict_urls=dict_urls,
                                     store_export=False)  # Avoid having duplicate .zip files stored on disk
             urls_used = url_field
             # For totalspineseg, for now we need to copy its custom trainer to the `nnunetv2` folder
