@@ -1195,6 +1195,7 @@ class AnalyzeLesion:
 
             # 1. Find lesion center of mass in S-I axis (z direction)
             z_center = int(round(center_of_mass(im_lesion_data_largest_lesion)[2]))   # [2] --> S-I
+            z_range = z_range[(z_range >= 0) & (z_range < im_sc_data.shape[2])]  # clip to volume bounds
             # 2. Define analysis range (2 axial slices above and below the lesion center of mass) around lesion center
             # mass in S-I axis (z direction)
             # TODO: try other number of slices above and below the lesion center of mass
