@@ -786,8 +786,6 @@ def install_model(name_model, custom_url=None):
             # Totalspineseg expects exactly 1 URL string per model (rather than a list of mirrors)
             dict_urls = {seed_name: (urls[0] if isinstance(urls, list) else urls)
                          for seed_name, urls in url_field.items()}
-            # NB: Totalspineseg can install multiple model versions side by side. But, we use the most recent release
-            #     for inference, so we don't have to clear out the existing model files before installing new ones.
             tss_init.init_inference(data_path=Path(folder(name_model)), quiet=False, dict_urls=dict_urls,
                                     store_export=False)  # Avoid having duplicate .zip files stored on disk
             urls_used = url_field

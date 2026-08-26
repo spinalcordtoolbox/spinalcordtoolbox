@@ -448,17 +448,13 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device, ensemble=F
 def segment_totalspineseg(path_img, tmpdir, predictor, device, label_vert=False):
     # for totalspineseg, the 'predictor' is just the model path
     path_model = predictor
-    # fetch the release subdirectory from the model path (newest last)
-    release_paths = glob.glob(os.path.join(path_model, 'nnUNet', 'results', 'r*'), recursive=True)
-    installed_releases = [
-        os.path.basename(p) for p in
-        sorted(release_paths, key=os.path.getmtime)  # use the most recent release
-    ]
+    # fetch the release subdirectory from the model path
+    installed_releases = sorted(
+        os.path.basename(release_path) for release_path in
+        glob.glob(os.path.join(path_model, 'nnUNet', 'results', 'r*'), recursive=True)
+    )
     # There should always be a release subdirectory, hence the 'assert'
     assert installed_releases, f"No 'nnUNet/results/rYYYYMMDD' subdirectory found in {path_model}"
-    default_release = installed_releases[-1]
-    if len(installed_releases) > 1:
-        logger.info(f"Choosing '{default_release}' out of {installed_releases} based on last modified time")
 
     # Copy the file to the temporary directory using shutil.copyfile
     path_img_tmp = os.path.join(tmpdir, os.path.basename(path_img))
@@ -480,7 +476,7 @@ def segment_totalspineseg(path_img, tmpdir, predictor, device, label_vert=False)
         output_path=tmpdir_nnunet,
         data_path=path_model,
         # totalspineseg requires explicitly specifying the release subdirectory
-        default_release=default_release,
+        default_release=installed_releases[-1],  # use the most recent release
         # totalspineseg expects the device type, not torch.device
         device=device,
         # Try to address stalling due to the use of concurrent.futures in totalspineseg
