@@ -1197,9 +1197,10 @@ class AnalyzeLesion:
             z_center = int(round(center_of_mass(im_lesion_data_largest_lesion)[2]))   # [2] --> S-I
             # 2. Define analysis range (2 axial slices above and below the lesion center of mass) around lesion center
             # mass in S-I axis (z direction)
+            # 5 slices in total (or fewer if range extends image bounds)
             # TODO: try other number of slices above and below the lesion center of mass
-            z_range = np.arange(z_center - 2, z_center + 3)   # 5 slices in total
-            z_range = z_range[(z_range >= 0) & (z_range < im_sc_data.shape[2])]  # clip to volume bounds
+            z_range = np.arange(max(z_center - 2, 0),
+                                min(z_center + 3, im_sc_data.shape[2])) 
             # 3: For each of these slices, compute the spinal cord center of mass in the x-axis (R-L direction)
             stored_x_coordinates = [
                 center_of_mass(spinal_cord_slice)[0]  # [0] --> R-L
