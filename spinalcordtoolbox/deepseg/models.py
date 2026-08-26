@@ -733,14 +733,20 @@ def load_crop_metadata(name_model, path_model):
     return {key: crop_metadata[key] for key in CROP_PAD_KEYS}
 
 
-def is_list_of_urls(obj):
+def is_list_of_urls(url_field):
     """Check if an object is a list of URLs."""
-    if not isinstance(obj, list):
-        return False
-    for url in obj:
-        if not isinstance(url, str) or not url.startswith("http"):
-            return False
-    return True
+    return isinstance(url_field, list) and all(
+        isinstance(url, str) and url.startswith("http")
+        for url in url_field
+    )
+
+
+def is_dict_of_lists_of_urls(url_field):
+    """Check if an object is a dict of lists of URLs."""
+    return isinstance(url_field, dict) and all(
+        isinstance(k, str) and is_list_of_urls(v)
+        for k, v in url_field.items()
+    )
 
 
 def install_model(name_model, custom_url=None):
@@ -778,9 +784,7 @@ def install_model(name_model, custom_url=None):
         # Make sure to preserve the internal folder structure for nnUNet-based models (to allow re-use with 3D Slicer)
         urls_used = download.install_data(model_urls, folder(name_model), dirs_to_preserve=("nnUNetTrainer",))
     # Dict of lists, with each list corresponding to a different model seed for ensembling
-    else:
-        if not isinstance(url_field, dict) and all(is_list_of_urls(urls) for urls in url_field.values()):
-            raise ValueError(f"Invalid url field in MODELS: {url_field}")
+    elif is_dict_of_lists_of_urls(url_field):
         # totalspineseg handles data downloading itself, so just pass the urls along
         if name_model in TASKS['spine']['models']:
             # Totalspineseg expects exactly 1 URL string per model (rather than a list of mirrors)
@@ -809,6 +813,8 @@ def install_model(name_model, custom_url=None):
                 logger.info(f"\nInstalling '{seed_name}'...")
                 urls_used[seed_name] = download.install_data(model_urls, target_directory, keep=(i > 0),
                                                              dirs_to_preserve=dirs_to_preserve)
+    else:
+        raise ValueError(f"Invalid url field in MODELS: {url_field}")
     # Write `source.json` (for model provenance / updating)
     source_dict = {
         'model_name': name_model,
