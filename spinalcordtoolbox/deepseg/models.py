@@ -856,30 +856,40 @@ def is_up_to_date(path_model):
 
     expected_model_urls = MODELS[model_name]['url'].copy()
     actual_model_urls = source_dict["model_urls"]
+    # old format for cached/on-disk model may have been saved as a single string
+    if isinstance(actual_model_urls, str):
+        actual_model_urls = [actual_model_urls]
 
     if "custom" in source_dict and source_dict["custom"] is True:
         logger.warning(f"Using custom model from URL '{actual_model_urls}'.")
         return True  # Don't reinstall the model if the 'custom' flag is set (since custom URLs would fail comparison)
 
-    # Single-seed models
-    if isinstance(expected_model_urls, list) and isinstance(actual_model_urls, str):
-        if actual_model_urls not in expected_model_urls:
+    # Single-seed models (list of URLs)
+    if is_list_of_urls(expected_model_urls) and is_list_of_urls(actual_model_urls):
+        if not any(url in expected_model_urls for url in actual_model_urls):
             return False
-    # Multi-seed, ensemble models
-    elif isinstance(expected_model_urls, dict) and isinstance(actual_model_urls, dict):
-        for seed, url in actual_model_urls.items():
-            if seed not in expected_model_urls:
-                logger.warning(f"unexpected seed: {seed}")
-                return False
-            if url not in expected_model_urls.pop(seed):
-                logger.warning(f"wrong version for {seed}: {url}")
-                return False
-        if expected_model_urls:
-            logger.warning(f"missing seeds: {list(expected_model_urls.keys())}")
+
+    # Multi-seed, ensemble models (dict of lists of URLs, one list per seed)
+    elif is_dict_of_lists_of_urls(expected_model_urls) and is_dict_of_lists_of_urls(actual_model_urls):
+        expected_seeds = set(expected_model_urls)
+        actual_seeds = set(actual_model_urls)
+
+        if unexpected_seeds := actual_seeds - expected_seeds:
+            logger.warning(f"unexpected seeds: {list(unexpected_seeds)}")
             return False
+        if missing_seeds := expected_seeds - actual_seeds:
+            logger.warning(f"missing seeds: {list(missing_seeds)}")
+            return False
+
+        for seed in actual_seeds:
+            if not set(actual_model_urls[seed]).issubset(expected_model_urls[seed]):
+                logger.warning(f"wrong version for {seed}: {actual_model_urls[seed]}")
+                return False
+
     else:
         logger.warning("Mismatch between 'source.json' URL format and SCT source code URLs")
         return False
+
     logger.info(f"Model '{model_name}' is up to date (Source: {actual_model_urls})")
     return True
 
