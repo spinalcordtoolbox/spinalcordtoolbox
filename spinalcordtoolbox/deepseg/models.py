@@ -782,7 +782,7 @@ def install_model(name_model, custom_url=None):
     if is_list_of_urls(url_field):
         model_urls = url_field
         # Make sure to preserve the internal folder structure for nnUNet-based models (to allow re-use with 3D Slicer)
-        urls_used = download.install_data(model_urls, folder(name_model), dirs_to_preserve=("nnUNetTrainer",))
+        urls_used = [download.install_data(model_urls, folder(name_model), dirs_to_preserve=("nnUNetTrainer",))]
     # Dict of lists, with each list corresponding to a different model seed for ensembling
     elif is_dict_of_lists_of_urls(url_field):
         # totalspineseg handles data downloading itself, so just pass the urls along
@@ -811,8 +811,8 @@ def install_model(name_model, custom_url=None):
                     target_directory = folder(os.path.join(name_model, seed_name))
                     dirs_to_preserve = ()
                 logger.info(f"\nInstalling '{seed_name}'...")
-                urls_used[seed_name] = download.install_data(model_urls, target_directory, keep=(i > 0),
-                                                             dirs_to_preserve=dirs_to_preserve)
+                urls_used[seed_name] = [download.install_data(model_urls, target_directory, keep=(i > 0),
+                                                              dirs_to_preserve=dirs_to_preserve)]
     else:
         raise ValueError(f"Invalid url field in MODELS: {url_field}")
     # Write `source.json` (for model provenance / updating)
