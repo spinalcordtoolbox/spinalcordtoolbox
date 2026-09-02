@@ -41,22 +41,32 @@ def interpolate_metrics(metrics, fname_vert_levels_PAM50, fname_vert_levels):
     # Initialize a metrics dict filled by NaN with number of rows equal to number of slices in PAM50 template
     z = im_seg_labeled_PAM50.dim[2]  # z == number of slices
     metrics_PAM50_space_dict = {k: np.full([z], np.nan) for k in metrics.keys()}
+
     # Loop through slices per-level (excluding first and last levels), populating the metrics dict
     for level, slices_PAM50, slices_im in zip(levels, level_slices_PAM50, level_slices_im):
-        # Prepare vectors for the interpolation
+        # Set up the necessary input parameters for the interpolation function `np.interp`: x, xp, and fp.
+        #    - (xp, fp) are a set of known input->output pairs (e.g. slice1->csa1, slice2->csa2, etc.)
+        #    - (x) is a set of inputs we want (e.g. slices in the PAM50 space)
+        #    - However, since our goal is just to go from one linearly-spaced grid to another, all we need to know is:
+        #       * A. How many points are in the level in the subject space, and
+        #       * B. How many points are in the level in the PAM50 space.
+        n_subj  = len(slices_im)
+        n_pam50 = len(slices_PAM50)
+        #    - However, there is a caveat:
+        #       * For the first/last levels in the subject space, the cord seg could be cut off (i.e. partial levels)
+        #       * So, instead of using all the points from the corresponding PAM50 level, we estimate what the "partial"
+        #         PAM50 level would look like by using the mean ratio of subj:PAM50 points and multiplying.
         if level in [levels[0], levels[-1]]:
-            # Note: since the first/last levels can be incomplete, we use the mean scaling factor from all other levels
-            x_PAM50 = np.linspace(0, scale_mean * len(slices_im), int(scale_mean * len(slices_im)))
-            x = np.linspace(0, scale_mean * len(slices_im), len(slices_im))
-        else:
-            x_PAM50 = np.arange(0, len(slices_PAM50), 1)
-            x = np.linspace(0, len(slices_PAM50) - 1, len(slices_im))
+            n_pam50 = int(scale_mean * n_subj)
+        # Finally, we linearly space N points across a shared range to create both grids
+        x  = np.linspace(start=0, stop=1, num=n_pam50)
+        xp = np.linspace(start=0, stop=1, num=n_subj)
+
         # Loop through metrics
         for key, value in metrics.items():
             if key != 'length':
                 metric_values_level = value.data[slices_im]
-                # Interpolate in the same number of slices
-                metrics_inter = np.interp(x_PAM50, x, metric_values_level)
+                metrics_inter = np.interp(x=x, xp=xp, fp=metric_values_level)
                 # Scale interpolation of first and last levels (to account for incomplete levels)
                 diff = len(metrics_inter) - len(slices_PAM50)
                 if level == levels[0]:
