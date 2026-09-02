@@ -45,7 +45,7 @@ def interpolate_metrics(metrics, fname_vert_levels_PAM50, fname_vert_levels):
     # Loop through slices per-level (excluding first and last levels), populating the metrics dict
     for i, (level, slices_PAM50, slices_im) in enumerate(zip(levels, level_slices_PAM50, level_slices_im)):
         is_first = (i == 0)
-        is_last  = (i == len(levels) - 1)
+        is_last = (i == len(levels) - 1)
 
         # Set up the necessary input parameters for the interpolation function `np.interp`: x, xp, and fp.
         #    - (xp, fp) are a set of known input->output pairs (e.g. slice1->csa1, slice2->csa2, etc.)
@@ -56,7 +56,7 @@ def interpolate_metrics(metrics, fname_vert_levels_PAM50, fname_vert_levels):
         #    - The plan would be to use these values to create the two linearly-spaced grids and interpolate between:
         #       * `x  = np.linspace(start=0, stop=1, num=n_pam50)`
         #       * `xp = np.linspace(start=0, stop=1, num=n_subj)`
-        n_subj  = len(slices_im)
+        n_subj = len(slices_im)
         n_pam50 = len(slices_PAM50)
         # However, there is a caveat:
         #    - For the first/last levels in the subject space, the cord seg could be cut off (i.e. partial levels)
@@ -74,14 +74,14 @@ def interpolate_metrics(metrics, fname_vert_levels_PAM50, fname_vert_levels):
         #     - If we tried to interpolate the C3 level from the subj space to the PAM50 space, we need to include the
         #       information from the last C2 sample and the first C4 sample.
         #     - So, we inset the range by half of the spacing between points, such that the two discs fall on [0, 1]
-        spacing       = 1 / (n_subj - 1)  if n_subj > 1  else 1
+        spacing = 1 / (n_subj - 1) if n_subj > 1 else 1
         spacing_pam50 = 1 / (n_pam50 - 1) if n_pam50 > 1 else 1
         inset_subj_l = (spacing / 2 if not is_last else 0)
         inset_subj_r = (spacing / 2 if not is_first else 0)
         inset_pam50_l = (spacing_pam50 / 2 if not is_last else 0)
         inset_pam50_r = (spacing_pam50 / 2 if not is_first else 0)
-        x =  np.linspace(start=0 + inset_pam50_l, stop= 1 - inset_pam50_r, num=n_pam50)
-        xp = np.linspace(start=0 + inset_subj_l,  stop= 1 - inset_subj_r,  num=n_subj)
+        x = np.linspace(start=0 + inset_pam50_l, stop=1 - inset_pam50_r, num=n_pam50)
+        xp = np.linspace(start=0 + inset_subj_l,  stop=1 - inset_subj_r,  num=n_subj)
 
         # Loop through metrics
         for key, value in metrics.items():
