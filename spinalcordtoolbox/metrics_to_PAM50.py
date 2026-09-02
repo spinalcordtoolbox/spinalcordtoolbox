@@ -53,6 +53,9 @@ def interpolate_metrics(metrics, fname_vert_levels_PAM50, fname_vert_levels):
         #    - However, since our goal is just to go from one linearly-spaced grid to another, all we need to know is:
         #       * A. How many points are in the level in the subject space, and
         #       * B. How many points are in the level in the PAM50 space.
+        #    - The plan would be to use these values to create the two linearly-spaced grids and interpolate between:
+        #       * `x  = np.linspace(start=0, stop=1, num=n_pam50)`
+        #       * `xp = np.linspace(start=0, stop=1, num=n_subj)`
         n_subj  = len(slices_im)
         n_pam50 = len(slices_PAM50)
         # However, there is a caveat:
@@ -61,15 +64,43 @@ def interpolate_metrics(metrics, fname_vert_levels_PAM50, fname_vert_levels):
         #      "partial" PAM50 level would have by using the mean ratio of subj:PAM50 points and multiplying.
         if is_first or is_last:
             n_pam50 = int(scale_mean * n_subj)
-        # Finally, we linearly space N points across a shared range to create both grids
-        x  = np.linspace(start=0, stop=1, num=n_pam50)
-        xp = np.linspace(start=0, stop=1, num=n_subj)
+
+        # There is one other caveat here:
+        #     - Right now, we are only interpolating within a vertebral level.
+        #     - But, this neglects the space in *between* vertebral levels, e.g.:
+        #         * Level slices:    C2 C2 C2 C2 C3 C3 C3 C3 C4 C4 C4 C4
+        #                                       |           |
+        #         * Intervertebral discs:     c2-c3       c3-c4
+        #     - If we tried to interpolate the C3 level from the subj space to the PAM50 space, we need to include the
+        #       information from the last C2 sample and the first C4 sample.
+        #     - So, we inset the range by half of the spacing between points, such that the two discs fall on [0, 1]
+        spacing       = 1 / (n_subj - 1)  if n_subj > 1  else 1
+        spacing_pam50 = 1 / (n_pam50 - 1) if n_pam50 > 1 else 1
+        inset_subj_l = (spacing / 2 if not is_last else 0)
+        inset_subj_r = (spacing / 2 if not is_first else 0)
+        inset_pam50_l = (spacing_pam50 / 2 if not is_last else 0)
+        inset_pam50_r = (spacing_pam50 / 2 if not is_first else 0)
+        x =  np.linspace(start=0 + inset_pam50_l, stop= 1 - inset_pam50_r, num=n_pam50)
+        xp = np.linspace(start=0 + inset_subj_l,  stop= 1 - inset_subj_r,  num=n_subj)
 
         # Loop through metrics
         for key, value in metrics.items():
             if key != 'length':
-                metric_values_level = value.data[slices_im]
-                metrics_inter = np.interp(x=x, xp=xp, fp=metric_values_level)
+                # Get the metric values corresponding to the subject-space slices
+                fp = value.data[slices_im]
+                xp_full, fp_full = xp, fp
+
+                # Fetch 1 metric from each of the subject's adjacent levels (if they exist) and concat to either side
+                if not is_last:
+                    xp_full = np.concatenate(([-inset_subj_l], xp_full))
+                    fp_full = np.concatenate(([value.data[level_slices_im[i + 1][-1]]], fp_full))
+                if not is_first:
+                    xp_full = np.concatenate((xp_full, [1 + inset_subj_r]))
+                    fp_full = np.concatenate((fp_full, [value.data[level_slices_im[i - 1][0]]]))
+
+                # Interpolate from the full range (incl. adjacent levels) to the PAM50 range
+                metrics_inter = np.interp(x=x, xp=xp_full, fp=fp_full)
+
                 # Scale interpolation of first and last levels (to account for incomplete levels)
                 diff = len(metrics_inter) - len(slices_PAM50)
                 if is_first:
