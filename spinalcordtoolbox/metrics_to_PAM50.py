@@ -43,7 +43,10 @@ def interpolate_metrics(metrics, fname_vert_levels_PAM50, fname_vert_levels):
     metrics_PAM50_space_dict = {k: np.full([z], np.nan) for k in metrics.keys()}
 
     # Loop through slices per-level (excluding first and last levels), populating the metrics dict
-    for level, slices_PAM50, slices_im in zip(levels, level_slices_PAM50, level_slices_im):
+    for i, (level, slices_PAM50, slices_im) in enumerate(zip(levels, level_slices_PAM50, level_slices_im)):
+        is_first = (i == 0)
+        is_last  = (i == len(levels) - 1)
+
         # Set up the necessary input parameters for the interpolation function `np.interp`: x, xp, and fp.
         #    - (xp, fp) are a set of known input->output pairs (e.g. slice1->csa1, slice2->csa2, etc.)
         #    - (x) is a set of inputs we want (e.g. slices in the PAM50 space)
@@ -52,11 +55,11 @@ def interpolate_metrics(metrics, fname_vert_levels_PAM50, fname_vert_levels):
         #       * B. How many points are in the level in the PAM50 space.
         n_subj  = len(slices_im)
         n_pam50 = len(slices_PAM50)
-        #    - However, there is a caveat:
-        #       * For the first/last levels in the subject space, the cord seg could be cut off (i.e. partial levels)
-        #       * So, instead of using all the points from the corresponding PAM50 level, we estimate what the "partial"
-        #         PAM50 level would look like by using the mean ratio of subj:PAM50 points and multiplying.
-        if level in [levels[0], levels[-1]]:
+        # However, there is a caveat:
+        #    - For the first/last levels in the subject space, the cord seg could be cut off (i.e. partial levels)
+        #    - So, instead of using all the points from the corresponding PAM50 level, we estimate how many points the
+        #      "partial" PAM50 level would have by using the mean ratio of subj:PAM50 points and multiplying.
+        if is_first or is_last:
             n_pam50 = int(scale_mean * n_subj)
         # Finally, we linearly space N points across a shared range to create both grids
         x  = np.linspace(start=0, stop=1, num=n_pam50)
@@ -69,13 +72,13 @@ def interpolate_metrics(metrics, fname_vert_levels_PAM50, fname_vert_levels):
                 metrics_inter = np.interp(x=x, xp=xp, fp=metric_values_level)
                 # Scale interpolation of first and last levels (to account for incomplete levels)
                 diff = len(metrics_inter) - len(slices_PAM50)
-                if level == levels[0]:
+                if is_first:
                     # If the first level, scale from level below
                     if diff > 0:
                         metrics_inter = metrics_inter[:-diff]
                     elif diff < 0:
                         slices_PAM50 = slices_PAM50[:-abs(diff)]
-                elif level == levels[-1]:
+                elif is_last:
                     # If the last level, scale from level above
                     if diff > 0:
                         metrics_inter = metrics_inter[diff:]
