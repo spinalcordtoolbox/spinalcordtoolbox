@@ -26,6 +26,7 @@ The following studies have used SCT:
 2026
 ----
 
+-  Duan *et al.* `Adult-Lifespan Segment-Specific Normative Atlas of Cervical Spinal Cord Morphology, With Exploratory Application in Degenerative Cervical Myelopathy <https://doi.org/10.14245/ns.26520610.0305>`_, **Neurospine** 2026
 -  Büeler *et al.* `Navigator readouts with optimized processing improve spinal cord and gray matter segmentability in multi-echo gradient-echo imaging <https://doi.org/10.1162/IMAG.a.1320>`_, **Imaging Neurosci.** 2026
 -  Boushila *et al.* `A lightweight method for regression-based normalization of the cross-sectional area for cervical spinal cord atrophy assessment <https://doi.org/10.1007/s11517-026-03644-7>`_, **Med. Biol. Eng. Comput.** 2026
 -  Cronin *et al.* `1D Pre-Acquisition Navigator Correcting Respiratory-Induced Field Fluctuations in Multi-Echo Gradient-Echo Imaging of the Thoracic Spinal Cord <https://doi.org/10.1002/mrm.70528>`_, **Magn. Reson. Med.** 2026
