@@ -13,6 +13,7 @@ import logging
 import textwrap
 import shutil
 import glob
+import re
 from pathlib import Path
 from importlib.metadata import metadata
 
@@ -228,8 +229,11 @@ MODELS = {
          # NB: Rather than hardcoding the URLs ourselves, use the URLs from the totalspineseg package.
          # This means that when the totalspineseg package is updated, the URLs will be too, thus triggering
          # a re-installation of the model URLs
-         "url": dict([meta.split(', ') for meta in metadata('totalspineseg').get_all('Project-URL')
-                      if meta.startswith('Dataset')]),
+         "url": {
+             k: re.findall(r'https?://\S+', v)
+             for k, v in (meta.split(', ', 1) for meta in metadata('totalspineseg').get_all('Project-URL'))
+             if k.startswith('Dataset')
+         },
          "description": "Instance segmentation of vertebrae, intervertebral discs (IVDs), spinal cord, and spinal canal on multi-contrasts MRI scans.",
          "contrasts": ["any"],
          "framework": "nnunetv2",
@@ -729,6 +733,22 @@ def load_crop_metadata(name_model, path_model):
     return {key: crop_metadata[key] for key in CROP_PAD_KEYS}
 
 
+def is_list_of_urls(url_field):
+    """Check if an object is a list of URLs."""
+    return isinstance(url_field, list) and all(
+        isinstance(url, str) and url.startswith("http")
+        for url in url_field
+    )
+
+
+def is_dict_of_lists_of_urls(url_field):
+    """Check if an object is a dict of lists of URLs."""
+    return isinstance(url_field, dict) and all(
+        isinstance(k, str) and is_list_of_urls(v)
+        for k, v in url_field.items()
+    )
+
+
 def install_model(name_model, custom_url=None):
     """
     Download and install specified model under SCT installation dir.
@@ -759,17 +779,18 @@ def install_model(name_model, custom_url=None):
                     f"Expected {n_urls_expected} custom URL(s) for model '{name_model}' "
                     f"but got {len(custom_url)} instead.")
     # List of mirror URLs corresponding to a single model
-    if isinstance(url_field, list):
+    if is_list_of_urls(url_field):
         model_urls = url_field
         # Make sure to preserve the internal folder structure for nnUNet-based models (to allow re-use with 3D Slicer)
-        urls_used = download.install_data(model_urls, folder(name_model), dirs_to_preserve=("nnUNetTrainer",))
+        urls_used = [download.install_data(model_urls, folder(name_model), dirs_to_preserve=("nnUNetTrainer",))]
     # Dict of lists, with each list corresponding to a different model seed for ensembling
-    else:
-        if not isinstance(url_field, dict):
-            raise ValueError("Invalid url field in MODELS")
+    elif is_dict_of_lists_of_urls(url_field):
         # totalspineseg handles data downloading itself, so just pass the urls along
         if name_model in TASKS['spine']['models']:
-            tss_init.init_inference(data_path=Path(folder(name_model)), quiet=False, dict_urls=url_field,
+            # Totalspineseg expects exactly 1 URL string per model (rather than a list of mirrors)
+            dict_urls = {seed_name: (urls[0] if isinstance(urls, list) else urls)
+                         for seed_name, urls in url_field.items()}
+            tss_init.init_inference(data_path=Path(folder(name_model)), quiet=False, dict_urls=dict_urls,
                                     store_export=False)  # Avoid having duplicate .zip files stored on disk
             urls_used = url_field
             # For totalspineseg, for now we need to copy its custom trainer to the `nnunetv2` folder
@@ -790,8 +811,10 @@ def install_model(name_model, custom_url=None):
                     target_directory = folder(os.path.join(name_model, seed_name))
                     dirs_to_preserve = ()
                 logger.info(f"\nInstalling '{seed_name}'...")
-                urls_used[seed_name] = download.install_data(model_urls, target_directory, keep=(i > 0),
-                                                             dirs_to_preserve=dirs_to_preserve)
+                urls_used[seed_name] = [download.install_data(model_urls, target_directory, keep=(i > 0),
+                                                              dirs_to_preserve=dirs_to_preserve)]
+    else:
+        raise ValueError(f"Invalid url field in MODELS: {url_field}")
     # Write `source.json` (for model provenance / updating)
     source_dict = {
         'model_name': name_model,
@@ -833,30 +856,40 @@ def is_up_to_date(path_model):
 
     expected_model_urls = MODELS[model_name]['url'].copy()
     actual_model_urls = source_dict["model_urls"]
+    # old format for cached/on-disk model may have been saved as a single string
+    if isinstance(actual_model_urls, str):
+        actual_model_urls = [actual_model_urls]
 
     if "custom" in source_dict and source_dict["custom"] is True:
         logger.warning(f"Using custom model from URL '{actual_model_urls}'.")
         return True  # Don't reinstall the model if the 'custom' flag is set (since custom URLs would fail comparison)
 
-    # Single-seed models
-    if isinstance(expected_model_urls, list) and isinstance(actual_model_urls, str):
-        if actual_model_urls not in expected_model_urls:
+    # Single-seed models (list of URLs)
+    if is_list_of_urls(expected_model_urls) and is_list_of_urls(actual_model_urls):
+        if not any(url in expected_model_urls for url in actual_model_urls):
             return False
-    # Multi-seed, ensemble models
-    elif isinstance(expected_model_urls, dict) and isinstance(actual_model_urls, dict):
-        for seed, url in actual_model_urls.items():
-            if seed not in expected_model_urls:
-                logger.warning(f"unexpected seed: {seed}")
-                return False
-            if url not in expected_model_urls.pop(seed):
-                logger.warning(f"wrong version for {seed}: {url}")
-                return False
-        if expected_model_urls:
-            logger.warning(f"missing seeds: {list(expected_model_urls.keys())}")
+
+    # Multi-seed, ensemble models (dict of lists of URLs, one list per seed)
+    elif is_dict_of_lists_of_urls(expected_model_urls) and is_dict_of_lists_of_urls(actual_model_urls):
+        expected_seeds = set(expected_model_urls)
+        actual_seeds = set(actual_model_urls)
+
+        if unexpected_seeds := actual_seeds - expected_seeds:
+            logger.warning(f"unexpected seeds: {list(unexpected_seeds)}")
             return False
+        if missing_seeds := expected_seeds - actual_seeds:
+            logger.warning(f"missing seeds: {list(missing_seeds)}")
+            return False
+
+        for seed in actual_seeds:
+            if not set(actual_model_urls[seed]).issubset(expected_model_urls[seed]):
+                logger.warning(f"wrong version for {seed}: {actual_model_urls[seed]}")
+                return False
+
     else:
         logger.warning("Mismatch between 'source.json' URL format and SCT source code URLs")
         return False
+
     logger.info(f"Model '{model_name}' is up to date (Source: {actual_model_urls})")
     return True
 
