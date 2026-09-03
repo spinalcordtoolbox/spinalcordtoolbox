@@ -14,6 +14,7 @@ blosc2!=3.9.0
 dipy==1.8.0
 # Avoid 3.15.0 due to known build errors on older versions of macOS (https://github.com/h5py/h5py/issues/2720)
 h5py!=3.15.0
+huggingface_hub<1.30.0
 # PyTorch's Linux distribution is very large due to its GPU support,
 # but we only need that for training models. Our users only need CPU.
 --extra-index-url https://download.pytorch.org/whl/cpu # append_to_freeze
