@@ -17,7 +17,7 @@ h5py!=3.15.0
 # PyTorch's Linux distribution is very large due to its GPU support,
 # but we only need that for training models. Our users only need CPU.
 --extra-index-url https://download.pytorch.org/whl/cpu # append_to_freeze
-ivadomed
+ivadomed>=2.9.10
 matplotlib
 # `matplotlib-inline` is an optional package that comes with `jupyter` for use with the '%matplotlib inline' directive.
 # However, if the user runs `jupyter` from a separate environment and sets '%matplotlib inline', then SCT's
