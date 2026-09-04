@@ -251,11 +251,11 @@ def average_nnunet_predictions(pred, probabilities=False):
     return pred
 
 
-def segment_nnunet(path_img, tmpdir, predictor, device: torch.device, ensemble=False, soft_ms_lesion=False,
+def segment_nnunet(path_img, tmpdir, predictor, device: torch.device, ensemble=False, soft_seg=False,
                    crop=False, crop_pad=None, box_overrides=None, out_fname=None):
     """
     This script is used to run inference on a single subject using a nnUNetV2 model.
-    For soft segmentation of MS lesions, set `soft_ms_lesion=True`. Output segmentation will be thresholded at 1e-3.
+    For soft segmentation (of MS lesions, the spinal cord, etc.), set `soft_seg=True`.
     If `crop=True`, the spinal cord is detected and the image cropped before inference (sc-crop), then the
     prediction is restored to the full image space.
 
@@ -362,13 +362,20 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device, ensemble=F
         # The spacings also have to be reversed to match nnUNet's conventions.
         image_properties={'spacing': img_in.dim[6:3:-1]},
         # Save the probability maps if specified
-        save_or_return_probabilities=soft_ms_lesion,
+        save_or_return_probabilities=soft_seg,
         # If using a model ensemble, return the logits per fold so we can average them ourselves
         return_logits_per_fold=True if ensemble else False
     )
     # For the lesion_ms model, `pred` is a list of np.arrays, one per fold and needs averaging
     if ensemble:
-        pred = average_nnunet_predictions(pred, probabilities=soft_ms_lesion)
+        pred = average_nnunet_predictions(pred, probabilities=soft_seg)
+    elif soft_seg:
+        # `save_or_return_probabilities=True` without ensembling (i.e. a single, non-multi-fold model like
+        # the contrast-agnostic SC model) returns a `(segmentation, probabilities)` tuple. Keep the value only
+        # where the foreground probability beats the background one, matching the soft-value logic used by
+        # `average_nnunet_predictions` for per-fold lesion_ms predictions.
+        _, prob_map = pred
+        pred = np.where(prob_map[1] > prob_map[0], prob_map[1], 0)
     # Lastly, we undo the transpose to return the image from [z,y,x] (SimpleITK) to [x,y,z] (nibabel)
     pred = pred.transpose([2, 1, 0])
     img_out = img_in.copy()
@@ -389,7 +396,7 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device, ensemble=F
     if crop:
         # Soft outputs must not be truncated to `uint8`, or the probability map would
         # collapse to all-zero (since values are almost always < 1.0).
-        seg_dtype = np.float32 if soft_ms_lesion else np.uint8
+        seg_dtype = np.float32 if soft_seg else np.uint8
         seg_full = sc_crop.uncrop(nib.Nifti1Image(np.asanyarray(img_out.data).astype(seg_dtype), img_out.affine), bbox, dtype=seg_dtype)
         truncated = sc_crop.check_seg_truncation(seg_full, bbox)
         if truncated:
@@ -418,9 +425,10 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device, ensemble=F
     elif sorted(labels.keys()) == ['sc']:
         targets = ["_seg"]
         outputs = [img_out]
-    # in the case of the lesion_ms model for soft labels, we don't want the binarization done afterwards
-    elif soft_ms_lesion:
-        targets = ["_msLesionSoft"]
+    # in the case of a multiclass soft-segmentation model (e.g. lesion_ms), we don't want the per-label
+    # binarization done afterwards
+    elif soft_seg:
+        targets = ["_softseg"]
         outputs = [img_out]
     # for the other multiclass models (SCI lesion/SC, mouse GM/WM, etc.), save 1 image per label
     else:
