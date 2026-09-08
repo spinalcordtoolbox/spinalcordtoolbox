@@ -314,7 +314,7 @@ def get_parser(subparser_to_return=None):
             params.add_argument(
                 "-soft-seg",
                 action="store_true",
-                help="If set, the model will output a soft segmentation (i.e. probability map) instead of a binary "
+                help="If set, the model will output a soft segmentation (i.e. float between 0 and 1) instead of a binary "
                      "segmentation."
             )
         if task_name == 'lesion_ms':
