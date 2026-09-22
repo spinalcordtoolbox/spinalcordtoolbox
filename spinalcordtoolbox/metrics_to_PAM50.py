@@ -42,7 +42,15 @@ def interpolate_metrics(metrics, fname_vert_levels_PAM50, fname_vert_levels):
     z = im_seg_labeled_PAM50.dim[2]  # z == number of slices
     metrics_PAM50_space_dict = {k: np.full([z], np.nan) for k in metrics.keys()}
 
-    # Loop through slices per-level (excluding first and last levels), populating the metrics dict
+    # Loop through slices per-level populating the metrics dict
+    # NB: The iteration direction is a bit unintuitive here: we iterate from superior to inferior
+    #                          I    <--         <--    S
+    #                     "last level"           "first level"
+    #  * Iteration:          i==2        i==1        i==0
+    #  * Slice numbers:   00 01 02 03|04 05 06 07|08 09 10 11
+    #  * Level slices:    C4 C4 C4 C4|C3 C3 C3 C3|C2 C2 C2 C2
+    #                                |           |
+    #  * Intervertebral discs:     c3-c4       c2-c3
     for i, (level, slices_PAM50, slices_im) in enumerate(zip(levels, level_slices_PAM50, level_slices_im)):
         is_first = (i == 0)
         is_last = (i == len(levels) - 1)
@@ -68,9 +76,10 @@ def interpolate_metrics(metrics, fname_vert_levels_PAM50, fname_vert_levels):
         # There is one other caveat here:
         #     - Right now, we are only interpolating within a vertebral level.
         #     - But, this neglects the space in *between* vertebral levels, e.g.:
-        #         * Level slices:    C2 C2 C2 C2 C3 C3 C3 C3 C4 C4 C4 C4
+        #         * Level slices:    C4 C4 C4 C4 C3 C3 C3 C3 C2 C2 C2 C2
         #                                       |           |
-        #         * Intervertebral discs:     c2-c3       c3-c4
+        #         * Intervertebral discs:     c3-c4       c2-c3
+        #         * Interpolation range:       [0           1]
         #     - If we tried to interpolate the C3 level from the subj space to the PAM50 space, we need to include the
         #       information from the last C2 sample and the first C4 sample.
         #     - So, we inset the range by half of the spacing between points, such that the two discs fall on [0, 1]
