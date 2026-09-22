@@ -76,8 +76,8 @@ def interpolate_metrics(metrics, fname_vert_levels_PAM50, fname_vert_levels):
         #     - So, we inset the range by half of the spacing between points, such that the two discs fall on [0, 1]
         n_spaces_subj = (0 if is_last else 1/2) + (n_subj - 1) + (0 if is_first else 1/2)
         n_spaces_pam50 = (0 if is_last else 1/2) + (n_pam50 - 1) + (0 if is_first else 1/2)
-        spacing = (1 / n_spaces_subj) if n_spaces_subj > 1 else 1
-        spacing_pam50 = (1 / n_spaces_pam50) if n_spaces_pam50 > 1 else 1
+        spacing = (1 / n_spaces_subj) if n_spaces_subj > 0 else 1
+        spacing_pam50 = (1 / n_spaces_pam50) if n_spaces_pam50 > 0 else 1
         inset_subj_l = (spacing / 2 if not is_last else 0)
         inset_subj_r = (spacing / 2 if not is_first else 0)
         inset_pam50_l = (spacing_pam50 / 2 if not is_last else 0)
