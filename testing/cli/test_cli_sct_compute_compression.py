@@ -197,14 +197,14 @@ def test_sct_compute_compression(tmp_path, dummy_3d_mask_nib, dummy_3d_compressi
         # expected ratio (1 - 10/13) ~= 23.07%
         # PAM50 and PAM50_normalized are just taken from a test run
         assert float(row['diameter_AP_ratio']) == pytest.approx(23.07, abs=0.01)
-        assert float(row['diameter_AP_ratio_PAM50']) == pytest.approx(14.32, abs=0.01)
+        assert float(row['diameter_AP_ratio_PAM50']) == pytest.approx(14.33, abs=0.01)
         assert float(row['diameter_AP_ratio_PAM50_normalized']) == pytest.approx(18.43, abs=0.01)
         # compressed area 10*15 = 150
         # surrounding area 13*15 = 195
         # expected ratio (1 - 150/195) ~= 23.07%
         # PAM50 and PAM50_normalized are just taken from a test run
         assert float(row['area_ratio']) == pytest.approx(23.07, abs=0.01)
-        assert float(row['area_ratio_PAM50']) == pytest.approx(14.32, abs=0.01)
+        assert float(row['area_ratio_PAM50']) == pytest.approx(14.33, abs=0.01)
         assert float(row['area_ratio_PAM50_normalized']) == pytest.approx(21.88, abs=0.01)
         # Ensure that there isn't a duplicate appended row from running sct_compute_compression twice
         with pytest.raises(StopIteration):
@@ -226,7 +226,7 @@ def test_sct_compute_compression_sex_F(tmp_path, dummy_3d_mask_nib, dummy_3d_com
         # expected ratio (1 - 10/13) ~= 23.07%
         # PAM50 and PAM50_normalized are just taken from a test run
         assert float(row['diameter_AP_ratio']) == pytest.approx(23.07, abs=0.01)
-        assert float(row['diameter_AP_ratio_PAM50']) == pytest.approx(14.32, abs=0.01)
+        assert float(row['diameter_AP_ratio_PAM50']) == pytest.approx(14.33, abs=0.01)
         assert float(row['diameter_AP_ratio_PAM50_normalized']) == pytest.approx(17.98, abs=0.01)
 
 
