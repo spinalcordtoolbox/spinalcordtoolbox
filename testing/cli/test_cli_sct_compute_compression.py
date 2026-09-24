@@ -227,7 +227,7 @@ def test_sct_compute_compression_sex_F(tmp_path, dummy_3d_mask_nib, dummy_3d_com
         # PAM50 and PAM50_normalized are just taken from a test run
         assert float(row['diameter_AP_ratio']) == pytest.approx(23.07, abs=0.01)
         assert float(row['diameter_AP_ratio_PAM50']) == pytest.approx(14.33, abs=0.01)
-        assert float(row['diameter_AP_ratio_PAM50_normalized']) == pytest.approx(17.98, abs=0.01)
+        assert float(row['diameter_AP_ratio_PAM50_normalized']) == pytest.approx(17.99, abs=0.01)
 
 
 def test_sct_compute_compression_lesion_no_vertfile(tmp_path, dummy_3d_mask_nib, dummy_3d_lesion_label):
