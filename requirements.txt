@@ -43,7 +43,9 @@ nilearn
 # 2.6+ is now compatible with older versions of torch (>=2.1.2), so we can use the latest version.
 nnunetv2-neuropoly
 # sc-crop: SC detection+cropping for models with "cropped_image": True in MODELS (e.g. contrast-agnostic spinalcord).
-sc-crop>=0.12.1
+# TODO: switch back to a PyPI release once https://github.com/ivadomed/sc-crop/pull/5 (fixing uncrop() truncating
+#       soft/float predictions to uint8) is merged and released.
+sc-crop @ git+https://github.com/ivadomed/sc-crop.git@plb/fix_soft_seg_dtype_issue
 # SCT is compatible, however the upgrade to numpy==2.0.0 broke *many* upstream packages. Let's try again later. See https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4535
 numpy<2
 # This is a sub-package of `numpy` whose update broke compatibility with older versions of `numpy`. 
