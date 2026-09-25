@@ -26,6 +26,9 @@ The following studies have used SCT:
 2026
 ----
 
+-  Raju *et al.* `Spinal cord diffusion tensor imaging predicts balance in degenerative cervical myelopathy <https://doi.org/10.3389/fnins.2026.1911141>`_, **Front. Neurosci.** 2026
+-  Adl *et al.* `Normative Reference Values and Age-Related Variation in Advanced Diffusion MRI of the Pediatric Spinal Cord: DTI, DKI, and NODDI Metrics across Cervical and Thoracic Levels Using Hybrid Diffusion Imaging <https://doi.org/10.3174/ajnr.A9633>`_, **AJNR Am. J. Neuroradiol.** 2026
+-  Sun *et al.* `Genetic architecture of MRI-derived cervical spinal cord morphology reveals sensory-motor axis and systemic disease associations <https://doi.org/10.1038/s41467-026-77419-x>`_, **Nat. Commun.** 2026
 -  Duan *et al.* `Adult-Lifespan Segment-Specific Normative Atlas of Cervical Spinal Cord Morphology, With Exploratory Application in Degenerative Cervical Myelopathy <https://doi.org/10.14245/ns.26520610.0305>`_, **Neurospine** 2026
 -  Büeler *et al.* `Navigator readouts with optimized processing improve spinal cord and gray matter segmentability in multi-echo gradient-echo imaging <https://doi.org/10.1162/IMAG.a.1320>`_, **Imaging Neurosci.** 2026
 -  Boushila *et al.* `A lightweight method for regression-based normalization of the cross-sectional area for cervical spinal cord atrophy assessment <https://doi.org/10.1007/s11517-026-03644-7>`_, **Med. Biol. Eng. Comput.** 2026
