@@ -424,7 +424,7 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device, ensemble=F
         targets = ["_seg"]
         outputs = [img_out]
     # in the case of the lesion_ms model for soft labels, we don't want the binarization done afterwards
-    elif soft_ms_lesion:
+    elif soft_ms_lesion or average_per_fold:
         targets = ["_msLesionSoft"]
         outputs = [img_out]
     # for the other multiclass models (SCI lesion/SC, mouse GM/WM, etc.), save 1 image per label
