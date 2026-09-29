@@ -223,7 +223,7 @@ def segment_monai(path_img, tmpdir, predictor, device: torch.device):
     return [fname_out], [target]
 
 
-def average_nnunet_predictions(pred, probabilities=False):
+def average_nnunet_predictions(pred, probabilities=False, average_per_fold=False):
     """
     Compute an average prediction for multi-fold output of `nnunetv2`.
 
@@ -242,6 +242,11 @@ def average_nnunet_predictions(pred, probabilities=False):
         # Divide by number of folds to get the average
         pred = ensembled_pred / len(prob_maps)
         # We do not binarize the output, since we want the soft segmentation
+    if average_per_fold:
+        # We sum the elements of the list to get the ensembled output
+        ensembled_pred = np.sum(pred, axis=0)
+        # Divide by number of folds to get the average
+        pred = ensembled_pred / len(pred)
     else:
         # We sum the elements of the list to get the ensembled output
         ensembled_pred = np.sum(pred, axis=0)
@@ -253,7 +258,7 @@ def average_nnunet_predictions(pred, probabilities=False):
 
 
 def segment_nnunet(path_img, tmpdir, predictor, device: torch.device, ensemble=False, soft_ms_lesion=False,
-                   crop=False, crop_pad=None, box_overrides=None, out_fname=None):
+                   crop=False, crop_pad=None, box_overrides=None, out_fname=None, average_per_fold=False):
     """
     This script is used to run inference on a single subject using a nnUNetV2 model.
     For soft segmentation of MS lesions, set `soft_ms_lesion=True`. Output segmentation will be thresholded at 1e-3.
@@ -369,7 +374,7 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device, ensemble=F
     )
     # For the lesion_ms model, `pred` is a list of np.arrays, one per fold and needs averaging
     if ensemble:
-        pred = average_nnunet_predictions(pred, probabilities=soft_ms_lesion)
+        pred = average_nnunet_predictions(pred, probabilities=soft_ms_lesion, average_per_fold=average_per_fold)
     # Lastly, we undo the transpose to return the image from [z,y,x] (SimpleITK) to [x,y,z] (nibabel)
     pred = pred.transpose([2, 1, 0])
     img_out = img_in.copy()

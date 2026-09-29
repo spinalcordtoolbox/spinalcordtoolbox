@@ -323,6 +323,12 @@ def get_parser(subparser_to_return=None):
                 action="store_true",
                 help="If set, only 1 fold will be used for inference instead of the full 5-fold ensemble. This will speed up inference, but may reduce segmentation quality."
             )
+            # Add new argument for fold average
+            params.add_argument(
+                "-average-per-fold",
+                action="store_true",
+                help="If set, it returns the average of the folds' binary predictions."
+            )
 
         # -box-* lets the user override specific crop box face positions (voxel indices), for
         # tasks whose model has "cropped_image": True (see models.load_crop_metadata()).
