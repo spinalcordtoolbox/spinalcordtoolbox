@@ -74,7 +74,7 @@ def create_qc_entry(
     plane: str,
     dataset: Optional[str],
     subject: Optional[str],
-    contrast: Optional[str] = None,
+    contrast: Optional[str],
     image_extension: str = 'png',
 ) -> AbstractContextManager[dict[str, Path]]:
     """
@@ -609,9 +609,9 @@ def sct_register(
     command: str,
     argv: Sequence[str],
     path_qc: str,
-    dataset: str | None,
-    subject: str | None,
-    contrast: str | None = None,
+    dataset: Optional[str],
+    subject: Optional[str],
+    contrast: Optional[str],
     p_resample: float | None = 0.6,
 ):
     """
@@ -657,9 +657,9 @@ def sct_fmri_compute_tsnr(
     fname_seg: str,
     argv: Sequence[str],
     path_qc: str,
-    dataset: str | None,
-    subject: str | None,
-    contrast: str | None = None,
+    dataset: Optional[str],
+    subject: Optional[str],
+    contrast: Optional[str],
     p_resample: float | None = 0.6,
 ):
     """
@@ -735,12 +735,12 @@ def sct_label_vertebrae(
     command: str,
     argv: Sequence[str],
     path_qc: str,
-    dataset: str | None,
-    subject: str | None,
+    dataset: Optional[str],
+    subject: Optional[str],
+    contrast: Optional[str],
     path_custom_labels: str,
-    contrast: str | None = None,
     draw_text: bool = True,
-    p_resample: float | None = None,
+    p_resample: Optional[float] = None,
     offset_text: bool = True,
 ):
     """
@@ -864,10 +864,10 @@ def sct_label_utils(
     command: str,
     argv: Sequence[str],
     path_qc: str,
-    dataset: str | None,
-    subject: str | None,
-    contrast: str | None = None,
-    p_resample: float | None = None,
+    dataset: Optional[str],
+    subject: Optional[str],
+    contrast: Optional[str],
+    p_resample: Optional[float] = None,
 ):
     """
     Generate a QC report for sct_label_utils.
@@ -1004,6 +1004,7 @@ def sct_register_multimodal(
     path_qc: str,
     dataset: Optional[str],
     subject: Optional[str],
+    contrast: Optional[str],
 ):
     """
     Generate a QC report for sct_register_multimodal.
@@ -1021,6 +1022,7 @@ def sct_register_multimodal(
         plane='Axial',
         dataset=dataset,
         subject=subject,
+        contrast=contrast,
     ) as imgs_to_generate:
 
         # Resample images slice by slice
@@ -1092,6 +1094,7 @@ def sct_process_segmentation(
         path_qc: str,
         dataset: Optional[str],
         subject: Optional[str],
+        contrast: Optional[str],
         angle_qc: Optional[bool] = False,
         angle_type: Optional[str] = 'angle_hog',
 ):
@@ -1192,6 +1195,7 @@ def sct_process_segmentation(
             plane='Axial',
             dataset=dataset,
             subject=subject,
+            contrast=contrast,
         ) as imgs_to_generate:
             # Generate the first QC report image - background image
             fig = mpl_figure.Figure()
@@ -1390,9 +1394,9 @@ def sct_deepseg(
     path_qc: str,
     dataset: Optional[str],
     subject: Optional[str],
+    contrast: Optional[str],
     plane: Optional[str],
     fname_qc_seg: Optional[str],
-    contrast: Optional[str] = None,
 ):
     """
     Generate a QC report for sct_deepseg, based on which task was used.
@@ -1826,6 +1830,7 @@ def sct_deepseg_cropbox(
     path_qc: str,
     dataset: Optional[str],
     subject: Optional[str],
+    contrast: Optional[str],
 ):
     """
     Generate a QC report entry for the sc-crop bounding box: one slice per orthogonal plane
@@ -1856,6 +1861,7 @@ def sct_deepseg_cropbox(
         plane='Ortho',
         dataset=dataset,
         subject=subject,
+        contrast=contrast,
     ) as imgs_to_generate:
         # Extract every panel up front so widths can be derived from their actual aspect ratio
         # (width / height) instead of splitting the figure into equal-width columns: with a fixed
@@ -1963,6 +1969,7 @@ def sct_analyze_lesion(
     path_qc: str,
     dataset: Optional[str],
     subject: Optional[str],
+    contrast: Optional[str],
 ):
     """
     Generate a QC report for sct_analyze_lesion, specifically highlighting the tissue bridge widths.
@@ -1980,6 +1987,7 @@ def sct_analyze_lesion(
         plane='Sagittal',
         dataset=dataset,
         subject=subject,
+        contrast=contrast,
     ) as imgs_to_generate:
         # Load the spinal cord segmentation mask
         im_sc = Image(fname_sc)
