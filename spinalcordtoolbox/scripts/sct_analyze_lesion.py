@@ -128,6 +128,11 @@ def get_parser():
         metavar=Metavar.str,
         help="If provided, this string will be mentioned in the QC report as the subject the process was run on."
     )
+    optional.add_argument(
+        '-qc-contrast',
+        metavar=Metavar.str,
+        help="If provided, this string will be mentioned in the QC report as the contrast the process was run on."
+    )
 
     # Arguments which implement shared functionality
     parser.add_common_args()
@@ -1473,6 +1478,7 @@ def main(argv: Sequence[str]):
                 path_qc=arguments.qc,
                 dataset=arguments.qc_dataset,
                 subject=arguments.qc_subject,
+                contrast=arguments.qc_contrast,
             )
         else:
             printv("WARNING: Spinal cord segmentation not provided, skipping QC. "
