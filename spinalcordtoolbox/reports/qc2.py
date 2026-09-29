@@ -1151,6 +1151,7 @@ def sct_process_segmentation(
         plane='Axial',
         dataset=dataset,
         subject=subject,
+        contrast=contrast,
     ) as imgs_to_generate:
         # Generate the first QC report image - background image
         fig = mpl_figure.Figure()
