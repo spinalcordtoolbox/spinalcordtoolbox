@@ -389,7 +389,8 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device, ensemble=F
     # sc-crop: restore the prediction to the full image space.
     if crop:
         # Here we uncrop th
-        seg_full = sc_crop_sct.uncrop(nib.Nifti1Image(np.asanyarray(img_out.data), img_out.affine), bbox)
+        seg_dtype = np.float32 if soft_ms_lesion else np.uint8
+        seg_full = sc_crop_sct.uncrop(nib.Nifti1Image(np.asanyarray(img_out.data).astype(seg_dtype), img_out.affine), bbox)
         truncated = sc_crop.check_seg_truncation(seg_full, bbox)
         if truncated:
             suggestions = "  ".join(f"-box-{key} <value>" for key in truncated)
