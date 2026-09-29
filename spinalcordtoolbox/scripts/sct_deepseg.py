@@ -679,6 +679,7 @@ def main(argv: Sequence[str]):
                     path_qc=os.path.abspath(arguments.qc),
                     dataset=arguments.qc_dataset,
                     subject=arguments.qc_subject,
+                    contrast=arguments.qc_contrast,
                 )
 
     images = [arguments.i[0]]
