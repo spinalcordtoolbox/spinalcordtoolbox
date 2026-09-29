@@ -527,8 +527,8 @@ def main(argv: Sequence[str]):
             extra_inference_kwargs = {
                 arg_name: getattr(arguments, arg_name)
                 # "label_vert" -> used only by spine
-                # "soft_ms_lesion" -> used only by lesion_ms
-                for arg_name in ["label_vert", "soft_ms_lesion"]
+                # "soft_ms_lesion", "average_per_fold" -> used only by lesion_ms
+                for arg_name in ["label_vert", "soft_ms_lesion", "average_per_fold"]
                 if hasattr(arguments, arg_name)
             }
             # The MS lesion model is multifold, which requires turning on the "ensemble averaging" behavior

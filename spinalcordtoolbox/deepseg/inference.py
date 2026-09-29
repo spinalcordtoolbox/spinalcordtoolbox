@@ -242,11 +242,12 @@ def average_nnunet_predictions(pred, probabilities=False, average_per_fold=False
         # Divide by number of folds to get the average
         pred = ensembled_pred / len(prob_maps)
         # We do not binarize the output, since we want the soft segmentation
-    if average_per_fold:
+    elif average_per_fold:
         # We sum the elements of the list to get the ensembled output
         ensembled_pred = np.sum(pred, axis=0)
         # Divide by number of folds to get the average
         pred = ensembled_pred / len(pred)
+        # We do not binarize the output, since we want the average of the per-fold binary predictions
     else:
         # We sum the elements of the list to get the ensembled output
         ensembled_pred = np.sum(pred, axis=0)
@@ -393,8 +394,8 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device, ensemble=F
 
     # sc-crop: restore the prediction to the full image space.
     if crop:
-        # Here we uncrop th
-        seg_dtype = np.float32 if soft_ms_lesion else np.uint8
+        # Keep soft outputs as float, otherwise the uint8 cast would floor fractional values to 0
+        seg_dtype = np.float32 if (soft_ms_lesion or average_per_fold) else np.uint8
         seg_full = sc_crop_sct.uncrop(nib.Nifti1Image(np.asanyarray(img_out.data).astype(seg_dtype), img_out.affine), bbox)
         truncated = sc_crop.check_seg_truncation(seg_full, bbox)
         if truncated:
