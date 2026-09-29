@@ -28,6 +28,7 @@ from spinalcordtoolbox.deepseg_.postprocessing import keep_largest_object, fill_
 import spinalcordtoolbox.deepseg.models as ds_models
 import spinalcordtoolbox.deepseg.monai as ds_monai
 import spinalcordtoolbox.deepseg.nnunet as ds_nnunet
+import spinalcordtoolbox.deepseg.sc_crop_sct as sc_crop_sct 
 
 from spinalcordtoolbox.utils.sys import LazyLoader, stylize
 
@@ -387,7 +388,8 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device, ensemble=F
 
     # sc-crop: restore the prediction to the full image space.
     if crop:
-        seg_full = sc_crop.uncrop(nib.Nifti1Image(np.asanyarray(img_out.data).astype(np.uint8), img_out.affine), bbox)
+        # Here we uncrop th
+        seg_full = sc_crop_sct.uncrop(nib.Nifti1Image(np.asanyarray(img_out.data), img_out.affine), bbox)
         truncated = sc_crop.check_seg_truncation(seg_full, bbox)
         if truncated:
             suggestions = "  ".join(f"-box-{key} <value>" for key in truncated)
