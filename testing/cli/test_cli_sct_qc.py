@@ -18,7 +18,8 @@ def test_sct_qc_no_checks():
     sct_qc.main(argv=['-i', sct_test_path('t2', 't2.nii.gz'),
                       '-s', sct_test_path('t2', 't2_seg-manual.nii.gz'),
                       '-p', 'sct_deepseg_sc',
-                      '-qc-dataset', 'sct_testing_data', '-qc-subject', 'dummy'])
+                      '-qc-dataset', 'sct_testing_data', '-qc-subject', 'dummy',
+                      '-qc-contrast', 't2'])
 
 
 # custom label to str mapping for totalspineseg
@@ -98,7 +99,8 @@ def test_sct_qc_totalspineseg_custom_labels(custom_labels, err_msg, totalspinese
             '-p', 'sct_label_vertebrae',
             '-qc', tmp_path_qc,
             '-qc-dataset', 'sct_testing_data',
-            '-qc-subject', 'dummy']
+            '-qc-subject', 'dummy',
+            '-qc-contrast', 't2']
 
     # add the custom labels as an argument (if provided)
     if custom_labels:

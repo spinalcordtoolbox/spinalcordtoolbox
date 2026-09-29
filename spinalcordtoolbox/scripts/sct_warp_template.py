@@ -206,6 +206,11 @@ def get_parser():
         help="If provided, this string will be mentioned in the QC report as the subject the process was run on."
     )
     optional.add_argument(
+        '-qc-contrast',
+        metavar=Metavar.str,
+        help="If provided, this string will be mentioned in the QC report as the contrast the process was run on."
+    )
+    optional.add_argument(
         '-histo',
         metavar=Metavar.int,
         type=int,
@@ -251,6 +256,7 @@ def main(argv: Sequence[str]):
     path_qc = arguments.qc
     qc_dataset = arguments.qc_dataset
     qc_subject = arguments.qc_subject
+    qc_contrast = arguments.qc_contrast
     folder_template = param.folder_template
     folder_atlas = param.folder_atlas
     folder_histo = param.folder_histo
@@ -270,7 +276,7 @@ def main(argv: Sequence[str]):
                 w.folder_out, w.folder_template, spinalcordtoolbox.metadata.get_file_label(path_template, id_label=4))  # label = 'white matter mask (probabilistic)'
             generate_qc(
                 fname_src, fname_seg=fname_wm, args=argv, path_qc=os.path.abspath(path_qc), dataset=qc_dataset,
-                subject=qc_subject, process='sct_warp_template')
+                subject=qc_subject, contrast=qc_contrast, process='sct_warp_template')
         # If label is missing, get_file_label() throws a RuntimeError
         except RuntimeError:
             printv("QC not generated since expected labels are missing from template", type="warning")

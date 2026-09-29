@@ -90,6 +90,12 @@ def get_parser():
         help='If provided, this string will be mentioned in the QC report as the subject the process '
              'was run on')
     optional.add_argument(
+        '-qc-contrast',
+        metavar='CONTRAST',
+        help='If provided, this string will be mentioned in the QC report as the contrast the process '
+             'was run on. If not provided, this will fall back to the name of the parent directory of '
+             '`-i` (which may not be meaningful for all directory layouts).')
+    optional.add_argument(
         '-fps',
         metavar='float',
         type=float,
@@ -121,6 +127,7 @@ def main(argv: Sequence[str]):
         path_qc=arguments.qc,
         dataset=arguments.qc_dataset,
         subject=arguments.qc_subject,
+        contrast=arguments.qc_contrast,
     )
     if arguments.resample is None:
         assert 'p_resample' not in kwargs  # Use the report's default
@@ -154,6 +161,7 @@ def main(argv: Sequence[str]):
                     path_qc=arguments.qc,
                     dataset=arguments.qc_dataset,
                     subject=arguments.qc_subject,
+                    contrast=arguments.qc_contrast,
                     process=arguments.p,
                     fps=arguments.fps,
                     p_resample=arguments.resample,
