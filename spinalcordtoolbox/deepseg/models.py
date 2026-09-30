@@ -250,6 +250,7 @@ MODELS = {
         "thr": None,
         "default": False,
      },
+    "model_seg_brachialplexus-drg_human_stir": {},
 }
 
 
