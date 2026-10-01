@@ -343,6 +343,11 @@ def get_parser(ascor=False):
             metavar=Metavar.str,
             help="If provided, this string will be mentioned in the QC report as the subject the process was run on."
         )
+        optional.add_argument(
+            '-qc-contrast',
+            metavar=Metavar.str,
+            help="If provided, this string will be mentioned in the QC report as the contrast the process was run on."
+        )
 
     # Arguments which implement shared functionality
     parser.add_common_args()
@@ -516,6 +521,7 @@ def main(argv: Sequence[str]):
     path_qc = arguments.qc
     qc_dataset = arguments.qc_dataset
     qc_subject = arguments.qc_subject
+    qc_contrast = arguments.qc_contrast
 
     fname_centerline = arguments.centerline
     param_centerline = ParamCenterline(
@@ -655,6 +661,7 @@ def main(argv: Sequence[str]):
                             path_qc=path_qc,
                             dataset=qc_dataset,
                             subject=qc_subject,
+                            contrast=qc_contrast,
                             process='sct_process_segmentation')
             else:
                 parser.error('-qc-image is required to display QC report.')
@@ -672,6 +679,7 @@ def main(argv: Sequence[str]):
                 path_qc=arguments.qc,
                 dataset=arguments.qc_dataset,
                 subject=arguments.qc_subject,
+                contrast=arguments.qc_contrast,
                 angle_qc=(verbose == 2),  # only output HOG angle plot if `-v 2` is passed
                 angle_type='angle_hog',
             )

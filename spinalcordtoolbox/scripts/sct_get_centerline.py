@@ -127,6 +127,11 @@ def get_parser():
         metavar=Metavar.str,
         help="If provided, this string will be mentioned in the QC report as the subject the process was run on."
     )
+    optional.add_argument(
+        "-qc-contrast",
+        metavar=Metavar.str,
+        help="If provided, this string will be mentioned in the QC report as the contrast the process was run on."
+    )
 
     # Arguments which implement shared functionality
     parser.add_common_args()
@@ -212,11 +217,12 @@ def main(argv: Sequence[str]):
     path_qc = arguments.qc
     qc_dataset = arguments.qc_dataset
     qc_subject = arguments.qc_subject
+    qc_contrast = arguments.qc_contrast
 
     # Generate QC report
     if path_qc is not None:
         generate_qc(fname_input_data, fname_seg=file_output, args=argv, path_qc=os.path.abspath(path_qc),
-                    dataset=qc_dataset, subject=qc_subject, process='sct_get_centerline')
+                    dataset=qc_dataset, subject=qc_subject, contrast=qc_contrast, process='sct_get_centerline')
 
     im_type_ctl = 'softseg' if arguments.centerline_soft else 'seg'
     display_viewer_syntax([fname_input_data, file_output], im_types=['anat', im_type_ctl], opacities=['', '0.7'], verbose=verbose)
