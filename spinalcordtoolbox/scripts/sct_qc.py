@@ -83,7 +83,8 @@ def get_parser():
     optional.add_argument(
         '-custom-labels',
         metavar="JSON",
-        help="Path to a JSON file containing custom region labels. Only relevant for `-p sct_label_vertebrae`.",
+        help="Path to a JSON file containing custom region labels. Only relevant for `-p sct_label_vertebrae` or "
+             "`-p sct_deepseg -deepseg-task spine.",
         default=os.path.join(__sct_dir__, 'spinalcordtoolbox', 'reports', 'sct_label_vertebrae_regions.json'))
     optional.add_argument(
         '-qc',
@@ -185,9 +186,15 @@ def main(argv: Sequence[str]):
             kwargs_label_vertebrae = kwargs.copy()
             kwargs_label_vertebrae['fname_seg'] = arguments.s2
             kwargs_label_vertebrae['offset_text'] = False
-            kwargs_label_vertebrae['path_custom_labels'] = os.path.join(
-                __sct_dir__, 'spinalcordtoolbox', 'reports',
-                f'totalspineseg_{"step2" if arguments.label_vert else "step1"}_regions.json',
+            # FIXME: There is currently know way to immediately know if we should use the step1 or step2 labels
+            #   We have a custom labels option, so the user could override this with the correct JSON file, but this
+            #   isn't very user-friendly. We can't infer it from the filename since _all will be used in both cases.
+            #   We might need to add a new CLI argument just to specify which totalspineseg step was used. Or, maybe
+            #   we could grab it from the JSON sidecar file? For now, I'm leaving this an open question and just using
+            #   step1 as default but allowing it to be overridden by the user with the -custom-labels option.
+            kwargs_label_vertebrae['path_custom_labels'] = (
+                arguments.custom_labels if "sct_label_vertebrae" not in arguments.custom_labels else
+                os.path.join(__sct_dir__, 'spinalcordtoolbox', 'reports', 'totalspineseg_step1_regions.json')  # step2?
             )
             qc2.sct_label_vertebrae(**kwargs_label_vertebrae)  # uses -s2 (fname_all)
         else:
