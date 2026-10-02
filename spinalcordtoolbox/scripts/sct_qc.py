@@ -15,6 +15,8 @@ from spinalcordtoolbox.reports import qc2
 from spinalcordtoolbox.utils.sys import init_sct, list2cmdline, __sct_dir__, set_loglevel
 from spinalcordtoolbox.utils.shell import SCTArgumentParser
 
+from spinalcordtoolbox.deepseg.models import TASKS
+
 
 def get_parser():
     parser = SCTArgumentParser(
@@ -38,7 +40,7 @@ def get_parser():
     mandatory.add_argument(
         '-p',
         help='SCT function associated with the QC report to generate',
-        choices=('sct_propseg', 'sct_deepseg_sc', 'sct_deepseg_gm', 'sct_deepseg_lesion',
+        choices=('sct_deepseg', 'sct_propseg', 'sct_deepseg_sc', 'sct_deepseg_gm', 'sct_deepseg_lesion',
                  'sct_register_multimodal', 'sct_register_to_template', 'sct_warp_template',
                  'sct_label_vertebrae', 'sct_detect_pmj', 'sct_label_utils', 'sct_get_centerline',
                  'sct_fmri_moco', 'sct_dmri_moco', 'sct_image_stitch', 'sct_fmri_compute_tsnr'))
@@ -48,6 +50,15 @@ def get_parser():
         '-s',
         metavar='SEG',
         help='Input segmentation or label')
+    optional.add_argument(
+        '-s2',
+        metavar='SEG2',
+        help='Second input segmentation or label. Only relevant for `-p sct_deepseg`. Necessary for models that output '
+             'two images, for example:\n'
+             ' - 1. SC    + 2. lesion\n '
+             ' - 1. SC    + 2. GM\n'
+             ' - 1. discs + 2. full spine segmentation'
+    )
     optional.add_argument(
         '-d',
         metavar='DEST',
@@ -72,7 +83,8 @@ def get_parser():
     optional.add_argument(
         '-custom-labels',
         metavar="JSON",
-        help="Path to a JSON file containing custom region labels. Only relevant for `-p sct_label_vertebrae`.",
+        help="Path to a JSON file containing custom region labels. Only relevant for `-p sct_label_vertebrae` or "
+             "`-p sct_deepseg -deepseg-task spine.",
         default=os.path.join(__sct_dir__, 'spinalcordtoolbox', 'reports', 'sct_label_vertebrae_regions.json'))
     optional.add_argument(
         '-qc',
@@ -102,6 +114,16 @@ def get_parser():
         default=5,
         help='The number of frames per second for output gif images. Only useful for sct_fmri_moco and '
              'sct_dmri_moco.')
+    optional.add_argument(
+        '-deepseg-task',
+        help="The task used to generate the sct_deepseg output files. (See: `sct_deepseg -h` for list of tasks.)\n"
+             "Only relevant for `-p sct_deepseg`.\n"
+             "This option dictates which specific QC report will be generated (e.g. single-class segmentation, multi-class segmentation, "
+             "whole-spine, etc.).",
+        metavar="TASK",
+        choices=TASKS.keys(),
+        default='spinalcord'
+    )
 
     # Arguments which implement shared functionality
     parser.add_common_args()
@@ -151,6 +173,43 @@ def main(argv: Sequence[str]):
     elif arguments.p == 'sct_label_utils':
         del kwargs['fname_output']  # not used by this report
         qc2.sct_label_utils(command=arguments.p, **kwargs)
+    elif arguments.p == 'sct_deepseg':
+        del kwargs['fname_output']  # not used by this report
+        # FIXME: Distinguish command between both QC reports
+        if arguments.deepseg_task == 'spine':
+            kwargs['command'] = f"{arguments.p} {arguments.deepseg_task}"
+            # For the spine task, we need two outputs (fname_discs and fname_all) to generate the QC report.
+            # The first output (-s) is used for the sct_label_utils report
+            kwargs_label_utils = kwargs.copy()
+            qc2.sct_label_utils(**kwargs_label_utils)          # uses -s (fname_discs)
+
+            # The second output (-s2) is used for the sct_label_vertebrae report
+            kwargs_label_vertebrae = kwargs.copy()
+            kwargs_label_vertebrae['fname_seg'] = arguments.s2
+            kwargs_label_vertebrae['offset_text'] = False
+            # FIXME: There is currently know way to immediately know if we should use the step1 or step2 labels
+            #   We have a custom labels option, so the user could override this with the correct JSON file, but this
+            #   isn't very user-friendly. We can't infer it from the filename since _all will be used in both cases.
+            #   We might need to add a new CLI argument just to specify which totalspineseg step was used. Or, maybe
+            #   we could grab it from the JSON sidecar file? For now, I'm leaving this an open question and just using
+            #   step1 as default but allowing it to be overridden by the user with the -custom-labels option.
+            kwargs_label_vertebrae['path_custom_labels'] = (
+                arguments.custom_labels if "sct_label_vertebrae" not in arguments.custom_labels else
+                os.path.join(__sct_dir__, 'spinalcordtoolbox', 'reports', 'totalspineseg_step1_regions.json')  # step2?
+            )
+            qc2.sct_label_vertebrae(**kwargs_label_vertebrae)  # uses -s2 (fname_all)
+        else:
+            # For all other deepseg tasks, we just have to trust that the user provided the correct segmentation file(s) for the task.
+            # - The QC report will be generated based on the task name (present in argv) + the provided files.
+            # - The responsibility for input validation lies with the QC report for the specific task
+            kwargs['fname_seg2'] = arguments.s2
+            kwargs['species'] = 'mouse' if 'mouse' in arguments.deepseg_task else 'human'  # used for resampling
+            # sct_deepseg assumes 'Axial' by default
+            kwargs['plane'] = arguments.plane.capitalize() if isinstance(arguments.plane, str) else 'Axial'
+            # TODO: kwargs['fname_qc_seg'] (mirror of argument present in `sct_deepseg`)
+            kwargs['fname_qc_seg'] = None
+            qc2.sct_deepseg(**kwargs)
+
     else:
         generate_qc(fname_in1=arguments.i,
                     fname_in2=arguments.d,
