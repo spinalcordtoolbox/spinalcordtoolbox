@@ -175,11 +175,12 @@ def main(argv: Sequence[str]):
         qc2.sct_label_utils(command=arguments.p, **kwargs)
     elif arguments.p == 'sct_deepseg':
         del kwargs['fname_output']  # not used by this report
+        # FIXME: Distinguish command between both QC reports
         if arguments.deepseg_task == 'spine':
+            kwargs['command'] = f"{arguments.p} {arguments.deepseg_task}"
             # For the spine task, we need two outputs (fname_discs and fname_all) to generate the QC report.
             # The first output (-s) is used for the sct_label_utils report
             kwargs_label_utils = kwargs.copy()
-            kwargs_label_utils['command'] = arguments.p
             qc2.sct_label_utils(**kwargs_label_utils)          # uses -s (fname_discs)
 
             # The second output (-s2) is used for the sct_label_vertebrae report
