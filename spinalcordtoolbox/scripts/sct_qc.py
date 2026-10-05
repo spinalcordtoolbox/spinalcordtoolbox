@@ -148,10 +148,16 @@ def main(argv: Sequence[str]):
         parser.error('Please provide the plane of the output QC with `-plane`')
 
     # Common arguments for QC reports
+    # NB: For the qc2 reports, we override the command name to be `sct_qc` so that the QC report will always show
+    # `sct_qc` as the command that was run, even if the user ran a different SCT command (e.g. `sct_deepseg`) and then
+    # called `sct_qc` to generate a QC report for that command. (Alternatively, we could fake the command name to be
+    # the original command (e.g. `sct_deepseg`) but that would require us to reverse engineer the corresponding
+    # command from the provided arguments.)
     kwargs = dict(
         fname_input=arguments.i,
         fname_output=arguments.d,
         fname_seg=arguments.s,
+        command="sct_qc",
         argv=argv,
         path_qc=arguments.qc,
         dataset=arguments.qc_dataset,
@@ -166,25 +172,23 @@ def main(argv: Sequence[str]):
         kwargs['p_resample'] = arguments.resample
 
     if arguments.p in ['sct_register_multimodal', 'sct_register_to_template']:
-        qc2.sct_register(command=arguments.p, **kwargs)
+        qc2.sct_register(**kwargs)
     elif arguments.p == 'sct_fmri_compute_tsnr':
         qc2.sct_fmri_compute_tsnr(**kwargs)
     elif arguments.p == 'sct_label_vertebrae':
         del kwargs['fname_output']  # not used by this report
         qc2.sct_label_vertebrae(
-            command=arguments.p,
             draw_text=bool(arguments.text_labels),
             path_custom_labels=arguments.custom_labels,
             **kwargs
         )
     elif arguments.p == 'sct_label_utils':
         del kwargs['fname_output']  # not used by this report
-        qc2.sct_label_utils(command=arguments.p, **kwargs)
+        qc2.sct_label_utils(**kwargs)
     elif arguments.p == 'sct_deepseg':
         del kwargs['fname_output']  # not used by this report
         # FIXME: Distinguish command between both QC reports
         if arguments.deepseg_task == 'spine':
-            kwargs['command'] = f"{arguments.p} {arguments.deepseg_task}"
             # For the spine task, we need two outputs (fname_discs and fname_all) to generate the QC report.
             # The first output (-s) is used for the sct_label_utils report
             kwargs_label_utils = kwargs.copy()
