@@ -108,6 +108,13 @@ def get_parser():
              'was run on. If not provided, this will fall back to the name of the parent directory of '
              '`-i` (which may not be meaningful for all directory layouts).')
     optional.add_argument(
+        "-qc-seg",
+        metavar="IMAGE",
+        help="Segmentation file to use for cropping the QC. This option is useful when you want to QC a region "
+             "that is different from the output segmentation. For example, it might be useful to provide a "
+             "dilated cord segmentation to expand the QC field of view. Only for use with `-p sct_deepseg`."
+    )
+    optional.add_argument(
         '-fps',
         metavar='float',
         type=float,
@@ -206,8 +213,7 @@ def main(argv: Sequence[str]):
             kwargs['species'] = 'mouse' if 'mouse' in arguments.deepseg_task else 'human'  # used for resampling
             # sct_deepseg assumes 'Axial' by default
             kwargs['plane'] = arguments.plane.capitalize() if isinstance(arguments.plane, str) else 'Axial'
-            # TODO: kwargs['fname_qc_seg'] (mirror of argument present in `sct_deepseg`)
-            kwargs['fname_qc_seg'] = None
+            kwargs['fname_qc_seg'] = arguments.qc_seg
             qc2.sct_deepseg(**kwargs)
 
     else:
