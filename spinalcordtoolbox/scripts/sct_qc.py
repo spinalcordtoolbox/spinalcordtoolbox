@@ -5,6 +5,7 @@
 # Copyright (c) 2019 Polytechnique Montreal <www.neuro.polymtl.ca>
 # License: see the file LICENSE
 
+import json
 import os
 import sys
 from typing import Sequence
@@ -13,7 +14,7 @@ import textwrap
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.reports import qc2
 from spinalcordtoolbox.utils.sys import init_sct, list2cmdline, __sct_dir__, set_loglevel
-from spinalcordtoolbox.utils.shell import SCTArgumentParser
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, printv
 
 from spinalcordtoolbox.deepseg.models import TASKS
 
@@ -138,6 +139,27 @@ def get_parser():
     return parser
 
 
+def parse_label_type(json_file, verbose):
+    """Parse `sct_deepseg spine` label type from its JSON sidecar file."""
+    label_type = "step1"  # default label type
+    if os.path.exists(json_file):
+        printv(f"Attempting to parse label type from JSON sidecar file: {json_file}", verbose=verbose)
+        with open(json_file, 'r') as f:
+            json_data = json.load(f)
+        if 'GeneratedBy' in json_data and "Name" in json_data['GeneratedBy'] and "-label-vert" in json_data['GeneratedBy']['Name']:
+            if "-label-vert 1" in json_data['GeneratedBy']['Name']:
+                label_type = "step2"
+            elif "-label-vert 0" in json_data['GeneratedBy']['Name']:
+                label_type = "step1"
+            printv(f"Inferred label type: {label_type}", verbose=verbose)
+        else:
+            printv(f"Could not find 'GeneratedBy' -> 'Name' -> '-label-vert' usage in JSON sidecar file: {json_file}. "
+                   f"Defaulting to label type: {label_type}", verbose=verbose)
+    else:
+        printv(f"Could not find JSON sidecar file: {json_file}. Defaulting to label type: {label_type}", verbose=verbose)
+    return label_type
+
+
 def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
@@ -198,17 +220,19 @@ def main(argv: Sequence[str]):
             kwargs_label_vertebrae = kwargs.copy()
             kwargs_label_vertebrae['fname_seg'] = arguments.s2
             kwargs_label_vertebrae['offset_text'] = False
-            # FIXME: There is currently know way to immediately know if we should use the step1 or step2 labels
-            #   We have a custom labels option, so the user could override this with the correct JSON file, but this
-            #   isn't very user-friendly. We can't infer it from the filename since _all will be used in both cases.
-            #   We might need to add a new CLI argument just to specify which totalspineseg step was used. Or, maybe
-            #   we could grab it from the JSON sidecar file? For now, I'm leaving this an open question and just using
-            #   step1 as default but allowing it to be overridden by the user with the -custom-labels option.
+
+            # Look for an identically-named JSON sidecar file in the same directory as the provided -s2 file, and try
+            # to parse the "GeneratedBy" field to determine the type of custom labels.
+            json_file = arguments.s2.replace('.nii.gz', '.json')
+            label_type = parse_label_type(json_file, verbose=verbose)
+
+            # If `custom_labels` is a non-default value, then prioritize it over the default labels
             kwargs_label_vertebrae['path_custom_labels'] = (
                 arguments.custom_labels if "sct_label_vertebrae" not in arguments.custom_labels else
-                os.path.join(__sct_dir__, 'spinalcordtoolbox', 'reports', 'totalspineseg_step1_regions.json')  # step2?
+                os.path.join(__sct_dir__, 'spinalcordtoolbox', 'reports', f'totalspineseg_{label_type}_regions.json')
             )
             qc2.sct_label_vertebrae(**kwargs_label_vertebrae)  # uses -s2 (fname_all)
+
         else:
             # For all other deepseg tasks, we just have to trust that the user provided the correct segmentation file(s) for the task.
             # - The QC report will be generated based on the task name (present in argv) + the provided files.

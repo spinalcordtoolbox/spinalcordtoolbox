@@ -14,9 +14,8 @@ from torch.serialization import SourceChangeWarning
 
 import spinalcordtoolbox as sct
 from spinalcordtoolbox.image import Image, compute_dice, add_suffix, check_image_kind
-from spinalcordtoolbox.utils.sys import sct_test_path, __deepseg_dir__, __sct_dir__
+from spinalcordtoolbox.utils.sys import sct_test_path, __deepseg_dir__
 import spinalcordtoolbox.deepseg.models
-import spinalcordtoolbox.deepseg.inference
 
 from spinalcordtoolbox.scripts import sct_deepseg, sct_resample, sct_qc
 
@@ -246,11 +245,6 @@ def test_segment_nifti_multiclass(fname_image, fnames_seg_manual, fname_out, suf
     # Generate secondary (sct_qc) QC report for the segmentation, should be identical to normal `-qc`
     qc_args = ['-i', fname_image, '-s', fnames_out[0], '-s2', fnames_out[1],
                '-p', 'sct_deepseg', '-deepseg-task', task, '-qc', tmp_path_qc]
-    # FIXME: Currently we need to explicitly specify the step2 regions if we're using `-label-vert 1` since the sct_qc
-    #        doesn't know inherently which of the two possible label files we're providing to `-s2`.
-    if "-label-vert" in extra_args:
-        step2_labels = os.path.join(__sct_dir__, 'spinalcordtoolbox', 'reports', 'totalspineseg_step2_regions.json')
-        qc_args.extend(['-custom-labels', step2_labels])
     sct_qc.main(argv=qc_args)
 
 
