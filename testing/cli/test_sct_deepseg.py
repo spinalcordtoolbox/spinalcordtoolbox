@@ -85,6 +85,12 @@ def cleanup_model_dirs():
      'canal',
      None,
      None),
+    (sct_test_path('t2', 't2.nii.gz'),  # dummy image since no STIR test data
+     None,  # no ground truth, just test if it runs
+     't2_seg_deepseg.nii.gz',
+     'brachial_plexus',
+     None,
+     None),
 ])
 @pytest.mark.usefixtures(cleanup_model_dirs.__name__)
 def test_segment_nifti_binary_seg(fname_image, fname_seg_manual, fname_out, task, thr, expected_dice,
