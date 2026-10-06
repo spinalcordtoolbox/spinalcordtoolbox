@@ -57,6 +57,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+import yaml
 
 import nibabel as nib
 import numpy as np
@@ -68,10 +69,7 @@ from nibabel.processing import resample_to_output
 
 def load_config() -> dict:
     """Load config.yaml bundled with the package."""
-    import importlib.resources
-    import yaml
-    config_path = importlib.resources.files("sc_crop").joinpath("config.yaml")
-    return yaml.safe_load(Path(config_path).read_text())
+    return yaml.safe_load((Path(__file__).parent / "config.yaml").read_text())
 
 
 # ─── BBox3D: single source of truth for voxel bboxes in LAS index space ──────
