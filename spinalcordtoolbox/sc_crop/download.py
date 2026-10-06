@@ -12,28 +12,26 @@ import hashlib
 import urllib.request
 from pathlib import Path
 
-_MODEL_TAG = "v0.0.11"
-_BASE_URL = f"https://github.com/ivadomed/sc-crop/releases/download/{_MODEL_TAG}"
-
 _ASSETS = {
     "det_model.onnx": {
-        "url": f"{_BASE_URL}/det_model.onnx",
+        "url": "https://github.com/ivadomed/sc-crop/releases/download/v0.0.11/det_model.onnx",
         "sha256": "052abe794f3878422e2acc2df4e4942f995aab3788ad513bbcc92b66b16ee9c0",
     },
     "cls_model.onnx": {
-        "url": f"{_BASE_URL}/cls_model.onnx",
+        "url": "https://github.com/ivadomed/sc-crop/releases/download/v0.0.11/cls_model.onnx",
         "sha256": "25fc911e501ae944dbfb66546e36d32f26021e35506c2495b0f71d4ff6bf3d6b",
     },
     "det_model.pt": {
-        "url": f"{_BASE_URL}/det_model.pt",
+        "url": "https://github.com/ivadomed/sc-crop/releases/download/v0.0.11/det_model.pt",
         "sha256": "ec667d683bf7766305c32346eac14c09079d522bb43d1dd925d7c613a8461417",
     },
     "cls_model.pt": {
-        "url": f"{_BASE_URL}/cls_model.pt",
+        "url": "https://github.com/ivadomed/sc-crop/releases/download/v0.0.11/cls_model.pt",
         "sha256": "6f2c66153904e644835fec5e71342904f11cd527ad9310a0dde54c122b1af482",
     },
 }
 
+_MODEL_TAG = "v0.0.11"
 _CACHE_DIR = Path.home() / ".cache" / "sc_crop" / _MODEL_TAG
 
 
