@@ -33,6 +33,22 @@ from .qc import check_label_crop, CropReport, save_bbox_nifti, check_seg_truncat
 from .download import download, ensure_model, ensure_cls_model, _MODEL_TAG
 from .metadata import write_crop_metadata
 
-__version__       = "0.12.1"
+__version__ = "0.12.1"
 __model_version__ = _MODEL_TAG
-MODEL_VERSION     = _MODEL_TAG
+MODEL_VERSION = _MODEL_TAG
+
+__all__ = [
+    "crop",
+    "detect",
+    "detect_and_crop",
+    "load_config",
+    "uncrop",
+    "check_label_crop",
+    "CropReport",
+    "save_bbox_nifti",
+    "check_seg_truncation",
+    "download",
+    "ensure_model",
+    "ensure_cls_model",
+    "write_crop_metadata",
+]

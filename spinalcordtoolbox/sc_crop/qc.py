@@ -77,7 +77,7 @@ def check_seg_truncation(seg_nii: nib.Nifti1Image, bbox: dict) -> list:
             print("Truncated at:", {k: bbox[k] for k in truncated})
     """
     seg_data = np.asanyarray(seg_nii.dataobj)
-    shape    = seg_data.shape
+    shape = seg_data.shape
     truncated = []
     for ax, (lo_key, hi_key) in enumerate([("xmin", "xmax"), ("ymin", "ymax"), ("zmin", "zmax")]):
         lo, hi = bbox[lo_key], bbox[hi_key]
@@ -121,11 +121,11 @@ def check_label_crop(label: nib.Nifti1Image, bbox: dict) -> dict:
             print(f"Bad crop: lost {qc['voxels_before'] - qc['voxels_after']} voxels")
         crop_label = crop(nib.load("t2_seg.nii.gz"), bbox)
     """
-    data  = np.asarray(label.dataobj)
+    data = np.asarray(label.dataobj)
     zooms = label.header.get_zooms()[:3]
 
     voxels_before = int(np.count_nonzero(data))
-    voxels_after  = int(np.count_nonzero(np.asarray(crop(label, bbox).dataobj)))
+    voxels_after = int(np.count_nonzero(np.asarray(crop(label, bbox).dataobj)))
 
     # Extra padding needed per anatomical face (mm) — maps directly to detect() parameters
     # axcodes[i] = positive direction of axis i (e.g. 'R', 'A', 'S')
@@ -213,9 +213,9 @@ class CropReport:
             "max_extra_padding_mm": max_padding,
             "failed_labels": [
                 {k: e[k] for k in ["label", "voxels_before", "voxels_after",
-                                    "extra_pad_superior_mm", "extra_pad_inferior_mm",
-                                    "extra_pad_left_mm", "extra_pad_right_mm",
-                                    "extra_pad_anterior_mm", "extra_pad_posterior_mm"]
+                                   "extra_pad_superior_mm", "extra_pad_inferior_mm",
+                                   "extra_pad_left_mm", "extra_pad_right_mm",
+                                   "extra_pad_anterior_mm", "extra_pad_posterior_mm"]
                  if k in e}
                 for e in failed
             ],

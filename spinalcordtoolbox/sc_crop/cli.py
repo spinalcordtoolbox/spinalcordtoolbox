@@ -37,7 +37,7 @@ GREEN, RESET = "\033[32m", "\033[0m"
 
 
 def _print_fsleyes(input_path, crop_path):
-    print(f"\nDone! To view results, type:")
+    print("\nDone! To view results, type:")
     print(f"  {GREEN}fsleyes {input_path} {crop_path} &{RESET}")
 
 
@@ -50,7 +50,7 @@ def _crop_from_coords(input_path, xmin, xmax, ymin, ymax, zmin, zmax,
         "ymin": ymin, "ymax": ymax,
         "zmin": zmin, "zmax": zmax,
     }
-    cropped   = crop(nib.load(input_path), bbox, translate=translate)
+    cropped = crop(nib.load(input_path), bbox, translate=translate)
     crop_path = Path(output) if output else parent / f"{stem}_crop.nii.gz"
     _warn_overwrite(crop_path)
     nib.save(cropped, crop_path)
@@ -128,7 +128,7 @@ examples:
     pad.add_argument("--pad-inf",  type=float, default=None, dest="pad_inferior",  metavar="MM")
     pad.add_argument("--pad-si",   type=float, default=None, dest="pad_si",        metavar="MM")
     pad.add_argument("--pad-left", type=float, default=None, dest="pad_left",      metavar="MM")
-    pad.add_argument("--pad-right",type=float, default=None, dest="pad_right",     metavar="MM")
+    pad.add_argument("--pad-right", type=float, default=None, dest="pad_right",     metavar="MM")
     pad.add_argument("--pad-rl",   type=float, default=None, dest="pad_rl",        metavar="MM")
     pad.add_argument("--pad-ant",  type=float, default=None, dest="pad_anterior",  metavar="MM")
     pad.add_argument("--pad-post", type=float, default=None, dest="pad_posterior", metavar="MM")
@@ -193,21 +193,21 @@ examples:
     # ── Detect (shared by detect and detect-crop modes) ───────────────────────
     bbox = detect(
         input_path,
-        model_path    = args.model,
-        pad_superior  = args.pad_superior,
-        pad_inferior  = args.pad_inferior,
-        pad_si        = args.pad_si,
-        pad_left      = args.pad_left,
-        pad_right     = args.pad_right,
-        pad_rl        = args.pad_rl,
-        pad_anterior  = args.pad_anterior,
-        pad_posterior = args.pad_posterior,
-        pad_ap        = args.pad_ap,
-        conf          = args.conf,
-        regularization = args.regularization,
-        cls_conf       = args.cls_conf,
-        device         = args.device,
-        norm_scope     = args.norm_scope,
+        model_path=args.model,
+        pad_superior=args.pad_superior,
+        pad_inferior=args.pad_inferior,
+        pad_si=args.pad_si,
+        pad_left=args.pad_left,
+        pad_right=args.pad_right,
+        pad_rl=args.pad_rl,
+        pad_anterior=args.pad_anterior,
+        pad_posterior=args.pad_posterior,
+        pad_ap=args.pad_ap,
+        conf=args.conf,
+        regularization=args.regularization,
+        cls_conf=args.cls_conf,
+        device=args.device,
+        norm_scope=args.norm_scope,
     )
 
     parent, stem = _stem(input_path)
@@ -217,7 +217,7 @@ examples:
 
     # ── Mode: detect only ─────────────────────────────────────────────────────
     if args.detect:
-        cropbox_path  = parent / f"{stem}_cropbox.nii.gz"
+        cropbox_path = parent / f"{stem}_cropbox.nii.gz"
         bbox_txt_path = parent / f"{stem}_bbox.txt"
         _warn_overwrite(cropbox_path)
         save_bbox_nifti(bbox, nib.load(input_path), cropbox_path)
@@ -225,18 +225,18 @@ examples:
         _write_bbox_txt(bbox_txt_path, BBox3D(xmin, xmax + 1, ymin, ymax + 1, zmin, zmax + 1))
         print(f"BBox    : {bbox_txt_path}")
         crop_path = parent / f"{stem}_crop.nii.gz"
-        print(f"\nTo crop and view in FSLeyes:")
+        print("\nTo crop and view in FSLeyes:")
         print(f"  {GREEN}sc_crop -i {input_path} --bbox {cropbox_path}{RESET}")
         print(f"  {GREEN}fsleyes {input_path} {crop_path} {cropbox_path} -ot mask -mc 1 0 0 --outline -w 3 &{RESET}")
         return
 
     # ── Mode: detect + crop (default) ────────────────────────────────────────
     if args.las:
-        cropped      = bbox["_bbox_pad_las"].crop(bbox["_img_las"], translate=args.translate)
-        crop_path    = Path(args.output) if args.output else parent / f"{stem}_crop_las.nii.gz"
+        cropped = bbox["_bbox_pad_las"].crop(bbox["_img_las"], translate=args.translate)
+        crop_path = Path(args.output) if args.output else parent / f"{stem}_crop_las.nii.gz"
     else:
-        cropped      = crop(nib.load(input_path), bbox, translate=args.translate)
-        crop_path    = Path(args.output) if args.output else parent / f"{stem}_crop.nii.gz"
+        cropped = crop(nib.load(input_path), bbox, translate=args.translate)
+        crop_path = Path(args.output) if args.output else parent / f"{stem}_crop.nii.gz"
     cropbox_path = parent / f"{stem}_cropbox.nii.gz"
     bbox_txt_path = parent / f"{stem}_bbox.txt"
     _warn_overwrite(crop_path)
@@ -247,7 +247,7 @@ examples:
     print(f"Crop    : {crop_path}  shape={cropped.shape}")
     print(f"Cropbox : {cropbox_path}")
     print(f"BBox    : {bbox_txt_path}")
-    print(f"\nTo view in FSLeyes:")
+    print("\nTo view in FSLeyes:")
     print(f"  {GREEN}fsleyes {input_path} {crop_path} {cropbox_path} -ot mask -mc 1 0 0 --outline -w 3 &{RESET}")
 
 

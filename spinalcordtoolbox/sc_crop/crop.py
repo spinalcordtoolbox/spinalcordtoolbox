@@ -76,10 +76,10 @@ def load_config() -> dict:
 
 # ─── BBox3D: single source of truth for voxel bboxes in LAS index space ──────
 
-_DEFAULT_PAD_SUPERIOR  = 40.0
-_DEFAULT_PAD_INFERIOR  = 100.0   # cords extend far inferiorly (lumbar); covers anisotropic sagittal cases
-_DEFAULT_PAD_RL        = 15.0    # +5mm over the detected bbox to cover lateral GT overshoot (≤3.2mm observed)
-_DEFAULT_PAD_ANTERIOR  = 15.0
+_DEFAULT_PAD_SUPERIOR = 40.0
+_DEFAULT_PAD_INFERIOR = 100.0   # cords extend far inferiorly (lumbar); covers anisotropic sagittal cases
+_DEFAULT_PAD_RL = 15.0    # +5mm over the detected bbox to cover lateral GT overshoot (≤3.2mm observed)
+_DEFAULT_PAD_ANTERIOR = 15.0
 _DEFAULT_PAD_POSTERIOR = 22.0    # cords (esp. PSIR) overshoot posteriorly; covers the ≤6.2mm observed
 
 
@@ -93,11 +93,11 @@ def _resolve_padding(
     Priority per face: individual > symmetric > default.
     Returns (left, right, anterior, posterior, superior, inferior).
     """
-    sup  = pad_superior  if pad_superior  is not None else (pad_si if pad_si is not None else _DEFAULT_PAD_SUPERIOR)
-    inf  = pad_inferior  if pad_inferior  is not None else (pad_si if pad_si is not None else _DEFAULT_PAD_INFERIOR)
-    left = pad_left      if pad_left      is not None else (pad_rl if pad_rl is not None else _DEFAULT_PAD_RL)
-    right= pad_right     if pad_right     is not None else (pad_rl if pad_rl is not None else _DEFAULT_PAD_RL)
-    ant  = pad_anterior  if pad_anterior  is not None else (pad_ap if pad_ap is not None else _DEFAULT_PAD_ANTERIOR)
+    sup = pad_superior if pad_superior is not None else (pad_si if pad_si is not None else _DEFAULT_PAD_SUPERIOR)
+    inf = pad_inferior if pad_inferior is not None else (pad_si if pad_si is not None else _DEFAULT_PAD_INFERIOR)
+    left = pad_left if pad_left is not None else (pad_rl if pad_rl is not None else _DEFAULT_PAD_RL)
+    right = pad_right if pad_right is not None else (pad_rl if pad_rl is not None else _DEFAULT_PAD_RL)
+    ant = pad_anterior if pad_anterior is not None else (pad_ap if pad_ap is not None else _DEFAULT_PAD_ANTERIOR)
     post = pad_posterior if pad_posterior is not None else (pad_ap if pad_ap is not None else _DEFAULT_PAD_POSTERIOR)
     return left, right, ant, post, sup, inf
 
@@ -134,12 +134,12 @@ class BBox3D:
         rl_mm, ap_mm, si_mm = zooms
         RL, AP, Z = shape
         return BBox3D(
-            rl1=max(0,  self.rl1 - int(np.ceil(right    / rl_mm))),
-            rl2=min(RL, self.rl2 + int(np.ceil(left     / rl_mm))),
-            ap1=max(0,  self.ap1 - int(np.ceil(posterior/ ap_mm))),
+            rl1=max(0,  self.rl1 - int(np.ceil(right / rl_mm))),
+            rl2=min(RL, self.rl2 + int(np.ceil(left / rl_mm))),
+            ap1=max(0,  self.ap1 - int(np.ceil(posterior / ap_mm))),
             ap2=min(AP, self.ap2 + int(np.ceil(anterior / ap_mm))),
-            z1=max(0,   self.z1  - int(np.ceil(inferior / si_mm))),
-            z2=min(Z,   self.z2  + int(np.ceil(superior / si_mm))),
+            z1=max(0,   self.z1 - int(np.ceil(inferior / si_mm))),
+            z2=min(Z,   self.z2 + int(np.ceil(superior / si_mm))),
         )
 
     def crop(self, img: nib.Nifti1Image, translate: bool = True) -> nib.Nifti1Image:
@@ -148,9 +148,9 @@ class BBox3D:
 
         Generic over orientation: bbox indices must match img's voxel orientation.
         """
-        data    = img.get_fdata(dtype=np.float32)
+        data = img.get_fdata(dtype=np.float32)
         cropped = data[self.rl1:self.rl2, self.ap1:self.ap2, self.z1:self.z2]
-        affine  = img.affine.copy()
+        affine = img.affine.copy()
         if translate:
             affine[:3, 3] = img.affine[:3, :3] @ np.array([self.rl1, self.ap1, self.z1]) \
                            + img.affine[:3, 3]
@@ -169,14 +169,14 @@ class BBox3D:
         T = ornt_transform(src_ornt, dst_ornt)
 
         dst_ranges: list[tuple[int, int] | None] = [None, None, None]
-        dst_shape:  list[int | None]             = [None, None, None]
+        dst_shape:  list[int | None] = [None, None, None]
 
         for src_ax, (dst_ax, flip) in enumerate(T):
             dst_ax = int(dst_ax)
-            n      = int(src_shape[src_ax])
+            n = int(src_shape[src_ax])
             lo, hi = src_ranges[src_ax]
             dst_ranges[dst_ax] = (lo, hi) if flip == 1 else (n - hi, n - lo)
-            dst_shape[dst_ax]  = n
+            dst_shape[dst_ax] = n
 
         (a1, a2), (b1, b2), (c1, c2) = dst_ranges  # type: ignore[misc]
         return BBox3D(a1, a2, b1, b2, c1, c2), tuple(dst_shape)  # type: ignore[return-value]
@@ -186,15 +186,15 @@ class BBox3D:
 
 def reorient_to_las(img: nib.Nifti1Image) -> nib.Nifti1Image:
     current = nib.io_orientation(img.affine)
-    target  = axcodes2ornt(("L", "A", "S"))
+    target = axcodes2ornt(("L", "A", "S"))
     return img.as_reoriented(ornt_transform(current, target))
 
 
 # ─── Resampling ───────────────────────────────────────────────────────────────
 
 def resample_for_inference(img_las: nib.Nifti1Image,
-                            si_res: float,
-                            inplane_res: float | None) -> nib.Nifti1Image:
+                           si_res: float,
+                           inplane_res: float | None) -> nib.Nifti1Image:
     """Resample LAS image to match training preprocessing resolution (order=1)."""
     rl_mm, ap_mm, si_mm = [float(v) for v in img_las.header.get_zooms()[:3]]
     target_rl = inplane_res if inplane_res is not None else rl_mm
@@ -274,8 +274,8 @@ def build_slices(data: np.ndarray, channels: int, norm_scope: str) -> tuple[list
     black = np.zeros((AP, RL), dtype=np.uint8)
 
     if norm_scope == "volume":
-        lo, hi   = _volume_percentiles(data)
-        data_u8  = _normalize_volume(data, lo, hi)
+        lo, hi = _volume_percentiles(data)
+        data_u8 = _normalize_volume(data, lo, hi)
 
         def _get(idx):
             if idx < 0 or idx >= Z:
@@ -322,11 +322,11 @@ def infer_slices(model, slices: list, las_idxs: list, conf_thresh: float,
     if device:
         kw["device"] = device
     results = model.predict(slices, **kw)
-    preds   = {}
+    preds = {}
     for las_idx, res in zip(las_idxs, results):
         if res.boxes is None or len(res.boxes) == 0:
             continue
-        best         = int(res.boxes.conf.argmax())
+        best = int(res.boxes.conf.argmax())
         cx, cy, w, h = res.boxes.xywhn[best].tolist()
         preds[las_idx] = (cx, cy, w, h)
     return preds
@@ -381,7 +381,7 @@ def cls_comp_filter(preds: dict, slices: list, las_idxs: list,
     Returns all preds with z ≥ min_z of the validated component.
     Fallback: returns all preds if no component is validated.
     """
-    comps     = _si_connected_components(preds)
+    comps = _si_connected_components(preds)
     slice_map = {idx: sl for idx, sl in zip(las_idxs, slices)}
 
     for comp in comps:
@@ -395,8 +395,8 @@ def cls_comp_filter(preds: dict, slices: list, las_idxs: list,
 
 
 def _graphreg_edge_broken(preds: dict, z_i: int, z_j: int,
-                           H: int, W: int,
-                           ap_mm: float, rl_mm: float, si_mm: float) -> bool:
+                          H: int, W: int,
+                          ap_mm: float, rl_mm: float, si_mm: float) -> bool:
     hop = z_j - z_i
     if hop * si_mm >= 40.0:
         return True
@@ -409,7 +409,7 @@ def _graphreg_edge_broken(preds: dict, z_i: int, z_j: int,
 
 
 def graphtrim_superior_filter(preds: dict, H: int, W: int,
-                               ap_mm: float, rl_mm: float, si_mm: float) -> dict:
+                              ap_mm: float, rl_mm: float, si_mm: float) -> dict:
     """Remove superior outlier detections by checking only the 2 topmost SI edges.
 
     If the edge between the 1st↔2nd or 2nd↔3rd most superior slice is broken
@@ -442,9 +442,9 @@ def aggregate_bbox_3d(preds: dict,
     """
     rl1s, rl2s, ap1s, ap2s, zs = [], [], [], [], []
     for las_idx_inf, (cx, cy, w, h) in preds.items():
-        z_nat   = min(Z_nat - 1, round(las_idx_inf / si_zoom))
-        rl_c    = cx * RL_nat
-        ap_c    = (1.0 - cy) * AP_nat
+        z_nat = min(Z_nat - 1, round(las_idx_inf / si_zoom))
+        rl_c = cx * RL_nat
+        ap_c = (1.0 - cy) * AP_nat
         rl_half = w / 2 * RL_nat
         ap_half = h / 2 * AP_nat
         rl1s.append(max(0,      int(rl_c - rl_half)))
@@ -458,13 +458,13 @@ def aggregate_bbox_3d(preds: dict,
 # ─── I/O helpers ──────────────────────────────────────────────────────────────
 
 def _stem(input_path: str) -> tuple[Path, str]:
-    inp  = Path(input_path)
+    inp = Path(input_path)
     stem = inp.name.replace(".nii.gz", "").replace(".nii", "")
     return inp.parent, stem
 
 
 _YELLOW = "\033[33m"
-_RESET  = "\033[0m"
+_RESET = "\033[0m"
 
 
 def _warn_overwrite(path: Path) -> None:
@@ -556,20 +556,20 @@ def detect(img_path: "str | Path | nib.Nifti1Image",
         bbox = detect("t2.nii.gz", pad_si=30)                    # symmetric SI
         bbox = detect("t2.nii.gz", pad_si=30, pad_inferior=60)   # symmetric + override
     """
-    config     = config if config is not None else load_config()
-    si_res        = config["si_res"]
-    inplane_res   = config.get("inplane_res")
-    channels      = config.get("channels", 3)
-    conf          = conf           if conf           is not None else config.get("conf", 0.1)
+    config = config if config is not None else load_config()
+    si_res = config["si_res"]
+    inplane_res = config.get("inplane_res")
+    channels = config.get("channels", 3)
+    conf = conf if conf is not None else config.get("conf", 0.1)
     regularization = regularization if regularization is not None else config.get("regularization", "cls")
-    cls_conf      = cls_conf       if cls_conf       is not None else config.get("cls_conf", 0.5)
+    cls_conf = cls_conf if cls_conf is not None else config.get("cls_conf", 0.5)
     # Must match the normalisation the shipped detector was trained with — an explicit
     # kwarg/CLI flag can still override it, but the silent default always defers to
     # config.yaml, never to a value hardcoded here.
     norm_scope = norm_scope if norm_scope is not None else config["norm_scope"]
     assert norm_scope in ("volume", "slice_all", "slice"), \
         f"unsupported norm_scope: {norm_scope!r} (expected volume, slice_all, or slice)"
-    imgsz         = config.get("imgsz", 320)
+    imgsz = config.get("imgsz", 320)
 
     pad_left, pad_right, pad_anterior, pad_posterior, pad_superior, pad_inferior = _resolve_padding(
         pad_si=pad_si, pad_superior=pad_superior, pad_inferior=pad_inferior,
@@ -578,18 +578,18 @@ def detect(img_path: "str | Path | nib.Nifti1Image",
     )
 
     if isinstance(img_path, nib.Nifti1Image):
-        img      = img_path
+        img = img_path
         img_name = getattr(img.file_map.get("image"), "filename", None)
         img_name = Path(img_name).name if img_name else "NIfTI"
     else:
-        img      = nib.load(img_path)
+        img = nib.load(img_path)
         img_name = Path(img_path).name
-    original_ornt    = nib.io_orientation(img.affine)
+    original_ornt = nib.io_orientation(img.affine)
     original_axcodes = "".join(str(a) for a in nib.aff2axcodes(img.affine))
-    img_las          = reorient_to_las(img)
-    las_ornt         = axcodes2ornt(("L", "A", "S"))
-    zooms            = tuple(float(v) for v in img_las.header.get_zooms()[:3])
-    shape            = img_las.shape
+    img_las = reorient_to_las(img)
+    las_ornt = axcodes2ornt(("L", "A", "S"))
+    zooms = tuple(float(v) for v in img_las.header.get_zooms()[:3])
+    shape = img_las.shape
 
     print(f"Input   : {img_name}  shape={img.shape}  ornt={original_axcodes}")
 
@@ -598,10 +598,10 @@ def detect(img_path: "str | Path | nib.Nifti1Image",
     import onnxruntime as ort
     model_file = Path(model_path) if model_path else ensure_model()
     det_model = YOLO(str(model_file), task="detect")
-    cls_sess  = ort.InferenceSession(str(ensure_cls_model())) if regularization == "cls" else None
+    cls_sess = ort.InferenceSession(str(ensure_cls_model())) if regularization == "cls" else None
 
-    si_zoom  = zooms[2] / si_res
-    img_inf  = resample_for_inference(img_las, si_res, inplane_res)
+    si_zoom = zooms[2] / si_res
+    img_inf = resample_for_inference(img_las, si_res, inplane_res)
     data_inf = img_inf.get_fdata(dtype=np.float32)
 
     slices, las_idxs = build_slices(data_inf, channels, norm_scope)
@@ -622,14 +622,14 @@ def detect(img_path: "str | Path | nib.Nifti1Image",
     if not preds:
         raise RuntimeError("No spinal cord detected — check the volume or lower --conf")
 
-    bbox          = aggregate_bbox_3d(preds, shape[0], shape[1], shape[2], si_zoom)
-    bbox_pad      = bbox.pad(pad_left, pad_right, pad_anterior, pad_posterior,
-                             pad_superior, pad_inferior, zooms, shape)
+    bbox = aggregate_bbox_3d(preds, shape[0], shape[1], shape[2], si_zoom)
+    bbox_pad = bbox.pad(pad_left, pad_right, pad_anterior, pad_posterior,
+                        pad_superior, pad_inferior, zooms, shape)
     bbox_pad_orig, _ = bbox_pad.reorient(shape, las_ornt, original_ornt)
 
     xmin, xmax = bbox_pad_orig.rl1, bbox_pad_orig.rl2 - 1
     ymin, ymax = bbox_pad_orig.ap1, bbox_pad_orig.ap2 - 1
-    zmin, zmax = bbox_pad_orig.z1,  bbox_pad_orig.z2  - 1
+    zmin, zmax = bbox_pad_orig.z1,  bbox_pad_orig.z2 - 1
     print(f"BBox    : xmin={xmin} xmax={xmax}  ymin={ymin} ymax={ymax}  zmin={zmin} zmax={zmax}")
 
     return {
@@ -680,7 +680,7 @@ def crop(img: "str | Path | nib.Nifti1Image", bbox: dict,
     ymin, ymax = bbox["ymin"], bbox["ymax"]
     zmin, zmax = bbox["zmin"], bbox["zmax"]
 
-    data   = np.asarray(img.dataobj)
+    data = np.asarray(img.dataobj)
     affine = img.affine.copy()
     if translate:
         affine[:3, 3] = (img.affine @ np.array([xmin, ymin, zmin, 1.0]))[:3]
@@ -722,12 +722,12 @@ def uncrop(seg_nii, bbox) -> "nib.Nifti1Image":
         using the original affine and header.
     """
     original_img = bbox["_original_img"]
-    xmin, xmax   = bbox["xmin"], bbox["xmax"]
-    ymin, ymax   = bbox["ymin"], bbox["ymax"]
-    zmin, zmax   = bbox["zmin"], bbox["zmax"]
+    xmin, xmax = bbox["xmin"], bbox["xmax"]
+    ymin, ymax = bbox["ymin"], bbox["ymax"]
+    zmin, zmax = bbox["zmin"], bbox["zmax"]
 
-    dtype   = seg_nii.get_data_dtype()
-    full    = np.zeros(original_img.shape[:3], dtype=dtype)
+    dtype = seg_nii.get_data_dtype()
+    full = np.zeros(original_img.shape[:3], dtype=dtype)
     seg_arr = np.asarray(seg_nii.dataobj).astype(dtype)
     full[xmin:xmax+1, ymin:ymax+1, zmin:zmax+1] = seg_arr
 
