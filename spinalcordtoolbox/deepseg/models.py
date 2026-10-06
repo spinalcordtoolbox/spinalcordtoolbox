@@ -649,6 +649,22 @@ TASKS = {
          'group': 'gray_matter',
          'priority': 1  # Push gray matter to the top of its eponymous category
          },
+    'brachial_plexus':
+        {'description': 'Segmentation of brachial plexus nerve roots and dorsal root ganglia on STIR MRI',
+         'long_description': 'This segmentation model for the bilateral C5-C8 brachial plexus nerve roots and dorsal '
+                             'root ganglia (DRG) uses a two-stage cascade of 3D U-Nets (ResEncUNet-M), trained with the '
+                             'nnUNetV2 framework. Stage 1 produces a coarse 3-class segmentation (background, DRG, '
+                             'plexus) that localizes the target region. Stage 2 takes the image and the Stage 1 '
+                             'prediction as input, and outputs a single segmentation image containing 16 classes: '
+                             'DRG C5-C8 right (1-4), DRG C5-C8 left (5-8), plexus C5-C8 right (9-12), and plexus C5-C8 '
+                             'left (13-16). Left/right merged structures are split in post-processing. Training data '
+                             'consisted of approximately 400 coronal T2 SPACE STIR scans from three sites (Oxford, '
+                             'Brighton, Stanford), acquired on Siemens and GE scanners. Five-fold cross-validation gave '
+                             'a median test Dice of 0.90.',
+         'url': 'https://github.com/jfundaun/model_seg_brachialplexus-drg_human_stir',
+         'models': ['model_seg_brachialplexus-drg_human_stir'],
+         'citation': None
+         },
 }
 
 
