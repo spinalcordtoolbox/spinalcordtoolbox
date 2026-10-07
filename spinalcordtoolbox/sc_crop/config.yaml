@@ -6,3 +6,9 @@ imgsz: 320             # YOLO inference imgsz — must match training; required 
 conf: 0.1             # Detection confidence threshold
 regularization: 'cls'           # cls | graphtrim | none
 cls_conf: 0.5             # Classification confidence threshold (used with regularization=cls)
+# The exported detector uses prediction strides 8/16/32 and embeds TopK(k=300).
+# With imgsz=320, a 320x32 input has 210 anchors; 320x64 has 420. Keep the short
+# padded side at least 64 so even very anisotropic inputs satisfy TopK. The side is
+# rounded up to the detector stride; when both rounded dimensions are already >=64,
+# the input remains identical to Ultralytics' original rectangular letterboxing.
+min_side: 64
