@@ -65,6 +65,17 @@ from nibabel.orientations import axcodes2ornt, ornt_transform
 from nibabel.processing import resample_to_output
 
 
+# The exported detector has three prediction heads at these strides and a fixed
+# TopK of 300. With imgsz=320, a 32-pixel short side yields 210 anchors, while
+# 64 pixels yields 420; min_side in config.yaml keeps the latter case safe.
+_DETECTOR_TOPK = 300
+_DETECTOR_STRIDES = (8, 16, 32)
+
+# Keep these defaults in sync with config.yaml for callers providing partial configs.
+_DEFAULT_IMGSZ = 320
+_DEFAULT_MIN_SIDE = 64
+
+
 # ─── Config ───────────────────────────────────────────────────────────────────
 
 def load_config() -> dict:
@@ -309,17 +320,33 @@ def build_slices(data: np.ndarray, channels: int, norm_scope: str) -> tuple[list
 # ─── YOLO inference ───────────────────────────────────────────────────────────
 
 def infer_slices(model, slices: list, las_idxs: list, conf_thresh: float,
-                 device: str | None = None, imgsz: int = 320) -> dict:
+                 device: str | None = None, imgsz: int = _DEFAULT_IMGSZ,
+                 min_side: int = _DEFAULT_MIN_SIDE) -> dict:
     """Run YOLO detection inference on pre-built slices.
 
     Returns {las_idx: (cx, cy, w, h)} in slice-image normalised coords [0,1].
     imgsz must match training imgsz (read from config.yaml) — required for ONNX
     models which do not embed imgsz in their metadata unlike .pt.
     """
+    from ultralytics.data.augment import LetterBox
+    from ultralytics.models.yolo.detect.predict import DetectionPredictor
+
+    class ScCropDetectionPredictor(DetectionPredictor):
+        def pre_transform(self, im):
+            same_shapes = len({x.shape for x in im}) == 1
+            auto = same_shapes and self.args.rect and (
+                self.model.format == "pt" or
+                (getattr(self.model, "dynamic", False) and self.model.format != "imx")
+            )
+            if auto:
+                return [_letterbox_detect(x, self.imgsz, self.model.stride, min_side) for x in im]
+            letterbox = LetterBox(self.imgsz, auto=False, stride=self.model.stride)
+            return [letterbox(image=x) for x in im]
+
     kw = {"conf": conf_thresh, "imgsz": imgsz, "verbose": False}
     if device:
         kw["device"] = device
-    results = model.predict(slices, **kw)
+    results = model.predict(slices, predictor=ScCropDetectionPredictor, **kw)
     preds = {}
     for las_idx, res in zip(las_idxs, results):
         if res.boxes is None or len(res.boxes) == 0:
@@ -328,6 +355,22 @@ def infer_slices(model, slices: list, las_idxs: list, conf_thresh: float,
         cx, cy, w, h = res.boxes.xywhn[best].tolist()
         preds[las_idx] = (cx, cy, w, h)
     return preds
+
+
+def _letterbox_detect(sl: np.ndarray, imgsz: int | tuple[int, int], stride: int,
+                      min_side: int) -> np.ndarray:
+    """Letterbox a detector slice, ensuring its padded sides meet the configured minimum."""
+    from ultralytics.data.augment import LetterBox
+
+    h, w = sl.shape[:2]
+    imgsz_h, imgsz_w = (imgsz, imgsz) if isinstance(imgsz, int) else imgsz
+    ratio = min(imgsz_h / h, imgsz_w / w)
+    new_w, new_h = round(w * ratio), round(h * ratio)
+    min_side = ((min_side + stride - 1) // stride) * stride
+    tgt_w = max(min_side, ((new_w + stride - 1) // stride) * stride)
+    tgt_h = max(min_side, ((new_h + stride - 1) // stride) * stride)
+    letterbox = LetterBox((tgt_h, tgt_w), auto=False, stride=stride)
+    return letterbox(image=sl)
 
 
 # ─── Regularization helpers ───────────────────────────────────────────────────
@@ -567,7 +610,8 @@ def detect(img_path: "str | Path | nib.Nifti1Image",
     norm_scope = norm_scope if norm_scope is not None else config["norm_scope"]
     assert norm_scope in ("volume", "slice_all", "slice"), \
         f"unsupported norm_scope: {norm_scope!r} (expected volume, slice_all, or slice)"
-    imgsz = config.get("imgsz", 320)
+    imgsz = config.get("imgsz", _DEFAULT_IMGSZ)
+    min_side = config.get("min_side", _DEFAULT_MIN_SIDE)
 
     pad_left, pad_right, pad_anterior, pad_posterior, pad_superior, pad_inferior = _resolve_padding(
         pad_si=pad_si, pad_superior=pad_superior, pad_inferior=pad_inferior,
@@ -604,7 +648,7 @@ def detect(img_path: "str | Path | nib.Nifti1Image",
 
     slices, las_idxs = build_slices(data_inf, channels, norm_scope)
 
-    preds = infer_slices(det_model, slices, las_idxs, conf, device, imgsz)
+    preds = infer_slices(det_model, slices, las_idxs, conf, device, imgsz, min_side)
     print(f"Detected: {len(preds)}/{data_inf.shape[2]} slices")
 
     if regularization == "cls":
