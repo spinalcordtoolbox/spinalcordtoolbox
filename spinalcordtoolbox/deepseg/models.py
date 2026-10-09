@@ -258,7 +258,7 @@ MODELS = {
             "model1_fold3": ["https://github.com/jfundaun/model_seg_brachialplexus-drg_human_stir/releases#:~:text=Dataset201_DRGPlexusCoarse_fold3_r20260723.zip"],
             "model1_fold4": ["https://github.com/jfundaun/model_seg_brachialplexus-drg_human_stir/releases#:~:text=Dataset201_DRGPlexusCoarse_fold4_r20260723.zip"],
 
-            "model2_fold0": ["https://github.com/jfundaun/model_seg_brachialplexus-drg_human_stir/releases#:~:text=Dataset202_DRGPlexusFine_fold0_r20260723.zip"], 
+            "model2_fold0": ["https://github.com/jfundaun/model_seg_brachialplexus-drg_human_stir/releases#:~:text=Dataset202_DRGPlexusFine_fold0_r20260723.zip"],
             "model2_fold1": ["https://github.com/jfundaun/model_seg_brachialplexus-drg_human_stir/releases#:~:text=Dataset202_DRGPlexusFine_fold1_r20260723.zip"],
             "model2_fold2": ["https://github.com/jfundaun/model_seg_brachialplexus-drg_human_stir/releases#:~:text=Dataset202_DRGPlexusFine_fold2_r20260723.zip"],
             "model2_fold3": ["https://github.com/jfundaun/model_seg_brachialplexus-drg_human_stir/releases#:~:text=Dataset202_DRGPlexusFine_fold3_r20260723.zip"],
