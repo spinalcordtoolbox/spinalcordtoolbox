@@ -797,6 +797,7 @@ def install_model(name_model, custom_url=None):
     """
     logger.info(f"\nINSTALLING MODEL: {name_model}")
     url_field = default_url = MODELS[name_model]['url']
+    framework = MODELS[name_model]["framework"]
     if custom_url is not None:
         if not isinstance(custom_url, list):
             raise ValueError(f"Expected a list of model URLs for custom_url, got: {custom_url}")
@@ -838,9 +839,8 @@ def install_model(name_model, custom_url=None):
         else:
             urls_used = {}
             for i, (seed_name, model_urls) in enumerate(url_field.items()):
-                # For the ms_lesion model, we need to regroup the folds together
-                # For lesion_ms, we can extract all the folds to the same `nnunetTrainer` directory
-                if name_model == "model_seg_ms_lesion":
+                # For nnunetv2 multifold models, we need to regroup the folds together into one `nnUNetTrainer` directory
+                if framework == "nnunetv2":
                     target_directory = folder(name_model)
                     dirs_to_preserve = ("nnUNetTrainer",)
                 # For other multi-seed models, create subfolders for each seed
