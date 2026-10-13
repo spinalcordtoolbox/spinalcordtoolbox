@@ -250,27 +250,36 @@ MODELS = {
         "thr": None,
         "default": False,
      },
-    "model_seg_brachialplexus-drg_human_stir": {
+    "model1_seg_brachialplexus-drg_human_stir": {
          "url": {
             "model1_fold0": ["https://github.com/jfundaun/model_seg_brachialplexus-drg_human_stir/releases/download/r20260723/Dataset201_DRGPlexusCoarse_fold0_r20260723.zip"],
             "model1_fold1": ["https://github.com/jfundaun/model_seg_brachialplexus-drg_human_stir/releases/download/r20260723/Dataset201_DRGPlexusCoarse_fold1_r20260723.zip"],
             "model1_fold2": ["https://github.com/jfundaun/model_seg_brachialplexus-drg_human_stir/releases/download/r20260723/Dataset201_DRGPlexusCoarse_fold2_r20260723.zip"],
             "model1_fold3": ["https://github.com/jfundaun/model_seg_brachialplexus-drg_human_stir/releases/download/r20260723/Dataset201_DRGPlexusCoarse_fold3_r20260723.zip"],
             "model1_fold4": ["https://github.com/jfundaun/model_seg_brachialplexus-drg_human_stir/releases/download/r20260723/Dataset201_DRGPlexusCoarse_fold4_r20260723.zip"],
-
-            "model2_fold0": ["https://github.com/jfundaun/model_seg_brachialplexus-drg_human_stir/releases/download/r20260723/Dataset202_DRGPlexusFine_fold0_r20260723.zip"],
-            "model2_fold1": ["https://github.com/jfundaun/model_seg_brachialplexus-drg_human_stir/releases/download/r20260723/Dataset202_DRGPlexusFine_fold1_r20260723.zip"],
-            "model2_fold2": ["https://github.com/jfundaun/model_seg_brachialplexus-drg_human_stir/releases/download/r20260723/Dataset202_DRGPlexusFine_fold2_r20260723.zip"],
-            "model2_fold3": ["https://github.com/jfundaun/model_seg_brachialplexus-drg_human_stir/releases/download/r20260723/Dataset202_DRGPlexusFine_fold3_r20260723.zip"],
-            "model2_fold4": ["https://github.com/jfundaun/model_seg_brachialplexus-drg_human_stir/releases/download/r20260723/Dataset202_DRGPlexusFine_fold4_r20260723.zip"]
          },
          "description": "Segmentation of the brachial plexus and dorsal root ganglia on human STIR MRI",
          "contrasts": ["STIR"],
          "framework": "nnunetv2",
          "thr": None,  # unsure
          "default": False,
-         "cropped_image": True,
+         "cropped_image": False,
      },
+    "model2_seg_brachialplexus-drg_human_stir": {
+        "url": {
+            "model2_fold0": ["https://github.com/jfundaun/model_seg_brachialplexus-drg_human_stir/releases/download/r20260723/Dataset202_DRGPlexusFine_fold0_r20260723.zip"],
+            "model2_fold1": ["https://github.com/jfundaun/model_seg_brachialplexus-drg_human_stir/releases/download/r20260723/Dataset202_DRGPlexusFine_fold1_r20260723.zip"],
+            "model2_fold2": ["https://github.com/jfundaun/model_seg_brachialplexus-drg_human_stir/releases/download/r20260723/Dataset202_DRGPlexusFine_fold2_r20260723.zip"],
+            "model2_fold3": ["https://github.com/jfundaun/model_seg_brachialplexus-drg_human_stir/releases/download/r20260723/Dataset202_DRGPlexusFine_fold3_r20260723.zip"],
+            "model2_fold4": ["https://github.com/jfundaun/model_seg_brachialplexus-drg_human_stir/releases/download/r20260723/Dataset202_DRGPlexusFine_fold4_r20260723.zip"]
+        },
+        "description": "Segmentation of the brachial plexus and dorsal root ganglia on human STIR MRI",
+        "contrasts": ["STIR"],
+        "framework": "nnunetv2",
+        "thr": None,  # unsure
+        "default": False,
+        "cropped_image": False,
+    },
 }
 
 
@@ -662,7 +671,7 @@ TASKS = {
                              'Brighton, Stanford), acquired on Siemens and GE scanners. Five-fold cross-validation gave '
                              'a median test Dice of 0.90.',
          'url': 'https://github.com/jfundaun/model_seg_brachialplexus-drg_human_stir',
-         'models': ['model_seg_brachialplexus-drg_human_stir'],
+         'models': ['model1_seg_brachialplexus-drg_human_stir', 'model2_seg_brachialplexus-drg_human_stir'],
          'citation': None
          },
 }
