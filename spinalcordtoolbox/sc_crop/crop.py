@@ -56,6 +56,7 @@ Usage:
 from __future__ import annotations
 
 from dataclasses import dataclass
+import importlib.resources
 from pathlib import Path
 import yaml
 
@@ -64,12 +65,15 @@ import numpy as np
 from nibabel.orientations import axcodes2ornt, ornt_transform
 from nibabel.processing import resample_to_output
 
+import spinalcordtoolbox.sc_crop
+
 
 # ─── Config ───────────────────────────────────────────────────────────────────
 
 def load_config() -> dict:
     """Load config.yaml bundled with the package."""
-    return yaml.safe_load((Path(__file__).parent / "config.yaml").read_text())
+    config_path = importlib.resources.files(spinalcordtoolbox.sc_crop) / "config.yaml"
+    return yaml.safe_load(config_path.read_text())
 
 
 # ─── BBox3D: single source of truth for voxel bboxes in LAS index space ──────
