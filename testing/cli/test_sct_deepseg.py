@@ -85,12 +85,6 @@ def cleanup_model_dirs():
      'canal',
      None,
      None),
-    (sct_test_path('t2', 't2.nii.gz'),  # dummy image since no STIR test data
-     None,  # no ground truth, just test if it runs
-     't2_seg_deepseg.nii.gz',
-     'brachial_plexus',
-     None,
-     None),
 ])
 @pytest.mark.usefixtures(cleanup_model_dirs.__name__)
 def test_segment_nifti_binary_seg(fname_image, fname_seg_manual, fname_out, task, thr, expected_dice,
@@ -144,6 +138,30 @@ def test_segment_nifti_binary_seg(fname_image, fname_seg_manual, fname_out, task
                 warnings.warn(
                     f"Test produced label(s) '{unexpected_labels}' in segmentation which were not expected to appear."
                 )
+
+
+@pytest.mark.usefixtures(cleanup_model_dirs.__name__)
+def test_brachial_plexus_multistage_outputs(tmp_path):
+    fname_image = sct_test_path('t2', 't2.nii.gz')  # Placeholder until STIR test data is available.
+    fname_out = str(tmp_path / 'brachial_plexus.nii.gz')
+    files_before = set(tmp_path.iterdir())
+
+    sct_deepseg.main(argv=['brachial_plexus', '-i', fname_image, '-o', fname_out])
+    generated_files = set(tmp_path.iterdir()) - files_before
+    nifti_files = sorted(path for path in generated_files if path.name.endswith(('.nii', '.nii.gz')))
+    expected_stage2_outputs = {
+        f"brachial_plexus_{region}_{side}_seg.nii.gz"
+        for region in (
+            'DRG_C5', 'DRG_C6', 'DRG_C7', 'DRG_C8',
+            'BP_C5', 'BP_C6', 'BP_C7', 'BP_C8',
+        )
+        for side in ('R', 'L')
+    }
+    assert expected_stage2_outputs <= {path.name for path in nifti_files}
+    for path in nifti_files:
+        image = Image(str(path))
+        assert image.data.ndim == 3
+        assert check_image_kind(image) == 'seg'
 
 
 @pytest.fixture(scope='session')

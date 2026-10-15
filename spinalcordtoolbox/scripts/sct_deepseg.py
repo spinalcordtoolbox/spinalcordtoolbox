@@ -14,17 +14,21 @@
 from argparse import SUPPRESS, Action
 import json
 import os
+import shutil
 import sys
 import logging
 from typing import Sequence
 from textwrap import dedent
 import functools
 
+import numpy as np
+
 from spinalcordtoolbox.reports import qc2
 from spinalcordtoolbox.image import splitext, Image, check_image_kind, add_suffix
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax, ActionCreateFolder
 from spinalcordtoolbox.utils.sys import init_sct, printv, __sct_dir__, set_loglevel, __version__, _git_info
 from spinalcordtoolbox.utils.sys import LazyLoader
+from spinalcordtoolbox.utils.fs import tmp_create
 
 cuda = LazyLoader("cuda", globals(), 'torch.cuda')
 
@@ -422,6 +426,16 @@ def main(argv: Sequence[str]):
 
     # Get pipeline model names
     name_models = models.TASKS[arguments.task]['models']
+    is_brachial_plexus = arguments.task == 'brachial_plexus'
+    model_frameworks = [models.MODELS[name_model]['framework'] for name_model in name_models]
+    if is_brachial_plexus:
+        if len(name_models) != 2 or model_frameworks != ['nnunetv2', 'nnunetv2'] or len(arguments.i) != 1:
+            parser.error("The brachial_plexus task requires two nnU-Net models and exactly one STIR input image.")
+    elif len(name_models) > 1 and any(framework != 'ivadomed' for framework in model_frameworks):
+        parser.error(
+            f"Multi-stage inference with non-ivadomed models is not supported for task '{arguments.task}'. "
+            "A task-specific input handler is required."
+        )
 
     # Parse -box-* once, here, and reuse `box_overrides` below in the pipeline loop.
     # Whether a given model actually uses the sc-crop pipeline (`crop_active`) is only knowable
@@ -446,7 +460,7 @@ def main(argv: Sequence[str]):
     # Run pipeline by iterating through the models
     fname_prior = None
     output_filenames = None
-    for name_model in name_models:
+    for stage_index, name_model in enumerate(name_models, start=1):
         # Check if this is an official model
         if name_model in list(models.MODELS.keys()):
             # If it is, check if it is installed
@@ -515,6 +529,21 @@ def main(argv: Sequence[str]):
         else:
             thr = (arguments.binarize_prediction if arguments.binarize_prediction is not None
                    else models.MODELS[name_model]['thr'])  # Default `thr` value stored in model dict
+            tmpdir_multichannel = None
+            if is_brachial_plexus and stage_index == 2:
+                if fname_prior is None:
+                    parser.error("The brachial_plexus stage-1 prior was not generated.")
+                image = Image(input_filenames[0])
+                prior = Image(fname_prior)
+                if (image.data.ndim != 3 or prior.data.ndim != 3 or
+                        image.data.shape != prior.data.shape or not np.allclose(image.affine, prior.affine)):
+                    parser.error("The brachial_plexus stage-1 prior must match the input image geometry.")
+                # nnU-Net receives (channels, z, y, x); store aligned channels as (x, y, z, channels).
+                multichannel_image = Image(np.stack((image.data, prior.data), axis=-1), hdr=image.hdr)
+                tmpdir_multichannel = tmp_create(basename="sct_deepseg_brachial_plexus")
+                fname_multichannel = os.path.join(tmpdir_multichannel, "input_channels.nii.gz")
+                multichannel_image.save(fname_multichannel)
+                input_filenames = [fname_multichannel]
             # Pass any "extra" kwargs defined only for specific models/tasks
             extra_network_kwargs = {
                 arg_name: getattr(arguments, arg_name)
@@ -555,11 +584,16 @@ def main(argv: Sequence[str]):
                 extra_network_kwargs=extra_network_kwargs,
                 extra_inference_kwargs=extra_inference_kwargs,
             )
+            if tmpdir_multichannel is not None and arguments.r:
+                shutil.rmtree(tmpdir_multichannel)
 
         # Delete intermediate outputs
         if fname_prior and os.path.isfile(fname_prior) and arguments.r:
             logger.info("Remove temporary files...")
             os.remove(fname_prior)
+            fname_prior_json = f"{splitext(fname_prior)[0]}.json"
+            if os.path.isfile(fname_prior_json):
+                os.remove(fname_prior_json)
 
         output_filenames = []
         # Save output seg
