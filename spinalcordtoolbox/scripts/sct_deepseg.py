@@ -687,6 +687,9 @@ def main(argv: Sequence[str]):
                     offset_text=False,
                     **common_args,
                 )
+        elif arguments.task == "brachial_plexus":
+            # FIXME: We need to think about how to best display the brachial_plexus outputs as a QC report
+            pass
         else:
             # If `arguments.qc_seg is None`, each entry will be treated as an
             # empty file with the same size as the corresponding input image
