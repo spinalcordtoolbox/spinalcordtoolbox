@@ -584,6 +584,9 @@ def main(argv: Sequence[str]):
             logger.info("Remove temporary files...")
             if fname_prior and os.path.isfile(fname_prior):
                 os.remove(fname_prior)
+                fname_prior_json = f"{splitext(fname_prior)[0]}.json"
+                if os.path.isfile(fname_prior_json):
+                    os.remove(fname_prior_json)
             if tmpdir is not None and os.path.exists(tmpdir):
                 shutil.rmtree(tmpdir)
 
