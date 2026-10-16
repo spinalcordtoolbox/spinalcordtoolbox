@@ -203,6 +203,19 @@ def t2_ax_sc_seg(tmp_path_factory):
      0,
      None,
      ["-label-vert", "1"]),
+    (sct_test_path('t2', 't2.nii.gz'),
+     [None] * 16,
+     'brachial_plexus.nii.gz',
+     [f"_{region}_{side}_seg"
+      for region in (
+          'DRG_C5', 'DRG_C6', 'DRG_C7', 'DRG_C8',
+          'BP_C5', 'BP_C6', 'BP_C7', 'BP_C8',
+      )
+      for side in ('R', 'L')],
+     'brachial_plexus',
+     0,
+     None,
+     []),
 ])
 @pytest.mark.usefixtures(cleanup_model_dirs.__name__)
 def test_segment_nifti_multiclass(fname_image, fnames_seg_manual, fname_out, suffixes, task, thr, expected_dice,
