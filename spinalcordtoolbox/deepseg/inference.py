@@ -353,10 +353,17 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device, ensemble=F
     #       ([z,y,x]). Nibabel (the image processing library SCT uses internally) _doesn't_ have this axis-swapping
     #       behavior. So, when SCT fetches the numpy array, we have to swap axes [x] and [z] to mimic nnUNet's internal
     #       behavior. See also: https://github.com/MIC-DKFZ/nnUNet/issues/1951
-    data = img_in.data.transpose([2, 1, 0])
-    # We also need to add an axis and convert to float32 to match nnUNet's input expectations
-    # (This would automatically be done by nnUNet if we were to predict from image files, rather than a npy array.)
-    data = np.expand_dims(data, axis=0).astype(np.float32)
+    # NB: Some nnUNet models (e.g. the brachial plexus model) expect multichannel input (4D, but not temporal!)
+    #     In that case, the channels-last stacked array becomes (channels, z, y, x) for nnunet.
+    if img_in.data.ndim == 4:
+        data = img_in.data.transpose([3, 2, 1, 0]).astype(np.float32)
+        img_ref = Image(img_in.data[..., 0], hdr=img_in.hdr)  # use the first channel (img_in) as the reference
+    else:
+        data = img_in.data.transpose([2, 1, 0])
+        # NB: For 3D images, we also need to add an axis and convert to float32 to match nnUNet's input expectations
+        # (This would automatically be done by nnUNet if we were to predict from image files, rather than a npy array.)
+        data = np.expand_dims(data, axis=0).astype(np.float32)
+        img_ref = img_in
     pred = predictor.predict_single_npy_array(
         input_image=data,
         # The spacings also have to be reversed to match nnUNet's conventions.
@@ -371,7 +378,7 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device, ensemble=F
         pred = average_nnunet_predictions(pred, probabilities=soft_ms_lesion)
     # Lastly, we undo the transpose to return the image from [z,y,x] (SimpleITK) to [x,y,z] (nibabel)
     pred = pred.transpose([2, 1, 0])
-    img_out = img_in.copy()
+    img_out = img_ref.copy()
     img_out.data = pred
 
     end = time.time()
@@ -408,6 +415,10 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device, ensemble=F
     is_rootlet_model = all((label == f"lvl{i}") for i, label in enumerate(labels.keys(), start=1))
     if is_rootlet_model:
         targets = ["_rootlets"]
+        outputs = [img_out]
+    # Keep the coarse class labels intact because stage 2 uses them as a spatial prior.
+    elif set(labels.keys()) == {'DRG', 'Plexus'}:
+        targets = ["_seg"]
         outputs = [img_out]
     # for spinal cord segmentation models with only 1 output label, save the image directly with specific "_seg" suffix
     # this is added to preserve the typical expected output for SC models (`sct_propseg`, `sct_deepseg_sc`, etc.)
