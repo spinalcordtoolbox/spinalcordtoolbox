@@ -268,6 +268,11 @@ def _split_nnunet_output(
     label_sets_to_keep = (
         # Stage 1 of the brachial_plexus model
         ("_seg", {"DRG", "Plexus"}),
+        # Stage 2 of the brachial_plexus model
+        ("_drg_bp_seg", {f"{region}_{side}" for region in (
+            'DRG_C5', 'DRG_C6', 'DRG_C7', 'DRG_C8',
+            'BP_C5', 'BP_C6', 'BP_C7', 'BP_C8',
+        ) for side in ('R', 'L')}),
         # Any single-class spinal cord model
         ("_seg", {"sc"}),
         # Individual rootlet labels
