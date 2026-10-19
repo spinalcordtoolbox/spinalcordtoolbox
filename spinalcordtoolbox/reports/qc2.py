@@ -2392,8 +2392,7 @@ def assign_label_colors_by_groups(labels):
     ]
     if len(label_groups) == 1:
         # repeat high-contrast colors until we have enough to cover the range of labels
-        n_colors = labels.max() - labels.min() + 1
-        color_list = list(it.islice(it.cycle(labels_color), n_colors))
+        color_list = list(it.islice(it.cycle(labels_color), len(labels)))
 
     # Handle the edge case: Multiple continuous groups
     else:
