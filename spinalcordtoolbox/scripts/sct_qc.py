@@ -62,7 +62,7 @@ def get_parser():
         metavar='SEG2',
         help='Second input segmentation or label. Only relevant for `-p sct_deepseg`. Necessary for models that output '
              'two images, for example:\n'
-             ' - 1. SC    + 2. lesion\n '
+             ' - 1. SC    + 2. lesion\n'
              ' - 1. SC    + 2. GM\n'
              ' - 1. discs + 2. full spine segmentation'
     )
