@@ -38,13 +38,16 @@ def get_parser():
         '-i',
         metavar='IMAGE',
         help='Input image #1')
+    processes = ('sct_deepseg', 'sct_deepseg_gm', 'sct_deepseg_lesion', 'sct_deepseg_sc', 'sct_detect_pmj',
+                 'sct_dmri_moco', 'sct_fmri_compute_tsnr', 'sct_fmri_moco', 'sct_get_centerline',
+                 'sct_image_stitch', 'sct_label_utils', 'sct_label_vertebrae', 'sct_propseg',
+                 'sct_register_multimodal', 'sct_register_to_template', 'sct_warp_template')
     mandatory.add_argument(
         '-p',
-        help='SCT function associated with the QC report to generate',
-        choices=('sct_deepseg', 'sct_propseg', 'sct_deepseg_sc', 'sct_deepseg_gm', 'sct_deepseg_lesion',
-                 'sct_register_multimodal', 'sct_register_to_template', 'sct_warp_template',
-                 'sct_label_vertebrae', 'sct_detect_pmj', 'sct_label_utils', 'sct_get_centerline',
-                 'sct_fmri_moco', 'sct_dmri_moco', 'sct_image_stitch', 'sct_fmri_compute_tsnr'))
+        metavar='PROCESS',
+        help="SCT function associated with the QC report to generate.\n"
+             f"(choices: {', '.join(processes)})",
+        choices=processes)
 
     optional = parser.optional_arggroup
     optional.add_argument(
@@ -124,12 +127,13 @@ def get_parser():
              'sct_dmri_moco.')
     optional.add_argument(
         '-deepseg-task',
-        help="The task used to generate the sct_deepseg output files. (See: `sct_deepseg -h` for list of tasks.)\n"
+        help="The task used to generate the sct_deepseg output files.\n"
              "Only relevant for `-p sct_deepseg`.\n"
              "This option dictates which specific QC report will be generated (e.g. single-class segmentation, multi-class segmentation, "
-             "whole-spine, etc.).",
+             "whole-spine, etc.).\n"
+             f"(choices: {', '.join(sorted(TASKS))})",
         metavar="TASK",
-        choices=TASKS.keys(),
+        choices=sorted(TASKS),
         default='spinalcord'
     )
 
