@@ -19,6 +19,9 @@ from spinalcordtoolbox.utils.shell import SCTArgumentParser, printv
 from spinalcordtoolbox.deepseg.models import TASKS
 
 
+DEFAULT_LABELS = os.path.join(__sct_dir__, 'spinalcordtoolbox', 'reports', 'sct_label_vertebrae_regions.json')
+
+
 def get_parser():
     parser = SCTArgumentParser(
         description='Generate Quality Control (QC) report following SCT processing.',
@@ -87,9 +90,13 @@ def get_parser():
     optional.add_argument(
         '-custom-labels',
         metavar="JSON",
-        help="Path to a JSON file containing custom region labels. Only relevant for `-p sct_label_vertebrae` or "
-             "`-p sct_deepseg -deepseg-task spine.",
-        default=os.path.join(__sct_dir__, 'spinalcordtoolbox', 'reports', 'sct_label_vertebrae_regions.json'))
+        help=f"Path to a JSON file containing custom region labels. Only relevant for `-p sct_label_vertebrae` or "
+             f"`-p sct_deepseg -deepseg-task spine`.\n"
+             f"   * For `-p spine`, the relevant label file will be inferred based on the model that was used to generate "
+             f"the inputs. If the model type cannot be inferred, the step1 labels will be used by default.\n"
+             f"   * For `-p sct_label_vertebrae`, the default labels will be used:\n"
+             f"     {DEFAULT_LABELS})",
+        )
     optional.add_argument(
         '-qc',
         metavar='QC',
@@ -173,6 +180,18 @@ def main(argv: Sequence[str]):
     if arguments.p == 'sct_deepseg_lesion' and arguments.plane is None:
         parser.error('Please provide the plane of the output QC with `-plane`')
 
+    # Load the label file depending on the provided arguments:
+    #   - Whether the user provided a custom label file via `-custom-labels` (takes precedence)
+    #   - The label type inferred from the `spine` JSON sidecar file (if present)
+    if arguments.custom_labels is not None:
+        label_file = arguments.custom_labels
+    elif arguments.p == 'sct_deepseg' and arguments.deepseg_task == 'spine':
+        json_file = arguments.s2.replace('.nii.gz', '.json')
+        label_type = parse_label_type(json_file, verbose=verbose)  # falls back to default 'spine' label type (step1)
+        label_file = os.path.join(__sct_dir__, 'spinalcordtoolbox', 'reports', f'totalspineseg_{label_type}_regions.json')
+    else:  # sct_label_vertebrae
+        label_file = DEFAULT_LABELS
+
     # Common arguments for QC reports
     # NB: For the qc2 reports, we override the command name to be `sct_qc` so that the QC report will always show
     # `sct_qc` as the command that was run, even if the user ran a different SCT command (e.g. `sct_deepseg`) and then
@@ -205,7 +224,7 @@ def main(argv: Sequence[str]):
         del kwargs['fname_output']  # not used by this report
         qc2.sct_label_vertebrae(
             draw_text=bool(arguments.text_labels),
-            path_custom_labels=arguments.custom_labels,
+            path_custom_labels=label_file,
             **kwargs
         )
     elif arguments.p == 'sct_label_utils':
@@ -213,40 +232,34 @@ def main(argv: Sequence[str]):
         qc2.sct_label_utils(**kwargs)
     elif arguments.p == 'sct_deepseg':
         del kwargs['fname_output']  # not used by this report
-        # FIXME: Distinguish command between both QC reports
         if arguments.deepseg_task == 'spine':
-            # For the spine task, we need two outputs (fname_discs and fname_all) to generate the QC report.
-            # The first output (-s) is used for the sct_label_utils report
-            kwargs_label_utils = kwargs.copy()
-            qc2.sct_label_utils(**kwargs_label_utils)          # uses -s (fname_discs)
-
-            # The second output (-s2) is used for the sct_label_vertebrae report
-            kwargs_label_vertebrae = kwargs.copy()
-            kwargs_label_vertebrae['fname_seg'] = arguments.s2
-            kwargs_label_vertebrae['offset_text'] = False
-
-            # Look for an identically-named JSON sidecar file in the same directory as the provided -s2 file, and try
-            # to parse the "GeneratedBy" field to determine the type of custom labels.
-            json_file = arguments.s2.replace('.nii.gz', '.json')
-            label_type = parse_label_type(json_file, verbose=verbose)
-
-            # If `custom_labels` is a non-default value, then prioritize it over the default labels
-            kwargs_label_vertebrae['path_custom_labels'] = (
-                arguments.custom_labels if "sct_label_vertebrae" not in arguments.custom_labels else
-                os.path.join(__sct_dir__, 'spinalcordtoolbox', 'reports', f'totalspineseg_{label_type}_regions.json')
+            # For the spine task, we need two outputs (fname_discs and fname_all) to generate 2 different QC reports.
+            # Because these are passed via two separate arguments (-s and -s2), we can't just rely on the "common"
+            # argument "fname_seg=arguments.s", so we delete it and specify the segmentation files explicitly.
+            del kwargs['fname_seg']
+            qc2.sct_label_utils(
+                fname_seg=arguments.s,
+                **kwargs
             )
-            qc2.sct_label_vertebrae(**kwargs_label_vertebrae)  # uses -s2 (fname_all)
+            qc2.sct_label_vertebrae(
+                fname_seg=arguments.s2,
+                offset_text=False,
+                path_custom_labels=label_file,
+                **kwargs
+            )
 
         else:
             # For all other deepseg tasks, we just have to trust that the user provided the correct segmentation file(s) for the task.
             # - The QC report will be generated based on the task name (present in argv) + the provided files.
             # - The responsibility for input validation lies with the QC report for the specific task
-            kwargs['fname_seg2'] = arguments.s2
-            kwargs['species'] = 'mouse' if 'mouse' in arguments.deepseg_task else 'human'  # used for resampling
-            # sct_deepseg assumes 'Axial' by default
-            kwargs['plane'] = arguments.plane.capitalize() if isinstance(arguments.plane, str) else 'Axial'
-            kwargs['fname_qc_seg'] = arguments.qc_seg
-            qc2.sct_deepseg(**kwargs)
+            qc2.sct_deepseg(
+                fname_seg2=arguments.s2,
+                species='mouse' if 'mouse' in arguments.deepseg_task else 'human',
+                # Internal functions use capitalized strings ('Axial'/'Sagittal') + sct_deepseg assumes 'Axial' by default
+                plane=arguments.plane.capitalize() if isinstance(arguments.plane, str) else 'Axial',
+                fname_qc_seg=arguments.qc_seg,
+                **kwargs
+            )
 
     else:
         generate_qc(fname_in1=arguments.i,
