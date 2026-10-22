@@ -43,7 +43,7 @@ def prediction_from_probability_map(prob_map):
     beats the background probability, similar to nnunetv2.
     """
     if prob_map.shape[0] != 2:
-       raise ValueError(f"Expected 2-channel probability map with channels "
+        raise ValueError(f"Expected 2-channel probability map with channels "
                         f"in first axis, got {prob_map.shape}.")
     background, foreground = prob_map[0], prob_map[1]
     return np.where(foreground > background, foreground, 0)

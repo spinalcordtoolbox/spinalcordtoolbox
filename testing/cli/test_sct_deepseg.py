@@ -412,6 +412,7 @@ def test_deepseg_crop_box_qc_report_entry(tmp_path, tmp_path_qc):
     assert (Path(tmp_path_qc) / entry['backgroundImage']).is_file()
     assert (Path(tmp_path_qc) / entry['overlayImage']).is_file()
 
+
 @pytest.mark.parametrize("task", ["spinalcord", "lesion_ms"])
 def test_deepseg_soft_seg_produces_expected_output(tmp_path, tmp_path_qc, task):
     """
