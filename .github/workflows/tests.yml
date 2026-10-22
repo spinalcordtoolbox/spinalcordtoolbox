@@ -74,7 +74,7 @@ jobs:
     # in the meantime, copy-paste this:
     if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-22.04
-    container: debian:sid
+    container: debian:unstable
     steps:
       - name: Dependencies
         run: |  # NB: libgl1-mesa-dev is needed for PyQT testing (https://stackoverflow.com/q/33085297/7584115)
@@ -113,24 +113,19 @@ jobs:
         run: |
           ./.ci.sh -t
 
-  debian-10:
-    name: Debian 10
+  debian-stable:
+    name: Debian Stable
     # TODO: when actions supports using ${{env}} in job.*.if and not just job.*.steps.*.if, use this:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
     if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-22.04
-    container: debian:10
+    container: debian:stable
     steps:
       - name: Dependencies
         # NB: libgl1-mesa-dev is needed for PyQT testing (https://stackoverflow.com/q/33085297/7584115)
-        # NB: We echo "archive.debian.org" to address https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4105
-        run: |  
-          echo "deb http://archive.debian.org/debian/ buster main non-free contrib" > /etc/apt/sources.list
-          echo "deb-src http://archive.debian.org/debian/ buster main non-free contrib" >> /etc/apt/sources.list
-          echo "deb http://archive.debian.org/debian-security/ buster/updates main non-free contrib" >> /etc/apt/sources.list
-          echo "deb-src http://archive.debian.org/debian-security/ buster/updates main non-free contrib" >> /etc/apt/sources.list
-          apt update && apt install -y libglib2.0-0 libgl1-mesa-dev procps gcc git curl libgl1-mesa-dev
+        run: |
+          apt update && apt install -y libglib2.0-0 libgl1-mesa-dev procps gcc git curl
       - uses: actions/checkout@v6
       - name: Install SCT
         run: |
@@ -142,19 +137,19 @@ jobs:
         run: |
           ./.ci.sh -t
 
-  debian-11:
-    name: Debian 11
+  debian-oldstable:
+    name: Debian OldStable
     # TODO: when actions supports using ${{env}} in job.*.if and not just job.*.steps.*.if, use this:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
     if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-22.04
-    container: debian:11
+    container: debian:oldstable
     steps:
       - name: Dependencies
         # NB: libgl1-mesa-dev is needed for PyQT testing (https://stackoverflow.com/q/33085297/7584115)
         # NB: We echo "archive.debian.org" to address https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4105
-        run: |  
+        run: |
           apt update && apt install -y libglib2.0-0 libgl1-mesa-dev procps gcc git curl
       - uses: actions/checkout@v6
       - name: Install SCT
