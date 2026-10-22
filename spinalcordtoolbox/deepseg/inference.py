@@ -37,6 +37,18 @@ nib = LazyLoader("nib", globals(), "nibabel")
 logger = logging.getLogger(__name__)
 
 
+def prediction_from_probability_map(prob_map):
+    """
+    Keep only the voxels where the foreground probability
+    beats the background probability, similar to nnunetv2.
+    """
+    if prob_map.shape[0] != 2:
+       raise ValueError(f"Expected 2-channel probability map with channels "
+                        f"in first axis, got {prob_map.shape}.")
+    background, foreground = prob_map[0], prob_map[1]
+    return np.where(foreground > background, foreground, 0)
+
+
 def segment_and_average_volumes(model_paths, input_filenames, options, use_gpu=False):
     """
         Run `ivadomed.inference.segment_volume()` once per model, then average the outputs.
@@ -235,7 +247,7 @@ def average_nnunet_predictions(pred, probabilities=False):
         for prob_map in prob_maps:  # loop over folds
             # The shape of the prob_map is (num_classes, z, y, x), so we keep only the non-background class (1)
             # Similar to nnunet, the value of the soft max is the value of the probability map at class 1 if the value is greater than that of class 0
-            fold_pred = np.where(prob_map[1] > prob_map[0], prob_map[1], 0)
+            fold_pred = prediction_from_probability_map(prob_map)
             ensembled_pred += fold_pred
         # Divide by number of folds to get the average
         pred = ensembled_pred / len(prob_maps)
@@ -374,7 +386,7 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device, ensemble=F
         # where the foreground probability beats the background one, matching the soft-value logic used by
         # `average_nnunet_predictions` for per-fold lesion_ms predictions.
         _, prob_map = pred
-        pred = np.where(prob_map[1] > prob_map[0], prob_map[1], 0)
+        pred = prediction_from_probability_map(prob_map)
     # Lastly, we undo the transpose to return the image from [z,y,x] (SimpleITK) to [x,y,z] (nibabel)
     pred = pred.transpose([2, 1, 0])
     img_out = img_in.copy()
