@@ -281,12 +281,16 @@ def get_parser():
     return parser
 
 
-def spinal_levels_to_border_labels(img_levels):
+def spinal_levels_to_border_labels(img_levels, add_terminal_borders=False):
     """
     TODO (#5332, temporary): Convert a spinal cord mask with discrete spinal levels (e.g. PAM50_spinal_levels.nii.gz)
-    into point-wise labels located at the spinal level borders. Label value N is placed at the superior border
-    (top-most slice) of spinal level N; an extra label N+1 is placed at the inferior border (bottom-most slice) of the
-    last level. Each point is located at the slice's center of mass of the level mask.
+    into point-wise labels located at the spinal level borders. Label value N is placed at the superior border of
+    spinal level N, i.e. midway between the top-most slice of level N and the bottom-most slice of level N-1 (for
+    contiguous levels such as PAM50, this is the top-most slice of level N). Only borders observed between two present
+    levels are labeled. Each point is located at the in-slice center of mass of the level mask (top-most slice of N).
+    With `add_terminal_borders=True`, the superior border of the first level and the inferior border of the last level
+    (label N+1) are also added (top-most/bottom-most slice) -- use this for the template, not for subjects with
+    possibly truncated levels.
 
     Spinal level values: C1-C8 = 1-8, T1-T12 = 9-20, L1-L5 = 21-25, S1-S5 = 26-30.
     Lumbar border labels (PAM50):
@@ -299,6 +303,7 @@ def spinal_levels_to_border_labels(img_levels):
     For PAM50, the last label is 31 = inferior border of S5.
 
     :param img_levels: Image with discrete spinal levels
+    :param add_terminal_borders: bool: also label the superior border of the first and inferior border of the last level
     :return: Image with point-wise border labels (same orientation as input)
     """
     orientation = img_levels.orientation
@@ -308,12 +313,17 @@ def spinal_levels_to_border_labels(img_levels):
     levels = sorted(np.unique(data[data > 0]))
     for level in levels:
         z_level = np.where(data == level)[2]
-        slices = [(z_level.max(), level)]
-        if level == levels[-1]:
-            slices.append((z_level.min(), level + 1))
-        for z, value in slices:
-            x, y = np.where(data[:, :, z] == level)
-            img_out.data[int(round(x.mean())), int(round(y.mean())), z] = value
+        x, y = np.where(data[:, :, z_level.max()] == level)
+        x, y = int(round(x.mean())), int(round(y.mean()))
+        if level - 1 in levels:
+            # midway between level N and level N-1 (located above, i.e. higher z in RPI)
+            z_above = np.where(data == level - 1)[2].min()
+            img_out.data[x, y, (z_level.max() + z_above) // 2] = level
+        elif add_terminal_borders:
+            img_out.data[x, y, z_level.max()] = level
+        if add_terminal_borders and level == levels[-1]:
+            x, y = np.where(data[:, :, z_level.min()] == level)
+            img_out.data[int(round(x.mean())), int(round(y.mean())), z_level.min()] = level + 1
     return img_out.change_orientation(orientation)
 
 
@@ -485,7 +495,7 @@ def main(argv: Sequence[str]):
     elif label_type == 'disc':
         printv('\nGenerate spinal level border labels from template spinal levels', verbose)
         ftmp_template_label_, ftmp_template_label = ftmp_template_label, add_suffix(ftmp_template_label, "_borders")
-        spinal_levels_to_border_labels(Image(ftmp_template_label_)).save(path=ftmp_template_label)
+        spinal_levels_to_border_labels(Image(ftmp_template_label_), add_terminal_borders=True).save(path=ftmp_template_label)
         Image(ftmp_template_label).save(os.path.join(curdir, path_output, 'PAM50_spinal_levels_borders.nii.gz'))
 
     # check if provided labels are available in the template
