@@ -171,9 +171,9 @@ def get_parser():
             "\n"
             "References:\n"
             "  - [De Leener B, Kadoury S, Cohen-Adad J. Robust, accurate and fast automatic segmentation of the spinal "
-            "cord. Neuroimage 98, 2014. pp 528-536. DOI: 10.1016/j.neuroimage.2014.04.051](https://pubmed.ncbi.nlm.nih.gov/24780696/)\n"
+            "cord. Neuroimage 98, 2014. pp 528-536. DOI: 10.1016/j.neuroimage.2014.04.051](https://doi.org/10.1016/j.neuroimage.2014.04.051)\n"
             "  - [De Leener B, Cohen-Adad J, Kadoury S. Automatic segmentation of the spinal cord and spinal canal "
-            "coupled with vertebral labeling. IEEE Trans Med Imaging. 2015 Aug;34(8):1705-18.](https://pubmed.ncbi.nlm.nih.gov/26011879/)"
+            "coupled with vertebral labeling. IEEE Trans Med Imaging. 2015 Aug;34(8):1705-18.](https://doi.org/10.1109/tmi.2015.2437192)"
         )
     )
 
@@ -359,6 +359,11 @@ def get_parser():
         '-qc-subject',
         metavar=Metavar.str,
         help="If provided, this string will be mentioned in the QC report as the subject the process was run on."
+    )
+    optional.add_argument(
+        '-qc-contrast',
+        metavar=Metavar.str,
+        help="If provided, this string will be mentioned in the QC report as the contrast the process was run on."
     )
     optional.add_argument(
         '-correct-seg',
@@ -664,9 +669,11 @@ def main(argv: Sequence[str]):
     path_qc = arguments.qc
     qc_dataset = arguments.qc_dataset
     qc_subject = arguments.qc_subject
+    qc_contrast = arguments.qc_contrast
     if path_qc is not None:
         generate_qc(fname_in1=fname_input_data, fname_seg=fname_seg, args=argv,
-                    path_qc=os.path.abspath(path_qc), dataset=qc_dataset, subject=qc_subject, process='sct_propseg')
+                    path_qc=os.path.abspath(path_qc), dataset=qc_dataset, subject=qc_subject,
+                    contrast=qc_contrast, process='sct_propseg')
     display_viewer_syntax([fname_input_data, fname_seg], im_types=['anat', 'seg'], opacities=['', '1'], verbose=verbose)
 
 
