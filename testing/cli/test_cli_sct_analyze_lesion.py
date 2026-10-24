@@ -347,6 +347,45 @@ def test_sct_analyze_lesion_with_template(dummy_lesion, perslice, tmp_path, tmp_
 
 
 @pytest.mark.sct_testing
+# Each tuple represents the starting coordinates in the AIL orientation (x: AP, y: IS, z: LR)
+# and dimensions (width, height, depth) of a dummy lesion
+@pytest.mark.parametrize("dummy_lesion", [
+    # One lesion inside the cord, and one single voxel lesion fully outside the cord
+    [[(29, 45, 25), (3, 10, 2)],
+     [(0, 45, 0), (1, 1, 1)]],
+], indirect=["dummy_lesion"])
+def test_sct_analyze_lesion_ignores_lesion_outside_cord(dummy_lesion, tmp_path, tmp_path_qc, capfd):
+    """
+    Test that a lesion lying fully outside the spinal cord segmentation is ignored (with a warning) instead of
+    crashing the script. See https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/5313
+    """
+    path_lesion, lesion_params = dummy_lesion
+    path_seg = sct_test_path("t2", "t2_seg-manual.nii.gz")
+    # Make sure the test setup is right: the second lesion must not touch the cord
+    (x, y, z), _ = lesion_params[1]
+    assert Image(path_seg).change_orientation("AIL").data[x, y, z] == 0
+
+    sct_analyze_lesion.main(argv=['-m', path_lesion,
+                                  '-s', path_seg,
+                                  '-ofolder', str(tmp_path),
+                                  '-qc', tmp_path_qc])
+
+    assert "found entirely outside the spinal cord segmentation" in capfd.readouterr().out
+
+    # Only the lesion inside the cord is measured
+    _, fname, _ = extract_fname(path_lesion)
+    with open(tmp_path/f"{fname}_analysis.pkl", 'rb') as f:
+        measurements = pickle.load(f)['measures']
+    assert list(measurements['label']) == [1]
+    expected_measurements = compute_expected_measurements([lesion_params[0]], path_seg)[0]
+    np.testing.assert_equal(measurements.at[0, 'volume [mm3]'], expected_measurements['volume [mm3]'])
+
+    # The lesion outside the cord is also removed from the output label image
+    labels = np.unique(Image(str(tmp_path/f"{fname}_label.nii.gz")).data)
+    assert list(labels[labels != 0]) == [1]
+
+
+@pytest.mark.sct_testing
 def test_sct_analyze_lesion_no_lesion_found(tmp_path, tmp_path_qc, capfd):
     """Test that the script exits when no lesion is found in the input image."""
     # Create an empty lesion mask (all zeros) using an existing test image as reference

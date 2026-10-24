@@ -1307,6 +1307,23 @@ class AnalyzeLesion:
         im = Image(self.fname_mask)
         im_2save = im.copy()
         im_2save.data = label(im.data, connectivity=2)
+
+        # Lesion voxels outside the cord are set to 0 when measuring (see `measure()`), so a lesion that lies entirely
+        # outside the cord would have nothing left to measure. Drop such lesions here, so that the lesion count matches
+        # the lesions that are actually measured.
+        if self.fname_sc is not None:
+            labels_in_cord = np.unique(im_2save.data[Image(self.fname_sc).data != 0])
+            labels_in_cord = labels_in_cord[labels_in_cord != 0]
+            n_outside = len([lesion_label for lesion_label in np.unique(im_2save.data)
+                             if lesion_label and lesion_label not in labels_in_cord])
+            if n_outside:
+                printv(f'WARNING: {n_outside} lesion(s) found entirely outside the spinal cord segmentation. '
+                       f'These lesion(s) will be ignored.', self.verbose, 'warning')
+                # Relabel the remaining lesions so that the labels stay consecutive (1, 2, 3, ...)
+                data_relabeled = np.zeros_like(im_2save.data)
+                for new_label, old_label in enumerate(labels_in_cord, start=1):
+                    data_relabeled[im_2save.data == old_label] = new_label
+                im_2save.data = data_relabeled
         im_2save.save(self.fname_label)
 
         labels = [lesion_label for lesion_label in np.unique(im_2save.data) if lesion_label]
