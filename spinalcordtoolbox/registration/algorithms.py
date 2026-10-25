@@ -1408,10 +1408,13 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
         # convert to array
         x_disp_a = np.asarray(x_displacement)
         y_disp_a = np.asarray(y_displacement)
+        # The translation from the ANTs .mat file is already in ITK (LPS) convention, while
+        # generate_warping_field() expects RAS displacements and flips the sign of x and y.
+        # So we pass the opposite sign here to get the ANTs translation back in the warp.
         # Generate warping field
-        generate_warping_field(fname_dest, x_disp_a, y_disp_a, fname_warp=fname_warp)  # name_warp='fstep{paramreg.step}'
+        generate_warping_field(fname_dest, -x_disp_a, -y_disp_a, fname_warp=fname_warp)  # name_warp='fstep{paramreg.step}'
         # Inverse warping field
-        generate_warping_field(fname_src, -x_disp_a, -y_disp_a, fname_warp=fname_warp_inv)
+        generate_warping_field(fname_src, x_disp_a, y_disp_a, fname_warp=fname_warp_inv)
 
     if paramreg.algo in ['Rigid', 'Affine', 'BSplineSyN', 'SyN']:
         # concatenate 2d warping fields along z

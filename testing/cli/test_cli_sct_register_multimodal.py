@@ -8,7 +8,7 @@ import numpy as np
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.utils.sys import sct_dir_local_path, sct_test_path
-from spinalcordtoolbox.scripts import sct_register_multimodal, sct_create_mask
+from spinalcordtoolbox.scripts import sct_register_multimodal, sct_create_mask, sct_image
 
 logger = logging.getLogger(__name__)
 
@@ -166,3 +166,47 @@ def test_sct_register_multimodal_with_qc_without_dseg(capsys, tmp_path, tmp_path
                                       '-ofolder', str(tmp_path),
                                       '-qc', tmp_path_qc])
     assert pytest_wrapped_e.value.code == 2
+
+
+@pytest.mark.parametrize("algo", ["translation", "rigid"])
+def test_sct_register_multimodal_slicewise_shift_is_recovered(algo, tmp_path):
+    """
+    Shift every axial slice by a known amount, then register it back slice by slice.
+
+    The registered image (and the inverse registration of the destination image) should line
+    up with the target again, instead of being moved further away. See issue #5329.
+    """
+    from scipy.ndimage import shift
+    from skimage.registration import phase_cross_correlation
+
+    fname_fixed = str(tmp_path / 'fixed.nii.gz')
+    fname_moving = str(tmp_path / 'moving.nii.gz')
+    sct_image.main(['-i', sct_test_path('t2', 't2.nii.gz'), '-setorient', 'RPI', '-o', fname_fixed, '-v', '0'])
+
+    im_fixed = Image(fname_fixed)
+    data_fixed = im_fixed.data.astype(np.float64)
+    true_shift = (2.0, -1.5)  # voxels, in-plane (x, y)
+    im_moving = im_fixed.copy()
+    im_moving.data = np.stack([shift(data_fixed[..., z], true_shift, order=3, mode='nearest')
+                               for z in range(data_fixed.shape[2])], axis=2).astype(np.float32)
+    im_moving.save(fname_moving)
+
+    sct_register_multimodal.main([
+        '-i', fname_moving, '-d', fname_fixed,
+        '-param', f'step=1,type=im,algo={algo},metric=MeanSquares,slicewise=1',
+        '-ofolder', str(tmp_path), '-v', '0',
+    ])
+
+    def mean_residual_shift(data_ref, data):
+        return np.mean([np.abs(phase_cross_correlation(data_ref[..., z], data[..., z], upsample_factor=20)[0]).sum()
+                        for z in range(data_ref.shape[2]) if data_ref[..., z].std() > 0])
+
+    data_moving = Image(fname_moving).data.astype(np.float64)
+    data_moving_reg = Image(str(tmp_path / 'moving_reg.nii.gz')).data.astype(np.float64)
+    data_fixed_reg = Image(str(tmp_path / 'fixed_reg.nii.gz')).data.astype(np.float64)
+
+    assert mean_residual_shift(data_fixed, data_moving) > 3
+    # Forward warp: source brought onto the destination
+    assert mean_residual_shift(data_fixed, data_moving_reg) < 0.5
+    # Inverse warp: destination brought onto the source
+    assert mean_residual_shift(data_moving, data_fixed_reg) < 0.5
