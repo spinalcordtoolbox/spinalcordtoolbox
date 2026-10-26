@@ -108,4 +108,7 @@ xlsxwriter
 # NB: These dependencies belong to `sc_crop`, and were copied over after absorbing the `sc_crop` package into SCT
 pillow>=10.0.0
 pyyaml>=6.0
-ultralytics>=8.0.0
+# 8.4.174 (Oct 6) changed scale_boxes to use a separate scale per axis when mapping boxes back from padded
+# (non-square) inputs. Theoretically, that could have changed the sc_crop box used by sct_deepseg spinalcord on mt1,
+# which in turn could change the segmentation and with it the MTR. If CI passes with this, then we know.
+ultralytics>=8.0.0,<8.4.174
