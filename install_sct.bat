@@ -212,7 +212,7 @@ if exist requirements-freeze.txt (
 echo:
 echo ### Installing SCT and its dependencies from %requirements_file%...
 rem Avoid eMudhra / emSign certificates with >=26.2.2 (https://discuss.python.org/t/information-for-python-users-regarding-emudhra-emsign-ca-certificate-security-incident/109576/40)
-python\envs\venv_sct\python -m pip install -U "pip^>=26.2.2" || goto error
+python\envs\venv_sct\python -m pip install -U "pip>=26.2.2" || goto error
 python\envs\venv_sct\Scripts\pip install -r %requirements_file% || goto error
 python\envs\venv_sct\Scripts\pip install -e . --use-pep517 || goto error
 
