@@ -418,10 +418,9 @@ def test_deepseg_soft_seg_produces_expected_output(tmp_path, tmp_path_qc, task):
     """
     Test that the softseg output is produced when requested.
     """
-    fname_out = str(tmp_path / "t2_seg_deepseg.nii.gz")
+    fname_out = str(tmp_path / "t2_seg_deepseg_sosft_seg.nii.gz")
     sct_deepseg.main([task, '-i', sct_test_path('t2', 't2.nii.gz'), '-o', fname_out,
                       '-qc', tmp_path_qc, '-soft-seg'])
-    fname_softseg = add_suffix(fname_out, "_softseg")
-    im_out = Image(fname_softseg)
+    im_out = Image(fname_out)
     # Check that the softseg output is a float image (not integer)
     assert np.issubdtype(im_out.data.dtype, np.floating)
