@@ -7,13 +7,14 @@
 #     (both removed along with `modelio.py`), since SCT never uses `.save()`, `.load()`, or `.config`. This removes the
 #     use of `inspect.getargspec`, which does not exist in Python 3.11+.
 #   - Removed the unused `torch.nn.functional` import and trailing whitespace in docstrings (flake8).
+#   - `default_unet_features` is imported from the vendored `utils` module.
 
 import numpy as np
 import torch
 import torch.nn as nn
 from torch.distributions.normal import Normal
 
-from .. import default_unet_features
+from .utils import default_unet_features
 from . import layers
 
 
