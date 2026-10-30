@@ -1,3 +1,9 @@
+# This file is vendored from ivadomed 2.9.10 (https://github.com/ivadomed/ivadomed),
+# originally `ivadomed/models.py`, licensed under the MIT License.
+# See the LICENSE.md file in this directory for the full license text.
+#
+# Modifications for SCT: none.
+
 from collections import OrderedDict
 import torch
 import torch.nn as nn
