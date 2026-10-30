@@ -1,0 +1,113 @@
+{
+    "command": "test",
+    "gpu_ids": [2],
+    "path_output": "spineGeneric_small",
+    "model_name": "seg_sc_t2star",
+    "debugging": false,
+    "loader_parameters": {
+        "path_data": ["../duke/projects/ivadomed/spineGeneric_201907041011/result/"],
+        "target_suffix": ["_seg-manual"],
+        "extensions": [".nii.gz"],
+        "roi_params": {
+            "suffix": null,
+            "slice_filter_roi": null
+        },
+        "contrast_params": {
+            "training_validation": ["T2star"],
+            "testing": ["T2star"],
+            "balance": {}
+        },
+        "slice_filter_params": {
+            "filter_empty_mask": false,
+            "filter_empty_input": true
+        },
+        "slice_axis": "axial",
+        "multichannel": false,
+        "soft_gt": false
+    },
+    "split_dataset": {
+        "fname_split": null,
+        "random_seed": 6,
+        "split_method" : "participant_id",
+        "data_testing": {"data_type": "institution_id", "data_value":["amu"]},
+        "balance": null,
+        "train_fraction": 0.6,
+        "test_fraction": 0.2
+    },
+    "training_parameters": {
+        "batch_size": 18,
+        "loss": {
+            "name": "DiceLoss"
+        },
+        "training_time": {
+            "num_epochs": 20,
+            "early_stopping_patience": 50,
+            "early_stopping_epsilon": 0.001
+        },
+        "scheduler": {
+            "initial_lr": 0.001,
+            "lr_scheduler": {
+                "name": "CosineAnnealingWarmRestarts",
+                "T_0": 10,
+                "T_mult": 1
+            }
+        },
+        "balance_samples": false,
+        "mixup_alpha": null,
+        "transfer_learning": {
+            "retrain_model": null,
+            "retrain_fraction": 1.0,
+            "reset": true
+        }
+    },
+    "default_model": {
+        "name": "Unet",
+        "dropout_rate": 0.3,
+        "bn_momentum": 0.1,
+        "depth": 2
+    },
+    "FiLMedUnet": {
+        "applied": false,
+        "metadata": "mri_params",
+        "film_layers": [0, 1, 0, 0, 0, 0, 0, 0]
+    },
+    "uncertainty": {
+        "epistemic": false,
+        "aleatoric": false,
+        "n_it": 0
+    },
+    "postprocessing": {
+        "remove_noise": {"thr": -1},
+        "binarize_prediction": {"thr": 0.5},
+        "remove_small": {"unit": "vox", "thr": 3},
+        "uncertainty": {"thr": -1, "suffix": "_unc-vox.nii.gz"}
+    },
+    "evaluation_parameters": {
+        "target_size": {"unit": "vox", "thr": [20, 100]},
+        "overlap": {"unit": "vox", "thr": 3}
+    },
+    "transformation": {
+        "Resample":
+        {
+            "hspace": 0.75,
+            "wspace": 0.75,
+            "dspace": 1
+        },
+        "CenterCrop": {
+            "size": [128, 128]
+        },
+        "RandomAffine": {
+            "translate": [0.03, 0.03],
+            "applied_to": ["im", "gt"],
+            "dataset_type": ["training"]
+        },
+        "ElasticTransform": {
+			"alpha_range": [28.0, 30.0],
+			"sigma_range":  [3.5, 4.5],
+			"p": 0.1,
+            "applied_to": ["im", "gt"],
+            "dataset_type": ["training"]
+        },
+      "NormalizeInstance": {"applied_to": ["im"]}
+    }
+}

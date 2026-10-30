@@ -1,0 +1,182 @@
+{
+    "name": "config_bids",
+    "entities": [
+        {
+            "name": "subject",
+            "pattern": "[/\\\\]+sub-([a-zA-Z0-9]+)",
+            "directory": "{subject}"
+        },
+        {
+            "name": "session",
+            "pattern": "[_/\\\\]+ses-([a-zA-Z0-9]+)",
+            "mandatory": false,
+            "directory": "{subject}{session}"
+        },
+        {
+            "name": "sample",
+            "pattern": "[_/\\\\]+sample-([a-zA-Z0-9]+)"
+        },
+        {
+            "name": "task",
+            "pattern": "[_/\\\\]+task-([a-zA-Z0-9]+)"
+        },
+        {
+            "name": "acquisition",
+            "pattern": "[_/\\\\]+acq-([a-zA-Z0-9]+)"
+        },
+        {
+            "name": "ceagent",
+            "pattern": "[_/\\\\]+ce-([a-zA-Z0-9]+)"
+        },
+        {
+            "name": "staining",
+            "pattern": "[_/\\\\]+stain-([a-zA-Z0-9]+)"
+        },
+        {
+            "name": "tracer",
+            "pattern": "[_/\\\\]+trc-([a-zA-Z0-9]+)"
+        },
+        {
+            "name": "reconstruction",
+            "pattern": "[_/\\\\]+rec-([a-zA-Z0-9]+)"
+        },
+        {
+            "name": "direction",
+            "pattern": "[_/\\\\]+dir-([a-zA-Z0-9]+)"
+        },
+        {
+            "name": "run",
+            "pattern": "[_/\\\\]+run-(\\d+)",
+            "dtype": "int"
+        },
+        {
+            "name": "proc",
+            "pattern": "[_/\\\\]+proc-([a-zA-Z0-9]+)"
+        },
+        {
+            "name": "modality",
+            "pattern": "[_/\\\\]+mod-([a-zA-Z0-9]+)"
+        },
+        {
+            "name": "echo",
+            "pattern": "[_/\\\\]+echo-([0-9]+)"
+        },
+        {
+            "name": "flip",
+            "pattern": "[_/\\\\]+flip-([0-9]+)"
+        },
+        {
+            "name": "inv",
+            "pattern": "[_/\\\\]+inv-([0-9]+)"
+        },
+        {
+            "name": "mt",
+            "pattern": "[_/\\\\]+mt-(on|off)"
+        },
+        {
+            "name": "part",
+            "pattern": "[_/\\\\]+part-(imag|mag|phase|real)"
+        },
+        {
+            "name": "recording",
+            "pattern": "[_/\\\\]+recording-([a-zA-Z0-9]+)"
+        },
+        {
+            "name": "space",
+            "pattern": "[_/\\\\]+space-([a-zA-Z0-9]+)"
+        },
+        {
+            "name": "chunk",
+            "pattern": "[_/\\\\]+chunk-([0-9]+)"
+        },
+        {
+            "name": "suffix",
+            "pattern": "[._]*([a-zA-Z0-9]*?)\\.[^/\\\\]+$"
+        },
+        {
+            "name": "scans",
+            "pattern": "(.*\\_scans.tsv)$"
+        },
+        {
+            "name": "fmap",
+            "pattern": "(phasediff|magnitude[1-2]|phase[1-2]|fieldmap|epi)\\.nii"
+        },
+        {
+            "name": "datatype",
+            "pattern": "[/\\\\]+(anat|beh|dwi|eeg|fmap|func|ieeg|meg|micr|perf|pet|ct)[/\\\\]+"
+        },
+        {
+            "name": "extension",
+            "pattern": "[._]*[a-zA-Z0-9]*?(\\.[^/\\\\]+)$"
+        }
+    ],
+
+    "default_path_patterns": [
+        "sub-{subject}[/ses-{session}]/{datatype<anat>|anat}/sub-{subject}[_ses-{session}][_acq-{acquisition}][_ce-{ceagent}][_rec-{reconstruction}][_part-{part}]_{suffix<T1w|T2w|T1rho|T1map|T2map|T2star|FLAIR|FLASH|PDmap|PD|PDT2|inplaneT[12]|angio>}{extension<.nii|.nii.gz|.json>|.nii.gz}",
+        "sub-{subject}[/ses-{session}]/{datatype<anat>|anat}/sub-{subject}[_ses-{session}][_acq-{acquisition}][_ce-{ceagent}][_rec-{reconstruction}][_mod-{modality}]_{suffix<defacemask>}{extension<.nii|.nii.gz|.json>|.nii.gz}",
+        "sub-{subject}[/ses-{session}]/{datatype<func>|func}/sub-{subject}[_ses-{session}]_task-{task}[_acq-{acquisition}][_ce-{ceagent}][_rec-{reconstruction}][_dir-{direction}][_run-{run}][_echo-{echo}][_part-{part}]_{suffix<bold|cbv|sbref>}{extension<.nii|.nii.gz|.json>|.nii.gz}",
+        "sub-{subject}[/ses-{session}]/{datatype<func>|func}/sub-{subject}[_ses-{session}]_task-{task}[_acq-{acquisition}][_ce-{ceagent}][_rec-{reconstruction}][_dir-{direction}][_run-{run}][_echo-{echo}]_{suffix<phase>}{extension<.nii|.nii.gz|.json>|.nii.gz}",
+        "sub-{subject}[/ses-{session}]/{datatype<dwi>|dwi}/sub-{subject}[_ses-{session}][_acq-{acquisition}][_part-{part}]_{suffix<dwi>}{extension<.bval|.bvec|.json|.nii.gz|.nii>|.nii.gz}",
+        "sub-{subject}[/ses-{session}]/{datatype<fmap>|fmap}/sub-{subject}[_ses-{session}][_acq-{acquisition}][_dir-{direction}][_run-{run}]_{suffix<phasediff|magnitude[12]|phase[12]|fieldmap>}{extension<.nii|.nii.gz|.json>|.nii.gz}",
+        "sub-{subject}[/ses-{session}]/{datatype<fmap>|fmap}/sub-{subject}[_ses-{session}][_acq-{acquisition}][_ce-{ceagent}]_dir-{direction}[_run-{run}]_{suffix<epi|m0scan>}{extension<.nii|.nii.gz|.json>|.nii.gz}",
+        "sub-{subject}[/ses-{session}]/{datatype<func|meg|beh>|func}/sub-{subject}[_ses-{session}]_task-{task}[_acq-{acquisition}][_rec-{reconstruction}][_run-{run}][_echo-{echo}][_recording-{recording}]_{suffix<events>}{extension<.tsv|.json>|.tsv}",
+        "sub-{subject}[/ses-{session}]/[{datatype<func|beh>|func}/]sub-{subject}[_ses-{session}]_task-{task}[_acq-{acquisition}][_rec-{reconstruction}][_run-{run}][_echo-{echo}][_recording-{recording}]_{suffix<physio|stim>}{extension<.tsv.gz|.json>|.tsv.gz}",
+        "sub-{subject}[/ses-{session}]/{datatype<meg>|meg}/sub-{subject}[_ses-{session}]_task-{task}[_acq-{acquisition}][_run-{run}][_proc-{proc}]_{suffix<meg>}{extension}",
+        "sub-{subject}[/ses-{session}]/{datatype<meg>|meg}/sub-{subject}[_ses-{session}]_task-{task}[_acq-{acquisition}][_run-{run}][_proc-{proc}]_{suffix<channels>}{extension<.tsv|.json>|.tsv}",
+        "sub-{subject}[/ses-{session}]/{datatype<meg>|meg}/sub-{subject}[_ses-{session}][_acq-{acquisition}]_{suffix<coordsystem>}{extension<.json>|.json}",
+        "sub-{subject}[/ses-{session}]/{datatype<meg>|meg}/sub-{subject}[_ses-{session}][_acq-{acquisition}]_{suffix<headshape>}{extension<.pos>|.pos}",
+        "sub-{subject}[/ses-{session}]/{datatype<meg>|meg}/sub-{subject}[_ses-{session}]_acq-{acquisition<calibration|crosstalk>}_{suffix<meg>|meg}{extension<.fif|.dat>}",
+        "sub-{subject}[/ses-{session}]/{datatype<eeg>|eeg}/sub-{subject}[_ses-{session}]_task-{task}[_acq-{acquisition}][_run-{run}]_{suffix<eeg>}{extension<.edf|.vhdr|.vmrk|.eeg|.set|.fdt|.bdf|.json>}",
+        "sub-{subject}[/ses-{session}]/{datatype<ieeg>|ieeg}/sub-{subject}[_ses-{session}]_task-{task}[_acq-{acquisition}][_run-{run}]_{suffix<ieeg>}{extension<.mefd/|.json|.edf|.vhdr|.eeg|.vmrk|.set|.fdt|.nwb|.json>}",
+        "sub-{subject}[/ses-{session}]/{datatype<eeg|ieeg>}/sub-{subject}[_ses-{session}]_task-{task}[_acq-{acquisition}][_run-{run}]_{suffix<channels|events>}{extension<.tsv|.json>|.tsv}",
+        "sub-{subject}[/ses-{session}]/{datatype<eeg|ieeg>}/sub-{subject}[_ses-{session}][_acq-{acquisition}][_space-{space}]_{suffix<coordsystem>}{extension<.json>|.json}",
+        "sub-{subject}[/ses-{session}]/{datatype<eeg|ieeg>}/sub-{subject}[_ses-{session}][_acq-{acquisition}][_space-{space}]_{suffix<electrodes>}{extension<.tsv|.json>|.tsv}",
+        "sub-{subject}[/ses-{session}]/{datatype<eeg|ieeg|meg>}/sub-{subject}[_ses-{session}][_acq-{acquisition}]_{suffix<photo>|photo}{extension<.jpg>}",
+        "sub-{subject}[/ses-{session}]/{datatype<eeg>|eeg}/sub-{subject}[_ses-{session}]_task-{task}[_acq-{acquisition}][_run-{run}][_recording-{recording}]_{suffix<physio>}{extension<.tsv.gz|.json>}",
+        "sub-{subject}[/ses-{session}]/{datatype<micr>|micr}/sub-{subject}[_ses-{session}]_sample-{sample}[_acq-{acquisition}][_stain-{staining}][_run-{run}][_chunk-{chunk}]_{suffix<TEM|SEM|uCT|BF|DF|PC|DIC|FLUO|CONF|PLI|CARS|2PE|MPE|SR|NLO|OCT|SPIM>}{extension<.png|.tif|.ome.tif|.ome.btf|.json>}",
+        "sub-{subject}[/ses-{session}]/{datatype<micr>|micr}/sub-{subject}[_ses-{session}]_sample-{sample}[_acq-{acquisition}]_{suffix<photo>|photo}{extension<.jpg|.png|.tif|.json>}",
+        "sub-{subject}[/ses-{session}]/{datatype<anat>|anat}/sub-{subject}[_ses-{session}][_acq-{acquisition}][_ce-{ceagent}][_rec-{reconstruction}][_run-{run}]_echo-{echo}[_part-{part<mag|phase|real|imag>}]_{suffix<MEGRE|MESE>}{extension<.nii|.nii.gz|.json>|.nii.gz}",
+        "sub-{subject}[/ses-{session}]/{datatype<anat>|anat}/sub-{subject}[_ses-{session}][_acq-{acquisition}][_ce-{ceagent}][_rec-{reconstruction}][_run-{run}][_echo-{echo}]_flip-{flip}[_part-{part<mag|phase|real|imag>}]_{suffix<VFA>}{extension<.nii|.nii.gz|.json>|.nii.gz}",
+        "sub-{subject}[/ses-{session}]/{datatype<anat>|anat}/sub-{subject}[_ses-{session}][_acq-{acquisition}][_ce-{ceagent}][_rec-{reconstruction}][_run-{run}]_inv-{inv}[_part-{part<mag|phase|real|imag>}]_{suffix<IRT1>}{extension<.nii|.nii.gz|.json>|.nii.gz}",
+        "sub-{subject}[/ses-{session}]/{datatype<anat>|anat}/sub-{subject}[_ses-{session}][_acq-{acquisition}][_ce-{ceagent}][_rec-{reconstruction}][_run-{run}][_echo-{echo}][_flip-{flip}]_inv-{inv}[_part-{part<mag|phase|real|imag>}]_{suffix<MP2RAGE>}{extension<.nii|.nii.gz|.json>|.nii.gz}",
+        "sub-{subject}[/ses-{session}]/{datatype<anat>|anat}/sub-{subject}[_ses-{session}][_acq-{acquisition}][_ce-{ceagent}][_rec-{reconstruction}][_run-{run}][_echo-{echo}]_flip-{flip}_mt-{mt<on|off>}[_part-{part<mag|phase|real|imag>}]_{suffix<MPM|MTS>}{extension<.nii|.nii.gz|.json>|.nii.gz}",
+        "sub-{subject}[/ses-{session}]/{datatype<anat>|anat}/sub-{subject}[_ses-{session}][_acq-{acquisition}][_ce-{ceagent}][_rec-{reconstruction}][_run-{run}]_mt-{mt<on|off>}[_part-{part<mag|phase|real|imag>}]_{suffix<MTR>}{extension<.nii|.nii.gz|.json>|.nii.gz}",
+        "sub-{subject}[/ses-{session}]/{datatype<anat>|anat}/sub-{subject}[_ses-{session}][_acq-{acquisition}][_ce-{ceagent}][_rec-{reconstruction}][_run-{run}]_{suffix<T1map|T2map|T2starmap|R1map|R2map|R2starmap|PDmap|MTRmap|MTsat|UNIT1|T1rho|MWFmap|MTVmap|PDT2map|Chimap|S0map|M0map>}{extension<.nii|.nii.gz|.json>|.nii.gz}",
+        "sub-{subject}[/ses-{session}]/{datatype<fmap>|fmap}/sub-{subject}[_ses-{session}][_acq-{acquisition}][_ce-{ceagent}][_rec-{reconstruction}][_run-{run}]_flip-{flip}[_inv-{inv}][_part-{part<mag|phase|real|imag>}]_{suffix<TB1DAM>}{extension<.nii|.nii.gz|.json>|.nii.gz}",
+        "sub-{subject}[/ses-{session}]/{datatype<fmap>|fmap}/sub-{subject}[_ses-{session}][_acq-{acquisition}][_ce-{ceagent}][_rec-{reconstruction}][_run-{run}]_echo-{echo}_flip-{flip}[_inv-{inv}][_part-{part<mag|phase|real|imag>}]_{suffix<TB1EPI>}{extension<.nii|.nii.gz|.json>|.nii.gz}",
+        "sub-{subject}[/ses-{session}]/{datatype<fmap>|fmap}/sub-{subject}[_ses-{session}][_acq-{acquisition}][_ce-{ceagent}][_rec-{reconstruction}][_run-{run}][_echo-{echo}][_flip-{flip}][_inv-{inv}][_part-{part<mag|phase|real|imag>}]_{suffix<TB1AFI|TB1TFL|TB1RFM|RB1COR>}{extension<.nii|.nii.gz|.json>|.nii.gz}",
+        "sub-{subject}[/ses-{session}]/{datatype<fmap>|fmap}/sub-{subject}[_ses-{session}][_acq-{acquisition}][_ce-{ceagent}][_rec-{reconstruction}][_run-{run}][_echo-{echo}]_flip-{flip}_inv-{inv}[_part-{part<mag|phase|real|imag>}]_{suffix<TB1SRGE>}{extension<.nii|.nii.gz|.json>|.nii.gz}",
+        "sub-{subject}[/ses-{session}]/{datatype<fmap>|fmap}/sub-{subject}[_ses-{session}][_acq-{acquisition}][_ce-{ceagent}][_rec-{reconstruction}][_run-{run}]_{suffix<TB1map|RB1map>}{extension<.nii|.nii.gz|.json>|.nii.gz}",
+        "sub-{subject}[/ses-{session}]/{datatype<pet>|pet}/sub-{subject}[_ses-{session}][_task-{task}][trc-{tracer}][_rec-{reconstruction}][_run-{run}]_{suffix<pet>}{extension<.nii|.nii.gz|.json>|.nii.gz}",
+        "sub-{subject}[/ses-{session}]/{datatype<pet>|pet}/sub-{subject}[_ses-{session}][_task-{task}][trc-{tracer}][_rec-{reconstruction}][_run-{run}]_recording-{recording}_{suffix<blood>}{extension<.tsv|.json>}",
+        "sub-{subject}[/ses-{session}]/{datatype<pet>|pet}/sub-{subject}[_ses-{session}]_task-{task}[trc-{tracer}][_rec-{reconstruction}][_run-{run}]_{suffix<events>}{extension<.tsv|.json>}",
+        "sub-{subject}[/ses-{session}]/{datatype<pet>|pet}/sub-{subject}[_ses-{session}][_task-{task}][trc-{tracer}][_rec-{reconstruction}][_run-{run}][_recording-{recording}]_{suffix<physio|stim>}{extension<.tsv.gz|.json>}",
+        "sub-{subject}[/ses-{session}]/{datatype<perf>|perf}/sub-{subject}[_ses-{session}][_acq-{acquisition}][_rec-{reconstruction}][_dir-{direction}][_run-{run}]_{suffix<asl|m0scan>}{extension<.nii|.nii.gz|.json>|.nii.gz}",
+        "sub-{subject}[/ses-{session}]/{datatype<perf>|perf}/sub-{subject}[_ses-{session}][_acq-{acquisition}][_rec-{reconstruction}][_dir-{direction}][_run-{run}]_{suffix<aslcontext>}{extension<.tsv|.json>}",
+        "sub-{subject}[/ses-{session}]/{datatype<perf>|perf}/sub-{subject}[_ses-{session}][_acq-{acquisition}][_rec-{reconstruction}][_run-{run}]_{suffix<asllabeling>}{extension<.jpg>}",
+        "sub-{subject}[/ses-{session}]/{datatype<perf>|perf}/sub-{subject}[_ses-{session}][_acq-{acquisition}][_rec-{reconstruction}][_dir-{direction}][_run-{run}][_recording{recording}]_{suffix<physio|stim>}{extension<.tsv|.json>}",
+        "[acq-{acquisition}_][ce-{ceagent}_][rec-{reconstruction}_]{suffix<T1w|T2w|T1rho|T1map|T2map|T2star|FLAIR|FLASH|PDmap|PD|PDT2|inplaneT[12]|angio>}{extension<.json>|.json}",
+        "[acq-{acquisition}_][ce-{ceagent}_][rec-{reconstruction}_][mod-{modality}_]{suffix<defacemask>}{extension<.json>|.json}",
+        "task-{task}[_acq-{acquisition}][_ce-{ceagent}][_dir-{direction}][_rec-{reconstruction}][_run-{run}][_echo-{echo}]_{suffix<bold|cbv|phase|sbref>}{extension<.json>|.json}",
+        "[acq-{acquisition}_]{suffix<dwi>}{extension<.json>|.json}",
+        "[acq-{acquisition}_][dir-{direction}_][run-{run}_]{suffix<phasediff|magnitude[1-2]|phase[1-2]|fieldmap>}{extension<.json>|.json}",
+        "[acq-{acquisition}_][ce-{ceagent}_]dir-{direction}[_run-{run}]_{suffix<epi|m0scan>}{extension<.json>|.json}",
+        "task-{task}[_acq-{acquisition}][_rec-{reconstruction}][_run-{run}][_echo-{echo}][_recording-{recording}]_{suffix<events>}{extension<.json>|.json}",
+        "task-{task}[_acq-{acquisition}][_rec-{reconstruction}][_run-{run}][_echo-{echo}][_recording-{recording}]_{suffix<physio|stim>}{extension<.json>}",
+        "sample-{sample}[_acq-{acquisition}][_stain-{stain}][_run-{run}][_chunk-{chunk}]_{suffix<TEM|SEM|uCT|BF|DF|PC|DIC|FLUO|CONF|PLI|CARS|2PE|MPE|SR|NLO|OCT|SPIM>}{extension<.json>|.json}",
+        "[acq-{acquisition}_][ce-{ceagent}_][rec-{reconstruction}_][run-{run}_]echo-{echo}[_part-{part<mag|phase|real|imag>}]_{suffix<MEGRE|MESE>}{extension<.json>|.json}",
+        "[acq-{acquisition}_][ce-{ceagent}_][rec-{reconstruction}_][run-{run}_][echo-{echo}_]flip-{flip}[_part-{part<mag|phase|real|imag>}]_{suffix<VFA>}{extension<.json>|.json}",
+        "[acq-{acquisition}_][ce-{ceagent}_][rec-{reconstruction}_][run-{run}_]inv-{inv}[_part-{part<mag|phase|real|imag>}]_{suffix<IRT1>}{extension<.json>|.json}",
+        "[acq-{acquisition}_][ce-{ceagent}_][rec-{reconstruction}_][run-{run}_][echo-{echo}_][flip-{flip}_]inv-{inv}[_part-{part<mag|phase|real|imag>}]_{suffix<MP2RAGE>}{extension<.json>|.json}",
+        "[acq-{acquisition}_][ce-{ceagent}_][rec-{reconstruction}_][run-{run}_][echo-{echo}_]flip-{flip}_mt-{mt<on|off>}[_part-{part<mag|phase|real|imag>}]_{suffix<MPM|MTS>}{extension<.json>|.json}",
+        "[acq-{acquisition}_][ce-{ceagent}_][rec-{reconstruction}_][run-{run}_]mt-{mt<on|off>}[_part-{part<mag|phase|real|imag>}]_{suffix<MTR>}{extension<.json>|.json}",
+        "[acq-{acquisition}_][ce-{ceagent}_][rec-{reconstruction}_][run-{run}_]{suffix<T1map|T2map|T2starmap|R1map|R2map|R2starmap|PDmap|MTRmap|MTsat|UNIT1|T1rho|MWFmap|MTVmap|PDT2map|Chimap|S0map|M0map>}{extension<.json>|.json}",
+        "[task-{task}_][trc-{tracer}_][rec-{reconstruction}_][run-{run}_]{suffix<pet>}{extension<.json>|.json}",
+        "[task-{task}_][trc-{tracer}_][rec-{reconstruction}_][run-{run}_]recording-{recording}_{suffix<blood>}{extension<.json>|.json}",
+        "task-{task}[_trc-{tracer}][_rec-{reconstruction}][_run-{run}]_{suffix<events>}{extension<.json>|.json}",
+        "[task-{task}][_trc-{tracer}][_rec-{reconstruction}][_run-{run}][_recording-{recording}]_{suffix<physio|stim>}{extension<.json>|.json}",
+        "[acq-{acquisition}_][rec-{reconstruction}_][dir-{direction}_][run-{run}_]{suffix<asl|m0scan>}{extension<.json>|.json}",
+        "[acq-{acquisition}_][rec-{reconstruction}_][dir-{direction}_][run-{run}_]{suffix<aslcontext>}{extension<.json>|.json}",
+        "[acq-{acquisition}_][rec-{reconstruction}_][dir-{direction}_][run-{run}_][recording-{recording}_]{suffix<physio|stim>}{extension<.json>|.json}"
+    ]
+}
