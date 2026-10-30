@@ -3,12 +3,9 @@ import numpy as np
 import onnxruntime
 import torch
 import imageio
-import joblib
 from typing import List
-from pathlib import Path
 
 from loguru import logger
-from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
 from torch import tensor
 
@@ -19,11 +16,10 @@ from ivadomed import config_manager as imed_config_manager
 from ivadomed import models as imed_models
 from ivadomed import postprocessing as imed_postpro
 from ivadomed import transforms as imed_transforms
-from ivadomed.loader import utils as imed_loader_utils, film as imed_film
+from ivadomed.loader import utils as imed_loader_utils
 from ivadomed.loader.slice_filter import SliceFilter
 from ivadomed.object_detection import utils as imed_obj_detect
 from ivadomed import utils as imed_utils
-from ivadomed import training as imed_training
 from ivadomed.keywords import ConfigKW, ModelParamsKW, ObjectDetectionParamsKW, TransformationKW, LoaderParamsKW, \
     ROIParamsKW, SliceFilterParamsKW, TrainingParamsKW, MetadataKW, OptionKW
 
@@ -73,15 +69,7 @@ def get_preds(context: dict, fname_model: str, model_params: dict, cuda_availabl
             # Inference time
             logger.debug(f"Evaluating model: {fname_model}")
             model.eval()
-
-            # Films/Hemis based prediction require meta data load
-            if (ConfigKW.FILMED_UNET in context and context[ConfigKW.FILMED_UNET].get(ModelParamsKW.APPLIED)) or \
-                    (ConfigKW.HEMIS_UNET in context and context[ConfigKW.HEMIS_UNET].get(ModelParamsKW.APPLIED)):
-                # Load meta data before prediction
-                metadata = imed_training.get_metadata(batch[MetadataKW.INPUT_METADATA], model_params)
-                preds = model(img, metadata)
-            else:
-                preds = model(img)
+            preds = model(img)
         # Otherwise, Onnex Inference (PyTorch can't load .onnx)
         else:
             logger.debug(f"Likely ONNX model detected at: {fname_model}")
@@ -93,32 +81,6 @@ def get_preds(context: dict, fname_model: str, model_params: dict, cuda_availabl
         preds = preds.cpu()
 
     return preds
-
-
-def get_onehotencoder(context: dict, folder_model: str, options: dict, ds: Dataset) -> dict:
-    """Returns one hot encoder which is needed to update the model parameters when FiLMedUnet is applied.
-
-    Args:
-        context (dict): Configuration dict.
-        folder_model (str): Foldername which contains trained model and its configuration file.
-        options (dict): Contains film metadata information.
-        ds (Dataset): Dataset used for the segmentation.
-
-    Returns:
-        dict: onehotencoder used in the model params.
-    """
-    metadata_dict = joblib.load(Path(folder_model, 'metadata_dict.joblib'))
-    for idx in ds.indexes:
-        for i in range(len(idx)):
-            idx[i][MetadataKW.INPUT_METADATA][0][context[ConfigKW.FILMED_UNET][ModelParamsKW.METADATA]] = options.get(OptionKW.METADATA)
-            idx[i][MetadataKW.INPUT_METADATA][0][MetadataKW.METADATA_DICT] = metadata_dict
-
-    if ConfigKW.DEBUGGING in context and ConfigKW.FILMED_UNET in context and \
-            context[ConfigKW.FILMED_UNET].get(ModelParamsKW.METADATA):
-        ds = imed_film.normalize_metadata(
-            ds, None, context[ConfigKW.DEBUGGING], context[ConfigKW.FILMED_UNET][ModelParamsKW.METADATA])
-
-    return joblib.load(Path(folder_model, 'one_hot_encoder.joblib'))
 
 
 def pred_to_nib(data_lst: List[np.ndarray], z_lst: List[int], fname_ref: str, fname_out: str, slice_axis: int,
@@ -486,12 +448,12 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
         else:
             logger.info(f"Loaded {len(ds)} {loader_params[LoaderParamsKW.SLICE_AXIS]} slices.")
 
+    # FiLMedUnet/HeMISUnet models need subject metadata at inference time, which requires ivadomed's training
+    # code. None of SCT's ivadomed models use them, so they are not supported here.
+    for model_name in (ConfigKW.FILMED_UNET, ConfigKW.HEMIS_UNET):
+        if model_name in context and context[model_name].get(ModelParamsKW.APPLIED):
+            raise NotImplementedError(f"'{model_name}' models are not supported by SCT's vendored copy of ivadomed.")
     model_params = {}
-    if ConfigKW.FILMED_UNET in context and context[ConfigKW.FILMED_UNET][ModelParamsKW.APPLIED]:
-        onehotencoder = get_onehotencoder(context, folder_model, options, ds)
-        model_params.update({ModelParamsKW.NAME: ConfigKW.FILMED_UNET,
-                             ModelParamsKW.FILM_ONEHOTENCODER: onehotencoder,
-                             ModelParamsKW.N_METADATA: len([ll for l in onehotencoder.categories_ for ll in l])})
 
     # Data Loader
     data_loader = DataLoader(ds, batch_size=context[ConfigKW.TRAINING_PARAMETERS][TrainingParamsKW.BATCH_SIZE],

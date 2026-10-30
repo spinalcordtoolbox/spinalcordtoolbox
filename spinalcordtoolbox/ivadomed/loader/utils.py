@@ -2,24 +2,16 @@ from __future__ import annotations
 import collections.abc
 import re
 import sys
-import os
-import joblib
 import gc
-from pathlib import Path
 from tempfile import mkdtemp
 
 import numpy as np
-import pandas as pd
 import torch
 from loguru import logger
-from sklearn.model_selection import train_test_split
-from ivadomed import utils as imed_utils
-from ivadomed.keywords import SplitDatasetKW, LoaderParamsKW, ROIParamsKW, ContrastParamsKW
 import nibabel as nib
 import random
 import typing
 if typing.TYPE_CHECKING:
-    from typing import Union
     from typing import Optional
 
 __numpy_type_map = {
@@ -42,202 +34,6 @@ TRANSFORM_PARAMS = ['elastic', 'rotation', 'scale', 'offset', 'crop_params', 're
 # They are included in the list to avoid a ".ome.tif" or ".ome.tiff" following the ".tif" or ".tiff" pipeline
 EXT_LST = [".nii", ".nii.gz", ".ome.tif", ".ome.tiff", ".ome.tf2", ".ome.tf8", ".ome.btf", ".tif",
            ".tiff", ".png", ".jpg", ".jpeg"]
-
-
-def split_dataset(df: pd.DataFrame, split_method: str, data_testing: dict, random_seed: int, train_frac: float = 0.8,
-                  test_frac: float = 0.1) -> (list, list, Union[list, object]):
-    """Splits dataset into training, validation and testing sets by applying train, test and validation fractions
-    according to the split_method.
-    The "data_testing" parameter can be used to specify the data_type and data_value to include in the testing set,
-    the dataset is then split as not to mix the data_testing between the training/validation set and the testing set.
-
-    Args:
-        df (pd.DataFrame): Dataframe containing all BIDS image files indexed and their metadata.
-        split_method (str): Used to specify on which metadata to split the dataset (eg. "participant_id", "sample_id", etc.)
-        data_testing (dict): Used to specify data_type and data_value to include in the testing set.
-        random_seed (int): Random seed to ensure reproducible splits.
-        train_frac (float): Between 0 and 1. Represents the train set proportion.
-        test_frac (float): Between 0 and 1. Represents the test set proportion.
-    Returns:
-        list, list, list: Train, validation and test filenames lists.
-    """
-
-    # Get data_type and data_value from split parameters
-    # If no data_type is provided, data_type is the same as split_method
-    data_type = data_testing['data_type'] if data_testing['data_type'] else split_method
-    data_value = data_testing['data_value']
-
-    if not split_method in df:
-        raise KeyError("No split_method '{}' was not found in metadata".format(split_method))
-    if not data_type in df:
-        logger.warning("No data_type named '{}' was found in metadata. Not taken into account "
-                       "to split the dataset.".format(data_type))
-        data_type = split_method
-
-    # Filter dataframe with rows where split_method is not NAN
-    df = df[df[split_method].notna()]
-
-    # If no data_value list is provided, create a random data_value according to data_type and test_fraction
-    # Split the TEST and remainder set using sklearn function
-    if len(data_value) == 0 and test_frac != 0:
-        data_value = sorted(df[data_type].unique().tolist())
-        test_frac = test_frac if test_frac >= 1 / len(data_value) else 1 / len(data_value)
-        data_value, _ = train_test_split(data_value, train_size=test_frac, random_state=random_seed)
-    if len(data_value) != 0:
-        for value in data_value:
-            if value not in df[data_type].values:
-                    logger.warning("No data_value '{}' was found in '{}'. Not taken into account "
-                                   "to split the dataset.".format(value, data_type))
-    X_test = df[df[data_type].isin(data_value)]['filename'].unique().tolist()
-    X_remain = df[~df[data_type].isin(data_value)][split_method].unique().tolist()
-
-    # List dataset unique values according to split_method
-    # Update train fraction to apply to X_remain
-    data = sorted(df[split_method].unique().tolist())
-    train_frac_update = train_frac * len(data) / len(X_remain)
-    if ((train_frac_update > (1 - 1 / len(X_remain)) and len(X_remain) < 2) or train_frac_update > 1):
-        raise RuntimeError("{}/{} '{}' remaining for training and validation sets, train_fraction {} is too large, "
-                           "validation set would be empty.".format(len(X_remain), len(data), split_method, train_frac))
-
-    # Split remainder in TRAIN and VALID sets according to train_frac_update using sklearn function
-    X_train, X_val = train_test_split(X_remain, train_size=train_frac_update, random_state=random_seed)
-
-    # Print the real train, validation and test fractions after splitting
-    real_train_frac = len(X_train)/len(data)
-    real_valid_frac = len(X_val)/len(data)
-    real_test_frac = 1 - real_train_frac - real_valid_frac
-    logger.warning("After splitting: train, validation and test fractions are respectively {}, {} and {}"
-                   " of {}.".format(round(real_train_frac, 3), round(real_valid_frac, 3),
-                   round(real_test_frac, 3), split_method))
-
-    # Convert train and valid sets from list of "split_method" to list of "filename"
-    X_train = df[df[split_method].isin(X_train)]['filename'].unique().tolist()
-    X_val = df[df[split_method].isin(X_val)]['filename'].unique().tolist()
-
-    # Make sure that test dataset is unseen during training
-    # (in cases where there are multiple "data_type" for a same "split_method")
-    X_train = list(set(X_train) - set(X_test))
-    X_val = list(set(X_val) - set(X_test))
-
-    return X_train, X_val, X_test
-
-
-def get_new_subject_file_split(df: pd.DataFrame, split_method: str, data_testing: dict, random_seed: int,
-                               train_frac: float, test_frac: float, path_output: str, balance: str,
-                               subject_selection: dict = None) -> (list, list, list):
-    """Randomly split dataset between training / validation / testing.
-
-    Randomly split dataset between training / validation / testing\
-        and save it in path_output + "/split_datasets.joblib".
-
-    Args:
-        df (pd.DataFrame): Dataframe containing all BIDS image files indexed and their metadata.
-        split_method (str): Used to specify on which metadata to split the dataset (eg. "participant_id", "sample_id", etc.)
-        data_testing (dict): Used to specify the data_type and data_value to include in the testing set.
-        random_seed (int): Random seed.
-        train_frac (float): Training dataset proportion, between 0 and 1.
-        test_frac (float): Testing dataset proportionm between 0 and 1.
-        path_output (str): Output folder.
-        balance (str): Metadata contained in "participants.tsv" file with categorical values. Each category will be
-        evenly distributed in the training, validation and testing datasets.
-        subject_selection (dict): Used to specify a custom subject selection from a dataset.
-
-    Returns:
-        list, list list: Training, validation and testing filenames lists.
-    """
-    if subject_selection is not None:
-        # Verify subject_selection format
-        if not (len(subject_selection["metadata"]) == len(subject_selection["n"]) == len(subject_selection["value"])):
-            raise ValueError("All lists in subject_selection parameter should have the same length.")
-
-        sampled_dfs = []
-        random.seed(random_seed)
-        for m, n, v in zip(subject_selection["metadata"], subject_selection["n"], subject_selection["value"]):
-            participants = random.sample(df[df[m] == v]['participant_id'].unique().tolist(), n)
-            for participant in participants:
-                sampled_dfs.append(df[df['participant_id'] == participant])
-
-        if len(sampled_dfs) != 0:
-            df = pd.concat(sampled_dfs)
-
-    # If balance, then split the dataframe for each categorical value of the "balance" column
-    if balance:
-        if balance in df.keys():
-            df_list = [df[df[balance] == k] for k in df[balance][df[balance].notna()].unique().tolist()]
-        else:
-            logger.warning("No column named '{}' was found in 'participants.tsv' file. Not taken into account to split "
-                           "the dataset.".format(balance))
-            df_list = [df]
-    else:
-        df_list = [df]
-
-    train_lst, valid_lst, test_lst = [], [], []
-    for df_tmp in df_list:
-        # Split dataset on each section of subjects
-        train_tmp, valid_tmp, test_tmp = split_dataset(df=df_tmp,
-                                                       split_method=split_method,
-                                                       data_testing=data_testing,
-                                                       random_seed=random_seed,
-                                                       train_frac=train_frac,
-                                                       test_frac=test_frac)
-        # Update the dataset lists
-        train_lst += train_tmp
-        valid_lst += valid_tmp
-        test_lst += test_tmp
-
-    # save the subject distribution
-    split_dct = {'train': train_lst, 'valid': valid_lst, 'test': test_lst}
-    split_path = Path(path_output, "split_datasets.joblib")
-    joblib.dump(split_dct, split_path)
-
-    return train_lst, valid_lst, test_lst
-
-
-def get_subdatasets_subject_files_list(split_params: dict, df: pd.DataFrame, path_output: str,
-                                       subject_selection: dict = None) -> (list, list, list):
-    """Get lists of subject filenames for each sub-dataset between training / validation / testing.
-
-    Args:
-        split_params (dict): Split parameters, see :doc:`configuration_file` for more details.
-        df (pd.DataFrame): Dataframe containing all BIDS image files indexed and their metadata.
-        path_output (str): Output folder.
-        subject_selection (dict): Used to specify a custom subject selection from a dataset.
-
-    Returns:
-        list, list list: Training, validation and testing filenames lists.
-    """
-    if split_params[SplitDatasetKW.FNAME_SPLIT]:
-        # Load subjects lists
-        old_split = joblib.load(split_params[SplitDatasetKW.FNAME_SPLIT])
-        train_lst, valid_lst, test_lst = old_split['train'], old_split['valid'], old_split['test']
-
-        # Backward compatibility for subject_file_lst containing participant_ids instead of filenames
-        df_subjects = df[df['filename'].isin(train_lst)]
-        if df_subjects.empty:
-            df_train = df[df['participant_id'].isin(train_lst)]
-            train_lst = sorted(df_train['filename'].to_list())
-
-        df_subjects = df[df['filename'].isin(valid_lst)]
-        if df_subjects.empty:
-            df_valid = df[df['participant_id'].isin(valid_lst)]
-            valid_lst = sorted(df_valid['filename'].to_list())
-
-        df_subjects = df[df['filename'].isin(test_lst)]
-        if df_subjects.empty:
-            df_test = df[df['participant_id'].isin(test_lst)]
-            test_lst = sorted(df_test['filename'].to_list())
-    else:
-        train_lst, valid_lst, test_lst = get_new_subject_file_split(df=df,
-                                                                    split_method=split_params[SplitDatasetKW.SPLIT_METHOD],
-                                                                    data_testing=split_params[SplitDatasetKW.DATA_TESTING],
-                                                                    random_seed=split_params[SplitDatasetKW.RANDOM_SEED],
-                                                                    train_frac=split_params[SplitDatasetKW.TRAIN_FRACTION],
-                                                                    test_frac=split_params[SplitDatasetKW.TEST_FRACTION],
-                                                                    path_output=path_output,
-                                                                    balance=split_params[SplitDatasetKW.BALANCE]
-                                                                    if SplitDatasetKW.BALANCE in split_params else None,
-                                                                    subject_selection=subject_selection)
-    return train_lst, valid_lst, test_lst
 
 
 def imed_collate(batch: dict) -> dict | list | str | torch.Tensor:

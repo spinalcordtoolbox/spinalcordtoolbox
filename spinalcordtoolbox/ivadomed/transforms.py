@@ -14,7 +14,6 @@ from scipy.ndimage import gaussian_filter, map_coordinates, affine_transform, la
     binary_fill_holes, binary_closing
 from skimage.exposure import equalize_adapthist
 from torchvision import transforms as torchvision_transforms
-import torchio as tio
 
 
 from ivadomed.loader import utils as imed_loader_utils
@@ -1062,51 +1061,6 @@ class RandomGamma(ImedTransform):
             return sample, metadata
 
 
-class RandomBiasField(ImedTransform):
-    """Applies a random MRI bias field artifact to the image via torchio.RandomBiasField()
-
-        Args:
-            coefficients (float): Maximum magnitude of polynomial coefficients
-            order: Order of the basis polynomial functions
-            p (float): Probability of applying the bias field
-        """
-
-    def __init__(self, coefficients, order, p=0.5):
-        self.coefficients = coefficients
-        self.order = order
-        self.p = p
-
-    @multichannel_capable
-    @two_dim_compatible
-    def __call__(self, sample, metadata=None):
-        if np.random.random() < self.p:
-            # Get params
-            random_bias_field = tio.Compose([tio.RandomBiasField(coefficients=self.coefficients,
-                                                                 order=self.order,
-                                                                 p=self.p)])
-
-            # Save params
-            metadata[MetadataKW.BIAS_FIELD] = [random_bias_field]
-
-        else:
-            metadata[MetadataKW.BIAS_FIELD] = [None]
-
-        if any(metadata[MetadataKW.BIAS_FIELD]):
-            # Apply random bias field
-            data_out, history = tio_transform(x=sample, transform=random_bias_field)
-
-            # Keep data type
-            data_out = data_out.astype(sample.dtype)
-
-            # Update metadata to history
-            metadata[MetadataKW.BIAS_FIELD] = [history]
-
-            return data_out, metadata
-
-        else:
-            return sample, metadata
-
-
 class RandomBlur(ImedTransform):
     """Applies a random blur to the image
 
@@ -1263,19 +1217,3 @@ def prepare_transforms(transform_dict, requires_undo=True):
     transforms = Compose(transform_dict, requires_undo=requires_undo)
     tranform_lst = [prepro_transforms if len(preprocessing_transforms) else None, transforms]
     return tranform_lst, training_undo_transform
-
-
-def tio_transform(x, transform):
-    """
-    Applies TorchIO transformations to a given image and returns the transformed image and history.
-
-    Args:
-        x (np.ndarray): input image
-        transform (tio.transforms.Transform): TorchIO transform
-
-    Returns:
-        np.ndarray, list: transformed image, history of parameters used for the applied transformation
-    """
-    tio_subject = tio.Subject(input=tio.ScalarImage(tensor=x[np.newaxis, ...]))
-    transformed = transform(tio_subject)
-    return transformed.input.numpy()[0], transformed.get_composed_history()
