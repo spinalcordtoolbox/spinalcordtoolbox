@@ -2,7 +2,8 @@
 # originally `ivadomed/object_detection/utils.py`, licensed under the MIT License.
 # See the LICENSE.md file in this directory for the full license text.
 #
-# Modifications for SCT: none.
+# Modifications for SCT:
+#   - Imports point to `spinalcordtoolbox.ivadomed` instead of `ivadomed`.
 
 import json
 import statistics
@@ -13,10 +14,10 @@ from loguru import logger
 from scipy import ndimage
 from pathlib import Path
 
-from ivadomed import postprocessing as imed_postpro
-from ivadomed import transforms as imed_transforms
-from ivadomed.loader import utils as imed_loader_utils
-from ivadomed.keywords import ObjectDetectionParamsKW, MetadataKW
+from spinalcordtoolbox.ivadomed import postprocessing as imed_postpro
+from spinalcordtoolbox.ivadomed import transforms as imed_transforms
+from spinalcordtoolbox.ivadomed.loader import utils as imed_loader_utils
+from spinalcordtoolbox.ivadomed.keywords import ObjectDetectionParamsKW, MetadataKW
 
 
 def get_bounding_boxes(mask):
@@ -113,7 +114,7 @@ def generate_bounding_box_file(subject_path_list, model_path, path_output, gpu_i
         dict: Dictionary containing bounding boxes related to their image.
 
     """
-    from ivadomed import inference as imed_inference
+    from spinalcordtoolbox.ivadomed import inference as imed_inference
     bounding_box_dict = {}
     if safety_factor is None:
         safety_factor = [1.0, 1.0, 1.0]

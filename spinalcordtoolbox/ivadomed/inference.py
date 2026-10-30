@@ -6,6 +6,9 @@
 #   - Removed FiLMedUnet/HeMISUnet support, which needs ivadomed's training code. Model configs that enable either one now
 #     raise `NotImplementedError`.
 #   - Fixed flake8 warnings, without changing behavior.
+#   - Imports point to `spinalcordtoolbox.ivadomed` instead of `ivadomed`.
+#   - `torch.load` is replaced by `pickle_compat.torch_load`, so that ivadomed-pickled `.pt` models load with the vendored
+#     classes.
 
 import nibabel as nib
 import numpy as np
@@ -18,18 +21,19 @@ from loguru import logger
 from torch.utils.data import DataLoader
 from torch import tensor
 
-from ivadomed.loader.mri3d_subvolume_segmentation_dataset import MRI3DSubVolumeSegmentationDataset
-from ivadomed.loader.mri2d_segmentation_dataset import MRI2DSegmentationDataset
-from ivadomed.transforms import UndoCompose
-from ivadomed import config_manager as imed_config_manager
-from ivadomed import models as imed_models
-from ivadomed import postprocessing as imed_postpro
-from ivadomed import transforms as imed_transforms
-from ivadomed.loader import utils as imed_loader_utils
-from ivadomed.loader.slice_filter import SliceFilter
-from ivadomed.object_detection import utils as imed_obj_detect
-from ivadomed import utils as imed_utils
-from ivadomed.keywords import ConfigKW, ModelParamsKW, ObjectDetectionParamsKW, TransformationKW, LoaderParamsKW, \
+from spinalcordtoolbox.ivadomed.loader.mri3d_subvolume_segmentation_dataset import MRI3DSubVolumeSegmentationDataset
+from spinalcordtoolbox.ivadomed.loader.mri2d_segmentation_dataset import MRI2DSegmentationDataset
+from spinalcordtoolbox.ivadomed.transforms import UndoCompose
+from spinalcordtoolbox.ivadomed import config_manager as imed_config_manager
+from spinalcordtoolbox.ivadomed import models as imed_models
+from spinalcordtoolbox.ivadomed import postprocessing as imed_postpro
+from spinalcordtoolbox.ivadomed import transforms as imed_transforms
+from spinalcordtoolbox.ivadomed.loader import utils as imed_loader_utils
+from spinalcordtoolbox.ivadomed.loader.slice_filter import SliceFilter
+from spinalcordtoolbox.ivadomed.object_detection import utils as imed_obj_detect
+from spinalcordtoolbox.ivadomed import utils as imed_utils
+from spinalcordtoolbox.ivadomed.pickle_compat import torch_load
+from spinalcordtoolbox.ivadomed.keywords import ConfigKW, ModelParamsKW, ObjectDetectionParamsKW, TransformationKW, LoaderParamsKW, \
     ROIParamsKW, SliceFilterParamsKW, TrainingParamsKW, MetadataKW, OptionKW
 
 
@@ -74,7 +78,7 @@ def get_preds(context: dict, fname_model: str, model_params: dict, cuda_availabl
         if fname_model.lower().endswith('.pt'):
             logger.debug(f"PyTorch model detected at: {fname_model}")
             logger.debug(f"Loading model from: {fname_model}")
-            model = torch.load(fname_model, map_location=device)
+            model = torch_load(fname_model, map_location=device)
             # Inference time
             logger.debug(f"Evaluating model: {fname_model}")
             model.eval()

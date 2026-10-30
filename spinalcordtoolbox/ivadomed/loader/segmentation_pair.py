@@ -4,6 +4,7 @@
 #
 # Modifications for SCT:
 #   - Fixed flake8 warnings, without changing behavior.
+#   - Imports point to `spinalcordtoolbox.ivadomed` instead of `ivadomed`.
 
 from __future__ import annotations
 from pathlib import Path
@@ -11,10 +12,10 @@ import imageio
 import nibabel as nib
 import numpy as np
 
-from ivadomed.loader import utils as imed_loader_utils
-from ivadomed.loader.sample_meta_data import SampleMetadata
-from ivadomed import postprocessing as imed_postpro
-from ivadomed.keywords import MetadataKW
+from spinalcordtoolbox.ivadomed.loader import utils as imed_loader_utils
+from spinalcordtoolbox.ivadomed.loader.sample_meta_data import SampleMetadata
+from spinalcordtoolbox.ivadomed import postprocessing as imed_postpro
+from spinalcordtoolbox.ivadomed.keywords import MetadataKW
 import typing
 if typing.TYPE_CHECKING:
     from typing import List

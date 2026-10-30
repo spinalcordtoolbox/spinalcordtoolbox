@@ -4,6 +4,7 @@
 #
 # Modifications for SCT:
 #   - Fixed flake8 warnings, without changing behavior.
+#   - Imports point to `spinalcordtoolbox.ivadomed` instead of `ivadomed`.
 
 import copy
 import random
@@ -16,14 +17,14 @@ import numpy as np
 from torch.utils.data import Dataset
 from loguru import logger
 
-from ivadomed import transforms as imed_transforms, postprocessing as imed_postpro
-from ivadomed.loader import utils as imed_loader_utils
-from ivadomed.loader.utils import dropout_input, create_temp_directory, get_obj_size
-from ivadomed.loader.segmentation_pair import SegmentationPair
-from ivadomed.object_detection import utils as imed_obj_detect
-from ivadomed.loader.patch_filter import PatchFilter
-from ivadomed.keywords import MetadataKW, SegmentationDatasetKW, SegmentationPairKW
-from ivadomed.utils import get_timestamp, get_system_memory
+from spinalcordtoolbox.ivadomed import transforms as imed_transforms, postprocessing as imed_postpro
+from spinalcordtoolbox.ivadomed.loader import utils as imed_loader_utils
+from spinalcordtoolbox.ivadomed.loader.utils import dropout_input, create_temp_directory, get_obj_size
+from spinalcordtoolbox.ivadomed.loader.segmentation_pair import SegmentationPair
+from spinalcordtoolbox.ivadomed.object_detection import utils as imed_obj_detect
+from spinalcordtoolbox.ivadomed.loader.patch_filter import PatchFilter
+from spinalcordtoolbox.ivadomed.keywords import MetadataKW, SegmentationDatasetKW, SegmentationPairKW
+from spinalcordtoolbox.ivadomed.utils import get_timestamp, get_system_memory
 from torchvision.transforms import Compose
 
 

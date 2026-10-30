@@ -4,6 +4,7 @@
 #
 # Modifications for SCT:
 #   - Fixed flake8 warnings, without changing behavior.
+#   - Imports point to `spinalcordtoolbox.ivadomed` instead of `ivadomed`.
 
 from __future__ import annotations
 import copy
@@ -19,20 +20,20 @@ from torchvision.transforms import Compose
 from torch.utils.data import Dataset
 from loguru import logger
 
-from ivadomed import transforms as imed_transforms, postprocessing as imed_postpro
-from ivadomed.loader import utils as imed_loader_utils
-from ivadomed.loader.utils import dropout_input, get_obj_size, create_temp_directory
-from ivadomed.loader.segmentation_pair import SegmentationPair
-from ivadomed.object_detection import utils as imed_obj_detect
-from ivadomed.keywords import ROIParamsKW, MetadataKW, SegmentationDatasetKW, SegmentationPairKW
+from spinalcordtoolbox.ivadomed import transforms as imed_transforms, postprocessing as imed_postpro
+from spinalcordtoolbox.ivadomed.loader import utils as imed_loader_utils
+from spinalcordtoolbox.ivadomed.loader.utils import dropout_input, get_obj_size, create_temp_directory
+from spinalcordtoolbox.ivadomed.loader.segmentation_pair import SegmentationPair
+from spinalcordtoolbox.ivadomed.object_detection import utils as imed_obj_detect
+from spinalcordtoolbox.ivadomed.keywords import ROIParamsKW, MetadataKW, SegmentationDatasetKW, SegmentationPairKW
 import typing
 
 if typing.TYPE_CHECKING:
-    from ivadomed.loader.slice_filter import SliceFilter
-    from ivadomed.loader.patch_filter import PatchFilter
+    from spinalcordtoolbox.ivadomed.loader.slice_filter import SliceFilter
+    from spinalcordtoolbox.ivadomed.loader.patch_filter import PatchFilter
     from typing import List, Dict, Optional
 
-from ivadomed.utils import get_timestamp, get_system_memory
+from spinalcordtoolbox.ivadomed.utils import get_timestamp, get_system_memory
 
 
 class MRI2DSegmentationDataset(Dataset):
