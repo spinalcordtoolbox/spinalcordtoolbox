@@ -1,0 +1,120 @@
+{
+    "command": "train",
+    "gpu_ids": [6],
+    "path_output": "classification_lesion_ax",
+    "model_name": "label_lesion_t2_t2star",
+    "debugging": false,
+    "wandb": {
+        "wandb_api_key": "",
+        "project_name": "my_project",
+        "group_name": "my_group",
+        "run_name": "run-1",
+        "log_grads_every": 100
+    },
+    "loader_parameters": {
+        "path_data": ["../duke/sct_testing/large/"],
+        "target_suffix": ["_lesion-manual"],
+        "extensions": [".nii.gz"],
+        "roi_params": {
+            "suffix": "_seg-manual",
+            "slice_filter_roi": 10
+        },
+        "contrast_params": {
+            "training_validation": ["acq-ax00012_T2w", "acq-axtop00100_T2w", "acq-axtsp_T2w", "acq-c4c7_T2star", "acq-axmid00100_T2w", "acq-axlow_T2w", "acq-sup_T2w", "acq-ax_T2star", "acq-inf_T2star", "acq-ax_T2w", "acq-axcsp_T2w", "acq-c1c3_T2star", "T2star", "acq-axtop_T2w", "acq-axbottom_T2w", "acq-ax00014_T2w", "T2w", "acq-sup_T2star", "acq-axmid00005_T2w", "acq-inf_T2w"],
+            "testing": ["acq-ax00012_T2w", "acq-axtop00100_T2w", "acq-axtsp_T2w", "acq-c4c7_T2star", "acq-axmid00100_T2w", "acq-axlow_T2w", "acq-sup_T2w", "acq-ax_T2star", "acq-inf_T2star", "acq-ax_T2w", "acq-axcsp_T2w", "acq-c1c3_T2star", "T2star", "acq-axtop_T2w", "acq-axbottom_T2w", "acq-ax00014_T2w", "T2w", "acq-sup_T2star", "acq-axmid00005_T2w", "acq-inf_T2w"],
+            "balance": {}
+        },
+        "slice_filter_params": {
+            "filter_empty_mask": false,
+            "filter_empty_input": true
+        },
+        "slice_axis": "axial",
+        "multichannel": false,
+        "soft_gt": false
+    },
+    "split_dataset": {
+        "fname_split": null,
+        "random_seed": 6,
+        "split_method" : "participant_id",
+        "data_testing": {"data_type": null, "data_value":[]},
+        "balance": null,
+        "train_fraction": 0.6,
+        "test_fraction": 0.2
+    },
+    "training_parameters": {
+        "batch_size": 64,
+        "loss": {
+            "name": "BinaryCrossEntropyLoss"
+        },
+        "training_time": {
+            "num_epochs": 100,
+            "early_stopping_patience": 50,
+            "early_stopping_epsilon": 0.001
+        },
+        "scheduler": {
+            "initial_lr": 0.001,
+            "lr_scheduler": {
+                "name": "CyclicLR",
+                "base_lr": 0.0001,
+                "max_lr": 0.001
+            }
+        },
+        "balance_samples": false,
+        "mixup_alpha": null,
+        "transfer_learning": {
+            "retrain_model": null,
+            "retrain_fraction": 1.0,
+            "reset": true
+        }
+    },
+    "default_model": {
+        "name": "Unet",
+        "dropout_rate": 0.3,
+        "bn_momentum": 0.9,
+        "depth": 2
+    },
+    "resnet18": {
+        "applied": true
+    },
+    "uncertainty": {
+        "epistemic": false,
+        "aleatoric": false,
+        "n_it": 0
+    },
+    "postprocessing": {
+        "remove_noise": {"thr": -1},
+        "binarize_prediction": {"thr": 0.5},
+        "remove_small": {"unit": "vox", "thr": 3},
+        "uncertainty": {"thr": -1, "suffix": "_unc-vox.nii.gz"}
+    },
+    "evaluation_parameters": {
+        "target_size": {"unit": "vox", "thr": [20, 100]},
+        "overlap": {"unit": "vox", "thr": 3}
+    },
+    "transformation": {
+        "Resample":
+        {
+            "hspace": 0.75,
+            "wspace": 0.75,
+            "dspace": 1,
+            "applied_to": ["im", "roi"]
+        },
+        "ROICrop": {
+            "size": [48, 48],
+            "applied_to": ["im", "roi"]
+        },
+        "RandomAffine": {
+            "translate": [0.03, 0.03],
+            "applied_to": ["im"],
+            "dataset_type": ["training"]
+        },
+        "ElasticTransform": {
+			"alpha_range": [28.0, 30.0],
+			"sigma_range":  [3.5, 4.5],
+			"p": 0.1,
+            "applied_to": ["im"],
+            "dataset_type": ["training"]
+        },
+      "NormalizeInstance": {"applied_to": ["im"]}
+    }
+}

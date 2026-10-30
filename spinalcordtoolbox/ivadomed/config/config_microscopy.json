@@ -1,0 +1,119 @@
+{
+    "command": "train",
+    "gpu_ids": [0],
+    "path_output": "log_microscopy_sem",
+    "model_name": "model_seg_rat_axon-myelin_sem",
+    "debugging": false,
+    "object_detection_params": {
+        "object_detection_path": null,
+        "safety_factor": [1.0, 1.0, 1.0]
+    },
+    "wandb": {
+        "wandb_api_key": "",
+        "project_name": "my_project",
+        "group_name": "my_group",
+        "run_name": "run-1",
+        "log_grads_every": 100
+    },
+    "loader_parameters": {
+        "path_data": ["data_axondeepseg_sem"],
+        "bids_config": "ivadomed/config/config_bids.json",
+        "subject_selection": {"n": [], "metadata": [], "value": []},
+        "target_suffix": ["_seg-axon-manual", "_seg-myelin-manual"],
+        "extensions": [".png"],
+        "roi_params": {
+            "suffix": null,
+            "slice_filter_roi": null
+        },
+        "contrast_params": {
+            "training_validation": ["SEM"],
+            "testing": ["SEM"],
+            "balance": {}
+        },
+        "slice_filter_params": {
+            "filter_empty_mask": false,
+            "filter_empty_input": true
+        },
+        "patch_filter_params": {
+            "filter_empty_mask": false,
+            "filter_empty_input": false
+        },
+        "slice_axis": "axial",
+        "multichannel": false,
+        "soft_gt": false
+    },
+    "split_dataset": {
+        "fname_split": null,
+        "random_seed": 6,
+        "split_method" : "sample_id",
+        "data_testing": {"data_type": null, "data_value":[]},
+        "balance": null,
+        "train_fraction": 0.6,
+        "test_fraction": 0.1
+    },
+    "training_parameters": {
+        "batch_size": 4,
+        "loss": {
+            "name": "DiceLoss"
+        },
+        "training_time": {
+            "num_epochs": 200,
+            "early_stopping_patience": 50,
+            "early_stopping_epsilon": 0.001
+        },
+        "scheduler": {
+            "initial_lr": 0.005,
+            "lr_scheduler": {
+                "name": "CosineAnnealingLR"
+            }
+        },
+        "balance_samples": {
+            "applied": false,
+            "type": "gt"
+        },
+        "mixup_alpha": null,
+        "transfer_learning": {
+            "retrain_model": null,
+            "retrain_fraction": 1.0,
+            "reset": true
+        }
+    },
+    "default_model": {
+        "name": "Unet",
+        "dropout_rate": 0.2,
+        "bn_momentum": 0.1,
+        "depth": 4,
+        "is_2d": true,
+        "final_activation": "sigmoid",
+        "length_2D": [256, 256],
+        "stride_2D": [244, 244]
+    },
+    "postprocessing": {
+        "binarize_maxpooling": {}
+    },
+    "evaluation_parameters": {
+        "object_detection_metrics": false
+    },
+    "transformation": {
+        "Resample":
+        {
+            "hspace": 0.0001,
+            "wspace": 0.0001
+        },
+        "RandomAffine": {
+            "degrees": 2.5,
+            "scale": [0.05, 0.05],
+            "translate": [0.015, 0.015],
+            "applied_to": ["im", "gt"],
+            "dataset_type": ["training"]
+        },
+        "ElasticTransform": {
+            "alpha_range": [100.0, 150.0],
+            "sigma_range": [4.0, 5.0],
+            "p": 0.5,
+            "applied_to": ["im", "gt"],
+            "dataset_type": ["training"]
+        },
+      "NormalizeInstance": {"applied_to": ["im"]}
+    }
+}
