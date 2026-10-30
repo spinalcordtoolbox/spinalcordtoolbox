@@ -2,7 +2,8 @@
 # originally `ivadomed/keywords.py`, licensed under the MIT License.
 # See the LICENSE.md file in this directory for the full license text.
 #
-# Modifications for SCT: none.
+# Modifications for SCT:
+#   - Fixed flake8 warnings, without changing behavior.
 
 from dataclasses import dataclass
 
@@ -256,15 +257,18 @@ class MetricsKW:
     RECALL_SPECIFICITY: str = "recall_specificity"
     DICE: str = "dice"
 
+
 @dataclass
 class MetadataParamsKW:
     CONTRAST = "contrast"
     BOUNDING_BOX = "bounding_box"
 
+
 @dataclass
 class MetadataChoiceKW:
     MRI_PARAMS = "mri_params"
     CONTRASTS = "contrasts"
+
 
 @dataclass
 class SegmentationDatasetKW:
@@ -275,6 +279,7 @@ class SegmentationDatasetKW:
     Z_MIN: str = 'z_min'
     Z_MAX: str = 'z_max'
     HANDLER_INDEX: str = 'handler_index'
+
 
 @dataclass
 class SegmentationPairKW:
