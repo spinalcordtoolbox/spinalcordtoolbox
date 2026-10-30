@@ -4,6 +4,8 @@
 #
 # Modifications for SCT:
 #   - Fixed flake8 warnings, without changing behavior.
+#   - `torch.load` is replaced by `pickle_compat.torch_load`, so that ivadomed-pickled `.pt` models load with the vendored
+#     classes.
 
 from collections import OrderedDict
 import torch
@@ -13,6 +15,8 @@ from torch.nn import Module
 from torch.nn import init
 from pathlib import Path
 import torchvision.models
+
+from spinalcordtoolbox.ivadomed.pickle_compat import torch_load
 
 
 # Modified from torchvision.models.resnet.Resnet
@@ -1466,7 +1470,7 @@ def set_model_for_retrain(model_path, retrain_fraction, map_location, reset=True
         torch.Module: Model ready for retrain.
     """
     # Load pretrained model
-    model = torch.load(model_path, map_location=map_location)
+    model = torch_load(model_path, map_location=map_location)
     # Get number of layers with learnt parameters
     layer_names = [name for name, layer in model.named_modules() if hasattr(layer, 'reset_parameters')]
     n_layers = len(layer_names)
