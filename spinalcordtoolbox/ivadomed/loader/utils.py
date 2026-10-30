@@ -4,6 +4,7 @@
 #
 # Modifications for SCT:
 #   - Removed training and dataset-splitting helpers that SCT doesn't use.
+#   - Fixed flake8 warnings, without changing behavior.
 
 from __future__ import annotations
 import collections.abc
@@ -181,7 +182,7 @@ def update_metadata(metadata_src_lst: list, metadata_dest_lst: list) -> list:
     return metadata_dest_lst
 
 
-def reorient_image(arr: np.ndarray, slice_axis: int, nib_ref: nib, nib_ref_canonical: nib) -> nd.ndarray:
+def reorient_image(arr: np.ndarray, slice_axis: int, nib_ref: nib, nib_ref_canonical: nib) -> np.ndarray:
     """Reorient an image to match a reference image orientation.
 
     It reorients a array to a given orientation and convert it to a nibabel object using the
@@ -220,9 +221,9 @@ def get_file_extension(filename: str) -> Optional[str]:
 
 
 def update_filename_to_nifti(filename: str) -> str:
-    """ 
+    """
     Update filename extension to 'nii.gz' if not a NifTI file.
-    
+
     This function is used to help make non-NifTI files (e.g. PNG/TIF/JPG)
     compatible with NifTI-only pipelines. The expectation is that a NifTI
     version of the file has been created alongside the original file, which
@@ -235,7 +236,7 @@ def update_filename_to_nifti(filename: str) -> str:
         str: Path of the corresponding NifTI file.
     """
     extension = get_file_extension(filename)
-    if not "nii" in extension:
+    if "nii" not in extension:
         filename = filename.replace(extension, ".nii.gz")
     return filename
 
@@ -292,6 +293,7 @@ def create_temp_directory() -> str:
     time_stamp = datetime.datetime.now().isoformat().replace(":", "")
     temp_folder_location = mkdtemp(prefix="ivadomed_", suffix=f"_{time_stamp}")
     return temp_folder_location
+
 
 def get_obj_size(obj) -> int:
     """

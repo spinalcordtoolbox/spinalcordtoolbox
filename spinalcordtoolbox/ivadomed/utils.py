@@ -4,6 +4,8 @@
 #
 # Modifications for SCT:
 #   - Removed training and CLI helpers that SCT doesn't use.
+#   - Fixed flake8 warnings, without changing behavior. This includes using a raw string for the `'[\s]+'` regex, since
+#     invalid escape sequences raise a `SyntaxWarning` on Python 3.12+.
 
 import os
 import subprocess
@@ -248,14 +250,14 @@ def get_mac_system_memory() -> float:
 
     # Iterate processes
     processLines = ps.split('\n')
-    sep = re.compile('[\s]+')
+    sep = re.compile(r'[\s]+')
     rssTotal = 0  # kB
     for row in range(1, len(processLines)):
         rowText = processLines[row].strip()
         rowElements = sep.split(rowText)
         try:
             rss = float(rowElements[0]) * 1024
-        except:
+        except Exception:
             rss = 0  # ignore...
         rssTotal += rss
 

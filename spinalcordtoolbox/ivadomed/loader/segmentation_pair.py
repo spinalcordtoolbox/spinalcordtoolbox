@@ -2,7 +2,8 @@
 # originally `ivadomed/loader/segmentation_pair.py`, licensed under the MIT License.
 # See the LICENSE.md file in this directory for the full license text.
 #
-# Modifications for SCT: none.
+# Modifications for SCT:
+#   - Fixed flake8 warnings, without changing behavior.
 
 from __future__ import annotations
 from pathlib import Path
@@ -321,16 +322,16 @@ class SegmentationPair(object):
         """
         # For '.png', '.tif', '.tiff', '.jpg' and 'jpeg' extentions
         # Read image as 8 bit grayscale in numpy array (behavior TBD in ivadomed for RGB, RBGA or higher bit depth)
-        try: 
-            props = imageio.v3.improps(filename) # new in v3 - standardized metadata
+        try:
+            imageio.v3.improps(filename)  # new in v3 - standardized metadata
             _img = imageio.v3.imread(filename)
-        except:
-            # brute force fall back to support backward compatibility 
+        except Exception:
+            # brute force fall back to support backward compatibility
             if '.tif' in extension:
                 img = np.expand_dims(
                     imageio.v3.imread(filename, plugin='TIFF-PIL'),
                     axis=-1).astype(np.unint8)
-                
+
                 if len(img.shape) > 3:
                     img = np.expand_dims(
                         imageio.v3.imread(filename, plugin='TIFF-PIL', as_gray=True),
@@ -341,14 +342,14 @@ class SegmentationPair(object):
                 # 1. _img = imageio.v3.imread(filename, plugin='PNG-PIL', as_gray=True)
                 # 2. _img = imageio.v3.imread(filename, plugin='PNG-PIL', pilmode='F')
                 # 3. _img = imageio.v3.imread(filename, plugin='pillow', pilmode='F')
-                
+
                 img = np.expand_dims(
                     imageio.v3.imread(filename, plugin='PNG-PIL', as_gray=True),
                     axis=-1).astype(np.unint8)
         else:
-            # c.f for more details: https://github.com/ivadomed/ivadomed/pull/1297#discussion_r1267563980 and 
-            # https://github.com/ivadomed/ivadomed/pull/1297#discussion_r1267563980 
-            
+            # c.f for more details: https://github.com/ivadomed/ivadomed/pull/1297#discussion_r1267563980 and
+            # https://github.com/ivadomed/ivadomed/pull/1297#discussion_r1267563980
+
             # TIFF is a "wild" format. A few assumptions greatly simplify the code below:
             # 1. the image is interleaved/channel-last (not planar)
             # 2. the colorspace is one of: binary, gray, RGB, RGBA (not aliasing ones like YUV or CMYK)
@@ -391,7 +392,6 @@ class SegmentationPair(object):
             nib.save(img, fname_out)
 
         return img
-
 
     def get_microscopy_pixelsize(self, filename: str) -> tuple:
         """

@@ -2,11 +2,12 @@
 # originally `ivadomed/config_manager.py`, licensed under the MIT License.
 # See the LICENSE.md file in this directory for the full license text.
 #
-# Modifications for SCT: none.
+# Modifications for SCT:
+#   - Fixed flake8 warnings, without changing behavior.
 
 import json
 import collections.abc
-from typing import Dict, List, Any, KeysView, Union
+from typing import Dict, List, Any, Union
 
 from loguru import logger
 from pathlib import Path
