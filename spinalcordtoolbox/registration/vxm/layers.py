@@ -1,3 +1,9 @@
+# This file is vendored from VoxelMorph 0.2 (https://github.com/voxelmorph/voxelmorph),
+# originally `voxelmorph/torch/layers.py`, licensed under the Apache License, Version 2.0.
+# See the LICENSE.md file in this directory for the full license text.
+#
+# Modifications for SCT: none.
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as nnf
