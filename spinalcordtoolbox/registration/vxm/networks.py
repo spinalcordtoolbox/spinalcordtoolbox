@@ -6,11 +6,11 @@
 #   - `VxmDense` subclasses `nn.Module` instead of `LoadableModel` and is no longer decorated with `store_config_args`
 #     (both removed along with `modelio.py`), since SCT never uses `.save()`, `.load()`, or `.config`. This removes the
 #     use of `inspect.getargspec`, which does not exist in Python 3.11+.
+#   - Removed the unused `torch.nn.functional` import and trailing whitespace in docstrings (flake8).
 
 import numpy as np
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from torch.distributions.normal import Normal
 
 from .. import default_unet_features
@@ -41,12 +41,12 @@ class Unet(nn.Module):
             inshape: Input shape. e.g. (192, 192, 192)
             infeats: Number of input features.
             nb_features: Unet convolutional features. Can be specified via a list of lists with
-                the form [[encoder feats], [decoder feats]], or as a single integer. 
-                If None (default), the unet features are defined by the default config described in 
+                the form [[encoder feats], [decoder feats]], or as a single integer.
+                If None (default), the unet features are defined by the default config described in
                 the class documentation.
-            nb_levels: Number of levels in unet. Only used when nb_features is an integer. 
+            nb_levels: Number of levels in unet. Only used when nb_features is an integer.
                 Default is None.
-            feat_mult: Per-level feature multiplier. Only used when nb_features is an integer. 
+            feat_mult: Per-level feature multiplier. Only used when nb_features is an integer.
                 Default is 1.
             nb_conv_per_level: Number of convolutions per unet level. Default is 1.
             half_res: Skip the last decoder upsampling. Default is False.
@@ -170,27 +170,27 @@ class VxmDense(nn.Module):
                  src_feats=1,
                  trg_feats=1,
                  unet_half_res=False):
-        """ 
+        """
         Parameters:
             inshape: Input shape. e.g. (192, 192, 192)
             nb_unet_features: Unet convolutional features. Can be specified via a list of lists with
-                the form [[encoder feats], [decoder feats]], or as a single integer. 
-                If None (default), the unet features are defined by the default config described in 
+                the form [[encoder feats], [decoder feats]], or as a single integer.
+                If None (default), the unet features are defined by the default config described in
                 the unet class documentation.
-            nb_unet_levels: Number of levels in unet. Only used when nb_features is an integer. 
+            nb_unet_levels: Number of levels in unet. Only used when nb_features is an integer.
                 Default is None.
-            unet_feat_mult: Per-level feature multiplier. Only used when nb_features is an integer. 
+            unet_feat_mult: Per-level feature multiplier. Only used when nb_features is an integer.
                 Default is 1.
             nb_unet_conv_per_level: Number of convolutions per unet level. Default is 1.
-            int_steps: Number of flow integration steps. The warp is non-diffeomorphic when this 
+            int_steps: Number of flow integration steps. The warp is non-diffeomorphic when this
                 value is 0.
-            int_downsize: Integer specifying the flow downsample factor for vector integration. 
+            int_downsize: Integer specifying the flow downsample factor for vector integration.
                 The flow field is not downsampled when this value is 1.
             bidir: Enable bidirectional cost function. Default is False.
             use_probs: Use probabilities in flow field. Default is False.
             src_feats: Number of source image features. Default is 1.
             trg_feats: Number of target image features. Default is 1.
-            unet_half_res: Skip the last unet decoder upsampling. Requires that int_downsize=2. 
+            unet_half_res: Skip the last unet decoder upsampling. Requires that int_downsize=2.
                 Default is False.
         """
         super().__init__()
