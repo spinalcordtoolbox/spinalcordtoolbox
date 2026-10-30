@@ -1,3 +1,10 @@
+# This file is vendored from ivadomed 2.9.10 (https://github.com/ivadomed/ivadomed),
+# originally `ivadomed/loader/utils.py`, licensed under the MIT License.
+# See the LICENSE.md file in this directory for the full license text.
+#
+# Modifications for SCT:
+#   - Removed training and dataset-splitting helpers that SCT doesn't use.
+
 from __future__ import annotations
 import collections.abc
 import re

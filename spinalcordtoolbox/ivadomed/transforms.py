@@ -1,3 +1,10 @@
+# This file is vendored from ivadomed 2.9.10 (https://github.com/ivadomed/ivadomed),
+# originally `ivadomed/transforms.py`, licensed under the MIT License.
+# See the LICENSE.md file in this directory for the full license text.
+#
+# Modifications for SCT:
+#   - Removed `RandomBiasField`, a training-only transform that needs `torchio`.
+
 import copy
 import functools
 import math

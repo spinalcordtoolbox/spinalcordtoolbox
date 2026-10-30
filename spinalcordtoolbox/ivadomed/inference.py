@@ -1,3 +1,11 @@
+# This file is vendored from ivadomed 2.9.10 (https://github.com/ivadomed/ivadomed),
+# originally `ivadomed/inference.py`, licensed under the MIT License.
+# See the LICENSE.md file in this directory for the full license text.
+#
+# Modifications for SCT:
+#   - Removed FiLMedUnet/HeMISUnet support, which needs ivadomed's training code. Model configs that enable either one now
+#     raise `NotImplementedError`.
+
 import nibabel as nib
 import numpy as np
 import onnxruntime
