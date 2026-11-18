@@ -72,7 +72,7 @@ def detect(img, pad_superior, pad_inferior, pad_left, pad_right, pad_anterior, p
     # Axial slices from superior to inferior, row 0 = Anterior, column 0 = patient Right, 3 identical channels
     slices = list(np.repeat(data.transpose(2, 1, 0)[::-1, ::-1, :, None], 3, axis=-1))
     results = YOLO(get_model_path(), task="detect").predict(source=slices, imgsz=IMAGE_SIZE, conf=conf,
-                                                             batch=len(slices), verbose=False)
+                                                            batch=len(slices), verbose=False)
     # Most confident box of the structure on each slice: (slice index, (x1, y1, x2, y2) in pixels)
     detected = []
     for i, r in enumerate(results):
