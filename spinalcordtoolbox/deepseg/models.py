@@ -22,6 +22,7 @@ from spinalcordtoolbox.utils.sys import stylize, __deepseg_dir__, LazyLoader
 
 tss_init = LazyLoader("tss_init", globals(), 'totalspineseg.init_inference')
 auglab_add_trainer = LazyLoader("auglab_add_trainer", globals(), 'auglab.add_trainer')
+sc_crop = LazyLoader("sc_crop", globals(), 'spinalcordtoolbox.deepseg.crop')
 
 logger = logging.getLogger(__name__)
 
@@ -889,6 +890,11 @@ def install_model(name_model, custom_url=None):
     }
     with open(os.path.join(folder(name_model), "source.json"), "w") as fp:
         json.dump(source_dict, fp, indent=4)
+    # Models trained on sc-crop images need the crop detector at inference time. Install it here so that it gets
+    # baked into images where the data dir is read-only at runtime (e.g. Docker/Apptainer).
+    # get_model_path() downloads the detector if it's missing; we call it for that side effect.
+    if is_cropped_model(name_model):
+        sc_crop.get_model_path()
 
 
 def install_default_models():
