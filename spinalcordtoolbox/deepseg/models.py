@@ -719,11 +719,25 @@ def _read_source_json(path_model):
         return json.load(fp)
 
 
+def is_cropped_model(name_model):
+    """
+    Return True if the model was trained on images cropped by sc-crop.
+
+    Such a model needs the sc-crop detector at inference time. Models without a `cropped_image`
+    entry in `MODELS` (and unknown models) are not cropped.
+    """
+    if name_model not in MODELS:
+        return False
+    if 'cropped_image' not in MODELS[name_model]:
+        return False
+    return MODELS[name_model]['cropped_image']
+
+
 def load_crop_metadata(name_model, path_model):
     """
     Determine an installed model's sc-crop padding, if it uses the sc-crop pipeline at all.
 
-    `MODELS[name_model]['cropped_image']` says whether this model is *expected* to use
+    `is_cropped_model(name_model)` says whether this model is *expected* to use
     sc-crop -- used before the model is even installed (e.g. to decide whether to expose
     `-box-*` at all). The actual decision, and the padding, come from whether a
     `crop_metadata.json` file is present at the root of the model's release .zip -- so both
@@ -751,7 +765,7 @@ def load_crop_metadata(name_model, path_model):
         `{}` if this model doesn't use the sc-crop pipeline. Callers should treat a non-empty
         return as "sc-crop is active" (i.e. use `bool(load_crop_metadata(...))`).
     """
-    if not MODELS.get(name_model, {}).get('cropped_image', False):
+    if not is_cropped_model(name_model):
         return {}
 
     path_json = os.path.join(path_model, "crop_metadata.json")

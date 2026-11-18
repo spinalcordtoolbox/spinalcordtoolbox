@@ -334,10 +334,8 @@ def get_parser(subparser_to_return=None):
                 help="If set, only 1 fold will be used for inference instead of the full 5-fold ensemble. This will speed up inference, but may reduce segmentation quality."
             )
 
-        # -box-* lets the user override specific crop box face positions (voxel indices), for
-        # tasks whose model has "cropped_image": True (see models.load_crop_metadata()).
-        task_has_crop = any(models.MODELS[m].get('cropped_image') for m in task_dict['models'])
-        if task_has_crop:
+        # -box-* lets the user override specific crop box face positions (voxel indices)
+        if any(models.is_cropped_model(m) for m in task_dict['models']):
             crop_group = subparser.add_argument_group('\nSC-CROP box override')
             for key in ('xmin', 'xmax', 'ymin', 'ymax', 'zmin', 'zmax'):
                 crop_group.add_argument(
