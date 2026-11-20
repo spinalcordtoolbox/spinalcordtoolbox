@@ -22,6 +22,7 @@ from spinalcordtoolbox.utils.sys import stylize, __deepseg_dir__, LazyLoader
 
 tss_init = LazyLoader("tss_init", globals(), 'totalspineseg.init_inference')
 auglab_add_trainer = LazyLoader("auglab_add_trainer", globals(), 'auglab.add_trainer')
+sc_crop = LazyLoader("sc_crop", globals(), 'spinalcordtoolbox.deepseg.crop')
 
 logger = logging.getLogger(__name__)
 
@@ -719,11 +720,25 @@ def _read_source_json(path_model):
         return json.load(fp)
 
 
+def is_cropped_model(name_model):
+    """
+    Return True if the model was trained on images cropped by sc-crop.
+
+    Such a model needs the sc-crop detector at inference time. Models without a `cropped_image`
+    entry in `MODELS` (and unknown models) are not cropped.
+    """
+    if name_model not in MODELS:
+        return False
+    if 'cropped_image' not in MODELS[name_model]:
+        return False
+    return MODELS[name_model]['cropped_image']
+
+
 def load_crop_metadata(name_model, path_model):
     """
     Determine an installed model's sc-crop padding, if it uses the sc-crop pipeline at all.
 
-    `MODELS[name_model]['cropped_image']` says whether this model is *expected* to use
+    `is_cropped_model(name_model)` says whether this model is *expected* to use
     sc-crop -- used before the model is even installed (e.g. to decide whether to expose
     `-box-*` at all). The actual decision, and the padding, come from whether a
     `crop_metadata.json` file is present at the root of the model's release .zip -- so both
@@ -751,7 +766,7 @@ def load_crop_metadata(name_model, path_model):
         `{}` if this model doesn't use the sc-crop pipeline. Callers should treat a non-empty
         return as "sc-crop is active" (i.e. use `bool(load_crop_metadata(...))`).
     """
-    if not MODELS.get(name_model, {}).get('cropped_image', False):
+    if not is_cropped_model(name_model):
         return {}
 
     path_json = os.path.join(path_model, "crop_metadata.json")
@@ -776,7 +791,11 @@ def load_crop_metadata(name_model, path_model):
             f"key(s) {missing_keys} -- all of {list(CROP_PAD_KEYS)} must be specified "
             f"explicitly, so cropping doesn't silently depend on sc_crop's own defaults."
         )
-    return {key: crop_metadata[key] for key in CROP_PAD_KEYS}
+    crop_kwargs = {key: crop_metadata[key] for key in CROP_PAD_KEYS}
+    # Optional: structure to crop around ("sc" or "canal"), sc_crop.detect() defaults to "sc" if not given
+    if 'structure' in crop_metadata:
+        crop_kwargs['structure'] = crop_metadata['structure']
+    return crop_kwargs
 
 
 def is_list_of_urls(url_field):
@@ -871,6 +890,11 @@ def install_model(name_model, custom_url=None):
     }
     with open(os.path.join(folder(name_model), "source.json"), "w") as fp:
         json.dump(source_dict, fp, indent=4)
+    # Models trained on sc-crop images need the crop detector at inference time. Install it here so that it gets
+    # baked into images where the data dir is read-only at runtime (e.g. Docker/Apptainer).
+    # get_model_path() downloads the detector if it's missing; we call it for that side effect.
+    if is_cropped_model(name_model):
+        sc_crop.get_model_path()
 
 
 def install_default_models():
