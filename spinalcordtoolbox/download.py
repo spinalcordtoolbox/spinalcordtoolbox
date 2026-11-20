@@ -50,7 +50,7 @@ DATASET_DICT = {
     },
     "manual-correction": {
         "mirrors": [
-            "https://github.com/spinalcordtoolbox/manual-correction/archive/refs/tags/r20260113.zip",
+            "https://github.com/spinalcordtoolbox/manual-correction/archive/refs/tags/r20261119.zip",
         ],
         "default_location": os.path.join(__sct_dir__, "data", "manual-correction"),
         "download_type": "SCT Course Files",
