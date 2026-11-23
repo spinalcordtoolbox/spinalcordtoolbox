@@ -11,6 +11,7 @@ os.environ['nnUNet_results'] = "./nnUNet_results"
 
 from batchgenerators.utilities.file_and_folder_operations import join  # noqa: E402
 from nnunetv2.inference.predict_from_raw_data import nnUNetPredictor   # noqa: E402
+from nnunetv2.training.nnUNetTrainer.nnUNetTrainer import nnUNetTrainer  # noqa: E402
 import importlib   # noqa: E402
 
 if TYPE_CHECKING:
@@ -64,7 +65,11 @@ def create_nnunet_from_plans(path_model, device: 'torch.device', single_fold: bo
     )
     print(f'Running inference on device: {predictor.device}')
 
-    trainer_class = load_trainer_class_if_available(path_model)
+    if os.path.basename(os.path.dirname(path_model)) == 'model_seg_canal':
+        # Temporary demonstration until the canal model ships an inference-only trainer.
+        trainer_class = nnUNetTrainer
+    else:
+        trainer_class = load_trainer_class_if_available(path_model)
 
     # initializes the network architecture, loads the checkpoint
     predictor.initialize_from_trained_model_folder(
