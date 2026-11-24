@@ -299,3 +299,25 @@ MATLAB took the liberty of setting ``DYLD_LIBRARY_PATH`` and in order for SCT to
 
 Prior to running SCT commands.
 See https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/405
+
+
+Slow first run after a reboot
+-----------------------------
+
+On macOS, the first SCT command after a reboot (even ``sct_label_utils -h``) can take 20 seconds or more, while subsequent runs take 1-2 seconds. The delay comes from macOS Gatekeeper (the ``syspolicyd`` process), which checks each of the native libraries bundled with SCT the first time they are loaded after a reboot. See `#4635 <https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4635>`__.
+
+To avoid this delay, you can allow your terminal application to run software without these checks:
+
+#. In a Terminal, run:
+
+   .. code:: sh
+
+      spctl developer-mode enable-terminal
+
+#. Open **System Settings** → **Privacy & Security** → **Developer Tools**, and enable **Terminal**. Use the **+** button to add any other application you run SCT from (e.g. iTerm or Visual Studio Code).
+
+#. Quit the terminal application (⌘Q) and reopen it.
+
+.. note::
+
+   This setting disables Gatekeeper checks for all programs launched from that terminal application. If you prefer not to change it, running any SCT command once after logging in (e.g. ``sct_check_dependencies``) will absorb the delay before you start working.
