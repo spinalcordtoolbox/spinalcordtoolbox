@@ -8,11 +8,11 @@ percentiles of the volume), then cut grayscale axial slices (row 0 = Anterior, c
 
 The bbox dict returned by `detect()` contains xmin, xmax, ymin, ymax, zmin, zmax (inclusive voxel indices of the
 original image) and `_original_img` (used by `uncrop()`).
-
-Author: Pierre-Louis Benveniste
 """
 
 import itertools
+import json
+import logging
 import os
 import shutil
 
@@ -24,8 +24,12 @@ from nibabel.processing import resample_from_to
 from spinalcordtoolbox import download
 from spinalcordtoolbox.utils.sys import __deepseg_dir__
 
+logger = logging.getLogger(__name__)
+
+MODEL_NAME = "model_sc_crop"
 MODEL_URL = "https://github.com/ivadomed/sc-crop/releases/download/r20261113/model_detect_canal_sc.pt"
 MODEL_PATH = os.path.join(__deepseg_dir__, "model_detect_canal_sc_r20261113", "model_detect_canal_sc.pt")
+MODEL_CLASSES = {0: "spinal_cord", 1: "canal"}  # Class names stored in the YOLO model
 # For each structure: (class index in the YOLO model, confidence threshold chosen on the validation set, name)
 STRUCTURES = {"sc": (0, 0.26, "spinal cord"), "canal": (1, 0.29, "spinal canal")}
 VOXEL_SIZE = np.array([1.0, 1.0, 1.0])  # LAS (RL, AP, SI), in mm
@@ -33,12 +37,30 @@ IMAGE_SIZE = 320
 
 
 def get_model_path():
-    """Return the path to the YOLO detector, downloading it if needed."""
+    """
+    Return the path to the YOLO detector, (re)installing it if it is missing or if it was downloaded from another URL
+    than MODEL_URL. Like for the other deepseg models (see `models.is_up_to_date()`), the URL used is recorded in a
+    `source.json` file next to the model.
+    """
+    path_source = os.path.join(os.path.dirname(MODEL_PATH), "source.json")
     if not os.path.isfile(MODEL_PATH):
-        path_tmp, _ = download.download_data(MODEL_URL)
-        os.makedirs(os.path.dirname(MODEL_PATH), exist_ok=True)
-        shutil.move(path_tmp, MODEL_PATH)
-        shutil.rmtree(os.path.dirname(path_tmp), ignore_errors=True)
+        logger.info(f"Model {MODEL_NAME} is not installed. Installing it now...")
+    else:
+        model_urls = []
+        if os.path.isfile(path_source):
+            with open(path_source) as fp:
+                model_urls = json.load(fp).get("model_urls", [])
+        if MODEL_URL in model_urls:
+            logger.info(f"Model '{MODEL_NAME}' is up to date (Source: {model_urls})")
+            return MODEL_PATH
+        logger.info(f"Model {MODEL_NAME} is out of date. Re-installing it now...")
+    logger.info(f"\nINSTALLING MODEL: {MODEL_NAME}")
+    path_tmp, url_used = download.download_data([MODEL_URL])
+    os.makedirs(os.path.dirname(MODEL_PATH), exist_ok=True)
+    shutil.move(path_tmp, MODEL_PATH)
+    shutil.rmtree(os.path.dirname(path_tmp), ignore_errors=True)
+    with open(path_source, "w") as fp:
+        json.dump({"model_name": MODEL_NAME, "model_urls": [url_used]}, fp, indent=4)
     return MODEL_PATH
 
 
@@ -65,20 +87,28 @@ def detect(img, pad_superior, pad_inferior, pad_left, pad_right, pad_anterior, p
     """
     from ultralytics import YOLO
     cls, conf, name = STRUCTURES[structure]
+    logger.debug(f"sc-crop: detecting the {name} (padding in mm: superior {pad_superior}, inferior {pad_inferior}, "
+                f"left {pad_left}, right {pad_right}, anterior {pad_anterior}, posterior {pad_posterior})")
+
+    model = YOLO(get_model_path(), task="detect")
+    if model.names != MODEL_CLASSES:
+        raise RuntimeError(f"Model {MODEL_NAME} has unexpected classes {model.names}, expected {MODEL_CLASSES}.")
 
     resampled = resample_image(img)
     data = np.asarray(resampled.dataobj)
     n_x, n_y, n_z = data.shape
+    logger.debug(f"sc-crop: image of shape {img.shape} resampled to {data.shape} (LAS, {VOXEL_SIZE.tolist()} mm), "
+                f"{n_z} axial slices")
     # Axial slices from superior to inferior, row 0 = Anterior, column 0 = patient Right, 3 identical channels
     slices = list(np.repeat(data.transpose(2, 1, 0)[::-1, ::-1, :, None], 3, axis=-1))
-    results = YOLO(get_model_path(), task="detect").predict(source=slices, imgsz=IMAGE_SIZE, conf=conf,
-                                                            batch=len(slices), verbose=False)
+    results = model.predict(source=slices, imgsz=IMAGE_SIZE, conf=conf, batch=len(slices), verbose=False)
     # Most confident box of the structure on each slice: (slice index, (x1, y1, x2, y2) in pixels)
     detected = []
     for i, r in enumerate(results):
         boxes = r.boxes[r.boxes.cls == cls]
         if len(boxes):
             detected.append((i, boxes.xyxy[boxes.conf.argmax()].tolist()))
+    logger.debug(f"sc-crop: {name} detected on {len(detected)}/{n_z} slices (confidence >= {conf})")
     if not detected:
         raise RuntimeError(f"No {name} detected: the image could not be cropped.")
 
@@ -97,6 +127,8 @@ def detect(img, pad_superior, pad_inferior, pad_left, pad_right, pad_anterior, p
     shape = np.array(img.shape[:3])
     start = np.clip(np.ceil(voxels.min(axis=0) - 1e-3), 0, shape - 1).astype(int).tolist()
     stop = np.clip(np.floor(voxels.max(axis=0) + 1e-3), 0, shape - 1).astype(int).tolist()
+    logger.debug(f"sc-crop: detected box (voxels, inclusive): x {start[0]}-{stop[0]}, y {start[1]}-{stop[1]}, "
+                f"z {start[2]}-{stop[2]}")
     return {"xmin": start[0], "xmax": stop[0], "ymin": start[1], "ymax": stop[1], "zmin": start[2], "zmax": stop[2],
             "_original_img": img}
 
