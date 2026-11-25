@@ -3,7 +3,7 @@ sc-crop: crop an image around the spinal cord (or the spinal canal) before deep 
 
 The structure is detected on each axial slice by a YOLO model (https://github.com/ivadomed/sc-crop). The
 preprocessing must match the one used to build the training slices (`training/data/build_yolo_dataset.py`):
-average 4D images over time, reorient to LAS, resample to 1 x 1 x 10 mm, normalize to uint8 (0.5-99.5
+average 4D images over time, reorient to LAS, resample to 1 x 1 x 1 mm, normalize to uint8 (0.5-99.5
 percentiles of the volume), then cut grayscale axial slices (row 0 = Anterior, column 0 = patient Right).
 
 The bbox dict returned by `detect()` contains xmin, xmax, ymin, ymax, zmin, zmax (inclusive voxel indices of the
