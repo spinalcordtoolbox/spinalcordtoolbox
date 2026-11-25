@@ -383,8 +383,8 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device, ensemble=F
         img_cropped = sc_crop.crop(img_nii, bbox)
         nib.save(img_cropped, path_img_tmp)
         logger.debug(f'sc-crop: final box (voxels, inclusive): x {bbox["xmin"]}-{bbox["xmax"]}, '
-                    f'y {bbox["ymin"]}-{bbox["ymax"]}, z {bbox["zmin"]}-{bbox["zmax"]}. Image cropped from '
-                    f'{img_nii.shape[:3]} to {img_cropped.shape[:3]}. Crop box saved to {fname_cropbox}')
+                     f'y {bbox["ymin"]}-{bbox["ymax"]}, z {bbox["zmin"]}-{bbox["zmax"]}. Image cropped from '
+                     f'{img_nii.shape[:3]} to {img_cropped.shape[:3]}. Crop box saved to {fname_cropbox}')
         print(f'Cropping done in {time.time() - start_crop:.1f} seconds.')
 
     # Get the original orientation of the image, for example LPI

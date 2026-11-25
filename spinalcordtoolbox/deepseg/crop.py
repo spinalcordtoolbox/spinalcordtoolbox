@@ -88,7 +88,7 @@ def detect(img, pad_superior, pad_inferior, pad_left, pad_right, pad_anterior, p
     from ultralytics import YOLO
     cls, conf, name = STRUCTURES[structure]
     logger.debug(f"sc-crop: detecting the {name} (padding in mm: superior {pad_superior}, inferior {pad_inferior}, "
-                f"left {pad_left}, right {pad_right}, anterior {pad_anterior}, posterior {pad_posterior})")
+                 f"left {pad_left}, right {pad_right}, anterior {pad_anterior}, posterior {pad_posterior})")
 
     model = YOLO(get_model_path(), task="detect")
     if model.names != MODEL_CLASSES:
@@ -98,7 +98,7 @@ def detect(img, pad_superior, pad_inferior, pad_left, pad_right, pad_anterior, p
     data = np.asarray(resampled.dataobj)
     n_x, n_y, n_z = data.shape
     logger.debug(f"sc-crop: image of shape {img.shape} resampled to {data.shape} (LAS, {VOXEL_SIZE.tolist()} mm), "
-                f"{n_z} axial slices")
+                 f"{n_z} axial slices")
     # Axial slices from superior to inferior, row 0 = Anterior, column 0 = patient Right, 3 identical channels
     slices = list(np.repeat(data.transpose(2, 1, 0)[::-1, ::-1, :, None], 3, axis=-1))
     results = model.predict(source=slices, imgsz=IMAGE_SIZE, conf=conf, batch=len(slices), verbose=False)
@@ -128,7 +128,7 @@ def detect(img, pad_superior, pad_inferior, pad_left, pad_right, pad_anterior, p
     start = np.clip(np.ceil(voxels.min(axis=0) - 1e-3), 0, shape - 1).astype(int).tolist()
     stop = np.clip(np.floor(voxels.max(axis=0) + 1e-3), 0, shape - 1).astype(int).tolist()
     logger.debug(f"sc-crop: detected box (voxels, inclusive): x {start[0]}-{stop[0]}, y {start[1]}-{stop[1]}, "
-                f"z {start[2]}-{stop[2]}")
+                 f"z {start[2]}-{stop[2]}")
     return {"xmin": start[0], "xmax": stop[0], "ymin": start[1], "ymax": stop[1], "zmin": start[2], "zmax": stop[2],
             "_original_img": img}
 
