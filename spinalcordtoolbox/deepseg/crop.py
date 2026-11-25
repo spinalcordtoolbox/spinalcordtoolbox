@@ -28,7 +28,7 @@ MODEL_URL = "https://github.com/ivadomed/sc-crop/releases/download/r20261113/mod
 MODEL_PATH = os.path.join(__deepseg_dir__, "model_detect_canal_sc_r20261113", "model_detect_canal_sc.pt")
 # For each structure: (class index in the YOLO model, confidence threshold chosen on the validation set, name)
 STRUCTURES = {"sc": (0, 0.26, "spinal cord"), "canal": (1, 0.29, "spinal canal")}
-VOXEL_SIZE = np.array([1.0, 1.0, 10.0])  # LAS (RL, AP, SI), in mm
+VOXEL_SIZE = np.array([1.0, 1.0, 1.0])  # LAS (RL, AP, SI), in mm
 IMAGE_SIZE = 320
 
 
