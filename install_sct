@@ -760,6 +760,12 @@ if [[ "$INSTALL_GPU_TORCH" == "yes" ]]; then
 
     echo "Patching nnunetv2 (for compatibility with torch 1.13.1)"
     patch -p2 -d python/envs/venv_sct/lib/python3.10/site-packages/nnunetv2/ < nnunetv2_remove_optimizedmodule.patch
+
+    # `auglab` (imported by the `trainer_class.py` of some models, e.g. `canal`) imports the private module
+    # `torchvision.transforms._functional_tensor`, which was named `functional_tensor` prior to torchvision 0.15
+    echo "Adding torchvision shim (for compatibility with auglab)"
+    echo "from torchvision.transforms.functional_tensor import *  # shim for torchvision<0.15" \
+      > python/envs/venv_sct/lib/python3.10/site-packages/torchvision/transforms/_functional_tensor.py
   fi
 fi
 
