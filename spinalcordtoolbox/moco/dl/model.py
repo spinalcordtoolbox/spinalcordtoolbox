@@ -72,4 +72,3 @@ class RigidRegistrationNet(nn.Module):
         affine_matrix = params_to_affine_matrix(params)
         warped = warp_with_affine(moving, affine_matrix)
         return warped, affine_matrix
-        
