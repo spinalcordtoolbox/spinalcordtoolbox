@@ -16,9 +16,8 @@ import spinalcordtoolbox as sct
 from spinalcordtoolbox.image import Image, compute_dice, add_suffix, check_image_kind
 from spinalcordtoolbox.utils.sys import sct_test_path, __deepseg_dir__
 import spinalcordtoolbox.deepseg.models
-import spinalcordtoolbox.deepseg.inference
 
-from spinalcordtoolbox.scripts import sct_deepseg, sct_resample
+from spinalcordtoolbox.scripts import sct_deepseg, sct_resample, sct_qc
 
 
 def test_model_dict():
@@ -85,6 +84,12 @@ def cleanup_model_dirs():
      'canal',
      None,
      None),
+    (sct_test_path('t2', 't2.nii.gz'),
+     None,  # no ground truth, just test if it runs
+     'brachial_plexus.nii.gz',
+     'brachial_plexus',
+     0,
+     None),
 ])
 @pytest.mark.usefixtures(cleanup_model_dirs.__name__)
 def test_segment_nifti_binary_seg(fname_image, fname_seg_manual, fname_out, task, thr, expected_dice,
@@ -138,6 +143,11 @@ def test_segment_nifti_binary_seg(fname_image, fname_seg_manual, fname_out, task
                 warnings.warn(
                     f"Test produced label(s) '{unexpected_labels}' in segmentation which were not expected to appear."
                 )
+
+    # Generate secondary (sct_qc) QC report for the segmentation, should be identical to normal `-qc`
+    sct_qc.main(argv=['-i', fname_image, '-s', fname_out,
+                      '-p', 'sct_deepseg', '-deepseg-task', task,
+                      '-qc', tmp_path_qc])
 
 
 @pytest.fixture(scope='session')
@@ -237,6 +247,11 @@ def test_segment_nifti_multiclass(fname_image, fnames_seg_manual, fname_out, suf
             im_seg_manual = Image(fname_seg_manual)
             dice_segmentation = compute_dice(im_seg, im_seg_manual, mode='3d', zboundaries=False)
             assert dice_segmentation > expected_dice
+
+    # Generate secondary (sct_qc) QC report for the segmentation, should be identical to normal `-qc`
+    qc_args = ['-i', fname_image, '-s', fnames_out[0], '-s2', fnames_out[1],
+               '-p', 'sct_deepseg', '-deepseg-task', task, '-qc', tmp_path_qc]
+    sct_qc.main(argv=qc_args)
 
 
 @pytest.mark.parametrize("qc_plane", ["Axial", "Sagittal"])
@@ -411,3 +426,16 @@ def test_deepseg_crop_box_qc_report_entry(tmp_path, tmp_path_qc):
     assert entry['cmdline'] == " ".join(shlex.quote(x) for x in cmdline)
     assert (Path(tmp_path_qc) / entry['backgroundImage']).is_file()
     assert (Path(tmp_path_qc) / entry['overlayImage']).is_file()
+
+
+@pytest.mark.parametrize("task", ["spinalcord", "lesion_ms"])
+def test_deepseg_soft_seg_produces_expected_output(tmp_path, tmp_path_qc, task):
+    """
+    Test that the softseg output is produced when requested.
+    """
+    fname_out = str(tmp_path / "t2_seg_deepseg_sosft_seg.nii.gz")
+    sct_deepseg.main([task, '-i', sct_test_path('t2', 't2.nii.gz'), '-o', fname_out,
+                      '-qc', tmp_path_qc, '-soft-seg'])
+    im_out = Image(fname_out)
+    # Check that the softseg output is a float image (not integer)
+    assert np.issubdtype(im_out.data.dtype, np.floating)

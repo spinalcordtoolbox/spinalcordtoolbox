@@ -74,7 +74,7 @@ jobs:
     # in the meantime, copy-paste this:
     if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-22.04
-    container: debian:sid
+    container: debian:unstable
     steps:
       - name: Dependencies
         run: |  # NB: libgl1-mesa-dev is needed for PyQT testing (https://stackoverflow.com/q/33085297/7584115)
@@ -113,24 +113,19 @@ jobs:
         run: |
           ./.ci.sh -t
 
-  debian-10:
-    name: Debian 10
+  debian-stable:
+    name: Debian Stable
     # TODO: when actions supports using ${{env}} in job.*.if and not just job.*.steps.*.if, use this:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
     if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-22.04
-    container: debian:10
+    container: debian:stable
     steps:
       - name: Dependencies
         # NB: libgl1-mesa-dev is needed for PyQT testing (https://stackoverflow.com/q/33085297/7584115)
-        # NB: We echo "archive.debian.org" to address https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4105
-        run: |  
-          echo "deb http://archive.debian.org/debian/ buster main non-free contrib" > /etc/apt/sources.list
-          echo "deb-src http://archive.debian.org/debian/ buster main non-free contrib" >> /etc/apt/sources.list
-          echo "deb http://archive.debian.org/debian-security/ buster/updates main non-free contrib" >> /etc/apt/sources.list
-          echo "deb-src http://archive.debian.org/debian-security/ buster/updates main non-free contrib" >> /etc/apt/sources.list
-          apt update && apt install -y libglib2.0-0 libgl1-mesa-dev procps gcc git curl libgl1-mesa-dev
+        run: |
+          apt update && apt install -y libglib2.0-0 libgl1-mesa-dev procps gcc git curl
       - uses: actions/checkout@v6
       - name: Install SCT
         run: |
@@ -142,19 +137,19 @@ jobs:
         run: |
           ./.ci.sh -t
 
-  debian-11:
-    name: Debian 11
+  debian-oldstable:
+    name: Debian OldStable
     # TODO: when actions supports using ${{env}} in job.*.if and not just job.*.steps.*.if, use this:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
     if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-22.04
-    container: debian:11
+    container: debian:oldstable
     steps:
       - name: Dependencies
         # NB: libgl1-mesa-dev is needed for PyQT testing (https://stackoverflow.com/q/33085297/7584115)
         # NB: We echo "archive.debian.org" to address https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4105
-        run: |  
+        run: |
           apt update && apt install -y libglib2.0-0 libgl1-mesa-dev procps gcc git curl
       - uses: actions/checkout@v6
       - name: Install SCT
@@ -216,7 +211,7 @@ jobs:
         run: |
           ./.ci.sh -t
 
-  ubuntu-20_04:
+  ubuntu-22_04:
     name: Ubuntu 22.04 (Jammy Jellyfish)
     runs-on: ubuntu-22.04
     steps:
@@ -237,7 +232,7 @@ jobs:
           name: Pytest QC (${{ runner.os }})
           path: "/tmp/pytest-of-runner/pytest-current/qc-report-current"
 
-  ubuntu-22_04:
+  ubuntu-24_04:
     name: Ubuntu 24.04 (Noble Numbat)
     # TODO: when actions supports using ${{env}} in job.*.if and not just job.*.steps.*.if, use this:
     #if: ${{ env.NIGHTLY }}
@@ -259,9 +254,13 @@ jobs:
         run: |
           ./.ci.sh -t
 
-  macos-14:
-    name: macOS 14.0 (Sonoma)
-    runs-on: macos-14
+  ubuntu-26_04:
+    name: Ubuntu 26.04 (Resolute Raccoon)
+    # TODO: when actions supports using ${{env}} in job.*.if and not just job.*.steps.*.if, use this:
+    #if: ${{ env.NIGHTLY }}
+    # in the meantime, copy-paste this:
+    if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-26.04
     steps:
       - name: Dependencies
         run: |
@@ -279,10 +278,6 @@ jobs:
 
   macos-15:
     name: macOS 15.0 (Sequoia)
-    # TODO: when actions supports using ${{env}} in job.*.if and not just job.*.steps.*.if, use this:
-    #if: ${{ env.NIGHTLY }}
-    # in the meantime, copy-paste this:
-    if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
     runs-on: macos-15
     steps:
       - name: Dependencies
@@ -317,6 +312,28 @@ jobs:
      - name: Run pytest test suite
        run: |
          ./.ci.sh -t
+
+  macos-26:
+    name: macOS 26.0 (Tahoe)
+    # TODO: when actions supports using ${{env}} in job.*.if and not just job.*.steps.*.if, use this:
+    #if: ${{ env.NIGHTLY }}
+    # in the meantime, copy-paste this:
+    if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
+    runs-on: macos-26
+    steps:
+      - name: Dependencies
+        run: |
+          # github runners come with dev-tools pre-installed
+      - uses: actions/checkout@v6
+      - name: Install SCT
+        run: |
+          ./.ci.sh -i
+      - name: Check dependencies
+        run: |
+          ./.ci.sh -c
+      - name: Run pytest test suite
+        run: |
+          ./.ci.sh -t
 
   windows-wsl-ubuntu-24_04:
     # with the help of https://github.com/marketplace/actions/setup-wsl

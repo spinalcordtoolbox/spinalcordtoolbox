@@ -90,6 +90,10 @@ def get_parser():
         '-qc-subject',
         metavar=Metavar.str,
         help='If provided, this string will be mentioned in the QC report as the subject the process was run on.')
+    optional.add_argument(
+        '-qc-contrast',
+        metavar=Metavar.str,
+        help='If provided, this string will be mentioned in the QC report as the contrast the process was run on.')
 
     # Arguments which implement shared functionality
     parser.add_common_args()
@@ -327,7 +331,8 @@ def main(argv: Sequence[str]):
         if path_qc is not None:
             from spinalcordtoolbox.reports.qc import generate_qc
             generate_qc(fname_in, fname_seg=fname_out, args=argv, path_qc=os.path.abspath(path_qc),
-                        dataset=arguments.qc_dataset, subject=arguments.qc_subject, process='sct_detect_pmj')
+                        dataset=arguments.qc_dataset, subject=arguments.qc_subject,
+                        contrast=arguments.qc_contrast, process='sct_detect_pmj')
 
         display_viewer_syntax([fname_in, fname_out], im_types=['anat', 'seg'], verbose=verbose)
 

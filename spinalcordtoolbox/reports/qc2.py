@@ -74,6 +74,7 @@ def create_qc_entry(
     plane: str,
     dataset: Optional[str],
     subject: Optional[str],
+    contrast: Optional[str],
     image_extension: str = 'png',
 ) -> AbstractContextManager[dict[str, Path]]:
     """
@@ -86,7 +87,7 @@ def create_qc_entry(
     The body of the `with` block should create these two image files.
     When the `with` block exits, the QC report is updated, with proper file synchronization.
     """
-    if plane not in ['Axial', 'Sagittal', 'Ortho']:
+    if plane not in ['Axial', 'Sagittal', 'Coronal', 'Ortho']:
         raise ValueError(f'Invalid plane: {plane!r}')
 
     logger.info('\n*** Generating Quality Control (QC) html report ***')
@@ -99,7 +100,8 @@ def create_qc_entry(
         dataset = path_input.parent.parent.parent.name
     if subject is None:
         subject = path_input.parent.parent.name
-    contrast = path_input.parent.name
+    if contrast is None:
+        contrast = path_input.parent.name
     timestamp = mod_date.strftime('%Y_%m_%d_%H%M%S.%f')
 
     # Make sure the image directory exists
@@ -607,8 +609,9 @@ def sct_register(
     command: str,
     argv: Sequence[str],
     path_qc: str,
-    dataset: str | None,
-    subject: str | None,
+    dataset: Optional[str],
+    subject: Optional[str],
+    contrast: Optional[str],
     p_resample: float | None = 0.6,
 ):
     """
@@ -616,6 +619,9 @@ def sct_register(
 
     Axial orientation, switch between input and output images.
     """
+    if not command:
+        raise ValueError("The 'command' argument must be provided for the sct_register QC report, as there are "
+                         "multiple registration commands that can generate `sct_register` QC reports.")
     cmdline = [command]
     cmdline.extend(argv)
 
@@ -627,6 +633,7 @@ def sct_register(
         plane='Axial',
         dataset=dataset,
         subject=subject,
+        contrast=contrast,
     ) as imgs_to_generate:
 
         img_input = Image(fname_input)
@@ -653,9 +660,11 @@ def sct_fmri_compute_tsnr(
     fname_seg: str,
     argv: Sequence[str],
     path_qc: str,
-    dataset: str | None,
-    subject: str | None,
+    dataset: Optional[str],
+    subject: Optional[str],
+    contrast: Optional[str],
     p_resample: float | None = 0.6,
+    command: str = 'sct_fmri_compute_tsnr',
 ):
     """
     Generate a QC report for sct_fmri_compute_tsnr.
@@ -663,7 +672,6 @@ def sct_fmri_compute_tsnr(
     Axial orientation, switch between two input images, with color bar and
     mean value in spinal cord.
     """
-    command = 'sct_fmri_compute_tsnr'
     cmdline = [command]
     cmdline.extend(argv)
 
@@ -675,6 +683,7 @@ def sct_fmri_compute_tsnr(
         plane='Axial',
         dataset=dataset,
         subject=subject,
+        contrast=contrast,
     ) as imgs_to_generate:
 
         img_input = Image(fname_input)
@@ -726,15 +735,16 @@ def sct_fmri_compute_tsnr(
 def sct_label_vertebrae(
     fname_input: str,
     fname_seg: str,
-    command: str,
     argv: Sequence[str],
     path_qc: str,
-    dataset: str | None,
-    subject: str | None,
+    dataset: Optional[str],
+    subject: Optional[str],
+    contrast: Optional[str],
     path_custom_labels: str,
     draw_text: bool = True,
-    p_resample: float | None = None,
+    p_resample: Optional[float] = None,
     offset_text: bool = True,
+    command: str = 'sct_label_vertebrae',
 ):
     """
     Generate a QC report for sct_label_vertebrae.
@@ -752,6 +762,7 @@ def sct_label_vertebrae(
         plane='Sagittal',
         dataset=dataset,
         subject=subject,
+        contrast=contrast,
     ) as imgs_to_generate:
 
         img_input = Image(fname_input)
@@ -853,12 +864,13 @@ def sct_label_vertebrae(
 def sct_label_utils(
     fname_input: str,
     fname_seg: str,
-    command: str,
     argv: Sequence[str],
     path_qc: str,
-    dataset: str | None,
-    subject: str | None,
-    p_resample: float | None = None,
+    dataset: Optional[str],
+    subject: Optional[str],
+    contrast: Optional[str],
+    p_resample: Optional[float] = None,
+    command: str = 'sct_label_utils',
 ):
     """
     Generate a QC report for sct_label_utils.
@@ -876,6 +888,7 @@ def sct_label_utils(
         plane='Sagittal',
         dataset=dataset,
         subject=subject,
+        contrast=contrast,
     ) as imgs_to_generate:
 
         img_input = Image(fname_input)
@@ -994,11 +1007,12 @@ def sct_register_multimodal(
     path_qc: str,
     dataset: Optional[str],
     subject: Optional[str],
+    contrast: Optional[str],
+    command: str = 'sct_register_multimodal',
 ):
     """
     Generate a QC report for sct_register_multimodal.
     """
-    command = 'sct_register_multimodal'
     cmdline = [command]
     cmdline.extend(argv)
 
@@ -1011,6 +1025,7 @@ def sct_register_multimodal(
         plane='Axial',
         dataset=dataset,
         subject=subject,
+        contrast=contrast,
     ) as imgs_to_generate:
 
         # Resample images slice by slice
@@ -1082,8 +1097,10 @@ def sct_process_segmentation(
         path_qc: str,
         dataset: Optional[str],
         subject: Optional[str],
+        contrast: Optional[str],
         angle_qc: Optional[bool] = False,
         angle_type: Optional[str] = 'angle_hog',
+        command: str = 'sct_process_segmentation'
 ):
     """
     Generate one (optionally two) QC report entries for sct_process_segmentation:
@@ -1092,8 +1109,6 @@ def sct_process_segmentation(
       2. (Optional) Angle overlay: a line per slice showing the estimated cord orientation angle
          (obtained using spinalcordtoolbox.registration.algorithms.find_angle_hog when angle_type='angle_hog').
     """
-
-    command = 'sct_process_segmentation'
     cmdline = [command]
     cmdline.extend(argv)
 
@@ -1138,6 +1153,7 @@ def sct_process_segmentation(
         plane='Axial',
         dataset=dataset,
         subject=subject,
+        contrast=contrast,
     ) as imgs_to_generate:
         # Generate the first QC report image - background image
         fig = mpl_figure.Figure()
@@ -1182,6 +1198,7 @@ def sct_process_segmentation(
             plane='Axial',
             dataset=dataset,
             subject=subject,
+            contrast=contrast,
         ) as imgs_to_generate:
             # Generate the first QC report image - background image
             fig = mpl_figure.Figure()
@@ -1380,13 +1397,14 @@ def sct_deepseg(
     path_qc: str,
     dataset: Optional[str],
     subject: Optional[str],
+    contrast: Optional[str],
     plane: Optional[str],
     fname_qc_seg: Optional[str],
+    command: str = 'sct_deepseg'
 ):
     """
     Generate a QC report for sct_deepseg, based on which task was used.
     """
-    command = 'sct_deepseg'
     cmdline = [command]
     cmdline.extend(argv)
 
@@ -1398,6 +1416,7 @@ def sct_deepseg(
         plane=plane,
         dataset=dataset,
         subject=subject,
+        contrast=contrast,
     ) as imgs_to_generate:
         # Custom QC to handle multiclass segmentation outside the spinal cord
         if "rootlets" in argv:
@@ -1814,6 +1833,7 @@ def sct_deepseg_cropbox(
     path_qc: str,
     dataset: Optional[str],
     subject: Optional[str],
+    contrast: Optional[str],
 ):
     """
     Generate a QC report entry for the sc-crop bounding box: one slice per orthogonal plane
@@ -1844,6 +1864,7 @@ def sct_deepseg_cropbox(
         plane='Ortho',
         dataset=dataset,
         subject=subject,
+        contrast=contrast,
     ) as imgs_to_generate:
         # Extract every panel up front so widths can be derived from their actual aspect ratio
         # (width / height) instead of splitting the figure into equal-width columns: with a fixed
@@ -1942,6 +1963,189 @@ def sct_deepseg_cropbox(
         fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
 
 
+# brachial_plexus labels are named e.g. 'DRG_C5_R': warm colors for the DRG, cool colors for the BP, and the
+# levels of each side running outwards from the center of the colormap, so that left and right mirror each other
+_BRACHIAL_PLEXUS_CMAPS = {'DRG': 'autumn', 'BP': 'cool'}
+_BRACHIAL_PLEXUS_LEVELS = ['C5', 'C6', 'C7', 'C8']
+_BRACHIAL_PLEXUS_SIDES = ['R', 'L']
+# Every coronal slice containing a label is shown, up to this many. Beyond that, only 1 out of every N slices is
+# shown instead, with N chosen so that at most this many slices are shown.
+_BRACHIAL_PLEXUS_MAX_SLICES = 40
+_BRACHIAL_PLEXUS_NUM_COLS = 4
+
+
+def _brachial_plexus_label_color(label_name):
+    structure, level, side = label_name.split('_')
+    offset = 0.1 + 0.4 * _BRACHIAL_PLEXUS_LEVELS.index(level) / (len(_BRACHIAL_PLEXUS_LEVELS) - 1)
+    position = 0.5 - offset if side == 'R' else 0.5 + offset
+    return mpl_colors.to_hex(mpl_plt.get_cmap(_BRACHIAL_PLEXUS_CMAPS[structure])(position))
+
+
+def sct_deepseg_brachial_plexus(
+    fname_input: str,
+    fname_seg: str,
+    argv: Sequence[str],
+    path_qc: str,
+    dataset: Optional[str],
+    subject: Optional[str],
+    contrast: Optional[str],
+):
+    """
+    Generate a QC report for the `sct_deepseg brachial_plexus` task.
+
+    Coronal mosaic of every slice containing a label, cropped around the labels, with a legend in the last cell.
+    """
+    command = 'sct_deepseg'
+    cmdline = [command]
+    cmdline.extend(argv)
+
+    path_labels = Path(__sct_dir__) / 'spinalcordtoolbox' / 'reports' / 'brachial_plexus_regions.json'
+    dict_labels = {int(num): name for num, name in json.loads(path_labels.read_text()).items()}
+
+    with create_qc_entry(
+        path_input=Path(fname_input).resolve(),
+        path_qc=Path(path_qc),
+        command=command,
+        cmdline=list2cmdline(cmdline),
+        plane='Coronal',
+        dataset=dataset,
+        subject=subject,
+        contrast=contrast,
+    ) as imgs_to_generate:
+        # Coronal orientation, one mosaic cell per slice
+        orientation, (top, bottom), (left, right) = _ORTHO_QC_PLANES['Coronal']
+        img_input = Image(fname_input)
+        orientation_orig = img_input.orientation
+        img_input = img_input.change_orientation(orientation)
+        img_seg = Image(fname_seg).change_orientation(orientation)
+        img_seg.data = np.rint(img_seg.data).astype(int)
+        p_vert, p_horiz = img_input.dim[5], img_input.dim[6]
+
+        # Figure out how we need to crop the mosaic + which slices to show
+        # NB: If the segmentation is empty, just show the middle slice of the image, and crop to the full image extent
+        coords = np.argwhere(img_seg.data > 0)
+        if coords.size == 0:
+            slice_indices = [img_seg.data.shape[0] // 2]
+            y_min, x_min = 0, 0
+            y_max, x_max = img_seg.data.shape[1:]
+        else:
+            first, last = coords[:, 0].min(), coords[:, 0].max()
+            n_slices = last - first + 1
+            step = math.ceil(n_slices / _BRACHIAL_PLEXUS_MAX_SLICES)
+            if step > 1:
+                logger.warning(f"The labels span {n_slices} coronal slices, more than the maximum of "
+                               f"{_BRACHIAL_PLEXUS_MAX_SLICES} that can be shown. Showing 1 out of every {step} slices.")
+            slice_indices = list(range(first, last + 1, step))
+            # Crop around the labels, with the same margin (in mm) on every side, to keep the vertebrae in view
+            y_min, x_min = coords[:, 1:].min(axis=0)
+            y_max, x_max = coords[:, 1:].max(axis=0) + 1
+            margin = 0.2 * max((y_max - y_min) * p_vert, (x_max - x_min) * p_horiz)
+            y_min, y_max = y_min - round(margin / p_vert), y_max + round(margin / p_vert)
+            x_min, x_max = x_min - round(margin / p_horiz), x_max + round(margin / p_horiz)
+
+        # Slice numbers of the original image, which may be flipped along A-P compared to `orientation`
+        if 'A' in orientation_orig:
+            slice_numbers = slice_indices
+        else:
+            slice_numbers = [img_seg.data.shape[0] - 1 - i for i in slice_indices]
+
+        # Keep only the slices to show, plus an empty slice for the legend
+        for img in [img_input, img_seg]:
+            img.data = np.concatenate([img.data[slice_indices], np.zeros_like(img.data[:1])])
+
+        # Each slice is centered on the bounding box around the labels
+        radius = (math.ceil((y_max - y_min) / 2), math.ceil((x_max - x_min) / 2))
+        centers = np.array([[(y_min + y_max) / 2, (x_min + x_max) / 2]] * img_input.data.shape[0])
+        # Don't resample, to avoid corrupting the small labels; instead, use `aspect` to handle anisotropic images
+        aspect = p_vert / p_horiz
+        # `mosaic()` fits as many cells per row as `scale` allows, so pick the `scale` that fits the number of
+        # columns we want (+0.5, so that rounding errors can't drop a column)
+        scale = TARGET_WIDTH_PIXL / ((_BRACHIAL_PLEXUS_NUM_COLS + 0.5) * 2 * radius[1])
+
+        # Generate the first QC report image
+        img = equalize_histogram(mosaic(img_input, centers, radius, scale))
+
+        # Fix the width to a specific size, and vary the height based on how many rows there are.
+        size_fig = [TARGET_WIDTH_INCH, TARGET_WIDTH_INCH * (img.shape[0] / img.shape[1]) * aspect]
+
+        fig = mpl_figure.Figure()
+        fig.set_size_inches(*size_fig, forward=True)
+        mpl_backend_agg.FigureCanvasAgg(fig)
+        ax = fig.add_axes((0, 0, 1, 1))
+        ax.imshow(img, cmap='gray', interpolation='none', aspect=aspect)
+        text_args = dict(
+            color='yellow',
+            fontsize=4,
+            path_effects=[
+                mpl_patheffects.Stroke(linewidth=1, foreground='black'),
+                mpl_patheffects.Normal(),
+            ],
+        )
+        # Orientation labels in the first cell (as in `sct_deepseg_cropbox`), since `add_orientation_labels`
+        # assumes the default upscaling of `mosaic()`
+        h, w = 2 * radius[0], 2 * radius[1]
+        inset = max(2, round(0.03 * min(w, h)))
+        ax.text(w / 2, inset, top, ha='center', va='top', **text_args)
+        ax.text(w / 2, h - inset, bottom, ha='center', va='bottom', **text_args)
+        ax.text(inset, h / 2, left, ha='left', va='center', **text_args)
+        ax.text(w - inset, h / 2, right, ha='right', va='center', **text_args)
+        # Slice numbers in the top-left corner of each cell (as in `add_slice_numbers`)
+        n_cols = img.shape[1] // w
+        for i, slice_number in enumerate(slice_numbers):
+            row, col = divmod(i, n_cols)
+            ax.text(col * w + inset, row * h + inset, str(slice_number), ha='left', va='top', **text_args)
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+        img_path = str(imgs_to_generate['path_background_img'])
+        logger.debug('Save image %s', img_path)
+        fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
+
+        # Generate the second QC report image
+        fig = mpl_figure.Figure()
+        fig.set_size_inches(*size_fig, forward=True)
+        mpl_backend_agg.FigureCanvasAgg(fig)
+        ax = fig.add_axes((0, 0, 1, 1))
+        color_list = [_brachial_plexus_label_color(dict_labels[num]) for num in sorted(dict_labels)]
+        img = mosaic(img_seg, centers, radius, scale)
+        img = np.ma.masked_less_equal(img, 0)
+        img.set_fill_value(0)
+        ax.imshow(img,
+                  cmap=mpl_colors.ListedColormap(color_list),
+                  norm=mpl_colors.Normalize(vmin=0.5, vmax=len(color_list) + 0.5),  # one color per label value
+                  alpha=1.0,
+                  interpolation='none',
+                  aspect=aspect)
+
+        # Draw the legend in the last cell: one column per structure/side, one row per level.
+        # Labels that are missing from the segmentation are only outlined.
+        row, col = divmod(len(slice_numbers), n_cols)
+        cell_h, cell_w = 2 * radius[0] / 6, 2 * radius[1] / 5  # 2 header rows + 4 levels, 1 header column + 4
+        y0, x0 = row * 2 * radius[0], col * 2 * radius[1]
+        labels_present = set(np.unique(img_seg.data))
+        nums = {name: num for num, name in dict_labels.items()}
+        legend_args = dict(ha='center', va='center', fontsize=3.5, color='white')
+        x = x0 + 1.5 * cell_w
+        for structure in _BRACHIAL_PLEXUS_CMAPS:
+            ax.text(x + 0.5 * cell_w, y0 + 0.5 * cell_h, structure, **legend_args)
+            for side in _BRACHIAL_PLEXUS_SIDES:
+                ax.text(x, y0 + 1.5 * cell_h, side, **legend_args)
+                for row, level in enumerate(_BRACHIAL_PLEXUS_LEVELS, start=2):
+                    color = color_list[nums[f'{structure}_{level}_{side}'] - 1]
+                    present = nums[f'{structure}_{level}_{side}'] in labels_present
+                    ax.add_patch(mpl_patches.Rectangle(
+                        (x - 0.3 * cell_w, y0 + (row + 0.2) * cell_h), 0.6 * cell_w, 0.6 * cell_h,
+                        linewidth=0.5, edgecolor=color, facecolor=color if present else 'none'))
+                x += cell_w
+        for row, level in enumerate(_BRACHIAL_PLEXUS_LEVELS, start=2):
+            ax.text(x0 + 0.5 * cell_w, y0 + (row + 0.5) * cell_h, level, **legend_args)
+
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+        img_path = str(imgs_to_generate['path_overlay_img'])
+        logger.debug('Save image %s', img_path)
+        fig.savefig(img_path, format='png', transparent=True, dpi=DPI)
+
+
 def sct_analyze_lesion(
     fname_input: str,
     fname_label: str,
@@ -1951,11 +2155,12 @@ def sct_analyze_lesion(
     path_qc: str,
     dataset: Optional[str],
     subject: Optional[str],
+    contrast: Optional[str],
+    command: str = 'sct_analyze_lesion'
 ):
     """
     Generate a QC report for sct_analyze_lesion, specifically highlighting the tissue bridge widths.
     """
-    command = 'sct_analyze_lesion'
     cmdline = [command]
     cmdline.extend(argv)
 
@@ -1968,6 +2173,7 @@ def sct_analyze_lesion(
         plane='Sagittal',
         dataset=dataset,
         subject=subject,
+        contrast=contrast,
     ) as imgs_to_generate:
         # Load the spinal cord segmentation mask
         im_sc = Image(fname_sc)
@@ -2371,8 +2577,7 @@ def assign_label_colors_by_groups(labels):
     ]
     if len(label_groups) == 1:
         # repeat high-contrast colors until we have enough to cover the range of labels
-        n_colors = labels.max() - labels.min() + 1
-        color_list = list(it.islice(it.cycle(labels_color), n_colors))
+        color_list = list(it.islice(it.cycle(labels_color), len(labels)))
 
     # Handle the edge case: Multiple continuous groups
     else:

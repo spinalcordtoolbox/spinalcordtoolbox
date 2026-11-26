@@ -63,7 +63,9 @@ jobs:
         path: requirements-freeze.txt
 
   generate-containers:
-    runs-on: ubuntu-latest
+    # NB: The eWaterCycle/setup-apptainer action is not yet compatible with Ubuntu 26.04
+    # See: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/5344
+    runs-on: ubuntu-24.04
     outputs:
       image-tag: ${{ steps.build_containers.outputs.image-tag }}
       apptainer-artifact: ${{ steps.build_containers.outputs.apptainer-artifact }}
@@ -120,7 +122,7 @@ jobs:
     needs: generate-requirements-freeze
     strategy:
       matrix:
-        os: [ubuntu-22.04, ubuntu-24.04, macos-14, macos-15, macos-15-intel, windows-2022, windows-2025]
+        os: [ubuntu-22.04, ubuntu-24.04, macos-15, macos-15-intel, macos-26, windows-2022, windows-2025]
     runs-on: ${{ matrix.os }}
     # NB: Setting `bash` as the default shell is a bit of a hack workaround for Windows to allow it to run .sh scripts.
     #     Normally, we would ask the user to install a Windows-compatible bash via either Cygwin or Git for Windows.

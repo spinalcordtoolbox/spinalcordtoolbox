@@ -16,6 +16,7 @@ import zipfile
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
+from pathlib import Path
 
 from spinalcordtoolbox.utils.fs import tmp_create
 from spinalcordtoolbox.utils.sys import __bin_dir__, __sct_dir__, sct_progress_bar, stylize
@@ -49,7 +50,7 @@ DATASET_DICT = {
     },
     "manual-correction": {
         "mirrors": [
-            "https://github.com/spinalcordtoolbox/manual-correction/archive/refs/tags/r20260113.zip",
+            "https://github.com/spinalcordtoolbox/manual-correction/archive/refs/tags/r20261119.zip",
         ],
         "default_location": os.path.join(__sct_dir__, "data", "manual-correction"),
         "download_type": "SCT Course Files",
@@ -147,13 +148,21 @@ DATASET_DICT = {
     },
     "PAM50_normalized_metrics": {
         "mirrors": [
-            "https://github.com/spinalcordtoolbox/PAM50-normalized-metrics/archive/refs/tags/r20250321.zip"
+            "https://github.com/spinalcordtoolbox/PAM50-normalized-metrics/archive/refs/tags/r20251014.zip"
         ],
         "default_location": os.path.join(__sct_dir__, "data", "PAM50_normalized_metrics"),
         "download_type": "Templates",
         "default": True,
     },
-    "moco-dl_models_fmri": {
+    "normative_plot_thumbnails": {
+        "mirrors": [
+            "https://github.com/user-attachments/files/29054242/normative_plot_thumbnails.zip"
+        ],
+        "default_location": os.path.join(__sct_dir__, "data", "normative_plot_thumbnails"),
+        "download_type": "Templates",
+        "default": True,
+    },
+    "moco-dl_models": {
         "mirrors": [
             "https://github.com/ivadomed/moco-dl/releases/download/r20261116/fmri_chkpt.zip"
         ],
@@ -255,6 +264,26 @@ def unzip(compressed, dest_folder):
         raise
 
 
+def find_bundle_root(extraction_folder, dirs_to_preserve=()):
+    """
+    Descend through single-directory wrappers to find the real content root.
+
+    Stops (and returns the current folder) when:
+      - the folder has anything other than exactly one directory entry
+        (ignoring junk like __MACOSX), or
+      - that single directory's name matches one of `dirs_to_preserve`,
+        meaning it's meaningful content rather than a wrapper.
+    """
+    root = Path(extraction_folder)
+    while True:
+        entries = [e for e in root.iterdir() if e.name not in {"__MACOSX"}]
+        if len(entries) != 1 or not entries[0].is_dir():
+            return root  # files, multiple entries, or empty -> content lives here
+        if any(s in entries[0].name for s in dirs_to_preserve):
+            return root  # the lone dir is content we want to keep
+        root = entries[0]  # pure wrapper -> go under and repeat
+
+
 def install_data(url, dest_folder, keep=False, dirs_to_preserve=()):
     """
     Download a data bundle from a URL and install in the destination folder.
@@ -301,30 +330,7 @@ def install_data(url, dest_folder, keep=False, dirs_to_preserve=()):
 
     unzip(tmp_file, extraction_folder)
 
-    # Identify whether we have a proper archive or a tarbomb
-    with os.scandir(extraction_folder) as it:
-        has_dir = False
-        nb_entries = 0
-        for entry in it:
-            if entry.name in ("__MACOSX",):
-                continue
-            nb_entries += 1
-            if entry.is_dir():
-                has_dir = True
-
-    if nb_entries == 1 and has_dir:
-        # tarball with single-directory -> go under
-        with os.scandir(extraction_folder) as it:
-            for entry in it:
-                if entry.name in ("__MACOSX",):
-                    continue
-                elif any((s in entry.name) for s in dirs_to_preserve):
-                    bundle_folder = extraction_folder
-                else:
-                    bundle_folder = entry.path
-    else:
-        # bomb scenario -> stay here
-        bundle_folder = extraction_folder
+    bundle_folder = find_bundle_root(extraction_folder, dirs_to_preserve)
 
     # Copy over
     logger.info(f"Copying data to: {dest_folder}")
