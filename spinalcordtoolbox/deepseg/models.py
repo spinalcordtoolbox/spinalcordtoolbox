@@ -702,7 +702,7 @@ def folder(name_model):
     return os.path.join(__deepseg_dir__, name_model)
 
 
-# sc_crop.detect() padding kwargs; see sc_crop.crop.detect() for the meaning of each face.
+# sc_crop.detect() padding kwargs; see `spinalcordtoolbox.deepseg.crop.detect()` for the meaning of each face.
 CROP_PAD_KEYS = ('pad_superior', 'pad_inferior', 'pad_left', 'pad_right', 'pad_anterior', 'pad_posterior')
 
 
