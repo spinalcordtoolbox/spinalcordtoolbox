@@ -29,7 +29,7 @@ from spinalcordtoolbox.deepseg_.postprocessing import keep_largest_object, fill_
 import spinalcordtoolbox.deepseg.models as ds_models
 import spinalcordtoolbox.deepseg.monai as ds_monai
 import spinalcordtoolbox.deepseg.nnunet as ds_nnunet
-import spinalcordtoolbox.sc_crop as sc_crop
+import spinalcordtoolbox.deepseg.crop as sc_crop
 
 from spinalcordtoolbox.utils.sys import LazyLoader, stylize
 
@@ -337,32 +337,37 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device, ensemble=F
     # Cropping is done here in the original orientation (sc-crop is orientation-agnostic),
     # before the reorientation step below (which preserves the orientation after cropping).
     if crop:
+        print('Cropping the image (sc-crop)...')
+        start_crop = time.time()
         img_nii = nib.load(path_img_tmp)
         box_overrides = box_overrides or {}
         box_faces = ('xmin', 'xmax', 'ymin', 'ymax', 'zmin', 'zmax')
         if all(face in box_overrides for face in box_faces):
             # All 6 faces given manually: skip detection entirely rather than running it just
             # to immediately overwrite every value it would have produced.
+            logger.debug('sc-crop: all 6 box faces given with -box-*, skipping detection.')
             bbox = {face: box_overrides[face] for face in box_faces}
-            bbox["original_axcodes"] = "".join(nib.aff2axcodes(img_nii.affine))
             bbox["_original_img"] = img_nii
         else:
             try:
-                bbox = sc_crop.detect(img_nii, **(crop_pad or {}))
-            except RuntimeError:
+                # Run the detector on the same device as the nnUNet predictor (see the `device` warning above)
+                bbox = sc_crop.detect(img_nii, device=predictor.device, **(crop_pad or {}))
+            except RuntimeError as e:
                 # Detection found no cord at all, so there's no bbox to patch with box_overrides.
                 # Fall back to the full image instead, letting box_overrides (if any) restrict
                 # only the face(s) the user actually specified.
                 if not box_overrides:
                     raise
+                logger.warning(f'{e} Using the full image for the faces not given with -box-*.')
                 shape = img_nii.shape
                 bbox = {
                     "xmin": 0, "xmax": shape[0] - 1,
                     "ymin": 0, "ymax": shape[1] - 1,
                     "zmin": 0, "zmax": shape[2] - 1,
-                    "original_axcodes": "".join(nib.aff2axcodes(img_nii.affine)),
                     "_original_img": img_nii,
                 }
+            if box_overrides:
+                logger.debug(f'sc-crop: box faces overridden with -box-*: {box_overrides}')
             bbox.update(box_overrides)
         if not (bbox["xmax"] >= bbox["xmin"] and bbox["ymax"] >= bbox["ymin"] and bbox["zmax"] >= bbox["zmin"]):
             raise ValueError("sc-crop: invalid bounding box — check that -box-* values are not inverted.")
@@ -374,7 +379,12 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device, ensemble=F
         if path_out and not os.path.exists(path_out):
             os.makedirs(path_out)
         sc_crop.save_bbox_nifti(bbox, img_nii, fname_cropbox)
-        nib.save(sc_crop.crop(img_nii, bbox), path_img_tmp)
+        img_cropped = sc_crop.crop(img_nii, bbox)
+        nib.save(img_cropped, path_img_tmp)
+        logger.debug(f'sc-crop: final box (voxels, inclusive): x {bbox["xmin"]}-{bbox["xmax"]}, '
+                     f'y {bbox["ymin"]}-{bbox["ymax"]}, z {bbox["zmin"]}-{bbox["zmax"]}. Image cropped from '
+                     f'{img_nii.shape[:3]} to {img_cropped.shape[:3]}. Crop box saved to {fname_cropbox}')
+        print(f'Cropping done in {time.time() - start_crop:.1f} seconds.')
 
     # Get the original orientation of the image, for example LPI
     orig_orientation = get_orientation(Image(path_img_tmp))
