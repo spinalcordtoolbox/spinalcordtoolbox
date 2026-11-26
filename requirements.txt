@@ -105,7 +105,5 @@ wquantiles
 # Source: https://github.com/pandas-dev/pandas/pull/49296
 xlsxwriter
 
-# NB: These dependencies belong to `sc_crop`, and were copied over after absorbing the `sc_crop` package into SCT
-pillow>=10.0.0
-pyyaml>=6.0
-ultralytics>=8.0.0
+# The newest crop model was trained with a YOLO26-L model, which I believe requires 8.4 or above.
+ultralytics>=8.4.0
