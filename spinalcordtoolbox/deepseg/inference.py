@@ -347,7 +347,6 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device, ensemble=F
             # to immediately overwrite every value it would have produced.
             logger.debug('sc-crop: all 6 box faces given with -box-*, skipping detection.')
             bbox = {face: box_overrides[face] for face in box_faces}
-            bbox["original_axcodes"] = "".join(nib.aff2axcodes(img_nii.affine))
             bbox["_original_img"] = img_nii
         else:
             try:
@@ -364,7 +363,6 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device, ensemble=F
                     "xmin": 0, "xmax": shape[0] - 1,
                     "ymin": 0, "ymax": shape[1] - 1,
                     "zmin": 0, "zmax": shape[2] - 1,
-                    "original_axcodes": "".join(nib.aff2axcodes(img_nii.affine)),
                     "_original_img": img_nii,
                 }
             if box_overrides:
