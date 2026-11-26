@@ -162,7 +162,7 @@ DATASET_DICT = {
         "download_type": "Templates",
         "default": True,
     },
-    "moco-dl_models": {
+    "moco-dl_models_fmri": {
         "mirrors": [
             "https://github.com/ivadomed/moco-dl/releases/download/r20261116/fmri_chkpt.zip"
         ],
