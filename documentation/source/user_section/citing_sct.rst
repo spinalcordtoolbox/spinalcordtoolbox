@@ -71,6 +71,8 @@ The table below lists the references for :ref:`sct_deepseg` sub-tasks which have
       - Lemay A *et al.* "`Automatic multiclass intramedullary spinal cord tumor segmentation on MRI with deep learning. <https://doi.org/10.1016/j.nicl.2021.102766>`__" **NeuroImage: Clinical** 31 (2021): 102766.
     * - :ref:`sct_deepseg_lesion_ms`
       - Benveniste PL *et al.* "`Generalizable spinal cord multiple sclerosis lesion segmentation across MRI contrasts, protocols, and centers. <https://doi.org/10.1177/13524585261427333>`__" **Multiple Sclerosis Journal** 32 (2026): 598-613.
+    * - :ref:`sct_deepseg_spine`
+      - Warszawer Y and Molinier N *et al.* "`TotalSpineSeg: automated whole-spine vertebral segmentation with high robustness to labeling errors. <https://doi.org/10.1007/s00330-026-13008-2>`__" **European Radiology** (2026).
 
 Command Line Tools
 ^^^^^^^^^^^^^^^^^^

@@ -50,7 +50,7 @@ DATASET_DICT = {
     },
     "manual-correction": {
         "mirrors": [
-            "https://github.com/spinalcordtoolbox/manual-correction/archive/refs/tags/r20260113.zip",
+            "https://github.com/spinalcordtoolbox/manual-correction/archive/refs/tags/r20261119.zip",
         ],
         "default_location": os.path.join(__sct_dir__, "data", "manual-correction"),
         "download_type": "SCT Course Files",
@@ -148,9 +148,17 @@ DATASET_DICT = {
     },
     "PAM50_normalized_metrics": {
         "mirrors": [
-            "https://github.com/spinalcordtoolbox/PAM50-normalized-metrics/archive/refs/tags/r20250321.zip"
+            "https://github.com/spinalcordtoolbox/PAM50-normalized-metrics/archive/refs/tags/r20251014.zip"
         ],
         "default_location": os.path.join(__sct_dir__, "data", "PAM50_normalized_metrics"),
+        "download_type": "Templates",
+        "default": True,
+    },
+    "normative_plot_thumbnails": {
+        "mirrors": [
+            "https://github.com/user-attachments/files/29054242/normative_plot_thumbnails.zip"
+        ],
+        "default_location": os.path.join(__sct_dir__, "data", "normative_plot_thumbnails"),
         "download_type": "Templates",
         "default": True,
     },
