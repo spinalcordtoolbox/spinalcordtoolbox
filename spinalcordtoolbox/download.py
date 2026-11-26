@@ -153,11 +153,19 @@ DATASET_DICT = {
         "download_type": "Templates",
         "default": True,
     },
-    "moco-dl_models": {
+    "moco-dl_models_fmri": {
         "mirrors": [
-            "https://github.com/ivadomed/moco-dl/releases/download/r20251127/models.zip"
+            "https://github.com/ivadomed/moco-dl/releases/download/r20261116/fmri_chkpt.zip"
         ],
-        "default_location": os.path.join(__sct_dir__, "data", "moco-dl_models"),
+        "default_location": os.path.join(__sct_dir__, "data", "moco-dl_models_fmri"),
+        "download_type": "Models",
+        "default": True,
+    },
+    "moco-dl_models_dmri": {
+        "mirrors": [
+            "https://github.com/ivadomed/moco-dl/releases/download/r20261116/dmri_chkpt.zip"
+        ],
+        "default_location": os.path.join(__sct_dir__, "data", "moco-dl_models_dmri"),
         "download_type": "Models",
         "default": True,
     },
