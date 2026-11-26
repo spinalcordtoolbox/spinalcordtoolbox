@@ -471,5 +471,4 @@ def _save_outputs(path_tmp, path_out_abs, fname_data, mode, fname_bvals, fname_b
         generate_output_file(fname_params_tmp[axis], os.path.join(path_out_abs, f"moco_params_{axis}.nii.gz"),
                              squeeze_data=False)
     return fname_moco
-
-
+    
