@@ -216,7 +216,7 @@ MODELS = {
      },
     "model_seg_canal": {
         "url": [
-            "https://github.com/ivadomed/model-canal-seg/releases/download/r20260406/model-canal-seg-r20260406.zip"
+            "https://github.com/ivadomed/model-canal-seg/releases/download/r20260406/model-canal-seg-r20260406-inference.zip"
         ],
         "description": "Segmentation of spinal canal on all contrasts",
         "contrasts": ["all"],
