@@ -80,10 +80,14 @@ def resample_image(img):
     return nib.Nifti1Image(data, affine)
 
 
-def detect(img, pad_superior, pad_inferior, pad_left, pad_right, pad_anterior, pad_posterior, structure="sc"):
+def detect(img, pad_superior, pad_inferior, pad_left, pad_right, pad_anterior, pad_posterior, structure="sc",
+           device=None):
     """
     Detect the box around the spinal cord (structure="sc") or the spinal canal (structure="canal"), padded on
     each face by the given margins (mm). Raise RuntimeError if the structure is not detected.
+
+    `device` (e.g. "cpu", "cuda:0", or a torch.device) is the device to run the detector on. If None, ultralytics
+    picks one automatically.
     """
     from ultralytics import YOLO
     cls, conf, name = STRUCTURES[structure]
@@ -101,7 +105,8 @@ def detect(img, pad_superior, pad_inferior, pad_left, pad_right, pad_anterior, p
                  f"{n_z} axial slices")
     # Axial slices from superior to inferior, row 0 = Anterior, column 0 = patient Right, 3 identical channels
     slices = list(np.repeat(data.transpose(2, 1, 0)[::-1, ::-1, :, None], 3, axis=-1))
-    results = model.predict(source=slices, imgsz=IMAGE_SIZE, conf=conf, batch=len(slices), verbose=False)
+    results = model.predict(source=slices, imgsz=IMAGE_SIZE, conf=conf, batch=len(slices), verbose=False,
+                            device=None if device is None else str(device))
     # Most confident box of the structure on each slice: (slice index, (x1, y1, x2, y2) in pixels)
     detected = []
     for i, r in enumerate(results):

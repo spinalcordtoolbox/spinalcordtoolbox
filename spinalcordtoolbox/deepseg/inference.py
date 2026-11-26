@@ -350,7 +350,8 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device, ensemble=F
             bbox["_original_img"] = img_nii
         else:
             try:
-                bbox = sc_crop.detect(img_nii, **(crop_pad or {}))
+                # Run the detector on the same device as the nnUNet predictor (see the `device` warning above)
+                bbox = sc_crop.detect(img_nii, device=predictor.device, **(crop_pad or {}))
             except RuntimeError as e:
                 # Detection found no cord at all, so there's no bbox to patch with box_overrides.
                 # Fall back to the full image instead, letting box_overrides (if any) restrict
